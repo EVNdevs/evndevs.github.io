@@ -170,6 +170,8 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 40px 0; }
 
 @media (max-width: 980px) {
   #menu-btn { display: grid; }
+  /* the nav leaves the flex row here (absolute or hidden), so the tools take over the right edge */
+  .header-tools { margin-left: auto; }
   .site-nav {
     position: absolute; left: 0; right: 0; top: 100%;
     flex-direction: column; align-items: stretch; gap: 0; padding: 8px 16px 16px;
