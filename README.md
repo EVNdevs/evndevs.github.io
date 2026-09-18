@@ -11,4 +11,4 @@ project. Read the documentation at <https://evn.coresg.tech>.
 | `latest.json` | the version manifest the extension's update check reads |
 | `index.html` | the documentation site itself (one file, no build step) |
 
-The packaged extension (`.vsix`) is attached to each [release](https://github.com/EVNdevs/vscode-evn-alpha/releases).
+The packaged extension (`.vsix`) is attached to each [release](https://github.com/EVNdevs/evndevs.github.io/releases).

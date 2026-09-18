@@ -1,8 +1,8 @@
 {
   "extension": {
     "version": "0.2.16",
-    "vsix": "https://github.com/EVNdevs/vscode-evn-alpha/releases/download/v0.2.16/evn-alpha-micropython-0.2.16.vsix",
-    "notes": "https://github.com/EVNdevs/vscode-evn-alpha/releases/tag/v0.2.16"
+    "vsix": "https://evn.coresg.tech/vsix/evn-alpha-micropython-0.2.16.vsix",
+    "notes": "https://github.com/EVNdevs/evndevs.github.io/blob/main/docs/CHANGELOG.md"
   },
   "firmware": {
     "version": "0.2.15",
