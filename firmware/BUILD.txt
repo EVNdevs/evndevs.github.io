@@ -1,6 +1,6 @@
 ﻿EVN_ALPHA_MicroPython.uf2
-source: the commit after 6f3a1b1 (the loaded-rig validation of 2026-09-18 evening: the VL53L0X setter wait covers the range still in flight after a setting change, firmware 0.2.18; the first packaged build that also carries evn.Pose, the pose estimator begun on 2026-09-18, which the 0.2.15 build of 05:48 did not have)
-built: 2026-09-18 20:16 +08:00 (MicroPython v1.26.1, pico-sdk 2.3.0)
+source: the commit after d35aa63 (2026-09-18 late evening: the breakaway assist arms only behind a moving reference, releases when the shaft moves away, and does not arm at a stopped speed-mode reference, so run(0) leaves no standing voltage on a wheel-loaded shaft; control.state() diagnostic getter; firmware 0.2.19)
+built: 2026-09-18 23:30 +08:00 (MicroPython v1.26.1, pico-sdk 2.3.0)
 flash: single-line 03h boot2, PICO_FLASH_SPI_CLKDIV=4
-md5: 4cfba96a064c358ad9bfe2eb3872df8c
-version: 0.2.18
+md5: 51e6b91a0b11e0f744efcb5aa6d4e459
+version: 0.2.19

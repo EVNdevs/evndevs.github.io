@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.19 (2026-09-18)
+
+- **Firmware 0.2.19: no standing voltage on a stopped shaft after `run(0)`.** On a wheel-loaded EV3 Medium the breakaway assist could stay armed after a run (it re-armed against the run direction when the breakaway lurch carried the shaft ahead of the ramping reference, and its release only accepted motion in the assist direction) and could arm at the stopped `run(0)` reference; either way it locked out the hold state's rest decay and left 66 mV to 1.8 V on the stationary motor, with `speed()` and `load()` reading motion that was not there. The assist now arms only behind a moving reference, releases when the shaft moves away at speed, and does not arm at all at a stopped speed-mode reference. 12 of 12 `run(0)` settles end in the hold state at 0 to 0.11 V; the 64-move loaded set is unchanged at 64 / 64 within ±1° (`docs/ADRC_IMPLEMENTATION.md` §6e).
+- **New `control.state()`**: `(reference_deg, x1_deg, x2_degs, x3_degs2, applied_mv, hold, assist)` — the controller's reference, the ADRC observer's three states, the applied voltage and the two flags, a 1 kHz diagnostic for tuning and benches.
+- **MPR121 touch array and ADS1115 ADC re-benched on the board** (the touch module under the running motors): 137 / 137 and 68 / 68 after five stale bench expectations were brought up to the 2026-09-18 audit; no false touch and no ADC pickup through every motor phase. Bench scripts `tools/bench/mpy_touch_excitation.py`, `touch_excitation_metrics.py` and `run0_trace_metrics.py` added.
+
 ## 0.2.18 (2026-09-18)
 
 - **Firmware 0.2.18: a `DistanceSensor` setting change during a long range no longer raises.** `timing_budget(1000)` followed by `timing_budget(33)` (or any setter while a long range was in flight) raised `OSError: distance sensor on port n gave no measurement under the new setting`, because the chip finishes the range in progress before it restarts and the wait was sized from the new setting alone. The wait now covers the previous period, so the call returns after about one second instead of failing. Found by re-benching the VL53L0X after the 2026-09-18 audit (45 of 45 checks without a target, 58 of 58 with one). This is also the first packaged firmware with `evn.Pose` (the pose estimator begun in 0.2.16's notes; the 0.2.15 build did not carry it).
