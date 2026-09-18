@@ -90,6 +90,24 @@ In VS Code, **Ctrl+F1** on a word in a Python file opens this site at the matchi
 
 The controller itself, with what is in the box: **[coresg.tech/evn](https://coresg.tech/evn)**.
 
+## Credits
+
+**EVN was created by [Heng Teng Yi](https://github.com/HTY2003)**, in Singapore. He also wrote and
+maintains the [EVN Arduino library](https://github.com/EVNdevs/EVN-arduino) and
+[its documentation](https://evn.readthedocs.io). The EVN ALPHA was first developed at the end of 2018 by
+**Kenneth Chow** &mdash; who went on to found the [Centre of Robotics Excellence](https://edu.coresg.tech/)
+&mdash; and his mentor Teng Yi, who came to it with four years of international competitive robotics
+behind him, including wins in five RoboCup sub-leagues.
+
+LEGO&reg; MINDSTORMS&reg; was discontinued in 2022. The material for learning with it thinned out, and
+serious robotics hardware stayed expensive. EVN is meant to be an affordable, open platform &mdash; the
+natural evolution of LEGO MINDSTORMS, and a basecamp for students who want to get serious about robotics.
+
+The board exists because of its backers. The Kickstarter campaign
+[**EVN: The Natural Evolution of the LEGO&reg; MINDSTORMS&reg; System**](https://www.kickstarter.com/projects/thenaturalevolution/evn-the-natural-evolution-of-the-lego-mindstorms-system) ran from 22 December 2023 to
+20 February 2024 and was funded by **71 backers** pledging **S$13,053** against a S$8,888 goal. Without
+them EVN would not exist.
+
 ---
 
 <div align="center">

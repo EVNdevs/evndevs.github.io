@@ -605,6 +605,58 @@
     p.body.appendChild(gal);
     main.appendChild(p.node);
 
+    /* --- the story --- */
+    var st = section('The story');
+    var sg = el('div', 'story-grid');
+
+    var prose = el('div', 'story-prose');
+    prose.appendChild(el('p', null,
+      'LEGO® MINDSTORMS® was discontinued in 2022. The material for learning with it thinned ' +
+      'out, and serious robotics hardware stayed expensive. EVN is the answer to that: an affordable, ' +
+      'open platform — the natural evolution of LEGO MINDSTORMS, and a basecamp for students who ' +
+      'want to get serious about robotics.'));
+    prose.appendChild(el('p', null,
+      'EVN was created by Heng Teng Yi, in Singapore. The EVN ALPHA was first developed at the end of ' +
+      '2018 by Kenneth Chow, who went on to found the Centre of Robotics Excellence, and his mentor ' +
+      'Teng Yi, who came to it with four years of international competitive robotics behind him, ' +
+      'including wins in five RoboCup sub-leagues. Teng Yi also wrote and maintains the EVN Arduino library.'));
+    prose.appendChild(el('p', null,
+      'The board exists because of its backers. The Kickstarter campaign “EVN: The Natural Evolution ' +
+      'of the LEGO® MINDSTORMS® System” ran from 22 December 2023 to 20 February 2024 and ' +
+      'was funded by 71 backers pledging S$13,053 against a S$8,888 goal. Without them EVN would not exist.'));
+    var ks = el('a', 'btn btn-primary', 'The story on Kickstarter');
+    ks.href = 'https://www.kickstarter.com/projects/thenaturalevolution/evn-the-natural-evolution-of-the-lego-mindstorms-system';
+    ks.target = '_blank';
+    ks.rel = 'noopener';
+    var kw = el('div', 'actions');
+    kw.appendChild(ks);
+    prose.appendChild(kw);
+    sg.appendChild(prose);
+
+    var credit = el('aside', 'credit');
+    credit.appendChild(el('span', 'kicker', 'Created by'));
+    credit.appendChild(el('p', 'who', 'Heng Teng Yi'));
+    credit.appendChild(el('p', 'what',
+      'Creator of EVN, and the author and maintainer of the EVN Arduino library. Singapore.'));
+    var gh = el('a', 'credit-link', 'github.com/HTY2003');
+    gh.href = 'https://github.com/HTY2003';
+    gh.target = '_blank';
+    gh.rel = 'noopener';
+    credit.appendChild(gh);
+    var stats = el('ul', 'stats');
+    [['71', 'backers'], ['S$13,053', 'pledged, of a S$8,888 goal'], ['2018', 'the first EVN ALPHA']]
+      .forEach(function (s) {
+        var li = el('li');
+        li.appendChild(el('strong', null, s[0]));
+        li.appendChild(el('span', null, s[1]));
+        stats.appendChild(li);
+      });
+    credit.appendChild(stats);
+    sg.appendChild(credit);
+
+    st.body.appendChild(sg);
+    main.appendChild(st.node);
+
     /* --- documentation --- */
     var docs = section('Documentation');
     var list = el('div', 'doc-list');

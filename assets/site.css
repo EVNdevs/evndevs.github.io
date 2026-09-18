@@ -275,6 +275,29 @@ a.card:hover .more { text-decoration: underline; text-underline-offset: 3px; }
 .shot figcaption { padding: 10px 12px 12px; font-size: 13.5px; color: var(--muted); line-height: 1.45; }
 .shot figcaption strong { display: block; color: var(--heading); font-size: 14.5px; font-weight: 600; }
 
+/* ---- Home: the story ------------------------------------------------------------------------------- */
+.story-grid { display: grid; gap: 34px; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); align-items: start; }
+@media (max-width: 860px) { .story-grid { grid-template-columns: minmax(0, 1fr); gap: 26px; } }
+.story-prose p { margin: 0 0 16px; font-size: 16.5px; color: var(--text); max-width: 68ch; }
+.story-prose .actions { margin-top: 22px; }
+.credit {
+  border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: var(--radius-lg);
+  background: var(--surface); padding: 24px 26px 26px;
+}
+.credit .kicker {
+  font-size: 11.5px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--accent-ink);
+}
+.credit .who { margin: 8px 0 0; font-size: 25px; font-weight: 600; color: var(--heading); line-height: 1.2; }
+.credit .what { margin: 10px 0 0; font-size: 15px; color: var(--muted); }
+.credit-link {
+  display: inline-block; margin-top: 12px; font-size: 14.5px; font-weight: 500;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+.stats { list-style: none; margin: 22px 0 0; padding: 18px 0 0; border-top: 1px solid var(--line-strong); }
+.stats li { display: flex; align-items: baseline; gap: 10px; margin: 8px 0; }
+.stats strong { color: var(--heading); font-size: 19px; font-weight: 600; flex: 0 0 auto; }
+.stats span { color: var(--muted); font-size: 14.5px; }
+
 /* ---- Home: document list -------------------------------------------------------------------------- */
 .doc-list { display: grid; gap: 0; border-top: 1px solid var(--line); }
 .doc-row {
@@ -423,6 +446,8 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 }
 .site-footer .wrap { padding-top: 46px; padding-bottom: 38px; display: grid; gap: 30px;
                      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
+/* the first column carries the CORE attribution and the creator credit, so it gets the room */
+@media (min-width: 900px) { .site-footer .wrap { grid-template-columns: 1.75fr 1fr 1fr 1.1fr; gap: 40px; } }
 .site-footer a { color: rgba(255, 255, 255, .74); }
 .site-footer a:hover { color: #fff; text-decoration: underline; text-underline-offset: 3px; }
 .f-brand { display: flex; gap: 14px; align-items: flex-start; }
@@ -433,6 +458,9 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 .f-logo img { width: 100%; height: 100%; object-fit: contain; display: block; }
 .f-brand strong { display: block; color: #fff; font-weight: 600; font-size: 16px; letter-spacing: .02em; }
 .f-brand span { font-size: 14.5px; line-height: 1.6; display: block; margin-top: 4px; }
+.f-credit { margin-top: 12px !important; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, .12);
+            font-size: 14px !important; color: rgba(255, 255, 255, .62); }
+.f-credit a { color: #d8cdb6; }
 .f-col h4 { color: #fff; font-size: 11.5px; font-weight: 600; letter-spacing: .14em;
             text-transform: uppercase; margin: 0 0 12px; }
 .f-col ul { list-style: none; margin: 0; padding: 0; font-size: 15px; }
