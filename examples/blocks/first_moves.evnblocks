@@ -1,0 +1,272 @@
+{
+  "format": "evn-blocks",
+  "version": 1,
+  "needs": "a motor on port 1, wheels off the ground.",
+  "workspace": {
+    "blocks": {
+      "languageVersion": 0,
+      "blocks": [
+        {
+          "type": "text_print",
+          "inputs": {
+            "TEXT": {
+              "block": {
+                "type": "text_join",
+                "extraState": {
+                  "itemCount": 2
+                },
+                "inputs": {
+                  "ADD0": {
+                    "shadow": {
+                      "type": "text",
+                      "fields": {
+                        "TEXT": "angle at start: "
+                      }
+                    }
+                  },
+                  "ADD1": {
+                    "block": {
+                      "type": "evn_motor_measure",
+                      "fields": {
+                        "PORT": "1",
+                        "WHAT": "angle"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "x": 20,
+          "y": 20,
+          "next": {
+            "block": {
+              "type": "evn_motor_run_angle",
+              "fields": {
+                "PORT": "1",
+                "THEN": "HOLD",
+                "WAIT": "TRUE"
+              },
+              "inputs": {
+                "ANGLE": {
+                  "shadow": {
+                    "type": "math_number",
+                    "fields": {
+                      "NUM": 360
+                    }
+                  }
+                },
+                "SPEED": {
+                  "shadow": {
+                    "type": "math_number",
+                    "fields": {
+                      "NUM": 500
+                    }
+                  }
+                }
+              },
+              "next": {
+                "block": {
+                  "type": "text_print",
+                  "inputs": {
+                    "TEXT": {
+                      "block": {
+                        "type": "text_join",
+                        "extraState": {
+                          "itemCount": 2
+                        },
+                        "inputs": {
+                          "ADD0": {
+                            "shadow": {
+                              "type": "text",
+                              "fields": {
+                                "TEXT": "after one turn: "
+                              }
+                            }
+                          },
+                          "ADD1": {
+                            "block": {
+                              "type": "evn_motor_measure",
+                              "fields": {
+                                "PORT": "1",
+                                "WHAT": "angle"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "next": {
+                    "block": {
+                      "type": "evn_motor_run_target",
+                      "fields": {
+                        "PORT": "1",
+                        "THEN": "HOLD",
+                        "WAIT": "TRUE"
+                      },
+                      "inputs": {
+                        "ANGLE": {
+                          "shadow": {
+                            "type": "math_number",
+                            "fields": {
+                              "NUM": 0
+                            }
+                          }
+                        },
+                        "SPEED": {
+                          "shadow": {
+                            "type": "math_number",
+                            "fields": {
+                              "NUM": 500
+                            }
+                          }
+                        }
+                      },
+                      "next": {
+                        "block": {
+                          "type": "evn_motor_run",
+                          "fields": {
+                            "PORT": "1"
+                          },
+                          "inputs": {
+                            "SPEED": {
+                              "shadow": {
+                                "type": "math_number",
+                                "fields": {
+                                  "NUM": 300
+                                }
+                              }
+                            }
+                          },
+                          "next": {
+                            "block": {
+                              "type": "evn_wait",
+                              "inputs": {
+                                "TIME": {
+                                  "shadow": {
+                                    "type": "math_number",
+                                    "fields": {
+                                      "NUM": 1000
+                                    }
+                                  }
+                                }
+                              },
+                              "next": {
+                                "block": {
+                                  "type": "text_print",
+                                  "inputs": {
+                                    "TEXT": {
+                                      "block": {
+                                        "type": "text_join",
+                                        "extraState": {
+                                          "itemCount": 4
+                                        },
+                                        "inputs": {
+                                          "ADD0": {
+                                            "shadow": {
+                                              "type": "text",
+                                              "fields": {
+                                                "TEXT": "speed: "
+                                              }
+                                            }
+                                          },
+                                          "ADD1": {
+                                            "block": {
+                                              "type": "evn_motor_measure",
+                                              "fields": {
+                                                "PORT": "1",
+                                                "WHAT": "speed"
+                                              }
+                                            }
+                                          },
+                                          "ADD2": {
+                                            "shadow": {
+                                              "type": "text",
+                                              "fields": {
+                                                "TEXT": " load: "
+                                              }
+                                            }
+                                          },
+                                          "ADD3": {
+                                            "block": {
+                                              "type": "evn_motor_measure",
+                                              "fields": {
+                                                "PORT": "1",
+                                                "WHAT": "load"
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  },
+                                  "next": {
+                                    "block": {
+                                      "type": "evn_motor_run_time",
+                                      "fields": {
+                                        "PORT": "1",
+                                        "THEN": "COAST",
+                                        "WAIT": "TRUE"
+                                      },
+                                      "inputs": {
+                                        "TIME": {
+                                          "shadow": {
+                                            "type": "math_number",
+                                            "fields": {
+                                              "NUM": 800
+                                            }
+                                          }
+                                        },
+                                        "SPEED": {
+                                          "shadow": {
+                                            "type": "math_number",
+                                            "fields": {
+                                              "NUM": 300
+                                            }
+                                          }
+                                        }
+                                      },
+                                      "next": {
+                                        "block": {
+                                          "type": "evn_motor_stop",
+                                          "fields": {
+                                            "ACTION": "stop",
+                                            "PORT": "1"
+                                          },
+                                          "next": {
+                                            "block": {
+                                              "type": "text_print",
+                                              "inputs": {
+                                                "TEXT": {
+                                                  "shadow": {
+                                                    "type": "text",
+                                                    "fields": {
+                                                      "TEXT": "finished"
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

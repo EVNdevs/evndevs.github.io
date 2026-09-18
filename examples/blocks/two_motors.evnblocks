@@ -1,0 +1,185 @@
+{
+  "format": "evn-blocks",
+  "version": 1,
+  "needs": "two motors, on ports 1 and 2, wheels off the ground.",
+  "workspace": {
+    "blocks": {
+      "languageVersion": 0,
+      "blocks": [
+        {
+          "type": "evn_motor_setup",
+          "x": 20,
+          "y": 20,
+          "fields": {
+            "PORT": "2",
+            "DIRECTION": "CCW",
+            "UNIT": "DEG_S"
+          }
+        },
+        {
+          "type": "controls_repeat_ext",
+          "x": 20,
+          "y": 100,
+          "inputs": {
+            "TIMES": {
+              "shadow": {
+                "type": "math_number",
+                "fields": {
+                  "NUM": 3
+                }
+              }
+            },
+            "DO": {
+              "block": {
+                "type": "evn_motor_run_angle",
+                "fields": {
+                  "PORT": "1",
+                  "THEN": "HOLD",
+                  "WAIT": "FALSE"
+                },
+                "inputs": {
+                  "ANGLE": {
+                    "shadow": {
+                      "type": "math_number",
+                      "fields": {
+                        "NUM": 720
+                      }
+                    }
+                  },
+                  "SPEED": {
+                    "shadow": {
+                      "type": "math_number",
+                      "fields": {
+                        "NUM": 500
+                      }
+                    }
+                  }
+                },
+                "next": {
+                  "block": {
+                    "type": "evn_motor_run_angle",
+                    "fields": {
+                      "PORT": "2",
+                      "THEN": "HOLD",
+                      "WAIT": "TRUE"
+                    },
+                    "inputs": {
+                      "ANGLE": {
+                        "shadow": {
+                          "type": "math_number",
+                          "fields": {
+                            "NUM": 720
+                          }
+                        }
+                      },
+                      "SPEED": {
+                        "shadow": {
+                          "type": "math_number",
+                          "fields": {
+                            "NUM": 500
+                          }
+                        }
+                      }
+                    },
+                    "next": {
+                      "block": {
+                        "type": "evn_motor_wait_done",
+                        "fields": {
+                          "PORT": "1"
+                        },
+                        "next": {
+                          "block": {
+                            "type": "text_print",
+                            "inputs": {
+                              "TEXT": {
+                                "block": {
+                                  "type": "text_join",
+                                  "extraState": {
+                                    "itemCount": 4
+                                  },
+                                  "inputs": {
+                                    "ADD0": {
+                                      "shadow": {
+                                        "type": "text",
+                                        "fields": {
+                                          "TEXT": "motor 1: "
+                                        }
+                                      }
+                                    },
+                                    "ADD1": {
+                                      "block": {
+                                        "type": "evn_motor_measure",
+                                        "fields": {
+                                          "PORT": "1",
+                                          "WHAT": "angle"
+                                        }
+                                      }
+                                    },
+                                    "ADD2": {
+                                      "shadow": {
+                                        "type": "text",
+                                        "fields": {
+                                          "TEXT": "  motor 2: "
+                                        }
+                                      }
+                                    },
+                                    "ADD3": {
+                                      "block": {
+                                        "type": "evn_motor_measure",
+                                        "fields": {
+                                          "PORT": "2",
+                                          "WHAT": "angle"
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            },
+                            "next": {
+                              "block": {
+                                "type": "evn_wait",
+                                "inputs": {
+                                  "TIME": {
+                                    "shadow": {
+                                      "type": "math_number",
+                                      "fields": {
+                                        "NUM": 500
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "next": {
+            "block": {
+              "type": "evn_motor_stop",
+              "fields": {
+                "ACTION": "stop",
+                "PORT": "1"
+              },
+              "next": {
+                "block": {
+                  "type": "evn_motor_stop",
+                  "fields": {
+                    "ACTION": "stop",
+                    "PORT": "2"
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

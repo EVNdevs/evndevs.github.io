@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EVN ALPHA MicroPython</title>
+<meta name="description" content="Documentation of the EVN ALPHA MicroPython firmware and its VS Code extension: getting started, the API reference, the blocks reference, downloads.">
+<!--
+  The documentation site: one file, no build step. It is published at the root of the public repo
+  (github.com/EVNdevs/evndevs.github.io, the organisation site that evn.coresg.tech points at) and served by GitHub Pages; it fetches the Markdown documents
+  next to it (docs/API.md, docs/BLOCKS.md, docs/GETTING_STARTED.md) and renders them in the browser.
+
+  The URL contract with the VS Code extension (docs/PUBLISHING.md in the extension source):
+      /#/api/<slug>          docs/API.md scrolled to the heading whose slug is <slug>
+      /#/blocks/<slug>       docs/BLOCKS.md, same rule
+      /#/getting-started     docs/GETTING_STARTED.md from the top
+      /                      the home page (downloads from latest.json, the three documents)
+  An empty or unknown slug renders the document from the top: never a 404. The slug rule is GitHub's:
+  lowercase, whitespace runs to "-", every other character but letters, digits, "-" and "_" dropped.
+  Heading ids are assigned here after rendering with exactly that rule, so the extension's guess and
+  the site agree whatever the Markdown library does.
+
+  Paths are relative to this page on purpose: the site works at https://evndevs.github.io/vscode-evn-alpha/
+  and at a custom domain alike.
+-->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23444' d='M17.48 5.66Q17.48 4.56 17.41 4.15Q17.35 3.73 17.22 3.49Q17.08 3.25 16.82 3.08Q16.56 2.91 15.84 2.72V2H21.13V2.72Q20.47 2.89 20.2 3.04Q19.93 3.19 19.76 3.42Q19.59 3.66 19.5 4.12Q19.41 4.59 19.41 5.66V22H14.74L8.47 11.23Q7.18 9.02 6.51 7.6H6.37Q6.52 10.75 6.52 14.25V18.34Q6.52 19.52 6.63 20.03Q6.74 20.53 7.07 20.8Q7.4 21.06 8.23 21.28V22H2.87V21.28Q3.78 21.05 4.09 20.76Q4.4 20.48 4.49 19.95Q4.59 19.42 4.59 18.34V5.66Q4.59 4.65 4.51 4.19Q4.44 3.73 4.27 3.47Q4.1 3.22 3.82 3.06Q3.55 2.91 2.87 2.72V2H9.66L14.77 10.85Q15.21 11.61 16 13.09Q16.79 14.57 17.41 15.89H17.64Q17.48 12.39 17.48 8.24ZM17.79 20.71V19.23L8.54 3.29H6.21V4.14L15.82 20.71Z'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11.9.0/styles/github.min.css" media="(prefers-color-scheme: light)">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11.9.0/styles/github-dark.min.css" media="(prefers-color-scheme: dark)">
+<style>
+  :root {
+    --bg: #ffffff; --fg: #1f2328; --muted: #59636e; --line: #d1d9e0; --accent: #0969da;
+    --code-bg: #f6f8fa; --side-bg: #f6f8fa; --table-stripe: #f6f8fa;
+    color-scheme: light dark;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #0d1117; --fg: #e6edf3; --muted: #9198a1; --line: #30363d; --accent: #4493f8;
+            --code-bg: #161b22; --side-bg: #010409; --table-stripe: #161b22; }
+  }
+  * { box-sizing: border-box; }
+  html { scroll-padding-top: 64px; }
+  body { margin: 0; background: var(--bg); color: var(--fg);
+         font: 16px/1.55 -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  header { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+           padding: 10px 20px; background: var(--bg); border-bottom: 1px solid var(--line); }
+  header .brand { font-weight: 600; font-size: 17px; color: var(--fg); display: flex; align-items: center; gap: 8px; }
+  header .brand svg { width: 22px; height: 22px; fill: currentColor; }
+  header nav { display: flex; gap: 14px; flex-wrap: wrap; }
+  header nav a { color: var(--muted); padding: 4px 0; border-bottom: 2px solid transparent; }
+  header nav a.current { color: var(--fg); border-bottom-color: var(--accent); }
+  .layout { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 0; max-width: 1240px; margin: 0 auto; }
+  aside { border-right: 1px solid var(--line); background: var(--side-bg); padding: 18px 14px;
+          position: sticky; top: 49px; height: calc(100vh - 49px); overflow: auto; font-size: 14px; }
+  aside ul { list-style: none; margin: 0; padding: 0; }
+  aside li a { display: block; padding: 3px 8px; border-radius: 4px; color: var(--muted); white-space: nowrap;
+               overflow: hidden; text-overflow: ellipsis; }
+  aside li.h3 a { padding-left: 22px; font-size: 13px; }
+  aside li a:hover, aside li a.current { background: var(--bg); color: var(--fg); text-decoration: none; }
+  aside .title { font-weight: 600; color: var(--fg); padding: 0 8px 8px; }
+  main { padding: 24px 32px 80px; min-width: 0; }
+  main h1 { font-size: 30px; border-bottom: 1px solid var(--line); padding-bottom: 8px; }
+  main h2 { font-size: 23px; margin-top: 40px; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+  main h3 { font-size: 18px; margin-top: 28px; }
+  main h2:target, main h3:target, main h4:target { color: var(--accent); }
+  main code { font: 87% ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; background: var(--code-bg);
+              padding: 1px 5px; border-radius: 4px; }
+  main pre { background: var(--code-bg); padding: 14px 16px; border-radius: 6px; overflow: auto; line-height: 1.45; }
+  main pre code { background: none; padding: 0; font-size: 13.5px; }
+  main table { border-collapse: collapse; display: block; overflow: auto; max-width: 100%; margin: 16px 0; font-size: 15px; }
+  main th, main td { border: 1px solid var(--line); padding: 6px 12px; vertical-align: top; }
+  main th { background: var(--table-stripe); text-align: left; }
+  main tr:nth-child(even) td { background: var(--table-stripe); }
+  main blockquote { margin: 0; padding: 0 16px; color: var(--muted); border-left: 4px solid var(--line); }
+  main img { max-width: 100%; }
+  .notice { padding: 12px 16px; border: 1px solid var(--line); border-radius: 6px; background: var(--side-bg); color: var(--muted); }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin: 20px 0; }
+  .card { border: 1px solid var(--line); border-radius: 8px; padding: 16px 18px; background: var(--side-bg); }
+  .card h3 { margin: 0 0 6px; font-size: 17px; }
+  .card p { margin: 0; color: var(--muted); font-size: 14.5px; }
+  .dl { display: flex; flex-wrap: wrap; gap: 10px; margin: 12px 0 0; }
+  .dl a { display: inline-block; padding: 8px 14px; border: 1px solid var(--accent); border-radius: 6px; font-weight: 500; }
+  .dl a.primary { background: var(--accent); color: #fff; }
+  .small { color: var(--muted); font-size: 14px; }
+  @media (max-width: 860px) {
+    .layout { grid-template-columns: 1fr; }
+    aside { position: static; height: auto; border-right: 0; border-bottom: 1px solid var(--line); }
+    main { padding: 16px; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <a class="brand" href="#/">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17.48 5.66Q17.48 4.56 17.41 4.15Q17.35 3.73 17.22 3.49Q17.08 3.25 16.82 3.08Q16.56 2.91 15.84 2.72V2H21.13V2.72Q20.47 2.89 20.2 3.04Q19.93 3.19 19.76 3.42Q19.59 3.66 19.5 4.12Q19.41 4.59 19.41 5.66V22H14.74L8.47 11.23Q7.18 9.02 6.51 7.6H6.37Q6.52 10.75 6.52 14.25V18.34Q6.52 19.52 6.63 20.03Q6.74 20.53 7.07 20.8Q7.4 21.06 8.23 21.28V22H2.87V21.28Q3.78 21.05 4.09 20.76Q4.4 20.48 4.49 19.95Q4.59 19.42 4.59 18.34V5.66Q4.59 4.65 4.51 4.19Q4.44 3.73 4.27 3.47Q4.1 3.22 3.82 3.06Q3.55 2.91 2.87 2.72V2H9.66L14.77 10.85Q15.21 11.61 16 13.09Q16.79 14.57 17.41 15.89H17.64Q17.48 12.39 17.48 8.24ZM17.79 20.71V19.23L8.54 3.29H6.21V4.14L15.82 20.71Z"/></svg>
+    EVN ALPHA MicroPython
+  </a>
+  <nav id="nav">
+    <a href="#/getting-started" data-doc="getting-started">Getting started</a>
+    <a href="#/api/" data-doc="api">API reference</a>
+    <a href="#/blocks/" data-doc="blocks">Blocks reference</a>
+    <a href="#/" data-doc="home">Downloads</a>
+    <a href="https://github.com/EVNdevs/vscode-evn-alpha" target="_blank" rel="noopener">GitHub</a>
+  </nav>
+</header>
+<div class="layout">
+  <aside id="outline" aria-label="Contents"></aside>
+  <main id="main"><p class="notice">Loading…</p></main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11.9.0/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11.9.0/languages/python.min.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  /* The documents, by the route name the extension uses. */
+  var DOCS = {
+    'api':             { file: 'docs/API.md',             title: 'API reference' },
+    'blocks':          { file: 'docs/BLOCKS.md',          title: 'Blocks reference' },
+    'getting-started': { file: 'docs/GETTING_STARTED.md', title: 'Getting started' }
+  };
+
+  var main = document.getElementById('main');
+  var outline = document.getElementById('outline');
+  var cache = {};          // file -> markdown text
+  var current = null;      // { doc, slug }
+
+  /* GitHub's heading anchor rule, the same function the extension has (docsLinks.ts: slugify). */
+  function slugify(text) {
+    return String(text).trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9\-_]/g, '');
+  }
+
+  /* "#/api/motor" -> { doc: 'api', slug: 'motor' }; anything unknown is the home page. */
+  function parseRoute() {
+    var h = location.hash.replace(/^#\/?/, '');
+    if (!h) { return { doc: 'home', slug: '' }; }
+    var m = /^([a-z\-]+)\/?(.*)$/.exec(h);
+    if (!m) { return { doc: 'home', slug: '' }; }
+    var doc = m[1], slug = m[2] || '';
+    if (!DOCS[doc]) { return { doc: 'home', slug: '' }; }
+    return { doc: doc, slug: slugify(decodeURIComponent(slug)) };
+  }
+
+  function fetchText(path) {
+    if (cache[path]) { return Promise.resolve(cache[path]); }
+    return fetch(path, { cache: 'no-cache' }).then(function (r) {
+      if (!r.ok) { throw new Error(r.status + ' ' + r.statusText + ' for ' + path); }
+      return r.text();
+    }).then(function (t) { cache[path] = t; return t; });
+  }
+
+  /* Links inside the Markdown: another document becomes a route; anything else relative resolves
+     against docs/; absolute links open in a new tab. */
+  function fixLinks(root) {
+    var links = root.querySelectorAll('a[href]');
+    for (var i = 0; i < links.length; i++) {
+      var a = links[i], href = a.getAttribute('href');
+      if (!href) { continue; }
+      var m = /^(?:\.\.\/)?(?:docs\/)?(API|BLOCKS|GETTING_STARTED)\.md(?:#(.*))?$/.exec(href);
+      if (m) {
+        var doc = m[1] === 'API' ? 'api' : m[1] === 'BLOCKS' ? 'blocks' : 'getting-started';
+        a.setAttribute('href', '#/' + doc + '/' + (m[2] ? slugify(decodeURIComponent(m[2])) : ''));
+        continue;
+      }
+      if (/^#/.test(href)) { continue; }                       // same-document anchor, fixed below
+      if (/^[a-z]+:/i.test(href)) { a.target = '_blank'; a.rel = 'noopener'; continue; }
+      a.setAttribute('href', new URL(href, new URL('docs/', location.href)).href);
+    }
+  }
+
+  /* Same-document anchors ("#measuring") must stay inside the route, not replace it. */
+  function fixAnchors(root, doc) {
+    var links = root.querySelectorAll('a[href^="#"]');
+    for (var i = 0; i < links.length; i++) {
+      var frag = links[i].getAttribute('href').slice(1);
+      if (frag.charAt(0) === '/') { continue; }                // already a route
+      links[i].setAttribute('href', '#/' + doc + '/' + slugify(decodeURIComponent(frag)));
+    }
+  }
+
+  function assignIds(root) {
+    var seen = {};
+    var hs = root.querySelectorAll('h1, h2, h3, h4, h5, h6');
+    for (var i = 0; i < hs.length; i++) {
+      var id = slugify(hs[i].textContent), base = id, n = 1;
+      while (seen[id]) { id = base + '-' + (n++); }            // GitHub numbers duplicates the same way
+      seen[id] = true;
+      hs[i].id = id;
+    }
+    return hs;
+  }
+
+  function buildOutline(hs, doc, title) {
+    outline.textContent = '';
+    var t = document.createElement('div'); t.className = 'title'; t.textContent = title;
+    outline.appendChild(t);
+    var ul = document.createElement('ul');
+    for (var i = 0; i < hs.length; i++) {
+      var h = hs[i], level = h.tagName.toLowerCase();
+      if (level !== 'h2' && level !== 'h3') { continue; }
+      var li = document.createElement('li'); li.className = level;
+      var a = document.createElement('a');
+      a.href = '#/' + doc + '/' + h.id;
+      a.textContent = h.textContent;
+      a.setAttribute('data-id', h.id);
+      li.appendChild(a); ul.appendChild(li);
+    }
+    outline.appendChild(ul);
+  }
+
+  function markCurrentNav(doc) {
+    var links = document.querySelectorAll('#nav a[data-doc]');
+    for (var i = 0; i < links.length; i++) {
+      links[i].className = links[i].getAttribute('data-doc') === doc ? 'current' : '';
+    }
+  }
+
+  function scrollTo(slug) {
+    var el = slug ? document.getElementById(slug) : null;
+    if (el) { el.scrollIntoView(); window.scrollBy(0, -8); }
+    else { window.scrollTo(0, 0); }
+    var links = outline.querySelectorAll('a[data-id]');
+    for (var i = 0; i < links.length; i++) {
+      links[i].className = links[i].getAttribute('data-id') === slug ? 'current' : '';
+    }
+  }
+
+  function renderDoc(route) {
+    var info = DOCS[route.doc];
+    document.title = 'EVN ALPHA · ' + info.title;
+    markCurrentNav(route.doc);
+    var sameDoc = current && current.doc === route.doc;
+    current = route;
+    if (sameDoc) { scrollTo(route.slug); return; }
+    main.innerHTML = '<p class="notice">Loading ' + info.title + '…</p>';
+    fetchText(info.file).then(function (md) {
+      if (current !== route) { return; }
+      var html = DOMPurify.sanitize(marked.parse(md, { gfm: true, breaks: false }));
+      main.innerHTML = html;
+      var hs = assignIds(main);
+      fixLinks(main);
+      fixAnchors(main, route.doc);
+      var blocks = main.querySelectorAll('pre code');
+      for (var i = 0; i < blocks.length; i++) {
+        if (!/language-/.test(blocks[i].className)) { blocks[i].className += ' language-python'; }
+        hljs.highlightElement(blocks[i]);
+      }
+      buildOutline(hs, route.doc, info.title);
+      scrollTo(route.slug);
+    }).catch(function (e) {
+      main.innerHTML = '';
+      var p = document.createElement('p'); p.className = 'notice';
+      p.textContent = 'The document could not be loaded (' + e.message + '). ';
+      var a = document.createElement('a'); a.href = 'https://github.com/EVNdevs/evndevs.github.io/blob/main/' + info.file;
+      a.textContent = 'Read it on GitHub instead.'; p.appendChild(a);
+      main.appendChild(p);
+      outline.textContent = '';
+    });
+  }
+
+  /* The home page: the three documents and the downloads named by latest.json (the same file the
+     extension's update check reads). */
+  function renderHome() {
+    document.title = 'EVN ALPHA MicroPython';
+    markCurrentNav('home');
+    current = { doc: 'home', slug: '' };
+    outline.textContent = '';
+    main.innerHTML = '';
+    var h1 = document.createElement('h1'); h1.textContent = 'EVN ALPHA MicroPython'; main.appendChild(h1);
+    var intro = document.createElement('p');
+    intro.textContent = 'MicroPython for the EVN ALPHA robotics controller and the VS Code extension that runs your programs on it: motors with a tuned controller, servos, the standard peripherals, Bluetooth, and a live console in the editor.';
+    main.appendChild(intro);
+
+    var cards = document.createElement('div'); cards.className = 'cards';
+    [
+      ['#/getting-started', 'Getting started', 'Install the extension, flash the firmware, run the first program.'],
+      ['#/api/', 'API reference', 'Every class and function of the evn module, with units and defaults.'],
+      ['#/blocks/', 'Blocks reference', 'The block editor and the Python each block generates.']
+    ].forEach(function (c) {
+      var card = document.createElement('a'); card.className = 'card'; card.href = c[0];
+      var h = document.createElement('h3'); h.textContent = c[1];
+      var p = document.createElement('p'); p.textContent = c[2];
+      card.appendChild(h); card.appendChild(p); cards.appendChild(card);
+    });
+    main.appendChild(cards);
+
+    var h2 = document.createElement('h2'); h2.textContent = 'Downloads'; main.appendChild(h2);
+    var box = document.createElement('div'); box.className = 'notice'; box.textContent = 'Reading latest.json…';
+    main.appendChild(box);
+    fetch('latest.json', { cache: 'no-cache' }).then(function (r) {
+      if (!r.ok) { throw new Error(r.status + ' ' + r.statusText); }
+      return r.json();
+    }).then(function (j) {
+      box.textContent = '';
+      box.className = '';
+      var ext = j.extension || {}, fw = j.firmware || {};
+      function row(title, ver, links, note) {
+        var h3 = document.createElement('h3'); h3.textContent = title + (ver ? ' ' + ver : '');
+        box.appendChild(h3);
+        var p = document.createElement('p'); p.className = 'small'; p.textContent = note; box.appendChild(p);
+        var dl = document.createElement('div'); dl.className = 'dl';
+        links.forEach(function (l, i) {
+          if (!l[1]) { return; }
+          var a = document.createElement('a'); a.href = l[1]; a.textContent = l[0];
+          if (i === 0) { a.className = 'primary'; }
+          dl.appendChild(a);
+        });
+        box.appendChild(dl);
+      }
+      row('VS Code extension', ext.version, [['Download the VSIX', ext.vsix], ['Release notes', ext.notes]],
+          'Install it in VS Code with "Extensions: Install from VSIX...". It bundles the firmware below and flashes it for you.');
+      row('Firmware', fw.version, [['Download the UF2', fw.uf2], ['Build record', fw.notes]],
+          'Only needed without the extension: hold BOOTSEL while plugging the board in and copy the UF2 onto the drive that appears.');
+    }).catch(function (e) {
+      box.textContent = 'The download list (latest.json) could not be read: ' + e.message + '. The releases are on GitHub: ';
+      var a = document.createElement('a'); a.href = 'https://github.com/EVNdevs/vscode-evn-alpha/releases';
+      a.textContent = 'github.com/EVNdevs/vscode-evn-alpha/releases'; box.appendChild(a);
+    });
+  }
+
+  function route() {
+    var r = parseRoute();
+    if (r.doc === 'home') { renderHome(); } else { renderDoc(r); }
+  }
+
+  window.addEventListener('hashchange', route);
+  route();
+})();
+</script>
+</body>
+</html>
