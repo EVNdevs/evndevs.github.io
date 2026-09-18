@@ -1,6 +1,6 @@
 ﻿EVN_ALPHA_MicroPython.uf2
-source: the commit after 8d41834 (third-pass audit of every standard peripheral, 2026-09-18: the I2C transport recovers after a timeout and drops its mux cache on any error; ~90 driver, binding and console defects fixed; servo-port and serial-port ownership; Servo/UART close(), Bluetooth/UART readline() and overflow(); Compass self_test()/calibrate_cancel()/overrun(); every peripheral has Blockly blocks; guide findings 36-70)
-built: 2026-09-18 05:48 +08:00 (MicroPython v1.26.1, pico-sdk 2.3.0)
+source: the commit after 6f3a1b1 (the loaded-rig validation of 2026-09-18 evening: the VL53L0X setter wait covers the range still in flight after a setting change, firmware 0.2.18; the first packaged build that also carries evn.Pose, the pose estimator begun on 2026-09-18, which the 0.2.15 build of 05:48 did not have)
+built: 2026-09-18 20:16 +08:00 (MicroPython v1.26.1, pico-sdk 2.3.0)
 flash: single-line 03h boot2, PICO_FLASH_SPI_CLKDIV=4
-md5: ba1ec0788a7d1f267928ca4df6c40ab5
-version: 0.2.15
+md5: 4cfba96a064c358ad9bfe2eb3872df8c
+version: 0.2.18
