@@ -1,0 +1,170 @@
+/* The Console view: a transcript that fills the view and a prompt pinned to the bottom.
+ * Every colour comes from a VS Code theme variable, so the view follows the user's theme. */
+
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    background: var(--vscode-editor-background);
+    color: var(--vscode-foreground);
+    font-family: var(--vscode-font-family);
+    font-size: var(--vscode-font-size);
+    overflow: hidden;
+}
+
+/* ---- the transcript ---------------------------------------------------------------------- */
+
+#transcript {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: auto;
+    padding: 6px 8px 8px 8px;
+    font-family: var(--vscode-editor-font-family);
+    font-size: var(--vscode-editor-font-size, 12px);
+    line-height: 1.45;
+    user-select: text;
+}
+
+.line {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.line.cmd {
+    color: var(--vscode-textLink-foreground);
+    font-weight: 600;
+}
+
+.line.err {
+    color: var(--vscode-errorForeground);
+    opacity: 0.9;
+}
+
+.line.state {
+    color: var(--vscode-descriptionForeground);
+}
+
+/* ---- the strip charts ---------------------------------------------------------------------
+ * One small canvas per device that is being read live, between the transcript and the prompt.
+ * The strip is hidden outright when nothing is watched, so the transcript keeps the whole view. */
+
+#charts {
+    flex: 0 0 auto;
+    max-height: 45%;
+    overflow-y: auto;
+    padding: 2px 8px 4px 8px;
+    border-top: 1px solid var(--vscode-panel-border, transparent);
+}
+
+#charts:empty {
+    display: none;
+}
+
+.chart {
+    padding: 3px 0 5px 0;
+}
+
+.chart-head {
+    display: flex;
+    align-items: baseline;
+    gap: 5px;
+    font-size: 0.9em;
+    line-height: 1.3;
+    color: var(--vscode-descriptionForeground);
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.chart-value {
+    color: var(--vscode-foreground);
+    font-family: var(--vscode-editor-font-family);
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.chart-value.err {
+    color: var(--vscode-errorForeground);
+    font-family: var(--vscode-font-family);
+}
+
+.chart-canvas {
+    display: block;
+    width: 100%;
+    height: 64px;
+}
+
+/* ---- the prompt -------------------------------------------------------------------------- */
+
+#prompt {
+    flex: 0 0 auto;
+    padding: 4px 8px 8px 8px;
+    border-top: 1px solid var(--vscode-panel-border, transparent);
+}
+
+#hint {
+    color: var(--vscode-descriptionForeground);
+    font-size: 0.9em;
+    line-height: 1.3;
+    padding: 2px 0 5px 0;
+}
+
+#hint:empty {
+    display: none;
+}
+
+#entry {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    background: var(--vscode-input-background);
+    color: var(--vscode-input-foreground);
+    border: 1px solid var(--vscode-input-border, transparent);
+    border-radius: 2px;
+    padding: 3px 5px;
+}
+
+#entry.focused {
+    border-color: var(--vscode-focusBorder);
+}
+
+#entry.disabled {
+    opacity: 0.6;
+}
+
+#chevron {
+    color: var(--vscode-textLink-foreground);
+    font-family: var(--vscode-editor-font-family);
+    font-size: var(--vscode-editor-font-size, 12px);
+    line-height: 1.45;
+    padding-top: 1px;
+    user-select: none;
+}
+
+#input {
+    flex: 1 1 auto;
+    min-width: 0;
+    background: transparent;
+    color: inherit;
+    border: none;
+    outline: none;
+    resize: none;
+    overflow-y: auto;
+    padding: 1px 0 0 0;
+    font-family: var(--vscode-editor-font-family);
+    font-size: var(--vscode-editor-font-size, 12px);
+    line-height: 1.45;
+}
+
+#input::placeholder {
+    color: var(--vscode-input-placeholderForeground);
+}
+
+#input:disabled {
+    cursor: default;
+}

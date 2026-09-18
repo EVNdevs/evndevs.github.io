@@ -9,7 +9,7 @@
   'use strict';
 
   /* The "Use it in the browser" card on the home page. Set to false until /ide/ is published. */
-  var SHOW_IDE = false;
+  var SHOW_IDE = true;
 
   /* The documents, by the route name the extension uses. `order` drives the previous/next links. */
   var DOCS = {

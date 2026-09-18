@@ -1,0 +1,96 @@
+{
+  "format": "evn-blocks",
+  "version": 1,
+  "needs": "nothing but the board (its LED and battery).",
+  "workspace": {
+    "blocks": {
+      "languageVersion": 0,
+      "blocks": [
+        {
+          "type": "controls_repeat_ext",
+          "x": 20,
+          "y": 20,
+          "inputs": {
+            "TIMES": {
+              "shadow": {
+                "type": "math_number",
+                "fields": {
+                  "NUM": 10
+                }
+              }
+            },
+            "DO": {
+              "block": {
+                "type": "evn_led",
+                "fields": {
+                  "ACTION": "toggle"
+                },
+                "next": {
+                  "block": {
+                    "type": "evn_wait",
+                    "inputs": {
+                      "TIME": {
+                        "shadow": {
+                          "type": "math_number",
+                          "fields": {
+                            "NUM": 250
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "next": {
+            "block": {
+              "type": "evn_led",
+              "fields": {
+                "ACTION": "off"
+              },
+              "next": {
+                "block": {
+                  "type": "text_print",
+                  "inputs": {
+                    "TEXT": {
+                      "block": {
+                        "type": "text_join",
+                        "extraState": {
+                          "itemCount": 3
+                        },
+                        "inputs": {
+                          "ADD0": {
+                            "shadow": {
+                              "type": "text",
+                              "fields": {
+                                "TEXT": "battery: "
+                              }
+                            }
+                          },
+                          "ADD1": {
+                            "block": {
+                              "type": "evn_battery_voltage"
+                            }
+                          },
+                          "ADD2": {
+                            "shadow": {
+                              "type": "text",
+                              "fields": {
+                                "TEXT": " mV"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

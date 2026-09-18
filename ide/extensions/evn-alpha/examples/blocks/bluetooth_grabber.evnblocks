@@ -1,0 +1,219 @@
+{
+  "format": "evn-blocks",
+  "version": 1,
+  "needs": "the Bluetooth module on serial port 2, a servo on servo port 1, the LED matrix on I2C port 5 and the touch array on I2C port 6.",
+  "workspace": {
+    "blocks": {
+      "languageVersion": 0,
+      "blocks": [
+        {
+          "type": "evn_bluetooth_setup",
+          "id": "1d+KQ.|$BVQ9.aNG*}B6",
+          "x": 20,
+          "y": 20,
+          "fields": {
+            "PORT": "2"
+          }
+        },
+        {
+          "type": "evn_servo_setup",
+          "id": "FB!rR:r5%Q_+1*N@BL7.",
+          "x": 20,
+          "y": 85,
+          "fields": {
+            "PORT": "1",
+            "PROFILE": "geekservo_270"
+          }
+        },
+        {
+          "type": "evn_matrix_setup",
+          "id": "|bzEu]}C9nCc%^{hqWRS",
+          "x": 20,
+          "y": 153,
+          "fields": {
+            "PORT": "5"
+          }
+        },
+        {
+          "type": "evn_touch_setup",
+          "id": "RAdYIu~h@u5YSdWqu~L-",
+          "x": 20,
+          "y": 218,
+          "fields": {
+            "PORT": "6"
+          }
+        },
+        {
+          "type": "evn_forever",
+          "id": "GZw!)],YHaw15A@V1OQu",
+          "x": 20,
+          "y": 282,
+          "inputs": {
+            "DO": {
+              "block": {
+                "type": "controls_if",
+                "id": "[_UvT@PKBXcZ=5.{#h^A",
+                "extraState": {
+                  "hasElse": true
+                },
+                "inputs": {
+                  "IF0": {
+                    "block": {
+                      "type": "evn_touch_pad",
+                      "id": ".q)+=*MF|i0Pey9^hyle",
+                      "fields": {
+                        "PORT": "6"
+                      },
+                      "inputs": {
+                        "PAD": {
+                          "shadow": {
+                            "type": "math_number",
+                            "id": "[bW+ANNL`lDC$OuN=g^(",
+                            "fields": {
+                              "NUM": 0
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "DO0": {
+                    "block": {
+                      "type": "evn_servo_angle",
+                      "id": "{]YZVpmEl1+llYOIva8R",
+                      "fields": {
+                        "PORT": "1"
+                      },
+                      "inputs": {
+                        "ANGLE": {
+                          "shadow": {
+                            "type": "math_number",
+                            "id": "sGv5UA7Dosc3X-z62)V=",
+                            "fields": {
+                              "NUM": 270
+                            }
+                          }
+                        }
+                      },
+                      "next": {
+                        "block": {
+                          "type": "evn_matrix_icon",
+                          "id": "HbUe@RpFc5hO$YtO~ULi",
+                          "fields": {
+                            "PORT": "5",
+                            "ICON": "TRUE"
+                          },
+                          "next": {
+                            "block": {
+                              "type": "evn_bluetooth_send",
+                              "id": "n1,Cu7z|p4z?ym+;5zJ!",
+                              "fields": {
+                                "PORT": "2"
+                              },
+                              "inputs": {
+                                "TEXT": {
+                                  "shadow": {
+                                    "type": "text",
+                                    "id": "#7AVtmP:+0la+rA8SySz",
+                                    "fields": {
+                                      "TEXT": "open"
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "ELSE": {
+                    "block": {
+                      "type": "evn_servo_angle",
+                      "id": "x08Td9-0h5gjp,e!^)eG",
+                      "fields": {
+                        "PORT": "1"
+                      },
+                      "inputs": {
+                        "ANGLE": {
+                          "shadow": {
+                            "type": "math_number",
+                            "id": "xb!@uSg)LN~UChkqI+u?",
+                            "fields": {
+                              "NUM": 0
+                            }
+                          }
+                        }
+                      },
+                      "next": {
+                        "block": {
+                          "type": "evn_matrix_icon",
+                          "id": "ENG}-=tlmEM#uf[ti=U@",
+                          "fields": {
+                            "PORT": "5",
+                            "ICON": "FALSE"
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "next": {
+                  "block": {
+                    "type": "controls_if",
+                    "id": "e[w)cYeY.6Yv^4J?s,zn",
+                    "inputs": {
+                      "IF0": {
+                        "block": {
+                          "type": "evn_bluetooth_any",
+                          "id": "}.ea1mwFcx`vYNtT=`{B",
+                          "fields": {
+                            "PORT": "2"
+                          }
+                        }
+                      },
+                      "DO0": {
+                        "block": {
+                          "type": "text_print",
+                          "id": "%`|ahs*HF$_WaCB]9;L|",
+                          "inputs": {
+                            "TEXT": {
+                              "block": {
+                                "type": "evn_bluetooth_line",
+                                "id": "CoKIxuT+7A]yTDZs8_N7",
+                                "fields": {
+                                  "PORT": "2"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "next": {
+                      "block": {
+                        "type": "evn_wait",
+                        "id": "`/3e6zXf|H!}84%50`ZA",
+                        "inputs": {
+                          "TIME": {
+                            "shadow": {
+                              "type": "math_number",
+                              "id": "Y4=r2.)7(2Y^C!u}aJca",
+                              "fields": {
+                                "NUM": 100
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

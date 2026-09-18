@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>EVN ALPHA IDE</title>
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="EVN ALPHA IDE">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
+
+    <!-- filled in by the script below, from wherever this page is served -->
+    <meta id="vscode-workbench-web-configuration" data-settings="{}">
+    <meta id="vscode-workbench-builtin-extensions" data-settings="[]">
+
+    <link rel="icon" href="vscode/favicon.ico" type="image/x-icon">
+    <link data-name="vs/workbench/workbench.web.main" rel="stylesheet" href="vscode/out/vs/workbench/workbench.web.main.internal.css">
+    <style>
+        body { background: #1f1f1f; }
+        #evn-loading { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+            font: 15px/1.5 system-ui, sans-serif; color: #cccccc; }
+    </style>
+</head>
+<body aria-label="">
+    <div id="evn-loading">Starting the EVN ALPHA IDE&hellip;</div>
+</body>
+<script>
+    /* Where this folder lives right now: /ide/ on the site, /ide/ on a local static server, or the
+       root when it is served on its own. Everything below is relative to that. */
+    (function () {
+        var here = new URL('.', window.location.href);
+        var origin = window.location.origin;
+        var pathOf = function (rel) {
+            return new URL(rel, here).pathname;
+        };
+        var config = {
+            productConfiguration: {
+                nameShort: "EVN ALPHA IDE",
+                nameLong: "EVN ALPHA IDE",
+                applicationName: 'evn-alpha-ide',
+                dataFolderName: '.evn-alpha-ide',
+                /* the real workbench version: it is what an extension's engines.vscode is
+                   checked against, so a made-up one would refuse to load this extension */
+                version: "1.138.0",
+                commit: "7debcd0e2acdea1c52de81bf9ee1620444407dda",
+                quality: 'stable',
+                enableTelemetry: false,
+                extensionEnabledApiProposals: {},
+                documentationUrl: 'https://evn.coresg.tech',
+                reportIssueUrl: 'https://evn.coresg.tech',
+                licenseUrl: 'https://evn.coresg.tech',
+                /* This one must be cleared, not merely left out: the workbench bundle carries
+                   Microsoft's own default (https://{{uuid}}.vscode-cdn.net/{{quality}}/{{commit}}),
+                   and with it the web-worker extension host is an iframe on that CDN which then
+                   imports this site's extensionHostWorkerMain.js - a cross-origin fetch with no
+                   CORS, which fails and takes every extension with it. Empty makes the workbench
+                   put the extension host in a same-origin iframe instead; it warns once in the
+                   console ("started in a same-origin iframe!") and it works.
+
+                   webviewContentExternalBaseUrlTemplate is deliberately NOT cleared: the webview
+                   shell (out/.../webview/browser/pre/index.html) refuses to start unless its own
+                   hostname is the sha-256 of its parent origin and salt, so a webview can only be
+                   served from a wildcard-subdomain origin. A Pages site has none, so the webview
+                   shells come from Microsoft's CDN exactly as they do on vscode.dev; the content
+                   inside them is this site's, fetched by the workbench and passed in over a
+                   MessagePort, so nothing of the user's leaves this origin.
+                   --webview-endpoint <template> points them somewhere else for a site that does
+                   have a wildcard domain. */
+                webEndpointUrlTemplate: ''
+            },
+            /* this extension, unpacked next to the page */
+            additionalBuiltinExtensions: [
+                { scheme: window.location.protocol.replace(':', ''), authority: window.location.host, path: pathOf("extensions/evn-alpha") }
+            ],
+            /* the IDE opens on the browser's own projects folder, which the extension provides */
+            folderUri: { scheme: 'evn-projects', path: '/' },
+            callbackRoute: pathOf('index.html'),
+            settingsSyncOptions: { enabled: false },
+            /* The extension's views are contributed by its manifest and belong in its own
+               container; a defaultLayout here would move them out of it and leave the container
+               saying "Drag a view here to display". The first-run layout is left alone. */
+            defaultLayout: undefined
+        };
+        delete config.defaultLayout;
+        void origin;
+        document.getElementById('vscode-workbench-web-configuration')
+            .setAttribute('data-settings', JSON.stringify(config));
+        globalThis._VSCODE_FILE_ROOT = new URL("vscode/out/", here).toString();
+    })();
+</script>
+<script src="vscode/out/nls.messages.js"></script>
+<script type="module">
+import { create, URI, Emitter } from "./vscode/out/vs/workbench/workbench.web.main.internal.js";
+class WorkspaceProvider {
+    workspace;
+    payload;
+    static QUERY_PARAM_EMPTY_WINDOW = 'ew';
+    static QUERY_PARAM_FOLDER = 'folder';
+    static QUERY_PARAM_WORKSPACE = 'workspace';
+    static QUERY_PARAM_PAYLOAD = 'payload';
+    static create(config) {
+        let foundWorkspace = false;
+        let workspace;
+        let payload = Object.create(null);
+        const query = new URL(document.location.href).searchParams;
+        query.forEach((value, key) => {
+            switch (key) {
+                case WorkspaceProvider.QUERY_PARAM_FOLDER:
+                    workspace = { folderUri: URI.parse(value) };
+                    foundWorkspace = true;
+                    break;
+                case WorkspaceProvider.QUERY_PARAM_WORKSPACE:
+                    workspace = { workspaceUri: URI.parse(value) };
+                    foundWorkspace = true;
+                    break;
+                case WorkspaceProvider.QUERY_PARAM_EMPTY_WINDOW:
+                    workspace = undefined;
+                    foundWorkspace = true;
+                    break;
+                case WorkspaceProvider.QUERY_PARAM_PAYLOAD:
+                    try {
+                        payload = JSON.parse(value);
+                    }
+                    catch (error) {
+                        console.error(error);
+                    }
+                    break;
+            }
+        });
+        if (!foundWorkspace) {
+            if (config.folderUri) {
+                workspace = { folderUri: URI.revive(config.folderUri) };
+            }
+            else if (config.workspaceUri) {
+                workspace = { workspaceUri: URI.revive(config.workspaceUri) };
+            }
+        }
+        return new WorkspaceProvider(workspace, payload);
+    }
+    trusted = true;
+    constructor(workspace, payload) {
+        this.workspace = workspace;
+        this.payload = payload;
+    }
+    async open(workspace, options) {
+        if (options?.reuse && !options.payload && this.isSame(this.workspace, workspace)) {
+            return true;
+        }
+        const targetHref = this.createTargetUrl(workspace, options);
+        if (targetHref) {
+            if (options?.reuse) {
+                window.location.href = targetHref;
+                return true;
+            }
+            else {
+                return !!window.open(targetHref);
+            }
+        }
+        return false;
+    }
+    createTargetUrl(workspace, options) {
+        let targetHref = undefined;
+        if (!workspace) {
+            targetHref = `${document.location.origin}${document.location.pathname}?${WorkspaceProvider.QUERY_PARAM_EMPTY_WINDOW}=true`;
+        }
+        else if ('folderUri' in workspace) {
+            const queryParamFolder = encodeURIComponent(workspace.folderUri.toString(true));
+            targetHref = `${document.location.origin}${document.location.pathname}?${WorkspaceProvider.QUERY_PARAM_FOLDER}=${queryParamFolder}`;
+        }
+        else if ('workspaceUri' in workspace) {
+            const queryParamWorkspace = encodeURIComponent(workspace.workspaceUri.toString(true));
+            targetHref = `${document.location.origin}${document.location.pathname}?${WorkspaceProvider.QUERY_PARAM_WORKSPACE}=${queryParamWorkspace}`;
+        }
+        if (options?.payload) {
+            targetHref += `&${WorkspaceProvider.QUERY_PARAM_PAYLOAD}=${encodeURIComponent(JSON.stringify(options.payload))}`;
+        }
+        return targetHref;
+    }
+    isSame(workspaceA, workspaceB) {
+        if (!workspaceA || !workspaceB) {
+            return workspaceA === workspaceB;
+        }
+        if ('folderUri' in workspaceA && 'folderUri' in workspaceB) {
+            return this.isEqualURI(workspaceA.folderUri, workspaceB.folderUri);
+        }
+        if ('workspaceUri' in workspaceA && 'workspaceUri' in workspaceB) {
+            return this.isEqualURI(workspaceA.workspaceUri, workspaceB.workspaceUri);
+        }
+        return false;
+    }
+    isEqualURI(a, b) {
+        return a.scheme === b.scheme && a.authority === b.authority && a.path === b.path;
+    }
+}
+class LocalStorageURLCallbackProvider {
+    _callbackRoute;
+    static REQUEST_ID = 0;
+    static QUERY_KEYS = [
+        'scheme',
+        'authority',
+        'path',
+        'query',
+        'fragment'
+    ];
+    _onCallback = new Emitter();
+    onCallback = this._onCallback.event;
+    pendingCallbacks = new Set();
+    lastTimeChecked = Date.now();
+    checkCallbacksTimeout = undefined;
+    onDidChangeLocalStorageDisposable;
+    constructor(_callbackRoute) {
+        this._callbackRoute = _callbackRoute;
+    }
+    create(options = {}) {
+        const id = ++LocalStorageURLCallbackProvider.REQUEST_ID;
+        const queryParams = [`vscode-reqid=${id}`];
+        for (const key of LocalStorageURLCallbackProvider.QUERY_KEYS) {
+            const value = options[key];
+            if (value) {
+                queryParams.push(`vscode-${key}=${encodeURIComponent(value)}`);
+            }
+        }
+        if (!(options.authority === 'vscode.github-authentication' && options.path === '/dummy')) {
+            const key = `vscode-web.url-callbacks[${id}]`;
+            localStorage.removeItem(key);
+            this.pendingCallbacks.add(id);
+            this.startListening();
+        }
+        return URI.parse(window.location.href).with({ path: this._callbackRoute, query: queryParams.join('&') });
+    }
+    startListening() {
+        if (this.onDidChangeLocalStorageDisposable) {
+            return;
+        }
+        const fn = () => this.onDidChangeLocalStorage();
+        window.addEventListener('storage', fn);
+        this.onDidChangeLocalStorageDisposable = { dispose: () => window.removeEventListener('storage', fn) };
+    }
+    stopListening() {
+        this.onDidChangeLocalStorageDisposable?.dispose();
+        this.onDidChangeLocalStorageDisposable = undefined;
+    }
+    async onDidChangeLocalStorage() {
+        const ellapsed = Date.now() - this.lastTimeChecked;
+        if (ellapsed > 1000) {
+            this.checkCallbacks();
+        }
+        else if (this.checkCallbacksTimeout === undefined) {
+            this.checkCallbacksTimeout = setTimeout(() => {
+                this.checkCallbacksTimeout = undefined;
+                this.checkCallbacks();
+            }, 1000 - ellapsed);
+        }
+    }
+    checkCallbacks() {
+        let pendingCallbacks;
+        for (const id of this.pendingCallbacks) {
+            const key = `vscode-web.url-callbacks[${id}]`;
+            const result = localStorage.getItem(key);
+            if (result !== null) {
+                try {
+                    this._onCallback.fire(URI.revive(JSON.parse(result)));
+                }
+                catch (error) {
+                    console.error(error);
+                }
+                pendingCallbacks = pendingCallbacks ?? new Set(this.pendingCallbacks);
+                pendingCallbacks.delete(id);
+                localStorage.removeItem(key);
+            }
+        }
+        if (pendingCallbacks) {
+            this.pendingCallbacks = pendingCallbacks;
+            if (this.pendingCallbacks.size === 0) {
+                this.stopListening();
+            }
+        }
+        this.lastTimeChecked = Date.now();
+    }
+    dispose() {
+        this._onCallback.dispose();
+    }
+}
+(function () {
+    const configElement = window.document.getElementById('vscode-workbench-web-configuration');
+    const configElementAttribute = configElement ? configElement.getAttribute('data-settings') : undefined;
+    if (!configElement || !configElementAttribute) {
+        throw new Error('Missing web configuration element');
+    }
+    const config = JSON.parse(configElementAttribute);
+    create(window.document.body, {
+        ...config,
+        workspaceProvider: WorkspaceProvider.create(config),
+        urlCallbackProvider: new LocalStorageURLCallbackProvider(config.callbackRoute)
+    });
+})();
+
+</script>
+</html>

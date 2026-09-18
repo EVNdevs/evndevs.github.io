@@ -1,0 +1,291 @@
+{
+    "EVN motor program": {
+        "prefix": "evn-program",
+        "description": "Skeleton of an EVN ALPHA motor program",
+        "body": [
+            "from evn import Motor, Port, Stop, Direction, SpeedUnit, wait, StopWatch",
+            "",
+            "m = Motor(${1:1})          # EVN port 1..4",
+            "m.run_angle(${2:500}, ${3:360})   # deg/s, deg",
+            "print(\"angle\", m.angle(), \"speed\", m.speed())",
+            "m.stop()",
+            ""
+        ]
+    },
+    "EVN import": {
+        "prefix": "evn-import",
+        "description": "Import the EVN motor API",
+        "body": [
+            "from evn import Motor, Port, Stop, Direction, wait, StopWatch",
+            ""
+        ]
+    },
+    "EVN Motor": {
+        "prefix": "evn-motor",
+        "description": "Open a motor on an EVN port",
+        "body": "${1:m} = Motor(${2:1}${3:, positive_direction=Direction.CLOCKWISE}${4:, gears=None})"
+    },
+    "EVN run_angle": {
+        "prefix": "evn-run-angle",
+        "description": "Turn by an angle",
+        "body": "${1:m}.run_angle(${2:500}, ${3:360}${4:, then=Stop.HOLD, wait=True})"
+    },
+    "EVN run_target": {
+        "prefix": "evn-run-target",
+        "description": "Turn to an absolute angle",
+        "body": "${1:m}.run_target(${2:500}, ${3:0}${4:, then=Stop.HOLD, wait=True})"
+    },
+    "EVN run_time": {
+        "prefix": "evn-run-time",
+        "description": "Run for a time",
+        "body": "${1:m}.run_time(${2:300}, ${3:1000}${4:, then=Stop.HOLD, wait=True})"
+    },
+    "EVN run until stalled": {
+        "prefix": "evn-run-until-stalled",
+        "description": "Run until the shaft is blocked",
+        "body": "${1:angle} = ${2:m}.run_until_stalled(${3:200}, then=Stop.${4:COAST}, duty_limit=${5:50})"
+    },
+    "EVN wait until done": {
+        "prefix": "evn-wait-done",
+        "description": "Poll done() after a wait=False move",
+        "body": [
+            "while not ${1:m}.done():",
+            "    wait(10)"
+        ]
+    },
+    "EVN control limits": {
+        "prefix": "evn-limits",
+        "description": "Speed / acceleration / torque limits",
+        "body": "${1:m}.control.limits(speed=${2:1000}, acceleration=(${3:1000}, ${4:1000}), torque=${5:400})"
+    },
+    "EVN tuning knobs": {
+        "prefix": "evn-tuning",
+        "description": "PID and EVN-specific tuned parameters",
+        "body": [
+            "print(\"pid\", ${1:m}.control.pid())        # (kp, ki, kd, integral_deadzone, integral_limit)",
+            "print(\"evn\", ${1:m}.control.evn())        # (endpoint_kd, start_duty %, hold_duty %, friction_ff %)",
+            "${1:m}.control.pid(integral_limit=${2:20})",
+            "${1:m}.control.evn(start_duty=${3:83}, hold_duty=${4:50}, friction_ff=${5:20})"
+        ]
+    },
+    "EVN two motors": {
+        "prefix": "evn-two-motors",
+        "description": "Drive two motors together with wait=False",
+        "body": [
+            "left = Motor(${1:1})",
+            "right = Motor(${2:2}, Direction.COUNTERCLOCKWISE)",
+            "left.run_angle(${3:500}, ${4:720}, wait=False)",
+            "right.run_angle(${3:500}, ${4:720})",
+            "while not left.done():",
+            "    wait(10)"
+        ]
+    },
+    "EVN percent speed": {
+        "prefix": "evn-percent",
+        "description": "Motor whose speeds are % of its full speed (calibrated)",
+        "body": [
+            "${1:m} = Motor(${2:1}, speed_unit=SpeedUnit.PERCENT)",
+            "${1:m}.calibrate()   # 4.5 s, shaft must be free; stored for this port",
+            "print(\"100 % =\", ${1:m}.full_speed(), \"deg/s\")",
+            "${1:m}.run_angle(${3:50}, ${4:360})   # 50 % of full speed"
+        ]
+    },
+    "EVN with Motor": {
+        "prefix": "evn-with",
+        "description": "Motor closed automatically at the end of the block",
+        "body": [
+            "with Motor(${1:1}) as m:",
+            "    m.run_angle(${2:500}, ${3:360})",
+            "    $0"
+        ]
+    },
+    "EVN colour sensor": {
+        "prefix": "evn-color",
+        "description": "TCS34725 colour sensor on an I2C port (standard peripheral)",
+        "body": [
+            "from evn import ColorSensor, Color",
+            "",
+            "cs = ColorSensor(${1:5})            # I2C port 1..16",
+            "if cs.color() == Color.RED:        # nearest of the detectable colours",
+            "    print(\"red!\", cs.hsv())        # Color(h=.., s=.., v=..)",
+            "$0"
+        ]
+    },
+    "EVN ADC": {
+        "prefix": "evn-adc",
+        "description": "ADS1115 16-bit ADC on an I2C port (standard peripheral)",
+        "body": [
+            "from evn import ADC",
+            "",
+            "adc = ADC(${1:3})                  # I2C port 1..16; +-4.096 V, 860 SPS",
+            "adc.inputs((${2:0, 1}))            # the inputs scanned in turn (0..3 single-ended, 4..7 differential)",
+            "print(\"AIN0 %.3f V\" % adc.read(0))   # waits for the next conversion",
+            "$0"
+        ]
+    },
+    "EVN environment sensor": {
+        "prefix": "evn-env",
+        "description": "BME280 temperature / pressure / humidity on an I2C port (standard peripheral)",
+        "body": [
+            "from evn import EnvSensor",
+            "",
+            "env = EnvSensor(${1:4})            # I2C port 1..16",
+            "t, p, h = env.read()               # degC, Pa, %RH from one measurement",
+            "print(\"%.2f degC  %.0f Pa  %.1f %%RH\" % (t, p, h))",
+            "$0"
+        ]
+    },
+    "EVN touch array": {
+        "prefix": "evn-touch",
+        "description": "MPR121 12-electrode touch array on an I2C port (standard peripheral)",
+        "body": [
+            "from evn import TouchArray, wait",
+            "",
+            "t = TouchArray(${1:6})             # I2C port 1..16",
+            "while True:",
+            "    pressed, released = t.events() # edge masks since the last call",
+            "    if pressed:",
+            "        print(\"pressed\", [n for n in range(12) if pressed & (1 << n)])",
+            "    wait(50)",
+            "$0"
+        ]
+    },
+    "EVN gesture sensor": {
+        "prefix": "evn-gesture",
+        "description": "APDS-9960 gesture / proximity / colour sensor (standard peripheral)",
+        "body": [
+            "from evn import GestureSensor",
+            "",
+            "g = GestureSensor(${1:7})          # I2C port 1..16",
+            "print(g.read_gesture(timeout=${2:5000}))   # 'up' | 'down' | 'left' | 'right' | None",
+            "print(\"proximity\", g.proximity())  # 0..255, higher = closer",
+            "$0"
+        ]
+    },
+    "EVN distance sensor": {
+        "prefix": "evn-distance",
+        "description": "VL53L0X distance sensor on an I2C port (standard peripheral)",
+        "body": [
+            "from evn import DistanceSensor",
+            "",
+            "ds = DistanceSensor(${1:8})        # I2C port 1..16",
+            "d = ds.distance()                  # mm, or None without a target",
+            "$0"
+        ]
+    },
+    "EVN IMU": {
+        "prefix": "evn-imu",
+        "description": "MPU-6500 IMU (DMP) on an I2C port (standard peripheral)",
+        "body": [
+            "from evn import IMU, Side",
+            "",
+            "imu = IMU(${1:1})                  # I2C port 1..16 (about 0.5 s to load the DMP)",
+            "imu.reset_heading()",
+            "print(imu.heading(), imu.tilt())    # yaw deg (unwrapped), (pitch, roll)",
+            "$0"
+        ]
+    },
+    "EVN compass": {
+        "prefix": "evn-compass",
+        "description": "QMC5883L/HMC5883L compass with on-board calibration",
+        "body": [
+            "from evn import Compass, wait",
+            "",
+            "c = Compass(${1:2})                # I2C port 1..16",
+            "c.calibrate()                      # tumble the sensor ...",
+            "wait(${2:10000})",
+            "try:",
+            "    print(c.calibrate_stop())      # (residual, coverage, samples)",
+            "except ValueError:",
+            "    c.calibrate_cancel()           # not enough directions; it kept collecting",
+            "c.north()",
+            "print(c.heading())",
+            "$0"
+        ]
+    },
+    "EVN display": {
+        "prefix": "evn-display",
+        "description": "EVN OLED display on an I2C port (standard peripheral)",
+        "body": [
+            "from evn import Display",
+            "",
+            "d = Display(${1:11})               # I2C port 1..16",
+            "d.label(0, \"${2:Dist:}\")",
+            "d.data(0, ${3:value})",
+            "# d.mirror(True)                 # the REPL and every print() on the panel",
+            "$0"
+        ]
+    },
+    "EVN LED matrix": {
+        "prefix": "evn-matrix",
+        "description": "EVN 8x8 LED matrix (HT16K33) on an I2C port (standard peripheral)",
+        "body": [
+            "from evn import MatrixLED, Icon, Side",
+            "",
+            "m = MatrixLED(${1:9})              # I2C port 1..16 (the EVN matrix is at 0x71)",
+            "m.icon(Icon.${2:HEART})",
+            "m.pixel(${3:0}, ${4:0})            # (row, column) as Pybricks hub.display",
+            "m.number(${5:42})                  # -99..99",
+            "$0"
+        ]
+    },
+    "EVN seven-segment display": {
+        "prefix": "evn-sevenseg",
+        "description": "EVN 4-digit seven-segment display (HT16K33) on an I2C port",
+        "body": [
+            "from evn import SevenSegmentLED",
+            "",
+            "s = SevenSegmentLED(${1:10})       # I2C port 1..16 (the EVN board is at 0x74)",
+            "s.number(${2:12.34})               # a float places the point after the integer part",
+            "s.integer(${3:-42})                # -999..9999, right aligned",
+            "$0"
+        ]
+    },
+    "EVN RGB LED": {
+        "prefix": "evn-rgbled",
+        "description": "EVN RGB LED module / WS2812B strip on a servo port",
+        "body": [
+            "from evn import RGBLED, Color",
+            "",
+            "leds = RGBLED(${1:1})              # servo port 1..4, 8 LEDs",
+            "leds.set(0, Color.${2:RED})",
+            "leds.fill(0, 0, ${3:32})",
+            "$0"
+        ]
+    },
+    "EVN Bluetooth": {
+        "prefix": "evn-bluetooth",
+        "description": "EVN Bluetooth module (HC-05) on a serial port (standard peripheral)",
+        "body": [
+            "from evn import Bluetooth",
+            "",
+            "bt = Bluetooth(${1:1})             # Serial 1 or 2, 230400 baud",
+            "bt.write(b\"${2:hello from EVN}\\n\")",
+            "line = bt.readline(timeout=${3:5000})   # a line without its newline, or None on timeout",
+            "$0"
+        ]
+    },
+    "EVN UART": {
+        "prefix": "evn-uart",
+        "description": "Raw serial port (Serial 1 / Serial 2)",
+        "body": [
+            "from evn import UART",
+            "",
+            "u = UART(${1:1}, ${2:115200})      # 1 = Serial1, 2 = Serial2",
+            "u.write(b\"${3:hello}\\n\")           # every byte is queued, never lossy",
+            "line = u.readline(timeout=${4:1000})   # or u.read() for whatever is buffered",
+            "$0"
+        ]
+    },
+    "EVN Geekservo": {
+        "prefix": "evn-geekservo",
+        "description": "Geekservo 270-degree / continuous-rotation servo profile",
+        "body": [
+            "from evn import Servo",
+            "",
+            "s = Servo(${1:1}, \"${2|geekservo_270,geekservo_cr,generic|}\")",
+            "s.move(${3:270}, speed=${4:200})     # 270-degree servo: sweep and wait",
+            "$0"
+        ]
+    }
+}

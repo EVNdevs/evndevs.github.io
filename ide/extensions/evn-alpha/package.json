@@ -1,0 +1,1299 @@
+{
+  "name": "evn-alpha-micropython",
+  "displayName": "EVN ALPHA MicroPython",
+  "description": "Early-access tooling for the EVN ALPHA robotics controller: flash the MicroPython firmware, run programs, open the REPL, autocomplete for the evn motor API, and a Blockly block editor that generates MicroPython.",
+  "version": "0.2.17",
+  "publisher": "evn-alpha",
+  "license": "MIT",
+  "preview": true,
+  "icon": "media/icon.png",
+  "galleryBanner": {
+    "color": "#111518",
+    "theme": "dark"
+  },
+  "homepage": "https://evn.coresg.tech",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kenchow96/EVN_ALPHA_Performance.git",
+    "directory": "vscode-evn-alpha"
+  },
+  "engines": {
+    "vscode": "^1.106.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Snippets",
+    "Other"
+  ],
+  "keywords": [
+    "EVN",
+    "MicroPython",
+    "RP2040",
+    "robotics",
+    "Blockly",
+    "blocks"
+  ],
+  "activationEvents": [
+    "onStartupFinished",
+    "workspaceContains:**/evn_project.json",
+    "onLanguage:python",
+    "onCustomEditor:evn.blocksEditor",
+    "onLanguage:evnblocks",
+    "onView:evn.start",
+    "onView:evn.projects",
+    "onView:evn.examples",
+    "onFileSystem:evn-example",
+    "onFileSystem:evn-projects",
+    "onView:evn.console"
+  ],
+  "browser": "./dist/web/extension.js",
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": true,
+      "description": "The extension reads its own files and the programs you open; the board is reached over a port you choose."
+    },
+    "virtualWorkspaces": {
+      "supported": true,
+      "description": "Your programs can live in a virtual folder (the browser's projects folder); flashing the firmware needs the desktop."
+    }
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "evn.selectPort",
+        "title": "Select board port",
+        "category": "EVN"
+      },
+      {
+        "command": "evn.runFile",
+        "title": "Run current file on the board",
+        "category": "EVN",
+        "icon": "$(play)"
+      },
+      {
+        "command": "evn.uploadMain",
+        "title": "Upload current file as main.py (autorun)",
+        "category": "EVN",
+        "icon": "$(cloud-upload)"
+      },
+      {
+        "command": "evn.openRepl",
+        "title": "Open REPL",
+        "category": "EVN",
+        "icon": "$(terminal)"
+      },
+      {
+        "command": "evn.stopMotors",
+        "title": "Stop all motors",
+        "category": "EVN",
+        "icon": "$(debug-stop)"
+      },
+      {
+        "command": "evn.listFiles",
+        "title": "List files on the board",
+        "category": "EVN"
+      },
+      {
+        "command": "evn.removeMain",
+        "title": "Remove main.py from the board",
+        "category": "EVN"
+      },
+      {
+        "command": "evn.resetBoard",
+        "title": "Reset the board",
+        "category": "EVN"
+      },
+      {
+        "command": "evn.flashFirmware",
+        "title": "Flash MicroPython firmware",
+        "category": "EVN"
+      },
+      {
+        "command": "evn.diagnostics",
+        "title": "Collect board diagnostics",
+        "category": "EVN"
+      },
+      {
+        "command": "evn.newProject",
+        "title": "New project folder (examples, autocomplete stubs)",
+        "category": "EVN"
+      },
+      {
+        "command": "evn.openApiReference",
+        "title": "Open API reference",
+        "category": "EVN"
+      },
+      {
+        "command": "evn.openGettingStarted",
+        "title": "Open getting started guide",
+        "category": "EVN"
+      },
+      {
+        "command": "evn.openBlocksReference",
+        "title": "Open blocks reference",
+        "category": "EVN"
+      },
+      {
+        "command": "evn.installMpremote",
+        "title": "Install mpremote (Python tool used to talk to the board)",
+        "category": "EVN"
+      },
+      {
+        "command": "evn.newBlocksFile",
+        "title": "New blocks file here (choose a folder)",
+        "category": "EVN",
+        "icon": "$(new-file)"
+      },
+      {
+        "command": "evn.runBlocks",
+        "title": "Run blocks program on the board",
+        "category": "EVN",
+        "icon": "$(play)"
+      },
+      {
+        "command": "evn.uploadBlocksMain",
+        "title": "Upload blocks program as main.py (autorun)",
+        "category": "EVN",
+        "icon": "$(cloud-upload)"
+      },
+      {
+        "command": "evn.exportBlocksPython",
+        "title": "Export blocks program as Python",
+        "category": "EVN",
+        "icon": "$(export)"
+      },
+      {
+        "command": "evn.newPythonProject",
+        "title": "New Python program",
+        "category": "EVN",
+        "icon": "$(new-file)"
+      },
+      {
+        "command": "evn.newBlocksProject",
+        "title": "New blocks program",
+        "category": "EVN",
+        "icon": "$(symbol-misc)"
+      },
+      {
+        "command": "evn.openDocumentation",
+        "title": "Open online documentation (evn.coresg.tech)",
+        "category": "EVN",
+        "icon": "$(book)"
+      },
+      {
+        "command": "evn.refreshProjects",
+        "title": "Refresh my projects",
+        "category": "EVN",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "evn.openProjectsFolder",
+        "title": "Open my projects folder as the workspace",
+        "category": "EVN",
+        "icon": "$(folder-opened)"
+      },
+      {
+        "command": "evn.revealProjectsFolder",
+        "title": "Show my projects folder in the file explorer",
+        "category": "EVN",
+        "icon": "$(folder)"
+      },
+      {
+        "command": "evn.runProject",
+        "title": "Run on the board",
+        "category": "EVN",
+        "icon": "$(play)"
+      },
+      {
+        "command": "evn.uploadProjectMain",
+        "title": "Upload as main.py (autorun)",
+        "category": "EVN",
+        "icon": "$(cloud-upload)"
+      },
+      {
+        "command": "evn.renameProject",
+        "title": "Rename",
+        "category": "EVN",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "evn.duplicateProject",
+        "title": "Duplicate",
+        "category": "EVN",
+        "icon": "$(copy)"
+      },
+      {
+        "command": "evn.deleteProject",
+        "title": "Delete",
+        "category": "EVN",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "evn.revealProject",
+        "title": "Show in the file explorer",
+        "category": "EVN"
+      },
+      {
+        "command": "evn.runExample",
+        "title": "Run example on the board",
+        "category": "EVN",
+        "icon": "$(play)"
+      },
+      {
+        "command": "evn.saveExampleAsProject",
+        "title": "Save a copy to my projects",
+        "category": "EVN",
+        "icon": "$(save-as)"
+      },
+      {
+        "category": "EVN",
+        "command": "evn.refreshBoard",
+        "title": "Read the board (firmware, battery, files)",
+        "icon": "$(refresh)"
+      },
+      {
+        "category": "EVN",
+        "command": "evn.deleteBoardFile",
+        "title": "Delete from the board",
+        "icon": "$(trash)"
+      },
+      {
+        "category": "EVN",
+        "command": "evn.showProgramTerminal",
+        "title": "Show the program terminal",
+        "icon": "$(terminal)"
+      },
+      {
+        "category": "EVN",
+        "command": "evn.openWalkthrough",
+        "title": "Getting started walkthrough",
+        "icon": "$(compass)"
+      },
+      {
+        "category": "EVN",
+        "command": "evn.enableGlobalAutocomplete",
+        "title": "Enable evn autocomplete in every Python file"
+      },
+      {
+        "category": "EVN",
+        "command": "evn.openDocsForSymbol",
+        "title": "Open online documentation for the symbol under the cursor",
+        "icon": "$(book)"
+      },
+      {
+        "category": "EVN",
+        "command": "evn.checkForUpdates",
+        "title": "Check for extension and firmware updates"
+      },
+      {
+        "category": "EVN",
+        "command": "evn.nameBoard",
+        "title": "Name this board",
+        "icon": "$(tag)"
+      },
+      {
+        "category": "EVN",
+        "command": "evn.console.connect",
+        "title": "Connect the live console",
+        "icon": "$(plug)"
+      },
+      {
+        "category": "EVN",
+        "command": "evn.console.pause",
+        "title": "Pause the live console (free the port)",
+        "icon": "$(debug-disconnect)"
+      },
+      {
+        "category": "EVN",
+        "command": "evn.console.send",
+        "title": "Send a command to the board",
+        "icon": "$(terminal)"
+      },
+      {
+        "category": "EVN",
+        "command": "evn.console.stopProgram",
+        "title": "Stop the board's program and connect",
+        "icon": "$(debug-stop)"
+      },
+      {
+        "category": "EVN",
+        "command": "evn.console.showOutput",
+        "title": "Show the console output",
+        "icon": "$(output)"
+      },
+      {
+        "category": "EVN",
+        "command": "evn.configurePort",
+        "title": "Configure what is connected to a port",
+        "icon": "$(settings-gear)"
+      },
+      {
+        "category": "EVN",
+        "command": "evn.motor.run",
+        "title": "Run this motor at a speed...",
+        "icon": "$(play)"
+      },
+      {
+        "category": "EVN",
+        "command": "evn.motor.runTarget",
+        "title": "Run this motor to an angle...",
+        "icon": "$(target)"
+      },
+      {
+        "category": "EVN",
+        "command": "evn.motor.stop",
+        "title": "Stop this motor",
+        "icon": "$(debug-stop)"
+      },
+      {
+        "category": "EVN",
+        "command": "evn.servo.drive",
+        "title": "Drive this servo port...",
+        "icon": "$(play)"
+      },
+      {
+        "category": "EVN",
+        "command": "evn.servo.stop",
+        "title": "Stop this servo port",
+        "icon": "$(debug-stop)"
+      },
+      {
+        "category": "EVN",
+        "command": "evn.device.set",
+        "title": "Set a property of this device...",
+        "icon": "$(edit)"
+      },
+      {
+        "category": "EVN",
+        "command": "evn.device.watch",
+        "title": "Read this device live...",
+        "icon": "$(eye)"
+      },
+      {
+        "category": "EVN",
+        "command": "evn.device.unwatch",
+        "title": "Stop reading this device",
+        "icon": "$(eye-closed)"
+      },
+      {
+        "category": "EVN",
+        "command": "evn.bluetooth.repl",
+        "title": "Put the REPL on this Bluetooth module",
+        "icon": "$(broadcast)"
+      },
+      {
+        "category": "EVN",
+        "command": "evn.bluetooth.pair",
+        "title": "Pair the Bluetooth module in Windows",
+        "icon": "$(link)"
+      },
+      {
+        "category": "EVN",
+        "command": "evn.bluetooth.usePort",
+        "title": "Use the Bluetooth COM port for the board",
+        "icon": "$(plug)"
+      },
+      {
+        "category": "EVN",
+        "command": "evn.console.clear",
+        "title": "Clear the console view",
+        "icon": "$(clear-all)"
+      },
+      {
+        "category": "EVN",
+        "command": "evn.motor.runTime",
+        "title": "Run this motor for a time...",
+        "icon": "$(clock)"
+      },
+      {
+        "category": "EVN",
+        "command": "evn.bluetooth.preferWireless",
+        "title": "Switch the board to Bluetooth now (test the wireless link)",
+        "icon": "$(arrow-swap)"
+      },
+      {
+        "category": "EVN",
+        "command": "evn.bluetooth.preferUsb",
+        "title": "Switch the board back to USB",
+        "icon": "$(arrow-swap)"
+      }
+    ],
+    "menus": {
+      "editor/title/run": [
+        {
+          "command": "evn.runFile",
+          "when": "resourceLangId == python",
+          "group": "navigation@1"
+        },
+        {
+          "command": "evn.uploadMain",
+          "when": "resourceLangId == python",
+          "group": "navigation@2"
+        },
+        {
+          "command": "evn.openRepl",
+          "group": "navigation@3"
+        }
+      ],
+      "editor/title": [
+        {
+          "command": "evn.runBlocks",
+          "when": "activeCustomEditorId == evn.blocksEditor",
+          "group": "navigation@1"
+        },
+        {
+          "command": "evn.uploadBlocksMain",
+          "when": "activeCustomEditorId == evn.blocksEditor",
+          "group": "navigation@2"
+        },
+        {
+          "command": "evn.exportBlocksPython",
+          "when": "activeCustomEditorId == evn.blocksEditor",
+          "group": "navigation@3"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "evn.newBlocksFile",
+          "when": "explorerResourceIsFolder",
+          "group": "navigation@9"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "evn.installMpremote",
+          "when": "evn.hasPython"
+        },
+        {
+          "command": "evn.runFile",
+          "when": "resourceLangId == python"
+        },
+        {
+          "command": "evn.uploadMain",
+          "when": "resourceLangId == python"
+        },
+        {
+          "command": "evn.runBlocks",
+          "when": "activeCustomEditorId == evn.blocksEditor"
+        },
+        {
+          "command": "evn.uploadBlocksMain",
+          "when": "activeCustomEditorId == evn.blocksEditor"
+        },
+        {
+          "command": "evn.exportBlocksPython",
+          "when": "activeCustomEditorId == evn.blocksEditor"
+        },
+        {
+          "command": "evn.runProject",
+          "when": "false"
+        },
+        {
+          "command": "evn.uploadProjectMain",
+          "when": "false"
+        },
+        {
+          "command": "evn.renameProject",
+          "when": "false"
+        },
+        {
+          "command": "evn.duplicateProject",
+          "when": "false"
+        },
+        {
+          "command": "evn.deleteProject",
+          "when": "false"
+        },
+        {
+          "command": "evn.revealProject",
+          "when": "false"
+        },
+        {
+          "command": "evn.runExample",
+          "when": "false"
+        },
+        {
+          "command": "evn.saveExampleAsProject",
+          "when": "false"
+        },
+        {
+          "command": "evn.refreshProjects",
+          "when": "false"
+        },
+        {
+          "command": "evn.deleteBoardFile",
+          "when": "false"
+        },
+        {
+          "command": "evn.configurePort",
+          "when": "false"
+        },
+        {
+          "command": "evn.console.stopProgram",
+          "when": "false"
+        },
+        {
+          "command": "evn.motor.run",
+          "when": "false"
+        },
+        {
+          "command": "evn.motor.runTarget",
+          "when": "false"
+        },
+        {
+          "command": "evn.motor.stop",
+          "when": "false"
+        },
+        {
+          "command": "evn.servo.drive",
+          "when": "false"
+        },
+        {
+          "command": "evn.servo.stop",
+          "when": "false"
+        },
+        {
+          "command": "evn.device.set",
+          "when": "false"
+        },
+        {
+          "command": "evn.device.watch",
+          "when": "false"
+        },
+        {
+          "command": "evn.device.unwatch",
+          "when": "false"
+        },
+        {
+          "command": "evn.bluetooth.repl",
+          "when": "false"
+        },
+        {
+          "command": "evn.bluetooth.usePort",
+          "when": "false"
+        },
+        {
+          "command": "evn.motor.runTime",
+          "when": "false"
+        },
+        {
+          "command": "evn.bluetooth.preferWireless",
+          "when": "evn.bluetooth.linked && !evn.wirelessPreferred"
+        },
+        {
+          "command": "evn.bluetooth.preferUsb",
+          "when": "evn.wirelessPreferred"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "evn.newPythonProject",
+          "when": "view == evn.projects",
+          "group": "navigation@1"
+        },
+        {
+          "command": "evn.newBlocksProject",
+          "when": "view == evn.projects",
+          "group": "navigation@2"
+        },
+        {
+          "command": "evn.refreshProjects",
+          "when": "view == evn.projects",
+          "group": "navigation@3"
+        },
+        {
+          "command": "evn.openProjectsFolder",
+          "when": "view == evn.projects",
+          "group": "1_folder@1"
+        },
+        {
+          "command": "evn.revealProjectsFolder",
+          "when": "view == evn.projects && evn.hasFileExplorer",
+          "group": "1_folder@2"
+        },
+        {
+          "command": "evn.openDocumentation",
+          "when": "view == evn.examples",
+          "group": "navigation@1"
+        },
+        {
+          "command": "evn.console.send",
+          "when": "view == evn.board && evn.console.state == live",
+          "group": "navigation@1"
+        },
+        {
+          "command": "evn.refreshBoard",
+          "when": "view == evn.board",
+          "group": "navigation@2"
+        },
+        {
+          "command": "evn.openRepl",
+          "when": "view == evn.board",
+          "group": "navigation@3"
+        },
+        {
+          "command": "evn.stopMotors",
+          "when": "view == evn.board",
+          "group": "navigation@4"
+        },
+        {
+          "command": "evn.console.connect",
+          "when": "view == evn.board && evn.console.state != live && evn.console.state != busy && evn.console.state != connecting",
+          "group": "0_console@1"
+        },
+        {
+          "command": "evn.console.pause",
+          "when": "view == evn.board && (evn.console.state == live || evn.console.state == busy || evn.console.state == connecting)",
+          "group": "0_console@2"
+        },
+        {
+          "command": "evn.console.showOutput",
+          "when": "view == evn.board",
+          "group": "0_console@3"
+        },
+        {
+          "command": "evn.resetBoard",
+          "when": "view == evn.board",
+          "group": "1_board@1"
+        },
+        {
+          "command": "evn.flashFirmware",
+          "when": "view == evn.board",
+          "group": "1_board@2"
+        },
+        {
+          "command": "evn.listFiles",
+          "when": "view == evn.board",
+          "group": "1_board@3"
+        },
+        {
+          "command": "evn.nameBoard",
+          "when": "view == evn.board",
+          "group": "1_board@4"
+        },
+        {
+          "command": "evn.diagnostics",
+          "when": "view == evn.board",
+          "group": "2_more@1"
+        },
+        {
+          "command": "evn.selectPort",
+          "when": "view == evn.board",
+          "group": "2_more@2"
+        },
+        {
+          "command": "evn.console.clear",
+          "when": "view == evn.console",
+          "group": "navigation@1"
+        },
+        {
+          "command": "evn.console.showOutput",
+          "when": "view == evn.console",
+          "group": "navigation@2"
+        },
+        {
+          "command": "evn.console.pause",
+          "when": "view == evn.console && (evn.console.state == live || evn.console.state == busy || evn.console.state == connecting)",
+          "group": "0_console@1"
+        },
+        {
+          "command": "evn.console.connect",
+          "when": "view == evn.console && evn.console.state != live && evn.console.state != busy && evn.console.state != connecting",
+          "group": "0_console@2"
+        },
+        {
+          "command": "evn.openRepl",
+          "when": "view == evn.console",
+          "group": "0_console@3"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "evn.runProject",
+          "when": "view == evn.projects && viewItem =~ /^evnProject(File|Blocks)$/",
+          "group": "inline@1"
+        },
+        {
+          "command": "evn.uploadProjectMain",
+          "when": "view == evn.projects && viewItem =~ /^evnProject(File|Blocks)$/",
+          "group": "inline@2"
+        },
+        {
+          "command": "evn.runProject",
+          "when": "view == evn.projects && viewItem =~ /^evnProject(File|Blocks)$/",
+          "group": "1_run@1"
+        },
+        {
+          "command": "evn.uploadProjectMain",
+          "when": "view == evn.projects && viewItem =~ /^evnProject(File|Blocks)$/",
+          "group": "1_run@2"
+        },
+        {
+          "command": "evn.renameProject",
+          "when": "view == evn.projects && viewItem =~ /^evnProject(File|Blocks|Folder)$/",
+          "group": "2_edit@1"
+        },
+        {
+          "command": "evn.duplicateProject",
+          "when": "view == evn.projects && viewItem =~ /^evnProject(File|Blocks)$/",
+          "group": "2_edit@2"
+        },
+        {
+          "command": "evn.deleteProject",
+          "when": "view == evn.projects && viewItem =~ /^evnProject(File|Blocks|Folder)$/",
+          "group": "2_edit@3"
+        },
+        {
+          "command": "evn.revealProject",
+          "when": "view == evn.projects && evn.hasFileExplorer && viewItem =~ /^evnProject(File|Blocks|Folder)$/",
+          "group": "3_os@1"
+        },
+        {
+          "command": "evn.runExample",
+          "when": "view == evn.examples && viewItem =~ /^evnExample(File|Blocks)$/",
+          "group": "inline@1"
+        },
+        {
+          "command": "evn.saveExampleAsProject",
+          "when": "view == evn.examples && viewItem =~ /^evnExample(File|Blocks)$/",
+          "group": "inline@2"
+        },
+        {
+          "command": "evn.runExample",
+          "when": "view == evn.examples && viewItem =~ /^evnExample(File|Blocks)$/",
+          "group": "1_run@1"
+        },
+        {
+          "command": "evn.saveExampleAsProject",
+          "when": "view == evn.examples && viewItem =~ /^evnExample(File|Blocks)$/",
+          "group": "1_run@2"
+        },
+        {
+          "command": "evn.deleteBoardFile",
+          "when": "view == evn.board && viewItem =~ /^evnBoardFile/",
+          "group": "inline"
+        },
+        {
+          "command": "evn.deleteBoardFile",
+          "when": "view == evn.board && viewItem =~ /^evnBoardFile/",
+          "group": "1_edit"
+        },
+        {
+          "command": "evn.flashFirmware",
+          "when": "view == evn.board && viewItem =~ /^evnBoardFirmwareOutdated|^evnBoardPortBootsel/",
+          "group": "inline"
+        },
+        {
+          "command": "evn.selectPort",
+          "when": "view == evn.board && viewItem =~ /^evnBoardPort/",
+          "group": "inline@1"
+        },
+        {
+          "command": "evn.nameBoard",
+          "when": "view == evn.board && viewItem =~ /^evnBoardPortPresent/",
+          "group": "inline@2"
+        },
+        {
+          "command": "evn.nameBoard",
+          "when": "view == evn.board && viewItem =~ /^evnBoardPort/",
+          "group": "1_edit"
+        },
+        {
+          "command": "evn.console.stopProgram",
+          "when": "view == evn.board && viewItem == evnBoardConsoleBusy",
+          "group": "inline"
+        },
+        {
+          "command": "evn.console.connect",
+          "when": "view == evn.board && viewItem =~ /^evnBoardConsole(Paused|Off|Error|Gone)/",
+          "group": "inline"
+        },
+        {
+          "command": "evn.console.pause",
+          "when": "view == evn.board && viewItem =~ /^evnBoardConsole(Live|Connecting)/",
+          "group": "inline"
+        },
+        {
+          "command": "evn.console.send",
+          "when": "view == evn.board && viewItem == evnBoardCommands",
+          "group": "inline"
+        },
+        {
+          "command": "evn.console.showOutput",
+          "when": "view == evn.board && viewItem == evnBoardCommands",
+          "group": "1_edit"
+        },
+        {
+          "command": "evn.configurePort",
+          "when": "view == evn.board && viewItem =~ /^evnBoard(Servo|Motor|Serial)Port/",
+          "group": "inline@9"
+        },
+        {
+          "command": "evn.motor.run",
+          "when": "view == evn.board && viewItem == evnBoardMotorPortSet && evn.console.state == live",
+          "group": "inline@1"
+        },
+        {
+          "command": "evn.motor.runTarget",
+          "when": "view == evn.board && viewItem == evnBoardMotorPortSet && evn.console.state == live",
+          "group": "inline@2"
+        },
+        {
+          "command": "evn.motor.stop",
+          "when": "view == evn.board && viewItem == evnBoardMotorPortSet && evn.console.state == live",
+          "group": "inline@3"
+        },
+        {
+          "command": "evn.motor.run",
+          "when": "view == evn.board && viewItem == evnBoardMotorPortSet && evn.console.state == live",
+          "group": "1_drive@1"
+        },
+        {
+          "command": "evn.motor.runTarget",
+          "when": "view == evn.board && viewItem == evnBoardMotorPortSet && evn.console.state == live",
+          "group": "1_drive@2"
+        },
+        {
+          "command": "evn.motor.stop",
+          "when": "view == evn.board && viewItem == evnBoardMotorPortSet && evn.console.state == live",
+          "group": "1_drive@3"
+        },
+        {
+          "command": "evn.servo.drive",
+          "when": "view == evn.board && viewItem == evnBoardServoPortSet && evn.console.state == live",
+          "group": "inline@1"
+        },
+        {
+          "command": "evn.servo.stop",
+          "when": "view == evn.board && viewItem == evnBoardServoPortSet && evn.console.state == live",
+          "group": "inline@2"
+        },
+        {
+          "command": "evn.servo.drive",
+          "when": "view == evn.board && viewItem == evnBoardServoPortSet && evn.console.state == live",
+          "group": "1_drive@1"
+        },
+        {
+          "command": "evn.servo.stop",
+          "when": "view == evn.board && viewItem == evnBoardServoPortSet && evn.console.state == live",
+          "group": "1_drive@2"
+        },
+        {
+          "command": "evn.device.set",
+          "when": "view == evn.board && viewItem =~ /^evnBoardDevice(Known|Watched)$/ && evn.console.state == live",
+          "group": "inline@1"
+        },
+        {
+          "command": "evn.device.watch",
+          "when": "view == evn.board && viewItem == evnBoardDeviceKnown && evn.console.state == live",
+          "group": "inline@2"
+        },
+        {
+          "command": "evn.device.unwatch",
+          "when": "view == evn.board && viewItem == evnBoardDeviceWatched && evn.console.state == live",
+          "group": "inline@2"
+        },
+        {
+          "command": "evn.device.set",
+          "when": "view == evn.board && viewItem =~ /^evnBoardDevice(Known|Watched)$/ && evn.console.state == live",
+          "group": "1_device@1"
+        },
+        {
+          "command": "evn.device.watch",
+          "when": "view == evn.board && viewItem =~ /^evnBoardDevice(Known|Watched)$/ && evn.console.state == live",
+          "group": "1_device@2"
+        },
+        {
+          "command": "evn.device.unwatch",
+          "when": "view == evn.board && viewItem == evnBoardDeviceWatched && evn.console.state == live",
+          "group": "1_device@3"
+        },
+        {
+          "command": "evn.bluetooth.repl",
+          "when": "view == evn.board && viewItem =~ /^evnBoardSerialPortBluetooth/ && evn.console.state == live",
+          "group": "inline@1"
+        },
+        {
+          "command": "evn.bluetooth.pair",
+          "when": "view == evn.board && viewItem =~ /^evnBoardSerialPortBluetooth/",
+          "group": "inline@2"
+        },
+        {
+          "command": "evn.bluetooth.usePort",
+          "when": "view == evn.board && viewItem =~ /^evnBoardSerialPortBluetooth/",
+          "group": "inline@3"
+        },
+        {
+          "command": "evn.bluetooth.repl",
+          "when": "view == evn.board && viewItem =~ /^evnBoardSerialPortBluetooth/ && evn.console.state == live",
+          "group": "1_bluetooth@1"
+        },
+        {
+          "command": "evn.bluetooth.pair",
+          "when": "view == evn.board && viewItem =~ /^evnBoardSerialPortBluetooth/",
+          "group": "1_bluetooth@2"
+        },
+        {
+          "command": "evn.bluetooth.usePort",
+          "when": "view == evn.board && viewItem =~ /^evnBoardSerialPortBluetooth/",
+          "group": "1_bluetooth@3"
+        },
+        {
+          "command": "evn.motor.runTime",
+          "when": "view == evn.board && viewItem == evnBoardMotorPortSet && evn.console.state == live",
+          "group": "inline@4"
+        },
+        {
+          "command": "evn.motor.runTime",
+          "when": "view == evn.board && viewItem == evnBoardMotorPortSet && evn.console.state == live",
+          "group": "1_drive@4"
+        },
+        {
+          "command": "evn.bluetooth.preferWireless",
+          "when": "view == evn.board && viewItem =~ /^evnBoardSerialPortBluetooth/ && evn.bluetooth.linked && !evn.wirelessPreferred",
+          "group": "inline@4"
+        },
+        {
+          "command": "evn.bluetooth.preferUsb",
+          "when": "view == evn.board && viewItem =~ /^evnBoardSerialPortBluetooth/ && evn.wirelessPreferred",
+          "group": "inline@4"
+        },
+        {
+          "command": "evn.bluetooth.preferWireless",
+          "when": "view == evn.board && viewItem =~ /^evnBoardSerialPortBluetooth/ && evn.bluetooth.linked && !evn.wirelessPreferred",
+          "group": "1_bluetooth@4"
+        },
+        {
+          "command": "evn.bluetooth.preferUsb",
+          "when": "view == evn.board && viewItem =~ /^evnBoardSerialPortBluetooth/ && evn.wirelessPreferred",
+          "group": "1_bluetooth@4"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "evn.openDocsForSymbol",
+          "when": "resourceLangId == python",
+          "group": "evn@1"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "evn.runFile",
+        "key": "ctrl+f5",
+        "mac": "cmd+f5",
+        "when": "resourceLangId == python && !inDebugMode"
+      },
+      {
+        "command": "evn.stopMotors",
+        "key": "ctrl+shift+f5",
+        "mac": "cmd+shift+f5"
+      },
+      {
+        "command": "evn.runBlocks",
+        "key": "ctrl+f5",
+        "mac": "cmd+f5",
+        "when": "activeCustomEditorId == evn.blocksEditor"
+      },
+      {
+        "command": "evn.openDocsForSymbol",
+        "key": "ctrl+f1",
+        "mac": "cmd+f1",
+        "when": "editorTextFocus && resourceLangId == python"
+      }
+    ],
+    "languages": [
+      {
+        "id": "evnblocks",
+        "aliases": [
+          "EVN Blocks"
+        ],
+        "extensions": [
+          ".evnblocks"
+        ],
+        "icon": {
+          "light": "./media/blocks/icon.svg",
+          "dark": "./media/blocks/icon.svg"
+        }
+      }
+    ],
+    "customEditors": [
+      {
+        "viewType": "evn.blocksEditor",
+        "displayName": "EVN ALPHA Blocks",
+        "selector": [
+          {
+            "filenamePattern": "*.evnblocks"
+          }
+        ],
+        "priority": "default"
+      }
+    ],
+    "configuration": {
+      "title": "EVN ALPHA",
+      "properties": {
+        "evn.port": {
+          "type": "string",
+          "default": "",
+          "description": "Which board to use. The USB serial number of an EVN ALPHA (for example E46320165B5F2A36) — the board is then found again whatever COM number Windows gives it — or a port name such as COM7 or /dev/ttyACM0, which is what a Bluetooth port needs. \"EVN: Choose the board port\" stores the serial number for an EVN ALPHA. Leave empty to auto-detect the EVN ALPHA (USB 2e8a:000a)."
+        },
+        "evn.pythonPath": {
+          "type": "string",
+          "default": "",
+          "description": "Python interpreter used to run mpremote. Leave empty to use the Python extension's selected interpreter, then `py -3` / `python3` / `python` from PATH."
+        },
+        "evn.replAfterRun": {
+          "type": "boolean",
+          "default": true,
+          "description": "After running a file, stay connected in the REPL so the program's output stays visible and the board can be inspected (Ctrl+] leaves the REPL)."
+        },
+        "evn.blocks.renderer": {
+          "type": "string",
+          "enum": [
+            "zelos",
+            "geras",
+            "thrasos"
+          ],
+          "default": "zelos",
+          "description": "Look of the blocks in the block editor: zelos (rounded, Scratch-like), geras (classic Blockly), thrasos (classic, updated). Takes effect when a blocks file is (re)opened."
+        },
+        "evn.blocks.showCode": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show the generated MicroPython next to the blocks. The pane's minimise button collapses it to a Python pill on the block canvas; the pill brings it back."
+        },
+        "evn.blocks.theme": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "light",
+            "dark"
+          ],
+          "default": "auto",
+          "description": "Colour scheme of the block editor: auto follows the VS Code colour theme; light and dark force one (the scheme button in the block editor cycles through them)."
+        },
+        "evn.projectsFolder": {
+          "type": "string",
+          "default": "",
+          "description": "Folder that holds your EVN programs (.py and .evnblocks), shown in the EVN ALPHA sidebar under \"My projects\". Leave empty for \"EVN Projects\" in your Documents folder (or in your home folder when there is no Documents). It is created when the extension starts."
+        },
+        "evn.docsUrl": {
+          "type": "string",
+          "default": "https://evn.coresg.tech",
+          "description": "Web address of the online documentation. The Documentation button opens it; \"Open online documentation for the symbol under the cursor\" opens it at the matching section of the API reference."
+        },
+        "evn.updates.check": {
+          "type": "boolean",
+          "default": true,
+          "description": "Once a day, look up whether a newer extension or firmware has been published (one small download of latest.json from the documentation site; nothing is installed without asking)."
+        },
+        "evn.console.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Keep a live link to the board whenever no program is running and the REPL is closed: motor angles, battery, the devices on the I2C ports and a command line in the Board section. The link is dropped while a program runs and never interrupts a program the board started by itself from main.py."
+        },
+        "evn.console.bluetoothRate": {
+          "type": "number",
+          "default": 2,
+          "enum": [
+            1,
+            2,
+            4
+          ],
+          "enumDescriptions": [
+            "1 update a second",
+            "2 updates a second (default)",
+            "4 updates a second, the same as USB"
+          ],
+          "description": "Live console: telemetry updates a second over Bluetooth (USB always uses 4). Fewer updates leave more air time for your own program's Bluetooth traffic."
+        },
+        "evn.battery.warnVolts": {
+          "type": "number",
+          "default": 7,
+          "minimum": 0,
+          "maximum": 9,
+          "description": "Show a battery warning in the status bar when the pack drops below this voltage while the live console is connected. The EVN ALPHA pack is two cells, so 7.0 V is 3.5 V a cell. 0 turns the warning off."
+        }
+      }
+    },
+    "snippets": [
+      {
+        "language": "python",
+        "path": "./snippets/python.json"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "evn",
+          "title": "EVN ALPHA",
+          "icon": "media/evn-n-cambria.svg"
+        }
+      ],
+      "secondarySidebar": [
+        {
+          "id": "evnBoard",
+          "title": "EVN ALPHA Board",
+          "icon": "media/evn-n-cambria.svg"
+        }
+      ]
+    },
+    "views": {
+      "evn": [
+        {
+          "id": "evn.start",
+          "name": "Start",
+          "icon": "media/evn-n-cambria.svg",
+          "contextualTitle": "EVN ALPHA",
+          "visibility": "visible",
+          "initialSize": 1
+        },
+        {
+          "id": "evn.projects",
+          "name": "My projects",
+          "icon": "media/evn-n-cambria.svg",
+          "contextualTitle": "EVN ALPHA projects",
+          "visibility": "visible",
+          "initialSize": 3
+        },
+        {
+          "id": "evn.examples",
+          "name": "Examples",
+          "icon": "media/evn-n-cambria.svg",
+          "contextualTitle": "EVN ALPHA examples",
+          "visibility": "visible",
+          "initialSize": 3
+        }
+      ],
+      "evnBoard": [
+        {
+          "id": "evn.board",
+          "name": "Board",
+          "icon": "media/evn-n-cambria.svg",
+          "contextualTitle": "EVN ALPHA board",
+          "visibility": "visible"
+        },
+        {
+          "type": "webview",
+          "id": "evn.console",
+          "name": "Console",
+          "icon": "media/evn-n-cambria.svg",
+          "contextualTitle": "EVN ALPHA console",
+          "visibility": "visible"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "evn.projects",
+        "when": "evn.hasFileExplorer",
+        "contents": "No programs yet. Create one with the buttons above, or save a copy of an example.\n\n[Open my projects folder](command:evn.revealProjectsFolder)"
+      },
+      {
+        "view": "evn.projects",
+        "when": "!evn.hasFileExplorer",
+        "contents": "No programs yet. Create one with the buttons above, or save a copy of an example.\n\n[Open my projects folder](command:evn.openProjectsFolder)\n\nIn the browser your programs are kept in this browser's own storage, on this computer."
+      },
+      {
+        "view": "evn.board",
+        "when": "!evn.hasMpremote && evn.hasPython",
+        "contents": "The extension talks to the board with mpremote, a small Python tool.\n\n[Install mpremote](command:evn.installMpremote)\n\nAlready installed in another Python? [Set the Python path](command:workbench.action.openSettings?%5B%22evn.pythonPath%22%5D)."
+      },
+      {
+        "view": "evn.board",
+        "when": "!evn.hasMpremote && !evn.hasPython && evn.webSerial",
+        "contents": "No serial port has been granted to this page yet.\n\n[Choose the board port](command:evn.selectPort)\n\nThe browser asks which device this page may use: pick the EVN ALPHA (USB 2E8A:000A), or \"Any serial port\" for a Bluetooth link."
+      },
+      {
+        "view": "evn.board",
+        "when": "!evn.hasMpremote && !evn.hasPython && !evn.webSerial",
+        "contents": "This browser cannot reach a serial port, so the board cannot be used from here.\n\nWeb Serial works in Chrome, Edge and Opera, over https or on localhost. Everything that does not need the board - the examples, the blocks editor, your programs - works in any browser."
+      }
+    ],
+    "walkthroughs": [
+      {
+        "id": "evn.gettingStarted",
+        "title": "Get started with the EVN ALPHA",
+        "description": "Install the one tool the extension needs, flash the firmware, run an example, then write your own program.",
+        "steps": [
+          {
+            "id": "evn.step.mpremote",
+            "title": "Install mpremote",
+            "description": "The extension talks to the board with mpremote, a small Python tool. This step needs Python 3 on your computer.\n[Install mpremote](command:evn.installMpremote)",
+            "when": "evn.hasPython",
+            "media": {
+              "markdown": "media/walkthrough/mpremote.md"
+            },
+            "completionEvents": [
+              "onContext:evn.hasMpremote"
+            ]
+          },
+          {
+            "id": "evn.step.port",
+            "title": "Choose the board port",
+            "description": "In a browser there is nothing to install: the board is reached over Web Serial. Plug it in and let this page use the port - the browser asks you which device, and remembers it.\n[Choose the board port](command:evn.selectPort)",
+            "when": "!evn.hasPython",
+            "media": {
+              "markdown": "media/walkthrough/port-web.md"
+            },
+            "completionEvents": [
+              "onContext:evn.boardConnected",
+              "onCommand:evn.selectPort"
+            ]
+          },
+          {
+            "id": "evn.step.flash",
+            "title": "Flash the firmware",
+            "description": "Put the EVN ALPHA MicroPython firmware on the board. Once, and again whenever the extension bundles a newer one.\n[Flash the firmware](command:evn.flashFirmware)",
+            "when": "evn.hasPython",
+            "media": {
+              "markdown": "media/walkthrough/flash.md"
+            },
+            "completionEvents": [
+              "onCommand:evn.flashFirmware",
+              "onContext:evn.boardConnected"
+            ]
+          },
+          {
+            "id": "evn.step.run",
+            "title": "Run an example",
+            "description": "Pick an example in the Examples section of the EVN ALPHA sidebar and press its Run button. Keep the wheels off the ground.\n[Show the examples](command:evn.examples.focus)",
+            "media": {
+              "markdown": "media/walkthrough/run.md"
+            },
+            "completionEvents": [
+              "onCommand:evn.runExample",
+              "onCommand:evn.runFile",
+              "onCommand:evn.runProject"
+            ]
+          },
+          {
+            "id": "evn.step.program",
+            "title": "Write your own program",
+            "description": "Create a Python or blocks program. It is saved in your projects folder and runs with Ctrl+F5.\n[New Python program](command:evn.newPythonProject)\n[New blocks program](command:evn.newBlocksProject)\nWant autocomplete for evn in every Python file, not only inside your projects folder? [Turn it on](command:evn.enableGlobalAutocomplete)",
+            "media": {
+              "markdown": "media/walkthrough/program.md"
+            },
+            "completionEvents": [
+              "onCommand:evn.newPythonProject",
+              "onCommand:evn.newBlocksProject",
+              "onCommand:evn.newBlocksFile"
+            ]
+          },
+          {
+            "id": "evn.step.docs",
+            "title": "Learn more",
+            "description": "The online documentation covers every motor call, the board, the sensors and the blocks.\n[Open the documentation](command:evn.openDocumentation)",
+            "media": {
+              "markdown": "media/walkthrough/docs.md"
+            },
+            "completionEvents": [
+              "onCommand:evn.openDocumentation",
+              "onCommand:evn.openApiReference"
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

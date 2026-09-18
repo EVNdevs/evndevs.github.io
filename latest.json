@@ -1,7 +1,7 @@
 {
   "extension": {
-    "version": "0.2.16",
-    "vsix": "https://evn.coresg.tech/vsix/evn-alpha-micropython-0.2.16.vsix",
+    "version": "0.2.17",
+    "vsix": "https://evn.coresg.tech/vsix/evn-alpha-micropython-0.2.17.vsix",
     "notes": "https://evn.coresg.tech/#/changelog"
   },
   "firmware": {

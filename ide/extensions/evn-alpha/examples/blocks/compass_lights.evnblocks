@@ -1,0 +1,211 @@
+{
+  "format": "evn-blocks",
+  "version": 1,
+  "needs": "the compass on I2C port 3, an 8-LED RGB strip on I2C port 1 and the seven-segment display on I2C port 4.",
+  "workspace": {
+    "blocks": {
+      "languageVersion": 0,
+      "blocks": [
+        {
+          "type": "evn_compass_setup",
+          "id": "`bmGy/p%(%LRaAL$2]z:",
+          "x": 20,
+          "y": 20,
+          "fields": {
+            "PORT": "3"
+          }
+        },
+        {
+          "type": "evn_rgb_setup",
+          "id": "H{8^E%1|%I^Ure/C[q-s",
+          "x": 20,
+          "y": 85,
+          "fields": {
+            "PORT": "1",
+            "COUNT": 8
+          }
+        },
+        {
+          "type": "evn_seven_setup",
+          "id": "J_;~8`*m[E/K[~S`E^g6",
+          "x": 20,
+          "y": 151,
+          "fields": {
+            "PORT": "4"
+          }
+        },
+        {
+          "type": "evn_rgb_brightness",
+          "id": "GDAY_VI#/zC/nFh,uC4M",
+          "x": 20,
+          "y": 215,
+          "fields": {
+            "PORT": "1"
+          },
+          "inputs": {
+            "LEVEL": {
+              "shadow": {
+                "type": "math_number",
+                "id": ":*j0jL9RuiGCL;sh;*l4",
+                "fields": {
+                  "NUM": 40
+                }
+              }
+            }
+          },
+          "next": {
+            "block": {
+              "type": "evn_forever",
+              "id": "Q(GM^}GFN6~Z@i`%gwAD",
+              "inputs": {
+                "DO": {
+                  "block": {
+                    "type": "evn_seven_number",
+                    "id": "!,L,nB7AO.%V,_uuCg#v",
+                    "fields": {
+                      "PORT": "4"
+                    },
+                    "inputs": {
+                      "NUMBER": {
+                        "block": {
+                          "type": "evn_compass_heading",
+                          "id": "WH5+KFLjgoG@`Gk1b7,P",
+                          "fields": {
+                            "PORT": "3"
+                          }
+                        }
+                      }
+                    },
+                    "next": {
+                      "block": {
+                        "type": "controls_if",
+                        "id": "@s|(^ubHZ=PbE:p/{-QZ",
+                        "extraState": {
+                          "hasElse": true
+                        },
+                        "inputs": {
+                          "IF0": {
+                            "block": {
+                              "type": "logic_compare",
+                              "id": "gU^6#~6NODGrn5#2zb$p",
+                              "fields": {
+                                "OP": "LT"
+                              },
+                              "inputs": {
+                                "A": {
+                                  "block": {
+                                    "type": "evn_compass_heading",
+                                    "id": "(`;6Kp@I4=9imT^A01Ja",
+                                    "fields": {
+                                      "PORT": "3"
+                                    }
+                                  }
+                                },
+                                "B": {
+                                  "shadow": {
+                                    "type": "math_number",
+                                    "id": "13!WA[SVl*oGYqopFU*M",
+                                    "fields": {
+                                      "NUM": 45
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          },
+                          "DO0": {
+                            "block": {
+                              "type": "evn_rgb_fill",
+                              "id": "FW1|3,OrZec`wa[K+;KC",
+                              "fields": {
+                                "PORT": "1"
+                              },
+                              "inputs": {
+                                "COLOUR": {
+                                  "block": {
+                                    "type": "evn_color",
+                                    "id": "4t)f87op_-ZguNBbD~[K",
+                                    "fields": {
+                                      "COLOR": "GREEN"
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          },
+                          "ELSE": {
+                            "block": {
+                              "type": "evn_rgb_fill",
+                              "id": "VHNI:T9h.*:c0Yt@+x;|",
+                              "fields": {
+                                "PORT": "1"
+                              },
+                              "inputs": {
+                                "COLOUR": {
+                                  "block": {
+                                    "type": "evn_color_rgb",
+                                    "id": "ai6[pp]zwu=DvK%!c,?5",
+                                    "inputs": {
+                                      "R": {
+                                        "shadow": {
+                                          "type": "math_number",
+                                          "id": "!`{_sV~)G+AJl+6ilq5)",
+                                          "fields": {
+                                            "NUM": 255
+                                          }
+                                        }
+                                      },
+                                      "G": {
+                                        "shadow": {
+                                          "type": "math_number",
+                                          "id": "v;k~0X=LTlwI2I:}R@2N",
+                                          "fields": {
+                                            "NUM": 120
+                                          }
+                                        }
+                                      },
+                                      "B": {
+                                        "shadow": {
+                                          "type": "math_number",
+                                          "id": ",QbAj7{wNG/^o/V=;P6R",
+                                          "fields": {
+                                            "NUM": 0
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "next": {
+                          "block": {
+                            "type": "evn_wait",
+                            "id": "B(7;eXH/bws6-qQiuWTb",
+                            "inputs": {
+                              "TIME": {
+                                "shadow": {
+                                  "type": "math_number",
+                                  "id": "+dvX-=FtGSE}BKmk6Mo+",
+                                  "fields": {
+                                    "NUM": 200
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}
