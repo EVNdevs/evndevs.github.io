@@ -616,10 +616,11 @@
       'open platform — the natural evolution of LEGO MINDSTORMS, and a basecamp for students who ' +
       'want to get serious about robotics.'));
     prose.appendChild(el('p', null,
-      'EVN was created by Heng Teng Yi, in Singapore. The EVN ALPHA was first developed at the end of ' +
-      '2018 by Kenneth Chow, who went on to found the Centre of Robotics Excellence, and his mentor ' +
-      'Teng Yi, who came to it with four years of international competitive robotics behind him, ' +
-      'including wins in five RoboCup sub-leagues. Teng Yi also wrote and maintains the EVN Arduino library.'));
+      'EVN is a joint project of Kenneth Chow and Heng Teng Yi, mentor and mentee, in Singapore: ' +
+      'Kenneth as the Strategic Lead, Teng Yi as the Technical Lead. Kenneth founded the Centre of ' +
+      'Robotics Excellence in 2014; the EVN ALPHA was first developed there at the end of 2018. Teng Yi ' +
+      'came to it with four years of international competitive robotics behind him, including wins in ' +
+      'five RoboCup sub-leagues, and wrote and maintains the EVN Arduino library.'));
     prose.appendChild(el('p', null,
       'The board exists because of its backers. The Kickstarter campaign “EVN: The Natural Evolution ' +
       'of the LEGO® MINDSTORMS® System” ran from 22 December 2023 to 20 February 2024 and ' +
@@ -635,16 +636,25 @@
 
     var credit = el('aside', 'credit');
     credit.appendChild(el('span', 'kicker', 'Created by'));
-    credit.appendChild(el('p', 'who', 'Heng Teng Yi'));
-    credit.appendChild(el('p', 'what',
-      'Creator of EVN, and the author and maintainer of the EVN Arduino library. Singapore.'));
-    var gh = el('a', 'credit-link', 'github.com/HTY2003');
-    gh.href = 'https://github.com/HTY2003';
-    gh.target = '_blank';
-    gh.rel = 'noopener';
-    credit.appendChild(gh);
+    [['Kenneth Chow', 'Strategic Lead and mentor. Founded the Centre of Robotics Excellence in 2014.',
+      [['linkedin.com/in/kc-robotics', 'https://www.linkedin.com/in/kc-robotics/']]],
+     ['Heng Teng Yi', 'Technical Lead and mentee. Author and maintainer of the EVN Arduino library.',
+      [['linkedin.com/in/heng-teng-yi', 'https://www.linkedin.com/in/heng-teng-yi/'], ['github.com/HTY2003', 'https://github.com/HTY2003']]]]
+      .forEach(function (person) {
+        var box = el('div', 'person');
+        box.appendChild(el('p', 'who', person[0]));
+        box.appendChild(el('p', 'what', person[1]));
+        person[2].forEach(function (l) {
+          var a = el('a', 'credit-link', l[0]);
+          a.href = l[1];
+          a.target = '_blank';
+          a.rel = 'noopener';
+          box.appendChild(a);
+        });
+        credit.appendChild(box);
+      });
     var stats = el('ul', 'stats');
-    [['71', 'backers'], ['S$13,053', 'pledged, of a S$8,888 goal'], ['2018', 'the first EVN ALPHA']]
+    [['2014', 'the Centre of Robotics Excellence founded'], ['2018', 'the first EVN ALPHA'], ['71', 'Kickstarter backers'], ['S$13,053', 'pledged, of a S$8,888 goal']]
       .forEach(function (s) {
         var li = el('li');
         li.appendChild(el('strong', null, s[0]));

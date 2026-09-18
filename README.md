@@ -92,12 +92,13 @@ The controller itself, with what is in the box: **[coresg.tech/evn](https://core
 
 ## Credits
 
-**EVN was created by [Heng Teng Yi](https://github.com/HTY2003)**, in Singapore. He also wrote and
-maintains the [EVN Arduino library](https://github.com/EVNdevs/EVN-arduino) and
-[its documentation](https://evn.readthedocs.io). The EVN ALPHA was first developed at the end of 2018 by
-**Kenneth Chow** &mdash; who went on to found the [Centre of Robotics Excellence](https://edu.coresg.tech/)
-&mdash; and his mentor Teng Yi, who came to it with four years of international competitive robotics
-behind him, including wins in five RoboCup sub-leagues.
+**EVN is a joint project of [Kenneth Chow](https://www.linkedin.com/in/kc-robotics/) and [Heng Teng Yi](https://www.linkedin.com/in/heng-teng-yi/)**, mentor and mentee, in
+Singapore: Kenneth Chow as the Strategic Lead, Heng Teng Yi as the Technical Lead. Kenneth founded the
+[Centre of Robotics Excellence](https://edu.coresg.tech/) in 2014; the EVN ALPHA was first developed there
+at the end of 2018. Teng Yi came to it with four years of international competitive robotics behind him,
+including wins in five RoboCup sub-leagues, and he wrote and maintains the
+[EVN Arduino library](https://github.com/EVNdevs/EVN-arduino) ([GitHub](https://github.com/HTY2003),
+[documentation](https://evn.readthedocs.io)).
 
 LEGO&reg; MINDSTORMS&reg; was discontinued in 2022. The material for learning with it thinned out, and
 serious robotics hardware stayed expensive. EVN is meant to be an affordable, open platform &mdash; the
