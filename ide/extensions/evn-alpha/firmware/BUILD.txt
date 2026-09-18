@@ -1,6 +1,6 @@
 ﻿EVN_ALPHA_MicroPython.uf2
-source: the commit after d35aa63 (2026-09-18 late evening: the breakaway assist arms only behind a moving reference, releases when the shaft moves away, and does not arm at a stopped speed-mode reference, so run(0) leaves no standing voltage on a wheel-loaded shaft; control.state() diagnostic getter; firmware 0.2.19)
-built: 2026-09-18 23:30 +08:00 (MicroPython v1.26.1, pico-sdk 2.3.0)
+source: the commit after 93f304e (2026-09-18, later: the pose estimator with the IMU on the floor - hybrid prediction (v from the wheels, omega from the gyro, the bias from the wheel difference), imu_offset=, gate lock-out escapes, bounded angle wraps, Pose._stats(); firmware 0.2.20)
+built: 2026-09-18 23:08 +08:00 (MicroPython v1.26.1, pico-sdk 2.3.0)
 flash: single-line 03h boot2, PICO_FLASH_SPI_CLKDIV=4
-md5: 51e6b91a0b11e0f744efcb5aa6d4e459
-version: 0.2.19
+md5: e57a86393e2680e5b5fd7d014ed21b5c
+version: 0.2.20

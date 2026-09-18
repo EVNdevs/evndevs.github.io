@@ -1676,11 +1676,15 @@ class StopWatch:
 
 class Pose:
     """The robot's planar pose from any subset of the two drive encoders, an ``IMU`` and a ``Compass``
-    (docs/POSE_ESTIMATION_DESIGN.md; implementation begun 2026-09-18, motor-driven trajectories not yet benched).
+    (docs/POSE_ESTIMATION_DESIGN.md; encoders-only trajectories benched on the board 2026-09-18).
 
     ``Pose(1, 2, 56, 112, imu=3, compass=14)``: left/right motor ports 1..4 with the wheel diameter and axle
     track in mm (both or neither), ``imu=`` / ``compass=`` the I2C ports of existing ``IMU`` / ``Compass``
     objects (``OSError`` if no object is on that port; the compass counts once a calibration is installed).
+    ``reverse_left`` / ``reverse_right``: that motor's positive direction is backwards (a mirrored mount).
+    ``imu_offset=(x_mm, y_mm)``: where the IMU sits, forward and left of the axle mid-point (e.g. ``(-50, 60)``
+    for 50 mm behind, 60 mm left); a tape-measure value is enough, and it removes the acceleration a turning
+    body adds at a lever arm. Needs ``imu=``.
     One object per robot (``OSError`` for a second one until ``close()``). Frames: x East / y North in mm
     (without a compass, x is +90 degrees from the heading at ``reset()``), heading clockwise from north in
     degrees, speed mm/s, yaw rate deg/s clockwise. A source whose driver is lost leaves the set by itself and
@@ -1689,7 +1693,7 @@ class Pose:
     def __init__(self, left: Optional[int] = None, right: Optional[int] = None, wheel_diameter: Optional[float] = None,
                  axle_track: Optional[float] = None, *, gear_ratio: float = 1.0, imu: Optional[int] = None,
                  compass: Optional[int] = None, reverse_left: bool = False, reverse_right: bool = False,
-                 declination: float = 0.0) -> None: ...
+                 declination: float = 0.0, imu_offset: Optional[Tuple[float, float]] = None) -> None: ...
     def position(self) -> Tuple[float, float]:
         """(x, y) in mm, East / North."""
     def heading(self) -> float:
