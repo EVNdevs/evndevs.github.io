@@ -7,7 +7,7 @@ A block editor for the EVN ALPHA, built on [Blockly](https://github.com/Raspberr
 - **EVN: New blocks program** (command palette, or right-click a folder in the Explorer) creates a `.evnblocks` file and opens it in the block editor. **EVN: New project** puts the examples in `examples/blocks/`: `first_moves`, `two_motors`, `stall_stop` and `blink` for the motors and the board, then `colour_line` (a line-follower stub, no motors), `spirit_level` (IMU on the OLED display), `compass_lights` (the compass on the RGB strip and the 7-segment display) and `bluetooth_grabber` (touch pads, a servo, the LED matrix and Bluetooth).
 - Drag blocks from the toolbox on the left. The **Python** pane on the right shows the generated program as you build it; **Copy** puts it on the clipboard.
 - **Run on board** (or **Ctrl+F5**) saves the file, writes the program to `<name>.evnblocks.py` next to it and runs it in the *EVN ALPHA* terminal. **Stop motors** (Ctrl+Shift+F5) interrupts it and coasts every motor.
-- **Upload as main.py** makes the program start at power-on; **Export Python** saves it as a `.py` file you can edit as text.
+- **Upload as main.py** puts the program on the board, where a press of the user button starts it after every power-on; **Export Python** saves it as a `.py` file you can edit as text.
 - A `.evnblocks` file is JSON (the Blockly workspace); it can be committed, diffed and shared. `<name>.evnblocks.py` is rewritten at every run: edit the blocks, not that file.
 
 The editor uses the CORE colour scheme (white or dark, tan accent) and follows the VS Code colour theme; the scheme button at the right of the toolbar forces light or dark.

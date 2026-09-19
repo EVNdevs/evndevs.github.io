@@ -1763,8 +1763,19 @@ def _encoder_table(port: int, /) -> Tuple[Tuple[int, int, int, int], Tuple[int, 
     phase widths the last ``Motor.calibrate()`` measured in each direction (all zero when none this boot),
     ``None`` or why the default was kept, and the boot-consistency values ``tools/bench/mpy_encoder_seed.py``
     checks."""
-def reset() -> None:
-    """Coast the motors and reboot the board (``main.py`` runs again)."""
+def reset(*, start: bool = False) -> None:
+    """Coast the motors and reboot the board. After the reboot ``main.py`` waits for a press of the
+    user button as after a power-on; ``start=True`` makes that one boot run it at once (what the
+    extension's *Upload and run now* does)."""
+
+def autostart(on: Optional[bool] = None, /) -> bool:
+    """Whether ``main.py`` starts at boot without the user-button press (default ``False``: the board
+    waits, LED blinking fast, and runs ``main.py`` again at the next press once it has ended). Not
+    stored: put ``evn.autostart(True)`` in ``boot.py`` for a board that must run unattended."""
+
+def _chip_reset() -> dict:
+    """Debug: the RP2040's last chip-level reset as ``{"had_por", "had_run", "had_psm_restart"}``
+    (power-on or brown-out, the RESET key, a debugger). A software reboot leaves them as they were."""
 
 
 def wait(time: float) -> None:

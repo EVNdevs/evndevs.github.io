@@ -2,7 +2,7 @@
   "name": "evn-alpha-micropython",
   "displayName": "EVN ALPHA MicroPython",
   "description": "Early-access tooling for the EVN ALPHA robotics controller: flash the MicroPython firmware, run programs, open the REPL, autocomplete for the evn motor API, and a Blockly block editor that generates MicroPython.",
-  "version": "0.2.22",
+  "version": "0.2.23",
   "publisher": "evn-alpha",
   "license": "MIT",
   "preview": true,
@@ -72,7 +72,7 @@
       },
       {
         "command": "evn.uploadMain",
-        "title": "Upload current file as main.py (autorun)",
+        "title": "Upload current file as main.py",
         "category": "EVN",
         "icon": "$(cloud-upload)"
       },
@@ -152,7 +152,7 @@
       },
       {
         "command": "evn.uploadBlocksMain",
-        "title": "Upload blocks program as main.py (autorun)",
+        "title": "Upload blocks program as main.py",
         "category": "EVN",
         "icon": "$(cloud-upload)"
       },
@@ -206,7 +206,7 @@
       },
       {
         "command": "evn.uploadProjectMain",
-        "title": "Upload as main.py (autorun)",
+        "title": "Upload as main.py",
         "category": "EVN",
         "icon": "$(cloud-upload)"
       },

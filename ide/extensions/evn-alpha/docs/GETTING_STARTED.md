@@ -52,7 +52,7 @@ Autocomplete for `evn` works inside the projects folder once it is the workspace
 
 ## 3a. Blocks instead of Python
 
-Open `first_moves` under *Examples → Blocks*, or press **New blocks program** for an empty one. The block editor shows Scratch-style blocks on the left and the MicroPython they generate on the right. Build a program by dragging blocks from the toolbox, then press **Run on board** in the editor's toolbar (or **Ctrl+F5**); **Stop motors** interrupts it. **Upload as main.py** makes it the power-on program, **Export Python** turns it into a `.py` file you can keep editing as text. A blocks example saves the same way a Python one does: under a new name, into your projects folder. Every block and the Python it produces: **EVN: Open blocks reference**.
+Open `first_moves` under *Examples → Blocks*, or press **New blocks program** for an empty one. The block editor shows Scratch-style blocks on the left and the MicroPython they generate on the right. Build a program by dragging blocks from the toolbox, then press **Run on board** in the editor's toolbar (or **Ctrl+F5**); **Stop motors** interrupts it. **Upload as main.py** puts it on the board as the program the user button starts, **Export Python** turns it into a `.py` file you can keep editing as text. A blocks example saves the same way a Python one does: under a new name, into your projects folder. Every block and the Python it produces: **EVN: Open blocks reference**.
 
 **Every standard peripheral has blocks too.** Four of the block examples are peripheral programs you can open and run: `colour_line` (a line follower on the colour sensor), `spirit_level` (the IMU's tilt drawn on the 8x8 LED matrix), `compass_lights` (the compass heading on the RGB LED module) and `bluetooth_grabber` (a robot driven from a phone or PC over the Bluetooth module).
 
@@ -78,7 +78,7 @@ This is not the board's REPL. The REPL is still the **REPL** button and the term
 
 Two things to know:
 
-- **A program the board started by itself is never interrupted.** If `main.py` is running at power-on, the console row says so and only watches: its output still reaches the **EVN Console** panel. Press the stop button on that row (*Stop the board's program and connect*) when you do want to take the board over.
+- **A program the board started by itself is never interrupted.** If `main.py` is running (started from the user button), the console row says so and only watches: its output still reaches the **EVN Console** panel. Press the stop button on that row (*Stop the board's program and connect*) when you do want to take the board over.
 - **The link gets out of the way.** When you run a program, open the REPL, upload a file, reset or flash the board, the console lets go of the port and comes back a second after it is free. If you would rather it never held the port at all, turn `evn.console.enabled` off.
 
 ## 4. Ports and units
@@ -116,13 +116,14 @@ The RGB LED module and the servos sit on the servo ports 1 to 4, the Bluetooth m
 
 **Looking a call up while you type:** put the cursor on a word in a Python file — `Motor`, `run_angle`, `battery`, `StopWatch` — and press **Ctrl+F1** (or use *Open online documentation for the symbol under the cursor* in the right-click menu). The online documentation opens at that section of the API reference. The site it opens is the `evn.docsUrl` setting, so a staging copy can be used instead.
 
-## 5. A program that starts at power-on
+## 5. A program that starts from the user button
 
-**EVN: Upload current file as main.py** copies the open file to the board as `main.py`. It runs every time the board powers up (and after a reset). Choose *Upload and run now* to reset the board immediately.
+**EVN: Upload current file as main.py** copies the open file to the board as `main.py`. After every power-on (and after a reset) the board waits, LED blinking fast, and **a press of the user button starts the program**; when it ends, the next press runs it again, so a robot needs no PC. Choose *Upload and run now* to reset the board and start it immediately this once. Press the button once the LED blinks fast (a press during the first second of the boot is not counted). While the extension's live console is attached it talks to the board within a second of every boot, which ends the wait and gives it the REPL — so with VS Code connected use *Upload and run now* (or pause the console); the button starts `main.py` when nothing is talking to the port. A `boot.py` containing `import evn; evn.autostart(True)` restores the old behaviour (start at power-on without a press) for a board that must run unattended.
 
 Escapes, in case the program misbehaves:
 
-- Hold the **user button while powering on**: `main.py` is skipped once.
+- Hold the **user button for 2 s** while it runs: the board reboots (motors coast) and waits for the button again.
+- Hold the **user button while powering on**: `main.py` is skipped once (useful with `autostart`).
 - **EVN: Stop all motors** interrupts it from VS Code (the extension's own connections never start `main.py`).
 - The *Board* section's console row says when the board is running its own program, and its stop button (**Stop the board's program and connect**) ends it and hands the board back to you. Nothing else the extension does interrupts it.
 - **EVN: Remove main.py from the board** deletes it.
@@ -163,7 +164,7 @@ Notes: the first connection to the module takes a second or two (Windows opens t
 | Name this board | give this board a name; the status bar then shows it, as `EVN: Kenneth's robot (COM7)` |
 | Open REPL | interactive prompt on the board (Ctrl+] to leave); also the `REPL` button in the status bar and the terminal icon next to Run |
 | List files on the board | `ls` of the board's file system, in the *EVN ALPHA* output panel |
-| Reset the board | reboot (motors coast; `main.py` runs again) |
+| Reset the board | reboot (motors coast; `main.py` then waits for the user button) |
 | Collect board diagnostics | firmware version, battery, motion-engine counters, files: paste it into a bug report |
 | Read the board (firmware, battery, files) | re-read the firmware, the files and the I2C scan into the *Board* section; also its refresh button |
 | Send a command to the board | one line of Python on the board through the live console (§3b); the *Command line* row |
