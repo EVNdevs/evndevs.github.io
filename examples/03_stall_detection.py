@@ -4,8 +4,12 @@ Hold the shaft (or let the mechanism hit its end stop). An unloaded shaft
 creeps instead of stalling, so this call does not return until something blocks
 it. Ctrl+C aborts and coasts the motor.
 
-duty_limit caps the push as a percentage of the voltage cap; 50 % is a gentle
-push for an EV3 Medium (its breakaway is about 50 %); an EV3 Large moves at 40 %.
+duty_limit IS the stall force: the motor pushes up to that percentage of the
+voltage cap against the obstruction before the stall is reported, and without a
+duty_limit it pushes with the whole pack (an EV3 Large closes a gripper HARD).
+50 % is a firm push for an EV3 Medium (its breakaway is about 50 %, so much
+below that it cannot move at all and reports the stall at once); an EV3 Large
+moves at 40 %.
 
 Needs: one motor on port 1 and something to block its shaft (your hand or an end stop).
 """

@@ -102,8 +102,10 @@ class Control:
     @overload
     def evn(self, endpoint_kd: Optional[float] = None, start_duty: Optional[float] = None,
             hold_duty: Optional[float] = None, friction_ff: Optional[float] = None) -> None:
-        """EVN ALPHA's own tuned parameters (the getter returns the per-model optimum).
+        """EVN ALPHA's own tuned parameters of the ``"pid"`` law (the getter returns the per-model optimum).
 
+        Like ``pid()``, they act only when ``law("pid")`` is selected; the default ``"adrc"`` law
+        is self-calibrated and ignores them.
         ``endpoint_kd``: velocity gain inside the endpoint window (same units as ``kd``).
         ``start_duty`` / ``hold_duty`` (% duty, 0..100): stiction floors, breakaway push and least duty
         held near the target. ``friction_ff`` (%, 0..200): Coulomb friction feed-forward.
@@ -143,7 +145,8 @@ class Model:
 class Motor:
     """An EV3/NXT motor on EVN port ``port`` (1..4). ``Port.A..D`` are the same numbers.
 
-    The motor model (EV3 Large / EV3 Medium / NXT) comes from the firmware's port table.
+    The motor model (EV3 Large / EV3 Medium / NXT) is the one the port's stored calibration was made for, else
+    the firmware's fallback table; ``model=`` names it (below).
     A port already held by an open Motor raises ``OSError(EBUSY)`` until it is ``close()``d;
     a port outside 1..4 raises ``ValueError``. Every call after ``close()`` raises
     ``RuntimeError("motor closed; create a new Motor")``.
@@ -153,11 +156,21 @@ class Motor:
     model: Model
 
     def __init__(self, port: int, positive_direction: int = Direction.CLOCKWISE, gears: _Gears = None,
-                 reset_angle: bool = True, profile: Optional[float] = None, speed_unit: int = SpeedUnit.DEG_S) -> None:
+                 reset_angle: bool = True, profile: Optional[float] = None, speed_unit: int = SpeedUnit.DEG_S,
+                 *, model: Optional[str] = None) -> None:
         """``gears``: ``[12, 36]`` or ``[[12, 36], [20, 16, 40]]``; values are then in output degrees.
         ``reset_angle=True`` zeroes ``angle()`` at construction. ``profile``: position tolerance (deg)
         for ``done()``, must be positive. ``speed_unit=SpeedUnit.PERCENT`` makes every speed a
         percentage of ``full_speed()``.
+
+        ``model``: the motor on the port, ``"EV3 Large"``, ``"EV3 Medium"`` or ``"NXT"`` (``"large"``,
+        ``"medium"``, ``"nxt"`` also work). Every gain and limit starts from the model's compiled
+        defaults; ``calibrate()`` refines them for this motor and stores the result with the model.
+        ``None`` keeps the model the port runs: the one its stored calibration was made for, else the
+        firmware's fallback table (EV3 Large on ports 1-2, EV3 Medium on 3-4). Naming another model
+        switches the port to that model's defaults and prints a WARNING that its stored calibration
+        (made for the other model) is not applied until ``calibrate()`` runs again. ``ValueError`` for
+        an unknown name; ``RuntimeError`` if the port is moving.
         """
 
     # measuring
@@ -171,8 +184,11 @@ class Motor:
     def load(self) -> int:
         """Load torque in mNm (positive = opposing the motor): the controller's disturbance estimate."""
     def stalled(self) -> bool:
-        """True when more than the calibrated breakaway voltage is applied and the shaft does not move for
-        ``control.stall_tolerances()``; works on any calibrated motor, also during ``dc()``."""
+        """True when the motor is pushing as hard as it is allowed to and the shaft still does not turn, for
+        ``control.stall_tolerances()`` (Pybricks meaning): the applied voltage at the cap in force
+        (``settings(max_voltage)``, or the ``duty_limit`` of ``run_until_stalled``), the speed below the stall
+        speed and the load estimate absorbing the push. Works on any calibrated motor, also during ``dc()``
+        (at full duty). A hold pushed to its limit by a load reads stalled too."""
     def done(self) -> bool:
         """True when the last profiled move is complete and the shaft is within the target tolerances."""
 
@@ -198,9 +214,12 @@ class Motor:
     def run_until_stalled(self, speed: float, then: _Then = Stop.COAST, duty_limit: Optional[float] = None) -> int:
         """Run until the motor stalls (``stalled()`` after the first 150 ms); returns the angle reached.
 
-        ``duty_limit`` (% of ``settings()`` max_voltage) caps the push. An unloaded shaft creeps instead of
-        stalling, so this does not return without a real obstruction (Ctrl-C aborts); a ``duty_limit``
-        below the motor's breakaway cannot stall either. ``then`` outside ``Stop`` raises ``ValueError``.
+        **``duty_limit`` IS the stall force** (% of ``settings()`` max_voltage): the motor pushes up to that
+        cap against the obstruction before the stall is reported, and without one it pushes with the whole
+        pack (an EV3 Large gripper closes hard: pass ``duty_limit=30`` or so for a gentle grip). An unloaded
+        shaft creeps instead of stalling, so this does not return without a real obstruction (Ctrl-C aborts);
+        a ``duty_limit`` below the motor's breakaway returns at once, where it stands. ``then`` outside
+        ``Stop`` raises ``ValueError``.
         """
     def track_target(self, target_angle: float, /) -> None:
         """Unprofiled position servo: jump the reference straight to ``target_angle``."""
@@ -232,7 +251,10 @@ class Motor:
         every boot, and sets this port's ``full_speed()``. Re-run after swapping the motor.
         ``wait=False`` starts it and returns None; a later ``calibrate()`` on the same port joins it and
         returns the result, so several ports can calibrate together. ``RuntimeError`` when the shaft does
-        not break away or the fit fails."""
+        not break away or the fit fails. The calibration also measures the port's encoder phase table
+        (the four quadrature phase widths, both directions) and installs and stores it with the record,
+        which is what keeps ``speed()`` while coasting and ``Pose.velocity()`` smooth; see
+        ``evn._encoder_table()``."""
 
     # settings
     @overload
@@ -1149,13 +1171,13 @@ class IMU:
     def sample_rate(self) -> int: ...
     @overload
     def sample_rate(self, hz: int, /) -> None:
-        """DMP mode 1..200 Hz, raw mode 4..1000 Hz."""
+        """DMP mode 12..200 Hz, raw mode 4..1000 Hz."""
     @overload
     def dmp(self) -> bool: ...
     @overload
     def dmp(self, enable: bool, *, rate: Optional[int] = None, tap: bool = True,
             orientation: bool = True, gyro_cal: bool = True) -> None:
-        """Switch the DMP on or off. ``rate=None`` **keeps the rate in force** (1..200 Hz otherwise);
+        """Switch the DMP on or off. ``rate=None`` **keeps the rate in force** (12..200 Hz otherwise);
         ``tap`` / ``orientation`` / ``gyro_cal`` select the DMP features. ``dmp()`` with no argument
         is the getter."""
     @overload
@@ -1656,6 +1678,19 @@ def reset_cause() -> str:
 def bootloader() -> None:
     """Coast the motors and reboot into BOOTSEL (the RPI-RP2 drive) for flashing."""
 
+def _calibration(port: int, /) -> Optional[Tuple[bool, bool, int, int, int, int, int, int, int, int, Optional[str], Optional[str], int]]:
+    """Debug, nothing moves: the ADRC calibration port 1..4 is running as
+    (valid, stored, b0, tau_ms, v_break_mv, v_f_mv, k_vss, dt_mean_us, vbus_mv, vbus_pulse_mv,
+    warning, error, fit_max_us). ``warning`` says what is wrong with the record found in flash (made for another
+    motor model: refused; gains implausible for this port's model: applied anyway); ``error`` why the
+    last calibrate() on this port failed or was refused. None entries when there is nothing to say."""
+
+def _encoder_table(port: int, /) -> Tuple[Tuple[int, int, int, int], Tuple[int, int, int, int], Tuple[int, int, int, int], Optional[str], int, int]:
+    """Debug, nothing moves: ``(table, widths_fwd, widths_rev, note, pin_state, step_mod_4)`` for motor
+    port 1..4 — the substep phase table the port runs (``(0, 64, 128, 192)`` is the balanced default), the
+    phase widths the last ``Motor.calibrate()`` measured in each direction (all zero when none this boot),
+    ``None`` or why the default was kept, and the boot-consistency values ``tools/bench/mpy_encoder_seed.py``
+    checks."""
 def reset() -> None:
     """Coast the motors and reboot the board (``main.py`` runs again)."""
 
@@ -1684,7 +1719,8 @@ class Pose:
     ``reverse_left`` / ``reverse_right``: that motor's positive direction is backwards (a mirrored mount).
     ``imu_offset=(x_mm, y_mm)``: where the IMU sits, forward and left of the axle mid-point (e.g. ``(-50, 60)``
     for 50 mm behind, 60 mm left); a tape-measure value is enough, and it removes the acceleration a turning
-    body adds at a lever arm. Needs ``imu=``.
+    body adds at a lever arm. Needs ``imu=`` and no motor ports (``ValueError`` with wheels: the accelerometer
+    is not used then).
     One object per robot (``OSError`` for a second one until ``close()``). Frames: x East / y North in mm
     (without a compass, x is +90 degrees from the heading at ``reset()``), heading clockwise from north in
     degrees, speed mm/s, yaw rate deg/s clockwise. A source whose driver is lost leaves the set by itself and
@@ -1706,6 +1742,17 @@ class Pose:
         """(sigma x mm, sigma y mm, sigma heading deg): the filter's own uncertainty."""
     def parameters(self) -> Tuple[float, float, float]:
         """(r_left, r_right, track) in mm as the filter estimates them (they only move with turns)."""
+    @overload
+    def settings(self) -> Tuple[float, float]: ...
+    @overload
+    def settings(self, *, wheel_diameter: Optional[float] = None, axle_track: Optional[float] = None) -> None:
+        """``settings()`` -> (wheel_diameter mm, axle_track mm); ``settings(wheel_diameter=, axle_track=)`` applies a
+        calibrated geometry (1..1000 / 1..2000 mm). The axle track that matters is the effective one, between the two
+        contact patches as the robot really turns; measure it with one commanded 360 degree turn against a floor
+        mark: ``t_eff = t * turned_by_the_encoders / 360``. The pose, the heading and the gyro bias are kept; only
+        the wheel parameters and their covariance restart. NOT stored: a power cycle brings back the constructor's
+        numbers, so a program that needs the calibrated track sets it at start-up. The setter raises ``ValueError``
+        without motor ports."""
     def bounded(self) -> bool:
         """False while the live sources cannot bound the position (IMU alone, IMU + compass, none)."""
     def sources(self) -> Tuple[str, ...]:
@@ -1715,5 +1762,8 @@ class Pose:
     def reset(self, x: float = 0, y: float = 0, heading: float = 0, /) -> None:
         """Set the pose (mm, mm, degrees clockwise from north); biases and wheel parameters are kept."""
     def close(self) -> None: ...
+    def _stats(self) -> Tuple[int, int, int, int, int, int, int]:
+        """Bench diagnostic: (steps, rejected wheel updates, rejected lateral updates, rejected magnetometer updates,
+        the yaw-rate row's reject run, wheel-gate escapes taken, steps with a stale IMU)."""
     def _step(self, dt: float, gyro_z: float, accel_x: float, accel_y: float, wl: float, wr: float, mag: float, /) -> Tuple[float, ...]:
         """Bench hook: one filter step on SI values (nan = absent source); returns the SI state."""

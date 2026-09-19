@@ -103,6 +103,9 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 40px 0; }
   position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);
   clip-path: inset(50%); white-space: nowrap;
 }
+/* main carries tabindex="-1" so the skip link and a route change can move the focus onto it;
+   the focus ring belongs on what the user tabbed to, not on the whole page */
+main:focus { outline: none; }
 
 /* ---- Buttons ----------------------------------------------------------------------------------- */
 .btn {
@@ -383,6 +386,8 @@ a.card:hover .more { text-decoration: underline; text-underline-offset: 3px; }
   background: var(--page); color: var(--muted); border: 1px solid var(--line-strong); cursor: pointer;
 }
 pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
+/* a touch device has no hover: the button was invisible and still tappable */
+@media (hover: none) { .copy-btn { opacity: 1; } }
 .copy-btn:hover { color: var(--heading); border-color: var(--accent); }
 .copy-btn.done { color: var(--accent-ink); border-color: var(--accent); opacity: 1; }
 .doc-body table {

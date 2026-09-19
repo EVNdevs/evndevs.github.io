@@ -3,7 +3,7 @@
         "prefix": "evn-program",
         "description": "Skeleton of an EVN ALPHA motor program",
         "body": [
-            "from evn import Motor, Port, Stop, Direction, SpeedUnit, wait, StopWatch",
+            "from evn import Motor, Stop, Direction, SpeedUnit, wait, StopWatch",
             "",
             "m = Motor(${1:1})          # EVN port 1..4",
             "m.run_angle(${2:500}, ${3:360})   # deg/s, deg",
@@ -16,7 +16,7 @@
         "prefix": "evn-import",
         "description": "Import the EVN motor API",
         "body": [
-            "from evn import Motor, Port, Stop, Direction, wait, StopWatch",
+            "from evn import Motor, Stop, Direction, wait, StopWatch",
             ""
         ]
     },
@@ -60,8 +60,9 @@
     },
     "EVN tuning knobs": {
         "prefix": "evn-tuning",
-        "description": "PID and EVN-specific tuned parameters",
+        "description": "PID-law knobs (control.law(\"pid\") first; the default adrc law ignores them)",
         "body": [
+            "${1:m}.control.law(\"pid\")                 # pid()/evn() act on the PID law only",
             "print(\"pid\", ${1:m}.control.pid())        # (kp, ki, kd, integral_deadzone, integral_limit)",
             "print(\"evn\", ${1:m}.control.evn())        # (endpoint_kd, start_duty %, hold_duty %, friction_ff %)",
             "${1:m}.control.pid(integral_limit=${2:20})",
@@ -220,7 +221,7 @@
         "prefix": "evn-matrix",
         "description": "EVN 8x8 LED matrix (HT16K33) on an I2C port (standard peripheral)",
         "body": [
-            "from evn import MatrixLED, Icon, Side",
+            "from evn import MatrixLED, Icon",
             "",
             "m = MatrixLED(${1:9})              # I2C port 1..16 (the EVN matrix is at 0x71)",
             "m.icon(Icon.${2:HEART})",

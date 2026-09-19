@@ -419,8 +419,11 @@
      'Three EVN colour-sensor modules in black printed housings, one showing its TCS34725 board with two white LEDs.'],
     ['p-distance.jpg', 'Distance', 'VL53L0X · mm, profiles',
      'EVN distance-sensor modules in black printed housings, the time-of-flight sensor facing the camera.'],
-    ['p-imu.jpg',      'IMU',      'MPU-9250 · accel, gyro, mag',
-     'An EVN IMU module standing upright, its blue MPU-9250 breakout labelled VCC, GND, SCL, SDA visible through the housing.'],
+    // MPU-6500 (WHO_AM_I 0x70): what the kit ships and what hal_mpu6500.c
+    // accepts; no magnetometer (the Compass module is the separate part).
+    // The page said MPU-9250 until 2026-09-19 (owner: "shipped mpu6500").
+    ['p-imu.jpg',      'IMU',      'MPU-6500 · accel, gyro',
+     'An EVN IMU module standing upright, its blue MPU-6500 breakout labelled VCC, GND, SCL, SDA visible through the housing.'],
     ['p-compass.jpg',  'Compass',  'heading, calibration',
      'EVN compass modules in printed housings, the magnetometer board facing the camera.'],
     ['p-oled.jpg',     'OLED',     '128x64 · text and pixels',
@@ -721,9 +724,32 @@
 
   /* ---- go ----------------------------------------------------------------------------------------- */
 
+  /* A nav click replaces the whole of <main> and scrolls to the top. A screen reader is told
+     nothing by that - and the focus stays on a link that has just been removed from the page - so
+     the new document is announced and the focus is moved onto <main>, which carries tabindex="-1"
+     for the purpose (that is also what makes the "Skip to the content" link work in browsers that
+     will not focus a non-focusable target). */
+  function announce(text) {
+    var live = document.getElementById('route-status');
+    if (!live) {
+      live = el('div', 'visually-hidden');
+      live.id = 'route-status';
+      live.setAttribute('role', 'status');
+      live.setAttribute('aria-live', 'polite');
+      document.body.appendChild(live);
+    }
+    live.textContent = text;
+  }
+
+  var firstRoute = true;
+
   function route() {
     var r = parseRoute();
     if (r.doc === 'home') { renderHome(r.slug); } else { renderDoc(r); }
+    if (firstRoute) { firstRoute = false; return; }   // a page load announces itself
+    var info = r.doc === 'home' ? { title: SITE } : (DOCS[r.doc] || { title: SITE });
+    announce(info.title);
+    try { main.focus({ preventScroll: true }); } catch (e) { main.focus(); }
   }
 
   setUpTheme();

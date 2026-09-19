@@ -355,22 +355,32 @@
             ctx.strokeStyle = colors[s] || SERIES_FALLBACK[s];
             ctx.beginPath();
             var started = false;
-            var points = 0;
+            var run = 0;                 // points in the segment being drawn, not in the series
             var lastX = 0;
             var lastY = 0;
+            var dots = [];               // segments of exactly one point: a moveTo strokes nothing
             for (i = 0; i < samples.length; i++) {
                 v = (samples[i].values || [])[s];
-                if (typeof v !== 'number' || !isFinite(v)) { started = false; continue; }
+                if (typeof v !== 'number' || !isFinite(v)) {
+                    if (run === 1) { dots.push([lastX, lastY]); }
+                    started = false;
+                    run = 0;
+                    continue;
+                }
                 lastX = xOf(i);
                 lastY = yOf(v);
-                points++;
+                run++;
                 if (started) { ctx.lineTo(lastX, lastY); } else { ctx.moveTo(lastX, lastY); started = true; }
             }
+            if (run === 1) { dots.push([lastX, lastY]); }
             ctx.stroke();
-            // one point is a dot: a path of a single moveTo strokes nothing
-            if (points === 1) {
+            // Counting the whole series instead of each segment meant that two readings with a
+            // failure between them drew nothing at all: two lone moveTo's, and the dot branch did
+            // not fire because the series held two points. A sensor that answered twice looked as
+            // if it had never answered.
+            if (dots.length) {
                 ctx.fillStyle = colors[s] || SERIES_FALLBACK[s];
-                ctx.fillRect(lastX - 1, lastY - 1, 2, 2);
+                for (var d = 0; d < dots.length; d++) { ctx.fillRect(dots[d][0] - 1, dots[d][1] - 1, 2, 2); }
             }
         }
 

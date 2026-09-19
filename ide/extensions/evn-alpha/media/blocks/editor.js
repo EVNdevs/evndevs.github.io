@@ -171,9 +171,16 @@
         return python;
     }
 
+    /* Everything the file carried that is not the workspace - `needs`, which the Examples tree
+     * shows (src/examples.ts), and anything a later format adds. serialize() used to build the
+     * document from scratch, and applyEdit replaces the whole file, so one nudge of one block
+     * deleted the example's "Needs:" line for good. */
+    let lastDoc = {};
+
     function serialize() {
         const state = Blockly.serialization.workspaces.save(workspace);
-        return JSON.stringify({ format: FILE_FORMAT, version: FILE_VERSION, workspace: state }, null, 2) + '\n';
+        const doc = Object.assign({}, lastDoc, { format: FILE_FORMAT, version: FILE_VERSION, workspace: state });
+        return JSON.stringify(doc, null, 2) + '\n';
     }
 
     function load(text) {
@@ -182,16 +189,30 @@
         try {
             Blockly.Events.disable();
             workspace.clear();
+            lastDoc = {};
+            let warning = '';
             const trimmed = (text || '').trim();
             if (trimmed) {
                 const doc = JSON.parse(trimmed);
-                const state = doc && doc.format === FILE_FORMAT ? doc.workspace : doc;   // tolerate a bare Blockly state
+                const ours = doc && doc.format === FILE_FORMAT;
+                if (ours && Number(doc.version) > FILE_VERSION) {
+                    // a newer format: Blockly would load what it recognises and the next save
+                    // would write the rest away, silently. Say so instead.
+                    warning = 'This file was made by a newer version of the extension (format '
+                        + doc.version + '; this one knows ' + FILE_VERSION + '). Update the EVN ALPHA '
+                        + 'extension before editing it, or blocks it does not know may be lost.';
+                }
+                const state = ours ? doc.workspace : doc;   // tolerate a bare Blockly state
+                if (ours) {
+                    lastDoc = Object.assign({}, doc);
+                    delete lastDoc.workspace;              // the workspace is regenerated on save
+                }
                 if (state && typeof state === 'object') {
                     Blockly.serialization.workspaces.load(state, workspace);
                 }
             }
             lastText = text || '';
-            setStatus('');
+            setStatus(warning, !!warning);
         } catch (e) {
             setStatus('This file is not a valid blocks file: ' + (e && e.message ? e.message : e), true);
         } finally {

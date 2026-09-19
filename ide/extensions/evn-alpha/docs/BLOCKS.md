@@ -96,8 +96,8 @@ Every peripheral works like a motor: one object per port, created once at the to
 | IMU *1* has *the top* facing up | `imu_1.up() == Side.TOP` (`BOTTOM`, `FRONT`, `BACK`, `LEFT`, `RIGHT`) |
 | IMU *1* is still | `imu_1.stationary()` |
 | set IMU *1* heading to 0 | `imu_1.reset_heading()` |
-| set up ADC on port *1* | `adc_1 = ADC(1)` |
-| ADC *1* voltage of input *0* | `adc_1.voltage(0)` (volts; never more than 3.3 V on a pin) |
+| set up ADC on port *1* | `adc_1 = ADC(1)` followed by `adc_1.inputs((0, 1, 2, 3))` — the driver scans AIN0 only by default, and the voltage block would raise `ValueError` for any other input |
+| ADC *1* voltage of input *0* | `adc_1.voltage(0)` (input 0 to 3, all four scanned by the setup block; volts; never more than 3.3 V on a pin) |
 
 ### Outputs (displays, lights, servos, Bluetooth)
 
@@ -121,7 +121,7 @@ Every peripheral works like a motor: one object per port, created once at the to
 | clear 7-segment *1* | `seven_segment_1.clear()` |
 | colour *red* | `Color.RED` (orange, yellow, green, cyan, blue, violet, magenta, brown, white, gray, black, *off* `Color.NONE`) |
 | colour red *255* green *120* blue *0* | `(255, 120, 0)` |
-| set up RGB LEDs on servo port *1* with *8* LEDs | `rgb_1 = RGBLED(1, 8)` (a servo port; that port cannot drive a servo while this is open) |
+| set up RGB LEDs on servo port *1* with *8* LEDs | `rgb_1 = RGBLED(1, 8)` (1 to 64 LEDs — the firmware's limit; a servo port, which cannot drive a servo while this is open) |
 | RGB LEDs *1* set all to *colour red* | `rgb_1.fill(Color.RED)` |
 | RGB LEDs *1* set LED *0* to *colour green* | `rgb_1.set(0, Color.GREEN)` (LED 0 is the one at the plug) |
 | RGB LEDs *1* brightness *64* | `rgb_1.brightness(64)` (0 to 255) |
@@ -133,7 +133,7 @@ Every peripheral works like a motor: one object per port, created once at the to
 | set up Bluetooth on serial port *2* | `bluetooth_2 = Bluetooth(2)` |
 | Bluetooth *2* send *hello* | `bluetooth_2.write((str('hello') + '\n').encode())` |
 | Bluetooth *2* has something to read | `bluetooth_2.any() > 0` |
-| Bluetooth *2* received line | `bt_line(bluetooth_2)` — the binding has no `readline()`, so the block writes a small `bt_line(bt, timeout=5000)` helper at the top of the program: it reads with `bt.read(-1)` until a newline (up to 5 s), returns the line without it and keeps whatever came after for the next call |
+| Bluetooth *2* received line | `(bluetooth_2.readline(5000) or b'').decode()` — waits up to 5 s for a line, gives it without its newline (empty text on timeout) and leaves whatever arrived behind it in the receive buffer, where `read()` can still find it |
 
 The colour input of the RGB LED blocks takes either colour block: **colour *red*** (an `evn` `Color`) or **colour red / green / blue** (an `(r, g, b)` tuple, 0 to 255 each). Blockly's own colour-picker field is not part of Blockly 13 core, so there is no swatch picker.
 
@@ -149,7 +149,7 @@ The colour input of the RGB LED blocks takes either colour block: **colour *red*
 | Python *…* (statement) | the line as written |
 | Python *…* (value) | the expression as written |
 
-The two **Python** blocks are the escape hatch. `motor_1` .. `motor_4` and every peripheral object (`color_sensor_1`, `display_3`, `rgb_2`, …) are available: a Python block that mentions one has it created at the top of the program like a block would. A Python block always imports the core names (`Motor`, `Port`, `Stop`, `Direction`, `SpeedUnit`, `wait`, `StopWatch`, `battery`, `button`, `led`, `stop_all`), plus any peripheral class it spells out (`ColorSensor`, `Color`, `Icon`, `Side`, …), so the import line stays readable.
+The two **Python** blocks are the escape hatch. `motor_1` .. `motor_4` and every peripheral object (`color_sensor_1`, `display_3`, `rgb_2`, …) are available: a Python block that mentions one has it created at the top of the program like a block would. A Python block always imports the core names (`Motor`, `Port`, `Stop`, `Direction`, `SpeedUnit`, `wait`, `StopWatch`, `battery`, `button`, `led`, `stop_all`) and adds a bare `import evn`, plus any other name from the module it spells out (`ColorSensor`, `Color`, `Icon`, `Side`, `Pose`, `UART`, `I2C`, `Flash`, `core1_status`, …), so the import line stays readable and nothing in the module is out of reach. A device named inside a string or a `#` comment is *not* opened, and a port outside the device's range is ignored.
 
 ### What has no block
 
@@ -161,7 +161,7 @@ Each device has the few calls a program usually needs; everything else in the AP
 - **RGB LEDs**: `range()`, `on()` with a list, `blink()`, `animate()`, `hsv()`, `get()`, `invert()`, `count()`.
 - **Servo**: `move()` (a timed sweep), `duty()` for the continuous-rotation profile, `done()`, `set_range()`, `enable()` / `disable()`.
 - **Bluetooth**: `read()`, `read_all()`, `wait_until()`, `repl()`, `command()`, `address()`, `configured()`, `set_baudrate()`, and the constructor's `name=` / `baud=` / `mode=` (a block always uses the defaults).
-- **The rest of the module**: `I2C`, `UART`, `Flash`, `reset()`, `reset_cause()`, `bootloader()`, `core1_status()`.
+- **The rest of the module**: `Pose` (the drive base), `I2C`, `UART`, `Flash`, `reset()`, `reset_cause()`, `bootloader()`, `core1_status()`, `evn.version`.
 
 ### Logic, Loops, Math, Text, Variables, Functions
 

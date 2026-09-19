@@ -48,7 +48,7 @@ An example can be edited, but it is never overwritten: a save asks for a name an
 
 Autocomplete for `evn` works inside the projects folder once it is the workspace: **Open my projects folder as the workspace** in the *My projects* `...` menu (the folder already carries the stubs and the settings for it).
 
-**Stopping things:** **Ctrl+C** in the terminal, or **Ctrl+Shift+F5** (*EVN: Stop all motors*), interrupts the program and coasts every motor. The board's **user button** does the same without a PC. Connecting a tool to the board also coasts the motors.
+**Stopping things:** **Ctrl+C** in the terminal, or **Ctrl+Shift+F5** (*EVN: Stop all motors*), interrupts the program and coasts every motor. Both write the interrupt straight to the board's port, so the stop does not depend on a second tool being able to open it; if the port cannot be reached at all, the terminal says so in red and the editor shows a message naming the port instead of reporting a stop that did not happen — then use the board's **user button**, which coasts every motor without a PC. Closing the program terminal while a program is running stops it too. Connecting a tool to the board also coasts the motors.
 
 ## 3a. Blocks instead of Python
 
@@ -195,7 +195,8 @@ Please send:
 Known limitations of this build:
 
 - One board at a time per VS Code window; the *EVN ALPHA* terminal holds the port, and every other command closes that terminal first.
-- `run_until_stalled` needs a real obstruction; an unloaded shaft never stalls.
+- `run_until_stalled` needs a real obstruction; an unloaded shaft never stalls. **`duty_limit` is the force it
+  pushes with before the stall is reported** — without one the motor pushes with the whole pack.
 - The motion engine pauses for the duration of a file write on the board (tens of milliseconds); write files while the motors are idle.
 - A peripheral that is unplugged raises `OSError` from the next reading and recovers by itself when it is plugged back into the **same** port; a replug into a different port is not followed.
 - `Compass.calibrate_stop()` refuses a calibration until the sensor has been through enough directions, and keeps collecting: turn it more and stop again, or `calibrate_cancel()`.

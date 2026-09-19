@@ -317,7 +317,7 @@
             message0: 'Python %1',
             args0: [{ type: 'field_input', name: 'CODE', text: 'motor_1.settings(max_voltage=7000)' }],
             previousStatement: null, nextStatement: null, style: 'evn_advanced_blocks',
-            tooltip: 'One line of MicroPython, inserted as written. motor_1 .. motor_4 are the motors (defined when mentioned); everything from the evn module is imported.',
+            tooltip: 'One line of MicroPython, inserted as written. motor_1 .. motor_4 are the motors and color_sensor_3, imu_1 ... the peripherals (each defined when mentioned); the evn module is imported, so Pose, UART, I2C, Flash, core1_status() and evn.version are all reachable.',
         },
         {
             type: 'evn_python_value',
@@ -554,7 +554,7 @@
             message0: 'set up ADC on port %1',
             args0: [portField(I2C_PORTS)],
             style: 'evn_sense_blocks',
-            tooltip: 'The EVN ADC (ADS1115) on an I2C port, 1 to 16: it measures voltages on its own four inputs.',
+            tooltip: 'The EVN ADC (ADS1115) on an I2C port, 1 to 16. All four of its inputs (0 to 3) are scanned in turn, which is what the "voltage of input" block needs.',
         },
         {
             type: 'evn_adc_voltage',
@@ -708,9 +708,11 @@
         {
             type: 'evn_rgb_setup',
             message0: 'set up RGB LEDs on servo port %1 with %2 LEDs',
-            args0: [portField(SERVO_PORTS), { type: 'field_number', name: 'COUNT', value: 8, min: 1, max: 256, precision: 1 }],
+            // 64 is the firmware's limit (EVN_WS2812_MAX_LEDS): RGBLED(port, count) raises
+            // ValueError("count must be 1..64") on the program's first line otherwise
+            args0: [portField(SERVO_PORTS), { type: 'field_number', name: 'COUNT', value: 8, min: 1, max: 64, precision: 1 }],
             style: 'evn_output_blocks',
-            tooltip: 'A WS2812B strip or the EVN RGB LED module on a servo port, 1 to 4. LED 0 is the one nearest the plug. While it is in use that servo port cannot drive a servo.',
+            tooltip: 'A WS2812B strip or the EVN RGB LED module on a servo port, 1 to 4, with 1 to 64 LEDs. LED 0 is the one nearest the plug. While it is in use that servo port cannot drive a servo.',
         },
         {
             type: 'evn_rgb_fill',
@@ -811,8 +813,12 @@
      * block always gets; a peripheral class is imported only when a block (or a Python block that
      * spells it out) needs it, so the import line stays short. */
     const CORE_NAMES = ['Motor', 'Port', 'Stop', 'Direction', 'SpeedUnit', 'wait', 'StopWatch', 'battery', 'button', 'led', 'stop_all'];
+    /* Everything else the module offers. A name is imported when a block needs it or when a Python
+     * block spells it out - which is why the list has to hold the classes that have no block of
+     * their own as well (Pose is the drive base, and a blocks user has no other way to reach it). */
     const DEVICE_NAMES = ['Color', 'Icon', 'Side', 'ColorSensor', 'DistanceSensor', 'GestureSensor', 'EnvSensor',
-        'Compass', 'TouchArray', 'IMU', 'ADC', 'Display', 'MatrixLED', 'SevenSegmentLED', 'RGBLED', 'Servo', 'Bluetooth'];
+        'Compass', 'TouchArray', 'IMU', 'ADC', 'Display', 'MatrixLED', 'SevenSegmentLED', 'RGBLED', 'Servo', 'Bluetooth',
+        'Pose', 'UART', 'I2C', 'Flash', 'reset', 'reset_cause', 'bootloader', 'core1_status', 'version'];
     const EVN_NAMES = CORE_NAMES.concat(DEVICE_NAMES);
 
     /* class -> [variable prefix, "set up" block type]. One object per port, named after the port
@@ -834,8 +840,18 @@
         Bluetooth: ['bluetooth', 'evn_bluetooth_setup'],
     };
 
-    generator.addReservedWords('evn,motor_1,motor_2,motor_3,motor_4,stopwatch,bt_line,_bt_buffers,' +
-        Object.keys(DEVICES).map((cls) => DEVICES[cls][0]).join(',') + ',' + EVN_NAMES.join(','));
+    /* The generated object names themselves, not just their prefixes: a user variable called
+     * `imu_1` used to overwrite the `imu_1 = IMU(1)` the generator had just made, and the program
+     * then failed at `imu_1.heading()` with an AttributeError. `motor_1..4` were reserved and got
+     * renamed by Blockly, which is exactly what made the gap invisible. Servo and RGBLED only use
+     * ports 1..4, but reserving 1..16 for them costs nothing. */
+    const OBJECT_NAMES = [];
+    for (const cls of Object.keys(DEVICES)) {
+        for (let p = 1; p <= 16; p++) { OBJECT_NAMES.push(DEVICES[cls][0] + '_' + p); }
+    }
+    generator.addReservedWords('evn,motor_1,motor_2,motor_3,motor_4,stopwatch,' +
+        Object.keys(DEVICES).map((cls) => DEVICES[cls][0]).join(',') + ',' +
+        OBJECT_NAMES.join(',') + ',' + EVN_NAMES.join(','));
 
     generator.INDENT = '    ';
 
@@ -910,6 +926,13 @@
             }
             if (cls === 'Display' && setup && setup.getFieldValue('MIRROR') === 'TRUE') {
                 after = '\n' + name + '.mirror(True)';
+            }
+            if (cls === 'ADC') {
+                // The driver scans AIN0 only by default (hal_ads1115.c: cfg->inputs = 0x01), so
+                // `voltage(1)` raises ValueError("input 1 is not enabled: see inputs()") - and the
+                // block user has no block for inputs(). The setup block therefore enables all four;
+                // the cost is three more conversions per cycle (~3.5 ms at 860 SPS).
+                after = '\n' + name + '.inputs((0, 1, 2, 3))';
             }
             generator.definitions_[key] = name + ' = ' + cls + '(' + args.join(', ') + ')' + after;
         }
@@ -1183,41 +1206,64 @@
     generator.forBlock['evn_bluetooth_any'] = function (block) {
         return [deviceRef(block, 'Bluetooth') + '.any() > 0', Order.RELATIONAL];
     };
-    /* The binding has no readline(): a small helper reads until a newline and keeps whatever came
-     * after it, so the next call starts on the next line. */
+    /* The binding does have readline() (evn_bluetooth.c registers MP_QSTR_readline), so the block
+     * calls it: it waits up to 5 s, gives the line without its newline, and - unlike the 14-line
+     * read(-1) helper this replaced - leaves whatever arrived behind it in the receive buffer,
+     * where a "read everything" Python block can still find it. None on timeout becomes ''. */
     generator.forBlock['evn_bluetooth_line'] = function (block) {
-        const name = deviceRef(block, 'Bluetooth');
-        use('StopWatch'); use('wait');
-        generator.definitions_['bt_buffers'] = '_bt_buffers = {}';
-        generator.definitions_['bt_line'] = [
-            'def bt_line(bt, timeout=5000):',
-            '    """One line of text from a Bluetooth module (\'\' when none arrives in time)."""',
-            '    buf = _bt_buffers.get(bt, b\'\')',
-            '    watch = StopWatch()',
-            '    while True:',
-            '        buf += bt.read(-1)',
-            "        cut = buf.find(b'\\n')",
-            '        if cut >= 0:',
-            '            _bt_buffers[bt] = buf[cut + 1:]',
-            "            return buf[:cut].decode().strip()",
-            '        if watch.time() >= timeout:',
-            '            _bt_buffers[bt] = buf',
-            "            return ''",
-            '        wait(10)',
-        ].join('\n');
-        return ['bt_line(' + name + ')', Order.FUNCTION_CALL];
+        return ['(' + deviceRef(block, 'Bluetooth') + ".readline(5000) or b'').decode()", Order.FUNCTION_CALL];
     };
 
-    // Hand-written code always gets the core names, plus any evn class it spells out, and every
+    /* Blank out Python comments and the insides of string literals, keeping the length so nothing
+     * shifts. A Python block reading `print("check imu_1")` used to open an IMU on port 1 (an
+     * OSError when nothing is there), and `# imu_99` opened one on port 99 (a ValueError). */
+    function codeOnly(text) {
+        const out = text.split('');
+        let i = 0;
+        while (i < text.length) {
+            const c = text[i];
+            if (c === '#') {
+                while (i < text.length && text[i] !== '\n') { out[i] = ' '; i++; }
+                continue;
+            }
+            if (c === '"' || c === "'") {
+                const triple = text.slice(i, i + 3);
+                const close = (triple === c + c + c) ? triple : c;
+                let j = i + close.length;
+                while (j < text.length) {
+                    if (text[j] === '\\') { j += 2; continue; }
+                    if (text.slice(j, j + close.length) === close) { j += close.length; break; }
+                    if (close.length === 1 && text[j] === '\n') { break; }   // an unterminated string
+                    j++;
+                }
+                for (let k = i; k < Math.min(j, text.length); k++) { if (text[k] !== '\n') { out[k] = ' '; } }
+                i = j;
+                continue;
+            }
+            i++;
+        }
+        return out.join('');
+    }
+
+    /** The highest port number a class has: the firmware raises ValueError outside it. */
+    function maxPort(cls) { return (cls === 'Servo' || cls === 'RGBLED') ? 4 : 16; }
+
+    // Hand-written code always gets the core names plus a bare `import evn` (so `evn.version` and
+    // anything the list below misses still resolve), plus any evn name it spells out, and every
     // motor_N / peripheral object it mentions is defined at the top like a block's would be.
     function rawPython(block) {
         const code = block.getFieldValue('CODE').trim();
+        const bare = codeOnly(code);
         CORE_NAMES.forEach(use);
-        DEVICE_NAMES.forEach((n) => { if (new RegExp('\\b' + n + '\\b').test(code)) { use(n); } });
-        for (const m of code.matchAll(/\bmotor_([1-4])\b/g)) { motorRef(block, m[1]); }
+        // `import evn` as well as the `from evn import ...` line: the tooltip and docs/BLOCKS.md
+        // promise that everything in the module is reachable from a Python block.
+        generator.definitions_['import_evn_module'] = 'import evn';
+        DEVICE_NAMES.forEach((n) => { if (new RegExp('\\b' + n + '\\b').test(bare)) { use(n); } });
+        for (const m of bare.matchAll(/\bmotor_([1-4])\b/g)) { motorRef(block, m[1]); }
         for (const cls of Object.keys(DEVICES)) {
-            for (const m of code.matchAll(new RegExp('\\b' + DEVICES[cls][0] + '_(\\d+)\\b', 'g'))) {
-                deviceRef(block, cls, m[1]);
+            for (const m of bare.matchAll(new RegExp('\\b' + DEVICES[cls][0] + '_(\\d+)\\b', 'g'))) {
+                const port = Number(m[1]);
+                if (port >= 1 && port <= maxPort(cls)) { deviceRef(block, cls, m[1]); }
             }
         }
         return code;

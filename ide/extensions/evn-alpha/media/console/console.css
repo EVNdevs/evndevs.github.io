@@ -81,6 +81,18 @@ body {
     overflow: hidden;
 }
 
+/* the port and method, which must give way before the value does when the row is narrow */
+.chart-title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 0 1 auto;
+}
+
+.chart-sep {
+    flex: none;
+    opacity: 0.6;
+}
+
 .chart-value {
     color: var(--vscode-foreground);
     font-family: var(--vscode-editor-font-family);

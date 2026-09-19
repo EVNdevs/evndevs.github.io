@@ -13,17 +13,18 @@ Units: angle **deg**, speed **deg/s**, acceleration **deg/s²**, time **ms**, du
 ## Motor
 
 ```python
-Motor(port, positive_direction=Direction.CLOCKWISE, gears=None, reset_angle=True, profile=None, speed_unit=SpeedUnit.DEG_S)
+Motor(port, positive_direction=Direction.CLOCKWISE, gears=None, reset_angle=True, profile=None, speed_unit=SpeedUnit.DEG_S, *, model=None)
 ```
 
 | Parameter | Meaning |
 | :--- | :--- |
-| `port` | EVN port number **1–4** (M1–M4). `Port.A`–`Port.D` are the same integers 1–4. A port already held by an open `Motor` raises `OSError(EBUSY)` until that object is `close()`d. The motor model (EV3 Large or EV3 Medium) comes from the firmware's port table. |
+| `port` | EVN port number **1–4** (M1–M4). `Port.A`–`Port.D` are the same integers 1–4. A port already held by an open `Motor` raises `OSError(EBUSY)` until that object is `close()`d. |
 | `positive_direction` | `Direction.CLOCKWISE` (physically clockwise looking at the shaft) or `Direction.COUNTERCLOCKWISE`, which flips angle, speed, load, duty and targets. |
 | `gears` | `[12, 36]` or `[[12, 36], [20, 16, 40]]`; all values are then in output degrees, limits are divided by `control.scale`. |
 | `reset_angle` | `True` zeroes `angle()` at construction; `False` keeps the count accumulated since power-on. |
 | `profile` | position tolerance in degrees for `done()`, default 1 (two encoder edges: the controller lands inside its own 0.75° deadband). |
 | `speed_unit` | `SpeedUnit.DEG_S` (default) or `SpeedUnit.PERCENT`: the unit of every speed this motor takes or reports (see *Speed in percent*). |
+| `model` | keyword-only: `"EV3 Large"`, `"EV3 Medium"` or `"NXT"` (`"large"`, `"medium"`, `"nxt"` also work; an unknown name is `ValueError`). The motor **model** is the base of every gain and limit; `calibrate()` refines them for this motor and stores the record with the model. `None` (default) keeps the model the port runs: the one its stored calibration was made for, else the firmware's fallback (EV3 Large on ports 1–2, EV3 Medium on 3–4). Naming another model switches the port to that model's compiled defaults and prints a `WARNING` that the stored calibration (made for the other model) is not applied until `calibrate()` runs again. `print(m)` shows the model (`Motor(1, EV3 Large)`); `m.model` is the observer object below. |
 
 `Port.A..D` = 1..4, `Direction.CLOCKWISE=0 / COUNTERCLOCKWISE=1`, `Stop.COAST=0 / BRAKE=1 / HOLD=2 / NONE=3 / COAST_SMART=4`, `SpeedUnit.DEG_S=0 / PERCENT=1`.
 
@@ -35,7 +36,7 @@ Motor(port, positive_direction=Direction.CLOCKWISE, gears=None, reset_angle=True
 | `reset_angle(angle=None)` | makes the current position read `angle`; with no argument it becomes the **0 reference** every later move counts from |
 | `speed()` | deg/s (the controller's own estimate) |
 | `load()` | mNm; positive opposes the motor in the positive direction |
-| `stalled()` | `bool` |
+| `stalled()` | `bool` — pushing as hard as it is allowed to (the voltage cap, or the `duty_limit` of `run_until_stalled`) and the shaft does not turn, for `control.stall_tolerances()` (Pybricks meaning) |
 | `done()` | `True` when the axis is passive, or a profiled move has finished and the shaft is within `control.target_tolerances()`; `False` while `run()` is active |
 
 ### Stopping
@@ -55,7 +56,7 @@ Motor(port, positive_direction=Direction.CLOCKWISE, gears=None, reset_angle=True
 | `run_time(speed, time, then=Stop.HOLD, wait=True)` | profiled move covering the distance a trapezoid of `speed` covers in `time` ms |
 | `run_angle(speed, rotation_angle, then=Stop.HOLD, wait=True)` | relative move; negative `speed` reverses |
 | `run_target(speed, target_angle, then=Stop.HOLD, wait=True)` | absolute move; the sign of `speed` is ignored |
-| `run_until_stalled(speed, then=Stop.COAST, duty_limit=None)` | `run(speed)` with the voltage capped at `duty_limit` % of `settings()`; returns the angle once `stalled()` is true, after the first 150 ms (the breakaway). Needs a real obstruction: an unloaded shaft creeps and the call does not return (Ctrl-C aborts). Breakaway on the reference rig: EV3 Medium ≈ 50 %, EV3 Large < 40 % |
+| `run_until_stalled(speed, then=Stop.COAST, duty_limit=None)` | `run(speed)` with the voltage capped at `duty_limit` % of `settings()`; returns the angle once `stalled()` is true, after the first 150 ms (the breakaway). **`duty_limit` is the stall force: the motor pushes up to that cap before the stall is reported, and without one it pushes with the whole pack** (an EV3 Large gripper closes hard — pass `duty_limit=30` or so for a gentle grip). Needs a real obstruction: an unloaded shaft creeps and the call does not return (Ctrl-C aborts); a `duty_limit` below the breakaway returns at once, where it stands. Breakaway on the reference rig: EV3 Medium ≈ 50 %, EV3 Large < 40 % |
 | `track_target(target_angle)` | unprofiled position servo, the reference jumps to the target |
 
 `then` is carried out by the motion engine when the profile completes, so it works with `wait=False` too:
@@ -94,8 +95,8 @@ The speed limit still applies, but a calibrated port's default limit is its meas
 | Method | Notes |
 | :--- | :--- |
 | `control.limits(speed, acceleration, torque)` / `control.limits()` | `speed` caps every speed argument. `acceleration` is a number or an `(accel, decel)` tuple in deg/s²: the profiler honours the two independently (ramp up at `accel`, down at `decel`; `run()` ramps at `decel` whenever the speed magnitude shrinks). The getter returns the tuple when they differ. `torque` (mNm) becomes an equivalent voltage cap through the motor model. New limits apply to the next command |
-| `control.pid(kp, ki, kd, integral_deadzone, integral_limit)` / `control.pid()` | Pybricks units. `kd` is the cascade's velocity gain. `integral_deadzone` (deg, 0..5) is the endpoint deadzone (default 0.75). `integral_limit` (% duty, 0..100, default 20) is the largest contribution the integrator may make. Pybricks' `integral_rate` has no counterpart and is not accepted. Per motor object; the compiled per-model vector is untouched |
-| `control.evn(endpoint_kd, start_duty, hold_duty, friction_ff)` / `control.evn()` | **EVN ALPHA's own tuned parameters**, the getter returns the compiled per-model optimum. `endpoint_kd`: velocity gain inside the endpoint window. `start_duty` / `hold_duty` (% duty): stiction floors, breakaway push and least duty held near the target. `friction_ff` (%): Coulomb friction feed-forward |
+| `control.pid(kp, ki, kd, integral_deadzone, integral_limit)` / `control.pid()` | **PID law only** (`control.law("pid")`; the default `"adrc"` law is self-calibrated and ignores these). Pybricks units. `kd` is the cascade's velocity gain. `integral_deadzone` (deg, 0..5) is the endpoint deadzone (default 0.75). `integral_limit` (% duty, 0..100, default 20) is the largest contribution the integrator may make. Pybricks' `integral_rate` has no counterpart and is not accepted. Per motor object; the compiled per-model vector is untouched |
+| `control.evn(endpoint_kd, start_duty, hold_duty, friction_ff)` / `control.evn()` | **PID law only**, like `control.pid()`. EVN ALPHA's own tuned parameters of that law, the getter returns the compiled per-model optimum. `endpoint_kd`: velocity gain inside the endpoint window. `start_duty` / `hold_duty` (% duty): stiction floors, breakaway push and least duty held near the target. `friction_ff` (%): Coulomb friction feed-forward |
 | `control.target_tolerances(speed, position)` / `()` | the `done()` criterion; defaults 50 deg/s, 1 deg |
 | `control.stall_tolerances(speed, time)` / `()` | stall detection speed and time; defaults 50 deg/s, 50 ms |
 | `control.scale` | motor degrees per output degree (read-only) |
@@ -109,7 +110,7 @@ Defaults from the validated firmware, at the motor shaft:
 | acceleration limit | 2400 deg/s² | 3000 deg/s² |
 | torque limit | 449 mNm | 206 mNm |
 | `control.pid()` | (73837, 295, 3692, 1, 20) | (31402, 184, 342, 1, 20) |
-| `control.evn()` | (923, 12, 12, 50) | (170, 83, 50, 20) |
+| `control.evn()` | (923, 12, 20, 50) | (170, 83, 50, 20) |
 
 These are the fastest moves of the validation harness; the firmware also caps every move at what the calibrated motor can do at the present battery voltage, so a program never asks for a speed the battery cannot deliver. Higher limits are accepted but are outside the validated envelope.
 
@@ -190,6 +191,42 @@ Every constructor raises `OSError` when nothing answers on the port or the drive
 | `Bluetooth(serial_port, baud=230400, name="EVN Bluetooth", mode="remote", addr=None, *, stay_in_command=False, wait=True)` | EVN Bluetooth (HC-05) on Serial 1 or 2 | hold the module's button while powering on to program it (name, baud, `mode='host'` with `addr='98d3,31,fd1234'` to bind); then `write(b"...")`, `read()` / `read(n, timeout=None)`, `readline(timeout=5000)` (the next line without its `b"\n"` / `b"\r"`, or `None` on timeout; bytes behind it stay buffered; `timeout=0` never waits; a negative timeout raises `ValueError`; a line longer than 255 bytes never completes and `overflow()` counts the drop), `read_all()`, `any()` / `waiting()`, `overflow()` (read-and-clear), `wait_until(b"OK")`, `clear()`, `set_baudrate()`; `state()`, `ready()`, `configured()` / `config_errors()`, `in_command_mode()`, `command()`, `address()`, `version()`, `exit_command_mode()`, `factory_reset()`, `startup_time()`, `close()`; two modules link with one as `mode='host'` bound to the other's `address()`; `repl(True)` puts the board's REPL on the module so the PC's Bluetooth COM port carries the prompt, Run and Stop (Getting started §5a). One object per serial header: `Bluetooth(n)` raises while an `evn.UART` object holds the port |
 | `Servo(port)`, `Servo(port, "geekservo_cr")` | Geekservo 270° and continuous-rotation servos on servo port 1..4 | `Servo(port)` is the **Geekservo 270° profile** (the kit's servo): `angle(135)`, `move(270, speed=200)` (sweep, waits), `angle()`, `done()`; continuous: `duty(50)`, `stop()`; both: `reverse=True`, `range=`/`min_us=`/`max_us=`/`start=`/`max_dps=` overrides (keyword-only; `range=R` without `start=` starts at R/2), `profile()`, `pulse(us)`, `set_range()`, `enable()` / `disable()`, `close()` (gives the channel back — the pulse stops and the pin goes low — so an `RGBLED` strip or a new `Servo` object can take the port without a soft reset; every later call raises `ValueError("Servo is closed")`). `Servo(port, "generic")` is the 180° hobby-servo profile. A servo port pulses nothing until the first `Servo` object is built, and a new object drives its port even after `disable()` on an earlier one |
 
+## Pose (drive base)
+
+`evn.Pose` estimates the robot's planar pose from any subset of the two drive encoders, an `IMU` and a `Compass` — all eight combinations work; the sources not attached are simply left out. One object per robot (`OSError` for a second one until `close()`); every call after `close()` raises `ValueError("Pose is closed")`.
+
+```python
+Pose(left=None, right=None, wheel_diameter=None, axle_track=None, *, gear_ratio=1.0, imu=None, compass=None, reverse_left=False, reverse_right=False, declination=0.0, imu_offset=None)
+```
+
+| Parameter | Meaning |
+| :--- | :--- |
+| `left`, `right` | motor ports 1–4 of the two drive wheels; both or neither |
+| `wheel_diameter`, `axle_track` | mm, both or neither, with the ports. The axle track that matters is the **effective** one (between the two contact patches as the robot really turns), see `settings()` |
+| `gear_ratio` | motor turns per wheel turn |
+| `imu`, `compass` | the I2C ports of existing `IMU` / `Compass` objects (`OSError` if no object is on that port; the compass counts once a calibration is installed). Set the module's `axes(top=, front=)` from its silkscreen **before** building the `Pose` — the filter takes the body frame those objects publish |
+| `reverse_left`, `reverse_right` | that motor's positive direction is backwards (a mirrored mount) |
+| `declination` | degrees added to the compass heading |
+| `imu_offset` | `(x_mm, y_mm)`: where the IMU sits, forward and left of the axle mid-point (`(-50, 60)` is 50 mm behind, 60 mm left); a tape-measure value is enough. Needs `imu=` and **no motor ports** (`ValueError` with wheels: the accelerometer is not used then) |
+
+Frames: `x` East / `y` North in mm (without a compass, `x` is +90° from the heading at `reset()`), heading clockwise from north in degrees, speed mm/s, yaw rate deg/s clockwise.
+
+| Method | Notes |
+| :--- | :--- |
+| `position() -> (x, y)` | mm |
+| `heading()` | degrees clockwise from north, 0..360 |
+| `velocity() -> (speed, yaw_rate)` | mm/s, deg/s clockwise |
+| `state() -> (x, y, heading, speed, yaw_rate)` | the five above in one call |
+| `covariance() -> (sigma_x, sigma_y, sigma_heading)` | mm, mm, degrees: the filter's own uncertainty |
+| `parameters() -> (r_left, r_right, track)` | mm, as the filter estimates them (they only move with turns) |
+| `settings() -> (wheel_diameter, axle_track)` / `settings(wheel_diameter=, axle_track=)` | read or apply a calibrated geometry in mm (1..1000 / 1..2000). Measure the effective track with one commanded 360° turn against a floor mark: `t_eff = t * turned_by_the_encoders / 360`. The pose, the heading and the gyro bias are kept; **not stored** — a power cycle brings back the constructor's numbers, so a program sets it at start-up. The setter raises `ValueError` without motor ports |
+| `bounded()` | `False` while the live sources cannot bound the position (IMU alone, IMU + compass, none) |
+| `sources()` / `configured()` | the sources live right now / the ones the object was built with: subsets of `('wheels', 'imu', 'compass')`. A source whose driver is lost leaves the set by itself and rejoins when running |
+| `reset(x=0, y=0, heading=0)` | set the pose (mm, mm, degrees clockwise from north); biases and wheel parameters are kept |
+| `close()` | release the estimator |
+
+Bench diagnostics, not for programs: `_stats()` (seven counters: steps, rejected wheel / lateral / magnetometer updates, the yaw-rate row's reject run, wheel-gate escapes taken, steps with a stale IMU) and `_step(...)` (one filter step on SI values, for a `Pose(_test=True)` object).
+
 ## Timing
 
 | Call | Notes |
@@ -214,11 +251,12 @@ An 11 MB file system is mounted at `/`. `open()`, `import`, `os` and `vfs` work 
 | Topic | Pybricks | EVN ALPHA |
 | :--- | :--- | :--- |
 | `Motor(port)` | `Port.A`..`Port.D` | port numbers 1..4 (`Port.A`..`D` exist as the same integers) |
+| `Motor(port)` model | the motor identifies itself over the port | `model="EV3 Medium"` / `"EV3 Large"` / `"NXT"` (keyword-only) names it; without it the port keeps the model its stored calibration was made for, else the firmware's fallback (EV3 Large on 1-2, EV3 Medium on 3-4). The gain base is the model, never the port; `calibrate()` stores its record with the model, so nothing is re-run at boot |
 | `reset_angle()` with no argument | resets to the absolute marker angle | makes the current position 0 (EV3/NXT encoders have no absolute marker) |
 | `speed(window)` | averages over `window` ms | `speed()` only; the controller's own estimate is reported |
 | `control.pid()` `integral_rate` | caps integral growth | not offered; `integral_limit` and `integral_deadzone` are the real anti-windup knobs |
 | `control.pid()` units | torque controller | converted through the nominal pack voltage and the model's torque constant; EVN-specific terms live in `control.evn()` |
-| `run_until_stalled` | any obstruction | needs a real obstruction and more than 1.2 x the calibrated breakaway voltage applied; the first 150 ms of a move are ignored |
+| `run_until_stalled` | any obstruction; `duty_limit` is the stall torque | the same: the stall is reported once the drive sits at `duty_limit` (or the pack) and the shaft does not turn; the first 150 ms of a move are ignored |
 | Absolute angle range | unbounded | unbounded (64-bit) |
 | `settings()` | may return more fields | `(max_voltage,)` |
 | Program end | motors stop | motors keep their last command at the REPL; Ctrl-C, Ctrl-D, `evn.stop_all()` and connecting a tool coast them |

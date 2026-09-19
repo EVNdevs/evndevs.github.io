@@ -7,7 +7,7 @@ It is also the **Documentation** button in the Start section of the EVN ALPHA si
 
 ## Without leaving VS Code
 
-Two commands open the reference that ships with the extension, so they work offline:
+Three commands open the reference that ships with the extension, so they work offline:
 
 - **EVN: Open API reference** - every class and call in the `evn` module.
 - **EVN: Open blocks reference** - every block and the Python it generates.

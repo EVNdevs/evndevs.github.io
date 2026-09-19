@@ -3,6 +3,10 @@
 Every change here affects this Motor object only; the firmware's per-model
 defaults are untouched and come back at the next power-on.
 
+control.pid() and control.evn() are the legacy PID law's knobs. The default
+law is "adrc" (self-calibrated, no gains to set) and ignores them, so the
+last section switches this motor to control.law("pid") first.
+
 Needs: one motor on port 3, wheels off the ground.
 """
 from evn import Motor, wait, StopWatch
@@ -33,11 +37,16 @@ m.run_angle(800, 360)
 print("360 deg under a 6 V cap:", sw.time(), "ms")
 m.settings(max_voltage=9000)
 
-# Anti-windup and the stiction floors are real, enforced knobs.
+# Anti-windup and the stiction floors are real, enforced knobs - of the PID
+# law only. Under the default "adrc" law they are stored but never used.
+m.control.law("pid")
 m.control.pid(integral_limit=10)
 m.control.evn(hold_duty=40)
 print("pid after integral_limit=10:", m.control.pid())
 print("evn after hold_duty=40:", m.control.evn())
+m.run_angle(500, 360)
+print("law:", m.control.law())
+m.control.law("adrc")
 
 m.stop()
 m.close()
