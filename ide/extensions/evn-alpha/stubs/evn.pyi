@@ -268,6 +268,78 @@ class Motor:
     def __exit__(self, *args: object) -> None: ...
 
 
+
+class DriveBase:
+    """Two ``Motor`` objects driven as a differential drive, the Pybricks ``robotics.DriveBase`` API
+    (docs/MICROPYTHON_API.md; phase 8, 2026-09-19).
+
+    ``DriveBase(left_motor, right_motor, wheel_diameter, axle_track)``: the wheel diameter and the axle track
+    in mm. A motor's forward direction is its ``positive_direction`` (a mirrored left motor:
+    ``Motor(4, Direction.COUNTERCLOCKWISE)``); its ``gears=`` make the values wheel degrees. Units: mm, mm/s,
+    mm/s^2 for distances, degrees, deg/s, deg/s^2 for the heading; a positive angle is a clockwise turn seen
+    from above (the ``Pose`` / compass convention). The axle track that matters is the effective one between
+    the two contact patches (measure it with one ``turn(360)`` against a floor mark).
+
+    Each maneuver is two profiled moves on one time base: the wheel with the longer travel gets the
+    maneuver's speed and acceleration, the other the same numbers scaled by the ratio of the travels, both
+    started on the same 1 kHz tick, so the wheels stay proportional and a straight is straight. A direct
+    ``Motor`` command on one wheel while a maneuver is in force coasts the other wheel (Pybricks).
+    A motor that already belongs to a DriveBase is taken over (that base is closed). ``ValueError`` for a
+    motor used twice or a geometry outside 1..1000 / 1..2000 mm; ``RuntimeError`` after ``close()``."""
+    def __init__(self, left_motor: Motor, right_motor: Motor, wheel_diameter: float, axle_track: float) -> None: ...
+    def straight(self, distance: float, then: int = Stop.HOLD, wait: bool = True) -> None:
+        """Drive straight ``distance`` mm (negative = backwards), then hold / coast / brake. ``then=Stop.NONE``
+        raises ``ValueError`` (use ``drive()``); ``Stop.COAST_SMART`` counts the next relative move from this
+        move's aim. ``wait=False`` returns at once; poll ``done()``."""
+    def turn(self, angle: float, then: int = Stop.HOLD, wait: bool = True) -> None:
+        """Turn in place by ``angle`` degrees, clockwise positive."""
+    def curve(self, radius: float, angle: float, then: int = Stop.HOLD, wait: bool = True) -> None:
+        """Drive an arc of ``|radius|`` mm through ``|angle|`` degrees, the Pybricks ``curve()`` convention: the
+        angle's sign picks the side of the circle (positive = clockwise, to the right), the radius's sign the
+        direction of travel (negative = backwards), so ``curve(-r, a)`` retraces ``curve(r, a)``.
+        ``radius = axle_track / 2`` pivots on one wheel. See ``arc()`` for the other convention."""
+    def arc(self, radius: float, distance: Optional[float] = None, angle: Optional[float] = None,
+            then: int = Stop.HOLD, wait: bool = True) -> None:
+        """Drive along a circle of ``|radius|`` mm to the right (positive radius) or left (negative) for
+        ``distance`` mm of path or ``angle`` degrees of heading (exactly one of the two); a negative value drives
+        backwards. Pybricks ``arc()``."""
+    def drive(self, speed: float, turn_rate: float) -> None:
+        """Drive at ``speed`` mm/s along the path and ``turn_rate`` deg/s (clockwise positive) until the next
+        command; both wheels ramp to their new speeds together, and if one would exceed the weaker wheel's
+        limit both are scaled so the radius is kept."""
+    def stop(self) -> None:
+        """Coast both wheels."""
+    def brake(self) -> None:
+        """Passive brake on both wheels."""
+    def distance(self) -> int:
+        """mm driven since ``reset()`` (the mean of the two wheels, from the encoders)."""
+    def angle(self) -> int:
+        """Degrees turned since ``reset()``, clockwise positive (from the encoders)."""
+    def state(self) -> Tuple[float, float, float, float]:
+        """(distance mm, drive speed mm/s, angle deg, turn rate deg/s)."""
+    def reset(self, distance: float = 0, angle: float = 0, /) -> None:
+        """Start ``distance()`` and ``angle()`` again from these values."""
+    def done(self) -> bool:
+        """True when both wheels have completed their maneuver (or are passive)."""
+    def stalled(self) -> bool:
+        """True when either wheel is stalled (``Motor.stalled()``: at its allowed limit and not turning)."""
+    @overload
+    def settings(self) -> Tuple[int, Union[int, Tuple[int, int]], int, Union[int, Tuple[int, int]]]: ...
+    @overload
+    def settings(self, straight_speed: Optional[float] = None, straight_acceleration: Union[None, float, Tuple[float, float]] = None,
+                 turn_rate: Optional[float] = None, turn_acceleration: Union[None, float, Tuple[float, float]] = None) -> None:
+        """``settings()`` -> (straight_speed mm/s, straight_acceleration mm/s^2, turn_rate deg/s, turn_acceleration
+        deg/s^2); an acceleration may be ``(accel, decel)``. Defaults: the weaker wheel's ``control.limits()``
+        (about 770 mm/s, 1630 mm/s^2, 520 deg/s, 1100 deg/s^2 on two Mediums with 62.4 mm wheels 170 mm apart:
+        the floor closed as cleanly there as at 40 %); lower them for a heavier robot or a slick floor. A value
+        above what the weaker wheel can do is clamped to it and the getter reports the clamped value."""
+    def close(self) -> None:
+        """Coast both wheels and release them (the ``Motor`` objects stay open; a new DriveBase can use them)."""
+    def __enter__(self) -> DriveBase: ...
+    def __exit__(self, *args: object) -> None: ...
+    def _wheels(self) -> Tuple[float, float, float, float]:
+        """Bench diagnostic: (left deg, right deg, left deg/s, right deg/s) since ``reset()``, wheel degrees."""
+
 class battery:
     """Battery readings (a module-like object: ``evn.battery.voltage()``)."""
     @staticmethod

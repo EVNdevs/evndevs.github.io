@@ -1,6 +1,6 @@
 EVN_ALPHA_MicroPython.uf2
-source: the commit after b00069d (2026-09-19, later still: the whole-repository audit remediation, waves 1-5 - 198 findings fixed, the motor model as the base of every gain, calibration record v4 with measured encoder phase tables, stalled() in the Pybricks meaning, the hold nudge after run(0); firmware 0.2.21)
-built: 2026-09-19 15:49 +08:00 (MicroPython v1.26.1, pico-sdk 2.3.0)
+source: worktree-drivebase after 9baadc8 (2026-09-19, evening: evn.DriveBase - the Pybricks drive base on two Motors, two profiled moves on one time base; firmware 0.2.22)
+built: 2026-09-19 19:00 +08:00 (MicroPython v1.26.1, pico-sdk 2.3.0)
 flash: single-line 03h boot2, PICO_FLASH_SPI_CLKDIV=4
-md5: 9d9943f6145907b8fa0c842b8742fcdc
-version: 0.2.21
+md5: 2754f53283a500354ba708bcec84f882
+version: 0.2.22

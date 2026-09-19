@@ -191,7 +191,36 @@ Every constructor raises `OSError` when nothing answers on the port or the drive
 | `Bluetooth(serial_port, baud=230400, name="EVN Bluetooth", mode="remote", addr=None, *, stay_in_command=False, wait=True)` | EVN Bluetooth (HC-05) on Serial 1 or 2 | hold the module's button while powering on to program it (name, baud, `mode='host'` with `addr='98d3,31,fd1234'` to bind); then `write(b"...")`, `read()` / `read(n, timeout=None)`, `readline(timeout=5000)` (the next line without its `b"\n"` / `b"\r"`, or `None` on timeout; bytes behind it stay buffered; `timeout=0` never waits; a negative timeout raises `ValueError`; a line longer than 255 bytes never completes and `overflow()` counts the drop), `read_all()`, `any()` / `waiting()`, `overflow()` (read-and-clear), `wait_until(b"OK")`, `clear()`, `set_baudrate()`; `state()`, `ready()`, `configured()` / `config_errors()`, `in_command_mode()`, `command()`, `address()`, `version()`, `exit_command_mode()`, `factory_reset()`, `startup_time()`, `close()`; two modules link with one as `mode='host'` bound to the other's `address()`; `repl(True)` puts the board's REPL on the module so the PC's Bluetooth COM port carries the prompt, Run and Stop (Getting started §5a). One object per serial header: `Bluetooth(n)` raises while an `evn.UART` object holds the port |
 | `Servo(port)`, `Servo(port, "geekservo_cr")` | Geekservo 270° and continuous-rotation servos on servo port 1..4 | `Servo(port)` is the **Geekservo 270° profile** (the kit's servo): `angle(135)`, `move(270, speed=200)` (sweep, waits), `angle()`, `done()`; continuous: `duty(50)`, `stop()`; both: `reverse=True`, `range=`/`min_us=`/`max_us=`/`start=`/`max_dps=` overrides (keyword-only; `range=R` without `start=` starts at R/2), `profile()`, `pulse(us)`, `set_range()`, `enable()` / `disable()`, `close()` (gives the channel back — the pulse stops and the pin goes low — so an `RGBLED` strip or a new `Servo` object can take the port without a soft reset; every later call raises `ValueError("Servo is closed")`). `Servo(port, "generic")` is the 180° hobby-servo profile. A servo port pulses nothing until the first `Servo` object is built, and a new object drives its port even after `disable()` on an earlier one |
 
-## Pose (drive base)
+## DriveBase (two motors as a robot)
+
+`evn.DriveBase` follows [`pybricks.robotics.DriveBase`](https://docs.pybricks.com/en/latest/robotics.html): two `Motor` objects, the wheel diameter and the axle track in mm. Distances are mm, speeds mm/s, accelerations mm/s²; headings are degrees, deg/s, deg/s², **positive = clockwise seen from above** (the `Pose` / compass convention). Each motor's `positive_direction` is its forward direction (a mirrored left motor: `Motor(4, Direction.COUNTERCLOCKWISE)`) and its `gears=` make the values wheel degrees.
+
+```python
+from evn import Motor, Direction, DriveBase, Stop
+left, right = Motor(4, Direction.COUNTERCLOCKWISE), Motor(3)
+robot = DriveBase(left, right, wheel_diameter=62.4, axle_track=170)
+robot.straight(300); robot.turn(45); robot.arc(-150, angle=90)
+robot.drive(200, 30); ...; robot.stop()
+```
+
+| Method | Meaning |
+| :--- | :--- |
+| `straight(distance, then=Stop.HOLD, wait=True)` | drive `distance` mm (negative = backwards). `then`: `HOLD`, `COAST`, `BRAKE`, `COAST_SMART` (the next relative move counts from this move's aim); `Stop.NONE` raises `ValueError` (use `drive()`). `wait=False` returns at once — poll `done()`. |
+| `turn(angle, then, wait)` | turn in place by `angle` degrees, clockwise positive. |
+| `arc(radius, distance=None, angle=None, then, wait)` | drive along a circle of `|radius|` mm on the right (positive radius) or left (negative) for `distance` mm of path **or** `angle` degrees of heading (one of the two); negative = backwards. |
+| `curve(radius, angle, then, wait)` | the same circle with the older Pybricks signs: the angle's sign picks the side (positive = right), the radius's sign the direction (negative = backwards), so `curve(-r, a)` retraces `curve(r, a)`. |
+| `drive(speed, turn_rate)` | mm/s along the path and deg/s of heading until the next command; both wheels ramp together (the path during the ramp is the steady-state arc), and if a wheel would exceed the weaker motor's limit both are scaled so the radius is kept. |
+| `stop()` / `brake()` | coast / brake both wheels. |
+| `distance()`, `angle()` | mm driven and degrees turned since `reset()`, from the two encoders (ints). |
+| `state()` | `(distance, drive_speed, angle, turn_rate)` as floats. |
+| `reset(distance=0, angle=0)` | start the readings again from these values. |
+| `done()`, `stalled()` | both wheels finished (or passive) / either wheel stalled. |
+| `settings(straight_speed, straight_acceleration, turn_rate, turn_acceleration)` / `settings()` | mm/s, mm/s², deg/s, deg/s²; an acceleration may be `(accel, decel)`. **Defaults: the weaker motor's `control.limits()`** — about 770 mm/s, 1630 mm/s², 520 deg/s, 1100 deg/s² on two EV3 Mediums with 62.4 mm wheels 170 mm apart, where a 30 cm out-and-back and ±45° turns closed as cleanly as at 40 %. Lower them for a heavier robot or a slick floor; a value above the motor's limit is clamped to it. |
+| `close()` | coast both wheels and release them (the `Motor` objects stay open). A new `DriveBase` on a motor that still belongs to one takes the pair over. |
+
+**How it drives.** A maneuver is two profiled moves on one time base: the wheel with the longer travel gets the maneuver's speed and acceleration, the other the same numbers scaled by the ratio of the travels, both started on the same 1 kHz tick — so a straight is straight and an arc is an arc, and each wheel then tracks its own reference with the calibrated controller (endpoints within 1°, the two profiles ending within 5 ms of each other on the reference robot). There is no gyro in the loop: a `Pose` built on the same ports gives you the position and heading, and the axle track that matters is the effective one between the tyres' contact patches — measure it with one `turn(360)` against a floor mark. A direct `Motor` command on one wheel while a maneuver runs coasts the other wheel (Pybricks). A maneuver started while the robot is still moving lets each wheel blend from its own speed for one ramp; the endpoints stay exact.
+
+## Pose (pose estimator)
 
 `evn.Pose` estimates the robot's planar pose from any subset of the two drive encoders, an `IMU` and a `Compass` — all eight combinations work; the sources not attached are simply left out. One object per robot (`OSError` for a second one until `close()`); every call after `close()` raises `ValueError("Pose is closed")`.
 

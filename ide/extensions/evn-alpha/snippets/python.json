@@ -288,5 +288,19 @@
             "s.move(${3:270}, speed=${4:200})     # 270-degree servo: sweep and wait",
             "$0"
         ]
+    },
+    "EVN drive base": {
+        "prefix": "evn-drivebase",
+        "body": [
+            "${1:db} = DriveBase(${2:left}, ${3:right}, wheel_diameter=${4:62.4}, axle_track=${5:170})",
+            "${1:db}.straight(${6:300})",
+            "${1:db}.turn(${7:90})"
+        ],
+        "description": "Two motors as a Pybricks DriveBase (mm, deg clockwise)"
+    },
+    "EVN drive base drive": {
+        "prefix": "evn-drive",
+        "body": "${1:db}.drive(${2:200}, ${3:0})   # mm/s, deg/s",
+        "description": "DriveBase: drive at a speed and turn rate until the next command"
     }
 }

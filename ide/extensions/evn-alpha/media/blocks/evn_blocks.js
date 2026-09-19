@@ -317,7 +317,7 @@
             message0: 'Python %1',
             args0: [{ type: 'field_input', name: 'CODE', text: 'motor_1.settings(max_voltage=7000)' }],
             previousStatement: null, nextStatement: null, style: 'evn_advanced_blocks',
-            tooltip: 'One line of MicroPython, inserted as written. motor_1 .. motor_4 are the motors and color_sensor_3, imu_1 ... the peripherals (each defined when mentioned); the evn module is imported, so Pose, UART, I2C, Flash, core1_status() and evn.version are all reachable.',
+            tooltip: 'One line of MicroPython, inserted as written. motor_1 .. motor_4 are the motors, drive_base the robot and color_sensor_3, imu_1 ... the peripherals (each defined when mentioned); the evn module is imported, so Pose, UART, I2C, Flash, core1_status() and evn.version are all reachable.',
         },
         {
             type: 'evn_python_value',
@@ -807,6 +807,112 @@
         },
     ]);
 
+    /* ---- drive base (evn.DriveBase: two motors as a robot; mm, deg clockwise) -------------- */
+
+    /* then= for a drive base: Stop.NONE is refused by DriveBase (use "drive at"). */
+    const DB_THEN = [['hold', 'HOLD'], ['coast', 'COAST'], ['brake', 'BRAKE'], ['coast (smart)', 'COAST_SMART']];
+
+    Blockly.common.defineBlocksWithJsonArray([
+        {
+            type: 'evn_drivebase_setup',
+            message0: 'set up robot: left motor %1 right motor %2 wheel diameter %3 mm wheels %4 mm apart',
+            args0: [
+                { type: 'field_dropdown', name: 'LEFT', options: PORTS },
+                { type: 'field_dropdown', name: 'RIGHT', options: PORTS },
+                { type: 'field_number', name: 'WHEEL', value: 56, min: 1, max: 999, precision: 0.1 },
+                { type: 'field_number', name: 'TRACK', value: 112, min: 1, max: 1999, precision: 0.1 },
+            ],
+            style: 'evn_motor_blocks',
+            tooltip: 'The two wheel motors and the geometry of the robot (one per program). A motor mounted mirrored needs a "set up motor" block with counterclockwise as its positive direction. The distance between the wheels is measured between their contact patches: check it with one "turn robot 360 degrees" against a mark on the floor.',
+        },
+        {
+            type: 'evn_drivebase_straight',
+            message0: 'drive straight %1 mm',
+            args0: [{ type: 'input_value', name: 'DISTANCE', check: 'Number' }],
+            message1: 'then %1 wait %2',
+            args1: [
+                { type: 'field_dropdown', name: 'THEN', options: DB_THEN },
+                { type: 'field_checkbox', name: 'WAIT', checked: true },
+            ],
+            inputsInline: true, previousStatement: null, nextStatement: null, style: 'evn_motor_blocks',
+            tooltip: 'Drive straight by a distance in mm (negative = backwards), both wheels on one time base. "wait" pauses the program until the move is done.',
+        },
+        {
+            type: 'evn_drivebase_turn',
+            message0: 'turn robot %1 degrees',
+            args0: [{ type: 'input_value', name: 'ANGLE', check: 'Number' }],
+            message1: 'then %1 wait %2',
+            args1: [
+                { type: 'field_dropdown', name: 'THEN', options: DB_THEN },
+                { type: 'field_checkbox', name: 'WAIT', checked: true },
+            ],
+            inputsInline: true, previousStatement: null, nextStatement: null, style: 'evn_motor_blocks',
+            tooltip: 'Turn on the spot by an angle: positive turns right (clockwise seen from above), negative left.',
+        },
+        {
+            type: 'evn_drivebase_arc',
+            message0: 'drive an arc of radius %1 mm through %2 degrees',
+            args0: [
+                { type: 'input_value', name: 'RADIUS', check: 'Number' },
+                { type: 'input_value', name: 'ANGLE', check: 'Number' },
+            ],
+            message1: 'then %1 wait %2',
+            args1: [
+                { type: 'field_dropdown', name: 'THEN', options: DB_THEN },
+                { type: 'field_checkbox', name: 'WAIT', checked: true },
+            ],
+            inputsInline: true, previousStatement: null, nextStatement: null, style: 'evn_motor_blocks',
+            tooltip: 'Drive along a circle: a positive radius curves to the right, a negative one to the left; a negative angle drives the arc backwards.',
+        },
+        {
+            type: 'evn_drivebase_drive',
+            message0: 'drive at %1 mm/s turning %2 deg/s',
+            args0: [
+                { type: 'input_value', name: 'SPEED', check: 'Number' },
+                { type: 'input_value', name: 'TURN', check: 'Number' },
+            ],
+            inputsInline: true, previousStatement: null, nextStatement: null, style: 'evn_motor_blocks',
+            tooltip: 'Drive at a speed and a turn rate (positive = right) until the next robot block: the block for a line follower loop.',
+        },
+        {
+            type: 'evn_drivebase_stop',
+            message0: 'stop the robot %1',
+            args0: [{ type: 'field_dropdown', name: 'ACTION', options: [['coast', 'stop'], ['brake', 'brake']] }],
+            previousStatement: null, nextStatement: null, style: 'evn_motor_blocks',
+            tooltip: 'Coast (let the wheels roll) or brake both wheels.',
+        },
+        {
+            type: 'evn_drivebase_speeds',
+            message0: 'set robot speed %1 mm/s turn rate %2 deg/s',
+            args0: [
+                { type: 'input_value', name: 'SPEED', check: 'Number' },
+                { type: 'input_value', name: 'TURN', check: 'Number' },
+            ],
+            inputsInline: true, previousStatement: null, nextStatement: null, style: 'evn_motor_blocks',
+            tooltip: 'The speed "drive straight" and "drive an arc" use, and the rate "turn robot" uses. Without this block the robot uses the most its motors can do.',
+        },
+        {
+            type: 'evn_drivebase_reset',
+            message0: 'reset robot distance and angle',
+            previousStatement: null, nextStatement: null, style: 'evn_motor_blocks',
+            tooltip: 'The "robot distance" and "robot angle" values count from here.',
+        },
+        {
+            type: 'evn_drivebase_measure',
+            message0: 'robot %1',
+            args0: [{ type: 'field_dropdown', name: 'WHAT', options: [['distance (mm)', 'distance'], ['angle (deg)', 'angle']] }],
+            output: 'Number', style: 'evn_sense_blocks',
+            tooltip: 'How far the robot has driven (mm) or turned (degrees, clockwise positive) since the program started or the last reset, from the wheel encoders.',
+        },
+        {
+            type: 'evn_drivebase_is',
+            message0: 'robot %1',
+            args0: [{ type: 'field_dropdown', name: 'WHAT', options: [['is done', 'done'], ['is stalled', 'stalled']] }],
+            output: 'Boolean', style: 'evn_sense_blocks',
+            tooltip: 'Whether the last robot move has finished, or a wheel is pushing against something it cannot move.',
+        },
+    ]);
+
     /* ---- generator helpers --------------------------------------------------------------- */
 
     /* The names of the `evn` module a program can use. CORE_NAMES are what a hand-written Python
@@ -818,7 +924,7 @@
      * their own as well (Pose is the drive base, and a blocks user has no other way to reach it). */
     const DEVICE_NAMES = ['Color', 'Icon', 'Side', 'ColorSensor', 'DistanceSensor', 'GestureSensor', 'EnvSensor',
         'Compass', 'TouchArray', 'IMU', 'ADC', 'Display', 'MatrixLED', 'SevenSegmentLED', 'RGBLED', 'Servo', 'Bluetooth',
-        'Pose', 'UART', 'I2C', 'Flash', 'reset', 'reset_cause', 'bootloader', 'core1_status', 'version'];
+        'DriveBase', 'Pose', 'UART', 'I2C', 'Flash', 'reset', 'reset_cause', 'bootloader', 'core1_status', 'version'];
     const EVN_NAMES = CORE_NAMES.concat(DEVICE_NAMES);
 
     /* class -> [variable prefix, "set up" block type]. One object per port, named after the port
@@ -849,7 +955,7 @@
     for (const cls of Object.keys(DEVICES)) {
         for (let p = 1; p <= 16; p++) { OBJECT_NAMES.push(DEVICES[cls][0] + '_' + p); }
     }
-    generator.addReservedWords('evn,motor_1,motor_2,motor_3,motor_4,stopwatch,' +
+    generator.addReservedWords('evn,motor_1,motor_2,motor_3,motor_4,stopwatch,drive_base,' +
         Object.keys(DEVICES).map((cls) => DEVICES[cls][0]).join(',') + ',' +
         OBJECT_NAMES.join(',') + ',' + EVN_NAMES.join(','));
 
@@ -879,6 +985,12 @@
             const pb = b.match(/^dev_(.*)_(\d+)$/);
             return pa[1] === pb[1] ? Number(pa[2]) - Number(pb[2]) : (pa[1] < pb[1] ? -1 : 1);
         });
+        // the drive base is built from two motor objects: its line goes after the (regrouped) motors
+        if (this.definitions_.drive_base) {
+            const d = this.definitions_.drive_base;
+            delete this.definitions_.drive_base;
+            this.definitions_.drive_base = d;
+        }
         return baseFinish.call(this, code);
     };
 
@@ -943,6 +1055,23 @@
         return generator.valueToCode(block, input, Order.NONE) || fallback;
     }
 
+    /** Name of the robot's DriveBase object, defining it (once) from the "set up robot" block; without
+     * one the robot is left motor 1, right motor 2, 56 mm wheels 112 mm apart (the Pybricks example). */
+    function driveRef(block) {
+        const name = 'drive_base';
+        if (!generator.definitions_[name]) {
+            const setup = block.workspace.getBlocksByType('evn_drivebase_setup', false).find((b) => b.isEnabled());
+            const left = setup ? setup.getFieldValue('LEFT') : '1';
+            const right = setup ? setup.getFieldValue('RIGHT') : '2';
+            const wheel = setup ? Number(setup.getFieldValue('WHEEL')) : 56;
+            const track = setup ? Number(setup.getFieldValue('TRACK')) : 112;
+            const l = motorRef(block, left), r = motorRef(block, right);
+            use('DriveBase');
+            generator.definitions_[name] = name + ' = DriveBase(' + l + ', ' + r + ', wheel_diameter=' + wheel + ', axle_track=' + track + ')';
+        }
+        return name;
+    }
+
     /** The `then=` / `wait=` keyword arguments of a profiled move, omitted at their defaults. */
     function moveTail(block, defaultThen) {
         const then = block.getFieldValue('THEN');
@@ -990,6 +1119,37 @@
     generator.forBlock['evn_motor_reset_angle'] = function (block) {
         const angle = generator.valueToCode(block, 'ANGLE', Order.NONE);
         return motorRef(block) + '.reset_angle(' + (angle && angle !== '0' ? angle : '') + ')\n';
+    };
+    generator.forBlock['evn_drivebase_setup'] = function (block) {
+        driveRef(block);            // the definition is all the setup does
+        return '';
+    };
+    generator.forBlock['evn_drivebase_straight'] = function (block) {
+        return driveRef(block) + '.straight(' + value(block, 'DISTANCE', '0') + moveTail(block, 'HOLD') + ')\n';
+    };
+    generator.forBlock['evn_drivebase_turn'] = function (block) {
+        return driveRef(block) + '.turn(' + value(block, 'ANGLE', '0') + moveTail(block, 'HOLD') + ')\n';
+    };
+    generator.forBlock['evn_drivebase_arc'] = function (block) {
+        return driveRef(block) + '.arc(' + value(block, 'RADIUS', '100') + ', angle=' + value(block, 'ANGLE', '0') + moveTail(block, 'HOLD') + ')\n';
+    };
+    generator.forBlock['evn_drivebase_drive'] = function (block) {
+        return driveRef(block) + '.drive(' + value(block, 'SPEED', '0') + ', ' + value(block, 'TURN', '0') + ')\n';
+    };
+    generator.forBlock['evn_drivebase_stop'] = function (block) {
+        return driveRef(block) + '.' + block.getFieldValue('ACTION') + '()\n';
+    };
+    generator.forBlock['evn_drivebase_speeds'] = function (block) {
+        return driveRef(block) + '.settings(straight_speed=' + value(block, 'SPEED', '300') + ', turn_rate=' + value(block, 'TURN', '150') + ')\n';
+    };
+    generator.forBlock['evn_drivebase_reset'] = function (block) {
+        return driveRef(block) + '.reset()\n';
+    };
+    generator.forBlock['evn_drivebase_measure'] = function (block) {
+        return [driveRef(block) + '.' + block.getFieldValue('WHAT') + '()', Order.FUNCTION_CALL];
+    };
+    generator.forBlock['evn_drivebase_is'] = function (block) {
+        return [driveRef(block) + '.' + block.getFieldValue('WHAT') + '()', Order.FUNCTION_CALL];
     };
     generator.forBlock['evn_stop_all'] = function () {
         use('stop_all');
@@ -1260,6 +1420,7 @@
         generator.definitions_['import_evn_module'] = 'import evn';
         DEVICE_NAMES.forEach((n) => { if (new RegExp('\\b' + n + '\\b').test(bare)) { use(n); } });
         for (const m of bare.matchAll(/\bmotor_([1-4])\b/g)) { motorRef(block, m[1]); }
+        if (/\bdrive_base\b/.test(bare)) { driveRef(block); }
         for (const cls of Object.keys(DEVICES)) {
             for (const m of bare.matchAll(new RegExp('\\b' + DEVICES[cls][0] + '_(\\d+)\\b', 'g'))) {
                 const port = Number(m[1]);
@@ -1312,10 +1473,25 @@
                 ],
             },
             {
+                kind: 'category', name: 'Robot', categorystyle: 'evn_motor_category',
+                contents: [
+                    { kind: 'block', type: 'evn_drivebase_straight', inputs: { DISTANCE: shadowNum(300) } },
+                    { kind: 'block', type: 'evn_drivebase_turn', inputs: { ANGLE: shadowNum(90) } },
+                    { kind: 'block', type: 'evn_drivebase_arc', inputs: { RADIUS: shadowNum(150), ANGLE: shadowNum(90) } },
+                    { kind: 'block', type: 'evn_drivebase_drive', inputs: { SPEED: shadowNum(200), TURN: shadowNum(0) } },
+                    { kind: 'block', type: 'evn_drivebase_stop' },
+                    { kind: 'block', type: 'evn_drivebase_speeds', inputs: { SPEED: shadowNum(300), TURN: shadowNum(150) } },
+                    { kind: 'block', type: 'evn_drivebase_reset' },
+                    { kind: 'block', type: 'evn_drivebase_setup' },
+                ],
+            },
+            {
                 kind: 'category', name: 'Sensing', categorystyle: 'evn_sense_category',
                 contents: [
                     { kind: 'block', type: 'evn_motor_measure' },
                     { kind: 'block', type: 'evn_motor_is' },
+                    { kind: 'block', type: 'evn_drivebase_measure' },
+                    { kind: 'block', type: 'evn_drivebase_is' },
                     { kind: 'block', type: 'evn_button_pressed' },
                     { kind: 'block', type: 'evn_battery_voltage' },
                     { kind: 'block', type: 'evn_stopwatch_time' },

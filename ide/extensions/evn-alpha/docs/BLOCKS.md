@@ -35,12 +35,29 @@ Motors are `motor_1` .. `motor_4`, one object per port, created once at the top 
 
 `then` is *hold* (default), *coast*, *brake*, *keep running* (`Stop.NONE`) or *coast (smart)* (`Stop.COAST_SMART`); it is only written when it differs from the default. `wait` unticked adds `wait=False` (the move continues while the program goes on: use it to move two motors together, then **wait until motor is done**).
 
+### Robot (a drive base: two wheel motors driven together)
+
+| Block | Python |
+| :--- | :--- |
+| set up robot: left motor *4* right motor *3* wheel diameter *62.4* mm wheels *170* mm apart | `drive_base = DriveBase(motor_4, motor_3, wheel_diameter=62.4, axle_track=170)` (after the two motors' lines; a mirrored motor gets its direction from its own **set up motor** block) |
+| drive straight *300* mm then *hold* wait ☑ | `drive_base.straight(300)` |
+| turn robot *90* degrees then *hold* wait ☑ | `drive_base.turn(90)` (positive = right, clockwise seen from above) |
+| drive an arc of radius *150* mm through *90* degrees then *hold* wait ☑ | `drive_base.arc(150, angle=90)` (a negative radius curves left, a negative angle drives backwards) |
+| drive at *200* mm/s turning *0* deg/s | `drive_base.drive(200, 0)` |
+| stop the robot *coast* / *brake* | `drive_base.stop()` / `drive_base.brake()` |
+| set robot speed *300* mm/s turn rate *150* deg/s | `drive_base.settings(straight_speed=300, turn_rate=150)` |
+| reset robot distance and angle | `drive_base.reset()` |
+
+One robot per program. Without a **set up robot** block the robot is left motor 1, right motor 2, 56 mm wheels 112 mm apart. `then` here is *hold*, *coast*, *brake* or *coast (smart)* (a drive base has no *keep running*: use **drive at**). Both wheels run on one time base, so a straight is straight and an arc is an arc; the distance between the wheels is measured between the tyres' contact patches — check it with one *turn robot 360 degrees* against a mark on the floor.
+
 ### Sensing (values)
 
 | Block | Python |
 | :--- | :--- |
 | motor *1* angle / speed / load (mNm) / full speed (deg/s) | `motor_1.angle()` / `.speed()` / `.load()` / `.full_speed()` |
 | motor *1* is done / is stalled | `motor_1.done()` / `motor_1.stalled()` |
+| robot distance (mm) / angle (deg) | `drive_base.distance()` / `drive_base.angle()` |
+| robot is done / is stalled | `drive_base.done()` / `drive_base.stalled()` |
 | button pressed? | `button.pressed()` |
 | battery voltage (mV) | `battery.voltage()` |
 | stopwatch time (ms) | `stopwatch.time()` (a `StopWatch` created at the top of the program) |
@@ -149,19 +166,20 @@ The colour input of the RGB LED blocks takes either colour block: **colour *red*
 | Python *…* (statement) | the line as written |
 | Python *…* (value) | the expression as written |
 
-The two **Python** blocks are the escape hatch. `motor_1` .. `motor_4` and every peripheral object (`color_sensor_1`, `display_3`, `rgb_2`, …) are available: a Python block that mentions one has it created at the top of the program like a block would. A Python block always imports the core names (`Motor`, `Port`, `Stop`, `Direction`, `SpeedUnit`, `wait`, `StopWatch`, `battery`, `button`, `led`, `stop_all`) and adds a bare `import evn`, plus any other name from the module it spells out (`ColorSensor`, `Color`, `Icon`, `Side`, `Pose`, `UART`, `I2C`, `Flash`, `core1_status`, …), so the import line stays readable and nothing in the module is out of reach. A device named inside a string or a `#` comment is *not* opened, and a port outside the device's range is ignored.
+The two **Python** blocks are the escape hatch. `motor_1` .. `motor_4`, `drive_base` and every peripheral object (`color_sensor_1`, `display_3`, `rgb_2`, …) are available: a Python block that mentions one has it created at the top of the program like a block would. A Python block always imports the core names (`Motor`, `Port`, `Stop`, `Direction`, `SpeedUnit`, `wait`, `StopWatch`, `battery`, `button`, `led`, `stop_all`) and adds a bare `import evn`, plus any other name from the module it spells out (`ColorSensor`, `Color`, `Icon`, `Side`, `DriveBase`, `Pose`, `UART`, `I2C`, `Flash`, `core1_status`, …), so the import line stays readable and nothing in the module is out of reach. A device named inside a string or a `#` comment is *not* opened, and a port outside the device's range is ignored.
 
 ### What has no block
 
 Each device has the few calls a program usually needs; everything else in the API reference is a **Python** block away, with the object already created:
 
 - **Motors**: `gears`, `control.pid()`, `settings(max_voltage=…)`, `model`, `close()`.
+- **Robot**: `curve()` (the older Pybricks sign convention of `arc()`), `state()`, `reset(distance, angle)`, the accelerations in `settings()`, `then=Stop.COAST_SMART` chains, `close()`.
 - **Every peripheral**: `close()`, `age()`, `read()` (the "wait for a new reading" form of each getter), `raw()`, and the tuning calls — colour sensor `gain()`, `integration_time()`, `ranges()` / `normalized()`, `detectable_colors()`, `thresholds()`, `lux()`, `color_temperature()`; distance sensor `timing_budget()`, `signal_rate_limit()`; gesture sensor `engines()`, `gain()`, `led()`, `gesture_config()`; weather sensor `oversampling()`, `filter()`, `standby()`, `forced()`; compass `field()`, `axes()`, `calibration()` (storing and restoring a calibration), `calibrate_progress()`; touch pads `touched()`, `events()`, `data()`, `thresholds()`, `electrodes()`, `autoconfig()`; IMU `euler()`, `acceleration()`, `angular_velocity()`, `tap()`, `ready()`, `settings()`, `axes()`, `dmp()`; ADC `raw()`, `inputs()`, `range()`, `data_rate()`, `continuous()`.
 - **Displays**: the OLED's drawing calls (`pixel`, `line`, `rect`, `draw_circle`, `draw_text`, `splash`, `contrast`, `flip`, `invert`, `scroll`), the matrix's `bitmap()` / `animate()` / `orientation()` / `blink()` / `hline()` / `vline()` / `rect()`, the 7-segment's `digit()`, `char()`, `point()`, `colon()`, `segments()`.
 - **RGB LEDs**: `range()`, `on()` with a list, `blink()`, `animate()`, `hsv()`, `get()`, `invert()`, `count()`.
 - **Servo**: `move()` (a timed sweep), `duty()` for the continuous-rotation profile, `done()`, `set_range()`, `enable()` / `disable()`.
 - **Bluetooth**: `read()`, `read_all()`, `wait_until()`, `repl()`, `command()`, `address()`, `configured()`, `set_baudrate()`, and the constructor's `name=` / `baud=` / `mode=` (a block always uses the defaults).
-- **The rest of the module**: `Pose` (the drive base), `I2C`, `UART`, `Flash`, `reset()`, `reset_cause()`, `bootloader()`, `core1_status()`, `evn.version`.
+- **The rest of the module**: `Pose` (the pose estimator: position and heading from the encoders, an IMU and a compass), `I2C`, `UART`, `Flash`, `reset()`, `reset_cause()`, `bootloader()`, `core1_status()`, `evn.version`.
 
 ### Logic, Loops, Math, Text, Variables, Functions
 

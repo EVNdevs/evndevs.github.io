@@ -401,12 +401,12 @@
 
   var FEATURES = [
     ['Blocks', 'A block editor that writes MicroPython',
-     'Scratch-style blocks for the motors, timing, the board and every standard peripheral, with the ' +
+     'Scratch-style blocks for the motors, the robot (a two-wheel drive base), timing, the board and every standard peripheral, with the ' +
      'generated code beside them. Export a blocks program as a .py file and carry on in text.',
      '#/blocks/'],
     ['Python', 'Python with real autocomplete',
      'Type stubs for the whole evn module go into your projects folder, so Pylance completes Motor, ' +
-     'run_angle, the sensors and their units, with the documentation in the tooltip.',
+     'DriveBase, run_angle, the sensors and their units, with the documentation in the tooltip.',
      '#/api/'],
     ['Live', 'A board panel and a live console',
      'Motor angles and speeds four times a second, the pack and cell voltages, the peripherals found ' +
@@ -466,8 +466,8 @@
 
     left.appendChild(el('p', 'pitch',
       'MicroPython for the EVN ALPHA robotics controller, and the VS Code extension that runs your ' +
-      'programs on it: four EV3/NXT motor ports with a tuned controller, servos, fifteen standard ' +
-      'peripherals, Bluetooth, blocks or Python, and the board live in the editor.'));
+      'programs on it: four EV3/NXT motor ports with a tuned controller and a Pybricks-style drive base, ' +
+      'servos, fifteen standard peripherals, Bluetooth, blocks or Python, and the board live in the editor.'));
 
     var actions = el('div', 'actions');
     var b1 = el('a', 'btn btn-primary', 'Get started');
