@@ -987,7 +987,11 @@ class GestureSensor:
     ``OSError("no free GestureSensor slot for port %d (%d in use)")`` when all 4 slots are taken;
     ``OSError("gesture sensor on port %d gave no first sample")`` / ``"... gave no sample under the
     new setting"`` on a timeout; ``OSError("gesture sensor on port %d not responding")`` while
-    unplugged; ``ValueError("gesture sensor is closed")`` after ``close()``;
+    unplugged; ``OSError("gesture sensor on port %d is in gesture mode (an object within the gesture
+    threshold): colour and proximity are suspended until it moves away, or engines(gesture=False)")``
+    from ``proximity()``, the colour getters and ``age()`` when the chip entered gesture mode before
+    any reading was taken (a sensor lying face down at power-up, or right after a setter);
+    ``ValueError("gesture sensor is closed")`` after ``close()``;
     ``ValueError("colour engine is off: engines(colour=True)")`` /
     ``ValueError("gesture engine is off: engines(gesture=True)")`` with an engine disabled.
     """
@@ -1005,7 +1009,8 @@ class GestureSensor:
         """0..255, higher = closer. While an object is held still inside the gesture entry threshold the
         chip stays in gesture mode and this value (and the colour) stops updating until it moves away;
         ``age()`` grows and ``status()[4]`` is ``True``; use ``engines(gesture=False)`` to track a
-        stationary object."""
+        stationary object. With no reading taken yet (the object there from power-up) it raises
+        ``OSError("... is in gesture mode ...")`` instead of a stale value."""
     def raw(self) -> Tuple[int, int, int, int]:
         """``(clear, red, green, blue)`` counts (needs the colour engine)."""
     def rgb(self) -> Tuple[int, int, int]: ...
@@ -1428,8 +1433,8 @@ class Display:
 
     **Scrolling**: the panel's RAM may not be written while a hardware scroll runs, so drawing is
     held back until it stops. The first drawing call after ``scroll()`` stops the scroll and repaints
-    the frame, and a new ``scroll()`` sends the stop command first. ``flip()`` does not repaint (the
-    remap is applied at display time).
+    the frame, and a new ``scroll()`` sends the stop command first. ``flip()`` repaints the frame
+    (the segment re-map only affects data written after it, SSD1306 10.1.8).
 
     Raises: ``ValueError("port must be 1..16")``; ``ValueError("addr must be 0x3C or 0x3D")``;
     ``OSError("no SSD1306 on port %d (I2C 0x%02x)")``;
@@ -1501,8 +1506,8 @@ class Display:
     def flip(self) -> bool: ...
     @overload
     def flip(self, enable: bool, /) -> None:
-        """Rotate the panel 180 degrees. The remap happens at display time, so the frame is not
-        repainted."""
+        """Rotate the panel 180 degrees. The frame is repainted (the segment re-map only affects
+        data written after it, SSD1306 10.1.8): about 30 ms with ``show()``."""
     @overload
     def invert(self) -> bool: ...
     @overload

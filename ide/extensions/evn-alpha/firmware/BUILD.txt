@@ -1,6 +1,6 @@
 EVN_ALPHA_MicroPython.uf2
-source: worktree-power-cycle-boot after ab33bb8 (2026-09-19, night: main.py starts from the user button, evn.reset(start=), evn.autostart(), evn._chip_reset(), the 1200-baud BOOTSEL hook off; firmware 0.2.23)
-built: 2026-09-19 20:40 +08:00 (MicroPython v1.26.1, pico-sdk 2.3.0)
+source: worktree-worktree-overnight-bench after b0e2e58 (2026-09-20, night: Display.flip() repaints again (SSD1306 10.1.8), GestureSensor names gesture mode instead of "not responding" and waits for the verdict; firmware 0.2.24)
+built: 2026-09-19 22:20 +08:00 (MicroPython v1.26.1, pico-sdk 2.3.0)
 flash: single-line 03h boot2, PICO_FLASH_SPI_CLKDIV=4
-md5: 7030cdfe29928aa7b34130ad463f93e5
-version: 0.2.23
+md5: 467258274d6e39437bb9bcbfa759fe01
+version: 0.2.24
