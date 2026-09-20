@@ -13,7 +13,7 @@ This is an early-access build for user testing. It covers the **motor layer** (f
 
 ## 2. Put the firmware on the board
 
-Run **EVN: Flash MicroPython firmware**. The extension carries the firmware (`firmware/EVN_ALPHA_MicroPython.uf2`; `firmware/BUILD.txt` says which build).
+Run **EVN: Flash MicroPython firmware**. The extension carries the firmware (`firmware/EVN_ALPHA_MicroPython.uf2`; `firmware/BUILD.txt` says which build, and the flash command checks the file's md5 against that record before it touches the board - a stale or half-synchronised file is refused with both hashes named, never flashed).
 
 - If the board already runs the MicroPython firmware, the extension reboots it into the bootloader by itself.
 - Otherwise: unplug USB, **hold the BOOTSEL button**, plug USB back in, release the button. A drive named `RPI-RP2` appears and the extension copies the firmware onto it.
@@ -36,7 +36,7 @@ Open the **EVN ALPHA** tab in the activity bar (the ℕ glyph). It has three sec
 
 1. Plug a motor into **port 1** and keep the wheel off the ground.
 2. Under *Examples*, click `01_first_moves` to open it, then press **Ctrl+F5** (*EVN: Run current file on the board*), or use the **Run example on the board** button next to its name.
-3. The program's output appears in the *EVN ALPHA* terminal. When it finishes, the terminal stays attached to the board's REPL: type `m.angle()` and press Enter, for example. **Ctrl+]** leaves the REPL.
+3. The program's output appears in the *EVN ALPHA* terminal. When it ends - finished, or stopped by an error - every motor coasts (the terminal says `program finished; the motors are coasting`, as a Pybricks program ends stopped), and the terminal stays attached to the board's REPL with the program's variables: type `m.angle()` and press Enter, for example. **Ctrl+]** leaves the REPL.
 
 Every example says what hardware it needs next to its name and in its tooltip (`Needs: one motor on port 1, wheels off the ground`), so you can tell before you run it whether you have the parts on the board.
 
@@ -151,10 +151,10 @@ Then simply **unplug the USB cable**. The extension notices within about 4 s and
 **By hand**, if you would rather do it yourself or you are not on Windows:
 
 1. Pair the module once in Windows *Bluetooth & devices* (it shows as `HC-05` or `EVN Bluetooth`, PIN `1234`). Windows then lists a *Standard Serial over Bluetooth link (COMxx)* port for it — the outgoing one (Bluetooth settings → *More Bluetooth settings* → *COM Ports* shows which).
-2. On the board, once per power-up, switch the REPL onto the module. Over USB, in the REPL: `import evn; evn.Bluetooth(2).repl(True)` (the module's serial port number). To make it permanent, put those two lines in a `boot.py` on the board — from the USB REPL: `open('boot.py','w').write("import evn\nevn.Bluetooth(2).repl(True)\n")` (or `mpremote cp boot.py :` from a terminal).
+2. On the board, once per power-up, switch the REPL onto the module. Over USB, in the REPL: `import evn; bt = evn.Bluetooth(2); bt.repl(True)` (the module's serial port number). To make it permanent, put those lines in a `boot.py` on the board — from the USB REPL: `open('boot.py','w').write("import evn\nbt = evn.Bluetooth(2)\nbt.repl(True)\n")` (or `mpremote cp boot.py :` from a terminal; *Make it permanent* in the Board view writes the same). The name matters: `bt` is how a program later reaches the module (`bt.repl(False)`, `bt.write(...)`). A `boot.py` that wrote the anonymous `evn.Bluetooth(2).repl(True)` still works: a later plain `Bluetooth(2)` adopts the module the REPL is on.
 3. In VS Code click the port in the status bar and choose the Bluetooth COM port (marked with a broadcast icon). If the board has been on USB before, the extension keeps that port as its wireless link and keeps `evn.port` on the board's serial number, so USB is used again as soon as the cable is in. Unplug the cable; the REPL button, Run and Stop all motors now go over Bluetooth. Ctrl+C is still the emergency stop.
 
-Notes: the first connection to the module takes a second or two (Windows opens the Bluetooth link when the port is opened); a program that uses the same module for its own traffic should turn the REPL off first (`bt.repl(False)`), because bytes the REPL consumes never reach `read()`; the USB prompt keeps working alongside. Over Bluetooth a board that answers nothing is ambiguous (it may be running its own `main.py`, or its REPL may not be on this module), and the console row says both rather than guessing; it never interrupts a running program to find out.
+Notes: the first connection to the module takes a second or two (Windows opens the Bluetooth link when the port is opened); a program that uses the same module for its own traffic should turn the REPL off first (`bt.repl(False)`, with `bt` from `boot.py` — or, if `boot.py` did not bind a name, `bt = evn.Bluetooth(2)`, which adopts the module the REPL is on), because bytes the REPL consumes never reach `read()`; while the module carries the REPL a plain `Bluetooth(2)` adopts it as it is, and `Bluetooth(2, name=...)`, a different `baud`, `mode`, `addr` or `stay_in_command` raise `ValueError` — the module cannot be re-programmed under the REPL (`repl(False)`, program, `repl(True)`); the USB prompt keeps working alongside. Over Bluetooth a board that answers nothing is ambiguous (it may be running its own `main.py`, or its REPL may not be on this module), and the console row says both rather than guessing; it never interrupts a running program to find out.
 
 ## 6. Other commands (command palette, type `EVN:`)
 
@@ -198,6 +198,6 @@ Known limitations of this build:
 - One board at a time per VS Code window; the *EVN ALPHA* terminal holds the port, and every other command closes that terminal first.
 - `run_until_stalled` needs a real obstruction; an unloaded shaft never stalls. **`duty_limit` is the force it
   pushes with before the stall is reported** — without one the motor pushes with the whole pack.
-- The motion engine pauses for the duration of a file write on the board (tens of milliseconds); write files while the motors are idle.
+- A file write on the board is **refused while a motor is driving**: it raises `OSError: [Errno 16] EBUSY` (a write would stall the 1 kHz motion engine for 45–400 ms). Motors that hold, brake or coast do not block it. Collect your readings in a list while the robot moves and write the file after `stop()` / `hold()` or a `wait=True` move; or catch the `OSError` and write later. Reading files and `import` are never refused.
 - A peripheral that is unplugged raises `OSError` from the next reading and recovers by itself when it is plugged back into the **same** port; a replug into a different port is not followed.
 - `Compass.calibrate_stop()` refuses a calibration until the sensor has been through enough directions, and keeps collecting: turn it more and stop again, or `calibrate_cancel()`.

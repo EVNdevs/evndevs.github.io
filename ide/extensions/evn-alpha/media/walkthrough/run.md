@@ -16,9 +16,11 @@ Plug a motor into **port 1** and switch the battery pack on; the motors run from
 
 ## While it runs
 
-The program's output appears in the **EVN ALPHA** terminal. When the program ends, the terminal stays
-attached to the board's prompt, so you can type a line like `m.angle()` and press Enter to see what the
-motor did. **Ctrl+]** leaves that prompt, and the text stays in the terminal for you to read.
+The program's output appears in the **EVN ALPHA** terminal. When the program ends - finished, or stopped
+by an error - **every motor coasts**, as at the end of a Pybricks program (the terminal says `program
+finished; the motors are coasting`), and the terminal stays attached to the board's prompt, so you can
+type a line like `m.angle()` and press Enter to see what the motor did. **Ctrl+]** leaves that prompt,
+and the text stays in the terminal for you to read.
 
 ## Stopping
 

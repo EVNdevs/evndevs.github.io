@@ -182,7 +182,7 @@ Each device has the few calls a program usually needs; everything else in the AP
 - **RGB LEDs**: `range()`, `on()` with a list, `blink()`, `animate()`, `hsv()`, `get()`, `invert()`, `count()`.
 - **Servo**: `move()` (a timed sweep), `duty()` for the continuous-rotation profile, `done()`, `set_range()`, `enable()` / `disable()`.
 - **Bluetooth**: `read()`, `read_all()`, `wait_until()`, `repl()`, `command()`, `address()`, `configured()`, `set_baudrate()`, and the constructor's `name=` / `baud=` / `mode=` (a block always uses the defaults).
-- **The rest of the module**: `Pose` (the pose estimator: position and heading from the encoders, an IMU and a compass), `I2C`, `UART`, `Flash`, `reset()`, `reset_cause()`, `bootloader()`, `core1_status()`, `evn.version`.
+- **The rest of the module**: `Pose` (the pose estimator: position and heading from the encoders, an IMU and a compass), `I2C`, `UART`, `Flash`, `reset()`, `reset_cause()`, `bootloader()`, `autostart()`, `core1_status()`, `evn.version`.
 
 ### Logic, Loops, Math, Text, Variables, Functions
 

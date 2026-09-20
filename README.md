@@ -4,7 +4,7 @@
 
 ### MicroPython for the EVN ALPHA robotics controller, and the VS Code extension that runs your programs on it
 
-[![Extension 0.2.28, early access](https://img.shields.io/badge/extension-0.2.28%20%C2%B7%20early%20access-a8977b?style=flat-square&labelColor=111518)](https://evn.coresg.tech/#/changelog)
+[![Extension 0.2.29, early access](https://img.shields.io/badge/extension-0.2.29%20%C2%B7%20early%20access-a8977b?style=flat-square&labelColor=111518)](https://evn.coresg.tech/#/changelog)
 [![VS Code 1.106 or newer](https://img.shields.io/badge/VS%20Code-1.106%2B-a8977b?style=flat-square&labelColor=111518&logo=visualstudiocode&logoColor=white)](https://code.visualstudio.com/)
 [![MicroPython on RP2040](https://img.shields.io/badge/MicroPython-RP2040-a8977b?style=flat-square&labelColor=111518&logo=micropython&logoColor=white)](https://micropython.org/)
 [![Documentation at evn.coresg.tech](https://img.shields.io/badge/docs-evn.coresg.tech-a8977b?style=flat-square&labelColor=111518)](https://evn.coresg.tech)
@@ -36,7 +36,7 @@ peripherals bench-validated.
 ## Quick start
 
 1. **Install the extension.** Download
-   [`evn-alpha-micropython-0.2.28.vsix`](https://evn.coresg.tech/vsix/evn-alpha-micropython-0.2.28.vsix),
+   [`evn-alpha-micropython-0.2.29.vsix`](https://evn.coresg.tech/vsix/evn-alpha-micropython-0.2.29.vsix),
    then in VS Code (1.106 or newer): *Extensions* view → the `...` menu → **Install from VSIX…** → pick the file.
 2. **Set the board up.** Run **EVN: Install mpremote** once, then **EVN: Flash MicroPython firmware** with
    the board plugged in. The firmware travels inside the extension; a board in UF2 (BOOTSEL) mode is
@@ -51,8 +51,8 @@ a five-step walkthrough (**EVN: Getting started walkthrough**).
 
 | | Version | Download | Notes |
 | :--- | :--- | :--- | :--- |
-| **VS Code extension** | 0.2.28 | [`.vsix`](https://evn.coresg.tech/vsix/evn-alpha-micropython-0.2.28.vsix) | [Changelog](https://evn.coresg.tech/#/changelog) |
-| **MicroPython firmware** | 0.2.28 | [`.uf2`](https://evn.coresg.tech/firmware/EVN_ALPHA_MicroPython.uf2) | [BUILD.txt](firmware/BUILD.txt) |
+| **VS Code extension** | 0.2.29 | [`.vsix`](https://evn.coresg.tech/vsix/evn-alpha-micropython-0.2.29.vsix) | [Changelog](https://evn.coresg.tech/#/changelog) |
+| **MicroPython firmware** | 0.2.29 | [`.uf2`](https://evn.coresg.tech/firmware/EVN_ALPHA_MicroPython.uf2) | [BUILD.txt](firmware/BUILD.txt) |
 
 The extension carries the firmware and flashes it for you, so the UF2 is only needed without it: hold
 **BOOTSEL** while plugging the board in and copy the file onto the drive that appears.

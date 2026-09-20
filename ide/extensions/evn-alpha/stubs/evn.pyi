@@ -37,7 +37,8 @@ class Stop:
     BRAKE: int  # = 1  passive brake (both bridge inputs high)
     HOLD: int  # = 2   keep regulating at the target (default for profiled moves)
     NONE: int  # = 3   no deceleration: reach the target at speed and keep running
-    COAST_SMART: int  # = 4  coast, and start the next relative move from the remembered target
+    COAST_SMART: int  # = 4  coast, and start the next relative move from the remembered target - only while the
+                      #       shaft still stands within twice the position tolerance of it (Pybricks), else from where it is
 
 
 class SpeedUnit:
@@ -77,14 +78,15 @@ class Control:
         """
 
     @overload
-    def pid(self) -> Tuple[int, int, int, int, int]: ...
+    def pid(self) -> Tuple[int, int, int, float, int]: ...
     @overload
     def pid(self, kp: Optional[float] = None, ki: Optional[float] = None, kd: Optional[float] = None,
             integral_deadzone: Optional[float] = None, integral_limit: Optional[float] = None) -> None:
         """Position controller gains in uNm/deg, uNm/(deg*s), uNm/(deg/s) (the Pybricks convention).
 
-        ``integral_deadzone`` (deg, 0..5) is the endpoint deadzone; ``integral_limit`` (% duty, 0..100,
-        default 20) is the largest contribution the integrator may make (anti-windup).
+        ``integral_deadzone`` (deg, 0..5) is the endpoint deadzone - read back as a float in degrees (default
+        0.75, i.e. 1.5 encoder edges), the one value in the tuple that is not an int; ``integral_limit`` (% duty,
+        0..100, default 20) is the largest contribution the integrator may make (anti-windup).
         There is no ``integral_rate`` (a growth-rate cap has no counterpart in this loop); passing it
         raises ``TypeError``. A negative gain raises ``ValueError``.
         Changes affect this motor object only, and only the ``"pid"`` control law.
@@ -112,20 +114,30 @@ class Control:
         """
 
     @overload
-    def target_tolerances(self) -> Tuple[int, int]: ...
+    def target_tolerances(self) -> Tuple[float, float]: ...
     @overload
     def target_tolerances(self, speed: Optional[float] = None, position: Optional[float] = None) -> None:
-        """The ``done()`` criterion: speed (deg/s, default 50) and position (deg, default 1) tolerance."""
+        """The ``done()`` criterion: speed (deg/s, default 50) and position (deg, default 1) tolerance. Both read
+        back as the floats they were set to (``position=0.25`` reads 0.25; the encoder edge is 0.5 deg)."""
 
     @overload
-    def stall_tolerances(self) -> Tuple[int, int]: ...
+    def stall_tolerances(self) -> Tuple[float, int]: ...
     @overload
     def stall_tolerances(self, speed: Optional[float] = None, time: Optional[int] = None) -> None:
-        """Stall detection: below ``speed`` deg/s for ``time`` ms, 0..10000 (defaults 50, 50)."""
+        """Stall detection: below ``speed`` deg/s for ``time`` ms, 0..10000 (defaults 50, 50). The speed reads
+        back as the float it was set to, the time as int ms."""
 
     def done(self) -> bool: ...
     def stalled(self) -> bool: ...
     def load(self) -> int: ...
+    def state(self) -> Tuple[float, float, float, float, int, bool, bool]:
+        """``(reference_deg, x1_deg, x2_degs, x3_degs2, applied_mv, hold, assist)``: the controller's position
+        reference, the ADRC extended-state observer's position / speed / total-disturbance estimates (output
+        units; ``x3`` is the unmodelled acceleration the observer is cancelling - ``load()`` is it through the
+        motor's torque constant), the voltage applied last tick (mV, signed in the user's direction), and whether
+        the observer is at its hold bandwidth / the breakaway assist is armed. A 1 kHz diagnostic for tuning and
+        benches; live while the axis is engaged, the shaft angle otherwise. (``model.state()`` is the legacy
+        Luenberger observer, not this estimator.)"""
 
 
 class Model:
@@ -206,7 +218,13 @@ class Motor:
     def dc(self, duty: float, /) -> None:
         """Open-loop duty cycle, clamped to -100..100 %."""
     def run_time(self, speed: float, time: float, then: _Then = Stop.HOLD, wait: bool = True) -> None:
-        """Run at ``speed`` for ``time`` ms as a profiled move. A negative ``time`` raises ``ValueError``."""
+        """Run at ``speed`` for ``time`` ms, then ``then``: the maneuver takes ``time`` (Pybricks). The distance is
+        what a trapezoid of ``speed`` covers in ``time`` at the speed and acceleration the controller will actually
+        allow at the present pack voltage, so a limit shortens the distance, never the duration; ``speed`` 0 is a
+        timed hold of the measured angle (``done()`` stays False until ``time`` has passed). ``time`` is 0 to
+        2147483647 ms (24.8 days); a negative or longer ``time`` raises ``ValueError``. The exact bound holds for an
+        int; a float ``time`` is exact only below about 2147483520 (this port's floats are 32-bit, so 2147483647.0
+        rounds to 2147483648 and is refused - the message says so)."""
     def run_angle(self, speed: float, rotation_angle: float, then: _Then = Stop.HOLD, wait: bool = True) -> None:
         """Turn by ``rotation_angle`` degrees at ``speed``. Counts from the aim the motor is holding after a
         completed position command (Pybricks: the reference while actively controlled), so chained relative
@@ -297,7 +315,8 @@ class DriveBase:
     motor used twice or a geometry outside 1..1000 / 1..2000 mm; ``RuntimeError`` after ``close()``.
 
     **Closing the loop over the pose** (``use_gyro(True)``, Pybricks' name): with an ``evn.Pose`` built on the
-    same two motors (and an IMU), every maneuver is trimmed at 200 Hz so the ROBOT - not just the wheels -
+    same two motors (and an IMU), every maneuver is trimmed at the pose rate (100 Hz with the IMU, every second
+    DMP packet; 200 Hz on the wheels alone) so the ROBOT - not just the wheels -
     follows the path the program asked for: the base keeps the pose an ideal robot would have (integrated from
     the wheel references, anchored at ``reset()`` and at the first maneuver after a stop, continuous across
     chained maneuvers) and corrects the body-frame error with the RAMSETE law, so scrub on a turn, a dragged
@@ -339,9 +358,12 @@ class DriveBase:
     def reset(self, distance: float = 0, angle: float = 0, /) -> None:
         """Start ``distance()`` and ``angle()`` again from these values."""
     def done(self) -> bool:
-        """True when both wheels have completed their maneuver (or are passive); with ``use_gyro(True)`` also
-        when the pose error has settled inside ``follower()`` tolerances (or the trim is at its bound, or 2 s
-        have passed since the wheels finished)."""
+        """True when both wheels have completed their maneuver - ``Motor.done()``'s meaning: profile complete AND
+        inside ``control.target_tolerances()`` - or are passive; like ``Motor``, the only other way a ``wait=True``
+        maneuver returns is the stall timeout (``Motor.settings(stall_timeout=)``). With ``use_gyro(True)`` the
+        wheels are judged against their target plus the trim and ``done()`` also waits for the pose error to
+        settle inside ``follower()`` tolerances - or the trim at its bound, or 2 s after the profiles ended (a pose
+        that never settles must not hang the program); that 2 s escape exists only under ``use_gyro``."""
     def stalled(self) -> bool:
         """True when either wheel is stalled (``Motor.stalled()``: at its allowed limit and not turning)."""
     @overload
@@ -508,7 +530,9 @@ class I2C:
 
     Errors: ``OSError(ENODEV)`` nothing answered at that address; ``OSError(EIO)`` the device
     answered but refused a byte; ``OSError(ETIMEDOUT)`` the bus was held and has been reset
-    (``stats()`` counts it). ``ValueError`` for a port outside 1..16, an address outside
+    (``stats()`` counts it). ``stats()``'s ``errors`` are failed transactions since boot; the expected NACK of
+    a probe, of a constructor's ID-register identify on an empty port or of a driver's re-probe of an unplugged
+    device is not one, so a climbing count means a real fault. ``ValueError`` for a port outside 1..16, an address outside
     0x08..0x77, a register outside 0..255 or a length outside the limits below.
 
     A scan of a port that carries an ``IMU`` pops one byte of the chip's FIFO (the driver heals it
@@ -881,7 +905,17 @@ class Compass:
     def field(self) -> Tuple[float, float, float]:
         """Calibrated field in gauss, body frame."""
     def heading(self) -> float:
-        """Degrees 0..360 clockwise from north."""
+        """Degrees 0..360 clockwise from north - the direction of the horizontal field, whatever its size.
+        ``heading_confidence()`` says how far that field can be trusted as the Earth's; read it beside a heading
+        the program acts on."""
+    def heading_confidence(self) -> float:
+        """0..1, measured from this sample's field strength: 1 when |field| equals the calibration's fitted
+        radius, falling to 0 at 25 % off it (a motor's magnets 10 cm away cancelled three quarters of the Earth's
+        field on the bench and read 0). Without a fitted radius (no ``calibrate()``, or one installed with
+        ``calibration(offset, matrix)``, which carries no radius) only a coarse test is possible: 0.5 when |field| is inside the
+        Earth's 0.25..0.65 G, else 0. ``Pose`` drops compass samples whose confidence is 0."""
+    def field_strength(self) -> float:
+        """|field| in gauss (calibrated when a calibration is set). The Earth's field is 0.25..0.65 G."""
     def read(self) -> float:
         """Heading after the next new sample."""
     def north(self, heading: float = 0, /) -> None:
@@ -1674,10 +1708,19 @@ class Bluetooth:
     ``baud``, ``name`` and ``mode`` (``'remote'`` or ``'host'`` bound to ``addr``), reboots the
     module and switches to ``baud``. Otherwise it just opens the port at ``baud``; ``configured()``
     tells which happened. Default 230400 = the highest baud the module sustains (bench 2026-09-17).
+    Third case - the module already carries the REPL (``repl(True)``, typically from ``boot.py``): a plain
+    ``Bluetooth(n)`` adopts it as it stands, at the port's own baud (``print(bt)`` shows it), sends the module
+    nothing and ``configured()`` is False; any configuration argument (``baud`` other than that baud, ``name``,
+    ``mode``, ``addr``, ``stay_in_command``) raises ``ValueError("the module carries the REPL; call repl(False)
+    before changing its configuration")`` - the carrier cannot be re-programmed under the REPL.
 
-    One object per serial header: ``Bluetooth(n)`` raises ``OSError("serial port %d is used by a
-    UART object")`` while an ``evn.UART`` object holds the port, and ``UART(n)`` raises the mirror
-    error while this object does. A port that is already open keeps its transmit queue; only the
+    One LIVE object per serial header: ``Bluetooth(n)`` raises ``OSError("serial port %d is used by a
+    UART object")`` while an ``evn.UART`` object holds the port, ``OSError("serial port %d is already
+    open")`` while another live ``Bluetooth(n)`` does, and ``UART(n)`` raises the mirror error while this
+    object does. A module the REPL is on whose object was dropped without ``close()`` (``boot.py``'s
+    ``evn.Bluetooth(2).repl(True)``) is ADOPTED by the next ``Bluetooth(n)`` - the REPL keeps running,
+    the new object is the handle - so ``bt = Bluetooth(2); bt.repl(False)`` always has something to act
+    on. Dropping an object that does not carry the REPL closes its port (as a dropped ``Motor`` does). A port that is already open keeps its transmit queue; only the
     divisor changes, once the transmitter is idle.
 
     Raises: ``ValueError("serial port must be 1 or 2")``, ``ValueError("baud must be
@@ -1690,7 +1733,8 @@ class Bluetooth:
     """
     def __init__(self, port: int, baud: int = 230400, name: Optional[str] = None, mode: Optional[str] = None,
                  addr: Optional[str] = None, *, stay_in_command: bool = False, wait: bool = True) -> None:
-        """``name=None`` keeps "EVN Bluetooth", ``mode=None`` keeps ``'remote'``."""
+        """``name=None`` keeps "EVN Bluetooth", ``mode=None`` keeps ``'remote'``; ``baud`` left out means 230400, or
+        the port's own baud when the module already carries the REPL."""
     def write(self, data: bytes, /) -> int:
         """Queues every byte (never lossy): returns ``len(data)``; waits only while the port's 1 KiB transmit
         queue is full. Keep the module at 230400 or below so a large single write is not lost inside the
@@ -1804,13 +1848,23 @@ class UART:
 
 
 class Flash:
-    """LittleFS block device backing the filesystem mounted at ``/``."""
+    """LittleFS block device backing the filesystem mounted at ``/``.
+
+    Every write to it - ``open(...).write()``, ``flush()``, ``close()``, ``os.remove()``, ``mkfs`` - is
+    **refused while any motor is driving** (``run()``/``dc()``, an unfinished ``run_angle``/``run_target``/
+    ``run_time`` or DriveBase maneuver, a moving ``track_target``) with ``OSError(EBUSY)`` (errno 16): a
+    flash write would stall the 1 kHz motion engine for 45..400 ms, so the firmware refuses instead of
+    pausing. A holding, braked or coasting motor does not block a write; reads and ``import`` are never
+    refused. Write logs after the move (``stop()``/``hold()``/``wait=True``, then write) or catch the error
+    and write later."""
     def __init__(self) -> None: ...
 
 
-def core1_status() -> Optional[Tuple[int, int, int, int, int]]:
-    """``(ticks, period_min_us, period_max_us, exec_max_us, missed)`` of the 1 kHz motion engine,
-    or ``None`` when it is not running."""
+def core1_status() -> Optional[Tuple[int, int, int, int, int, int]]:
+    """``(ticks, period_min_us, period_max_us, exec_max_us, missed, late)`` of the 1 kHz motion engine,
+    or ``None`` when it is not running. ``missed`` = deadlines the alarm ISR itself skipped (a flash
+    lockout gap); ``late`` = loop-body overruns, ticks whose body ran past its 1 ms so that two deadlines
+    were pending when it came back - the count ``exec_max_us`` alone cannot give. Both must stay 0."""
 
 def stop_all() -> None:
     """Coast every motor."""
@@ -1875,6 +1929,11 @@ class Pose:
     for 50 mm behind, 60 mm left); a tape-measure value is enough, and it removes the acceleration a turning
     body adds at a lever arm. Needs ``imu=`` and no motor ports (``ValueError`` with wheels: the accelerometer
     is not used then).
+
+    One ``Pose`` per robot: a second constructor raises ``OSError`` while one is live. ``with Pose(...) as pose:``
+    is the idiom - ``__exit__`` is ``close()``. A ``Pose`` dropped inside a function, or closed, is released at
+    once; a bare temporary in the same statement scope (``Pose(...).heading()`` then ``Pose(...)``) can survive
+    one collection and still block the next constructor - use a function, ``with``, or ``close()``.
     One object per robot (``OSError`` for a second one until ``close()``). Frames: x East / y North in mm
     (without a compass, x is +90 degrees from the heading at ``reset()``), heading clockwise from north in
     degrees, speed mm/s, yaw rate deg/s clockwise. A source whose driver is lost leaves the set by itself and
@@ -1910,15 +1969,35 @@ class Pose:
     def bounded(self) -> bool:
         """False while the live sources cannot bound the position (IMU alone, IMU + compass, none)."""
     def sources(self) -> Tuple[str, ...]:
-        """The sources live right now: a subset of ('wheels', 'imu', 'compass')."""
+        """The sources contributing right now: a subset of ('wheels', 'imu', 'compass'). 'compass' is absent
+        while the compass's field is being rejected (``Compass.heading_confidence()`` 0: a motor's magnets, a
+        steel table) - the heading then has NO absolute reference and drifts with the gyro/wheels until the
+        field is the Earth's again; ``_stats()[8]`` counts the dropped samples."""
     def configured(self) -> Tuple[str, ...]:
         """The sources the object was built with."""
-    def reset(self, x: float = 0, y: float = 0, heading: float = 0, /) -> None:
-        """Set the pose (mm, mm, degrees clockwise from north); biases and wheel parameters are kept."""
+    def __enter__(self) -> "Pose": ...
+    def __exit__(self, *args: object) -> None:
+        """``close()``: ``with Pose(...) as pose:`` releases the estimator on exit, whatever happened inside."""
+    def __del__(self) -> None:
+        """A ``Pose`` dropped without ``close()`` (a function-local, a re-run cell) stops its service at the next
+        garbage collection - and the next ``Pose(...)`` runs one collection before it decides, so a Pose dropped
+        inside a function is released at once with no ``gc.collect()`` of your own. A bare temporary in the same
+        statement scope (``Pose(...).heading()`` followed by ``Pose(...)``) can survive that one collection and
+        still raise "already exists": use a function, ``with``, or ``close()`` (which stops the service
+        immediately). Keep the object referenced while ``DriveBase.use_gyro(True)`` is on: the base holds no
+        reference to it, and once it is collected the base raises ``OSError`` at its next maneuver and
+        turns ``use_gyro`` off."""
+    def reset(self, x: float = 0, y: float = 0, heading: float = 0) -> None:
+        """Set the pose (mm, mm, degrees clockwise from north); biases and wheel parameters are kept. A reset is a
+        re-framing, never a command: a ``DriveBase`` with ``use_gyro(True)`` re-anchors its ideal robot on the new
+        pose and nothing moves - to close an offset an outside reference revealed, follow the reset with an
+        explicit ``straight()``/``turn()``."""
     def close(self) -> None: ...
-    def _stats(self) -> Tuple[int, int, int, int, int, int, int]:
+    def _stats(self) -> Tuple[int, int, int, int, int, int, int, int, int]:
         """Bench diagnostic: (steps, rejected wheel updates, rejected lateral updates, rejected magnetometer updates,
-        the yaw-rate row's reject run, wheel-gate escapes taken, steps with a stale IMU)."""
+        the yaw-rate row's reject run, wheel-gate escapes taken, steps with a stale IMU, steps that integrated a
+        time gap - a Core 0 stall longer than 100 ms, whose exact encoder travel is integrated as one arc, compass
+        samples dropped before the filter because their field was not the Earth's)."""
     def _bias(self) -> Tuple[float, float]:
         """Bench diagnostic: (the filter's gyro bias deg/s, its sigma deg/s) - in the filter's frame,
         counter-clockwise positive, unlike ``heading()``."""

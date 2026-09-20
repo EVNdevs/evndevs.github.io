@@ -928,10 +928,13 @@
     const CORE_NAMES = ['Motor', 'Port', 'Stop', 'Direction', 'SpeedUnit', 'wait', 'StopWatch', 'battery', 'button', 'led', 'stop_all'];
     /* Everything else the module offers. A name is imported when a block needs it or when a Python
      * block spells it out - which is why the list has to hold the classes that have no block of
-     * their own as well (Pose is the drive base, and a blocks user has no other way to reach it). */
+     * their own as well (Pose is the drive base, and a blocks user has no other way to reach it).
+     * CORE_NAMES + DEVICE_NAMES must cover every public name of micropython/modules/evn_module.c:
+     * scripts/test_blocks.js and tools/check.py compare the two (B-036: `autostart` was missing, so
+     * a Python block spelling `autostart(True)` raised NameError on the board). */
     const DEVICE_NAMES = ['Color', 'Icon', 'Side', 'ColorSensor', 'DistanceSensor', 'GestureSensor', 'EnvSensor',
         'Compass', 'TouchArray', 'IMU', 'ADC', 'Display', 'MatrixLED', 'SevenSegmentLED', 'RGBLED', 'Servo', 'Bluetooth',
-        'DriveBase', 'Pose', 'UART', 'I2C', 'Flash', 'reset', 'reset_cause', 'bootloader', 'core1_status', 'version'];
+        'DriveBase', 'Pose', 'UART', 'I2C', 'Flash', 'reset', 'reset_cause', 'bootloader', 'autostart', 'core1_status', 'version'];
     const EVN_NAMES = CORE_NAMES.concat(DEVICE_NAMES);
 
     /* class -> [variable prefix, "set up" block type]. One object per port, named after the port
@@ -1729,7 +1732,8 @@
         return generator.workspaceToCode(workspace);
     }
 
-    const api = { TOOLBOX, PALETTE, BLOCK_STYLES, CATEGORY_STYLES, workspaceToPython };
+    // CORE_NAMES / DEVICE_NAMES are exported for scripts/test_blocks.js, which compares them with the module's table.
+    const api = { TOOLBOX, PALETTE, BLOCK_STYLES, CATEGORY_STYLES, workspaceToPython, CORE_NAMES, DEVICE_NAMES };
     if (typeof self !== 'undefined') { self.evnBlocks = api; }
     return api;
 }));

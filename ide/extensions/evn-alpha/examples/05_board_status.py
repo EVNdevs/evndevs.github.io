@@ -9,7 +9,7 @@ from evn import wait
 print("firmware", evn.version, "-", os.uname().version)
 print("reset cause:", evn.reset_cause())
 print("battery: %d mV, cells %s" % (evn.battery.voltage(), evn.battery.cells()))
-print("motion engine (ticks, period_min_us, period_max_us, exec_max_us, missed):", evn.core1_status())
+print("motion engine (ticks, period_min_us, period_max_us, exec_max_us, missed, late):", evn.core1_status())
 print("files on the board:", os.listdir("/"))
 
 print("press the user button within 5 s (it is also the emergency stop) ...")
