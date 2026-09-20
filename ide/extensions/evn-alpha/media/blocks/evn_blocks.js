@@ -826,6 +826,13 @@
             tooltip: 'The two wheel motors and the geometry of the robot (one per program). A motor mounted mirrored needs a "set up motor" block with counterclockwise as its positive direction. The distance between the wheels is measured between their contact patches: check it with one "turn robot 360 degrees" against a mark on the floor.',
         },
         {
+            type: 'evn_drivebase_gyro',
+            message0: 'robot follows its gyro: IMU on port %1',
+            args0: [portField(I2C_PORTS)],
+            previousStatement: null, nextStatement: null, style: 'evn_motor_blocks',
+            tooltip: 'The robot itself, not just its wheels, follows every straight, turn and arc: the wheel encoders and an EVN IMU on this port track where the robot really is (evn.Pose) and each move is corrected as it goes, so scrub on a turn, a dragged cable and the gyro\'s drift no longer add up over minutes. Put it before the first move and keep the robot still: it waits (up to 30 s) for the IMU to settle. Uses the "set up robot" geometry; one per program (a second block only repeats the switch-on).',
+        },
+        {
             type: 'evn_drivebase_straight',
             message0: 'drive straight %1 mm',
             args0: [{ type: 'input_value', name: 'DISTANCE', check: 'Number' }],
@@ -955,7 +962,7 @@
     for (const cls of Object.keys(DEVICES)) {
         for (let p = 1; p <= 16; p++) { OBJECT_NAMES.push(DEVICES[cls][0] + '_' + p); }
     }
-    generator.addReservedWords('evn,motor_1,motor_2,motor_3,motor_4,stopwatch,drive_base,' +
+    generator.addReservedWords('evn,motor_1,motor_2,motor_3,motor_4,stopwatch,drive_base,pose,' +
         Object.keys(DEVICES).map((cls) => DEVICES[cls][0]).join(',') + ',' +
         OBJECT_NAMES.join(',') + ',' + EVN_NAMES.join(','));
 
@@ -990,6 +997,12 @@
             const d = this.definitions_.drive_base;
             delete this.definitions_.drive_base;
             this.definitions_.drive_base = d;
+        }
+        // the pose names the IMU's port: its line goes after the (regrouped) devices
+        if (this.definitions_.pose) {
+            const p = this.definitions_.pose;
+            delete this.definitions_.pose;
+            this.definitions_.pose = p;
         }
         return baseFinish.call(this, code);
     };
@@ -1060,14 +1073,46 @@
     function driveRef(block) {
         const name = 'drive_base';
         if (!generator.definitions_[name]) {
-            const setup = block.workspace.getBlocksByType('evn_drivebase_setup', false).find((b) => b.isEnabled());
-            const left = setup ? setup.getFieldValue('LEFT') : '1';
-            const right = setup ? setup.getFieldValue('RIGHT') : '2';
-            const wheel = setup ? Number(setup.getFieldValue('WHEEL')) : 56;
-            const track = setup ? Number(setup.getFieldValue('TRACK')) : 112;
-            const l = motorRef(block, left), r = motorRef(block, right);
+            const g = driveGeometry(block);
+            const l = motorRef(block, g.left), r = motorRef(block, g.right);
             use('DriveBase');
-            generator.definitions_[name] = name + ' = DriveBase(' + l + ', ' + r + ', wheel_diameter=' + wheel + ', axle_track=' + track + ')';
+            generator.definitions_[name] = name + ' = DriveBase(' + l + ', ' + r + ', wheel_diameter=' + g.wheel + ', axle_track=' + g.track + ')';
+        }
+        return name;
+    }
+
+    /** The robot's ports and geometry from the "set up robot" block (or the Pybricks example's defaults). */
+    function driveGeometry(block) {
+        const setup = block.workspace.getBlocksByType('evn_drivebase_setup', false).find((b) => b.isEnabled());
+        return {
+            left: setup ? setup.getFieldValue('LEFT') : '1',
+            right: setup ? setup.getFieldValue('RIGHT') : '2',
+            wheel: setup ? Number(setup.getFieldValue('WHEEL')) : 56,
+            track: setup ? Number(setup.getFieldValue('TRACK')) : 112,
+        };
+    }
+
+    /** Whether the port's "set up motor" block makes counterclockwise its positive direction (a mirrored
+     * mount). The Pose reads the encoders directly, so it needs the same fact as `reverse_left=` / `reverse_right=`. */
+    function motorReversed(block, port) {
+        const setup = block.workspace.getBlocksByType('evn_motor_setup', false)
+            .find((b) => b.isEnabled() && b.getFieldValue('PORT') === port);
+        return !!setup && setup.getFieldValue('DIRECTION') === 'CCW';
+    }
+
+    /** Name of the robot's Pose object (the drive base's wheels plus the IMU on `imuPort`), defining it once.
+     * The IMU object has to exist before the Pose names its port (Pose raises OSError otherwise): finish()
+     * puts the `pose = ...` line after the devices. */
+    function poseRef(block, imuPort) {
+        const name = 'pose';
+        if (!generator.definitions_[name]) {
+            const g = driveGeometry(block);
+            deviceRef(block, 'IMU', imuPort);
+            use('Pose');
+            generator.definitions_[name] = name + ' = Pose(' + g.left + ', ' + g.right + ', wheel_diameter=' + g.wheel + ', axle_track=' + g.track
+                + (motorReversed(block, g.left) ? ', reverse_left=True' : '')
+                + (motorReversed(block, g.right) ? ', reverse_right=True' : '')
+                + ', imu=' + imuPort + ')';
         }
         return name;
     }
@@ -1123,6 +1168,11 @@
     generator.forBlock['evn_drivebase_setup'] = function (block) {
         driveRef(block);            // the definition is all the setup does
         return '';
+    };
+    generator.forBlock['evn_drivebase_gyro'] = function (block) {
+        const db = driveRef(block);
+        poseRef(block, block.getFieldValue('PORT'));
+        return db + '.use_gyro(True)\n';
     };
     generator.forBlock['evn_drivebase_straight'] = function (block) {
         return driveRef(block) + '.straight(' + value(block, 'DISTANCE', '0') + moveTail(block, 'HOLD') + ')\n';
@@ -1483,6 +1533,7 @@
                     { kind: 'block', type: 'evn_drivebase_speeds', inputs: { SPEED: shadowNum(300), TURN: shadowNum(150) } },
                     { kind: 'block', type: 'evn_drivebase_reset' },
                     { kind: 'block', type: 'evn_drivebase_setup' },
+                    { kind: 'block', type: 'evn_drivebase_gyro' },
                 ],
             },
             {

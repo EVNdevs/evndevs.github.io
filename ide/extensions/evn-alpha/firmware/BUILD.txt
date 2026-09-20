@@ -1,6 +1,6 @@
 EVN_ALPHA_MicroPython.uf2
-source: worktree-bt-floor after e7d218c (2026-09-20, evening: the pose estimator's bias-prior escape counts rejections at rest only - the heading no longer walks off after a pivot; Pose._bias(); firmware 0.2.27)
-built: 2026-09-20 17:47 +08:00 (MicroPython v1.26.1, pico-sdk 2.3.0)
+source: worktree-pose-surfaces (2026-09-20, night: firmware 0.2.28 = 0.2.27 with the version string; the release carries the pose-closed drive base to the block editor, the examples and the snippets)
+built: 2026-09-20 20:55 +08:00 (MicroPython v1.26.1, pico-sdk 2.3.0)
 flash: single-line 03h boot2, PICO_FLASH_SPI_CLKDIV=4
-md5: e0a5a0935dcf1937ca3f85e8ad2b7ad4
-version: 0.2.27
+md5: 53d6235eca6ceb43b0935a4189679aca
+version: 0.2.28

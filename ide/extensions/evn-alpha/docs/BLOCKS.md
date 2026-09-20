@@ -4,7 +4,7 @@ A block editor for the EVN ALPHA, built on [Blockly](https://github.com/Raspberr
 
 ## Using it
 
-- **EVN: New blocks program** (command palette, or right-click a folder in the Explorer) creates a `.evnblocks` file and opens it in the block editor. **EVN: New project** puts the examples in `examples/blocks/`: `first_moves`, `two_motors`, `stall_stop` and `blink` for the motors and the board, then `colour_line` (a line-follower stub, no motors), `spirit_level` (IMU on the OLED display), `compass_lights` (the compass on the RGB strip and the 7-segment display) and `bluetooth_grabber` (touch pads, a servo, the LED matrix and Bluetooth).
+- **EVN: New blocks program** (command palette, or right-click a folder in the Explorer) creates a `.evnblocks` file and opens it in the block editor. **EVN: New project** puts the examples in `examples/blocks/`: `first_moves`, `two_motors`, `stall_stop` and `blink` for the motors and the board, then `colour_line` (a line-follower stub, no motors), `spirit_level` (IMU on the OLED display), `compass_lights` (the compass on the RGB strip and the 7-segment display) and `bluetooth_grabber` (touch pads, a servo, the LED matrix and Bluetooth); `drive_base` (two motors as a robot) and `drive_base_gyro` (the same robot following its gyro).
 - Drag blocks from the toolbox on the left. The **Python** pane on the right shows the generated program as you build it; **Copy** puts it on the clipboard.
 - **Run on board** (or **Ctrl+F5**) saves the file, writes the program to `<name>.evnblocks.py` next to it and runs it in the *EVN ALPHA* terminal. **Stop motors** (Ctrl+Shift+F5) interrupts it and coasts every motor.
 - **Upload as main.py** puts the program on the board, where a press of the user button starts it after every power-on; **Export Python** saves it as a `.py` file you can edit as text.
@@ -47,8 +47,11 @@ Motors are `motor_1` .. `motor_4`, one object per port, created once at the top 
 | stop the robot *coast* / *brake* | `drive_base.stop()` / `drive_base.brake()` |
 | set robot speed *300* mm/s turn rate *150* deg/s | `drive_base.settings(straight_speed=300, turn_rate=150)` |
 | reset robot distance and angle | `drive_base.reset()` |
+| robot follows its gyro: IMU on port *3* | `imu_3 = IMU(3)` … `pose = Pose(4, 3, wheel_diameter=62.4, axle_track=170, reverse_left=True, imu=3)` at the top (the robot's ports and geometry, a mirrored motor as `reverse_left=` / `reverse_right=`, after the IMU's line), then `drive_base.use_gyro(True)` where the block sits |
 
 One robot per program. Without a **set up robot** block the robot is left motor 1, right motor 2, 56 mm wheels 112 mm apart. `then` here is *hold*, *coast*, *brake* or *coast (smart)* (a drive base has no *keep running*: use **drive at**). Both wheels run on one time base, so a straight is straight and an arc is an arc; the distance between the wheels is measured between the tyres' contact patches — check it with one *turn robot 360 degrees* against a mark on the floor.
+
+**Robot follows its gyro** makes the robot itself, not just its wheels, drive the path: the wheel encoders and an EVN IMU fixed to the chassis track where the robot really is (`evn.Pose`), and every straight, turn and arc is corrected as it goes, so scrub on a turn, a dragged cable and the gyro's drift no longer add up over minutes (on the floor, 40 moves ended about a centimetre from the mark with no visible heading error; the pose's own closure was 3 mm / 0.24 degrees). Put it before the first move and keep the robot still while the program starts: it waits, up to 30 s, for the IMU to settle (an `OSError` if the robot was moving). A robot pushed sideways is the one thing the pose cannot see. The `drive_base_gyro` example is the `drive_base` one with this block.
 
 ### Sensing (values)
 
@@ -166,7 +169,7 @@ The colour input of the RGB LED blocks takes either colour block: **colour *red*
 | Python *…* (statement) | the line as written |
 | Python *…* (value) | the expression as written |
 
-The two **Python** blocks are the escape hatch. `motor_1` .. `motor_4`, `drive_base` and every peripheral object (`color_sensor_1`, `display_3`, `rgb_2`, …) are available: a Python block that mentions one has it created at the top of the program like a block would. A Python block always imports the core names (`Motor`, `Port`, `Stop`, `Direction`, `SpeedUnit`, `wait`, `StopWatch`, `battery`, `button`, `led`, `stop_all`) and adds a bare `import evn`, plus any other name from the module it spells out (`ColorSensor`, `Color`, `Icon`, `Side`, `DriveBase`, `Pose`, `UART`, `I2C`, `Flash`, `core1_status`, …), so the import line stays readable and nothing in the module is out of reach. A device named inside a string or a `#` comment is *not* opened, and a port outside the device's range is ignored.
+The two **Python** blocks are the escape hatch. `motor_1` .. `motor_4`, `drive_base` and every peripheral object (`color_sensor_1`, `display_3`, `rgb_2`, …) are available: a Python block that mentions one has it created at the top of the program like a block would. A Python block always imports the core names (`Motor`, `Port`, `Stop`, `Direction`, `SpeedUnit`, `wait`, `StopWatch`, `battery`, `button`, `led`, `stop_all`) and adds a bare `import evn`, plus any other name from the module it spells out (`ColorSensor`, `Color`, `Icon`, `Side`, `DriveBase`, `Pose`, `UART`, `I2C`, `Flash`, `core1_status`, …), so the import line stays readable and nothing in the module is out of reach. A device named inside a string or a `#` comment is *not* opened, and a port outside the device's range is ignored. `pose` exists only when a **robot follows its gyro** block is in the program (a Python block does not create it).
 
 ### What has no block
 

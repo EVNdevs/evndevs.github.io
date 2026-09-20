@@ -195,7 +195,7 @@ Every constructor raises `OSError` when nothing answers on the port or the drive
 
 ## DriveBase (two motors as a robot)
 
-`evn.DriveBase` follows [`pybricks.robotics.DriveBase`](https://docs.pybricks.com/en/latest/robotics.html): two `Motor` objects, the wheel diameter and the axle track in mm. Distances are mm, speeds mm/s, accelerations mm/s²; headings are degrees, deg/s, deg/s², **positive = clockwise seen from above** (the `Pose` / compass convention). Each motor's `positive_direction` is its forward direction (a mirrored left motor: `Motor(4, Direction.COUNTERCLOCKWISE)`) and its `gears=` make the values wheel degrees.
+`evn.DriveBase` follows [`pybricks.robotics.DriveBase`](https://docs.pybricks.com/en/latest/robotics.html): two `Motor` objects, the wheel diameter and the axle track in mm. Distances are mm, speeds mm/s, accelerations mm/s²; headings are degrees, deg/s, deg/s², **positive = clockwise seen from above** (the `Pose` / compass convention). Each motor's `positive_direction` is its forward direction (a mirrored left motor: `Motor(4, Direction.COUNTERCLOCKWISE)`) and its `gears=` make the values wheel degrees. With an IMU on the chassis, `use_gyro(True)` (below) makes the robot itself follow the path over an `evn.Pose` built on the same motors — `examples/10_drive_base_pose.py` is the whole set-up, the **robot follows its gyro** block the same in blocks.
 
 ```python
 from evn import Motor, Direction, DriveBase, Stop

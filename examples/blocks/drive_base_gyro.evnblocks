@@ -1,0 +1,284 @@
+{
+  "format": "evn-blocks",
+  "version": 1,
+  "needs": "a robot: left wheel motor on port 4 (mounted mirrored), right on port 3, 62.4 mm wheels 170 mm apart, an EVN IMU on I2C port 3 fixed to the chassis, and 40 cm of clear floor ahead. Keep the robot still while the program starts (the IMU settles in 8 to 25 s).",
+  "workspace": {
+    "blocks": {
+      "languageVersion": 0,
+      "blocks": [
+        {
+          "type": "evn_motor_setup",
+          "fields": {
+            "PORT": "4",
+            "DIRECTION": "CCW",
+            "UNIT": "DEG_S"
+          },
+          "x": 20,
+          "y": 20
+        },
+        {
+          "type": "evn_drivebase_setup",
+          "fields": {
+            "LEFT": "4",
+            "RIGHT": "3",
+            "WHEEL": 62.4,
+            "TRACK": 170
+          },
+          "x": 20,
+          "y": 70
+        },
+        {
+          "type": "evn_imu_setup",
+          "fields": {
+            "PORT": "3"
+          },
+          "x": 20,
+          "y": 120
+        },
+        {
+          "type": "evn_drivebase_gyro",
+          "fields": {
+            "PORT": "3"
+          },
+          "x": 20,
+          "y": 190,
+          "next": {
+            "block": {
+              "type": "evn_imu_reset_heading",
+              "fields": {
+                "PORT": "3"
+              },
+              "next": {
+                "block": {
+                  "type": "evn_drivebase_straight",
+                  "fields": {
+                    "THEN": "HOLD",
+                    "WAIT": "TRUE"
+                  },
+                  "inputs": {
+                    "DISTANCE": {
+                      "shadow": {
+                        "type": "math_number",
+                        "fields": {
+                          "NUM": 300
+                        }
+                      }
+                    }
+                  },
+                  "next": {
+                    "block": {
+                      "type": "evn_drivebase_turn",
+                      "fields": {
+                        "THEN": "HOLD",
+                        "WAIT": "TRUE"
+                      },
+                      "inputs": {
+                        "ANGLE": {
+                          "shadow": {
+                            "type": "math_number",
+                            "fields": {
+                              "NUM": 45
+                            }
+                          }
+                        }
+                      },
+                      "next": {
+                        "block": {
+                          "type": "evn_drivebase_turn",
+                          "fields": {
+                            "THEN": "HOLD",
+                            "WAIT": "TRUE"
+                          },
+                          "inputs": {
+                            "ANGLE": {
+                              "shadow": {
+                                "type": "math_number",
+                                "fields": {
+                                  "NUM": -45
+                                }
+                              }
+                            }
+                          },
+                          "next": {
+                            "block": {
+                              "type": "evn_drivebase_turn",
+                              "fields": {
+                                "THEN": "HOLD",
+                                "WAIT": "TRUE"
+                              },
+                              "inputs": {
+                                "ANGLE": {
+                                  "shadow": {
+                                    "type": "math_number",
+                                    "fields": {
+                                      "NUM": 180
+                                    }
+                                  }
+                                }
+                              },
+                              "next": {
+                                "block": {
+                                  "type": "evn_drivebase_straight",
+                                  "fields": {
+                                    "THEN": "HOLD",
+                                    "WAIT": "TRUE"
+                                  },
+                                  "inputs": {
+                                    "DISTANCE": {
+                                      "shadow": {
+                                        "type": "math_number",
+                                        "fields": {
+                                          "NUM": 300
+                                        }
+                                      }
+                                    }
+                                  },
+                                  "next": {
+                                    "block": {
+                                      "type": "evn_drivebase_turn",
+                                      "fields": {
+                                        "THEN": "HOLD",
+                                        "WAIT": "TRUE"
+                                      },
+                                      "inputs": {
+                                        "ANGLE": {
+                                          "shadow": {
+                                            "type": "math_number",
+                                            "fields": {
+                                              "NUM": -45
+                                            }
+                                          }
+                                        }
+                                      },
+                                      "next": {
+                                        "block": {
+                                          "type": "evn_drivebase_turn",
+                                          "fields": {
+                                            "THEN": "HOLD",
+                                            "WAIT": "TRUE"
+                                          },
+                                          "inputs": {
+                                            "ANGLE": {
+                                              "shadow": {
+                                                "type": "math_number",
+                                                "fields": {
+                                                  "NUM": 45
+                                                }
+                                              }
+                                            }
+                                          },
+                                          "next": {
+                                            "block": {
+                                              "type": "evn_drivebase_turn",
+                                              "fields": {
+                                                "THEN": "HOLD",
+                                                "WAIT": "TRUE"
+                                              },
+                                              "inputs": {
+                                                "ANGLE": {
+                                                  "shadow": {
+                                                    "type": "math_number",
+                                                    "fields": {
+                                                      "NUM": -180
+                                                    }
+                                                  }
+                                                }
+                                              },
+                                              "next": {
+                                                "block": {
+                                                  "type": "text_print",
+                                                  "inputs": {
+                                                    "TEXT": {
+                                                      "block": {
+                                                        "type": "text_join",
+                                                        "extraState": {
+                                                          "itemCount": 2
+                                                        },
+                                                        "inputs": {
+                                                          "ADD0": {
+                                                            "shadow": {
+                                                              "type": "text",
+                                                              "fields": {
+                                                                "TEXT": "robot angle (deg): "
+                                                              }
+                                                            }
+                                                          },
+                                                          "ADD1": {
+                                                            "block": {
+                                                              "type": "evn_drivebase_measure",
+                                                              "fields": {
+                                                                "WHAT": "angle"
+                                                              }
+                                                            }
+                                                          }
+                                                        }
+                                                      }
+                                                    }
+                                                  },
+                                                  "next": {
+                                                    "block": {
+                                                      "type": "text_print",
+                                                      "inputs": {
+                                                        "TEXT": {
+                                                          "block": {
+                                                            "type": "text_join",
+                                                            "extraState": {
+                                                              "itemCount": 2
+                                                            },
+                                                            "inputs": {
+                                                              "ADD0": {
+                                                                "shadow": {
+                                                                  "type": "text",
+                                                                  "fields": {
+                                                                    "TEXT": "IMU heading (deg): "
+                                                                  }
+                                                                }
+                                                              },
+                                                              "ADD1": {
+                                                                "block": {
+                                                                  "type": "evn_imu_angle",
+                                                                  "fields": {
+                                                                    "PORT": "3",
+                                                                    "WHAT": "heading()"
+                                                                  }
+                                                                }
+                                                              }
+                                                            }
+                                                          }
+                                                        }
+                                                      },
+                                                      "next": {
+                                                        "block": {
+                                                          "type": "evn_drivebase_stop",
+                                                          "fields": {
+                                                            "ACTION": "stop"
+                                                          }
+                                                        }
+                                                      }
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

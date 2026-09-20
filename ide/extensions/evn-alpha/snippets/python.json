@@ -302,5 +302,23 @@
         "prefix": "evn-drive",
         "body": "${1:db}.drive(${2:200}, ${3:0})   # mm/s, deg/s",
         "description": "DriveBase: drive at a speed and turn rate until the next command"
+    },
+    "EVN drive base follows its gyro": {
+        "prefix": "evn-drivebase-gyro",
+        "body": [
+            "from evn import Motor, Direction, DriveBase, IMU, Pose",
+            "",
+            "left = Motor(${1:4}, Direction.COUNTERCLOCKWISE)   # the mirrored motor",
+            "right = Motor(${2:3})",
+            "imu = IMU(${3:3})                                   # fixed to the chassis",
+            "pose = Pose(${1:4}, ${2:3}, wheel_diameter=${4:62.4}, axle_track=${5:170}, reverse_left=True, imu=${3:3})",
+            "${6:db} = DriveBase(left, right, wheel_diameter=${4:62.4}, axle_track=${5:170})",
+            "${6:db}.use_gyro(True)     # the robot follows the path, not just the wheels; waits (still) for the IMU",
+            "${6:db}.straight(${7:300})",
+            "${6:db}.turn(${8:90})",
+            "print(pose.position(), pose.heading(), ${6:db}.pose_error())",
+            "$0"
+        ],
+        "description": "DriveBase closed over evn.Pose (encoders + IMU): scrub, drag and gyro drift corrected as the robot drives"
     }
 }
