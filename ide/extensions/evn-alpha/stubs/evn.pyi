@@ -208,7 +208,11 @@ class Motor:
     def run_time(self, speed: float, time: float, then: _Then = Stop.HOLD, wait: bool = True) -> None:
         """Run at ``speed`` for ``time`` ms as a profiled move. A negative ``time`` raises ``ValueError``."""
     def run_angle(self, speed: float, rotation_angle: float, then: _Then = Stop.HOLD, wait: bool = True) -> None:
-        """Turn by ``rotation_angle`` degrees at ``speed`` (negative speed reverses)."""
+        """Turn by ``rotation_angle`` degrees at ``speed``. Counts from the aim the motor is holding after a
+        completed position command (Pybricks: the reference while actively controlled), so chained relative
+        moves are exact - ten ``run_angle(200, 90)`` are 900 degrees - and from the measured angle after a
+        coast, a brake, a stall or a shaft forced more than 45 degrees off its hold. A ``Stop.COAST_SMART``
+        aim counts the same way for a coasting shaft. A negative speed reverses."""
     def run_target(self, speed: float, target_angle: float, then: _Then = Stop.HOLD, wait: bool = True) -> None:
         """Turn to the absolute ``target_angle`` at ``speed`` (the sign of ``speed`` is ignored)."""
     def run_until_stalled(self, speed: float, then: _Then = Stop.COAST, duty_limit: Optional[float] = None) -> int:
@@ -258,10 +262,15 @@ class Motor:
 
     # settings
     @overload
-    def settings(self) -> Tuple[int]: ...
+    def settings(self) -> Tuple[int, int]: ...
     @overload
-    def settings(self, max_voltage: float) -> None:
-        """Voltage cap in mV, 0..12000 (default 9000, above any 2S pack, so no effect until lowered)."""
+    def settings(self, max_voltage: Optional[float] = None, *, stall_timeout: Optional[float] = None) -> None:
+        """``(max_voltage mV, stall_timeout ms)``. ``max_voltage``: the voltage cap, 0..12000 (default 9000, above any
+        2S pack, so no effect until lowered). ``stall_timeout`` (default 1000): a ``wait=True`` move returns once
+        the motor has been stalled this long - the hold keeps pushing, ``stalled()`` is True and the program goes
+        on instead of hanging on a gripper closed on a brick (an industrial drive's following-error fault; ROS
+        actions time out); 0 waits forever as Pybricks does. A ``DriveBase`` wait uses the shorter of its two
+        wheels' timeouts."""
     def close(self) -> None:
         """Coast, free the port. Every later call raises ``RuntimeError``."""
     def __enter__(self) -> "Motor": ...
@@ -285,7 +294,17 @@ class DriveBase:
     started on the same 1 kHz tick, so the wheels stay proportional and a straight is straight. A direct
     ``Motor`` command on one wheel while a maneuver is in force coasts the other wheel (Pybricks).
     A motor that already belongs to a DriveBase is taken over (that base is closed). ``ValueError`` for a
-    motor used twice or a geometry outside 1..1000 / 1..2000 mm; ``RuntimeError`` after ``close()``."""
+    motor used twice or a geometry outside 1..1000 / 1..2000 mm; ``RuntimeError`` after ``close()``.
+
+    **Closing the loop over the pose** (``use_gyro(True)``, Pybricks' name): with an ``evn.Pose`` built on the
+    same two motors (and an IMU), every maneuver is trimmed at 200 Hz so the ROBOT - not just the wheels -
+    follows the path the program asked for: the base keeps the pose an ideal robot would have (integrated from
+    the wheel references, anchored at ``reset()`` and at the first maneuver after a stop, continuous across
+    chained maneuvers) and corrects the body-frame error with the RAMSETE law, so scrub on a turn, a dragged
+    cable and the gyro's drift are taken out as they happen instead of adding up over minutes. ``done()`` then
+    also waits for the pose to settle inside ``follower()`` tolerances. What it cannot fix is what the pose
+    cannot see: a translation the encoders do not turn for (a robot pushed sideways while turning in place)
+    goes uncorrected until an outside reference (a wall, a line) resets the pose."""
     def __init__(self, left_motor: Motor, right_motor: Motor, wheel_diameter: float, axle_track: float) -> None: ...
     def straight(self, distance: float, then: int = Stop.HOLD, wait: bool = True) -> None:
         """Drive straight ``distance`` mm (negative = backwards), then hold / coast / brake. ``then=Stop.NONE``
@@ -320,19 +339,56 @@ class DriveBase:
     def reset(self, distance: float = 0, angle: float = 0, /) -> None:
         """Start ``distance()`` and ``angle()`` again from these values."""
     def done(self) -> bool:
-        """True when both wheels have completed their maneuver (or are passive)."""
+        """True when both wheels have completed their maneuver (or are passive); with ``use_gyro(True)`` also
+        when the pose error has settled inside ``follower()`` tolerances (or the trim is at its bound, or 2 s
+        have passed since the wheels finished)."""
     def stalled(self) -> bool:
         """True when either wheel is stalled (``Motor.stalled()``: at its allowed limit and not turning)."""
+    @overload
+    def use_gyro(self) -> bool: ...
+    @overload
+    def use_gyro(self, enable: bool, /) -> None:
+        """Close the chassis loop over ``evn.Pose`` (see the class docstring). Needs a running ``Pose`` whose
+        left and right motors are this base's, in that order: ``ValueError`` otherwise. With an IMU on the Pose it
+        first waits (up to 30 s) for ``IMU.ready()`` - the DMP calibrates its gyro 8..25 s into stillness, and a
+        loop armed before that would correct toward a drifting heading (Pybricks calibrates the hub IMU before any
+        program runs, so its users never see this); ``OSError`` if it never comes (the robot was moving), when the
+        pose has no estimate yet, and from the next maneuver if the ``Pose`` was closed meanwhile (``use_gyro``
+        is then off). ``use_gyro(False)`` drops the trims (the wheels move back to their untrimmed references,
+        up to the trim limit at the trim slew) and returns to wheel-only maneuvers. With it on, each maneuver
+        counts from the aim the wheel holds INCLUDING its trim, so a correction is kept, not undone; a maneuver
+        ended with ``Stop.COAST`` / ``BRAKE`` keeps the reference path too (the next one corrects any roll)."""
+    @overload
+    def follower(self) -> Tuple[float, float, float, int, int, int, int, float, float, int]: ...
+    @overload
+    def follower(self, *, b: Optional[float] = None, zeta: Optional[float] = None, k_min: Optional[float] = None,
+                 correction_speed: Optional[float] = None, correction_rate: Optional[float] = None,
+                 trim_limit: Optional[float] = None, trim_slew: Optional[float] = None,
+                 position_tolerance: Optional[float] = None, heading_tolerance: Optional[float] = None,
+                 settle_time: Optional[float] = None) -> None:
+        """The pose loop's knobs: ``b`` (1/m^2, convergence; 400 - the RAMSETE gain scales with 1/length^2, so
+        WPILib's 2.0 for a field-sized robot is far too soft here), ``zeta`` (damping, 0.7), ``k_min`` (1/s, the
+        pull-in gain once the profile has stopped, 4), ``correction_speed`` (mm/s the loop may add along the path,
+        150), ``correction_rate`` (deg/s it may add to the heading, 90), ``trim_limit`` (wheel degrees of
+        correction per wheel, 180), ``trim_slew`` (the most a wheel's reference moves toward its trim, wheel deg/s,
+        600), ``position_tolerance`` (mm, 1) and ``heading_tolerance`` (deg, 0.3) that ``done()`` waits for, held
+        for ``settle_time`` (ms, 100). Every value > 0, ``zeta`` in (0, 1). Gains only: a change mid-maneuver keeps
+        the correction in force; the robot's geometry comes from the base that has ``use_gyro`` on."""
+    def pose_error(self) -> Tuple[float, float, float, bool, float, float]:
+        """``(forward mm, left mm, heading deg, settled, trim_left deg, trim_right deg)``: where the ideal robot
+        is, seen from the estimate, and the wheel trims asked of the engine (it slews toward them).
+        ``ValueError`` without ``use_gyro(True)``."""
     @overload
     def settings(self) -> Tuple[int, Union[int, Tuple[int, int]], int, Union[int, Tuple[int, int]]]: ...
     @overload
     def settings(self, straight_speed: Optional[float] = None, straight_acceleration: Union[None, float, Tuple[float, float]] = None,
                  turn_rate: Optional[float] = None, turn_acceleration: Union[None, float, Tuple[float, float]] = None) -> None:
         """``settings()`` -> (straight_speed mm/s, straight_acceleration mm/s^2, turn_rate deg/s, turn_acceleration
-        deg/s^2); an acceleration may be ``(accel, decel)``. Defaults: the weaker wheel's ``control.limits()``
-        (about 770 mm/s, 1630 mm/s^2, 520 deg/s, 1100 deg/s^2 on two Mediums with 62.4 mm wheels 170 mm apart:
-        the floor closed as cleanly there as at 40 %); lower them for a heavier robot or a slick floor. A value
-        above what the weaker wheel can do is clamped to it and the getter reports the clamped value."""
+        deg/s^2); an acceleration may be ``(accel, decel)``. Defaults: the weaker wheel's ``control.limits()``,
+        the straight acceleration at 75 % of it (about 770 mm/s, 1230 mm/s^2, 520 deg/s, 1100 deg/s^2 on two
+        Mediums with 62.4 mm wheels 170 mm apart: at the full 1630 mm/s^2 the tyres slip about 1.5 mm per 30 cm
+        out-and-back, invisible to the encoders); lower them for a heavier robot or a slick floor. A value above what the
+        weaker wheel can do is clamped to it and the getter reports the clamped value."""
     def close(self) -> None:
         """Coast both wheels and release them (the ``Motor`` objects stay open; a new DriveBase can use them)."""
     def __enter__(self) -> DriveBase: ...
@@ -602,6 +658,13 @@ class ColorSensor:
 
         Hue matches work at any distance or light level. For ``Color.WHITE`` vs ``Color.NONE`` the
         reading's value must be meaningful: calibrate with ``ranges()`` on white and black first."""
+    def color_match(self) -> Tuple[Optional[Color], float]:
+        """``(color(), confidence)`` from one reading. The confidence is the margin to the runner-up in
+        ``detectable_colors()``: ``1 - d_best / d_second`` in the matcher's own distance, so 1.0 means the
+        reading sits on the chosen colour and 0.0 that it is halfway between two (a coin flip); with a single
+        detectable colour it is the distance to that one against a fixed scale. Threshold it:
+        ``c, p = cs.color_match(); if c == Color.RED and p > 0.6:``. ``(None, 0.0)`` with no detectable colours.
+        (Owner's rule, 2026-09-20: a classification comes with its confidence.)"""
     @overload
     def detectable_colors(self) -> Sequence[Color]: ...
     @overload
@@ -1017,6 +1080,9 @@ class GestureSensor:
     def hsv(self) -> Color: ...
     def color(self) -> Optional[Color]:
         """Nearest of ``detectable_colors()``, or ``None`` when that set is empty."""
+    def color_match(self) -> Tuple[Optional[Color], float]:
+        """``(color(), confidence)`` from one reading, as ``ColorSensor.color_match()``: the margin to the
+        runner-up (1.0 on the colour, 0.0 halfway between two)."""
     @overload
     def detectable_colors(self) -> Sequence[Color]: ...
     @overload

@@ -1,6 +1,6 @@
 EVN_ALPHA_MicroPython.uf2
-source: worktree-endpoint-release after 2034d35 (2026-09-20, day: the endpoint hunt fixed - the breakaway assist at a stopped reference releases at the first edge of travel (EVN_ADRC_RELEASE_DEG_HOLD); firmware 0.2.25)
-built: 2026-09-20 13:50 +08:00 (MicroPython v1.26.1, pico-sdk 2.3.0)
+source: worktree-drivebase-pose after 686e774 (2026-09-20, afternoon: DriveBase.use_gyro(True) - the pose-closed drive base, floor-accepted for heading; default straight acceleration 75 % of the wheel limit; firmware 0.2.26)
+built: 2026-09-20 16:26 +08:00 (MicroPython v1.26.1, pico-sdk 2.3.0)
 flash: single-line 03h boot2, PICO_FLASH_SPI_CLKDIV=4
-md5: d9e1eb18ad06c6c4058cf659bd9f643f
-version: 0.2.25
+md5: 6f3af84750d8c63d8f99975b6a5b8492
+version: 0.2.26

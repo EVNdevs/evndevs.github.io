@@ -1,11 +1,11 @@
 {
   "extension": {
-    "version": "0.2.25",
-    "vsix": "https://evn.coresg.tech/vsix/evn-alpha-micropython-0.2.25.vsix",
+    "version": "0.2.26",
+    "vsix": "https://evn.coresg.tech/vsix/evn-alpha-micropython-0.2.26.vsix",
     "notes": "https://evn.coresg.tech/#/changelog"
   },
   "firmware": {
-    "version": "0.2.25",
+    "version": "0.2.26",
     "uf2": "https://evn.coresg.tech/firmware/EVN_ALPHA_MicroPython.uf2",
     "notes": "https://github.com/EVNdevs/evndevs.github.io/blob/main/firmware/BUILD.txt"
   }
