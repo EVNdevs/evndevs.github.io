@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.25 (2026-09-20)
+
+- **Firmware 0.2.25: the endpoint hunt is fixed.** A `run_target()` / `track_target()` that came to rest just outside the endpoint deadband could shake for a second at 2–3° either side of the target (a ±2–3° cycle at about 4 Hz; in the overnight endurance run one motor did it on a quarter of its arrivals). The breakaway assist, which pushes a shaft stuck short of its target free, released its push only after 1° of travel at speed — by then a free EV3 Medium was doing ~140 deg/s and coasted 2° past. At a stopped target it now lets go at the first encoder edge of travel (0.4°), and the shaft settles inside the deadband. Behind a moving reference nothing changes. Measured on the bench with the hunt reproduced on demand (`tools/bench/mpy_arrival_trace.py`: 12 hunting moves of 32 → 0 in 128), the free-shaft sweep alternating with 0.2.24 (182 / 174 against 179 / 184 of 192, the run-to-run scatter), `run(0)` settle 0 residuals in 40, a 25-minute four-axis endurance run with zero hunts.
+- **Known and recorded**: on a motor whose calibration installed a measured encoder phase table the shaft can rest 0.6–0.7° from its target (inside the 0.75° deadband) and `angle()` then reads ±1; where that happens depends on the target's phase in the encoder cycle, not on the direction. `docs/ADRC_IMPLEMENTATION.md` §6g.
+
 ## 0.2.24 (2026-09-20)
 
 - **Firmware 0.2.24: `Display.flip()` repaints again.** The segment re-map (A0h/A1h) only applies to data written after it (SSD1306 §10.1.8), so the 0.2.23 change that skipped the repaint left a live panel upside down *and mirrored* until the next drawing call; `flip()` is back to rewriting the frame (about 30 ms). Owner's eye check pending on the bench (the bench cannot read the panel).
