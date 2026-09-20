@@ -259,7 +259,7 @@ Frames: `x` East / `y` North in mm (without a compass, `x` is +90° from the hea
 | `reset(x=0, y=0, heading=0)` | set the pose (mm, mm, degrees clockwise from north); biases and wheel parameters are kept |
 | `close()` | release the estimator |
 
-Bench diagnostics, not for programs: `_stats()` (seven counters: steps, rejected wheel / lateral / magnetometer updates, the yaw-rate row's reject run, wheel-gate escapes taken, steps with a stale IMU) and `_step(...)` (one filter step on SI values, for a `Pose(_test=True)` object).
+Bench diagnostics, not for programs: `_stats()` (seven counters: steps, rejected wheel / lateral / magnetometer updates, the yaw-rate row's reject run near rest, wheel-gate escapes taken, steps with a stale IMU), `_bias()` (the filter's gyro bias and its sigma in deg/s, counter-clockwise positive — the filter's frame, not the heading's) and `_step(...)` (one filter step on SI values, for a `Pose(_test=True)` object).
 
 ## Timing
 

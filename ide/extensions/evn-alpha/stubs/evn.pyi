@@ -1919,5 +1919,8 @@ class Pose:
     def _stats(self) -> Tuple[int, int, int, int, int, int, int]:
         """Bench diagnostic: (steps, rejected wheel updates, rejected lateral updates, rejected magnetometer updates,
         the yaw-rate row's reject run, wheel-gate escapes taken, steps with a stale IMU)."""
+    def _bias(self) -> Tuple[float, float]:
+        """Bench diagnostic: (the filter's gyro bias deg/s, its sigma deg/s) - in the filter's frame,
+        counter-clockwise positive, unlike ``heading()``."""
     def _step(self, dt: float, gyro_z: float, accel_x: float, accel_y: float, wl: float, wr: float, mag: float, /) -> Tuple[float, ...]:
         """Bench hook: one filter step on SI values (nan = absent source); returns the SI state."""
