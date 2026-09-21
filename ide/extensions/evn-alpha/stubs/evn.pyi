@@ -157,8 +157,10 @@ class Model:
 class Motor:
     """An EV3/NXT motor on EVN port ``port`` (1..4). ``Port.A..D`` are the same numbers.
 
-    The motor model (EV3 Large / EV3 Medium / NXT) is the one the port's stored calibration was made for, else
-    the firmware's fallback table; ``model=`` names it (below).
+    The motor model (EV3 Large / EV3 Medium / NXT, or a custom motor) is the one the port was configured for
+    (``evn.configure_motor()`` / the extension's Board view, stored on the board), else the one its stored
+    calibration was made for, else the firmware's fallback table; ``model=`` names a standard one for this
+    session (below). A custom motor's no-load speed is its speed limit and 100 %, its rated voltage its cap.
     A port already held by an open Motor raises ``OSError(EBUSY)`` until it is ``close()``d;
     a port outside 1..4 raises ``ValueError``. Every call after ``close()`` raises
     ``RuntimeError("motor closed; create a new Motor")``.
@@ -1868,6 +1870,49 @@ def core1_status() -> Optional[Tuple[int, int, int, int, int, int]]:
 
 def stop_all() -> None:
     """Coast every motor."""
+
+def configure_motor(port: int, model: Optional[str], *, counts_per_rev: Optional[float] = None,
+                    rated_voltage: int = 0, no_load_speed: Optional[float] = None) -> None:
+    """Say what is on motor port 1..4 and store it on the board, so a plain ``Motor(port)`` runs that motor
+    from any host and after every reboot. ``model``: ``"EV3 Large"``, ``"EV3 Medium"`` or ``"NXT"`` for a
+    standard motor; ``"custom"`` for any other DC motor with a quadrature encoder, described by
+    ``counts_per_rev`` (encoder edges per OUTPUT revolution = one channel's pulses x 4 x the gear ratio;
+    a LEGO motor is 720), ``rated_voltage`` (mV, the port's voltage cap; 0 = none) and ``no_load_speed``
+    (deg/s at the rated voltage, 0 = not known: it sets the speed limit, 100 % and the control's first
+    guess until ``calibrate()`` measures the motor); ``None`` removes the stored configuration and puts
+    the port back to the firmware's fallback (EV3 Large on 1-2, EV3 Medium on 3-4).
+    A change to a different motor clears the port's calibration (the old motor's numbers must not run
+    the new one): ``calibrate()`` afterwards. Nothing moves. The port must be free (``OSError(EBUSY)``
+    while a Motor holds it: ``close()`` it first) and every motor stopped (the flash write);
+    ``RuntimeError`` says why a refused change did nothing, ``ValueError`` what was wrong with the
+    numbers."""
+
+def motor_config(port: int, /) -> dict:
+    """What motor port 1..4 runs now: ``{"port", "model" ('EV3 Large' / 'EV3 Medium' / 'NXT' / 'custom'),
+    "custom" (bool), "control_class" (the standard model a custom motor's control starts from),
+    "counts_per_rev", "rated_voltage" (mV, 0 = no cap), "no_load_speed" (deg/s, 0 = not given),
+    "stored" (True when it is in flash and the port runs it), "session" (True while a program's
+    ``Motor(port, model=)`` runs a standard model in its place until the next reboot)}``."""
+
+def calibration(port: int, /) -> dict:
+    """The calibration motor port 1..4 runs: ``{"port", "calibrated" (a calibrate() result drives the port),
+    "busy" (a calibrate(wait=False) is running on it), "stored" (it is in flash), "stamp" (seconds since 1970 UTC when it was made; 0 = the board's clock
+    was not set then - the extension sets it, a bare program does not), "b0" (deg/s^2 per V),
+    "tau_ms", "v_break_mv", "v_f_mv", "no_load_speed" (deg/s at 9 V, or at a custom motor's rated
+    voltage), "vbus_mv" (the pack during it), "warning" (what is wrong with the record found in flash:
+    made for another motor, refused; implausible for the model, applied anyway; else None),
+    "error" (why the last calibrate() on this port failed or was refused, else None)}``."""
+
+def clock(seconds: Optional[int] = None, /) -> int:
+    """The board's wall clock as seconds since 1970-01-01 UTC; 0 until a host sets it (no battery-backed
+    clock, no epoch time in the build). With an argument it is set first (a date in 2025..2105, else
+    ``ValueError``). The extension's console sets it at every connect; ``calibration(port)["stamp"]``
+    is this clock at the time of the calibration."""
+
+def clear_calibration(port: int, /) -> None:
+    """Forget motor port 1..4's calibration, record and running numbers: the port goes back to its motor's
+    compiled defaults as if ``calibrate()`` had never run. Nothing moves. Port free (``OSError(EBUSY)``
+    while a Motor holds it) and every motor stopped; ``RuntimeError`` says why a refusal changed nothing."""
 
 def reset_cause() -> str:
     """``"watchdog"`` after a watchdog reboot, else ``"normal"``."""

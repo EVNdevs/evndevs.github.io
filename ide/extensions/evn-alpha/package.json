@@ -2,7 +2,7 @@
   "name": "evn-alpha-micropython",
   "displayName": "EVN ALPHA MicroPython",
   "description": "Early-access tooling for the EVN ALPHA robotics controller: flash the MicroPython firmware, run programs, open the REPL, autocomplete for the evn motor API, and a Blockly block editor that generates MicroPython.",
-  "version": "0.2.29",
+  "version": "0.2.30",
   "publisher": "evn-alpha",
   "license": "MIT",
   "preview": true,
@@ -407,6 +407,18 @@
       },
       {
         "category": "EVN",
+        "command": "evn.motor.calibrate",
+        "title": "Calibrate this motor (shaft free, ~5 s)...",
+        "icon": "$(pulse)"
+      },
+      {
+        "category": "EVN",
+        "command": "evn.motor.clearCalibration",
+        "title": "Clear this motor port's calibration...",
+        "icon": "$(clear-all)"
+      },
+      {
+        "category": "EVN",
         "command": "evn.bluetooth.preferWireless",
         "title": "Switch the board to Bluetooth now (test the wireless link)",
         "icon": "$(arrow-swap)"
@@ -574,6 +586,14 @@
         },
         {
           "command": "evn.motor.runTime",
+          "when": "false"
+        },
+        {
+          "command": "evn.motor.calibrate",
+          "when": "false"
+        },
+        {
+          "command": "evn.motor.clearCalibration",
           "when": "false"
         },
         {
@@ -947,6 +967,16 @@
           "command": "evn.motor.runTime",
           "when": "view == evn.board && viewItem == evnBoardMotorPortSet && evn.console.state == live",
           "group": "1_drive@4"
+        },
+        {
+          "command": "evn.motor.calibrate",
+          "when": "view == evn.board && viewItem == evnBoardMotorPortSet && evn.console.state == live",
+          "group": "2_calibrate@1"
+        },
+        {
+          "command": "evn.motor.clearCalibration",
+          "when": "view == evn.board && viewItem == evnBoardMotorPortSet && evn.console.state == live",
+          "group": "2_calibrate@2"
         },
         {
           "command": "evn.bluetooth.preferWireless",

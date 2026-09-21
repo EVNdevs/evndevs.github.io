@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.30 (2026-09-21)
+
+- **Custom motors and per-port calibration from the Board view.** The gear on a motor port now really configures the board: EV3 Large / EV3 Medium / NXT, or **Custom…** (name, encoder counts per output revolution, rated voltage, no-load speed) — stored on the board, so a plain `Motor(port)` runs that motor from any host and after every reboot. The row has **Calibrate** (the ~5 s self-calibration, shaft free) and **Clear calibration**; it shows *calibrated 21 Sep 2026 14:02* / *not calibrated* / *calibration is for another motor*. Choosing a different motor for a port clears that port's calibration. The console sets the board's clock at connect so a calibration carries its date. Firmware: `evn.configure_motor()`, `evn.motor_config()`, `evn.calibration()`, `evn.clear_calibration()`; the calibration page is version 5 (older pages load; older firmware refuses a v5 page and a `calibrate()` there rewrites it as version 4, which loses the stored motor configurations: configure the ports again after re-upgrading). The Board view's motor picker used to be a note; the notes it held are replaced by what the board reports.
+
 ## 0.2.29 (2026-09-21)
 
 **The overnight bug-bounty tournament's 36 fixes** (`docs/session/2026-09-21_bounty_tournament.md`): 59 findings, 59 confirmed, every one fixed, tested and adversarially reviewed; the two-wheel bar 172/172 and the owner's four hand checks green before this release. Highlights below; the firmware carries them all (`evn.version` 0.2.29).

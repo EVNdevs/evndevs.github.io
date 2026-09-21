@@ -934,7 +934,8 @@
      * a Python block spelling `autostart(True)` raised NameError on the board). */
     const DEVICE_NAMES = ['Color', 'Icon', 'Side', 'ColorSensor', 'DistanceSensor', 'GestureSensor', 'EnvSensor',
         'Compass', 'TouchArray', 'IMU', 'ADC', 'Display', 'MatrixLED', 'SevenSegmentLED', 'RGBLED', 'Servo', 'Bluetooth',
-        'DriveBase', 'Pose', 'UART', 'I2C', 'Flash', 'reset', 'reset_cause', 'bootloader', 'autostart', 'core1_status', 'version'];
+        'DriveBase', 'Pose', 'UART', 'I2C', 'Flash', 'reset', 'reset_cause', 'bootloader', 'autostart', 'core1_status', 'version',
+        'configure_motor', 'motor_config', 'calibration', 'clear_calibration', 'clock'];
     const EVN_NAMES = CORE_NAMES.concat(DEVICE_NAMES);
 
     /* class -> [variable prefix, "set up" block type]. One object per port, named after the port
