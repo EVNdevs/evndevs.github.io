@@ -2,7 +2,7 @@
   "name": "evn-alpha-micropython",
   "displayName": "EVN ALPHA MicroPython",
   "description": "Early-access tooling for the EVN ALPHA robotics controller: flash the MicroPython firmware, run programs, open the REPL, autocomplete for the evn motor API, and a Blockly block editor that generates MicroPython.",
-  "version": "0.2.30",
+  "version": "0.2.31",
   "publisher": "evn-alpha",
   "license": "MIT",
   "preview": true,
@@ -962,6 +962,11 @@
           "command": "evn.motor.runTime",
           "when": "view == evn.board && viewItem == evnBoardMotorPortSet && evn.console.state == live",
           "group": "inline@4"
+        },
+        {
+          "command": "evn.motor.calibrate",
+          "when": "view == evn.board && viewItem == evnBoardMotorPortSet && evn.console.state == live",
+          "group": "inline@5"
         },
         {
           "command": "evn.motor.runTime",

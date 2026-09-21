@@ -157,7 +157,7 @@ class Model:
 class Motor:
     """An EV3/NXT motor on EVN port ``port`` (1..4). ``Port.A..D`` are the same numbers.
 
-    The motor model (EV3 Large / EV3 Medium / NXT, or a custom motor) is the one the port was configured for
+    The motor model (EV3 Large / EV3 Medium / NXT / JGA25-370 6V 77RPM, or a custom motor) is the one the port was configured for
     (``evn.configure_motor()`` / the extension's Board view, stored on the board), else the one its stored
     calibration was made for, else the firmware's fallback table; ``model=`` names a standard one for this
     session (below). A custom motor's no-load speed is its speed limit and 100 %, its rated voltage its cap.
@@ -177,8 +177,9 @@ class Motor:
         for ``done()``, must be positive. ``speed_unit=SpeedUnit.PERCENT`` makes every speed a
         percentage of ``full_speed()``.
 
-        ``model``: the motor on the port, ``"EV3 Large"``, ``"EV3 Medium"`` or ``"NXT"`` (``"large"``,
-        ``"medium"``, ``"nxt"`` also work). Every gain and limit starts from the model's compiled
+        ``model``: the motor on the port, ``"EV3 Large"``, ``"EV3 Medium"``, ``"NXT"`` or
+        ``"JGA25-370 6V 77RPM"`` (``"large"``, ``"medium"``, ``"nxt"``, ``"jga25"`` also work; the JGA25 is
+        a 6 V gearmotor, 3432 counts per revolution, the port capped at 6 V). Every gain and limit starts from the model's compiled
         defaults; ``calibrate()`` refines them for this motor and stores the result with the model.
         ``None`` keeps the model the port runs: the one its stored calibration was made for, else the
         firmware's fallback table (EV3 Large on ports 1-2, EV3 Medium on 3-4). Naming another model
@@ -262,7 +263,8 @@ class Motor:
     def full_speed(self, deg_s: float, /) -> None:
         """What 100 % means, in deg/s, at the present battery voltage: the no-load speed measured by
         ``calibrate()`` (stored in flash per port), or until then the motor model's rated no-load speed
-        (EV3 Large 1050, EV3 Medium 1560, NXT 1020 deg/s at 9 V) scaled by the pack.
+        (EV3 Large 1050, EV3 Medium 1560, NXT 1020 deg/s at 9 V; JGA25 462 deg/s at its 6 V cap) scaled
+        by the voltage the motor sees (the pack, or its cap).
         Setting it stores deg/s per volt, so it keeps tracking the battery; a non-positive value raises
         ``ValueError``."""
     @overload
@@ -1874,23 +1876,28 @@ def stop_all() -> None:
 def configure_motor(port: int, model: Optional[str], *, counts_per_rev: Optional[float] = None,
                     rated_voltage: int = 0, no_load_speed: Optional[float] = None) -> None:
     """Say what is on motor port 1..4 and store it on the board, so a plain ``Motor(port)`` runs that motor
-    from any host and after every reboot. ``model``: ``"EV3 Large"``, ``"EV3 Medium"`` or ``"NXT"`` for a
-    standard motor; ``"custom"`` for any other DC motor with a quadrature encoder, described by
+    from any host and after every reboot. ``model``: ``"EV3 Large"``, ``"EV3 Medium"``, ``"NXT"`` or
+    ``"JGA25-370 6V 77RPM"`` (``"jga25"``: a 6 V, 77 rpm, 1:78 gearmotor with an 11 cpr hall encoder, 3432
+    counts per revolution, the port capped at 6 V) for a library motor; ``"custom"`` for any other DC motor with a quadrature encoder, described by
     ``counts_per_rev`` (encoder edges per OUTPUT revolution = one channel's pulses x 4 x the gear ratio;
     a LEGO motor is 720), ``rated_voltage`` (mV, the port's voltage cap; 0 = none) and ``no_load_speed``
     (deg/s at the rated voltage, 0 = not known: it sets the speed limit, 100 % and the control's first
     guess until ``calibrate()`` measures the motor); ``None`` removes the stored configuration and puts
     the port back to the firmware's fallback (EV3 Large on 1-2, EV3 Medium on 3-4).
     A change to a different motor clears the port's calibration (the old motor's numbers must not run
-    the new one): ``calibrate()`` afterwards. Nothing moves. The port must be free (``OSError(EBUSY)``
+    the new one): ``calibrate()`` afterwards - it also finds which way the motor's encoder counts, so a
+    custom or JGA25 motor is only fully trusted once calibrated. Nothing moves. The port must be free (``OSError(EBUSY)``
     while a Motor holds it: ``close()`` it first) and every motor stopped (the flash write);
     ``RuntimeError`` says why a refused change did nothing, ``ValueError`` what was wrong with the
     numbers."""
 
 def motor_config(port: int, /) -> dict:
-    """What motor port 1..4 runs now: ``{"port", "model" ('EV3 Large' / 'EV3 Medium' / 'NXT' / 'custom'),
-    "custom" (bool), "control_class" (the standard model a custom motor's control starts from),
-    "counts_per_rev", "rated_voltage" (mV, 0 = no cap), "no_load_speed" (deg/s, 0 = not given),
+    """What motor port 1..4 runs now: ``{"port", "model" ('EV3 Large' / 'EV3 Medium' / 'NXT' /
+    'JGA25-370 6V 77RPM' / 'custom'), "custom" (bool), "control_class" (the standard model the control
+    starts from: a custom motor's, or a library motor's own - the JGA25 runs the EV3 Large class),
+    "counts_per_rev", "rated_voltage" (mV, the port's voltage cap: a custom motor's rated voltage, the
+    JGA25's 6000, 0 for a LEGO motor), "no_load_speed" (deg/s at that voltage, at 9 V when uncapped; 0 =
+    a custom motor gave none),
     "stored" (True when it is in flash and the port runs it), "session" (True while a program's
     ``Motor(port, model=)`` runs a standard model in its place until the next reboot)}``."""
 
@@ -1898,8 +1905,10 @@ def calibration(port: int, /) -> dict:
     """The calibration motor port 1..4 runs: ``{"port", "calibrated" (a calibrate() result drives the port),
     "busy" (a calibrate(wait=False) is running on it), "stored" (it is in flash), "stamp" (seconds since 1970 UTC when it was made; 0 = the board's clock
     was not set then - the extension sets it, a bare program does not), "b0" (deg/s^2 per V),
-    "tau_ms", "v_break_mv", "v_f_mv", "no_load_speed" (deg/s at 9 V, or at a custom motor's rated
-    voltage), "vbus_mv" (the pack during it), "warning" (what is wrong with the record found in flash:
+    "tau_ms", "v_break_mv", "v_f_mv", "no_load_speed" (deg/s at 9 V, or at the motor's rated
+    voltage), "vbus_mv" (the pack during it), "encoder_reversed" (True when the calibration found the
+    encoder counting against the drive and flipped the port's decoder - a non-LEGO motor wired the other
+    way round; stored with the record, back at boot, gone with the record), "warning" (what is wrong with the record found in flash:
     made for another motor, refused; implausible for the model, applied anyway; else None),
     "error" (why the last calibrate() on this port failed or was refused, else None)}``."""
 
