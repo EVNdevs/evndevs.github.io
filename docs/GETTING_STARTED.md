@@ -32,7 +32,7 @@ Give the board a name once with **EVN: Name this board** (or the tag button on t
 
 ## 3. Your first program
 
-Open the **EVN ALPHA** tab in the activity bar (the ℕ glyph). It has three sections: *Start* (five rows: **New Python program**, **New blocks program**, **Board panel**, **Documentation**, **Getting started**), *My projects* and *Examples*. Two more, *Board* and *Console*, are in the secondary side bar on the other side of the window (§2, §3b).
+Open the **EVN ALPHA** tab in the activity bar (the ℕ glyph). It has three sections: *Start* (the extension's version beside its title, worth quoting in a bug report; five rows: **New Python program**, **New blocks program**, **Board panel**, **Documentation**, **Getting started**), *My projects* and *Examples*. Two more, *Board* and *Console*, are in the secondary side bar on the other side of the window (§2, §3b).
 
 1. Plug a motor into **port 1** and keep the wheel off the ground.
 2. Under *Examples*, click `01_first_moves` to open it, then press **Ctrl+F5** (*EVN: Run current file on the board*), or use the **Run example on the board** button next to its name.
