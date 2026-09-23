@@ -516,7 +516,8 @@ class Servo:
     def close(self) -> None:
         """Give the channel back (the pulse stops, the pin goes low) so an ``RGBLED`` strip or a new
         ``Servo`` object can take the port without a soft reset. Idempotent; every other method then
-        raises ``ValueError("Servo is closed")``."""
+        raises ``ValueError("Servo is closed")`` except ``done()`` and ``profile()``, which still
+        answer from the port as it is now."""
 
 
 class I2C:
@@ -792,7 +793,8 @@ class ADC:
     def inputs(self) -> Tuple[int, ...]: ...
     @overload
     def inputs(self, seq: Union[int, Sequence[int]], /) -> None:
-        """The inputs scanned in turn (a single int or a sequence; each takes 1/data_rate + 25 us).
+        """The inputs scanned in turn (a single int or a sequence; each takes about 1.2/data_rate
+        + 0.7 ms, ~3 ms at 860 samples per second).
         An empty set raises ``ValueError("at least one input")``."""
     @overload
     def range(self) -> float: ...
@@ -868,7 +870,8 @@ class EnvSensor:
     def forced(self) -> int: ...
     @overload
     def forced(self, interval_ms: int, /) -> None:
-        """One host-triggered measurement every ``interval_ms``, 0..3600000 (0 = back to normal mode)."""
+        """One host-triggered measurement every ``interval_ms``, 0..2000000 (0 = back to normal mode);
+        above that raises ``ValueError("interval must be 0..2000000 ms")``."""
     def measurement_time(self) -> float:
         """Worst-case ms for one measurement at the current oversampling (the datasheet's bound, not
         the typical time the schedule uses)."""
@@ -996,9 +999,10 @@ class TouchArray:
     electrode at every start. Bench-validated 2026-09-18: a bare finger moves a pad by about 500
     counts against the default 12 / 6 thresholds (lower them for a pad under a cover); a hand 1 cm
     above moves it by at most 6; proximity needs ``electrodes(12, proximity=3)``; hot-plug recovers
-    by itself. The constructor takes about 50 ms (reset, 76 register writes, auto-configuration, two
-    status periods); a setter about 35 ms and 26 polls of three writes, and returns with the first
-    sample under the new setting.
+    by itself. The constructor takes about 55 ms (reset, 76 register writes, auto-configuration, two
+    status periods); a setter about 52 ms at the 4 ms status period (26 polls of three writes, then
+    the restart and its periods; 171 ms at the 64 ms period), and returns with the first sample
+    under the new setting.
 
     Raises: ``ValueError("port must be 1..16")``; ``OSError("no MPR121 on port %d (I2C 0x5A)")``;
     ``OSError(EIO)`` when all 4 slots are taken, ``OSError(ETIMEDOUT)`` for no first sample;
@@ -1026,6 +1030,10 @@ class TouchArray:
     def thresholds(self, channel: int, /) -> Tuple[int, int]:
         """One bare positional argument is the **channel to read**, not ``touch``: it returns that
         channel's ``(touch, release)``."""
+    @overload
+    def thresholds(self, *, channel: int) -> Tuple[int, int]:
+        """``channel=n`` without ``touch`` / ``release`` is a getter too: that channel's
+        ``(touch, release)``."""
     @overload
     def thresholds(self, touch: Optional[int] = None, release: Optional[int] = None, *,
                    channel: Optional[int] = None) -> None:
@@ -1331,7 +1339,7 @@ class IMU:
     def screen_orientation(self) -> Optional[str]:
         """``'portrait'``, ``'landscape'``, ``'reverse portrait'`` or ``'reverse landscape'`` of an
         orientation change not yet returned, else ``None`` - each event is reported once, as ``tap()``
-        does. Body frame."""
+        does. **Chip frame**: the DMP's own x/y, which ``axes()`` does not remap (taps are remapped)."""
     def calibrate_gyro(self, samples: int = 500, /) -> Optional[Tuple[int, int, int]]:
         """Raw mode: average ``samples`` (1..65535) still readings and subtract the bias; returns the
         bias in counts, or ``None`` in DMP mode, where the DMP's own calibration owns the bias."""
@@ -1419,7 +1427,8 @@ class MatrixLED:
         """Set one of the 128 LEDs (0..127) directly."""
     @overload
     def keys(self) -> bytes:
-        """The six key-scan bytes; ``ValueError("key scan is off: keys(True)")`` until ``keys(True)``."""
+        """The six key-scan bytes; ``ValueError("key scan is off: keys(True)")`` until ``keys(True)``,
+        and after it until the first scan has completed."""
     @overload
     def keys(self, enable: bool, /) -> None:
         """Turn the chip's key scan on or off."""
@@ -1499,14 +1508,16 @@ class SevenSegmentLED:
     @overload
     def raw(self, led: int, on: bool, /) -> None: ...
     @overload
-    def keys(self) -> bytes: ...
+    def keys(self) -> bytes:
+        """As ``MatrixLED.keys()``: ``ValueError("key scan is off: keys(True)")`` until ``keys(True)``
+        and its first completed scan."""
     @overload
     def keys(self, enable: bool, /) -> None: ...
     def digit(self, position: int, value: int, /) -> None:
         """``position`` 0..3, ``value`` 0..9."""
     def char(self, position: int, letter: str, /) -> None:
-        """A letter with a seven-segment glyph (A B C D E F G H J L N O P R T U Y - _ space);
-        anything else raises ``ValueError``."""
+        """A character with a seven-segment glyph: a digit 0-9 or A B C D E F G H J L N O P R T U Y
+        (upper or lower case, shown the same) - _ space; anything else raises ``ValueError``."""
     def text(self, text: str, /) -> None:
         """Up to 4 characters, left aligned; a ``'.'`` after a character lights its point."""
     def number(self, value: Union[int, float], /) -> None:
@@ -1529,8 +1540,10 @@ class Display:
 
     Text is a 16-column x 8-row grid of 8x8 characters. Changes are streamed to the panel in the
     background (a full repaint takes about 30 ms with ``show()``, about 57 ms streamed); a display
-    that is unplugged raises ``OSError`` from ``show()`` and the settings-changing calls, and comes
-    back by itself with its picture when replugged. The constructor's budget covers the settle and
+    that is unplugged raises ``OSError`` from ``show()``, ``all_on()``, ``scroll()``,
+    ``scroll_stop()``, ``fade()``, ``zoom()`` and ``command()``, while ``contrast()``, ``flip()``,
+    ``invert()``, ``on()`` and ``off()`` only store the setting; it comes back by itself with its
+    picture and those settings when replugged. The constructor's budget covers the settle and
     the confirming re-send and can take up to about 740 ms on a panel that has just been plugged in;
     the confirming setup is re-sent on every attach. Bench-validated on the EVN OLED (an SSD1315)
     2026-09-17.
@@ -1569,8 +1582,9 @@ class Display:
     width: int
     height: int
     def draw_pixel(self, x: int, y: int, color: Union[Color, bool] = True, /) -> None:
-        """EV3 screen names: ``Color.BLACK`` (the default ink) lights a pixel, ``Color.WHITE`` /
-        ``Color.NONE`` erase. Coordinates off the screen are clipped, not refused."""
+        """EV3 screen names: ``Color.BLACK`` (the default ink) lights a pixel; ``Color.NONE`` (value 0)
+        and any grey with value >= 50 (``Color.WHITE``, ``Color.GRAY``) erase, as does ``False``.
+        Coordinates off the screen are clipped, not refused."""
     def draw_line(self, x1: int, y1: int, x2: int, y2: int, width: int = 1, color: Union[Color, bool] = True) -> None:
         """``width`` 1..64."""
     def draw_box(self, x1: int, y1: int, x2: int, y2: int, r: int = 0, fill: bool = False,
@@ -1774,8 +1788,9 @@ class Bluetooth:
     def state(self) -> str:
         """``'probing'``, ``'configuring'``, ``'resetting'``, ``'command'``, ``'data'`` or ``'closed'``."""
     def ready(self) -> bool:
-        """The port is open and the module is in data mode. The module has no STATE line on the header,
-        so this does **not** mean a peer is connected."""
+        """The port is open and the module is in data mode, or in command mode with no command in
+        flight. The module has no STATE line on the header, so this does **not** mean a peer is
+        connected."""
     @overload
     def repl(self) -> bool: ...
     @overload

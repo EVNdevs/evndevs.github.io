@@ -1,7 +1,7 @@
 EVN_ALPHA_MicroPython.uf2
-source: main 1bb75e5 + the 0.2.33 changes (2026-09-23: Python and Blocks folders in Examples and My projects; firmware unchanged but for the version string)
+source: main + the 0.2.34 changes (2026-09-23: the API reference documents every standard peripheral in its own section; stub and STANDARD_PERIPHERALS corrections; firmware unchanged but for the version string)
 built: 2026-09-23 18:30 +08:00 (MicroPython v1.26.1, pico-sdk 2.3.0; SOURCE_DATE_EPOCH=1790164800 = noon UTC 2026-09-23)
 flash: single-line 03h boot2, PICO_FLASH_SPI_CLKDIV=4
-md5: e7c18f174caf0472fdaa275584147337
+md5: fab731729dd92daa9a1346016ff39d27
 reproduce: cmake -G Ninja -DEVN_MICROPYTHON=ON + ninja with SOURCE_DATE_EPOCH = noon UTC of the built: date (py/makeversionhdr.py embeds MICROPY_BUILD_DATE); release_public.py does this and refuses on an md5 mismatch
-version: 0.2.33
+version: 0.2.34
