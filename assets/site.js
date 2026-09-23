@@ -578,6 +578,8 @@
         'the board over Web Serial, so it needs a Chromium browser (Chrome or Edge) and a USB cable.'));
       var go = el('a', 'btn btn-primary', 'Open the browser IDE');
       go.href = 'ide/';
+      go.target = '_blank';
+      go.rel = 'noopener';
       card.appendChild(txt);
       card.appendChild(go);
       i.body.appendChild(card);
