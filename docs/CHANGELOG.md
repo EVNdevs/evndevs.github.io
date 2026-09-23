@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.33 (2026-09-23)
+
+- **Examples and My projects each have a Python and a Blocks folder.** *Examples* used to list the Python examples loose with a *Blocks* folder below them; both kinds now sit in folders of their own. *My projects* is split the same way: **Python** holds your `.py` programs and **Blocks** your `.evnblocks` programs, each row with its own *New ...* button. The split is the view's only: nothing moves on disk, and a sub-folder of yours shows under whichever row holds its programs (both when it has both kinds or none yet). Deleting a folder that also holds the other kind says so before it goes.
+- Firmware: no change beyond the version string (`evn.version` 0.2.33).
+
 ## 0.2.32 (2026-09-23)
 
 - **The extension shows its version.** The *Start* view's title in the EVN ALPHA side bar carries the extension's version (*v0.2.32*), in VS Code and in the browser IDE, so a tester can say which one they run without opening the Extensions view.

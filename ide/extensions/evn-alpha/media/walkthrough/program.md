@@ -11,7 +11,8 @@ Either way you are asked for a name, the file is created, and it opens straight 
 ## Where your programs live
 
 In your projects folder: **EVN Projects** inside your Documents folder. Everything in it is listed under
-**My projects** in the sidebar, with **Run on the board** and **Upload as main.py** next to each program,
+**My projects** in the sidebar, Python programs in its **Python** folder and blocks programs in its
+**Blocks** folder, with **Run on the board** and **Upload as main.py** next to each program,
 and Rename, Duplicate, Delete and *Show in the file explorer* in the right-click menu.
 
 Somewhere else suits you better? Change the **evn.projectsFolder** setting and the sidebar follows.

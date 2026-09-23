@@ -1,8 +1,8 @@
 ## Ready-made programs
 
 Open the **EVN ALPHA** tab in the activity bar (the board icon on the far left). Its **Examples**
-section holds short programs that already work: first moves, percent speed, the colour sensor, the
-standard peripherals, and a set of blocks examples.
+section holds short programs that already work, in two folders: **Python** (first moves, percent speed,
+the colour sensor, the standard peripherals) and **Blocks** (the same ideas as block programs).
 
 Click an example to read it. Press the **Run** button next to its name - or **Ctrl+F5** while it is
 open - and it runs on the board.
