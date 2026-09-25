@@ -17,6 +17,6 @@ i = None
 
 # The main program starts here.
 for i in range(5, -1, -1):
-    matrix_1.number(i)
+    matrix_1.number(int(round(i)))
     wait(1000)
 matrix_1.icon(Icon.HEART)

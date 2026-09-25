@@ -165,9 +165,9 @@ The calibration blocks here (compass, IMU) and under *Advanced* (motor) store th
 | clear display *1* | `display_1.clear()` |
 | set up LED matrix on port *1* | `matrix_1 = MatrixLED(1)` |
 | LED matrix *1* show *heart* | `matrix_1.icon(Icon.HEART)` (happy, sad, yes, no, the four arrows and triangles, square, circle, clockwise, counterclockwise, pause, all on, all off) |
-| LED matrix *1* show number *7* | `matrix_1.number(7)` (-99 to 99) |
+| LED matrix *1* show number *7* | `matrix_1.number(7)` (-99 to 99). A computed value is rounded: `matrix_1.number(int(round(distance_sensor_2.distance() / 10)))` - the same for every block whose number must be whole (matrix pixel and brightness, 7-segment and RGB brightness, RGB LED number, display column / row, servo pulse, touch pad, ADC input, gesture timeout) |
 | LED matrix *1* show text *hi* | `matrix_1.text('hi')` (one letter at a time; the program waits) |
-| LED matrix *1* show letter *A* | `matrix_1.char(str('A')[:1])` (one character, shown until something else is) |
+| LED matrix *1* show letter *A* | `matrix_1.char((str('A') + ' ')[:1])` (one character, shown until something else is; the added blank means an empty text shows a blank instead of raising `ValueError`) |
 | LED matrix *1* pixel row *0* column *0* *on* | `matrix_1.pixel(0, 0, True)` (row from the top, column from the left, 0 to 7) |
 | LED matrix *1* brightness *8* | `matrix_1.brightness(8)` (1 to 16) |
 | clear LED matrix *1* | `matrix_1.clear()` |

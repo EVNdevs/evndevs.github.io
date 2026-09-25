@@ -935,7 +935,8 @@ class Compass:
     def raw(self) -> Tuple[int, int, int]:
         """Sensor-frame counts."""
     def field(self) -> Tuple[float, float, float]:
-        """Calibrated field in gauss, body frame."""
+        """Calibrated field in gauss, body frame. A planar calibration (``calibrate(planar=True)``) corrects x and y
+        only: z is then the sensor's own reading, the robot's iron included."""
     def heading(self) -> float:
         """Degrees 0..360 clockwise from north - the direction of the horizontal field, whatever its size.
         ``heading_confidence()`` says how far that field can be trusted as the Earth's; read it beside a heading
@@ -943,11 +944,15 @@ class Compass:
     def heading_confidence(self) -> float:
         """0..1, measured from this sample's field strength: 1 when |field| equals the calibration's fitted
         radius, falling to 0 at 25 % off it (a motor's magnets 10 cm away cancelled three quarters of the Earth's
-        field on the bench and read 0). Without a fitted radius (no ``calibrate()``, or one installed with
+        field on the bench and read 0). After a planar calibration (``calibrate(planar=True)``) the fit is the
+        horizontal circle, so the horizontal part of the field is measured against it: the Earth's vertical
+        field, which the planar fit does not see, does not count. Without a fitted radius (no ``calibrate()``, or one installed with
         ``calibration(offset, matrix)``, which carries no radius) only a coarse test is possible: 0.5 when |field| is inside the
         Earth's 0.25..0.65 G, else 0. ``Pose`` drops compass samples whose confidence is 0."""
     def field_strength(self) -> float:
-        """|field| in gauss (calibrated when a calibration is set). The Earth's field is 0.25..0.65 G."""
+        """|field| in gauss (calibrated when a calibration is set). The Earth's field is 0.25..0.65 G. After a planar
+        calibration it is the horizontal field only (x and y, what the planar fit calibrates; compare it with
+        ``stored_calibration()["field"]``), which is smaller: from about 0.1 G at high latitudes to 0.4 G near the equator."""
     def read(self) -> float:
         """Heading after the next new sample."""
     def north(self, heading: float = 0, /) -> None:

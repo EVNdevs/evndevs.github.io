@@ -248,7 +248,7 @@ A new `DriveBase` on a motor that still belongs to one takes the pair over.
 | `turn(angle, then=Stop.HOLD, wait=True)` | turn in place by `angle` degrees, clockwise positive |
 | `arc(radius, distance=None, angle=None, then=Stop.HOLD, wait=True)` | drive along a circle of \|`radius`\| mm on the right (positive radius) or left (negative) for `distance` mm of path **or** `angle` degrees of heading (one of the two); negative = backwards |
 | `curve(radius, angle, then=Stop.HOLD, wait=True)` | the same circle with the older Pybricks signs: the angle's sign picks the side (positive = right), the radius's sign the direction (negative = backwards), so `curve(-r, a)` retraces `curve(r, a)` |
-| `drive(speed, turn_rate)` | mm/s along the path and deg/s of heading until the next command; both wheels ramp together (the path during the ramp is the steady-state arc), and if a wheel would exceed the weaker motor's limit both are scaled so the radius is kept |
+| `drive(speed, turn_rate)` | mm/s along the path and deg/s of heading until the next command (positional, or `speed=` / `turn_rate=` as in Pybricks); both wheels ramp together (the path during the ramp is the steady-state arc), and if a wheel would exceed the weaker motor's limit both are scaled so the radius is kept |
 | `stop()`, `brake()` | coast / brake both wheels |
 
 ### Measuring
@@ -516,11 +516,11 @@ Plug a QMC5883L or HMC5883L compass module (the EVN compass module is an HMC5883
 | Call | Notes |
 | :--- | :--- |
 | `c.heading()` | degrees 0..360, clockwise seen from above, from `north()` — the direction of the calibrated horizontal field, whatever its size. 2-D only: no tilt compensation, so keep the module level |
-| `c.heading_confidence()` | 0..1, measured from this reading's field strength: 1 when \|field\| equals the calibration's fitted radius, falling to 0 at ±25 % off it. Without a fitted radius (no `calibrate()`, or a calibration installed with `calibration(offset, matrix)`, which carries none) only a coarse test: 0.5 while \|field\| is inside the Earth's 0.25..0.65 G, else 0. A field the motors have cancelled reads 0 even when the heading looks plausible |
-| `c.field_strength()` | \|field\| in gauss (calibrated when a calibration is installed); the Earth's field is 0.25..0.65 G |
+| `c.heading_confidence()` | 0..1, measured from this reading's field strength: 1 when \|field\| equals the calibration's fitted radius, falling to 0 at ±25 % off it. After a planar calibration (`calibrate(planar=True)`) only the horizontal part of the field is measured against the fitted circle — the Earth's vertical field, which the planar fit does not see, does not count. Without a fitted radius (no `calibrate()`, or a calibration installed with `calibration(offset, matrix)`, which carries none) only a coarse test: 0.5 while \|field\| is inside the Earth's 0.25..0.65 G, else 0. A field the motors have cancelled reads 0 even when the heading looks plausible |
+| `c.field_strength()` | \|field\| in gauss (calibrated when a calibration is installed); the Earth's field is 0.25..0.65 G. After a planar calibration it is the horizontal field only (x and y, what the planar fit calibrates; compare it with `stored_calibration()["field"]`), which is smaller: from about 0.1 G at high latitudes to 0.4 G near the equator |
 | `c.read()` | waits for the **next** reading and returns its heading (13.3 ms at the HMC default) — use it in a loop that should see a new sample each time |
 | `c.north(heading=0)` | the current direction reads as `heading` degrees from now on (positional) |
-| `c.field()` | `(x, y, z)` gauss in the body frame (forward, left, up), calibrated when a calibration is installed |
+| `c.field()` | `(x, y, z)` gauss in the body frame (forward, left, up), calibrated when a calibration is installed; a planar calibration corrects x and y only, so z is then the sensor's own reading, the robot's iron included |
 | `c.raw()` | `(x, y, z)` sensor-frame counts of the latest reading (cached, never blocks) |
 | `c.age()` | ms since the latest reading was taken |
 
@@ -1341,7 +1341,7 @@ An 11 MB file system is mounted at `/`. `open()`, `import`, `os` and `vfs` work 
 
 | Call | Does |
 | :--- | :--- |
-| `evn.wait(ms)` | pause the program; motors keep doing what they were told |
+| `evn.wait(time)` | pause the program for `time` ms (positional, or `time=` as in Pybricks); motors keep doing what they were told |
 | `evn.StopWatch()` | `time()` ms since construction, `pause()`, `resume()`, `reset()` |
 
 ## Safety behaviour

@@ -1790,6 +1790,17 @@
             return deviceRef(block, cls) + '.' + method + '(' + value(block, input, fallback) + ')\n';
         };
     }
+    /* X-003: an input whose binding takes an int (mp_obj_get_int refuses 7.0): an integer literal is
+     * passed as it is, anything else - a division, a sensor reading, a decimal - is rounded. */
+    function intValue(block, input, fallback) {
+        const code = value(block, input, fallback);
+        return /^-?\d+$/.test(code) ? code : 'int(round(' + code + '))';
+    }
+    function doInt(cls, method, input, fallback) {
+        return function (block) {
+            return deviceRef(block, cls) + '.' + method + '(' + intValue(block, input, fallback) + ')\n';
+        };
+    }
 
     generator.forBlock['evn_colorsensor_setup'] = setupGenerator('ColorSensor');
     generator.forBlock['evn_colorsensor_color'] = call('ColorSensor', 'color');
@@ -1816,7 +1827,7 @@
     generator.forBlock['evn_gesture_proximity'] = call('GestureSensor', 'proximity');
     generator.forBlock['evn_gesture_color'] = call('GestureSensor', 'color');
     generator.forBlock['evn_gesture_wait'] = function (block) {
-        return [deviceRef(block, 'GestureSensor') + '.read_gesture(' + value(block, 'TIMEOUT', '5000') + ')', Order.FUNCTION_CALL];
+        return [deviceRef(block, 'GestureSensor') + '.read_gesture(' + intValue(block, 'TIMEOUT', '5000') + ')', Order.FUNCTION_CALL];
     };
 
     generator.forBlock['evn_env_setup'] = setupGenerator('EnvSensor');
@@ -1843,7 +1854,7 @@
     generator.forBlock['evn_touch_setup'] = setupGenerator('TouchArray');
     generator.forBlock['evn_touch_any'] = call('TouchArray', 'pressed');
     generator.forBlock['evn_touch_pad'] = function (block) {
-        return [deviceRef(block, 'TouchArray') + '.read(' + value(block, 'PAD', '0') + ')', Order.FUNCTION_CALL];
+        return [deviceRef(block, 'TouchArray') + '.read(' + intValue(block, 'PAD', '0') + ')', Order.FUNCTION_CALL];
     };
 
     generator.forBlock['evn_imu_setup'] = setupGenerator('IMU');
@@ -1867,13 +1878,13 @@
 
     generator.forBlock['evn_adc_setup'] = setupGenerator('ADC');
     generator.forBlock['evn_adc_voltage'] = function (block) {
-        return [deviceRef(block, 'ADC') + '.voltage(' + value(block, 'INPUT', '0') + ')', Order.FUNCTION_CALL];
+        return [deviceRef(block, 'ADC') + '.voltage(' + intValue(block, 'INPUT', '0') + ')', Order.FUNCTION_CALL];
     };
 
     generator.forBlock['evn_display_setup'] = setupGenerator('Display');
     generator.forBlock['evn_display_clear'] = doCall('Display', 'clear');
     generator.forBlock['evn_display_text'] = function (block) {
-        return deviceRef(block, 'Display') + '.text(' + value(block, 'COL', '0') + ', ' + value(block, 'ROW', '0') +
+        return deviceRef(block, 'Display') + '.text(' + intValue(block, 'COL', '0') + ', ' + intValue(block, 'ROW', '0') +
             ', ' + value(block, 'TEXT', "''") + ')\n';
     };
     generator.forBlock['evn_display_print'] = function (block) {
@@ -1882,8 +1893,8 @@
 
     generator.forBlock['evn_matrix_setup'] = setupGenerator('MatrixLED');
     generator.forBlock['evn_matrix_clear'] = doCall('MatrixLED', 'clear');
-    generator.forBlock['evn_matrix_number'] = doNumber('MatrixLED', 'number', 'NUMBER', '0');
-    generator.forBlock['evn_matrix_brightness'] = doNumber('MatrixLED', 'brightness', 'LEVEL', '8');
+    generator.forBlock['evn_matrix_number'] = doInt('MatrixLED', 'number', 'NUMBER', '0');
+    generator.forBlock['evn_matrix_brightness'] = doInt('MatrixLED', 'brightness', 'LEVEL', '8');
     generator.forBlock['evn_matrix_text'] = function (block) {
         return deviceRef(block, 'MatrixLED') + '.text(' + value(block, 'TEXT', "''") + ')\n';
     };
@@ -1895,14 +1906,14 @@
         return deviceRef(block, 'MatrixLED') + '.icon(Icon.' + block.getFieldValue('ICON') + ')\n';
     };
     generator.forBlock['evn_matrix_pixel'] = function (block) {
-        return deviceRef(block, 'MatrixLED') + '.pixel(' + value(block, 'ROW', '0') + ', ' + value(block, 'COL', '0') +
+        return deviceRef(block, 'MatrixLED') + '.pixel(' + intValue(block, 'ROW', '0') + ', ' + intValue(block, 'COL', '0') +
             ', ' + (block.getFieldValue('ON') === 'TRUE' ? 'True' : 'False') + ')\n';
     };
 
     generator.forBlock['evn_seven_setup'] = setupGenerator('SevenSegmentLED');
     generator.forBlock['evn_seven_clear'] = doCall('SevenSegmentLED', 'clear');
     generator.forBlock['evn_seven_number'] = doNumber('SevenSegmentLED', 'number', 'NUMBER', '0');
-    generator.forBlock['evn_seven_brightness'] = doNumber('SevenSegmentLED', 'brightness', 'LEVEL', '8');
+    generator.forBlock['evn_seven_brightness'] = doInt('SevenSegmentLED', 'brightness', 'LEVEL', '8');
     generator.forBlock['evn_seven_colon'] = function (block) {
         return deviceRef(block, 'SevenSegmentLED') + '.colon(' + (block.getFieldValue('ON') === 'False' ? 'False' : 'True') + ')\n';
     };
@@ -1920,18 +1931,18 @@
 
     generator.forBlock['evn_rgb_setup'] = setupGenerator('RGBLED');
     generator.forBlock['evn_rgb_off'] = doCall('RGBLED', 'off');
-    generator.forBlock['evn_rgb_brightness'] = doNumber('RGBLED', 'brightness', 'LEVEL', '64');
+    generator.forBlock['evn_rgb_brightness'] = doInt('RGBLED', 'brightness', 'LEVEL', '64');
     generator.forBlock['evn_rgb_fill'] = function (block) {
         return deviceRef(block, 'RGBLED') + '.fill(' + value(block, 'COLOUR', '(0, 0, 0)') + ')\n';
     };
     generator.forBlock['evn_rgb_set'] = function (block) {
-        return deviceRef(block, 'RGBLED') + '.set(' + value(block, 'LED', '0') + ', ' + value(block, 'COLOUR', '(0, 0, 0)') + ')\n';
+        return deviceRef(block, 'RGBLED') + '.set(' + intValue(block, 'LED', '0') + ', ' + value(block, 'COLOUR', '(0, 0, 0)') + ')\n';
     };
 
     generator.forBlock['evn_servo_setup'] = setupGenerator('Servo');
     generator.forBlock['evn_servo_stop'] = doCall('Servo', 'stop');
     generator.forBlock['evn_servo_angle'] = doNumber('Servo', 'angle', 'ANGLE', '90');
-    generator.forBlock['evn_servo_pulse'] = doNumber('Servo', 'pulse', 'US', '1500');
+    generator.forBlock['evn_servo_pulse'] = doInt('Servo', 'pulse', 'US', '1500');
     generator.forBlock['evn_servo_duty'] = doNumber('Servo', 'duty', 'DUTY', '0');
     generator.forBlock['evn_servo_move'] = function (block) {
         return deviceRef(block, 'Servo') + '.move(' + value(block, 'ANGLE', '90') + ', ' + value(block, 'SPEED', '60') +

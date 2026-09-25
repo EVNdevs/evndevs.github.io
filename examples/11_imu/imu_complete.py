@@ -100,12 +100,19 @@ print("raw counts ((ax, ay, az), (gx, gy, gz)):", imu.raw())
 print("die temperature %.1f C, sample age %d ms" % (imu.temperature(), imu.age()))
 
 # --- step 4: taps and turning it on its side -------------------------------------------------------
-press_button("For 10 s: tap the robot firmly, then stand it on one side.")
+press_button("For 8 s: tap the robot firmly a few times (it stays on the table).")
 clock.reset()
-while clock.time() < 10000:
+while clock.time() < 8000:
     tap = imu.tap()                              # each tap once: ('z up', 1), a double tap 2
     if tap:
         print("tap", tap)
+    wait(20)
+# The DMP's own screen-orientation engine fires about half a second after the robot comes to rest on a
+# side (its four states are the chip's +-x / +-y pointing up; nothing fires for flat), so this step gets
+# its own window: the taps used to eat it (bench, 2026-09-25).
+press_button("Stand the robot on one side and hold it there.")
+clock.reset()
+while clock.time() < 6000:
     side = imu.screen_orientation()              # each change once (the chip's own axes)
     if side:
         print("orientation", side)

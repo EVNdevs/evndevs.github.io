@@ -1,7 +1,7 @@
 EVN_ALPHA_MicroPython.uf2
-source: main (0.2.35, PICO_XOSC_STARTUP_DELAY_MULTIPLIER=64 kept for both targets) + the 0.2.36 changes (2026-09-25: the IMU calibration stored per port, one or two poses, evn.imu_calibration; the compass calibration stored per port, full or planar, evn.compass_calibration; a closed Bluetooth / RGBLED stays closed, Servo closed checks, the RGBLED -> Servo hand-back, draw_pixel / pixel keywords, DistanceSensor / EnvSensor waits with a capped poll share)
+source: main (0.2.36) + the bounty tournament iteration 2 fixes (2026-09-25: the planar compass fit's heading_confidence() and field_strength() judge the horizontal field, a detached compass slot drops its fit flags, the motor library's plant constants in SRAM (the tick read them from flash), DriveBase.drive(speed=, turn_rate=) and wait(time=) keywords, the JGA25-370 datasheet torque figures)
 built: 2026-09-25 (MicroPython v1.26.1, pico-sdk 2.3.0; SOURCE_DATE_EPOCH=1790337600 = noon UTC 2026-09-25)
 flash: single-line 03h boot2, PICO_FLASH_SPI_CLKDIV=4
-md5: 183bf30096e5ba2a4f78f3f712a81cb5
+md5: 09d80e010b369cc015a3e1835affe75b
 reproduce: cmake -G Ninja -DEVN_MICROPYTHON=ON + ninja with SOURCE_DATE_EPOCH = noon UTC of the built: date (py/makeversionhdr.py embeds MICROPY_BUILD_DATE); release_public.py does this and refuses on an md5 mismatch
-version: 0.2.36
+version: 0.2.37
