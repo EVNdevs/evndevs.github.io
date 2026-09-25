@@ -1,0 +1,116 @@
+/* The data logger's page (src/dataLogger.ts, media/datalog/datalog.js).
+ *
+ * Chrome: the EVN (CORE) palette, media/theme/evn-palette.json, light and dark picked from the VS Code theme
+ * (body.vscode-dark / high contrast) as the compass map and the blocks editor do; Jost.
+ * Series: the dataviz reference categorical palette (8 hues, fixed order, a light and a dark step), checked
+ * with its validator on this page's surfaces (#ffffff: all checks pass, three hues under 3:1 so every series
+ * is also named in the legend and the table; #111518: all pass). The palette's own four series are muted
+ * (chroma under 0.1) and too few to tell eight readings apart, so they stay with the console's strip charts.
+ */
+:root {
+  --bg: #ffffff; --surface: #f4f4f5; --surface2: #eeeeee; --border: #eaeaec; --border-strong: #d3d3d3; --grid: #eaeaec;
+  --ink: #111518; --text: #3f4245; --muted: #6d7072;
+  --accent: #a8977b; --accent-ink: #7f715c; --on-accent: #ffffff; --ok: #5f9e88; --danger: #b5493f;
+  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100; --s5: #e87ba4; --s6: #008300; --s7: #4a3aa7; --s8: #e34948;
+  --font-ui: 'Jost', 'Segoe UI Variable', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --font-num: var(--vscode-editor-font-family, ui-monospace, 'Cascadia Mono', Consolas, monospace);
+}
+body.vscode-dark, body.vscode-high-contrast:not(.vscode-high-contrast-light) {
+  --bg: #111518; --surface: #1a1f24; --surface2: #22282e; --border: #2a3138; --border-strong: #3a424a; --grid: #1d2329;
+  --ink: #f4f5f6; --text: #d7dade; --muted: #a3a8ad;
+  --accent: #c9b99c; --accent-ink: #c9b99c; --on-accent: #111518; --ok: #7fbba6; --danger: #d8776d;
+  --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; --s6: #008300; --s7: #9085e9; --s8: #e66767;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: var(--font-ui); font-size: 13px; overflow: hidden; }
+button, select, input { font: inherit; color: inherit; }
+#app { display: grid; grid-template-rows: auto 1fr; height: 100vh; }
+
+/* ---- header ---- */
+header { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 14px; border-bottom: 1px solid var(--border); }
+header h1 { font-size: 1.1em; font-weight: 600; color: var(--ink); margin: 0; letter-spacing: 0.01em; }
+header .sub { color: var(--muted); flex: 1 1 200px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.btn { border: 1px solid var(--border-strong); background: var(--surface); border-radius: 6px; padding: 5px 12px; cursor: pointer; white-space: nowrap; }
+.btn:hover:not(:disabled) { border-color: var(--accent); }
+.btn:disabled { opacity: 0.5; cursor: default; }
+.btn.primary { background: var(--accent-ink); border-color: var(--accent-ink); color: var(--on-accent); }
+body.vscode-dark .btn.primary { background: var(--accent); border-color: var(--accent); }
+.btn.rec { background: var(--danger); border-color: var(--danger); color: #fff; }
+.dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: currentColor; margin-right: 6px; vertical-align: 1px; }
+.recording .dot { animation: blink 1s steps(2) infinite; }
+@keyframes blink { 50% { opacity: 0.2; } }
+input[type=text] { background: var(--bg); border: 1px solid var(--border-strong); border-radius: 6px; padding: 4px 8px; min-width: 0; }
+input[type=text]:focus, select:focus, .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+/* ---- body: sources | chart ---- */
+.main { display: grid; grid-template-columns: 290px 1fr; min-height: 0; }
+body.mode-file .main { grid-template-columns: 1fr; }
+aside { border-right: 1px solid var(--border); overflow-y: auto; padding: 10px 12px 16px; display: flex; flex-direction: column; gap: 10px; }
+body.mode-file aside { display: none; }
+aside .note { color: var(--muted); line-height: 1.4; }
+aside .warn { color: var(--danger); line-height: 1.4; }
+.src { border: 1px solid var(--border); border-radius: 8px; background: var(--surface); }
+.src > .head { display: flex; align-items: center; gap: 8px; padding: 6px 8px; cursor: pointer; user-select: none; }
+.src > .head .name { font-weight: 600; color: var(--ink); }
+.src > .head .what { color: var(--muted); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.src > .head .count { color: var(--accent-ink); font-variant-numeric: tabular-nums; }
+.src > .head .chev { color: var(--muted); transition: transform 0.15s; }
+.src.open > .head .chev { transform: rotate(90deg); }
+.src .body { display: none; padding: 2px 8px 8px 8px; border-top: 1px solid var(--border); }
+.src.open .body { display: block; }
+.src label.rd { display: flex; align-items: baseline; gap: 6px; padding: 3px 0; cursor: pointer; }
+.src label.rd .u { color: var(--muted); margin-left: auto; }
+.src .rate { display: flex; align-items: center; gap: 6px; margin-top: 6px; color: var(--muted); }
+.src select { background: var(--bg); border: 1px solid var(--border-strong); border-radius: 6px; padding: 2px 4px; }
+.src.on { border-color: var(--accent); }
+.capture { border-top: 1px solid var(--border); padding-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+.capture .row { display: flex; gap: 6px; }
+.capture .row input { flex: 1; }
+.points { display: flex; flex-direction: column; gap: 4px; }
+.points .pt { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 4px 8px; }
+.points .pt b { color: var(--ink); font-weight: 600; }
+.points .pt .v { font-family: var(--font-num); font-size: 12px; color: var(--text); }
+
+/* ---- the chart side ---- */
+section.chart { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+.toolbar { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; padding: 8px 12px; border-bottom: 1px solid var(--border); }
+.toolbar .seg { display: inline-flex; border: 1px solid var(--border-strong); border-radius: 6px; overflow: hidden; }
+.toolbar .seg button { border: 0; background: var(--bg); padding: 3px 10px; cursor: pointer; border-right: 1px solid var(--border-strong); }
+.toolbar .seg button:last-child { border-right: 0; }
+.toolbar .seg button.on { background: var(--accent-ink); color: var(--on-accent); }
+body.vscode-dark .toolbar .seg button.on { background: var(--accent); }
+.toolbar .hint { color: var(--muted); margin-left: auto; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 12px; padding: 6px 12px 0; }
+.legend .chip { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; padding: 2px 0; user-select: none; color: var(--text); }
+.legend .chip.off { color: var(--muted); text-decoration: line-through; }
+.legend .sw { width: 14px; height: 3px; border-radius: 2px; }
+.legend .chip.off .sw { opacity: 0.3; }
+.legend .chip.text { color: var(--muted); font-style: italic; cursor: default; }
+.legend .chip.text .sw { opacity: 0.3; }
+.plot { position: relative; flex: 1 1 auto; min-height: 160px; }
+.plot canvas { position: absolute; inset: 0; width: 100%; height: 100%; cursor: crosshair; }
+.overview { position: relative; height: 46px; margin: 0 12px; border-top: 1px solid var(--border); }
+.overview canvas { position: absolute; inset: 0; width: 100%; height: 100%; cursor: grab; }
+.tip { position: absolute; pointer-events: none; background: var(--bg); border: 1px solid var(--border-strong); border-radius: 6px;
+       padding: 6px 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.12); font-size: 12px; min-width: 150px; z-index: 5; display: none; }
+.tip .t { color: var(--muted); margin-bottom: 3px; font-family: var(--font-num); }
+.tip .r { display: flex; gap: 6px; align-items: center; white-space: nowrap; }
+.tip .r .sw { width: 10px; height: 3px; border-radius: 2px; flex: none; }
+.tip .r .val { margin-left: auto; padding-left: 12px; font-family: var(--font-num); color: var(--ink); }
+.empty { display: flex; align-items: center; justify-content: center; text-align: center; color: var(--muted); padding: 30px; line-height: 1.5; position: absolute; inset: 0; pointer-events: none; }
+
+/* ---- statistics ---- */
+.stats { max-height: 34%; overflow: auto; border-top: 1px solid var(--border); padding: 4px 12px 10px; }
+.stats h2 { font-size: 0.95em; font-weight: 600; color: var(--ink); margin: 6px 0; }
+.stats h2 span { color: var(--muted); font-weight: 400; }
+table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+th { text-align: right; font-weight: 500; color: var(--muted); padding: 3px 8px; border-bottom: 1px solid var(--border); white-space: nowrap; position: sticky; top: 0; background: var(--bg); }
+td { text-align: right; padding: 3px 8px; border-bottom: 1px solid var(--border); font-family: var(--font-num); font-size: 12px; white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; font-family: var(--font-ui); font-size: 13px; }
+td .sw { display: inline-block; width: 12px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 6px; }
+.errors { color: var(--danger); padding: 4px 12px; }
+@media (max-width: 720px) {
+  .main { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+  aside { border-right: 0; border-bottom: 1px solid var(--border); max-height: 40vh; }
+}

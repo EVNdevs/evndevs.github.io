@@ -322,5 +322,23 @@
             "$0"
         ],
         "description": "DriveBase with imu= builds and owns its evn.Pose (encoders + IMU) and closes the loop over it: scrub, drag and gyro drift corrected as the robot drives"
+    },
+    "EVN data log": {
+        "prefix": "evn-datalog",
+        "body": [
+            "from evn import Motor, IMU, DataLog",
+            "",
+            "motor = Motor(${1:1})",
+            "imu = IMU(${2:1})",
+            "${3:log} = DataLog(name='${4:run1}')   # recorded on the board, in RAM: 32 kB by default (size=)",
+            "${3:log}.add(motor, 'angle')          # 0 = every new reading (up to 1000 a second)",
+            "${3:log}.add(imu, 'heading', ${5:50})     # samples a second; a full channel halves its rate",
+            "${3:log}.start()",
+            "$0",
+            "motor.stop()                       # save() is refused (OSError EBUSY) while a motor drives",
+            "${3:log}.stop()",
+            "print(${3:log}.save())                # /data/${4:run1}_<date>_<time>.csv"
+        ],
+        "description": "evn.DataLog: record motors and sensors on the board at their own rates, then save a CSV once the motors coast"
     }
 }

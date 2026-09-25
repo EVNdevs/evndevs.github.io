@@ -1,7 +1,7 @@
 EVN_ALPHA_MicroPython.uf2
-source: main (0.2.37) + the drive base owns its pose (2026-09-25: DriveBase(..., imu=, compass=, declination=, pose=) builds or adopts its Pose from the base's own geometry and the motors' direction and gears, robot.pose, use_gyro(True) checks ports / direction / gears / geometry and holds the Pose, a Pose closed under the base stops the follower at once; the engine seam motion/pose_estimate.h between a pose engine and a chassis follower, the law behind drive_follow_law_fn)
-built: 2026-09-25 (MicroPython v1.26.1, pico-sdk 2.3.0; SOURCE_DATE_EPOCH=1790337600 = noon UTC 2026-09-25)
+source: main (0.2.38) + the data logger in the firmware (2026-09-26: evn.DataLog over hal/hal_datalog - the Core 0 sampler, best effort at the lowest priority, only new readings, a full channel halves its rate; save() to /data as the extension's CSV, refused while a motor drives; the console's data logger now records through it; EVN_TRACE_MAX 4 on this image)
+built: 2026-09-26 (MicroPython v1.26.1, pico-sdk 2.3.0; SOURCE_DATE_EPOCH=1790424000 = noon UTC 2026-09-26)
 flash: single-line 03h boot2, PICO_FLASH_SPI_CLKDIV=4
-md5: e495eb032e8f1e7c7952ae0fb87b398c
+md5: 723aa453ae80094029565efa60eb2c0c
 reproduce: cmake -G Ninja -DEVN_MICROPYTHON=ON + ninja with SOURCE_DATE_EPOCH = noon UTC of the built: date (py/makeversionhdr.py embeds MICROPY_BUILD_DATE); release_public.py does this and refuses on an md5 mismatch
-version: 0.2.38
+version: 0.2.39

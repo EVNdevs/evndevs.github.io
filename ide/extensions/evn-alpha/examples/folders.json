@@ -422,6 +422,25 @@
       "module": [],
       "blocks": null,
       "skip": {}
+    },
+    {
+      "dir": "22_data_log",
+      "slug": "datalog",
+      "title": "Data log (recorded on the board)",
+      "description": "motors, sensors, the battery and your own rows, saved to a CSV file",
+      "classes": [
+        "DataLog"
+      ],
+      "module": [],
+      "blocks": [
+        "evn_datalog_setup",
+        "evn_datalog_add_motor",
+        "evn_datalog_add",
+        "evn_datalog_run",
+        "evn_datalog_row",
+        "evn_datalog_save"
+      ],
+      "skip": {}
     }
   ]
 }

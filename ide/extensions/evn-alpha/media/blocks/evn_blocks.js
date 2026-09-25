@@ -923,6 +923,72 @@
 
     /* ---- drive base (evn.DriveBase: two motors as a robot; mm, deg clockwise) -------------- */
 
+    /* The data log (evn.DataLog): the board records each source at the rate it makes new readings, in RAM,
+     * and save() writes the file once the motors coast. One log per program, `data_log`, built from the
+     * "set up data log" block (or `DataLog(name='log')` without one). */
+    const DATALOG_SOURCES = [['IMU', 'IMU'], ['compass', 'Compass'], ['colour sensor', 'ColorSensor'],
+        ['distance sensor', 'DistanceSensor'], ['gesture sensor', 'GestureSensor'], ['weather sensor', 'EnvSensor'],
+        ['touch pads', 'TouchArray'], ['ADC', 'ADC'], ['battery', 'battery'], ['button', 'button']];
+    Blockly.common.defineBlocksWithJsonArray([
+        {
+            type: 'evn_datalog_setup',
+            message0: 'set up data log named %1 columns %2',
+            args0: [
+                { type: 'field_input', name: 'NAME', text: 'log' },
+                { type: 'field_input', name: 'COLUMNS', text: '' },
+            ],
+            style: 'evn_board_blocks',
+            tooltip: 'The data log: the board records what "data log: record" names, each at the rate its source makes new readings, and keeps it in its memory; "save data log" writes /data/<name>_<date>_<time>.csv (open it in the data viewer). Columns (comma separated, e.g. "x, y") are the values "data log: add row" records; leave it empty when the program adds no rows. When a reading\'s share of the memory is full, the board keeps every second sample and halves its rate: the recording never stops by itself.',
+        },
+        {
+            type: 'evn_datalog_add_motor',
+            message0: 'data log: record motor %1 %2 %3 times a second (0 = every new reading)',
+            args0: [
+                { type: 'field_dropdown', name: 'PORT', options: PORTS },
+                { type: 'field_dropdown', name: 'WHAT', options: [['angle', 'angle'], ['speed', 'speed'], ['load (mNm)', 'load'], ['stalled', 'stalled']] },
+                { type: 'input_value', name: 'RATE', check: 'Number' },
+            ],
+            inputsInline: true, previousStatement: null, nextStatement: null, style: 'evn_board_blocks',
+            tooltip: 'Add a motor reading to the data log, before "start data log". 0 = every new reading (up to 1000 a second, the motor engine\'s tick; about 460 with an IMU on the bus). Angles in degrees, speeds in deg/s, load in mNm.',
+        },
+        {
+            type: 'evn_datalog_add',
+            message0: 'data log: record %1 on port %2 %3 %4 times a second (0 = every new reading)',
+            args0: [
+                { type: 'field_dropdown', name: 'SOURCE', options: DATALOG_SOURCES },
+                portField(I2C_PORTS),
+                { type: 'field_input', name: 'QUANTITY', text: 'heading' },
+                { type: 'input_value', name: 'RATE', check: 'Number' },
+            ],
+            inputsInline: true, previousStatement: null, nextStatement: null, style: 'evn_board_blocks',
+            tooltip: 'Add a sensor reading to the data log, before "start data log": the reading is the sensor\'s method name (IMU: heading, tilt, acceleration, angular_velocity; compass: heading; colour sensor: hsv, rgb, color, lux; distance sensor: distance; weather sensor: temperature, pressure, humidity; battery: voltage, cells; button: pressed; the full list is in the API reference). The port is the I2C port (ignored for the battery and the button). A rate above the sensor\'s own gives the sensor\'s (an IMU makes 200 readings a second, a compass 75, the battery 25).',
+        },
+        {
+            type: 'evn_datalog_run',
+            message0: '%1 data log',
+            args0: [{ type: 'field_dropdown', name: 'ACTION', options: [['start', 'start'], ['stop', 'stop']] }],
+            previousStatement: null, nextStatement: null, style: 'evn_board_blocks',
+            tooltip: 'start: record from now on (a new recording); stop: stop recording, the samples stay in the board\'s memory for "save data log".',
+        },
+        {
+            type: 'evn_datalog_row',
+            message0: 'data log: add row %1 %2 %3',
+            args0: [
+                { type: 'input_value', name: 'A' },
+                { type: 'input_value', name: 'B' },
+                { type: 'input_value', name: 'C' },
+            ],
+            inputsInline: true, previousStatement: null, nextStatement: null, style: 'evn_board_blocks',
+            tooltip: 'Record one row of your own values, one per column of "set up data log" (at most three here; an empty slot is an empty cell; a slot beyond the columns is ignored), stamped with the board\'s time. Starts the log if it was never started; after stop it is an error.',
+        },
+        {
+            type: 'evn_datalog_save',
+            message0: 'save data log',
+            previousStatement: null, nextStatement: null, style: 'evn_board_blocks',
+            tooltip: 'Write the recording to a file on the board (/data/<name>_<date>_<time>.csv), after "stop data log" and with the motors stopped: the board refuses to write its flash while a motor drives. A data log not yet saved (recording or stopped) is saved by itself when main.py ends, the editor\'s Run finishes, the board soft-reboots or a with block ends, once the motors coast.',
+        },
+    ]);
+
     /* then= for a drive base: Stop.NONE is refused by DriveBase (use "drive at"). */
     const DB_THEN = [['hold', 'HOLD'], ['coast', 'COAST'], ['brake', 'BRAKE'], ['coast (smart)', 'COAST_SMART']];
 
@@ -1373,7 +1439,7 @@
      * a Python block spelling `autostart(True)` raised NameError on the board). */
     const DEVICE_NAMES = ['Color', 'Icon', 'Side', 'ColorSensor', 'DistanceSensor', 'GestureSensor', 'EnvSensor',
         'Compass', 'TouchArray', 'IMU', 'ADC', 'Display', 'MatrixLED', 'SevenSegmentLED', 'RGBLED', 'Servo', 'Bluetooth',
-        'DriveBase', 'Pose', 'UART', 'I2C', 'Flash', 'reset', 'reset_cause', 'bootloader', 'autostart', 'core1_status', 'version',
+        'DriveBase', 'Pose', 'DataLog', 'UART', 'I2C', 'Flash', 'reset', 'reset_cause', 'bootloader', 'autostart', 'core1_status', 'version',
         'configure_motor', 'motor_config', 'calibration', 'clear_calibration', 'imu_calibration', 'compass_calibration', 'clock'];
     const EVN_NAMES = CORE_NAMES.concat(DEVICE_NAMES);
 
@@ -1405,7 +1471,7 @@
     for (const cls of Object.keys(DEVICES)) {
         for (let p = 1; p <= 16; p++) { OBJECT_NAMES.push(DEVICES[cls][0] + '_' + p); }
     }
-    generator.addReservedWords('evn,motor_1,motor_2,motor_3,motor_4,stopwatch,drive_base,pose,' +
+    generator.addReservedWords('evn,motor_1,motor_2,motor_3,motor_4,stopwatch,drive_base,pose,data_log,' +
         Object.keys(DEVICES).map((cls) => DEVICES[cls][0]).join(',') + ',' +
         OBJECT_NAMES.join(',') + ',' + EVN_NAMES.join(','));
 
@@ -1447,9 +1513,15 @@
             delete this.definitions_.pose;
             this.definitions_.pose = p;
         }
+        // the data log is made after the devices it will record
+        if (this.definitions_.data_log) {
+            const d = this.definitions_.data_log;
+            delete this.definitions_.data_log;
+            this.definitions_.data_log = d;
+        }
         // Pybricks' generated code opens with the device lines, under this comment, before anything else
         // the program defines (variables, functions); so does ours. The stopwatch is set up there too.
-        const SETUP_KEYS = ['motors', 'devices', 'drive_base', 'pose', 'stopwatch'].filter((k) => this.definitions_[k]);
+        const SETUP_KEYS = ['motors', 'devices', 'drive_base', 'pose', 'data_log', 'stopwatch'].filter((k) => this.definitions_[k]);
         if (SETUP_KEYS.length) {
             const old = this.definitions_;
             const imports = Object.keys(old).filter((k) => /^(from\s+\S+\s+)?import\s+\S+/.test(old[k]));
@@ -1696,6 +1768,63 @@
         generator.definitions_['stopwatch'] = 'stopwatch = StopWatch()';
         const action = ['pause', 'resume'].indexOf(block.getFieldValue('ACTION')) >= 0 ? block.getFieldValue('ACTION') : 'reset';
         return 'stopwatch.' + action + '()\n';
+    };
+    /** Name of the program's DataLog, defining it (once) from the "set up data log" block. Its columns are the
+     * headers of "add row"; with none but an "add row" block in the program, one column called "value". */
+    function datalogRef(block) {
+        const name = 'data_log';
+        if (!generator.definitions_[name]) {
+            use('DataLog');
+            const setup = block.workspace.getBlocksByType('evn_datalog_setup', false).find((b) => b.isEnabled());
+            const args = datalogColumns(block).map((c) => generator.quote_(c));
+            const logName = setup ? String(setup.getFieldValue('NAME') || '').trim() : '';
+            if (logName && logName !== 'log') { args.push('name=' + generator.quote_(logName)); }
+            generator.definitions_[name] = name + ' = DataLog(' + args.join(', ') + ')';
+        }
+        return name;
+    }
+    /** The columns of "set up data log" (comma separated), or ['value'] when it names none and a row is added. */
+    function datalogColumns(block) {
+        const setup = block.workspace.getBlocksByType('evn_datalog_setup', false).find((b) => b.isEnabled());
+        const cols = setup ? String(setup.getFieldValue('COLUMNS') || '').split(',').map((c) => c.trim()).filter(Boolean).slice(0, 8) : [];
+        if (!cols.length && block.workspace.getBlocksByType('evn_datalog_row', false).some((b) => b.isEnabled())) { return ['value']; }
+        return cols;
+    }
+    /** `, rate` unless the rate is 0 (every new reading, the default). */
+    function datalogRate(block) {
+        const rate = generator.valueToCode(block, 'RATE', Order.NONE);
+        return rate && rate !== '0' ? ', ' + rate : '';
+    }
+    generator.forBlock['evn_datalog_setup'] = function (block) {
+        datalogRef(block);          // the definition is all the setup does
+        return '';
+    };
+    generator.forBlock['evn_datalog_add_motor'] = function (block) {
+        const log = datalogRef(block);
+        return log + '.add(' + motorRef(block) + ', ' + generator.quote_(block.getFieldValue('WHAT')) + datalogRate(block) + ')\n';
+    };
+    generator.forBlock['evn_datalog_add'] = function (block) {
+        const log = datalogRef(block);
+        const src = block.getFieldValue('SOURCE');
+        let obj;
+        if (src === 'battery' || src === 'button') { use(src); obj = src; } else { obj = deviceRef(block, src); }
+        const quantity = String(block.getFieldValue('QUANTITY') || '').trim() || 'heading';
+        return log + '.add(' + obj + ', ' + generator.quote_(quantity) + datalogRate(block) + ')\n';
+    };
+    generator.forBlock['evn_datalog_run'] = function (block) {
+        return datalogRef(block) + '.' + (block.getFieldValue('ACTION') === 'stop' ? 'stop' : 'start') + '()\n';
+    };
+    generator.forBlock['evn_datalog_row'] = function (block) {
+        const log = datalogRef(block);
+        const n = Math.max(1, datalogColumns(block).length);
+        const values = [];
+        for (let i = 0; i < n; i++) {
+            values.push(i < 3 ? (generator.valueToCode(block, 'ABC'[i], Order.NONE) || 'None') : 'None');
+        }
+        return log + '.log(' + values.join(', ') + ')\n';
+    };
+    generator.forBlock['evn_datalog_save'] = function (block) {
+        return datalogRef(block) + '.save()\n';
     };
     generator.forBlock['evn_drivebase_accel'] = function (block) {
         return driveRef(block) + '.settings(straight_acceleration=' + value(block, 'ACCEL', '500') + ', turn_acceleration=' + value(block, 'TURN', '500') + ')\n';
@@ -2003,6 +2132,7 @@
         DEVICE_NAMES.forEach((n) => { if (new RegExp('\\b' + n + '\\b').test(bare)) { use(n); } });
         for (const m of bare.matchAll(/\bmotor_([1-4])\b/g)) { motorRef(block, m[1]); }
         if (/\bdrive_base\b/.test(bare)) { driveRef(block); }
+        if (/\bdata_log\b/.test(bare)) { datalogRef(block); }
         for (const cls of Object.keys(DEVICES)) {
             for (const m of bare.matchAll(new RegExp('\\b' + DEVICES[cls][0] + '_(\\d+)\\b', 'g'))) {
                 const port = Number(m[1]);
@@ -2102,6 +2232,18 @@
                     { kind: 'block', type: 'text_print', inputs: { TEXT: { shadow: { type: 'text', fields: { TEXT: 'hello' } } } } },
                     { kind: 'block', type: 'evn_button_pressed' },
                     { kind: 'block', type: 'evn_battery_voltage' },
+                ],
+            },
+            {
+                kind: 'category', name: 'Data log', categorystyle: 'evn_board_category',
+                contents: [
+                    { kind: 'block', type: 'evn_datalog_setup' },
+                    { kind: 'block', type: 'evn_datalog_add_motor', inputs: { RATE: shadowNum(0) } },
+                    { kind: 'block', type: 'evn_datalog_add', inputs: { RATE: shadowNum(50) } },
+                    { kind: 'block', type: 'evn_datalog_run' },
+                    { kind: 'block', type: 'evn_datalog_run', fields: { ACTION: 'stop' } },
+                    { kind: 'block', type: 'evn_datalog_row', inputs: { A: shadowNum(0) } },
+                    { kind: 'block', type: 'evn_datalog_save' },
                 ],
             },
             {

@@ -1,0 +1,144 @@
+{
+  "format": "evn-blocks",
+  "version": 2,
+  "title": "Data log: minimal",
+  "needs": "a motor on port 1, free to turn; an EVN IMU module on I2C port 1, kept still",
+  "description": "Record a motor's angle and the IMU's heading on the board for 5 s while the motor turns, then save them to a CSV file on the board (/data/run1_<date>_<time>.csv once the console has set the board's clock).",
+  "workspace": {
+    "blocks": {
+      "languageVersion": 0,
+      "blocks": [
+        {
+          "type": "evn_setup_start",
+          "x": 30,
+          "y": 30,
+          "next": {
+            "block": {
+              "type": "evn_imu_setup",
+              "fields": {
+                "PORT": "1",
+                "CALIBRATE": "FALSE"
+              },
+              "next": {
+                "block": {
+                  "type": "evn_datalog_setup",
+                  "fields": {
+                    "NAME": "run1",
+                    "COLUMNS": ""
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "evn_program_start",
+          "x": 30,
+          "y": 140,
+          "next": {
+            "block": {
+              "type": "evn_datalog_add_motor",
+              "fields": {
+                "PORT": "1",
+                "WHAT": "angle"
+              },
+              "inputs": {
+                "RATE": {
+                  "shadow": {
+                    "type": "math_number",
+                    "fields": {
+                      "NUM": 0
+                    }
+                  }
+                }
+              },
+              "next": {
+                "block": {
+                  "type": "evn_datalog_add",
+                  "fields": {
+                    "SOURCE": "IMU",
+                    "PORT": "1",
+                    "QUANTITY": "heading"
+                  },
+                  "inputs": {
+                    "RATE": {
+                      "shadow": {
+                        "type": "math_number",
+                        "fields": {
+                          "NUM": 0
+                        }
+                      }
+                    }
+                  },
+                  "next": {
+                    "block": {
+                      "type": "evn_datalog_run",
+                      "fields": {
+                        "ACTION": "start"
+                      },
+                      "next": {
+                        "block": {
+                          "type": "evn_motor_run",
+                          "fields": {
+                            "PORT": "1"
+                          },
+                          "inputs": {
+                            "SPEED": {
+                              "shadow": {
+                                "type": "math_number",
+                                "fields": {
+                                  "NUM": 300
+                                }
+                              }
+                            }
+                          },
+                          "next": {
+                            "block": {
+                              "type": "evn_wait",
+                              "inputs": {
+                                "TIME": {
+                                  "shadow": {
+                                    "type": "math_number",
+                                    "fields": {
+                                      "NUM": 5000
+                                    }
+                                  }
+                                }
+                              },
+                              "next": {
+                                "block": {
+                                  "type": "evn_motor_stop",
+                                  "fields": {
+                                    "ACTION": "stop",
+                                    "PORT": "1"
+                                  },
+                                  "next": {
+                                    "block": {
+                                      "type": "evn_datalog_run",
+                                      "fields": {
+                                        "ACTION": "stop"
+                                      },
+                                      "next": {
+                                        "block": {
+                                          "type": "evn_datalog_save"
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

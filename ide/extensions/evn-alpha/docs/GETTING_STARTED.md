@@ -70,7 +70,7 @@ Hover over an `evn` name (`Motor`, `run_angle`, `imu.heading`, `robot.straight`)
 
 Open `motor_minimal` (the blocks file) in the **Motor** folder under *Examples*, or press **New blocks program** for an empty one. The block editor shows Scratch-style blocks on the left and the MicroPython they generate on the right. Build a program by dragging blocks from the toolbox, then press **Run on board** in the editor's toolbar (or **Ctrl+F5**); **Stop motors** interrupts it. **Upload as main.py** puts it on the board as the program the user button starts, **Export Python** turns it into a `.py` file you can keep editing as text. A blocks example saves the same way a Python one does: under a new name, into your projects folder. Every block and the Python it produces: **EVN: Open blocks reference**.
 
-**Every object has its own examples folder.** *Examples* has one folder per part of the API — the board, the motor, the robot, the pose, and every standard peripheral (colour sensor, compass, IMU, display, …) — each with a `…_minimal` program (the few lines you need) and a `…_complete` one (every call of that object), in Python and, where the object has blocks, as blocks too. On disk they are `examples/01_board/` to `examples/21_files/`, for example `examples/05_colour_sensor/colour_sensor_minimal.py`.
+**Every object has its own examples folder.** *Examples* has one folder per part of the API — the board, the motor, the robot, the pose, the data log, and every standard peripheral (colour sensor, compass, IMU, display, …) — each with a `…_minimal` program (the few lines you need) and a `…_complete` one (every call of that object), in Python and, where the object has blocks, as blocks too. On disk they are `examples/01_board/` to `examples/22_data_log/`, for example `examples/05_colour_sensor/colour_sensor_minimal.py`.
 
 ## 3b. The live console, the command line and the Console view
 
@@ -98,6 +98,87 @@ Two things to know:
 
 - **A program the board started by itself is never interrupted.** If `main.py` is running (started from the user button), the console row says so and only watches: its output still reaches the **EVN Console** panel. Press the stop button on that row (*Stop the board's program and connect*) when you do want to take the board over.
 - **The link gets out of the way.** When you run a program, open the REPL, upload a file, reset or flash the board, the console lets go of the port and comes back a second after it is free. If you would rather it never held the port at all, turn `evn.console.enabled` off.
+
+## 3c. Recording data (the data logger)
+
+The graph button at the top of the *Board* view (or **EVN: Open data logger**) opens the data logger beside
+your program. It needs the live console (§3b): the board idle, not running a program. The board itself
+records: the firmware samples each source at the rate it makes new readings, in the board's memory, at the
+lowest priority (it never delays the motors), and the logger fetches what it recorded.
+
+- **On the left**, everything the board can measure right now: the four motor ports (angle, speed, load,
+  stalled), every identified I2C device with its readings (the IMU's heading, tilt, acceleration ..., the
+  colour sensor's hsv, rgb, lux ..., the distance sensor's distance ...), the battery and the user button.
+  Tick what to record and choose each source's **rate**: **max** records every new reading - a motor at
+  the motion engine's own 1 kHz tick, an IMU at its 200 Hz, a compass at 75 Hz, the battery at 25 Hz - and
+  never the same reading twice; 1000 Hz down to 1 Hz otherwise (a rate above the source's own gives the
+  source's). Over Bluetooth every reading is held to 50 Hz.
+  Right-clicking a motor, the battery or a device on the *Board* view and choosing **Add to data logger**
+  ticks that source's usual readings for you.
+- **Record** starts a new file, **Stop** ends it. The status bar shows `0:12 logging` while it runs, even
+  with the logger's tab closed. A light set - up to 100 values a second, the note under the list says -
+  goes into the file as it is measured. A heavier one (a motor at **max** is 1000 values a second) is kept
+  **in the board's memory** while it records: the USB cable must not carry a stream of samples while
+  motors drive, it is not built for that. The chart shows a preview meanwhile. The note says how long the
+  memory lasts at full rate (about 10 s for one reading at max, longer at lower rates); when a reading's
+  share is full, the board keeps every second sample and **halves its rate**, so the recording never stops
+  by itself - a long run comes back evenly thinned, and the file says where (`# rate halved: ...`). After
+  **Stop** the logger waits until every motor has stopped, then fetches the samples and writes them. A
+  recording also ends by itself when the console lets go of the board (you press **Run**, open the REPL, or
+  unplug); what was streamed stays in the file, what the board still held is lost.
+- **Capture point** is for an experiment by hand: set it up, type a note (`10 cm`), capture. One reading of
+  every ticked reading is added to the day's points file, one row per value with your note.
+
+Files go to the **Data** folder of your projects folder and show under **Data logs** in *My projects*:
+`2026-09-25 14-03-11 arm test.csv` (the name box sets the last part), and `arm test points 2026-09-25.csv`
+for points. They are plain CSV, one row per value:
+
+    # EVN ALPHA data log
+    # started: 2026-09-25T14:03:11.123+08:00
+    # board: EVN ALPHA E46320165B5F2A36, firmware 0.2.39, MicroPython v1.26.1
+    time_s,device,port,quantity,value,unit,note
+    0.000000,Motor,1,angle,12,deg,
+    0.001000,Motor,1,angle,13,deg,
+    0.004210,MPU-6500 IMU,3,acceleration.x,12.5,mm/s²,
+
+`time_s` is the board's own clock, in seconds with microsecond resolution, since Record, so a gap or a jitter in the data is the
+board's, not the cable's. Excel opens the file as it is (filter the `quantity` column); in Python,
+`pandas.read_csv(f, comment='#')`.
+
+**Logging from your own program.** A program records the same way with `evn.DataLog` (Pybricks' `DataLog`,
+with EVN's `add()` for motors and sensors): it keeps the samples in the board's memory while it runs and
+writes a CSV file on the board once the motors have stopped - never while one drives, which would stall its
+control loop.
+
+```python
+from evn import Motor, IMU, DataLog, wait
+
+motor = Motor(1)
+imu = IMU(1)
+log = DataLog(name='run1')           # the file: /data/run1_<date>_<time>.csv
+log.add(motor, 'angle')              # every new reading (up to 1000 a second)
+log.add(imu, 'heading', 50)          # 50 a second
+log.start()
+motor.run(300)
+wait(5000)
+motor.stop()                         # save() is refused while a motor drives (a stop just issued is fine)
+log.stop()
+print(log.save())
+```
+
+A log not yet saved (recording or stopped) is saved by itself (`autosave=True`) when `main.py` ends, the editor's Run finishes, the board soft-reboots or a `with` block ends, once the motors coast. Copy the file to your
+computer with `mpremote cp :/data/run1_....csv .` and open it in the viewer below. `log.log(x, y)` adds rows
+of your own values (the columns are `DataLog('x', 'y', ...)`); the whole class is in the API reference
+(*DataLog*), and `examples/22_data_log/` has a minimal and a complete program, in Python and in blocks (the
+*Data log* category).
+
+**Looking at a log.** Click it under *Data logs* (or **Open log...** in the logger, or right-click any
+`.csv` and **Open in data viewer**). Each unit gets its own lane with its own scale, on one time axis; hover
+for the values at that moment, **drag** across the lanes to zoom into a span, the **wheel** zooms around the
+pointer, **double-click** shows everything, and the strip underneath shows the whole log with the span in
+view (drag it to pan). Click a name in the legend to hide or show that line. The table under the chart is
+the statistics of the span in view: samples, rate, min, max, mean, standard deviation, change, slope and
+the last value - zoom into the part you care about and read it off.
 
 ## 4. Ports and units
 
@@ -188,6 +269,8 @@ Notes: the first connection to the module takes a second or two (Windows opens t
 | Send a command to the board | one line of Python on the board through the live console (§3b); the *Command line* row |
 | Show the console output | the *EVN Console* panel: what the command line answered, and what a program the board started by itself is printing |
 | Clear the console view | empty the *Console* view's transcript (Ctrl+L in the view does the same) |
+| Open data logger / Open a data log / Stop the data logger recording | record what the board measures to a CSV, open a recording in the data viewer, end a recording (§3c); **Open data logger** is also the graph button on the *Board* view |
+| Open in data viewer | a `.csv` in the data viewer's chart (right-click it in the Explorer, or **Reopen Editor With...**) (§3c) |
 | Connect the live console / Pause the live console (free the port) | take the port for the live console, or let go of it (for another tool, say) |
 | Pair the Bluetooth module in Windows | open the Windows Bluetooth settings to add the module (`HC-05` or `EVN Bluetooth`, PIN `1234`); §5a |
 | Switch the board to Bluetooth now (test the wireless link) / Switch the board back to USB | move the live console onto the wireless link with the cable still in, and back again; also the arrow-swap button on a Bluetooth serial row (§5a) |

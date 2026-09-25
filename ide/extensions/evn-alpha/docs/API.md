@@ -23,7 +23,7 @@ Units: angle **deg**, speed **deg/s**, acceleration **deg/s²**, time **ms**, du
 
 **Coming from Pybricks:** the names and arguments are Pybricks' wherever Pybricks has the thing. The differences that matter first: motor ports are numbers; reset_angle with no argument makes the current position 0; motors coast when a program ends; there is no import from pybricks — wait and StopWatch come from evn. The whole list is in [Deviations from Pybricks](#deviations-from-pybricks).
 
-Contents: [Board](#board-battery-button-led-and-clock) · [Motor](#motor) · [DriveBase](#drivebase--two-motors-as-a-robot) · [Pose](#pose--where-the-robot-is) · [Calibration records](#calibration-records-evncalibration) · [Standard peripherals](#standard-peripherals) · [IMU](#imu--gyro-and-accelerometer-mpu-6500) · [Compass](#compass--magnetometer-qmc5883l--hmc5883l) · [ColorSensor](#colorsensor--colour-sensor-tcs34725) · [DistanceSensor](#distancesensor--time-of-flight-distance-sensor-vl53l0x) · [GestureSensor](#gesturesensor--gesture-proximity-and-colour-sensor-apds-9960) · [TouchArray](#toucharray--capacitive-touch-array-mpr121) · [EnvSensor](#envsensor--temperature-pressure-and-humidity-bme280) · [ADC](#adc--analogue-to-digital-converter-ads1115) · [Display](#display--12864-oled-ssd1306--ssd1315) · [MatrixLED](#matrixled--88-led-matrix-ht16k33) · [SevenSegmentLED](#sevensegmentled--4-digit-seven-segment-display-ht16k33) · [RGBLED](#rgbled--rgb-led-module-ws2812b) · [Servo](#servo--hobby-servo-geekservo-270--continuous-rotation) · [Bluetooth](#bluetooth--bluetooth-module-hc-05) · [UART](#uart--raw-serial-port) · [I2C](#i2c--raw-i2c-port) · [Files and main.py](#programs-files-and-mainpy) · [Timing](#timing-wait-and-stopwatch) · [Safety](#safety-behaviour)
+Contents: [Board](#board-battery-button-led-and-clock) · [Motor](#motor) · [DriveBase](#drivebase--two-motors-as-a-robot) · [Pose](#pose--where-the-robot-is) · [Calibration records](#calibration-records-evncalibration) · [Standard peripherals](#standard-peripherals) · [IMU](#imu--gyro-and-accelerometer-mpu-6500) · [Compass](#compass--magnetometer-qmc5883l--hmc5883l) · [ColorSensor](#colorsensor--colour-sensor-tcs34725) · [DistanceSensor](#distancesensor--time-of-flight-distance-sensor-vl53l0x) · [GestureSensor](#gesturesensor--gesture-proximity-and-colour-sensor-apds-9960) · [TouchArray](#toucharray--capacitive-touch-array-mpr121) · [EnvSensor](#envsensor--temperature-pressure-and-humidity-bme280) · [ADC](#adc--analogue-to-digital-converter-ads1115) · [Display](#display--12864-oled-ssd1306--ssd1315) · [MatrixLED](#matrixled--88-led-matrix-ht16k33) · [SevenSegmentLED](#sevensegmentled--4-digit-seven-segment-display-ht16k33) · [RGBLED](#rgbled--rgb-led-module-ws2812b) · [Servo](#servo--hobby-servo-geekservo-270--continuous-rotation) · [Bluetooth](#bluetooth--bluetooth-module-hc-05) · [UART](#uart--raw-serial-port) · [I2C](#i2c--raw-i2c-port) · [Files and main.py](#programs-files-and-mainpy) · [DataLog](#datalog--recording-on-the-board) · [Timing](#timing-wait-and-stopwatch) · [Safety](#safety-behaviour)
 
 ## Board: `battery`, `button`, `led` and `clock`
 
@@ -1344,7 +1344,99 @@ An 11 MB file system is mounted at `/`. `open()`, `import`, `os` and `vfs` work 
 - **Start-up:** `boot.py` runs at power-on and after Ctrl-D; `main.py` then waits for a press of the user button (LED blinking fast) and runs again at the next press once it has ended. Anything typed at the port during the wait (the extension's own connections, `mpremote`) gives the REPL instead, so a session never runs `main.py`; with the extension's live console attached, only *Upload and run now* starts it. `evn.autostart(True)` in `boot.py` starts it without the press; `evn.reset(start=True)` does so for one boot.
 - **Skipping it:** hold the user button while powering on to skip `main.py` once; after a watchdog reboot it is skipped automatically.
 - **When it ends:** every motor coasts.
-- **A file write is refused while a motor is driving:** `open(...).write(...)`, `flush()`, `close()`, `os.remove()` and any other flash write raise `OSError: [Errno 16] EBUSY` while any motor is in `run()`/`dc()`, in an unfinished `run_angle`/`run_target`/`run_time`/DriveBase maneuver, or tracking a moving target (a flash write would stall the 1 kHz motion engine for 45–400 ms, so the firmware refuses instead). A holding, braked or coasting motor does not block a write. The refusal surfaces from whichever call reaches the flash first — `open()`, `write()`, `flush()` or `close()`. Write your log after the move (`stop()`, `hold()` or `wait=True`, then write), or catch `OSError` and compare `e.errno == 16` (the board's `errno` module has no `EBUSY` name: `errno.EBUSY` raises `AttributeError`) and write later; keep readings in a list meanwhile. Reads (`open(...).read()`, `import`) are never refused. (`evn.Flash` is the block device behind the file system and follows the same rule.)
+- **A file write is refused while a motor is driving:** `open(...).write(...)`, `flush()`, `close()`, `os.remove()` and any other flash write raise `OSError: [Errno 16] EBUSY` while any motor is in `run()`/`dc()`, in an unfinished `run_angle`/`run_target`/`run_time`/DriveBase maneuver, or tracking a moving target (a flash write would stall the 1 kHz motion engine for 45–400 ms, so the firmware refuses instead). A holding, braked or coasting motor does not block a write. The refusal surfaces from whichever call reaches the flash first — `open()`, `write()`, `flush()` or `close()`. Write your log after the move (`stop()`, `hold()` or `wait=True`, then write), or catch `OSError` and compare `e.errno == 16` (the board's `errno` module has no `EBUSY` name: `errno.EBUSY` raises `AttributeError`) and write later; keep readings in a list meanwhile, or record them with [`DataLog`](#datalog--recording-on-the-board), which holds them in RAM and saves once the motors coast. Reads (`open(...).read()`, `import`) are never refused. (`evn.Flash` is the block device behind the file system and follows the same rule.)
+
+## DataLog — recording on the board
+
+`evn.DataLog` records motors, sensors, the battery, the user button and rows of the program's own values **on the board**: each source at the rate it makes new readings, kept in RAM, and written to a CSV file on the board once the motors coast. The same logger records for the extension's data logger (the graph button on the *Board* view). More in `examples/22_data_log/`.
+
+**Constructor**
+
+```python
+DataLog(*headers, name='log', timestamp=True, extension='csv', append=False, size=32768, autosave=True, on_full='halve')
+```
+
+| Parameter | Default | Meaning |
+| :--- | :--- | :--- |
+| `*headers` | none | the columns of `log()`: at most 8 strings. Without headers the log has no `log()` |
+| `name` | `'log'` | the file is `/data/<name>.<extension>`; without the clock (or `timestamp=False`) the name gets `_1`, `_2` ... rather than overwrite a file. `save(path)` does not create the folder |
+| `timestamp` | `True` | add `_<date>_<time>` to the file name (`/data/run1_2026-09-26_14-03-11.csv`), only when the board's clock is set: the extension's live console sets it when it connects |
+| `extension` | `'csv'` | the file's extension |
+| `append` | `False` | add the samples to an existing file, without a new header (a header first when the file does not exist yet) |
+| `size` | 32768 | bytes of RAM for the samples, 1024..1000000, taken from the heap at the first `start()` (`MemoryError` if the heap cannot give it). A sample of one value is 8 bytes: the default holds about 4 s of one 1 kHz channel before its first halving |
+| `autosave` | `True` | a DataLog **not yet saved** (still recording, or stopped) is stopped and saved by itself when `main.py` ends, the editor's Run finishes, the board soft-reboots or its `with` block ends, once the motors coast; a stopped one still owed its autosave is saved first when another DataLog `start()`s; a motor still driving is reported (`DataLog: not saved ...`) and the samples stay for a `save()` |
+| `on_full` | `'halve'` | what a channel whose share of the RAM is full does: `'halve'` keeps every second sample and halves its rate, so the recording never stops by itself and a long run comes back evenly thinned; `'drop'` drops the newest samples and counts them |
+
+The first five are Pybricks' (`pybricks.tools.DataLog`); `size`, `autosave`, `on_full` and every method but `log()` are EVN's own.
+
+### Channels
+
+| Method | Does |
+| :--- | :--- |
+| `add(source, quantity, rate=0, *, input=None)` | add a channel and return its index (before `start()`: `RuntimeError` while recording; at most 16). `source` is a `Motor`, `evn.battery`, `evn.button` or a standard-peripheral object; `quantity` the method name (table below); `rate` samples a second, **0 = every new reading**. A rate above the source's own gives the source's. `input=` (0..7, 4..7 the differential pairs as in `ADC.voltage()`) picks an `ADC` input (default: the one `voltage()` reads) |
+| `DataLog.quantities(source)` | a staticmethod: the quantity names `add()` takes for this source, e.g. `('angle', 'speed', 'load', 'stalled')` for a `Motor` |
+
+| Source | Quantities (unit) | New readings a second |
+| :--- | :--- | :--- |
+| `Motor` | `angle` (deg), `speed` (deg/s), `load` (mNm) - unrounded, where the methods round to an int - `stalled` (0/1) | every new reading: up to 1000 (the motor engine's tick; about 460 with an IMU on the bus) |
+| `evn.battery` | `voltage` (mV), `cells` (mV: `cells.cell1`, `cells.cell2`) | 25 |
+| `evn.button` | `pressed` (0/1) | 1000 |
+| `IMU` | `heading` (deg), `tilt` (deg: `.pitch`, `.roll`), `euler` (deg: `.heading`, `.pitch`, `.roll`), `acceleration` (mm/s²: `.x`, `.y`, `.z`), `angular_velocity` (deg/s: `.x`, `.y`, `.z`), `up` (the side's name), `stationary` (0/1), `temperature` (°C) | 200 |
+| `Compass` | `heading` (deg), `heading_confidence`, `field` (G: `.x`, `.y`, `.z`), `raw` (`.x`, `.y`, `.z`), `temperature` (°C, QMC5883L) | 75 |
+| `ColorSensor` | `hsv`, `rgb`, `raw` / `read` (`.c`, `.r`, `.g`, `.b`), `percent` (%: `.c`, `.r`, `.g`, `.b`), `color` (the colour's name, from the object's detectable colours; a colour outside the named set is written as its palette index), `ambient` (%), `lux` (lx), `color_temperature` (K) | its integration time |
+| `DistanceSensor` | `distance` (mm; empty when out of range), `status` (the status's name) | its timing budget |
+| `GestureSensor` | `gesture` (its name), `proximity`, `hsv`, `rgb`, `ambient` (%) | its cycle |
+| `EnvSensor` | `temperature` (°C), `pressure` (Pa), `humidity` (%), `all` (the three) | its cycle |
+| `TouchArray` | `touched` (the bit mask of the pads), `proximity` (0/1), `pressed` (0/1: any pad) | its cycle |
+| `ADC` | `voltage` (V), `raw` | its data rate |
+
+A multi-part quantity is one channel of several values, written as `quantity.part` in the file (`acceleration.x`). Values are recorded in the physical units above, never in `SpeedUnit.PERCENT`.
+
+### Recording
+
+| Method | Does |
+| :--- | :--- |
+| `start()` | start a new recording (the samples of an earlier one are gone) and return the seconds the fastest-filling channel records before its first halving (`None` if it was already recording). `ValueError` with no channel and no headers, or when `size` cannot give every channel room for 8 samples; `RuntimeError` while another DataLog records |
+| `stop()` | stop recording; the samples stay in RAM for `save()`. With `autosave` a stopped log not yet saved is saved by itself when `main.py` ends, the editor's Run finishes, the board soft-reboots or a `with` block ends, once the motors coast |
+| `running()` | `True` while recording |
+| `log(*values)` | Pybricks: one row of the program's own numbers, one per header, stamped with the board's time (`ValueError` for another count; `None` is an empty cell, `True`/`False` are 1/0). Starts the log if it was never started; after `stop()` it raises `RuntimeError` (`start()` again for a new recording) |
+| `info()` | a dict: `running`, `size`, `saved` (since the last start), `channels` (one dict each: `device`, `port`, `quantity`, `unit`, `rate` (samples a second now), `halvings`, `samples` (held), `taken`, `dropped`); once started also `seconds`, `polls`, `cost_us` (the longest poll) and `cost_mean_us` |
+
+### Saving
+
+| Method | Does |
+| :--- | :--- |
+| `save(path=None)` | write the recording and return the file's path: `/data/<name>[_<date>_<time>].<extension>`, or `path` (positional). A coast the program just issued is given up to 5 ms to land, so `motor.stop(); log.stop(); log.save()` works; **while a motor still drives it is refused**, with `OSError(EBUSY)` (errno 16) and nothing written: stop or coast the motors first. `RuntimeError` while recording (`stop()` first), `ValueError` before anything was recorded |
+| `close()` | stop and free the RAM, **without saving**. `with DataLog(...) as log:` stops, saves if `autosave` is on and nothing was saved yet, then closes on exit |
+
+The file is the extension's CSV: `# key: value` header lines (the firmware, the RAM, one `# channel:` line per channel with its rate and how often it was halved), then `time_s,device,port,quantity,value,unit,note`, one line per value; the program's rows are under device `log` with the header names as quantities. `time_s` is the source's own time stamp since `start()`, in seconds, to the microsecond. Copy it to the computer with `mpremote cp :/data/run1.csv .` and open it with **Open in data viewer** (right-click the `.csv`), or `pandas.read_csv(f, comment='#')`.
+
+**Example**
+
+```python
+from evn import Motor, IMU, DataLog
+motor = Motor(1)
+imu = IMU(1)
+log = DataLog('turn', 'heading', name='run1')
+log.add(motor, 'angle')              # every new reading (up to 1000 a second)
+log.add(imu, 'heading', 50)          # 50 a second
+log.start()
+for turn in range(4):
+    motor.run_angle(500, 180)
+    log.log(turn, imu.heading())     # one row of your own values
+motor.stop()
+log.stop()
+print(log.save())                    # /data/run1_2026-09-26_14-03-11.csv
+```
+
+**Notes**
+
+- **Best effort, lowest priority.** The sampler runs on Core 0 after every other service, reads only what the drivers already hold (no extra I2C traffic, no waiting) and records only **new** readings, each stamped with its source's own time — a stale value is never recorded twice. It never delays the motors or your program: Core 1 missed no tick while recording on the bench (2026-09-26).
+- **What it costs and how fast it gets** (measured on the board, 2026-09-26): about 11–14 µs per poll with one motor channel, about 100 µs with seven channels at max including an IMU, 17–30 µs under a Python loop that never sleeps. The poll, and so a motor channel at max, runs at about 820 Hz with nothing on I2C and about 460 Hz with an IMU attached (its FIFO read holds Core 0). An IMU's acceleration at max records about 180 samples a second beside five other channels through the console (about 60 Hz for the heading with a compass also on the bus in the program bench), never twice within 2 ms.
+- **When the RAM is full** (`on_full='halve'`), a channel keeps every second sample it holds and records at half its rate from then on; `info()` counts the `halvings`, and the file's `# channel:` line names the rate it ended at. Each channel's share of `size` is set at `start()` from its expected rate, so a slow channel is not thinned by a fast one.
+- **Why the file waits.** A Pybricks hub writes each `log()` row at once; the EVN ALPHA must not write its flash while a motor drives (a sector erase stalls the 1 kHz motor loop), so rows and samples wait in RAM for `save()` or autosave. A `save()` of a few kB costs Core 1 about 45 missed ticks per flash sector it erases, which is why it is refused while a motor drives.
+- One recording at a time: `start()` of another DataLog raises `RuntimeError` while one records; the same object's second `start()` returns `None`. A recording object is kept alive while it records, so `DataLog(...).start()` without a name records until the program ends. Every other call after `close()` raises `ValueError('DataLog is closed')`; `running()` answers `False` and `close()` is idempotent.
+- The extension's data logger drives this same class through the live console (`on_full='drop'` for a light set it streams live, `'halve'` for a heavier one it holds on the board): see [GETTING_STARTED §3c](GETTING_STARTED.md#3c-recording-data-the-data-logger).
 
 ## Timing: `wait` and `StopWatch`
 
@@ -1376,6 +1468,7 @@ An 11 MB file system is mounted at `/`. `open()`, `import`, `os` and `vfs` work 
 | Absolute angle range | unbounded | unbounded (64-bit) |
 | `settings()` | may return more fields | `(max_voltage, stall_timeout)` — the stall timeout is EVN's own (a `wait=True` move returns once `stalled()` has held that long; 0 = wait for ever, as Pybricks) |
 | Program end | motors stop | the same for a program run from the extension and for `main.py`: every motor coasts when it ends or raises. Lines typed at the REPL have no program end: motors keep their last command until Ctrl-C, Ctrl-D, `evn.stop_all()` or a connecting tool coasts them |
+| `DataLog` | Pybricks writes each `log()` row to its file at once | rows and samples wait in RAM and reach the file at `save()` or autosave (when `main.py` ends, the editor's Run finishes, the board soft-reboots or a `with` block ends, once the motors coast): the flash is not written while a motor drives (`save()` raises `OSError(EBUSY)` then). `add()` records motors and sensors on the board at their own rates; values are in physical units (never `SpeedUnit.PERCENT`), motor angles unrounded |
 
 ## Appendix: diagnostics and validation
 

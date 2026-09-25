@@ -13,7 +13,7 @@ Signatures follow the firmware bindings (`micropython/modules/evn_*.c`). A param
 before ``/`` is positional-only: the binding takes no keywords for it. A parameter written
 after ``*`` is keyword-only.
 """
-from typing import List, Optional, Sequence, Tuple, Union, overload
+from typing import List, Optional, Sequence, Tuple, Type, Union, overload
 
 version: str
 """Firmware API version string, e.g. "0.1.0"."""
@@ -2255,3 +2255,104 @@ class Pose:
         counter-clockwise positive, unlike ``heading()``."""
     def _step(self, dt: float, gyro_z: float, accel_x: float, accel_y: float, wl: float, wr: float, mag: float, /) -> Tuple[float, ...]:
         """Bench hook: one filter step on SI values (nan = absent source); returns the SI state."""
+
+
+class DataLog:
+    """The data logger, recorded on the board by the firmware: motors, sensors, the battery, the user button
+    and the program's own rows, each at the rate its source makes new readings, kept in RAM and written to a
+    CSV file when the motors are still.
+
+    ``DataLog(*headers, name='log', timestamp=True, extension='csv', append=False, size=32768, autosave=True,
+    on_full='halve')``. The first five are Pybricks' (``pybricks.tools.DataLog``): ``headers`` are the columns
+    of ``log()`` (at most 8 strings; none = no ``log()``), and the file is ``/data/<name>.<extension>``, with
+    ``_<date>_<time>`` after the name when ``timestamp`` is True and the board's clock is set (the EVN console
+    sets it when it connects); without the clock (or ``timestamp=False``) the name gets ``_1``, ``_2`` ... rather
+    than overwrite a file, and ``save(path)`` does not create the folder. ``append=True`` adds the rows to an
+    existing file without a new header (a header first when the file does not exist yet).
+    EVN's own: ``size`` = bytes of RAM for the samples (1024..1000000; the default 32 kB holds about 4 s of
+    one 1 kHz channel before its first halving); ``autosave`` = a DataLog not yet saved (still recording, or
+    stopped) is stopped and saved by itself when ``main.py`` ends, the editor's Run finishes, the board
+    soft-reboots or its ``with`` block ends, once the motors coast (a motor still driving is reported, not
+    saved); a stopped one still owed its autosave is saved first when another DataLog ``start()``s;
+    ``on_full`` = what a channel whose share of the RAM is full does: ``'halve'`` keeps every second sample
+    and halves its rate (the recording never stops by itself: a long run comes back evenly thinned), or
+    ``'drop'`` drops the newest samples and counts them.
+
+    Differences from Pybricks: rows and samples wait in RAM and reach the file at ``save()`` or at autosave
+    (a Pybricks hub writes each row at once; this board must not write flash while a motor drives: a
+    sector erase stalls the 1 kHz motor loop). Values are recorded in their physical unit (deg, deg/s, mNm,
+    mV ...), never ``SpeedUnit.PERCENT``, and a motor's angle, speed and load unrounded (the methods round
+    to an int).
+
+    Best effort at the lowest priority: the sampler reads what the drivers already hold (no extra bus
+    traffic), runs after every other Core 0 service and records only NEW readings, each stamped with its
+    source's own time. Measured on the board (2026-09-26): about 11-14 us per poll with one motor
+    channel, about 100 us with seven channels at max including an IMU; Core 1 misses no tick while it
+    records. The poll (and so a motor channel at max) runs at about 820 Hz with nothing on I2C and about
+    460 Hz with an IMU attached; an IMU's acceleration at max about 180 samples a second beside five other
+    channels through the console (about 60 Hz for the heading with a compass also on the bus in the program
+    bench), never twice within 2 ms.
+
+    One recording at a time: ``start()`` of another DataLog raises ``RuntimeError`` while one records; the
+    same object's second ``start()`` returns ``None``. Every other call after ``close()`` raises
+    ``ValueError('DataLog is closed')``; ``running()`` answers False and ``close()`` is idempotent."""
+    def __init__(self, *headers: str, name: str = 'log', timestamp: bool = True, extension: str = 'csv',
+                 append: bool = False, size: int = 32768, autosave: bool = True, on_full: str = 'halve') -> None: ...
+    def add(self, source: Union[Motor, Type[battery], Type[button], ColorSensor, DistanceSensor, GestureSensor,
+                                EnvSensor, Compass, IMU, TouchArray, ADC],
+            quantity: str, rate: float = 0, *, input: Optional[int] = None) -> int:
+        """Add a channel and return its index (before ``start()``; ``RuntimeError`` while recording, at most 16).
+        ``source``: a ``Motor``, ``evn.battery``, ``evn.button`` or a standard-peripheral object; ``quantity``:
+        the method name (``'angle'``, ``'speed'``, ``'heading'``, ``'acceleration'`` ...; ``quantities(source)``
+        lists them, ``ValueError`` for another); ``rate``: samples a second, 0 = every new reading. A rate
+        above the source's own gives the source's: a motor or the button every new reading (up to 1000 a
+        second, the motor engine's tick; about 460 with an IMU on the bus), an IMU 200, a compass 75, the battery 25, another sensor its own conversion rate. ``input=``
+        (0..7, 4..7 the differential pairs as in ``ADC.voltage()``) picks an ``ADC`` input (default: the one ``voltage()`` reads). Units: a motor's angle deg,
+        speed deg/s, load mNm, stalled 0/1; battery voltage / cells mV; the sensors the units of their methods
+        (IMU acceleration mm/s^2, angular_velocity deg/s, compass field G, temperature degC, pressure Pa ...);
+        a multi-part reading (``hsv``, ``acceleration``, ``cells`` ...) is one channel of several values."""
+    @staticmethod
+    def quantities(source: Union[Motor, Type[battery], Type[button], ColorSensor, DistanceSensor,
+                                 GestureSensor, EnvSensor, Compass, IMU, TouchArray, ADC], /) -> Tuple[str, ...]:
+        """The quantity names ``add()`` takes for this source, e.g. ``('angle', 'speed', 'load', 'stalled')``
+        for a ``Motor`` (a staticmethod: ``DataLog.quantities(motor)``)."""
+    def start(self) -> Optional[float]:
+        """Start recording (a new recording: the samples of an earlier one are gone). Returns the seconds the
+        fastest-filling channel records before its first halving (``None`` if it was already recording).
+        The RAM (``size``) is taken from the heap at the first start (``MemoryError`` if the heap cannot give
+        it). ``ValueError`` with no channel and no headers, or when ``size`` cannot give every channel room
+        for 8 samples; ``RuntimeError`` while another DataLog records."""
+    def stop(self) -> None:
+        """Stop recording; the samples stay in RAM for ``save()``. With ``autosave`` a stopped log not yet
+        saved is saved by itself when ``main.py`` ends, the editor's Run finishes, the board soft-reboots or
+        a ``with`` block ends, once the motors coast."""
+    def running(self) -> bool:
+        """True while recording."""
+    def log(self, *values: Union[float, bool, None]) -> None:
+        """Pybricks: one row of the program's own numbers, one value per header (``ValueError`` for another
+        count, ``TypeError`` for a value that is not a number, ``None`` or a bool; ``None`` is an empty cell).
+        Stamped with the board's time; starts the log if it was never started; after ``stop()`` it raises
+        ``RuntimeError`` (``start()`` again for a new recording). In the file the rows are under
+        device ``log`` with the header names as quantities."""
+    def info(self) -> dict:
+        """What is recorded: ``running``, ``size`` (bytes), ``saved`` (since the last start) and ``channels``
+        (one dict per channel: ``device``, ``port`` (None for the battery / button), ``quantity``, ``unit``,
+        ``rate`` (samples a second now), ``halvings``, ``samples`` (held), ``taken`` (since the start) and
+        ``dropped``); once started also ``seconds`` (recorded so far), ``polls``, ``cost_us`` (the longest
+        poll's cost) and ``cost_mean_us``."""
+    def save(self, path: Optional[str] = None, /) -> str:
+        """Write the recording to a file and return its path: ``/data/<name>[_<date>_<time>].<extension>`` or
+        ``path``. The file is the EVN extension's CSV (``# key: value`` header lines, then
+        ``time_s,device,port,quantity,value,unit,note``, one line per value; a multi-part quantity as
+        ``quantity.part``, e.g. ``acceleration.x``); it opens in the extension's data viewer. A coast the program
+        just issued is given up to 5 ms to land, so ``motor.stop(); log.stop(); log.save()`` works; while a
+        motor still drives it is refused with ``OSError(EBUSY)`` (errno 16) and nothing written: stop or
+        coast the motors first (a flash write while a motor drives would stall its control loop). ``RuntimeError`` while
+        recording (``stop()`` first), ``ValueError`` before anything was recorded. A save of a few kB
+        takes Core 1 about 45 missed ticks per flash sector erased."""
+    def close(self) -> None:
+        """Stop and free the RAM, WITHOUT saving (``save()`` first to keep the samples). Idempotent."""
+    def __enter__(self) -> "DataLog": ...
+    def __exit__(self, *args: object) -> None:
+        """``with DataLog(...) as log:``: on exit the log is stopped, saved if it saves by itself (``autosave``
+        and not saved yet, the motors coasting), then closed."""

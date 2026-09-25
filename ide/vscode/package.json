@@ -1,6 +1,6 @@
 {
   "name": "Code",
-  "version": "1.139.0",
+  "version": "1.139.1",
   "private": true,
   "dependencies": {
     "@microsoft/1ds-core-js": "^3.2.13",

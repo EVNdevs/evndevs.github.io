@@ -2,7 +2,7 @@
   "name": "evn-alpha-micropython",
   "displayName": "EVN ALPHA MicroPython",
   "description": "Early-access tooling for the EVN ALPHA robotics controller: flash the MicroPython firmware, run programs, open the REPL, autocomplete for the evn motor API, and a Blockly block editor that generates MicroPython.",
-  "version": "0.2.38",
+  "version": "0.2.39",
   "publisher": "evn-alpha",
   "license": "MIT",
   "preview": true,
@@ -44,7 +44,8 @@
     "onView:evn.examples",
     "onFileSystem:evn-example",
     "onFileSystem:evn-projects",
-    "onView:evn.console"
+    "onView:evn.console",
+    "onCustomEditor:evn.dataLogViewer"
   ],
   "browser": "./dist/web/extension.js",
   "capabilities": {
@@ -475,6 +476,33 @@
         "command": "evn.bluetooth.preferUsb",
         "title": "Switch the board back to USB",
         "icon": "$(arrow-swap)"
+      },
+      {
+        "command": "evn.dataLogger.open",
+        "title": "Open data logger",
+        "category": "EVN",
+        "icon": "$(graph-line)"
+      },
+      {
+        "command": "evn.dataLogger.openFile",
+        "title": "Open a data log",
+        "category": "EVN"
+      },
+      {
+        "command": "evn.dataLogger.stop",
+        "title": "Stop the data logger recording",
+        "category": "EVN"
+      },
+      {
+        "command": "evn.dataLogger.add",
+        "title": "Add to data logger",
+        "category": "EVN",
+        "icon": "$(graph-line)"
+      },
+      {
+        "command": "evn.dataLogger.view",
+        "title": "Open in data viewer",
+        "category": "EVN"
       }
     ],
     "menus": {
@@ -515,6 +543,11 @@
         {
           "command": "evn.newBlocksFile",
           "when": "explorerResourceIsFolder",
+          "group": "navigation@9"
+        },
+        {
+          "command": "evn.dataLogger.view",
+          "when": "resourceExtname == .csv",
           "group": "navigation@9"
         }
       ],
@@ -666,6 +699,14 @@
         {
           "command": "evn.bluetooth.preferUsb",
           "when": "evn.wirelessPreferred"
+        },
+        {
+          "command": "evn.dataLogger.add",
+          "when": "false"
+        },
+        {
+          "command": "evn.dataLogger.view",
+          "when": "resourceExtname == .csv"
         }
       ],
       "view/title": [
@@ -788,6 +829,11 @@
           "command": "evn.openRepl",
           "when": "view == evn.console",
           "group": "0_console@3"
+        },
+        {
+          "command": "evn.dataLogger.open",
+          "when": "view == evn.board",
+          "group": "navigation@5"
         }
       ],
       "view/item/context": [
@@ -848,12 +894,12 @@
         },
         {
           "command": "evn.deleteProject",
-          "when": "view == evn.projects && viewItem =~ /^evnProject(File|Blocks|Folder)$/",
+          "when": "view == evn.projects && viewItem =~ /^(evnProject(File|Blocks|Folder)|evnDataLog)$/",
           "group": "2_edit@3"
         },
         {
           "command": "evn.revealProject",
-          "when": "view == evn.projects && evn.hasFileExplorer && viewItem =~ /^evnProject(File|Blocks|Folder)$/",
+          "when": "view == evn.projects && evn.hasFileExplorer && viewItem =~ /^(evnProject(File|Blocks|Folder)|evnDataLog)$/",
           "group": "3_os@1"
         },
         {
@@ -1120,6 +1166,11 @@
           "command": "evn.bluetooth.preferUsb",
           "when": "view == evn.board && viewItem =~ /^evnBoardSerialPortBluetooth/ && evn.wirelessPreferred",
           "group": "1_bluetooth@4"
+        },
+        {
+          "command": "evn.dataLogger.add",
+          "when": "view == evn.board && viewItem =~ /^evnBoard(MotorPort(Set)?|Battery|DeviceKnown(Imu|Compass)?|DeviceWatched(Imu|Compass)?)$/",
+          "group": "4_log@1"
         }
       ],
       "editor/context": [
@@ -1180,6 +1231,16 @@
           }
         ],
         "priority": "default"
+      },
+      {
+        "viewType": "evn.dataLogViewer",
+        "displayName": "EVN ALPHA data log",
+        "selector": [
+          {
+            "filenamePattern": "*.csv"
+          }
+        ],
+        "priority": "option"
       }
     ],
     "configuration": {
