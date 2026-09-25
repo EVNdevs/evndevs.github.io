@@ -229,16 +229,23 @@ print(m.angle(), m.speed(), m.load())
 **Constructor**
 
 ```python
-DriveBase(left_motor, right_motor, wheel_diameter, axle_track)
+DriveBase(left_motor, right_motor, wheel_diameter, axle_track, *, imu=None, compass=None, declination=None, pose=None)
 ```
 
 | Parameter | Meaning |
 | :--- | :--- |
 | `left_motor`, `right_motor` | two open `Motor` objects. Each motor's `positive_direction` is its forward direction (a mirrored left motor: `Motor(4, Direction.COUNTERCLOCKWISE)`), and its `gears=` make the values wheel degrees |
 | `wheel_diameter` | mm |
-| `axle_track` | mm, the **effective** track between the tyres' contact patches: measure it with one `turn(360)` against a floor mark |
+| `axle_track` | mm, the **effective** track between the tyres' contact patches: measure it with one `turn(360)` against a floor mark, then rebuild the base with the measured value (its `Pose` is built from it) |
+| `imu`, `compass` | the I2C ports 1–16 of existing `IMU` / `Compass` objects (keyword-only; `OSError` if no object is on that port). Either one makes the base build and own a `Pose` |
+| `declination` | degrees added to the compass heading, east positive; needs `compass=` (`ValueError` without it) |
+| `pose` | a `Pose` the program built, adopted by the base after a geometry check (keyword-only; not together with `imu=` / `compass=` / `declination=`) |
 
-A new `DriveBase` on a motor that still belongs to one takes the pair over.
+A new `DriveBase` on a motor that still belongs to one takes the pair over (the old base is closed, and with it its own `Pose` — unless you pass that Pose on as `pose=old.pose`, which hands it over with its ownership). So re-running the `DriveBase(...)` line with the same `Motor` objects works; re-running a whole cell raises `OSError(EBUSY)` at its first `Motor(port)` whose port is still held.
+
+**The robot's pose.** `DriveBase(left, right, wheel_diameter=62.4, axle_track=170, imu=3)` builds an `evn.Pose` from the base's own geometry — the two motor ports, the wheel diameter and axle track, each motor's `positive_direction` (so no `reverse_left` to type) and the motors' gears as the gear ratio — so the geometry is typed once and cannot disagree between the two objects. `compass=` (with `declination=`) adds the compass the same way. `pose=` adopts a `Pose` you built instead, after checking it was built on the same physics: the same two ports as left and right, `reverse_left` / `reverse_right` matching the motors' directions, the gear ratio equal to the motors' gears and the same wheel diameter and axle track (`ValueError` naming what differs, `TypeError` for something that is not a `Pose`, `ValueError("pose= is closed")`). Read the pose as **`robot.pose`** — the same `Pose` object as ever (`position()`, `heading()`, `reset()`, …), or `None` when the base has none. The base holds that `Pose`, so it is never collected under the loop; `robot.close()` closes a `Pose` the base built and leaves one you built and gave it to the program; a `Pose` an old base built and handed over (`pose=old.pose`) comes with its ownership, so the new base's `close()` closes it. `OSError("a Pose object already exists: pass it as pose=, or close() it")` when your own `Pose` is already running; the two wheels must have the same gears for the base to build one (`ValueError`). Everything is checked before an old base on the same wheels is closed (the `declination=` value too: finite, -180..180, else `ValueError`), so a failed constructor leaves the old base working.
+
+**The geometry has one home, the base.** A measured axle track (or wheel diameter) for a robot with a `DriveBase` goes into `DriveBase(..., axle_track=t_eff, imu=3)`: rebuild the base, and it builds its `Pose` from it. `robot.pose.settings(axle_track=...)` on the base's Pose is refused at the next `use_gyro(True)`, and if `use_gyro` is already on, the next maneuver raises `OSError` and turns it off (below). `Pose.settings()` is for a `Pose` without a base.
 
 ### Driving
 
@@ -265,13 +272,15 @@ A new `DriveBase` on a motor that still belongs to one takes the pair over.
 
 | Method | Does |
 | :--- | :--- |
-| `use_gyro(True)`, `use_gyro(False)`, `use_gyro()` | close the loop over an `evn.Pose` built on the same two motors (left and right in that order): the robot itself follows the path the program asked for — scrub on a turn, a dragged cable and the gyro's drift are corrected as they happen, at the pose rate (100 Hz with the IMU, 200 Hz on the wheels alone). Needs the `Pose` running, with an IMU for the heading. `use_gyro(False)` drops the corrections accumulated so far, so a holding robot's wheels move back to their uncorrected targets (a small motion) |
+| `use_gyro(True)`, `use_gyro(False)`, `use_gyro()` | close the loop over the base's `Pose` (`robot.pose`: built from `imu=` / `compass=` or given as `pose=`): the robot itself follows the path the program asked for — scrub on a turn, a dragged cable and the gyro's drift are corrected as they happen, at the pose rate (100 Hz with the IMU, 200 Hz on the wheels alone). An IMU on the pose gives the heading. `use_gyro(False)` drops the corrections accumulated so far, so a holding robot's wheels move back to their uncorrected targets (a small motion) |
 | `follower(...)`, `follower()` | the loop's knobs, one set per robot (shared by every `DriveBase` object), keyword-only: `b` (400), `zeta` (0.7), `k_min` (4), `correction_speed` (150 mm/s), `correction_rate` (90 deg/s), `trim_limit` (180°), `trim_slew` (600 deg/s), `position_tolerance` (1 mm), `heading_tolerance` (0.3°), `settle_time` (100 ms). Every value must be positive and `zeta` in (0, 1), else `ValueError` |
 | `pose_error()` | `(forward mm, left mm, heading deg, settled, trim_left, trim_right)`: where the ideal robot is, seen from the pose; `ValueError("use_gyro(True) first")` without the loop |
 
-- `use_gyro(True)` raises `ValueError` when no `Pose` is running or it does not use this base's left and right motors, and `OSError("the Pose has no estimate yet")` before the pose's first estimate.
+- With a pose on the base, `use_gyro(True)` re-checks that its geometry still agrees with the base's: a `Pose.settings()` since the base took it raises `ValueError("use_gyro: the Pose's wheel_diameter and axle_track must equal the base's (rebuild the DriveBase with the measured values; it builds its Pose from them)")`. One made while `use_gyro` is on makes the next maneuver raise `OSError("use_gyro: the Pose's geometry no longer matches the base's (use_gyro is now off; rebuild the DriveBase with the measured wheel_diameter / axle_track - it builds its Pose from them)")`, with `use_gyro` turned off and nothing moved.
+- With no pose on the base but a `Pose` your program built running, `use_gyro(True)` adopts that one after the full check (ports, directions, gears, wheel diameter and axle track; a `ValueError` names what differs) and holds it from then on, so `robot.pose` returns it — the older form `pose = Pose(...)`, `robot = DriveBase(...)`, `robot.use_gyro(True)` keeps working and is now validated.
+- With no pose anywhere it raises `ValueError("use_gyro needs a pose: DriveBase(..., imu=port) builds one, pose= takes yours")`; before the pose's first estimate, `OSError("the Pose has no estimate yet")`.
 - With an IMU in the `Pose`, `use_gyro(True)` first waits (up to 30 s) until the gyro has calibrated (`IMU.ready()`: keep the robot still), else raises `OSError`. A calibrated IMU ([Calibrating your robot](CALIBRATION.md#imu)) is ready as soon as the robot is still.
-- What the pose cannot see (a robot pushed sideways) is not corrected. Keep the `Pose` object referenced while `use_gyro(True)` is on: the base holds no reference to it, and once it is collected the base raises `OSError` at its next maneuver and turns `use_gyro` off.
+- What the pose cannot see (a robot pushed sideways) is not corrected. The base holds its `Pose`, so it is never collected under the loop; if that `Pose` is closed (or replaced by another) while `use_gyro(True)` is on, the next maneuver raises `OSError` and `use_gyro` is off — the loop never trims on an estimate that is not its own. `robot.close()` closes a `Pose` the base built (or was handed by the base it replaced, `pose=old.pose`), never one you built and gave it or it adopted.
 - `examples/03_robot/` is the whole set-up; the **robot follows its gyro** block does the same in blocks.
 
 ### Settings
@@ -292,7 +301,7 @@ robot.drive(200, 30)                     # until the next command
 robot.stop()
 ```
 
-**How it drives.** A maneuver is two profiled moves on one time base: the wheel with the longer travel gets the maneuver's speed and acceleration, the other the same numbers scaled by the ratio of the travels, both started on the same 1 kHz tick — so a straight is straight and an arc is an arc, and each wheel then tracks its own reference with the calibrated controller. By default the wheels follow their encoders only: a `Pose` built on the same ports gives you the position and heading, and `use_gyro(True)` puts that pose (and its gyro) into the loop. A direct `Motor` command on one wheel while a maneuver runs coasts the other wheel (Pybricks). A maneuver started while the robot is still moving lets each wheel blend from its own speed for one ramp; the endpoints stay exact.
+**How it drives.** A maneuver is two profiled moves on one time base: the wheel with the longer travel gets the maneuver's speed and acceleration, the other the same numbers scaled by the ratio of the travels, both started on the same 1 kHz tick — so a straight is straight and an arc is an arc, and each wheel then tracks its own reference with the calibrated controller. By default the wheels follow their encoders only: `imu=` (or `pose=`) gives the base a `Pose`, `robot.pose` gives you its position and heading, and `use_gyro(True)` puts that pose (and its gyro) into the loop. A direct `Motor` command on one wheel while a maneuver runs coasts the other wheel (Pybricks). A maneuver started while the robot is still moving lets each wheel blend from its own speed for one ramp; the endpoints stay exact.
 
 ## Pose — where the robot is
 
@@ -335,7 +344,7 @@ Frames: `x` East / `y` North in mm (without a compass, `x` is +90° from the hea
 | Method | Does |
 | :--- | :--- |
 | `reset(x=0, y=0, heading=0)` | set the pose (mm, mm, degrees clockwise from north); biases and wheel parameters are kept. A re-framing, never a command: a `DriveBase` with `use_gyro(True)` re-anchors its ideal on the new pose and nothing moves — close an offset an outside reference revealed with an explicit `straight()`/`turn()` |
-| `settings()`, `settings(wheel_diameter=, axle_track=)` | read or apply a calibrated geometry in mm (1..1000 / 1..2000), keyword-only. Measure the effective track with one commanded 360° turn against a floor mark: `t_eff = t * turned_by_the_encoders / 360`. The pose, the heading and the gyro bias are kept; the wheel estimates (`parameters()` and their uncertainty) restart at every call, even with the values already in force. **Not stored** — a power cycle brings back the constructor's numbers, so a program sets it at start-up. The setter raises `ValueError` without motor ports |
+| `settings()`, `settings(wheel_diameter=, axle_track=)` | read or apply a calibrated geometry in mm (1..1000 / 1..2000), keyword-only. Measure the effective track with one commanded 360° turn against a floor mark: `t_eff = t * turned_by_the_encoders / 360`. This is the recipe for a `Pose` **without** a base: with a `DriveBase`, rebuild the base with `axle_track=t_eff` (it builds its Pose from it) — `settings()` on the base's Pose is refused at the next `use_gyro(True)` (see [Following the gyro](#following-the-gyro-use_gyro)). The pose, the heading and the gyro bias are kept; the wheel estimates (`parameters()` and their uncertainty) restart at every call, even with the values already in force. **Not stored** — a power cycle brings back the constructor's numbers, so a program sets it at start-up. The setter raises `ValueError` without motor ports |
 | `close()` | stop the estimator so another `Pose` can start; `with Pose(...) as pose:` closes on exit and is the idiom |
 
 **Example**
@@ -351,7 +360,7 @@ with Pose(1, 2, 56, 112, imu=3) as pose:
 
 - A second `Pose` raises `OSError` until the first is closed; every call after `close()` raises `ValueError("Pose is closed")`.
 - A `Pose` dropped without `close()` (a function-local, a re-run cell) is stopped at the next garbage collection — and the next `Pose(...)` runs one collection before it decides, so a Pose dropped inside a function is released at once (no `gc.collect()` needed). A bare temporary in the same statement scope (`Pose(...).heading()` then `Pose(...)`) can survive that one collection and still raise "already exists" — use a function, `with`, or `close()`.
-- Keep the object referenced while `DriveBase.use_gyro(True)` is on (see [DriveBase](#following-the-gyro-use_gyro)).
+- A `DriveBase` holds the `Pose` it built (`imu=` / `compass=`), was given (`pose=`) or adopted (`use_gyro(True)`), so you need not keep your own reference to it (see [DriveBase](#following-the-gyro-use_gyro)). A robot with a `DriveBase` normally does not build a `Pose` at all: `DriveBase(..., imu=port)` builds it, and `robot.pose` is it.
 - A source whose driver is lost leaves `sources()` by itself and rejoins when running. `'compass'` is also absent while the compass's field is being rejected (`Compass.heading_confidence()` 0: a motor's magnets, a steel table) — **the heading then has no absolute reference and drifts with the gyro/wheels** until the field is the Earth's again.
 - The compass counts only once it is calibrated, and a calibrated IMU starts with its gyro corrected: [Calibrating your robot](CALIBRATION.md).
 - Bench diagnostics (`_stats()`, `_bias()`, `_step()`): see [Diagnostics](#diagnostics).
@@ -495,7 +504,7 @@ print(imu.heading(), imu.tilt())
 
 **Notes**
 
-**With `evn.Pose`:** `Pose(imu=port)` takes the IMU's body-frame angular velocity and acceleration, not `heading()`, so `reset_heading()` and `heading_correction` do not change the Pose; set `axes()` before building it. A second `IMU(port)` on an open port shares the same driver.
+**With `evn.Pose`:** `Pose(imu=port)` takes the IMU's body-frame angular velocity and acceleration, not `heading()`, so `reset_heading()` and `heading_correction` do not change the Pose; set `axes()` before building it. On a robot, `DriveBase(..., imu=port)` builds that `Pose` for the base (`robot.pose`). A second `IMU(port)` on an open port shares the same driver.
 
 A scan of this port with `evn.I2C` pops one byte of the chip's FIFO (the driver heals it with a FIFO reset). One call can hold the I2C bus for up to ≈ 3.7 ms while it drains the waiting DMP packets.
 
@@ -572,7 +581,7 @@ print(c.heading())
 
 **Notes**
 
-**With `evn.Pose`:** `Pose(compass=port)` takes this object's `heading()` — including any `north()` offset — plus the Pose's `declination`. The compass counts only once a calibration is installed, and the Pose drops every sample whose `heading_confidence()` is 0, so a field the motors have bent leaves the heading without an absolute reference (`'compass'` leaves `pose.sources()`) instead of pulling it off. Set `axes()` before building the `Pose`.
+**With `evn.Pose`:** `Pose(compass=port)` takes this object's `heading()` — including any `north()` offset — plus the Pose's `declination`. The compass counts only once a calibration is installed, and the Pose drops every sample whose `heading_confidence()` is 0, so a field the motors have bent leaves the heading without an absolute reference (`'compass'` leaves `pose.sources()`) instead of pulling it off. Set `axes()` before building the `Pose`. On a robot, `DriveBase(..., compass=port, declination=...)` builds that `Pose` for the base (`robot.pose`).
 
 The constructor raises `OSError` when nothing answers; every reading raises `OSError("compass on port … not responding")` while the module is unplugged (`data_rate()`, `range()`, `oversampling()`, `bias()`, `axes()`, `chip()` and `calibration()` still answer); after `close()` every call except `close()` itself raises `ValueError("Compass is closed")`.
 

@@ -1,7 +1,7 @@
 EVN_ALPHA_MicroPython.uf2
-source: main (0.2.36) + the bounty tournament iteration 2 fixes (2026-09-25: the planar compass fit's heading_confidence() and field_strength() judge the horizontal field, a detached compass slot drops its fit flags, the motor library's plant constants in SRAM (the tick read them from flash), DriveBase.drive(speed=, turn_rate=) and wait(time=) keywords, the JGA25-370 datasheet torque figures)
+source: main (0.2.37) + the drive base owns its pose (2026-09-25: DriveBase(..., imu=, compass=, declination=, pose=) builds or adopts its Pose from the base's own geometry and the motors' direction and gears, robot.pose, use_gyro(True) checks ports / direction / gears / geometry and holds the Pose, a Pose closed under the base stops the follower at once; the engine seam motion/pose_estimate.h between a pose engine and a chassis follower, the law behind drive_follow_law_fn)
 built: 2026-09-25 (MicroPython v1.26.1, pico-sdk 2.3.0; SOURCE_DATE_EPOCH=1790337600 = noon UTC 2026-09-25)
 flash: single-line 03h boot2, PICO_FLASH_SPI_CLKDIV=4
-md5: 09d80e010b369cc015a3e1835affe75b
+md5: e495eb032e8f1e7c7952ae0fb87b398c
 reproduce: cmake -G Ninja -DEVN_MICROPYTHON=ON + ninja with SOURCE_DATE_EPOCH = noon UTC of the built: date (py/makeversionhdr.py embeds MICROPY_BUILD_DATE); release_public.py does this and refuses on an md5 mismatch
-version: 0.2.37
+version: 0.2.38

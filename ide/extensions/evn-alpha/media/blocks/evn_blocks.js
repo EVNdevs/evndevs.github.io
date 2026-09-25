@@ -1533,9 +1533,24 @@
             const g = driveGeometry(block);
             const l = motorRef(block, g.left), r = motorRef(block, g.right);
             use('DriveBase');
-            generator.definitions_[name] = name + ' = DriveBase(' + l + ', ' + r + ', wheel_diameter=' + g.wheel + ', axle_track=' + g.track + ')';
+            // A "robot follows its gyro" block anywhere in the program: the base builds its own Pose from
+            // its geometry and the motors' directions (firmware 0.2.38), so the set-up line carries the
+            // IMU's port. The IMU object has to exist first (DriveBase raises OSError otherwise): finish()
+            // puts the drive_base line after the devices.
+            const imuPort = gyroImuPort(block);
+            if (imuPort) { deviceRef(block, 'IMU', imuPort); }
+            generator.definitions_[name] = name + ' = DriveBase(' + l + ', ' + r + ', wheel_diameter=' + g.wheel + ', axle_track=' + g.track
+                + (imuPort ? ', imu=' + imuPort : '') + ')';
         }
         return name;
+    }
+
+    /** The IMU port of the first enabled "robot follows its gyro" block that switches the loop ON, or '' when
+     * the program has none: that is the port the drive base builds its Pose on. */
+    function gyroImuPort(block) {
+        const gyro = block.workspace.getBlocksByType('evn_drivebase_gyro', false)
+            .find((b) => b.isEnabled() && b.getFieldValue('ON') === 'True');
+        return gyro ? gyro.getFieldValue('PORT') : '';
     }
 
     /** The robot's ports and geometry from the "set up robot" block (or the Pybricks example's defaults). */
@@ -1547,31 +1562,6 @@
             wheel: setup ? Number(setup.getFieldValue('WHEEL')) : 56,
             track: setup ? Number(setup.getFieldValue('TRACK')) : 112,
         };
-    }
-
-    /** Whether the port's "set up motor" block makes counterclockwise its positive direction (a mirrored
-     * mount). The Pose reads the encoders directly, so it needs the same fact as `reverse_left=` / `reverse_right=`. */
-    function motorReversed(block, port) {
-        const setup = block.workspace.getBlocksByType('evn_motor_setup', false)
-            .find((b) => b.isEnabled() && b.getFieldValue('PORT') === port);
-        return !!setup && setup.getFieldValue('DIRECTION') === 'CCW';
-    }
-
-    /** Name of the robot's Pose object (the drive base's wheels plus the IMU on `imuPort`), defining it once.
-     * The IMU object has to exist before the Pose names its port (Pose raises OSError otherwise): finish()
-     * puts the `pose = ...` line after the devices. */
-    function poseRef(block, imuPort) {
-        const name = 'pose';
-        if (!generator.definitions_[name]) {
-            const g = driveGeometry(block);
-            deviceRef(block, 'IMU', imuPort);
-            use('Pose');
-            generator.definitions_[name] = name + ' = Pose(' + g.left + ', ' + g.right + ', wheel_diameter=' + g.wheel + ', axle_track=' + g.track
-                + (motorReversed(block, g.left) ? ', reverse_left=True' : '')
-                + (motorReversed(block, g.right) ? ', reverse_right=True' : '')
-                + ', imu=' + imuPort + ')';
-        }
-        return name;
     }
 
     /** The `then=` / `wait=` keyword arguments of a profiled move, omitted at their defaults. */
@@ -1637,9 +1627,8 @@
         return '';
     };
     generator.forBlock['evn_drivebase_gyro'] = function (block) {
-        const db = driveRef(block);
+        const db = driveRef(block);   // the set-up line carries this block's IMU port (gyroImuPort)
         if (block.getFieldValue('ON') === 'False') { return db + '.use_gyro(False)\n'; }
-        poseRef(block, block.getFieldValue('PORT'));
         return db + '.use_gyro(True)\n';
     };
     generator.forBlock['evn_drivebase_straight'] = function (block) {

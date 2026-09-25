@@ -306,19 +306,21 @@
     "EVN drive base follows its gyro": {
         "prefix": "evn-drivebase-gyro",
         "body": [
-            "from evn import Motor, Direction, DriveBase, IMU, Pose",
+            "from evn import Motor, Direction, DriveBase, IMU, StopWatch, wait",
             "",
             "left = Motor(${1:4}, Direction.COUNTERCLOCKWISE)   # the mirrored motor",
             "right = Motor(${2:3})",
-            "imu = IMU(${3:3})                                   # fixed to the chassis",
-            "pose = Pose(${1:4}, ${2:3}, wheel_diameter=${4:62.4}, axle_track=${5:170}, reverse_left=True, imu=${3:3})",
-            "${6:db} = DriveBase(left, right, wheel_diameter=${4:62.4}, axle_track=${5:170})",
-            "${6:db}.use_gyro(True)     # the robot follows the path, not just the wheels; waits (still) for the IMU",
+            "imu = IMU(${3:3})                                   # fixed flat to the chassis; build it before the base",
+            "${6:db} = DriveBase(left, right, wheel_diameter=${4:62.4}, axle_track=${5:170}, imu=${3:3})   # the base builds its own Pose",
+            "watch = StopWatch()",
+            "while not imu.ready() and watch.time() < 30000:    # keep the robot still: the gyro calibrates 8-25 s in",
+            "    wait(100)",
+            "${6:db}.use_gyro(True)     # the robot follows the path, not just the wheels",
             "${6:db}.straight(${7:300})",
             "${6:db}.turn(${8:90})",
-            "print(pose.position(), pose.heading(), ${6:db}.pose_error())",
+            "print(${6:db}.pose.position(), ${6:db}.pose.heading(), ${6:db}.pose_error())",
             "$0"
         ],
-        "description": "DriveBase closed over evn.Pose (encoders + IMU): scrub, drag and gyro drift corrected as the robot drives"
+        "description": "DriveBase with imu= builds and owns its evn.Pose (encoders + IMU) and closes the loop over it: scrub, drag and gyro drift corrected as the robot drives"
     }
 }

@@ -19,7 +19,6 @@ from evn import Motor, Direction, DriveBase, IMU, Compass, Pose, StopWatch, wait
 
 left = Motor(4, Direction.COUNTERCLOCKWISE)      # the mirrored motor: forward is counterclockwise
 right = Motor(3)
-robot = DriveBase(left, right, wheel_diameter=62.4, axle_track=170)   # only to drive the loop
 
 # --- the sources ----------------------------------------------------------------------------------
 # The IMU and the compass objects must exist before the Pose names their ports. A module that is
@@ -31,11 +30,14 @@ except OSError:
     compass = None
     print("no compass on port 14: the pose runs on the wheels and the IMU")
 
-# The pose reads the encoders itself, so it takes the motor PORTS, and the mirrored motor is
-# named again (reverse_left). declination= (degrees) is added to the compass heading: true north
-# instead of magnetic north.
-pose = Pose(4, 3, wheel_diameter=62.4, axle_track=170, reverse_left=True,
-            imu=3, compass=14 if compass else None, declination=0)
+# A robot with a DriveBase gets its pose from the base: imu= / compass= make the base build an
+# evn.Pose from its own ports, wheel, track and the mirrored motor's direction, and robot.pose is
+# that Pose. declination= (degrees) is added to the compass heading: true north instead of
+# magnetic north; it goes with compass=. (A Pose without a base - pushed by hand - is built on its
+# own: Pose(4, 3, wheel_diameter=62.4, axle_track=170, reverse_left=True, imu=3), see pose_minimal.py.)
+robot = DriveBase(left, right, wheel_diameter=62.4, axle_track=170, imu=3,
+                  compass=14 if compass else None, declination=0 if compass else None)
+pose = robot.pose
 print("built from", pose.configured())
 
 print("keep the robot still until the IMU is ready ...")
@@ -86,14 +88,19 @@ print("r_left, r_right, track (mm):", pose.parameters())
 # --- the wheel geometry ---------------------------------------------------------------------------
 # settings() -> (wheel_diameter, axle_track). The track that matters is the one between the two
 # contact patches: turn the robot a commanded 360 degrees against a floor mark, then
-# track_measured = track * (degrees it really turned) / 360, and pose.settings(axle_track=...).
-# Not stored: a program that needs the calibrated track sets it at start-up.
+# track_measured = track * (degrees it really turned) / 360. The geometry has one home, the base:
+# on a robot with a DriveBase the measured track goes into DriveBase(..., axle_track=track_measured,
+# imu=3) (rebuild the base; it builds its Pose from it). pose.settings(axle_track=...) is for a Pose
+# without a base: on the base's Pose, use_gyro(True) refuses it (ValueError), and with use_gyro
+# already on the next maneuver raises OSError and turns use_gyro off. This program never calls
+# use_gyro, so the call below (the same numbers) is harmless. Not stored: set it at start-up.
 wheel, track = pose.settings()
 print("geometry: wheel %.1f mm, track %.1f mm" % (wheel, track))
 pose.settings(wheel_diameter=wheel, axle_track=track)   # the same numbers, but it still re-seeds the wheel estimates (it forgets what it learned)
 
 # --- one Pose per robot ---------------------------------------------------------------------------
-# A second Pose raises OSError while this one is open; close() hands the estimator back.
+# A second Pose raises OSError while this one is open; close() hands the estimator back (the base
+# keeps driving on its wheels alone).
 pose.close()
 
 # A Pose from the IMU alone: a heading, but a position it cannot bound (from the accelerometer
