@@ -1,0 +1,436 @@
+{
+  "format": "evn-blocks",
+  "version": 2,
+  "title": "Compass: every block",
+  "needs": "an EVN compass module on I2C port 2, away from the motors; a robot you can turn by hand on the floor",
+  "description": "Every compass block once: the heading with the stored calibration, a new calibration made by turning the robot on the floor, and a heading that counts from the way the robot points. A finished calibration REPLACES the one stored on the board for port 2. It is finished only once the robot has been turned through every direction; after a minute without that it is cancelled and the stored one stays. Even then the board can refuse the fit (steel or a magnet near the robot bends the field): the program then stops with \"calibration refused\", nothing is stored, and you run it again somewhere else. The program waits for the user button at each step; to leave, press Stop in the editor (or Ctrl-C).",
+  "workspace": {
+    "blocks": {
+      "languageVersion": 0,
+      "blocks": [
+        {
+          "type": "evn_setup_start",
+          "x": 30,
+          "y": 30,
+          "next": {
+            "block": {
+              "type": "evn_compass_setup",
+              "fields": {
+                "PORT": "2"
+              }
+            }
+          }
+        },
+        {
+          "type": "evn_program_start",
+          "x": 30,
+          "y": 115,
+          "next": {
+            "block": {
+              "type": "evn_comment",
+              "fields": {
+                "TEXT": "the calibration stored for the port is used from the start"
+              },
+              "next": {
+                "block": {
+                  "type": "text_print",
+                  "inputs": {
+                    "TEXT": {
+                      "shadow": {
+                        "type": "text",
+                        "fields": {
+                          "TEXT": "heading with the stored calibration:"
+                        }
+                      }
+                    }
+                  },
+                  "next": {
+                    "block": {
+                      "type": "text_print",
+                      "inputs": {
+                        "TEXT": {
+                          "block": {
+                            "type": "evn_compass_heading",
+                            "fields": {
+                              "PORT": "2"
+                            }
+                          }
+                        }
+                      },
+                      "next": {
+                        "block": {
+                          "type": "evn_comment",
+                          "fields": {
+                            "TEXT": "a new calibration: the robot on the floor, turned by hand on the spot"
+                          },
+                          "next": {
+                            "block": {
+                              "type": "text_print",
+                              "inputs": {
+                                "TEXT": {
+                                  "shadow": {
+                                    "type": "text",
+                                    "fields": {
+                                      "TEXT": "Put the robot on the floor, then press the button."
+                                    }
+                                  }
+                                }
+                              },
+                              "next": {
+                                "block": {
+                                  "type": "evn_wait_for_button",
+                                  "next": {
+                                    "block": {
+                                      "type": "evn_compass_calibrate",
+                                      "fields": {
+                                        "PORT": "2",
+                                        "PLANAR": "TRUE"
+                                      },
+                                      "next": {
+                                        "block": {
+                                          "type": "text_print",
+                                          "inputs": {
+                                            "TEXT": {
+                                              "shadow": {
+                                                "type": "text",
+                                                "fields": {
+                                                  "TEXT": "Turn the robot slowly on the spot: two full turns."
+                                                }
+                                              }
+                                            }
+                                          },
+                                          "next": {
+                                            "block": {
+                                              "type": "evn_stopwatch_reset",
+                                              "fields": {
+                                                "ACTION": "reset"
+                                              },
+                                              "next": {
+                                                "block": {
+                                                  "type": "controls_whileUntil",
+                                                  "fields": {
+                                                    "MODE": "WHILE"
+                                                  },
+                                                  "inputs": {
+                                                    "BOOL": {
+                                                      "block": {
+                                                        "type": "logic_operation",
+                                                        "fields": {
+                                                          "OP": "AND"
+                                                        },
+                                                        "inputs": {
+                                                          "A": {
+                                                            "block": {
+                                                              "type": "logic_compare",
+                                                              "fields": {
+                                                                "OP": "LT"
+                                                              },
+                                                              "inputs": {
+                                                                "A": {
+                                                                  "block": {
+                                                                    "type": "evn_compass_coverage",
+                                                                    "fields": {
+                                                                      "PORT": "2"
+                                                                    }
+                                                                  }
+                                                                },
+                                                                "B": {
+                                                                  "shadow": {
+                                                                    "type": "math_number",
+                                                                    "fields": {
+                                                                      "NUM": 100
+                                                                    }
+                                                                  }
+                                                                }
+                                                              }
+                                                            }
+                                                          },
+                                                          "B": {
+                                                            "block": {
+                                                              "type": "logic_compare",
+                                                              "fields": {
+                                                                "OP": "LT"
+                                                              },
+                                                              "inputs": {
+                                                                "A": {
+                                                                  "block": {
+                                                                    "type": "evn_stopwatch_time"
+                                                                  }
+                                                                },
+                                                                "B": {
+                                                                  "shadow": {
+                                                                    "type": "math_number",
+                                                                    "fields": {
+                                                                      "NUM": 60000
+                                                                    }
+                                                                  }
+                                                                }
+                                                              }
+                                                            }
+                                                          }
+                                                        }
+                                                      }
+                                                    },
+                                                    "DO": {
+                                                      "block": {
+                                                        "type": "text_print",
+                                                        "inputs": {
+                                                          "TEXT": {
+                                                            "block": {
+                                                              "type": "text_join",
+                                                              "inputs": {
+                                                                "ADD0": {
+                                                                  "shadow": {
+                                                                    "type": "text",
+                                                                    "fields": {
+                                                                      "TEXT": "coverage % "
+                                                                    }
+                                                                  }
+                                                                },
+                                                                "ADD1": {
+                                                                  "block": {
+                                                                    "type": "evn_compass_coverage",
+                                                                    "fields": {
+                                                                      "PORT": "2"
+                                                                    }
+                                                                  }
+                                                                }
+                                                              },
+                                                              "extraState": {
+                                                                "itemCount": 2
+                                                              }
+                                                            }
+                                                          }
+                                                        },
+                                                        "next": {
+                                                          "block": {
+                                                            "type": "evn_wait",
+                                                            "inputs": {
+                                                              "TIME": {
+                                                                "shadow": {
+                                                                  "type": "math_number",
+                                                                  "fields": {
+                                                                    "NUM": 1000
+                                                                  }
+                                                                }
+                                                              }
+                                                            }
+                                                          }
+                                                        }
+                                                      }
+                                                    }
+                                                  },
+                                                  "next": {
+                                                    "block": {
+                                                      "type": "evn_comment",
+                                                      "fields": {
+                                                        "TEXT": "every direction seen: fit and store it (it replaces the stored one); else give up and keep the old one"
+                                                      },
+                                                      "next": {
+                                                        "block": {
+                                                          "type": "evn_comment",
+                                                          "fields": {
+                                                            "TEXT": "a fit spoiled by steel or a magnet nearby is refused: the program stops there and nothing is stored"
+                                                          },
+                                                          "next": {
+                                                            "block": {
+                                                              "type": "controls_if",
+                                                              "inputs": {
+                                                                "IF0": {
+                                                                  "block": {
+                                                                    "type": "logic_compare",
+                                                                    "fields": {
+                                                                      "OP": "GTE"
+                                                                    },
+                                                                    "inputs": {
+                                                                      "A": {
+                                                                        "block": {
+                                                                          "type": "evn_compass_coverage",
+                                                                          "fields": {
+                                                                            "PORT": "2"
+                                                                          }
+                                                                        }
+                                                                      },
+                                                                      "B": {
+                                                                        "shadow": {
+                                                                          "type": "math_number",
+                                                                          "fields": {
+                                                                            "NUM": 100
+                                                                          }
+                                                                        }
+                                                                      }
+                                                                    }
+                                                                  }
+                                                                },
+                                                                "DO0": {
+                                                                  "block": {
+                                                                    "type": "evn_compass_calibrate_stop",
+                                                                    "fields": {
+                                                                      "PORT": "2"
+                                                                    },
+                                                                    "next": {
+                                                                      "block": {
+                                                                        "type": "text_print",
+                                                                        "inputs": {
+                                                                          "TEXT": {
+                                                                            "shadow": {
+                                                                              "type": "text",
+                                                                              "fields": {
+                                                                                "TEXT": "calibrated and stored on the board"
+                                                                              }
+                                                                            }
+                                                                          }
+                                                                        }
+                                                                      }
+                                                                    }
+                                                                  }
+                                                                },
+                                                                "ELSE": {
+                                                                  "block": {
+                                                                    "type": "evn_compass_calibrate_cancel",
+                                                                    "fields": {
+                                                                      "PORT": "2"
+                                                                    },
+                                                                    "next": {
+                                                                      "block": {
+                                                                        "type": "text_print",
+                                                                        "inputs": {
+                                                                          "TEXT": {
+                                                                            "shadow": {
+                                                                              "type": "text",
+                                                                              "fields": {
+                                                                                "TEXT": "not turned far enough: cancelled, the old calibration stays"
+                                                                              }
+                                                                            }
+                                                                          }
+                                                                        }
+                                                                      }
+                                                                    }
+                                                                  }
+                                                                }
+                                                              },
+                                                              "extraState": {
+                                                                "hasElse": true
+                                                              },
+                                                              "next": {
+                                                                "block": {
+                                                                  "type": "evn_comment",
+                                                                  "fields": {
+                                                                    "TEXT": "count from the way the robot points now"
+                                                                  },
+                                                                  "next": {
+                                                                    "block": {
+                                                                      "type": "text_print",
+                                                                      "inputs": {
+                                                                        "TEXT": {
+                                                                          "shadow": {
+                                                                            "type": "text",
+                                                                            "fields": {
+                                                                              "TEXT": "Point the robot where 0 degrees should be, then press the button."
+                                                                            }
+                                                                          }
+                                                                        }
+                                                                      },
+                                                                      "next": {
+                                                                        "block": {
+                                                                          "type": "evn_wait_for_button",
+                                                                          "next": {
+                                                                            "block": {
+                                                                              "type": "evn_compass_north",
+                                                                              "fields": {
+                                                                                "PORT": "2"
+                                                                              },
+                                                                              "inputs": {
+                                                                                "HEADING": {
+                                                                                  "shadow": {
+                                                                                    "type": "math_number",
+                                                                                    "fields": {
+                                                                                      "NUM": 0
+                                                                                    }
+                                                                                  }
+                                                                                }
+                                                                              },
+                                                                              "next": {
+                                                                                "block": {
+                                                                                  "type": "controls_repeat_ext",
+                                                                                  "inputs": {
+                                                                                    "TIMES": {
+                                                                                      "shadow": {
+                                                                                        "type": "math_number",
+                                                                                        "fields": {
+                                                                                          "NUM": 30
+                                                                                        }
+                                                                                      }
+                                                                                    },
+                                                                                    "DO": {
+                                                                                      "block": {
+                                                                                        "type": "text_print",
+                                                                                        "inputs": {
+                                                                                          "TEXT": {
+                                                                                            "block": {
+                                                                                              "type": "evn_compass_heading",
+                                                                                              "fields": {
+                                                                                                "PORT": "2"
+                                                                                              }
+                                                                                            }
+                                                                                          }
+                                                                                        },
+                                                                                        "next": {
+                                                                                          "block": {
+                                                                                            "type": "evn_wait",
+                                                                                            "inputs": {
+                                                                                              "TIME": {
+                                                                                                "shadow": {
+                                                                                                  "type": "math_number",
+                                                                                                  "fields": {
+                                                                                                    "NUM": 300
+                                                                                                  }
+                                                                                                }
+                                                                                              }
+                                                                                            }
+                                                                                          }
+                                                                                        }
+                                                                                      }
+                                                                                    }
+                                                                                  }
+                                                                                }
+                                                                              }
+                                                                            }
+                                                                          }
+                                                                        }
+                                                                      }
+                                                                    }
+                                                                  }
+                                                                }
+                                                              }
+                                                            }
+                                                          }
+                                                        }
+                                                      }
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

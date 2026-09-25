@@ -1,0 +1,288 @@
+{
+  "format": "evn-blocks",
+  "version": 2,
+  "title": "Distance sensor: every block",
+  "needs": "the distance sensor on I2C port 1, and a hand or a box to move in front of it",
+  "description": "Every distance sensor block once: the distance in mm under each of the four settings (normal, long range, fast, accurate), then back to normal. Move your hand or a box in front of the sensor to see the numbers change; None means nothing is in range.",
+  "workspace": {
+    "blocks": {
+      "languageVersion": 0,
+      "blocks": [
+        {
+          "type": "evn_setup_start",
+          "x": 30,
+          "y": 30,
+          "next": {
+            "block": {
+              "type": "evn_distance_setup",
+              "fields": {
+                "PORT": "1"
+              }
+            }
+          }
+        },
+        {
+          "type": "evn_program_start",
+          "x": 30,
+          "y": 115,
+          "next": {
+            "block": {
+              "type": "evn_comment",
+              "fields": {
+                "TEXT": "normal: about 30 readings a second, up to about 1.2 m"
+              },
+              "next": {
+                "block": {
+                  "type": "controls_repeat_ext",
+                  "inputs": {
+                    "TIMES": {
+                      "shadow": {
+                        "type": "math_number",
+                        "fields": {
+                          "NUM": 20
+                        }
+                      }
+                    },
+                    "DO": {
+                      "block": {
+                        "type": "text_print",
+                        "inputs": {
+                          "TEXT": {
+                            "block": {
+                              "type": "evn_distance_mm",
+                              "fields": {
+                                "PORT": "1"
+                              }
+                            }
+                          }
+                        },
+                        "next": {
+                          "block": {
+                            "type": "evn_wait",
+                            "inputs": {
+                              "TIME": {
+                                "shadow": {
+                                  "type": "math_number",
+                                  "fields": {
+                                    "NUM": 100
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "next": {
+                    "block": {
+                      "type": "evn_comment",
+                      "fields": {
+                        "TEXT": "long range: sees further in the dark, with more wrong readings"
+                      },
+                      "next": {
+                        "block": {
+                          "type": "evn_distance_profile",
+                          "fields": {
+                            "PORT": "1",
+                            "PROFILE": "long_range"
+                          },
+                          "next": {
+                            "block": {
+                              "type": "controls_repeat_ext",
+                              "inputs": {
+                                "TIMES": {
+                                  "shadow": {
+                                    "type": "math_number",
+                                    "fields": {
+                                      "NUM": 20
+                                    }
+                                  }
+                                },
+                                "DO": {
+                                  "block": {
+                                    "type": "text_print",
+                                    "inputs": {
+                                      "TEXT": {
+                                        "block": {
+                                          "type": "evn_distance_mm",
+                                          "fields": {
+                                            "PORT": "1"
+                                          }
+                                        }
+                                      }
+                                    },
+                                    "next": {
+                                      "block": {
+                                        "type": "evn_wait",
+                                        "inputs": {
+                                          "TIME": {
+                                            "shadow": {
+                                              "type": "math_number",
+                                              "fields": {
+                                                "NUM": 100
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              },
+                              "next": {
+                                "block": {
+                                  "type": "evn_comment",
+                                  "fields": {
+                                    "TEXT": "fast: 50 readings a second, a little less exact"
+                                  },
+                                  "next": {
+                                    "block": {
+                                      "type": "evn_distance_profile",
+                                      "fields": {
+                                        "PORT": "1",
+                                        "PROFILE": "high_speed"
+                                      },
+                                      "next": {
+                                        "block": {
+                                          "type": "controls_repeat_ext",
+                                          "inputs": {
+                                            "TIMES": {
+                                              "shadow": {
+                                                "type": "math_number",
+                                                "fields": {
+                                                  "NUM": 20
+                                                }
+                                              }
+                                            },
+                                            "DO": {
+                                              "block": {
+                                                "type": "text_print",
+                                                "inputs": {
+                                                  "TEXT": {
+                                                    "block": {
+                                                      "type": "evn_distance_mm",
+                                                      "fields": {
+                                                        "PORT": "1"
+                                                      }
+                                                    }
+                                                  }
+                                                },
+                                                "next": {
+                                                  "block": {
+                                                    "type": "evn_wait",
+                                                    "inputs": {
+                                                      "TIME": {
+                                                        "shadow": {
+                                                          "type": "math_number",
+                                                          "fields": {
+                                                            "NUM": 100
+                                                          }
+                                                        }
+                                                      }
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          },
+                                          "next": {
+                                            "block": {
+                                              "type": "evn_comment",
+                                              "fields": {
+                                                "TEXT": "accurate: 5 readings a second, the most exact"
+                                              },
+                                              "next": {
+                                                "block": {
+                                                  "type": "evn_distance_profile",
+                                                  "fields": {
+                                                    "PORT": "1",
+                                                    "PROFILE": "high_accuracy"
+                                                  },
+                                                  "next": {
+                                                    "block": {
+                                                      "type": "controls_repeat_ext",
+                                                      "inputs": {
+                                                        "TIMES": {
+                                                          "shadow": {
+                                                            "type": "math_number",
+                                                            "fields": {
+                                                              "NUM": 20
+                                                            }
+                                                          }
+                                                        },
+                                                        "DO": {
+                                                          "block": {
+                                                            "type": "text_print",
+                                                            "inputs": {
+                                                              "TEXT": {
+                                                                "block": {
+                                                                  "type": "evn_distance_mm",
+                                                                  "fields": {
+                                                                    "PORT": "1"
+                                                                  }
+                                                                }
+                                                              }
+                                                            },
+                                                            "next": {
+                                                              "block": {
+                                                                "type": "evn_wait",
+                                                                "inputs": {
+                                                                  "TIME": {
+                                                                    "shadow": {
+                                                                      "type": "math_number",
+                                                                      "fields": {
+                                                                        "NUM": 200
+                                                                      }
+                                                                    }
+                                                                  }
+                                                                }
+                                                              }
+                                                            }
+                                                          }
+                                                        }
+                                                      },
+                                                      "next": {
+                                                        "block": {
+                                                          "type": "evn_comment",
+                                                          "fields": {
+                                                            "TEXT": "back to normal"
+                                                          },
+                                                          "next": {
+                                                            "block": {
+                                                              "type": "evn_distance_profile",
+                                                              "fields": {
+                                                                "PORT": "1",
+                                                                "PROFILE": "default"
+                                                              }
+                                                            }
+                                                          }
+                                                        }
+                                                      }
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

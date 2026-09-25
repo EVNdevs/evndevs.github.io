@@ -1,5 +1,12 @@
 /* The Console view: a transcript that fills the view and a prompt pinned to the bottom.
- * Every colour comes from a VS Code theme variable, so the view follows the user's theme. */
+ * The chrome's colours come from VS Code theme variables, so the docked view follows the user's theme;
+ * the strip charts' series are the EVN palette's (media/theme/evn-palette.json, checked by
+ * scripts/test_theme.js), light or dark with the theme. */
+
+:root { --evn-series-1: #3a93a6; --evn-series-2: #58937f; --evn-series-3: #c25e4f; --evn-series-4: #8d5b8f; }
+body.vscode-dark, body.vscode-high-contrast:not(.vscode-high-contrast-light) {
+    --evn-series-1: #6cc3d6; --evn-series-2: #7fbba6; --evn-series-3: #d8776d; --evn-series-4: #b88bba;
+}
 
 html, body {
     height: 100%;

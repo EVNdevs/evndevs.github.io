@@ -2,7 +2,7 @@
   "name": "evn-alpha-micropython",
   "displayName": "EVN ALPHA MicroPython",
   "description": "Early-access tooling for the EVN ALPHA robotics controller: flash the MicroPython firmware, run programs, open the REPL, autocomplete for the evn motor API, and a Blockly block editor that generates MicroPython.",
-  "version": "0.2.35",
+  "version": "0.2.36",
   "publisher": "evn-alpha",
   "license": "MIT",
   "preview": true,
@@ -131,6 +131,11 @@
       {
         "command": "evn.openBlocksReference",
         "title": "Open blocks reference",
+        "category": "EVN"
+      },
+      {
+        "command": "evn.openCalibrationGuide",
+        "title": "Open calibration guide",
         "category": "EVN"
       },
       {
@@ -276,6 +281,11 @@
       },
       {
         "category": "EVN",
+        "command": "evn.checkPythonSetup",
+        "title": "Check Python setup (why is evn not found?)"
+      },
+      {
+        "category": "EVN",
         "command": "evn.openDocsForSymbol",
         "title": "Open online documentation for the symbol under the cursor",
         "icon": "$(book)"
@@ -283,7 +293,20 @@
       {
         "category": "EVN",
         "command": "evn.checkForUpdates",
-        "title": "Check for extension and firmware updates"
+        "title": "Check for extension and firmware updates",
+        "icon": "$(sync)"
+      },
+      {
+        "category": "EVN",
+        "command": "evn.update",
+        "title": "Update the extension (download and install the published version)",
+        "icon": "$(cloud-download)"
+      },
+      {
+        "category": "EVN",
+        "command": "evn.updateAndReload",
+        "title": "Update the extension and reload the window",
+        "icon": "$(debug-restart)"
       },
       {
         "category": "EVN",
@@ -415,6 +438,30 @@
         "category": "EVN",
         "command": "evn.motor.clearCalibration",
         "title": "Clear this motor port's calibration...",
+        "icon": "$(clear-all)"
+      },
+      {
+        "category": "EVN",
+        "command": "evn.imu.calibrate",
+        "title": "Calibrate this IMU (still and level, ~2 s)...",
+        "icon": "$(pulse)"
+      },
+      {
+        "category": "EVN",
+        "command": "evn.imu.clearCalibration",
+        "title": "Clear this IMU's calibration...",
+        "icon": "$(clear-all)"
+      },
+      {
+        "category": "EVN",
+        "command": "evn.compass.calibrate",
+        "title": "Calibrate this compass (full or planar)...",
+        "icon": "$(pulse)"
+      },
+      {
+        "category": "EVN",
+        "command": "evn.compass.clearCalibration",
+        "title": "Clear this compass's calibration...",
         "icon": "$(clear-all)"
       },
       {
@@ -597,6 +644,22 @@
           "when": "false"
         },
         {
+          "command": "evn.imu.calibrate",
+          "when": "false"
+        },
+        {
+          "command": "evn.imu.clearCalibration",
+          "when": "false"
+        },
+        {
+          "command": "evn.compass.calibrate",
+          "when": "false"
+        },
+        {
+          "command": "evn.compass.clearCalibration",
+          "when": "false"
+        },
+        {
           "command": "evn.bluetooth.preferWireless",
           "when": "evn.bluetooth.linked && !evn.wirelessPreferred"
         },
@@ -728,6 +791,21 @@
         }
       ],
       "view/item/context": [
+        {
+          "command": "evn.update",
+          "when": "view == evn.start && viewItem == evnUpdateAvailable && !isWeb",
+          "group": "inline@1"
+        },
+        {
+          "command": "evn.updateAndReload",
+          "when": "view == evn.start && (viewItem == evnUpdateAvailable || viewItem == evnUpdateInstalled)",
+          "group": "inline@2"
+        },
+        {
+          "command": "evn.checkForUpdates",
+          "when": "view == evn.start && (viewItem == evnUpdateCurrent || viewItem == evnUpdateFailed)",
+          "group": "inline@1"
+        },
         {
           "command": "evn.newPythonProject",
           "when": "view == evn.projects && viewItem == evnProjectGroupPython",
@@ -910,32 +988,62 @@
         },
         {
           "command": "evn.device.set",
-          "when": "view == evn.board && viewItem =~ /^evnBoardDevice(Known|Watched)$/ && evn.console.state == live",
+          "when": "view == evn.board && viewItem =~ /^evnBoardDevice(Known|Watched)(Imu|Compass)?$/ && evn.console.state == live",
           "group": "inline@1"
         },
         {
           "command": "evn.device.watch",
-          "when": "view == evn.board && viewItem == evnBoardDeviceKnown && evn.console.state == live",
+          "when": "view == evn.board && viewItem =~ /^evnBoardDeviceKnown(Imu|Compass)?$/ && evn.console.state == live",
           "group": "inline@2"
         },
         {
           "command": "evn.device.unwatch",
-          "when": "view == evn.board && viewItem == evnBoardDeviceWatched && evn.console.state == live",
+          "when": "view == evn.board && viewItem =~ /^evnBoardDeviceWatched(Imu|Compass)?$/ && evn.console.state == live",
           "group": "inline@2"
         },
         {
+          "command": "evn.imu.calibrate",
+          "when": "view == evn.board && viewItem =~ /^evnBoardDevice(Known|Watched)Imu$/ && evn.console.state == live",
+          "group": "inline@3"
+        },
+        {
+          "command": "evn.compass.calibrate",
+          "when": "view == evn.board && viewItem =~ /^evnBoardDevice(Known|Watched)Compass$/ && evn.console.state == live",
+          "group": "inline@3"
+        },
+        {
+          "command": "evn.compass.calibrate",
+          "when": "view == evn.board && viewItem =~ /^evnBoardDevice(Known|Watched)Compass$/ && evn.console.state == live",
+          "group": "2_calibrate@1"
+        },
+        {
+          "command": "evn.compass.clearCalibration",
+          "when": "view == evn.board && viewItem =~ /^evnBoardDevice(Known|Watched)Compass$/ && evn.console.state == live",
+          "group": "2_calibrate@2"
+        },
+        {
           "command": "evn.device.set",
-          "when": "view == evn.board && viewItem =~ /^evnBoardDevice(Known|Watched)$/ && evn.console.state == live",
+          "when": "view == evn.board && viewItem =~ /^evnBoardDevice(Known|Watched)(Imu|Compass)?$/ && evn.console.state == live",
           "group": "1_device@1"
         },
         {
+          "command": "evn.imu.calibrate",
+          "when": "view == evn.board && viewItem =~ /^evnBoardDevice(Known|Watched)Imu$/ && evn.console.state == live",
+          "group": "2_calibrate@1"
+        },
+        {
+          "command": "evn.imu.clearCalibration",
+          "when": "view == evn.board && viewItem =~ /^evnBoardDevice(Known|Watched)Imu$/ && evn.console.state == live",
+          "group": "2_calibrate@2"
+        },
+        {
           "command": "evn.device.watch",
-          "when": "view == evn.board && viewItem =~ /^evnBoardDevice(Known|Watched)$/ && evn.console.state == live",
+          "when": "view == evn.board && viewItem =~ /^evnBoardDevice(Known|Watched)(Imu|Compass)?$/ && evn.console.state == live",
           "group": "1_device@2"
         },
         {
           "command": "evn.device.unwatch",
-          "when": "view == evn.board && viewItem == evnBoardDeviceWatched && evn.console.state == live",
+          "when": "view == evn.board && viewItem =~ /^evnBoardDeviceWatched(Imu|Compass)?$/ && evn.console.state == live",
           "group": "1_device@3"
         },
         {
@@ -1122,10 +1230,26 @@
           "default": "",
           "description": "Folder that holds your EVN programs (.py and .evnblocks), shown in the EVN ALPHA sidebar under \"My projects\". Leave empty for \"EVN Projects\" in your Documents folder (or in your home folder when there is no Documents). It is created when the extension starts."
         },
+        "evn.python.hover": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "always",
+            "off"
+          ],
+          "enumDescriptions": [
+            "Show evn documentation on hover only where no Pylance / Pyright / BasedPyright shows it: the browser IDE, Jedi, no Python extension, examples opened from the Examples view, and files the evn stubs do not reach",
+            "Always show the extension's evn hover, also next to the language server's",
+            "Never: hovers come from the language server only"
+          ],
+          "default": "auto",
+          "description": "Hover documentation for the evn module in Python files, from the extension's own copy of the stubs (typings/evn.pyi)."
+        },
         "evn.docsUrl": {
           "type": "string",
           "default": "https://evn.coresg.tech",
-          "description": "Web address of the online documentation. The Documentation button opens it; \"Open online documentation for the symbol under the cursor\" opens it at the matching section of the API reference."
+          "scope": "application",
+          "description": "Web address of the online documentation. The Documentation button opens it; \"Open online documentation for the symbol under the cursor\" opens it at the matching section of the API reference. The update check reads latest.json from it and installs only a VSIX published there, so it is a user setting only (a folder's settings cannot change it)."
         },
         "evn.updates.check": {
           "type": "boolean",

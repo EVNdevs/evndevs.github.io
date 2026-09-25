@@ -1,0 +1,69 @@
+{
+  "format": "evn-blocks",
+  "version": 2,
+  "title": "Colour sensor: minimal",
+  "needs": "the colour sensor on I2C port 1, and something coloured to hold under it",
+  "description": "Says the colour the sensor sees, five times a second, for ever (stop it with the stop button).",
+  "workspace": {
+    "blocks": {
+      "languageVersion": 0,
+      "blocks": [
+        {
+          "type": "evn_setup_start",
+          "x": 30,
+          "y": 30,
+          "next": {
+            "block": {
+              "type": "evn_colorsensor_setup",
+              "fields": {
+                "PORT": "1"
+              }
+            }
+          }
+        },
+        {
+          "type": "evn_program_start",
+          "x": 30,
+          "y": 115,
+          "next": {
+            "block": {
+              "type": "evn_forever",
+              "inputs": {
+                "DO": {
+                  "block": {
+                    "type": "text_print",
+                    "inputs": {
+                      "TEXT": {
+                        "block": {
+                          "type": "evn_colorsensor_color",
+                          "fields": {
+                            "PORT": "1"
+                          }
+                        }
+                      }
+                    },
+                    "next": {
+                      "block": {
+                        "type": "evn_wait",
+                        "inputs": {
+                          "TIME": {
+                            "shadow": {
+                              "type": "math_number",
+                              "fields": {
+                                "NUM": 200
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

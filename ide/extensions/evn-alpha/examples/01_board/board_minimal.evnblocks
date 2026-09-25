@@ -1,0 +1,102 @@
+{
+  "format": "evn-blocks",
+  "version": 2,
+  "title": "Board: minimal",
+  "needs": "nothing but the board; you press the user button when it asks",
+  "description": "Says the battery voltage, waits for the user button, then lights the LED for a second.",
+  "workspace": {
+    "blocks": {
+      "languageVersion": 0,
+      "blocks": [
+        {
+          "type": "evn_setup_start",
+          "x": 30,
+          "y": 30
+        },
+        {
+          "type": "evn_program_start",
+          "x": 30,
+          "y": 115,
+          "next": {
+            "block": {
+              "type": "text_print",
+              "inputs": {
+                "TEXT": {
+                  "block": {
+                    "type": "text_join",
+                    "inputs": {
+                      "ADD0": {
+                        "shadow": {
+                          "type": "text",
+                          "fields": {
+                            "TEXT": "battery (mV): "
+                          }
+                        }
+                      },
+                      "ADD1": {
+                        "block": {
+                          "type": "evn_battery_voltage"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "next": {
+                "block": {
+                  "type": "text_print",
+                  "inputs": {
+                    "TEXT": {
+                      "shadow": {
+                        "type": "text",
+                        "fields": {
+                          "TEXT": "press the user button"
+                        }
+                      }
+                    }
+                  },
+                  "next": {
+                    "block": {
+                      "type": "evn_wait_for_button",
+                      "next": {
+                        "block": {
+                          "type": "evn_led",
+                          "fields": {
+                            "ACTION": "on"
+                          },
+                          "next": {
+                            "block": {
+                              "type": "evn_wait",
+                              "inputs": {
+                                "TIME": {
+                                  "shadow": {
+                                    "type": "math_number",
+                                    "fields": {
+                                      "NUM": 1000
+                                    }
+                                  }
+                                }
+                              },
+                              "next": {
+                                "block": {
+                                  "type": "evn_led",
+                                  "fields": {
+                                    "ACTION": "off"
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

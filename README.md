@@ -4,7 +4,7 @@
 
 ### MicroPython for the EVN ALPHA robotics controller, and the VS Code extension that runs your programs on it
 
-[![Extension 0.2.35, early access](https://img.shields.io/badge/extension-0.2.35%20%C2%B7%20early%20access-a8977b?style=flat-square&labelColor=111518)](https://evn.coresg.tech/#/changelog)
+[![Extension 0.2.36, early access](https://img.shields.io/badge/extension-0.2.36%20%C2%B7%20early%20access-a8977b?style=flat-square&labelColor=111518)](https://evn.coresg.tech/#/changelog)
 [![VS Code 1.106 or newer](https://img.shields.io/badge/VS%20Code-1.106%2B-a8977b?style=flat-square&labelColor=111518&logo=visualstudiocode&logoColor=white)](https://code.visualstudio.com/)
 [![MicroPython on RP2040](https://img.shields.io/badge/MicroPython-RP2040-a8977b?style=flat-square&labelColor=111518&logo=micropython&logoColor=white)](https://micropython.org/)
 [![Documentation at evn.coresg.tech](https://img.shields.io/badge/docs-evn.coresg.tech-a8977b?style=flat-square&labelColor=111518)](https://evn.coresg.tech)
@@ -12,6 +12,7 @@
 
 **[evn.coresg.tech](https://evn.coresg.tech)** &nbsp;&middot;&nbsp;
 [Getting started](https://evn.coresg.tech/#/getting-started) &nbsp;&middot;&nbsp;
+[Calibration](https://evn.coresg.tech/#/calibration/) &nbsp;&middot;&nbsp;
 [API reference](https://evn.coresg.tech/#/api/) &nbsp;&middot;&nbsp;
 [Blocks reference](https://evn.coresg.tech/#/blocks/) &nbsp;&middot;&nbsp;
 [Downloads](https://evn.coresg.tech/#/downloads) &nbsp;&middot;&nbsp;
@@ -35,24 +36,26 @@ peripherals bench-validated.
 
 ## Quick start
 
+<!-- The extension and firmware versions on this page (the badge, the VSIX file name, the Downloads rows) are stamped by scripts/publish_public.py (stamp_readme) with the versions being published; keep them equal to package.json and firmware/BUILD.txt here so the source reads right too. -->
+
 1. **Install the extension.** Download
-   [`evn-alpha-micropython-0.2.35.vsix`](https://evn.coresg.tech/vsix/evn-alpha-micropython-0.2.35.vsix),
+   [`evn-alpha-micropython-0.2.36.vsix`](https://evn.coresg.tech/vsix/evn-alpha-micropython-0.2.36.vsix),
    then in VS Code (1.106 or newer): *Extensions* view → the `...` menu → **Install from VSIX…** → pick the file.
 2. **Set the board up.** Run **EVN: Install mpremote** once, then **EVN: Flash MicroPython firmware** with
    the board plugged in. The firmware travels inside the extension; a board in UF2 (BOOTSEL) mode is
    recognised and flashed without a COM port.
-3. **Run something.** Open the **EVN ALPHA** tab in the activity bar, open `01_first_moves` under
+3. **Run something.** Open the **EVN ALPHA** tab in the activity bar, open `motor_minimal` in the *Motor* folder under
    *Examples*, plug a motor into port 1, and press **Ctrl+F5**.
 
 The written guide is [Getting started](https://evn.coresg.tech/#/getting-started); the extension also has
-a five-step walkthrough (**EVN: Getting started walkthrough**).
+a six-step walkthrough (**EVN: Getting started walkthrough**).
 
 ## Downloads
 
 | | Version | Download | Notes |
 | :--- | :--- | :--- | :--- |
-| **VS Code extension** | 0.2.35 | [`.vsix`](https://evn.coresg.tech/vsix/evn-alpha-micropython-0.2.35.vsix) | [Changelog](https://evn.coresg.tech/#/changelog) |
-| **MicroPython firmware** | 0.2.35 | [`.uf2`](https://evn.coresg.tech/firmware/EVN_ALPHA_MicroPython.uf2) | [BUILD.txt](firmware/BUILD.txt) |
+| **VS Code extension** | 0.2.36 | [`.vsix`](https://evn.coresg.tech/vsix/evn-alpha-micropython-0.2.36.vsix) | [Changelog](https://evn.coresg.tech/#/changelog) |
+| **MicroPython firmware** | 0.2.36 | [`.uf2`](https://evn.coresg.tech/firmware/EVN_ALPHA_MicroPython.uf2) | [BUILD.txt](firmware/BUILD.txt) |
 
 The extension carries the firmware and flashes it for you, so the UF2 is only needed without it: hold
 **BOOTSEL** while plugging the board in and copy the file onto the drive that appears.
@@ -62,8 +65,8 @@ The extension carries the firmware and flashes it for you, so the UF2 is only ne
 
 | Path | What it is |
 | :--- | :--- |
-| [`docs/`](docs/) | The Markdown the site renders: `GETTING_STARTED.md`, `API.md`, `BLOCKS.md`, `CHANGELOG.md`. |
-| [`examples/`](examples/) | The bundled example programs — eight in Python, eight for the block editor. |
+| [`docs/`](docs/) | The Markdown the site renders: `GETTING_STARTED.md`, `CALIBRATION.md`, `API.md`, `BLOCKS.md`, `CHANGELOG.md`. |
+| [`examples/`](examples/) | The bundled example programs: one folder per object of the API (the board, the motor, the robot, the pose, every standard peripheral, UART, I2C and files), each with a minimal and a complete program, in Python and, where the object has blocks, for the block editor. |
 | [`firmware/`](firmware/) | `EVN_ALPHA_MicroPython.uf2` and `BUILD.txt`, the build record of that firmware. |
 | [`vsix/`](vsix/) | The packaged VS Code extension, served straight from Pages (no GitHub release needed). |
 | [`latest.json`](latest.json) | Extension and firmware versions with their download URLs; read by **EVN: Check for extension and firmware updates**. |
@@ -73,6 +76,7 @@ The extension carries the firmware and flashes it for you, so the UF2 is only ne
 ## Documentation
 
 - **[Getting started](https://evn.coresg.tech/#/getting-started)** — what you need, flashing, the first program, the sidebar, Bluetooth.
+- **[Calibrating your robot](https://evn.coresg.tech/#/calibration/)** — motors, IMU and compass: from the Board view, from Python and from blocks.
 - **[API reference](https://evn.coresg.tech/#/api/)** — every class and function of the `evn` module, with units and defaults.
 - **[Blocks reference](https://evn.coresg.tech/#/blocks/)** — every block and the MicroPython it generates.
 - **[Changelog](https://evn.coresg.tech/#/changelog)** — what changed in each release.

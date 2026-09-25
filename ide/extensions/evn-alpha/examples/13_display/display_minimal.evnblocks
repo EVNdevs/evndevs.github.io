@@ -1,0 +1,202 @@
+{
+  "format": "evn-blocks",
+  "version": 2,
+  "title": "Display: minimal",
+  "needs": "the OLED display on I2C port 1",
+  "description": "Writes a title on the OLED display, then counts from 1 to 10 in the middle of the screen.",
+  "workspace": {
+    "blocks": {
+      "languageVersion": 0,
+      "blocks": [
+        {
+          "type": "evn_setup_start",
+          "x": 30,
+          "y": 30,
+          "next": {
+            "block": {
+              "type": "evn_display_setup",
+              "fields": {
+                "PORT": "1",
+                "MIRROR": "FALSE"
+              }
+            }
+          }
+        },
+        {
+          "type": "evn_program_start",
+          "x": 30,
+          "y": 115,
+          "next": {
+            "block": {
+              "type": "evn_display_clear",
+              "fields": {
+                "PORT": "1"
+              },
+              "next": {
+                "block": {
+                  "type": "evn_display_text",
+                  "fields": {
+                    "PORT": "1"
+                  },
+                  "inputs": {
+                    "TEXT": {
+                      "shadow": {
+                        "type": "text",
+                        "fields": {
+                          "TEXT": "Hello, EVN!"
+                        }
+                      }
+                    },
+                    "COL": {
+                      "shadow": {
+                        "type": "math_number",
+                        "fields": {
+                          "NUM": 0
+                        }
+                      }
+                    },
+                    "ROW": {
+                      "shadow": {
+                        "type": "math_number",
+                        "fields": {
+                          "NUM": 0
+                        }
+                      }
+                    }
+                  },
+                  "next": {
+                    "block": {
+                      "type": "evn_display_text",
+                      "fields": {
+                        "PORT": "1"
+                      },
+                      "inputs": {
+                        "TEXT": {
+                          "shadow": {
+                            "type": "text",
+                            "fields": {
+                              "TEXT": "count:"
+                            }
+                          }
+                        },
+                        "COL": {
+                          "shadow": {
+                            "type": "math_number",
+                            "fields": {
+                              "NUM": 0
+                            }
+                          }
+                        },
+                        "ROW": {
+                          "shadow": {
+                            "type": "math_number",
+                            "fields": {
+                              "NUM": 3
+                            }
+                          }
+                        }
+                      },
+                      "next": {
+                        "block": {
+                          "type": "controls_for",
+                          "fields": {
+                            "VAR": {
+                              "id": "v_i"
+                            }
+                          },
+                          "inputs": {
+                            "FROM": {
+                              "shadow": {
+                                "type": "math_number",
+                                "fields": {
+                                  "NUM": 1
+                                }
+                              }
+                            },
+                            "TO": {
+                              "shadow": {
+                                "type": "math_number",
+                                "fields": {
+                                  "NUM": 10
+                                }
+                              }
+                            },
+                            "BY": {
+                              "shadow": {
+                                "type": "math_number",
+                                "fields": {
+                                  "NUM": 1
+                                }
+                              }
+                            },
+                            "DO": {
+                              "block": {
+                                "type": "evn_display_text",
+                                "fields": {
+                                  "PORT": "1"
+                                },
+                                "inputs": {
+                                  "TEXT": {
+                                    "block": {
+                                      "type": "variables_get",
+                                      "fields": {
+                                        "VAR": {
+                                          "id": "v_i"
+                                        }
+                                      }
+                                    }
+                                  },
+                                  "COL": {
+                                    "shadow": {
+                                      "type": "math_number",
+                                      "fields": {
+                                        "NUM": 7
+                                      }
+                                    }
+                                  },
+                                  "ROW": {
+                                    "shadow": {
+                                      "type": "math_number",
+                                      "fields": {
+                                        "NUM": 3
+                                      }
+                                    }
+                                  }
+                                },
+                                "next": {
+                                  "block": {
+                                    "type": "evn_wait",
+                                    "inputs": {
+                                      "TIME": {
+                                        "shadow": {
+                                          "type": "math_number",
+                                          "fields": {
+                                            "NUM": 500
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "variables": [
+      {
+        "name": "i",
+        "id": "v_i"
+      }
+    ]
+  }
+}

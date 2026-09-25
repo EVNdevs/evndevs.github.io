@@ -2,7 +2,8 @@
    EVN ALPHA MicroPython - the documentation site's renderer.
 
    It owns the URL contract documented at the top of index.html:
-       #/api/<slug>  #/blocks/<slug>  #/getting-started  #/changelog  #/downloads  and the home page.
+       #/api/<slug>  #/blocks/<slug>  #/calibration/<slug>  #/getting-started  #/changelog  #/downloads
+       and the home page.
    Every path it fetches is relative, so the site works at any root.
    ------------------------------------------------------------------------------------------------ */
 (function () {
@@ -15,6 +16,8 @@
   var DOCS = {
     'getting-started': { file: 'docs/GETTING_STARTED.md', title: 'Getting started', nav: 'Getting started',
                          blurb: 'Install the extension, flash the firmware, run the first program.' },
+    'calibration':     { file: 'docs/CALIBRATION.md',     title: 'Calibrating your robot', nav: 'Calibration',
+                         blurb: 'Motors, IMU and compass: from the Board view, from Python and from blocks.' },
     'api':             { file: 'docs/API.md',             title: 'API reference',  nav: 'API',
                          blurb: 'Every class and function of the evn module, with units and defaults.' },
     'blocks':          { file: 'docs/BLOCKS.md',          title: 'Blocks reference', nav: 'Blocks',
@@ -22,7 +25,9 @@
     'changelog':       { file: 'docs/CHANGELOG.md',       title: 'Changelog',      nav: 'Changelog',
                          blurb: 'What changed in every release of the extension and the firmware.' }
   };
-  var ORDER = ['getting-started', 'api', 'blocks', 'changelog'];
+  var ORDER = ['getting-started', 'calibration', 'api', 'blocks', 'changelog'];
+  /* The documents whose route takes a heading slug (#/api/<slug>): their bare route ends in a slash. */
+  var SECTIONED = { api: true, blocks: true, calibration: true };
   var REPO = 'https://github.com/EVNdevs/evndevs.github.io';
   var SITE = 'EVN ALPHA MicroPython';
 
@@ -130,15 +135,15 @@
   /* ---- Markdown plumbing ------------------------------------------------------------------------- */
 
   /* Links inside the Markdown: another document becomes a route; anything else relative resolves
-     against docs/; absolute links open in a new tab. */
+     against docs/; absolute links open in a new tab. Relative images resolve against docs/ too. */
   function fixLinks(root) {
     var links = root.querySelectorAll('a[href]');
     for (var i = 0; i < links.length; i++) {
       var a = links[i], href = a.getAttribute('href');
       if (!href) { continue; }
-      var m = /^(?:\.\.\/)?(?:docs\/)?(API|BLOCKS|GETTING_STARTED|CHANGELOG)\.md(?:#(.*))?$/.exec(href);
+      var m = /^(?:\.\.\/)?(?:docs\/)?(API|BLOCKS|CALIBRATION|GETTING_STARTED|CHANGELOG)\.md(?:#(.*))?$/.exec(href);
       if (m) {
-        var doc = m[1] === 'API' ? 'api' : m[1] === 'BLOCKS' ? 'blocks'
+        var doc = m[1] === 'API' ? 'api' : m[1] === 'BLOCKS' ? 'blocks' : m[1] === 'CALIBRATION' ? 'calibration'
                 : m[1] === 'CHANGELOG' ? 'changelog' : 'getting-started';
         a.setAttribute('href', '#/' + doc + '/' + (m[2] ? slugify(decodeURIComponent(m[2])) : ''));
         continue;
@@ -146,6 +151,14 @@
       if (/^#/.test(href)) { continue; }                       // same-document anchor, fixed below
       if (/^[a-z]+:/i.test(href)) { a.target = '_blank'; a.rel = 'noopener'; continue; }
       a.setAttribute('href', new URL(href, new URL('docs/', location.href)).href);
+    }
+    // images (docs/images/*.png) are written relative to the document, which lives in docs/
+    var imgs = root.querySelectorAll('img[src]');
+    for (var j = 0; j < imgs.length; j++) {
+      var src = imgs[j].getAttribute('src');
+      if (!src || /^[a-z]+:/i.test(src) || src.charAt(0) === '/') { continue; }
+      imgs[j].setAttribute('src', new URL(src, new URL('docs/', location.href)).href);
+      imgs[j].setAttribute('loading', 'lazy');
     }
   }
 
@@ -344,11 +357,14 @@
       article.appendChild(head);
 
       var body = el('div', 'doc-body');
-      body.innerHTML = DOMPurify.sanitize(marked.parse(md, { gfm: true, breaks: false }));
+      // links and image paths are fixed in an inert template, before the images are in the page:
+      // an <img> made in the live document starts loading its relative src at once (a 404)
+      var content = frag(DOMPurify.sanitize(marked.parse(md, { gfm: true, breaks: false })));
+      fixLinks(content);
+      body.appendChild(content);
       article.appendChild(body);
 
       var hs = assignIds(body);
-      fixLinks(body);
       fixAnchors(body, route.doc);
       var blocks = body.querySelectorAll('pre code');
       for (var i = 0; i < blocks.length; i++) {
@@ -391,7 +407,7 @@
   }
   function pagerLink(doc, label, cls) {
     var a = el('a', cls);
-    a.href = '#/' + doc + (doc === 'api' || doc === 'blocks' ? '/' : '');
+    a.href = '#/' + doc + (SECTIONED[doc] ? '/' : '');
     a.appendChild(el('span', 'lbl', label));
     a.appendChild(el('span', 'ttl', DOCS[doc].title));
     return a;
@@ -677,7 +693,7 @@
     var list = el('div', 'doc-list');
     ORDER.forEach(function (name, n) {
       var a = el('a', 'doc-row');
-      a.href = '#/' + name + (name === 'api' || name === 'blocks' ? '/' : '');
+      a.href = '#/' + name + (SECTIONED[name] ? '/' : '');
       a.appendChild(el('span', 'n', '0' + (n + 1)));
       var t = el('span', 't');
       t.appendChild(el('strong', null, DOCS[name].title));

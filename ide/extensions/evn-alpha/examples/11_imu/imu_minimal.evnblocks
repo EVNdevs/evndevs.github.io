@@ -1,0 +1,97 @@
+{
+  "format": "evn-blocks",
+  "version": 2,
+  "title": "IMU: minimal",
+  "needs": "an EVN IMU module on I2C port 1, fixed flat to the robot; keep it still for the first seconds",
+  "description": "The robot's heading from the gyro, five times a second for ten seconds: 0 where it points at the start, going up as it turns clockwise.",
+  "workspace": {
+    "blocks": {
+      "languageVersion": 0,
+      "blocks": [
+        {
+          "type": "evn_setup_start",
+          "x": 30,
+          "y": 30,
+          "next": {
+            "block": {
+              "type": "evn_imu_setup",
+              "fields": {
+                "PORT": "1",
+                "CALIBRATE": "FALSE"
+              }
+            }
+          }
+        },
+        {
+          "type": "evn_program_start",
+          "x": 30,
+          "y": 115,
+          "next": {
+            "block": {
+              "type": "evn_imu_reset_heading",
+              "fields": {
+                "PORT": "1"
+              },
+              "inputs": {
+                "ANGLE": {
+                  "shadow": {
+                    "type": "math_number",
+                    "fields": {
+                      "NUM": 0
+                    }
+                  }
+                }
+              },
+              "next": {
+                "block": {
+                  "type": "controls_repeat_ext",
+                  "inputs": {
+                    "TIMES": {
+                      "shadow": {
+                        "type": "math_number",
+                        "fields": {
+                          "NUM": 50
+                        }
+                      }
+                    },
+                    "DO": {
+                      "block": {
+                        "type": "text_print",
+                        "inputs": {
+                          "TEXT": {
+                            "block": {
+                              "type": "evn_imu_angle",
+                              "fields": {
+                                "PORT": "1",
+                                "WHAT": "heading()"
+                              }
+                            }
+                          }
+                        },
+                        "next": {
+                          "block": {
+                            "type": "evn_wait",
+                            "inputs": {
+                              "TIME": {
+                                "shadow": {
+                                  "type": "math_number",
+                                  "fields": {
+                                    "NUM": 200
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

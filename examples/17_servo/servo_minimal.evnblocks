@@ -1,0 +1,120 @@
+{
+  "format": "evn-blocks",
+  "version": 2,
+  "title": "Servo: minimal",
+  "needs": "a Geekservo 270-degree servo on servo port 1, horn free to turn",
+  "description": "The kit's 270-degree servo sweeps to 45 degrees, over to 225, and jumps back to the middle (135).",
+  "workspace": {
+    "blocks": {
+      "languageVersion": 0,
+      "blocks": [
+        {
+          "type": "evn_setup_start",
+          "x": 30,
+          "y": 30,
+          "next": {
+            "block": {
+              "type": "evn_servo_setup",
+              "fields": {
+                "PORT": "1",
+                "PROFILE": "geekservo_270"
+              }
+            }
+          }
+        },
+        {
+          "type": "evn_program_start",
+          "x": 30,
+          "y": 115,
+          "next": {
+            "block": {
+              "type": "evn_servo_move",
+              "fields": {
+                "PORT": "1",
+                "WAIT": "TRUE"
+              },
+              "inputs": {
+                "ANGLE": {
+                  "shadow": {
+                    "type": "math_number",
+                    "fields": {
+                      "NUM": 45
+                    }
+                  }
+                },
+                "SPEED": {
+                  "shadow": {
+                    "type": "math_number",
+                    "fields": {
+                      "NUM": 200
+                    }
+                  }
+                }
+              },
+              "next": {
+                "block": {
+                  "type": "evn_servo_move",
+                  "fields": {
+                    "PORT": "1",
+                    "WAIT": "TRUE"
+                  },
+                  "inputs": {
+                    "ANGLE": {
+                      "shadow": {
+                        "type": "math_number",
+                        "fields": {
+                          "NUM": 225
+                        }
+                      }
+                    },
+                    "SPEED": {
+                      "shadow": {
+                        "type": "math_number",
+                        "fields": {
+                          "NUM": 200
+                        }
+                      }
+                    }
+                  },
+                  "next": {
+                    "block": {
+                      "type": "evn_servo_angle",
+                      "fields": {
+                        "PORT": "1"
+                      },
+                      "inputs": {
+                        "ANGLE": {
+                          "shadow": {
+                            "type": "math_number",
+                            "fields": {
+                              "NUM": 135
+                            }
+                          }
+                        }
+                      },
+                      "next": {
+                        "block": {
+                          "type": "evn_wait",
+                          "inputs": {
+                            "TIME": {
+                              "shadow": {
+                                "type": "math_number",
+                                "fields": {
+                                  "NUM": 500
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

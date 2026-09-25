@@ -1,0 +1,39 @@
+{
+  "_doc": [
+    "The EVN / CORE palette: the one source of every colour the project themes (theming audit, 2026-09-24).",
+    "Light is the CORE website's, checked against the live edu.coresg.tech (2026-09-24, its Blocksy palette in a saved",
+    "copy of the home page): 1 #a8977b accent, 2 #7f715c hover (our accentInk), 3 #3f4245 text, 4 #111518 headings,",
+    "5 #eaeaec borders (our line), 6 #f4f4f5 surfaces and footer (our surface), 7/8 #ffffff page; Jost, 16 px, 0.02em.",
+    "CORE puts white text on #a8977b (2.85:1); here white text sits on accentInk (4.75:1, WCAG AA) and text on a",
+    "surface uses accentDeep (accentInk on #f4f4f5 is 4.32:1). These departures, and the EVN site's dark footer where",
+    "CORE's is #f4f4f5, stay by the owner's decision (2026-09-24). Not CORE's but ours: surface2, lineStrong, grid,",
+    "muted, accentDeep, ok/danger, the code colours and the series. CORE's dark panels are rgba(18,21,25,.98): dark",
+    "is the EVN site's scheme on the brand ink #111518. series: data lines and charts (console",
+    "strip charts; the blocks' own category colours are evn_blocks.js PALETTE). scripts/test_theme.js checks every",
+    "copy below against this file - site.css, editor.css, editor.js, compassCoverage.ts, console.css, the icons,",
+    "package.json, site/index.html, build_web_ide.js - so a change here is a change there, or the test fails.",
+    "Policy: editor-area pages (the blocks editor, the compass map) and the website use this palette; views docked",
+    "in VS Code's side bars (Start, My projects, Board, Console) follow the VS Code theme, and take only the",
+    "series from here. Text colours are AA (4.5:1) on page and surface: okInk / codeNum / codeComment / codeFn are the",
+    "text forms of ok / series[0] / grey / blue; the light series are 3:1 (graphics) on VS Code's light panels (#f3f3f3).",
+    "(the light values above were verified against the live site on 2026-09-24)."
+  ],
+  "light": {
+    "page": "#ffffff", "card": "#ffffff", "surface": "#f4f4f5", "surface2": "#eeeeee",
+    "line": "#eaeaec", "lineStrong": "#d3d3d3", "grid": "#eaeaec",
+    "heading": "#111518", "text": "#3f4245", "muted": "#6d7072",
+    "accent": "#a8977b", "accentInk": "#7f715c", "accentDeep": "#6a5e4c", "onAccent": "#ffffff",
+    "ok": "#5f9e88", "okInk": "#497968", "danger": "#b5493f",
+    "codeNum": "#307989", "codeComment": "#6f6f6f", "codeFn": "#4d6fad",
+    "series": ["#3a93a6", "#58937f", "#c25e4f", "#8d5b8f"]
+  },
+  "dark": {
+    "page": "#111518", "card": "#171c21", "surface": "#1a1f24", "surface2": "#22282e",
+    "line": "#2a3138", "lineStrong": "#3a424a", "grid": "#1d2329",
+    "heading": "#f4f5f6", "text": "#d7dade", "muted": "#a3a8ad",
+    "accent": "#c9b99c", "accentInk": "#c9b99c", "accentDeep": "#ddd0b8", "onAccent": "#111518",
+    "ok": "#7fbba6", "okInk": "#7fbba6", "danger": "#d8776d",
+    "codeNum": "#6cc3d6", "codeComment": "#83888c", "codeFn": "#8faae0",
+    "series": ["#6cc3d6", "#7fbba6", "#d8776d", "#b88bba"]
+  }
+}

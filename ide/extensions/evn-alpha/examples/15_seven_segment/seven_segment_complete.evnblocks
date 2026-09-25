@@ -1,0 +1,327 @@
+{
+  "format": "evn-blocks",
+  "version": 2,
+  "title": "7-segment display: every block",
+  "needs": "the 7-segment display on I2C port 1",
+  "description": "Every 7-segment block once: numbers with and without a point, text, the colon of a clock, the brightness, and a blank display at the end.",
+  "workspace": {
+    "blocks": {
+      "languageVersion": 0,
+      "blocks": [
+        {
+          "type": "evn_setup_start",
+          "x": 30,
+          "y": 30,
+          "next": {
+            "block": {
+              "type": "evn_seven_setup",
+              "fields": {
+                "PORT": "1"
+              }
+            }
+          }
+        },
+        {
+          "type": "evn_program_start",
+          "x": 30,
+          "y": 115,
+          "next": {
+            "block": {
+              "type": "evn_comment",
+              "fields": {
+                "TEXT": "text: up to 4 letters; only letters a segment display can draw (no K, M, V, W, X ...)"
+              },
+              "next": {
+                "block": {
+                  "type": "evn_seven_text",
+                  "fields": {
+                    "PORT": "1"
+                  },
+                  "inputs": {
+                    "TEXT": {
+                      "shadow": {
+                        "type": "text",
+                        "fields": {
+                          "TEXT": "HELP"
+                        }
+                      }
+                    }
+                  },
+                  "next": {
+                    "block": {
+                      "type": "evn_wait",
+                      "inputs": {
+                        "TIME": {
+                          "shadow": {
+                            "type": "math_number",
+                            "fields": {
+                              "NUM": 1500
+                            }
+                          }
+                        }
+                      },
+                      "next": {
+                        "block": {
+                          "type": "evn_comment",
+                          "fields": {
+                            "TEXT": "numbers: whole numbers -999 .. 9999, and decimals"
+                          },
+                          "next": {
+                            "block": {
+                              "type": "evn_seven_number",
+                              "fields": {
+                                "PORT": "1"
+                              },
+                              "inputs": {
+                                "NUMBER": {
+                                  "shadow": {
+                                    "type": "math_number",
+                                    "fields": {
+                                      "NUM": -42
+                                    }
+                                  }
+                                }
+                              },
+                              "next": {
+                                "block": {
+                                  "type": "evn_wait",
+                                  "inputs": {
+                                    "TIME": {
+                                      "shadow": {
+                                        "type": "math_number",
+                                        "fields": {
+                                          "NUM": 1500
+                                        }
+                                      }
+                                    }
+                                  },
+                                  "next": {
+                                    "block": {
+                                      "type": "evn_seven_number",
+                                      "fields": {
+                                        "PORT": "1"
+                                      },
+                                      "inputs": {
+                                        "NUMBER": {
+                                          "shadow": {
+                                            "type": "math_number",
+                                            "fields": {
+                                              "NUM": 3.14159
+                                            }
+                                          }
+                                        }
+                                      },
+                                      "next": {
+                                        "block": {
+                                          "type": "evn_wait",
+                                          "inputs": {
+                                            "TIME": {
+                                              "shadow": {
+                                                "type": "math_number",
+                                                "fields": {
+                                                  "NUM": 1500
+                                                }
+                                              }
+                                            }
+                                          },
+                                          "next": {
+                                            "block": {
+                                              "type": "evn_comment",
+                                              "fields": {
+                                                "TEXT": "a clock: 12:34 is the text 1234 with the colon on"
+                                              },
+                                              "next": {
+                                                "block": {
+                                                  "type": "evn_seven_text",
+                                                  "fields": {
+                                                    "PORT": "1"
+                                                  },
+                                                  "inputs": {
+                                                    "TEXT": {
+                                                      "shadow": {
+                                                        "type": "text",
+                                                        "fields": {
+                                                          "TEXT": "1234"
+                                                        }
+                                                      }
+                                                    }
+                                                  },
+                                                  "next": {
+                                                    "block": {
+                                                      "type": "evn_seven_colon",
+                                                      "fields": {
+                                                        "PORT": "1",
+                                                        "ON": "True"
+                                                      },
+                                                      "next": {
+                                                        "block": {
+                                                          "type": "evn_wait",
+                                                          "inputs": {
+                                                            "TIME": {
+                                                              "shadow": {
+                                                                "type": "math_number",
+                                                                "fields": {
+                                                                  "NUM": 1500
+                                                                }
+                                                              }
+                                                            }
+                                                          },
+                                                          "next": {
+                                                            "block": {
+                                                              "type": "evn_seven_colon",
+                                                              "fields": {
+                                                                "PORT": "1",
+                                                                "ON": "False"
+                                                              },
+                                                              "next": {
+                                                                "block": {
+                                                                  "type": "evn_comment",
+                                                                  "fields": {
+                                                                    "TEXT": "brightness 1 (dim) .. 16 (bright, where it starts)"
+                                                                  },
+                                                                  "next": {
+                                                                    "block": {
+                                                                      "type": "controls_for",
+                                                                      "fields": {
+                                                                        "VAR": {
+                                                                          "id": "v_level"
+                                                                        }
+                                                                      },
+                                                                      "inputs": {
+                                                                        "FROM": {
+                                                                          "shadow": {
+                                                                            "type": "math_number",
+                                                                            "fields": {
+                                                                              "NUM": 1
+                                                                            }
+                                                                          }
+                                                                        },
+                                                                        "TO": {
+                                                                          "shadow": {
+                                                                            "type": "math_number",
+                                                                            "fields": {
+                                                                              "NUM": 16
+                                                                            }
+                                                                          }
+                                                                        },
+                                                                        "BY": {
+                                                                          "shadow": {
+                                                                            "type": "math_number",
+                                                                            "fields": {
+                                                                              "NUM": 1
+                                                                            }
+                                                                          }
+                                                                        },
+                                                                        "DO": {
+                                                                          "block": {
+                                                                            "type": "evn_seven_brightness",
+                                                                            "fields": {
+                                                                              "PORT": "1"
+                                                                            },
+                                                                            "inputs": {
+                                                                              "LEVEL": {
+                                                                                "block": {
+                                                                                  "type": "variables_get",
+                                                                                  "fields": {
+                                                                                    "VAR": {
+                                                                                      "id": "v_level"
+                                                                                    }
+                                                                                  }
+                                                                                }
+                                                                              }
+                                                                            },
+                                                                            "next": {
+                                                                              "block": {
+                                                                                "type": "evn_seven_number",
+                                                                                "fields": {
+                                                                                  "PORT": "1"
+                                                                                },
+                                                                                "inputs": {
+                                                                                  "NUMBER": {
+                                                                                    "block": {
+                                                                                      "type": "variables_get",
+                                                                                      "fields": {
+                                                                                        "VAR": {
+                                                                                          "id": "v_level"
+                                                                                        }
+                                                                                      }
+                                                                                    }
+                                                                                  }
+                                                                                },
+                                                                                "next": {
+                                                                                  "block": {
+                                                                                    "type": "evn_wait",
+                                                                                    "inputs": {
+                                                                                      "TIME": {
+                                                                                        "shadow": {
+                                                                                          "type": "math_number",
+                                                                                          "fields": {
+                                                                                            "NUM": 200
+                                                                                          }
+                                                                                        }
+                                                                                      }
+                                                                                    }
+                                                                                  }
+                                                                                }
+                                                                              }
+                                                                            }
+                                                                          }
+                                                                        }
+                                                                      },
+                                                                      "next": {
+                                                                        "block": {
+                                                                          "type": "evn_comment",
+                                                                          "fields": {
+                                                                            "TEXT": "the end: a blank display"
+                                                                          },
+                                                                          "next": {
+                                                                            "block": {
+                                                                              "type": "evn_seven_clear",
+                                                                              "fields": {
+                                                                                "PORT": "1"
+                                                                              }
+                                                                            }
+                                                                          }
+                                                                        }
+                                                                      }
+                                                                    }
+                                                                  }
+                                                                }
+                                                              }
+                                                            }
+                                                          }
+                                                        }
+                                                      }
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "variables": [
+      {
+        "name": "level",
+        "id": "v_level"
+      }
+    ]
+  }
+}

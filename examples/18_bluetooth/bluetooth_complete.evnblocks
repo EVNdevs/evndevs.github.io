@@ -1,0 +1,304 @@
+{
+  "format": "evn-blocks",
+  "version": 2,
+  "title": "Bluetooth: every block",
+  "needs": "the Bluetooth module on serial port 2, and a phone (Android) or PC paired with it (PIN 1234) running a Bluetooth serial terminal app that ends each line it sends with a newline",
+  "description": "Every Bluetooth block once: the board sends its battery voltage to the phone, then for 30 seconds answers each line the phone sends, until the phone sends \"stop\". Switch the board on without holding the module's button (held, the set-up reprograms the module's name, speed and role), and do not have the board's REPL on this module: while it runs over the module it takes what the phone sends. The Board view's broadcast button puts it there by writing bt.repl(True) into boot.py; take that line out of boot.py and reset the board.",
+  "workspace": {
+    "blocks": {
+      "languageVersion": 0,
+      "blocks": [
+        {
+          "type": "evn_setup_start",
+          "x": 30,
+          "y": 30,
+          "next": {
+            "block": {
+              "type": "evn_bluetooth_setup",
+              "fields": {
+                "PORT": "2"
+              }
+            }
+          }
+        },
+        {
+          "type": "evn_program_start",
+          "x": 30,
+          "y": 115,
+          "next": {
+            "block": {
+              "type": "evn_comment",
+              "fields": {
+                "TEXT": "send: one line of text to the phone (the board sends every character; with no phone connected the module drops them)"
+              },
+              "next": {
+                "block": {
+                  "type": "evn_bluetooth_send",
+                  "fields": {
+                    "PORT": "2"
+                  },
+                  "inputs": {
+                    "TEXT": {
+                      "shadow": {
+                        "type": "text",
+                        "fields": {
+                          "TEXT": "EVN ready. Battery in mV:"
+                        }
+                      }
+                    }
+                  },
+                  "next": {
+                    "block": {
+                      "type": "evn_bluetooth_send",
+                      "fields": {
+                        "PORT": "2"
+                      },
+                      "inputs": {
+                        "TEXT": {
+                          "block": {
+                            "type": "evn_battery_voltage"
+                          }
+                        }
+                      },
+                      "next": {
+                        "block": {
+                          "type": "evn_bluetooth_send",
+                          "fields": {
+                            "PORT": "2"
+                          },
+                          "inputs": {
+                            "TEXT": {
+                              "shadow": {
+                                "type": "text",
+                                "fields": {
+                                  "TEXT": "Send me lines; send stop to end."
+                                }
+                              }
+                            }
+                          },
+                          "next": {
+                            "block": {
+                              "type": "evn_comment",
+                              "fields": {
+                                "TEXT": "60 times 500 ms: about 30 seconds"
+                              },
+                              "next": {
+                                "block": {
+                                  "type": "controls_repeat_ext",
+                                  "inputs": {
+                                    "TIMES": {
+                                      "shadow": {
+                                        "type": "math_number",
+                                        "fields": {
+                                          "NUM": 60
+                                        }
+                                      }
+                                    },
+                                    "DO": {
+                                      "block": {
+                                        "type": "evn_comment",
+                                        "fields": {
+                                          "TEXT": "has something arrived? then read one line (wait up to 1 s for its end)"
+                                        },
+                                        "next": {
+                                          "block": {
+                                            "type": "controls_if",
+                                            "inputs": {
+                                              "IF0": {
+                                                "block": {
+                                                  "type": "evn_bluetooth_any",
+                                                  "fields": {
+                                                    "PORT": "2"
+                                                  }
+                                                }
+                                              },
+                                              "DO0": {
+                                                "block": {
+                                                  "type": "variables_set",
+                                                  "fields": {
+                                                    "VAR": {
+                                                      "id": "v_line"
+                                                    }
+                                                  },
+                                                  "inputs": {
+                                                    "VALUE": {
+                                                      "block": {
+                                                        "type": "evn_bluetooth_line",
+                                                        "fields": {
+                                                          "PORT": "2"
+                                                        },
+                                                        "inputs": {
+                                                          "TIMEOUT": {
+                                                            "shadow": {
+                                                              "type": "math_number",
+                                                              "fields": {
+                                                                "NUM": 1000
+                                                              }
+                                                            }
+                                                          }
+                                                        }
+                                                      }
+                                                    }
+                                                  },
+                                                  "next": {
+                                                    "block": {
+                                                      "type": "controls_if",
+                                                      "inputs": {
+                                                        "IF0": {
+                                                          "block": {
+                                                            "type": "logic_compare",
+                                                            "fields": {
+                                                              "OP": "EQ"
+                                                            },
+                                                            "inputs": {
+                                                              "A": {
+                                                                "block": {
+                                                                  "type": "variables_get",
+                                                                  "fields": {
+                                                                    "VAR": {
+                                                                      "id": "v_line"
+                                                                    }
+                                                                  }
+                                                                }
+                                                              },
+                                                              "B": {
+                                                                "shadow": {
+                                                                  "type": "text",
+                                                                  "fields": {
+                                                                    "TEXT": "stop"
+                                                                  }
+                                                                }
+                                                              }
+                                                            }
+                                                          }
+                                                        },
+                                                        "DO0": {
+                                                          "block": {
+                                                            "type": "controls_flow_statements",
+                                                            "fields": {
+                                                              "FLOW": "BREAK"
+                                                            }
+                                                          }
+                                                        }
+                                                      },
+                                                      "next": {
+                                                        "block": {
+                                                          "type": "text_print",
+                                                          "inputs": {
+                                                            "TEXT": {
+                                                              "block": {
+                                                                "type": "variables_get",
+                                                                "fields": {
+                                                                  "VAR": {
+                                                                    "id": "v_line"
+                                                                  }
+                                                                }
+                                                              }
+                                                            }
+                                                          },
+                                                          "next": {
+                                                            "block": {
+                                                              "type": "evn_bluetooth_send",
+                                                              "fields": {
+                                                                "PORT": "2"
+                                                              },
+                                                              "inputs": {
+                                                                "TEXT": {
+                                                                  "block": {
+                                                                    "type": "text_join",
+                                                                    "inputs": {
+                                                                      "ADD0": {
+                                                                        "shadow": {
+                                                                          "type": "text",
+                                                                          "fields": {
+                                                                            "TEXT": "got: "
+                                                                          }
+                                                                        }
+                                                                      },
+                                                                      "ADD1": {
+                                                                        "block": {
+                                                                          "type": "variables_get",
+                                                                          "fields": {
+                                                                            "VAR": {
+                                                                              "id": "v_line"
+                                                                            }
+                                                                          }
+                                                                        }
+                                                                      }
+                                                                    },
+                                                                    "extraState": {
+                                                                      "itemCount": 2
+                                                                    }
+                                                                  }
+                                                                }
+                                                              }
+                                                            }
+                                                          }
+                                                        }
+                                                      }
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            },
+                                            "next": {
+                                              "block": {
+                                                "type": "evn_wait",
+                                                "inputs": {
+                                                  "TIME": {
+                                                    "shadow": {
+                                                      "type": "math_number",
+                                                      "fields": {
+                                                        "NUM": 500
+                                                      }
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  },
+                                  "next": {
+                                    "block": {
+                                      "type": "evn_bluetooth_send",
+                                      "fields": {
+                                        "PORT": "2"
+                                      },
+                                      "inputs": {
+                                        "TEXT": {
+                                          "shadow": {
+                                            "type": "text",
+                                            "fields": {
+                                              "TEXT": "bye"
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "variables": [
+      {
+        "name": "line",
+        "id": "v_line"
+      }
+    ]
+  }
+}

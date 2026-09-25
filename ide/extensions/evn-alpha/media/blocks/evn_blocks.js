@@ -3,7 +3,8 @@
  * Loaded by the block editor webview (script tag: globals `Blockly` and `python`) and by
  * scripts/test_blocks.js under Node (require). Every block generates code against the API in
  * stubs/evn.pyi; a motor is `motor_<port>`, created once at the top of the program from the
- * "set up motor" block for that port (or `Motor(port)` when there is none).
+ * "set up motor" block for that port (or `Motor(port)` when there is none). A program has two sections,
+ * "set up" and "program", as in Pybricks: see "a program in two sections" below.
  */
 (function (root, factory) {
     if (typeof module === 'object' && module.exports) {
@@ -24,6 +25,8 @@
         evn_time: '#c25e4f',        // terracotta
         evn_board: '#5f9e88',       // jade
         evn_advanced: '#5f6368',    // graphite
+        evn_start: '#b07a0c',       // amber: the two section hats, "set up" and "program" (Pybricks' yellow, deepened for white text)
+        evn_comment: '#7a7f84',     // grey: the comment block
         logic: '#5f7fb8',           // slate blue
         loop: '#5a9c5f',            // green
         math: '#7c6ab5',            // violet
@@ -40,6 +43,9 @@
         BLOCK_STYLES[key + '_blocks'] = { colourPrimary: PALETTE[key] };
         CATEGORY_STYLES[key + '_category'] = { colour: PALETTE[key] };
     }
+    // The two section hats have a flat top (no 'cap' hat style): the cap's dome made them half as tall
+    // again as a block, a mushroom on labels as short as "set up" (owner, 2026-09-24). Their amber
+    // colour and icon mark them, and nothing attaches above them either way (no previous connection).
 
     const PORTS = [['1', '1'], ['2', '2'], ['3', '3'], ['4', '4']];
     const THEN = [['hold', 'HOLD'], ['coast', 'COAST'], ['brake', 'BRAKE'], ['keep running', 'NONE'], ['coast (smart)', 'COAST_SMART']];
@@ -84,7 +90,7 @@
                 { type: 'field_dropdown', name: 'UNIT', options: [['deg/s', 'DEG_S'], ['% of full speed', 'PERCENT']] },
             ],
             style: 'evn_motor_blocks',
-            tooltip: 'Options for one motor port. Put one anywhere in the workspace; without it a port uses clockwise and deg/s. Ports are the numbers on the board, 1 to 4.',
+            tooltip: 'Options for one motor port. Put it under "set up"; without one a port uses clockwise and deg/s. Ports are the numbers on the board, 1 to 4.',
         },
         {
             type: 'evn_motor_run',
@@ -226,6 +232,20 @@
             previousStatement: null, style: 'evn_time_blocks',
             tooltip: 'Repeat forever. Ctrl+C in the terminal or "EVN: Stop all motors" ends the program.',
         },
+        /* Pybricks' Flow palette has "wait until" and "wait forever" (pybricks.com/learn/flow-basics/waiting-repeating) */
+        {
+            type: 'evn_wait_until',
+            message0: 'wait until %1',
+            args0: [{ type: 'input_value', name: 'COND', check: 'Boolean' }],
+            previousStatement: null, nextStatement: null, style: 'evn_time_blocks',
+            tooltip: 'Pause the program until the condition is true (checked every 10 ms); motors keep doing what they were told.',
+        },
+        {
+            type: 'evn_wait_forever',
+            message0: 'wait forever',
+            previousStatement: null, style: 'evn_time_blocks',
+            tooltip: 'Keep the program running without doing anything more, so moves that were started with "wait" off go on. Nothing can follow it; Stop motors ends the program.',
+        },
         {
             type: 'evn_stopwatch_time',
             message0: 'stopwatch time (ms)',
@@ -234,9 +254,10 @@
         },
         {
             type: 'evn_stopwatch_reset',
-            message0: 'reset stopwatch',
+            message0: '%1 stopwatch',
+            args0: [{ type: 'field_dropdown', name: 'ACTION', options: [['reset', 'reset'], ['pause', 'pause'], ['resume', 'resume']] }],
             previousStatement: null, nextStatement: null, style: 'evn_time_blocks',
-            tooltip: 'Set the stopwatch back to 0.',
+            tooltip: 'reset: back to 0 (a paused stopwatch stays paused: resume it); pause: stop counting; resume: count on from where it paused.',
         },
         {
             type: 'evn_led',
@@ -244,6 +265,13 @@
             args0: [{ type: 'field_dropdown', name: 'ACTION', options: [['on', 'on'], ['off', 'off'], ['toggle', 'toggle']] }],
             previousStatement: null, nextStatement: null, style: 'evn_board_blocks',
             tooltip: 'The user LED on the board.',
+        },
+        {
+            type: 'evn_led_set',
+            message0: 'set LED to %1',
+            args0: [{ type: 'input_value', name: 'ON', check: 'Boolean' }],
+            previousStatement: null, nextStatement: null, style: 'evn_board_blocks',
+            tooltip: 'The user LED on (true) or off (false): plug in a comparison or a sensor block.',
         },
         {
             type: 'evn_button_pressed',
@@ -296,11 +324,29 @@
             tooltip: 'Speed (deg/s or %), acceleration (deg/s^2) and torque (mNm) limits for profiled moves. Leave an input empty to keep its current value.',
         },
         {
+            type: 'evn_motor_limit',
+            message0: 'set motor %1 %2 limit to %3',
+            args0: [
+                { type: 'field_dropdown', name: 'PORT', options: PORTS },
+                { type: 'field_dropdown', name: 'WHAT', options: [['speed (deg/s or %)', 'speed'], ['acceleration (deg/s²)', 'acceleration'], ['torque (mNm)', 'torque']] },
+                { type: 'input_value', name: 'VALUE', check: 'Number' },
+            ],
+            inputsInline: true, previousStatement: null, nextStatement: null, style: 'evn_advanced_blocks',
+            tooltip: 'Change one limit of profiled moves and keep the other two. Speed is in the motor\'s speed unit; the defaults are the motor\'s tested maximum, so a limit is for going slower or gentler.',
+        },
+        {
             type: 'evn_motor_calibrate',
-            message0: 'calibrate motor %1',
-            args0: [{ type: 'field_dropdown', name: 'PORT', options: PORTS }],
+            message0: 'calibrate motor %1 wait %2',
+            args0: [{ type: 'field_dropdown', name: 'PORT', options: PORTS }, { type: 'field_checkbox', name: 'WAIT', checked: true }],
             previousStatement: null, nextStatement: null, style: 'evn_advanced_blocks',
-            tooltip: 'Self-calibration (about 4.5 s; the shaft must be free to turn). Measures the motor and its full speed; stored on the board for this port. Run it once after plugging in a motor.',
+            tooltip: 'Self-calibration (about 4.5 s; the shaft must be free to turn, it moves up to about a turn each way). Measures the motor and its full speed; stored on the board for this port. Untick "wait" to start it and go on while it runs (the ports are measured one after another in the background). A later "calibrate motor" with wait ticked on the same port waits for that run if it is still going; once it has finished it would start a new one, so wait with "motor ... is calibrated" instead.',
+        },
+        {
+            type: 'evn_motor_calibrated',
+            message0: 'motor %1 is calibrated',
+            args0: [{ type: 'field_dropdown', name: 'PORT', options: PORTS }],
+            output: 'Boolean', style: 'evn_advanced_blocks',
+            tooltip: 'True when the board has a stored calibration for the motor on this port (evn.calibration(port)).',
         },
         {
             type: 'evn_motor_law',
@@ -333,7 +379,7 @@
             message0: 'set up colour sensor on port %1',
             args0: [portField(I2C_PORTS)],
             style: 'evn_sense_blocks',
-            tooltip: 'The EVN colour sensor (TCS34725) on an I2C port, 1 to 16. Put one anywhere in the workspace; the colour-sensor blocks make the object by themselves, this block just says which ports the program uses.',
+            tooltip: 'The EVN colour sensor (TCS34725) on an I2C port, 1 to 16. Put it under "set up"; the colour-sensor blocks make the object by themselves, this block just says which ports the program uses.',
         },
         {
             type: 'evn_colorsensor_color',
@@ -351,10 +397,20 @@
         },
         {
             type: 'evn_colorsensor_ambient',
-            message0: 'colour sensor %1 reflection (%%)',
+            message0: 'colour sensor %1 light level (%%)',
             args0: [portField(I2C_PORTS)],
             output: 'Number', style: 'evn_sense_blocks',
-            tooltip: 'How much light comes back, 0 (black) to 100 (white).',
+            tooltip: 'The brightness the sensor sees, in % of its full scale (ambient()): higher over white, lower over black. It is not calibrated: compare it with values measured on your own surface.',
+        },
+        {
+            type: 'evn_colorsensor_detect',
+            message0: 'colour sensor %1 only reports red %2 yellow %3 green %4 blue %5 white %6 nothing %7',
+            args0: [portField(I2C_PORTS),
+                { type: 'field_checkbox', name: 'RED', checked: true }, { type: 'field_checkbox', name: 'YELLOW', checked: true },
+                { type: 'field_checkbox', name: 'GREEN', checked: true }, { type: 'field_checkbox', name: 'BLUE', checked: true },
+                { type: 'field_checkbox', name: 'WHITE', checked: true }, { type: 'field_checkbox', name: 'NONE', checked: true }],
+            previousStatement: null, nextStatement: null, style: 'evn_sense_blocks',
+            tooltip: 'The colours "colour sensor ... colour" chooses from (Pybricks\' detectable_colors): untick the ones that are not on your field, and a reading is never mistaken for them.',
         },
         {
             type: 'evn_colorsensor_channel',
@@ -471,10 +527,10 @@
         },
         {
             type: 'evn_compass_north',
-            message0: 'call this way north on compass %1',
-            args0: [portField(I2C_PORTS)],
-            previousStatement: null, nextStatement: null, style: 'evn_sense_blocks',
-            tooltip: 'The direction the robot points right now becomes heading 0.',
+            message0: 'set compass %1 heading to %2',
+            args0: [portField(I2C_PORTS), { type: 'input_value', name: 'HEADING', check: 'Number' }],
+            inputsInline: true, previousStatement: null, nextStatement: null, style: 'evn_sense_blocks',
+            tooltip: 'The direction the robot points right now becomes this heading (0 = call it north).',
         },
         {
             type: 'evn_compass_calibrate',
@@ -488,7 +544,21 @@
             message0: 'finish calibrating compass %1',
             args0: [portField(I2C_PORTS)],
             previousStatement: null, nextStatement: null, style: 'evn_sense_blocks',
-            tooltip: 'Work out and use the calibration. It raises an error when the sensor did not turn through enough directions, so keep spinning until this block runs.',
+            tooltip: 'Work out the calibration, use it and store it on the board for this port. It raises an error when the sensor did not turn through enough directions: wait until "calibration coverage" is high enough first.',
+        },
+        {
+            type: 'evn_compass_coverage',
+            message0: 'compass %1 calibration coverage (%%)',
+            args0: [portField(I2C_PORTS)],
+            output: 'Number', style: 'evn_sense_blocks',
+            tooltip: 'While calibrating: how many of the directions the fit wants the sensor has seen, 0 to 100. Spinning flat, wait until it is 100; turning it every way, about 75 is enough (the Board view finishes there), then finish.',
+        },
+        {
+            type: 'evn_compass_calibrate_cancel',
+            message0: 'cancel calibrating compass %1',
+            args0: [portField(I2C_PORTS)],
+            previousStatement: null, nextStatement: null, style: 'evn_sense_blocks',
+            tooltip: 'Stop collecting and keep the calibration the compass had before.',
         },
         {
             type: 'evn_touch_setup',
@@ -513,10 +583,10 @@
         },
         {
             type: 'evn_imu_setup',
-            message0: 'set up IMU on port %1',
-            args0: [portField(I2C_PORTS)],
+            message0: 'set up IMU on port %1 calibrate at start %2',
+            args0: [portField(I2C_PORTS), { type: 'field_checkbox', name: 'CALIBRATE', checked: false }],
             style: 'evn_sense_blocks',
-            tooltip: 'The EVN IMU (MPU-6500 gyro and accelerometer) on an I2C port, 1 to 16. Keep the robot still for the first 15 seconds so it can settle.',
+            tooltip: 'The EVN IMU (MPU-6500 gyro and accelerometer) on an I2C port, 1 to 16. It uses the calibration stored on the board for this port. Tick "calibrate at start" to measure a new one every time the program starts (about 2 s: keep the robot still and level); it replaces the stored one each run. Uncalibrated, keep the robot still for the first 15 seconds so it can settle.',
         },
         {
             type: 'evn_imu_angle',
@@ -537,17 +607,25 @@
         },
         {
             type: 'evn_imu_stationary',
-            message0: 'IMU %1 is still',
-            args0: [portField(I2C_PORTS)],
+            message0: 'IMU %1 %2',
+            args0: [portField(I2C_PORTS), { type: 'field_dropdown', name: 'WHAT', options: [['is still', 'stationary()'], ['is ready (gyro settled)', 'ready()']] }],
             output: 'Boolean', style: 'evn_sense_blocks',
-            tooltip: 'True while the robot is not moving or turning.',
+            tooltip: 'is still: the robot is not moving or turning right now. is ready: the gyro has settled (a calibrated IMU at once; otherwise after about 15 s still), which "robot follows its gyro" waits for.',
         },
         {
             type: 'evn_imu_reset_heading',
-            message0: 'set IMU %1 heading to 0',
-            args0: [portField(I2C_PORTS)],
+            message0: 'set IMU %1 heading to %2',
+            args0: [portField(I2C_PORTS), { type: 'input_value', name: 'ANGLE', check: 'Number' }],
+            inputsInline: true, previousStatement: null, nextStatement: null, style: 'evn_sense_blocks',
+            tooltip: 'The way the robot points right now becomes this heading (usually 0).',
+        },
+        {
+            type: 'evn_imu_calibrate',
+            message0: 'calibrate IMU %1 %2',
+            args0: [portField(I2C_PORTS), { type: 'field_dropdown', name: 'POSE', options: [
+                ['(still and level, about 2 s)', '0'], ['first pose of two', '1'], ['second pose, after half a turn', '2']] }],
             previousStatement: null, nextStatement: null, style: 'evn_sense_blocks',
-            tooltip: 'The way the robot points right now becomes heading 0.',
+            tooltip: 'Measure the gyro bias and the accelerometer offsets and store them on the board for this port; the robot must not move. On a surface that is not quite level use two poses: measure the first, turn the robot about half a turn on the same spot, then the second (within 2 minutes).',
         },
         {
             type: 'evn_adc_setup',
@@ -639,6 +717,13 @@
             tooltip: 'One letter at a time, half a second each. The program waits until the word is finished.',
         },
         {
+            type: 'evn_matrix_char',
+            message0: 'LED matrix %1 show letter %2',
+            args0: [portField(I2C_PORTS), { type: 'input_value', name: 'CHAR' }],
+            inputsInline: true, previousStatement: null, nextStatement: null, style: 'evn_output_blocks',
+            tooltip: 'One character, shown until something else is (the text block scrolls instead).',
+        },
+        {
             type: 'evn_matrix_clear',
             message0: 'clear LED matrix %1',
             args0: [portField(I2C_PORTS)],
@@ -671,7 +756,14 @@
             message0: '7-segment %1 show text %2',
             args0: [portField(I2C_PORTS), { type: 'input_value', name: 'TEXT' }],
             inputsInline: true, previousStatement: null, nextStatement: null, style: 'evn_output_blocks',
-            tooltip: 'Up to four characters. A full stop after a character lights that digit’s dot.',
+            tooltip: 'Up to four characters: digits and the letters A B C D E F G H J L N O P R T U Y (and - _ space); other letters raise an error. A full stop after a character lights that digit’s dot.',
+        },
+        {
+            type: 'evn_seven_colon',
+            message0: '7-segment %1 colon %2',
+            args0: [portField(I2C_PORTS), { type: 'field_dropdown', name: 'ON', options: [['on', 'True'], ['off', 'False']] }],
+            previousStatement: null, nextStatement: null, style: 'evn_output_blocks',
+            tooltip: 'The colon between the second and third digit (for a clock). Showing a number or text clears it, so put this block after them.',
         },
         {
             type: 'evn_seven_clear',
@@ -761,7 +853,29 @@
             message0: 'move servo %1 to %2 degrees',
             args0: [portField(SERVO_PORTS), { type: 'input_value', name: 'ANGLE', check: 'Number' }],
             inputsInline: true, previousStatement: null, nextStatement: null, style: 'evn_output_blocks',
-            tooltip: 'Go straight to an angle, 0 to the servo’s range (270 degrees for the kit’s servo).',
+            tooltip: 'Go straight to an angle, 0 to the servo’s range (270 degrees for the kit’s servo). Not for a continuous servo: use "run servo at %" for that.',
+        },
+        {
+            type: 'evn_servo_move',
+            message0: 'sweep servo %1 to %2 degrees at %3 deg/s wait %4',
+            args0: [portField(SERVO_PORTS), { type: 'input_value', name: 'ANGLE', check: 'Number' },
+                { type: 'input_value', name: 'SPEED', check: 'Number' }, { type: 'field_checkbox', name: 'WAIT', checked: true }],
+            inputsInline: true, previousStatement: null, nextStatement: null, style: 'evn_output_blocks',
+            tooltip: 'Turn to an angle at a steady speed instead of at once. "wait" pauses the program until it gets there. Not for a continuous servo.',
+        },
+        {
+            type: 'evn_servo_duty',
+            message0: 'run servo %1 at %2 %%',
+            args0: [portField(SERVO_PORTS), { type: 'input_value', name: 'DUTY', check: 'Number' }],
+            inputsInline: true, previousStatement: null, nextStatement: null, style: 'evn_output_blocks',
+            tooltip: 'A continuous-rotation servo ("Geekservo continuous" in its set-up block): -100 to 100 %, 0 stops it. Other servo types raise an error.',
+        },
+        {
+            type: 'evn_servo_done',
+            message0: 'servo %1 has finished its sweep',
+            args0: [portField(SERVO_PORTS)],
+            output: 'Boolean', style: 'evn_output_blocks',
+            tooltip: 'True once a sweep started with "wait" unticked has arrived.',
         },
         {
             type: 'evn_servo_pulse',
@@ -800,10 +914,10 @@
         },
         {
             type: 'evn_bluetooth_line',
-            message0: 'Bluetooth %1 received line',
-            args0: [portField(SERIAL_PORTS)],
-            output: 'String', style: 'evn_output_blocks',
-            tooltip: 'Wait up to 5 seconds for a line of text from the other side, and give it without its newline (empty text when nothing arrives).',
+            message0: 'Bluetooth %1 received line (wait up to %2 ms)',
+            args0: [portField(SERIAL_PORTS), { type: 'input_value', name: 'TIMEOUT', check: 'Number' }],
+            inputsInline: true, output: 'String', style: 'evn_output_blocks',
+            tooltip: 'Wait for a line of text from the other side, and give it without its newline (empty text when nothing arrives in time).',
         },
     ]);
 
@@ -827,8 +941,8 @@
         },
         {
             type: 'evn_drivebase_gyro',
-            message0: 'robot follows its gyro: IMU on port %1',
-            args0: [portField(I2C_PORTS)],
+            message0: 'robot %2 its gyro: IMU on port %1',
+            args0: [portField(I2C_PORTS), { type: 'field_dropdown', name: 'ON', options: [['follows', 'True'], ['stops following', 'False']] }],
             previousStatement: null, nextStatement: null, style: 'evn_motor_blocks',
             tooltip: 'The robot itself, not just its wheels, follows every straight, turn and arc: the wheel encoders and an EVN IMU on this port track where the robot really is (evn.Pose) and each move is corrected as it goes, so scrub on a turn, a dragged cable and the gyro\'s drift no longer add up over minutes. Put it before the first move and keep the robot still: it waits (up to 30 s) for the IMU to settle. Uses the "set up robot" geometry; one per program (a second block only repeats the switch-on).',
         },
@@ -858,10 +972,11 @@
         },
         {
             type: 'evn_drivebase_arc',
-            message0: 'drive an arc of radius %1 mm through %2 degrees',
+            message0: 'drive an arc of radius %1 mm through %2 %3',
             args0: [
                 { type: 'input_value', name: 'RADIUS', check: 'Number' },
                 { type: 'input_value', name: 'ANGLE', check: 'Number' },
+                { type: 'field_dropdown', name: 'UNIT', options: [['degrees', 'angle'], ['mm', 'distance']] },
             ],
             message1: 'then %1 wait %2',
             args1: [
@@ -869,7 +984,7 @@
                 { type: 'field_checkbox', name: 'WAIT', checked: true },
             ],
             inputsInline: true, previousStatement: null, nextStatement: null, style: 'evn_motor_blocks',
-            tooltip: 'Drive along a circle: a positive radius curves to the right, a negative one to the left; a negative angle drives the arc backwards.',
+            tooltip: 'Drive along a circle, by an angle or by a distance along the arc: a positive radius curves to the right, a negative one to the left; a negative amount drives the arc backwards.',
         },
         {
             type: 'evn_drivebase_drive',
@@ -899,6 +1014,16 @@
             tooltip: 'The speed "drive straight" and "drive an arc" use, and the rate "turn robot" uses. Without this block the robot uses the most its motors can do.',
         },
         {
+            type: 'evn_drivebase_accel',
+            message0: 'set robot acceleration %1 mm/s² turn acceleration %2 deg/s²',
+            args0: [
+                { type: 'input_value', name: 'ACCEL', check: 'Number' },
+                { type: 'input_value', name: 'TURN', check: 'Number' },
+            ],
+            inputsInline: true, previousStatement: null, nextStatement: null, style: 'evn_motor_blocks',
+            tooltip: 'How quickly the robot speeds up and slows down on straights and arcs, and on turns. Lower is gentler (less wheel slip, a tall robot does not tip).',
+        },
+        {
             type: 'evn_drivebase_reset',
             message0: 'reset robot distance and angle',
             previousStatement: null, nextStatement: null, style: 'evn_motor_blocks',
@@ -920,6 +1045,320 @@
         },
     ]);
 
+    /* ---- a program in two sections, as in Pybricks (owner, 2026-09-24) ---------------------
+     * "Mirror how Pybricks implements their block organisation": every workspace has one "set up"
+     * hat and one "program" hat, neither deletable (pybricks.com/learn/making-programs/basic-blocks:
+     * "Each Pybricks program consists of two parts: Device setup ... Program").
+     *   - The set-up blocks stack only under "set up" (and under each other there); nothing else
+     *     does, and a set-up never goes into the program, a loop or an if - its object is made once
+     *     at the top of the program wherever it sits (deviceRef / motorRef hoist it).
+     *   - The program is the stack under "program". Its play icon runs the program on the board
+     *     (the editor sets onRunClicked; greyed while no board is connected).
+     *   - A stack attached to neither is switched off (greyed, not generated), as a block left
+     *     outside a Pybricks program does not run; function definitions stand alone as before, and
+     *     a loose comment stays live (it only says something).
+     *   - The comment block goes anywhere, in either section.
+     * The rules live in the connection checker, so drag, paste and load all obey them: Blockly
+     * lets an unchecked connection take any block, so connection checks alone cannot say this. */
+    const ICON = (body) => 'data:image/svg+xml,' + encodeURIComponent(
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">' + body + '</svg>');
+    const HAT_ICONS = {
+        plug: ICON('<path d="M9 2v5M15 2v5M6 7h12v4a6 6 0 0 1-12 0zM12 17v5"/>'),
+        play: ICON('<circle cx="12" cy="12" r="10" fill="#fff" stroke="none"/><path d="M10 8l6 4-6 4z" fill="#b07a0c" stroke="none"/>'),
+        playOff: ICON('<circle cx="12" cy="12" r="10" stroke-opacity="0.6"/><path d="M10 8l6 4-6 4z" fill="#fff" fill-opacity="0.6" stroke="none"/>'),
+    };
+    const SETUP_HAT = 'evn_setup_start';
+    const PROGRAM_HAT = 'evn_program_start';
+    const COMMENT = 'evn_comment';
+    const STANDALONE_ROOTS = ['procedures_defnoreturn', 'procedures_defreturn'];
+    Blockly.common.defineBlocksWithJsonArray([
+        {
+            type: SETUP_HAT,
+            message0: '%1 set up',
+            args0: [{ type: 'field_image', name: 'ICON', src: HAT_ICONS.plug, width: 20, height: 20, alt: '' }],
+            nextStatement: null, style: 'evn_start_blocks',
+            tooltip: 'Set-up blocks go here: every motor, the robot and each sensor or output the program uses, with its port. They run first, once, before the program.',
+        },
+        {
+            type: PROGRAM_HAT,
+            message0: '%1 program',
+            args0: [{ type: 'field_image', name: 'RUN', src: HAT_ICONS.playOff, width: 22, height: 22, alt: 'run' }],
+            nextStatement: null, style: 'evn_start_blocks',
+            tooltip: 'The program: the blocks under this one run from top to bottom after the set-up. Click the play button to run it on the board. Blocks that are not attached here or under "set up" are greyed out and do not run.',
+        },
+        {
+            type: COMMENT,
+            message0: '# %1',
+            args0: [{ type: 'field_input', name: 'TEXT', text: 'what this part does' }],
+            previousStatement: null, nextStatement: null, style: 'evn_comment_blocks',
+            tooltip: 'A note for whoever reads the program. It does nothing on the board; it becomes a # comment in the Python.',
+        },
+    ]);
+    const api = {};                 // filled at the end; onRunClicked / boardConnected are set by the editor
+    const baseProgramInit = Blockly.Blocks[PROGRAM_HAT].init;
+    Blockly.Blocks[PROGRAM_HAT].init = function () {
+        baseProgramInit.call(this);
+        const field = this.getField('RUN');
+        if (field && field.setOnClickHandler) {
+            field.setOnClickHandler(() => { if (typeof api.onRunClicked === 'function') { api.onRunClicked(); } });
+        }
+        showBoard(this, !!api.boardConnected);
+    };
+    /** the play icon of a program hat: live while a board is connected */
+    function showBoard(block, connected) {
+        const field = block.getField('RUN');
+        if (!field) { return; }
+        // not an edit: no change event, so it is neither on the undo stack nor a reason to save the file
+        field.setValue(connected ? HAT_ICONS.play : HAT_ICONS.playOff, false);
+        if (field.setAlt) { field.setAlt(connected ? 'Run on the board' : 'Connect a board to run'); }
+        if (field.setTooltip) { field.setTooltip(connected ? 'Run this program on the board' : 'No board connected: plug in the EVN ALPHA to run the program'); }
+    }
+    function setBoardConnected(workspace, connected) {
+        api.boardConnected = !!connected;
+        for (const b of workspace.getBlocksByType(PROGRAM_HAT, false)) { showBoard(b, api.boardConnected); }
+    }
+
+    const SETUP_TYPES = Object.keys(Blockly.Blocks).filter((t) => /^evn_\w+_setup$/.test(t));
+    for (const t of SETUP_TYPES) {
+        const init = Blockly.Blocks[t].init;
+        Blockly.Blocks[t].init = function () {
+            init.call(this);
+            this.setPreviousStatement(true);
+            this.setNextStatement(true);
+        };
+    }
+    for (const t of [SETUP_HAT, PROGRAM_HAT]) {
+        const init = Blockly.Blocks[t].init;
+        Blockly.Blocks[t].init = function () { init.call(this); this.setDeletable(false); };
+    }
+    const isSetup = (b) => SETUP_TYPES.indexOf(b.type) >= 0;
+    /** 'setup' | 'program' | null (a comment, which belongs to either) */
+    const kindOf = (b) => (b.type === SETUP_HAT || isSetup(b)) ? 'setup' : b.type === COMMENT ? null : 'program';
+    /** false when a connection would mix set-up blocks and program blocks in one stack */
+    let loadingDepth = 0;           // loadWorkspace(): a file is read as written, then repaired
+    function sectionOk(a, b) {
+        if (loadingDepth > 0) { return true; }
+        const PREV = Blockly.ConnectionType.PREVIOUS_STATEMENT;
+        const child = a.type === PREV ? a : b.type === PREV ? b : null;
+        if (!child) { return true; }                       // value / output connections: not ours
+        const parent = (child === a ? b : a).getSourceBlock();
+        const below = new Set(child.getSourceBlock().getDescendants(false).map(kindOf).filter(Boolean));
+        const above = new Set();
+        for (let x = parent; x; x = x.getParent()) { const k = kindOf(x); if (k) { above.add(k); } }
+        return !((below.has('setup') && above.has('program')) || (below.has('program') && above.has('setup')));
+    }
+    class EvnConnectionChecker extends Blockly.ConnectionChecker {
+        doTypeChecks(a, b) { return super.doTypeChecks(a, b) && sectionOk(a, b); }
+    }
+    const CONNECTION_CHECKER = 'evn_sections';
+    Blockly.registry.register(Blockly.registry.Type.CONNECTION_CHECKER, CONNECTION_CHECKER, EvnConnectionChecker, true);
+    const ORPHAN = 'EVN_NOT_IN_PROGRAM';
+
+    const hasOwnReason = (b) => [...b.getDisabledReasons()].some((r) => r !== ORPHAN);
+    const HATS = [SETUP_HAT, PROGRAM_HAT];
+
+    /** Switch off every stack attached to neither hat (and back on once it is), and the stack of a hat
+     * the user disabled (Blockly would still generate the blocks after a disabled first block). Idempotent. */
+    function applySections(workspace) {
+        for (const root of workspace.getTopBlocks(false)) {
+            const all = root.getDescendants(false);
+            const live = (HATS.indexOf(root.type) >= 0 && !hasOwnReason(root)) || STANDALONE_ROOTS.indexOf(root.type) >= 0
+                || all.every((b) => b.type === COMMENT);
+            for (const b of all) {
+                if (b.isShadow()) { continue; }
+                if (b.hasDisabledReason(ORPHAN) === live) { b.setDisabledReason(!live, ORPHAN); }
+            }
+        }
+    }
+
+    /** A file that breaks the rules (hand-edited, merged, or from a build with other rules) is loaded as
+     * written and put right here, never refused: refusing lost every block after the first bad one, and the
+     * next edit saved that.
+     *
+     * The rule the checker keeps, as a property of the whole workspace: on no path from a top block down
+     * through its next blocks and statement inputs do set-up and program blocks meet (comments belong to
+     * neither). A path takes the kind of its first block that has one: "set up" is set-up, "program", a
+     * function definition or any other block is program. A stack that breaks it cannot be rebuilt through
+     * the checker, which paste, duplicate and undo all do, so it would lose blocks later.
+     *
+     * Repair: one hat of each kind stays (a second one is removed, its stack comes loose); then every
+     * run of consecutive wrong-kind blocks (with the comments among them) is cut out as a stack of its
+     * own, and the blocks after it close the gap, so nothing that was right moves. Runs while the load is
+     * still permissive, so closing a gap is never refused half-way. Returns notes for the user. */
+    function repairSections(workspace) {
+        const notes = [];
+        for (const type of HATS) {
+            for (const extra of workspace.getBlocksByType(type, false).slice(1)) {
+                const next = extra.getNextBlock();
+                if (next) { next.unplug(false); }
+                extra.setDeletable(true);
+                extra.dispose(false);
+                notes.push(`a second "${type === SETUP_HAT ? 'set up' : 'program'}" block was removed; its blocks are loose`);
+            }
+        }
+        /** the first block below whose kind differs from its path's, or null */
+        const findConflict = () => {
+            const walk = (b, pathKind) => {
+                if (b.isShadow()) { return null; }
+                const k = kindOf(b);
+                if (k && pathKind && k !== pathKind) { return b; }
+                const kind = pathKind || k;
+                for (const child of b.getChildren(true)) {
+                    const hit = walk(child, kind);
+                    if (hit) { return hit; }
+                }
+                return null;
+            };
+            for (const root of workspace.getTopBlocks(true)) {
+                const hit = walk(root, null);
+                if (hit) { return hit; }
+            }
+            return null;
+        };
+        let cuts = 0;
+        const moved = {};
+        const limit = workspace.getAllBlocks(false).length;
+        for (let bad = findConflict(); bad; bad = findConflict()) {
+            const kind = kindOf(bad);
+            const gap = bad.previousConnection && bad.previousConnection.targetConnection;
+            if (!gap) {                                    // no statement to cut (a value input): take the block out
+                bad.unplug(false);
+            } else {
+                // the run: the wrong-kind blocks in a row, and comments between them; a comment after the run stays
+                // (it describes the block below it)
+                let last = bad;
+                for (;;) {
+                    let x = last.getNextBlock();
+                    while (x && kindOf(x) === null) { x = x.getNextBlock(); }
+                    if (!x || kindOf(x) !== kind) { break; }
+                    last = x;
+                }
+                const after = last.getNextBlock();
+                if (after) { after.previousConnection.disconnect(); }
+                bad.previousConnection.disconnect();
+                if (after) { gap.connect(after.previousConnection); }
+            }
+            // beside the stack it came from, at its own height, a little further right for each cut
+            const root = gap ? gap.getSourceBlock().getRootBlock() : bad;
+            const r = root.getRelativeToSurfaceXY(), me = bad.getRelativeToSurfaceXY();
+            const w = (root.getHeightWidth && root.getHeightWidth().width) || 520;
+            bad.moveBy(r.x + w + 60 + 24 * cuts - me.x, 0);
+            cuts++;
+            moved[kind] = (moved[kind] || 0) + 1;
+            // every cut removes at least one conflict, so this is only reached if that stops being true: then the
+            // workspace is not the file put right, and the load fails (the editor shows it read-only, never saves it)
+            if (cuts > limit) { throw new Error('the blocks in the wrong part could not all be moved out'); }
+        }
+        if (moved.setup) { notes.push(`${moved.setup} group(s) of set-up blocks were among program blocks and are now loose`); }
+        if (moved.program) { notes.push(`${moved.program} group(s) of blocks that are not set-up blocks were under "set up" and are now loose`); }
+        return notes;
+    }
+
+    /** Give a workspace its two hats. `legacy` (a version-1 file: no hats, every top block ran, top to
+     * bottom then left to right) also stacks its set-ups under "set up" and chains its stacks under
+     * "program" in that order, so it generates the same program; anything that cannot be placed that
+     * way is left loose and named in the returned notes. A file of a later version only gets a missing
+     * hat, empty: its loose stacks were loose on purpose. */
+    function upgradeWorkspace(workspace, legacy) {
+        const notes = [];
+        let setupHat = workspace.getBlocksByType(SETUP_HAT, false)[0];
+        let programHat = workspace.getBlocksByType(PROGRAM_HAT, false)[0];
+        if (setupHat && programHat) { return notes; }
+        const tops = workspace.getTopBlocks(true);        // top to bottom, then left to right: the version-1 run order
+        const box = tops.reduce((r, b) => {
+            const xy = b.getRelativeToSurfaceXY();
+            return { x: Math.min(r.x, xy.x), y: Math.min(r.y, xy.y) };
+        }, { x: tops.length ? Infinity : 20, y: tops.length ? Infinity : 20 });
+        const make = (type) => {
+            const b = workspace.newBlock(type);
+            if (b.initSvg) { b.initSvg(); b.render(); }
+            return b;
+        };
+        const size = (b) => (b.getHeightWidth && b.getHeightWidth().height ? b.getHeightWidth()
+            : { height: 50 * b.getDescendants(false).length, width: 520 });     // headless: an estimate
+        const chainUnder = (hat, blocks) => {
+            let tail = hat;
+            const left = [];
+            for (const b of blocks) {
+                while (tail.getNextBlock()) { tail = tail.getNextBlock(); }
+                if (!tail.nextConnection) { left.push(b); continue; }
+                tail.nextConnection.connect(b.previousConnection);
+            }
+            // after a "forever": nothing ran there in version 1 either, unless the loop had a "break"
+            const LOOPS = ['evn_forever', 'controls_repeat_ext', 'controls_repeat', 'controls_whileUntil', 'controls_for', 'controls_forEach'];
+            const ownLoop = (d) => { let x = d.getSurroundParent(); while (x && LOOPS.indexOf(x.type) < 0) { x = x.getSurroundParent(); } return x; };
+            if (left.length && tail.getDescendants(false).some((d) => d.type === 'controls_flow_statements' && d.getFieldValue('FLOW') === 'BREAK'
+                && ownLoop(d) === tail)) {
+                notes.push(`${left.length} stack(s) that ran after "${tail.type}" ended with a break could not be joined to the program (nothing can follow that block); they are loose`);
+            }
+        };
+        if (!setupHat) {
+            setupHat = make(SETUP_HAT);
+            setupHat.moveBy(box.x, box.y - 60);
+            if (legacy) { chainUnder(setupHat, tops.filter(isSetup)); }
+        }
+        if (!programHat) {
+            programHat = make(PROGRAM_HAT);
+            programHat.moveBy(box.x, setupHat.getRelativeToSurfaceXY().y + size(setupHat).height + 60);
+            if (legacy) {
+                // a stack whose first block the user disabled is chained too: version 1 skipped only that block
+                chainUnder(programHat, tops.filter((b) => b.previousConnection && !isSetup(b) && kindOf(b) !== null));
+                const values = tops.filter((b) => b.outputConnection).length;
+                if (values) { notes.push(`${values} loose value block(s) no longer run on their own (a value has to go into a block)`); }
+            }
+        }
+        if (legacy) {
+            // what stayed loose moves to the right of the two stacks instead of under them
+            const right = Math.max(...[setupHat, programHat].map((h) => h.getRelativeToSurfaceXY().x + size(h).width)) + 60;
+            for (const b of workspace.getTopBlocks(false)) {
+                if (HATS.indexOf(b.type) < 0 && b.getRelativeToSurfaceXY().x < right) { b.moveBy(right - b.getRelativeToSurfaceXY().x, 0); }
+            }
+        }
+        return notes;
+    }
+
+    /** Load a saved workspace state the way the editor does: as written, then repaired, given its hats
+     * (a version-1 file upgraded), then its sections applied. Returns notes for the user (empty: nothing to say). */
+    function loadWorkspace(state, workspace, version) {
+        let notes;
+        loadingDepth++;
+        try {
+            if (state && typeof state === 'object') { Blockly.serialization.workspaces.load(state, workspace); }
+            notes = repairSections(workspace);
+        } finally { loadingDepth--; }
+        notes = notes.concat(upgradeWorkspace(workspace, !(Number(version) >= 2)));
+        applySections(workspace);
+        separateStacks(workspace);
+        return notes;
+    }
+
+    /* A file keeps the x/y it was saved with, but a stack's height depends on the renderer and the
+     * fonts: the program hat of a file written by hand (or by another version) can land on top of
+     * the set-up stack. Drawn stacks that really overlap are pushed down, top to bottom, to GAP
+     * below what they hit; stacks that only sit close are left where the user put them. It runs
+     * silently, so opening a file does not mark it changed. Blockly.Events.disable/enable is a
+     * counter (the editor's load() already holds one): one disable, one enable, always paired -
+     * skipping the enable when events were already off left them off for good (no edits saved). */
+    function separateStacks(workspace) {
+        if (!workspace.rendered || !workspace.getTopBlocks) { return; }
+        const GAP = 24;
+        if (Blockly.renderManagement && Blockly.renderManagement.triggerQueuedRenders) { Blockly.renderManagement.triggerQueuedRenders(workspace); }
+        const tops = workspace.getTopBlocks(false).filter((b) => b.getBoundingRectangle);
+        tops.sort((a, b) => a.getRelativeToSurfaceXY().y - b.getRelativeToSurfaceXY().y);
+        Blockly.Events.disable();
+        try {
+            for (let i = 1; i < tops.length; i++) {
+                for (let pass = 0; pass < tops.length; pass++) {
+                    const r = tops[i].getBoundingRectangle();
+                    const hit = tops.slice(0, i).map((t) => t.getBoundingRectangle())
+                        .find((o) => r.left < o.right && o.left < r.right && r.top < o.bottom && o.top < r.bottom);
+                    if (!hit) { break; }
+                    tops[i].moveBy(0, hit.bottom + GAP - r.top);
+                }
+            }
+        } finally { Blockly.Events.enable(); }
+    }
+
     /* ---- generator helpers --------------------------------------------------------------- */
 
     /* The names of the `evn` module a program can use. CORE_NAMES are what a hand-written Python
@@ -935,7 +1374,7 @@
     const DEVICE_NAMES = ['Color', 'Icon', 'Side', 'ColorSensor', 'DistanceSensor', 'GestureSensor', 'EnvSensor',
         'Compass', 'TouchArray', 'IMU', 'ADC', 'Display', 'MatrixLED', 'SevenSegmentLED', 'RGBLED', 'Servo', 'Bluetooth',
         'DriveBase', 'Pose', 'UART', 'I2C', 'Flash', 'reset', 'reset_cause', 'bootloader', 'autostart', 'core1_status', 'version',
-        'configure_motor', 'motor_config', 'calibration', 'clear_calibration', 'clock'];
+        'configure_motor', 'motor_config', 'calibration', 'clear_calibration', 'imu_calibration', 'compass_calibration', 'clock'];
     const EVN_NAMES = CORE_NAMES.concat(DEVICE_NAMES);
 
     /* class -> [variable prefix, "set up" block type]. One object per port, named after the port
@@ -1008,6 +1447,17 @@
             delete this.definitions_.pose;
             this.definitions_.pose = p;
         }
+        // Pybricks' generated code opens with the device lines, under this comment, before anything else
+        // the program defines (variables, functions); so does ours. The stopwatch is set up there too.
+        const SETUP_KEYS = ['motors', 'devices', 'drive_base', 'pose', 'stopwatch'].filter((k) => this.definitions_[k]);
+        if (SETUP_KEYS.length) {
+            const old = this.definitions_;
+            const imports = Object.keys(old).filter((k) => /^(from\s+\S+\s+)?import\s+\S+/.test(old[k]));
+            const rest = Object.keys(old).filter((k) => imports.indexOf(k) < 0 && SETUP_KEYS.indexOf(k) < 0);
+            this.definitions_ = Object.create(null);
+            for (const k of imports.concat(SETUP_KEYS, rest)) { this.definitions_[k] = old[k]; }
+            this.definitions_[SETUP_KEYS[0]] = '# Set up all devices.\n' + this.definitions_[SETUP_KEYS[0]];
+        }
         return baseFinish.call(this, code);
     };
 
@@ -1052,6 +1502,9 @@
             }
             if (cls === 'Servo' && setup && setup.getFieldValue('PROFILE') !== 'geekservo_270') {
                 args.push(generator.quote_(setup.getFieldValue('PROFILE')));
+            }
+            if (cls === 'IMU' && setup && setup.getFieldValue('CALIBRATE') === 'TRUE') {   // IMU(port, calibrate=True)
+                args.push('calibrate=True');
             }
             if (cls === 'Display' && setup && setup.getFieldValue('MIRROR') === 'TRUE') {
                 after = '\n' + name + '.mirror(True)';
@@ -1133,6 +1586,16 @@
 
     /* ---- generators ---------------------------------------------------------------------- */
 
+    /* the two sections. "set up" makes nothing itself (each set-up block defines its object at the
+     * top); "program" heads the main program with the comment Pybricks' own generated code carries */
+    generator.forBlock[SETUP_HAT] = function () { return ''; };
+    generator.forBlock[PROGRAM_HAT] = function (block) {
+        return block.getNextBlock() ? '# The main program starts here.\n' : '';
+    };
+    generator.forBlock[COMMENT] = function (block) {
+        const text = String(block.getFieldValue('TEXT') || '').replace(/[\r\n]+/g, ' ').trim();
+        return text ? '# ' + text + '\n' : '';
+    };
     generator.forBlock['evn_motor_setup'] = function (block) {
         motorRef(block);            // the definition is all the setup does
         return '';
@@ -1175,6 +1638,7 @@
     };
     generator.forBlock['evn_drivebase_gyro'] = function (block) {
         const db = driveRef(block);
+        if (block.getFieldValue('ON') === 'False') { return db + '.use_gyro(False)\n'; }
         poseRef(block, block.getFieldValue('PORT'));
         return db + '.use_gyro(True)\n';
     };
@@ -1185,7 +1649,8 @@
         return driveRef(block) + '.turn(' + value(block, 'ANGLE', '0') + moveTail(block, 'HOLD') + ')\n';
     };
     generator.forBlock['evn_drivebase_arc'] = function (block) {
-        return driveRef(block) + '.arc(' + value(block, 'RADIUS', '100') + ', angle=' + value(block, 'ANGLE', '0') + moveTail(block, 'HOLD') + ')\n';
+        const by = block.getFieldValue('UNIT') === 'distance' ? 'distance' : 'angle';
+        return driveRef(block) + '.arc(' + value(block, 'RADIUS', '100') + ', ' + by + '=' + value(block, 'ANGLE', '0') + moveTail(block, 'HOLD') + ')\n';
     };
     generator.forBlock['evn_drivebase_drive'] = function (block) {
         return driveRef(block) + '.drive(' + value(block, 'SPEED', '0') + ', ' + value(block, 'TURN', '0') + ')\n';
@@ -1219,6 +1684,15 @@
         use('wait');
         return 'wait(' + value(block, 'TIME', '0') + ')\n';
     };
+    generator.forBlock['evn_wait_until'] = function (block) {
+        use('wait');
+        const cond = generator.valueToCode(block, 'COND', Order.LOGICAL_NOT) || 'False';
+        return 'while not ' + cond + ':\n' + generator.INDENT + 'wait(10)\n';
+    };
+    generator.forBlock['evn_wait_forever'] = function () {
+        use('wait');
+        return 'while True:\n' + generator.INDENT + 'wait(1000)\n';
+    };
     generator.forBlock['evn_forever'] = function (block) {
         const body = generator.statementToCode(block, 'DO') || generator.PASS;
         return 'while True:\n' + body;
@@ -1228,10 +1702,18 @@
         generator.definitions_['stopwatch'] = 'stopwatch = StopWatch()';
         return ['stopwatch.time()', Order.FUNCTION_CALL];
     };
-    generator.forBlock['evn_stopwatch_reset'] = function () {
+    generator.forBlock['evn_stopwatch_reset'] = function (block) {
         use('StopWatch');
         generator.definitions_['stopwatch'] = 'stopwatch = StopWatch()';
-        return 'stopwatch.reset()\n';
+        const action = ['pause', 'resume'].indexOf(block.getFieldValue('ACTION')) >= 0 ? block.getFieldValue('ACTION') : 'reset';
+        return 'stopwatch.' + action + '()\n';
+    };
+    generator.forBlock['evn_drivebase_accel'] = function (block) {
+        return driveRef(block) + '.settings(straight_acceleration=' + value(block, 'ACCEL', '500') + ', turn_acceleration=' + value(block, 'TURN', '500') + ')\n';
+    };
+    generator.forBlock['evn_led_set'] = function (block) {
+        use('led');
+        return 'led.set(' + (generator.valueToCode(block, 'ON', Order.NONE) || 'False') + ')\n';
     };
     generator.forBlock['evn_led'] = function (block) {
         use('led');
@@ -1268,8 +1750,18 @@
         if (!args.length) { return ''; }
         return m + '.control.limits(' + args.join(', ') + ')\n';
     };
+    generator.forBlock['evn_motor_limit'] = function (block) {
+        const what = ['speed', 'acceleration', 'torque'].indexOf(block.getFieldValue('WHAT')) >= 0 ? block.getFieldValue('WHAT') : 'speed';
+        const limit = generator.valueToCode(block, 'VALUE', Order.NONE);
+        if (!limit) { return ''; }                        // an empty input changes nothing (0 would raise)
+        return motorRef(block) + '.control.limits(' + what + '=' + limit + ')\n';
+    };
     generator.forBlock['evn_motor_calibrate'] = function (block) {
-        return motorRef(block) + '.calibrate()\n';
+        return motorRef(block) + '.calibrate(' + (block.getFieldValue('WAIT') === 'FALSE' ? 'wait=False' : '') + ')\n';
+    };
+    generator.forBlock['evn_motor_calibrated'] = function (block) {
+        generator.definitions_['import_evn_module'] = 'import evn';
+        return ['evn.calibration(' + block.getFieldValue('PORT') + ")['calibrated']", Order.MEMBER];
     };
     generator.forBlock['evn_motor_law'] = function (block) {
         return motorRef(block) + '.control.law(' + generator.quote_(block.getFieldValue('LAW')) + ')\n';
@@ -1302,6 +1794,11 @@
     generator.forBlock['evn_colorsensor_setup'] = setupGenerator('ColorSensor');
     generator.forBlock['evn_colorsensor_color'] = call('ColorSensor', 'color');
     generator.forBlock['evn_colorsensor_ambient'] = call('ColorSensor', 'ambient');
+    generator.forBlock['evn_colorsensor_detect'] = function (block) {
+        use('Color');
+        const picked = ['RED', 'YELLOW', 'GREEN', 'BLUE', 'WHITE', 'NONE'].filter((c) => block.getFieldValue(c) === 'TRUE').map((c) => 'Color.' + c);
+        return deviceRef(block, 'ColorSensor') + '.detectable_colors((' + picked.join(', ') + (picked.length === 1 ? ',' : '') + '))\n';
+    };
     generator.forBlock['evn_colorsensor_channel'] = pick('ColorSensor', 'WHAT');
     generator.forBlock['evn_colorsensor_sees'] = function (block) {
         use('Color');
@@ -1329,7 +1826,14 @@
 
     generator.forBlock['evn_compass_setup'] = setupGenerator('Compass');
     generator.forBlock['evn_compass_heading'] = call('Compass', 'heading');
-    generator.forBlock['evn_compass_north'] = doCall('Compass', 'north');
+    generator.forBlock['evn_compass_north'] = function (block) {
+        const heading = generator.valueToCode(block, 'HEADING', Order.NONE);
+        return deviceRef(block, 'Compass') + '.north(' + (heading && heading !== '0' ? heading : '') + ')\n';
+    };
+    generator.forBlock['evn_compass_coverage'] = function (block) {
+        return ['round(' + deviceRef(block, 'Compass') + '.calibrate_progress()[1] * 100)', Order.FUNCTION_CALL];
+    };
+    generator.forBlock['evn_compass_calibrate_cancel'] = doCall('Compass', 'calibrate_cancel');
     generator.forBlock['evn_compass_calibrate'] = function (block) {
         const planar = block.getFieldValue('PLANAR') === 'TRUE';
         return deviceRef(block, 'Compass') + '.calibrate(' + (planar ? 'True' : '') + ')\n';
@@ -1344,8 +1848,18 @@
 
     generator.forBlock['evn_imu_setup'] = setupGenerator('IMU');
     generator.forBlock['evn_imu_angle'] = pick('IMU', 'WHAT');
-    generator.forBlock['evn_imu_stationary'] = call('IMU', 'stationary');
-    generator.forBlock['evn_imu_reset_heading'] = doCall('IMU', 'reset_heading');
+    generator.forBlock['evn_imu_stationary'] = function (block) {
+        const what = block.getFieldValue('WHAT') === 'ready()' ? 'ready()' : 'stationary()';
+        return [deviceRef(block, 'IMU') + '.' + what, Order.FUNCTION_CALL];
+    };
+    generator.forBlock['evn_imu_reset_heading'] = function (block) {
+        const angle = generator.valueToCode(block, 'ANGLE', Order.NONE);
+        return deviceRef(block, 'IMU') + '.reset_heading(' + (angle && angle !== '0' ? angle : '') + ')\n';
+    };
+    generator.forBlock['evn_imu_calibrate'] = function (block) {
+        const pose = block.getFieldValue('POSE');
+        return deviceRef(block, 'IMU') + '.calibrate(' + (pose === '1' || pose === '2' ? 'pose=' + pose : '') + ')\n';
+    };
     generator.forBlock['evn_imu_up'] = function (block) {
         use('Side');
         return [deviceRef(block, 'IMU') + '.up() == Side.' + block.getFieldValue('SIDE'), Order.RELATIONAL];
@@ -1373,6 +1887,9 @@
     generator.forBlock['evn_matrix_text'] = function (block) {
         return deviceRef(block, 'MatrixLED') + '.text(' + value(block, 'TEXT', "''") + ')\n';
     };
+    generator.forBlock['evn_matrix_char'] = function (block) {
+        return deviceRef(block, 'MatrixLED') + '.char((str(' + value(block, 'CHAR', "'A'") + ") + ' ')[:1])\n";   // empty text shows a blank
+    };
     generator.forBlock['evn_matrix_icon'] = function (block) {
         use('Icon');
         return deviceRef(block, 'MatrixLED') + '.icon(Icon.' + block.getFieldValue('ICON') + ')\n';
@@ -1386,6 +1903,9 @@
     generator.forBlock['evn_seven_clear'] = doCall('SevenSegmentLED', 'clear');
     generator.forBlock['evn_seven_number'] = doNumber('SevenSegmentLED', 'number', 'NUMBER', '0');
     generator.forBlock['evn_seven_brightness'] = doNumber('SevenSegmentLED', 'brightness', 'LEVEL', '8');
+    generator.forBlock['evn_seven_colon'] = function (block) {
+        return deviceRef(block, 'SevenSegmentLED') + '.colon(' + (block.getFieldValue('ON') === 'False' ? 'False' : 'True') + ')\n';
+    };
     generator.forBlock['evn_seven_text'] = function (block) {
         return deviceRef(block, 'SevenSegmentLED') + '.text(' + value(block, 'TEXT', "''") + ')\n';
     };
@@ -1412,6 +1932,12 @@
     generator.forBlock['evn_servo_stop'] = doCall('Servo', 'stop');
     generator.forBlock['evn_servo_angle'] = doNumber('Servo', 'angle', 'ANGLE', '90');
     generator.forBlock['evn_servo_pulse'] = doNumber('Servo', 'pulse', 'US', '1500');
+    generator.forBlock['evn_servo_duty'] = doNumber('Servo', 'duty', 'DUTY', '0');
+    generator.forBlock['evn_servo_move'] = function (block) {
+        return deviceRef(block, 'Servo') + '.move(' + value(block, 'ANGLE', '90') + ', ' + value(block, 'SPEED', '60') +
+            (block.getFieldValue('WAIT') === 'FALSE' ? ', wait=False' : '') + ')\n';
+    };
+    generator.forBlock['evn_servo_done'] = call('Servo', 'done');
 
     generator.forBlock['evn_bluetooth_setup'] = setupGenerator('Bluetooth');
     generator.forBlock['evn_bluetooth_send'] = function (block) {
@@ -1425,7 +1951,9 @@
      * read(-1) helper this replaced - leaves whatever arrived behind it in the receive buffer,
      * where a "read everything" Python block can still find it. None on timeout becomes ''. */
     generator.forBlock['evn_bluetooth_line'] = function (block) {
-        return ['(' + deviceRef(block, 'Bluetooth') + ".readline(5000) or b'').decode()", Order.FUNCTION_CALL];
+        const timeout = value(block, 'TIMEOUT', '5000');   // readline takes an int: a computed or decimal time is rounded
+        const ms = /^\d+$/.test(timeout) ? timeout : 'int(' + timeout + ')';
+        return ['(' + deviceRef(block, 'Bluetooth') + '.readline(' + ms + ") or b'').decode()", Order.FUNCTION_CALL];
     };
 
     /* Blank out Python comments and the insides of string literals, keeping the length so nothing
@@ -1511,6 +2039,8 @@
     const TOOLBOX = {
         kind: 'categoryToolbox',
         contents: [
+            // filled below from the set-up blocks of the other categories (Pybricks' first palette is "Setup")
+            { kind: 'category', name: 'Setup', categorystyle: 'evn_start_category', contents: [] },
             {
                 kind: 'category', name: 'Motors', categorystyle: 'evn_motor_category',
                 contents: [
@@ -1535,6 +2065,7 @@
                     { kind: 'block', type: 'evn_drivebase_drive', inputs: { SPEED: shadowNum(200), TURN: shadowNum(0) } },
                     { kind: 'block', type: 'evn_drivebase_stop' },
                     { kind: 'block', type: 'evn_drivebase_speeds', inputs: { SPEED: shadowNum(300), TURN: shadowNum(150) } },
+                    { kind: 'block', type: 'evn_drivebase_accel', inputs: { ACCEL: shadowNum(750), TURN: shadowNum(750) } },
                     { kind: 'block', type: 'evn_drivebase_reset' },
                     { kind: 'block', type: 'evn_drivebase_setup' },
                     { kind: 'block', type: 'evn_drivebase_gyro' },
@@ -1557,6 +2088,8 @@
                 contents: [
                     { kind: 'block', type: 'evn_wait', inputs: { TIME: shadowNum(1000) } },
                     { kind: 'block', type: 'evn_forever' },
+                    { kind: 'block', type: 'evn_wait_until', inputs: { COND: { shadow: { type: 'logic_boolean', fields: { BOOL: 'TRUE' } } } } },
+                    { kind: 'block', type: 'evn_wait_forever' },
                     { kind: 'block', type: 'evn_stopwatch_reset' },
                     { kind: 'block', type: 'evn_wait_for_button' },
                 ],
@@ -1565,6 +2098,7 @@
                 kind: 'category', name: 'Board', categorystyle: 'evn_board_category',
                 contents: [
                     { kind: 'block', type: 'evn_led' },
+                    { kind: 'block', type: 'evn_led_set', inputs: { ON: { shadow: { type: 'logic_boolean', fields: { BOOL: 'TRUE' } } } } },
                     { kind: 'block', type: 'text_print', inputs: { TEXT: { shadow: { type: 'text', fields: { TEXT: 'hello' } } } } },
                     { kind: 'block', type: 'evn_button_pressed' },
                     { kind: 'block', type: 'evn_battery_voltage' },
@@ -1578,6 +2112,7 @@
                         { kind: 'block', type: 'evn_colorsensor_sees' },
                         { kind: 'block', type: 'evn_colorsensor_color' },
                         { kind: 'block', type: 'evn_colorsensor_ambient' },
+                        { kind: 'block', type: 'evn_colorsensor_detect' },
                         { kind: 'block', type: 'evn_colorsensor_channel' },
                     ]),
                     group('Distance sensor', 'evn_sense_category', [
@@ -1599,9 +2134,11 @@
                     group('Compass', 'evn_sense_category', [
                         { kind: 'block', type: 'evn_compass_setup' },
                         { kind: 'block', type: 'evn_compass_heading' },
-                        { kind: 'block', type: 'evn_compass_north' },
+                        { kind: 'block', type: 'evn_compass_north', inputs: { HEADING: shadowNum(0) } },
                         { kind: 'block', type: 'evn_compass_calibrate' },
+                        { kind: 'block', type: 'evn_compass_coverage' },
                         { kind: 'block', type: 'evn_compass_calibrate_stop' },
+                        { kind: 'block', type: 'evn_compass_calibrate_cancel' },
                     ]),
                     group('Touch pads', 'evn_sense_category', [
                         { kind: 'block', type: 'evn_touch_setup' },
@@ -1613,7 +2150,8 @@
                         { kind: 'block', type: 'evn_imu_angle' },
                         { kind: 'block', type: 'evn_imu_up' },
                         { kind: 'block', type: 'evn_imu_stationary' },
-                        { kind: 'block', type: 'evn_imu_reset_heading' },
+                        { kind: 'block', type: 'evn_imu_reset_heading', inputs: { ANGLE: shadowNum(0) } },
+                        { kind: 'block', type: 'evn_imu_calibrate' },
                     ]),
                     group('ADC', 'evn_sense_category', [
                         { kind: 'block', type: 'evn_adc_setup' },
@@ -1635,6 +2173,7 @@
                         { kind: 'block', type: 'evn_matrix_icon' },
                         { kind: 'block', type: 'evn_matrix_number', inputs: { NUMBER: shadowNum(7) } },
                         { kind: 'block', type: 'evn_matrix_text', inputs: { TEXT: shadowText('hi') } },
+                        { kind: 'block', type: 'evn_matrix_char', inputs: { CHAR: shadowText('A') } },
                         { kind: 'block', type: 'evn_matrix_pixel', inputs: { ROW: shadowNum(0), COL: shadowNum(0) } },
                         { kind: 'block', type: 'evn_matrix_brightness', inputs: { LEVEL: shadowNum(8) } },
                         { kind: 'block', type: 'evn_matrix_clear' },
@@ -1642,7 +2181,8 @@
                     group('7-segment', 'evn_output_category', [
                         { kind: 'block', type: 'evn_seven_setup' },
                         { kind: 'block', type: 'evn_seven_number', inputs: { NUMBER: shadowNum(1234) } },
-                        { kind: 'block', type: 'evn_seven_text', inputs: { TEXT: shadowText('EVN') } },
+                        { kind: 'block', type: 'evn_seven_text', inputs: { TEXT: shadowText('HELP') } },   // 'EVN' raised: no V glyph on 7 segments
+                        { kind: 'block', type: 'evn_seven_colon' },
                         { kind: 'block', type: 'evn_seven_brightness', inputs: { LEVEL: shadowNum(8) } },
                         { kind: 'block', type: 'evn_seven_clear' },
                     ]),
@@ -1658,6 +2198,9 @@
                     group('Servo', 'evn_output_category', [
                         { kind: 'block', type: 'evn_servo_setup' },
                         { kind: 'block', type: 'evn_servo_angle', inputs: { ANGLE: shadowNum(90) } },
+                        { kind: 'block', type: 'evn_servo_move', inputs: { ANGLE: shadowNum(180), SPEED: shadowNum(60) } },
+                        { kind: 'block', type: 'evn_servo_done' },
+                        { kind: 'block', type: 'evn_servo_duty', inputs: { DUTY: shadowNum(50) } },
                         { kind: 'block', type: 'evn_servo_pulse', inputs: { US: shadowNum(1500) } },
                         { kind: 'block', type: 'evn_servo_stop' },
                     ]),
@@ -1665,7 +2208,7 @@
                         { kind: 'block', type: 'evn_bluetooth_setup', fields: { PORT: '2' } },
                         { kind: 'block', type: 'evn_bluetooth_send', fields: { PORT: '2' }, inputs: { TEXT: shadowText('hello') } },
                         { kind: 'block', type: 'evn_bluetooth_any', fields: { PORT: '2' } },
-                        { kind: 'block', type: 'evn_bluetooth_line', fields: { PORT: '2' } },
+                        { kind: 'block', type: 'evn_bluetooth_line', fields: { PORT: '2' }, inputs: { TIMEOUT: shadowNum(5000) } },
                     ]),
                 ],
             },
@@ -1716,8 +2259,12 @@
             {
                 kind: 'category', name: 'Advanced', categorystyle: 'evn_advanced_category',
                 contents: [
+                    { kind: 'block', type: COMMENT },
                     { kind: 'block', type: 'evn_motor_calibrate' },
-                    { kind: 'block', type: 'evn_motor_limits', inputs: { SPEED: shadowNum(1000), ACCEL: shadowNum(2400), TORQUE: shadowNum(400) } },
+                    { kind: 'block', type: 'evn_motor_calibrated' },
+                    // one limit at a time (Pybricks' "configure [maximum speed]"); the three-input evn_motor_limits still loads
+                    // and generates, but set all three at once with made-up defaults, so it left the toolbox
+                    { kind: 'block', type: 'evn_motor_limit', inputs: { VALUE: shadowNum(500) } },
                     { kind: 'block', type: 'evn_motor_dc', inputs: { DUTY: shadowNum(50) } },
                     { kind: 'block', type: 'evn_motor_track_target', inputs: { ANGLE: shadowNum(0) } },
                     { kind: 'block', type: 'evn_motor_law' },
@@ -1728,13 +2275,34 @@
         ],
     };
 
+    (function fillSetupCategory() {
+        const setups = [];
+        const walk = (items) => {
+            for (const it of items) {
+                if (it.kind === 'category' && it.contents) { walk(it.contents); }
+                else if (it.kind === 'block' && SETUP_TYPES.indexOf(it.type) >= 0) { setups.push(it); }
+            }
+        };
+        walk(TOOLBOX.contents.slice(1));
+        TOOLBOX.contents[0].contents = [
+            { kind: 'label', text: 'Put these under "set up": one for each motor, sensor or output the program uses' },
+        ].concat(setups, [{ kind: 'block', type: COMMENT }]);
+    }());
+
     /** Generate the MicroPython program for a workspace. */
     function workspaceToPython(workspace) {
+        // the sections decide what runs; in the editor they are already applied (a no-op here), and mid-drag they
+        // wait for the drop (a block just taken from the toolbox would show greyed while it is carried)
+        if (!(workspace.isDragging && workspace.isDragging())) {
+            Blockly.Events.disable();
+            try { applySections(workspace); } finally { Blockly.Events.enable(); }
+        }
         return generator.workspaceToCode(workspace);
     }
 
     // CORE_NAMES / DEVICE_NAMES are exported for scripts/test_blocks.js, which compares them with the module's table.
-    const api = { TOOLBOX, PALETTE, BLOCK_STYLES, CATEGORY_STYLES, workspaceToPython, CORE_NAMES, DEVICE_NAMES };
+    Object.assign(api, { TOOLBOX, PALETTE, BLOCK_STYLES, CATEGORY_STYLES, workspaceToPython, CORE_NAMES, DEVICE_NAMES, SETUP_TYPES,
+        CONNECTION_CHECKER, SETUP_HAT, PROGRAM_HAT, COMMENT, applySections, repairSections, upgradeWorkspace, loadWorkspace, setBoardConnected });
     if (typeof self !== 'undefined') { self.evnBlocks = api; }
     return api;
 }));

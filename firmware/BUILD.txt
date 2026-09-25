@@ -1,7 +1,7 @@
 EVN_ALPHA_MicroPython.uf2
-source: main + the 0.2.35 changes (2026-09-25: PICO_XOSC_STARTUP_DELAY_MULTIPLIER=64 for both targets, the crystal start-up margin Arduino-Pico uses, after two field boards failed at random on power-on / RESET with the firmware intact; site issue #1)
-built: 2026-09-25 11:55 +08:00 (MicroPython v1.26.1, pico-sdk 2.3.0; SOURCE_DATE_EPOCH=1790337600 = noon UTC 2026-09-25)
+source: main (0.2.35, PICO_XOSC_STARTUP_DELAY_MULTIPLIER=64 kept for both targets) + the 0.2.36 changes (2026-09-25: the IMU calibration stored per port, one or two poses, evn.imu_calibration; the compass calibration stored per port, full or planar, evn.compass_calibration; a closed Bluetooth / RGBLED stays closed, Servo closed checks, the RGBLED -> Servo hand-back, draw_pixel / pixel keywords, DistanceSensor / EnvSensor waits with a capped poll share)
+built: 2026-09-25 (MicroPython v1.26.1, pico-sdk 2.3.0; SOURCE_DATE_EPOCH=1790337600 = noon UTC 2026-09-25)
 flash: single-line 03h boot2, PICO_FLASH_SPI_CLKDIV=4
-md5: fdf7163be7e056f6ca09f2e552468f71
+md5: 183bf30096e5ba2a4f78f3f712a81cb5
 reproduce: cmake -G Ninja -DEVN_MICROPYTHON=ON + ninja with SOURCE_DATE_EPOCH = noon UTC of the built: date (py/makeversionhdr.py embeds MICROPY_BUILD_DATE); release_public.py does this and refuses on an md5 mismatch
-version: 0.2.35
+version: 0.2.36

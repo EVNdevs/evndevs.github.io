@@ -1,0 +1,420 @@
+{
+  "format": "evn-blocks",
+  "version": 2,
+  "title": "RGB LEDs: every block",
+  "needs": "the RGB LED module (8 LEDs) on servo port 1",
+  "description": "Every RGB LED block once: all LEDs one colour, one LED at a time, a colour mixed from red, green and blue, and the brightness. The LEDs are off at the end.",
+  "workspace": {
+    "blocks": {
+      "languageVersion": 0,
+      "blocks": [
+        {
+          "type": "evn_setup_start",
+          "x": 30,
+          "y": 30,
+          "next": {
+            "block": {
+              "type": "evn_rgb_setup",
+              "fields": {
+                "PORT": "1",
+                "COUNT": 8
+              }
+            }
+          }
+        },
+        {
+          "type": "evn_program_start",
+          "x": 30,
+          "y": 115,
+          "next": {
+            "block": {
+              "type": "evn_comment",
+              "fields": {
+                "TEXT": "brightness 0 .. 255 for the whole strip; it starts at 255, very bright"
+              },
+              "next": {
+                "block": {
+                  "type": "evn_rgb_brightness",
+                  "fields": {
+                    "PORT": "1"
+                  },
+                  "inputs": {
+                    "LEVEL": {
+                      "shadow": {
+                        "type": "math_number",
+                        "fields": {
+                          "NUM": 40
+                        }
+                      }
+                    }
+                  },
+                  "next": {
+                    "block": {
+                      "type": "evn_comment",
+                      "fields": {
+                        "TEXT": "every LED one colour: a named colour, or red / green / blue 0 .. 255 each"
+                      },
+                      "next": {
+                        "block": {
+                          "type": "evn_rgb_fill",
+                          "fields": {
+                            "PORT": "1"
+                          },
+                          "inputs": {
+                            "COLOUR": {
+                              "block": {
+                                "type": "evn_color",
+                                "fields": {
+                                  "COLOR": "CYAN"
+                                }
+                              }
+                            }
+                          },
+                          "next": {
+                            "block": {
+                              "type": "evn_wait",
+                              "inputs": {
+                                "TIME": {
+                                  "shadow": {
+                                    "type": "math_number",
+                                    "fields": {
+                                      "NUM": 1000
+                                    }
+                                  }
+                                }
+                              },
+                              "next": {
+                                "block": {
+                                  "type": "evn_rgb_fill",
+                                  "fields": {
+                                    "PORT": "1"
+                                  },
+                                  "inputs": {
+                                    "COLOUR": {
+                                      "block": {
+                                        "type": "evn_color_rgb",
+                                        "inputs": {
+                                          "R": {
+                                            "shadow": {
+                                              "type": "math_number",
+                                              "fields": {
+                                                "NUM": 255
+                                              }
+                                            }
+                                          },
+                                          "G": {
+                                            "shadow": {
+                                              "type": "math_number",
+                                              "fields": {
+                                                "NUM": 120
+                                              }
+                                            }
+                                          },
+                                          "B": {
+                                            "shadow": {
+                                              "type": "math_number",
+                                              "fields": {
+                                                "NUM": 0
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  },
+                                  "next": {
+                                    "block": {
+                                      "type": "evn_wait",
+                                      "inputs": {
+                                        "TIME": {
+                                          "shadow": {
+                                            "type": "math_number",
+                                            "fields": {
+                                              "NUM": 1000
+                                            }
+                                          }
+                                        }
+                                      },
+                                      "next": {
+                                        "block": {
+                                          "type": "evn_comment",
+                                          "fields": {
+                                            "TEXT": "one LED at a time: LED 0 is the one at the plug"
+                                          },
+                                          "next": {
+                                            "block": {
+                                              "type": "evn_rgb_off",
+                                              "fields": {
+                                                "PORT": "1"
+                                              },
+                                              "next": {
+                                                "block": {
+                                                  "type": "controls_for",
+                                                  "fields": {
+                                                    "VAR": {
+                                                      "id": "v_i"
+                                                    }
+                                                  },
+                                                  "inputs": {
+                                                    "FROM": {
+                                                      "shadow": {
+                                                        "type": "math_number",
+                                                        "fields": {
+                                                          "NUM": 0
+                                                        }
+                                                      }
+                                                    },
+                                                    "TO": {
+                                                      "shadow": {
+                                                        "type": "math_number",
+                                                        "fields": {
+                                                          "NUM": 7
+                                                        }
+                                                      }
+                                                    },
+                                                    "BY": {
+                                                      "shadow": {
+                                                        "type": "math_number",
+                                                        "fields": {
+                                                          "NUM": 1
+                                                        }
+                                                      }
+                                                    },
+                                                    "DO": {
+                                                      "block": {
+                                                        "type": "evn_rgb_set",
+                                                        "fields": {
+                                                          "PORT": "1"
+                                                        },
+                                                        "inputs": {
+                                                          "LED": {
+                                                            "block": {
+                                                              "type": "variables_get",
+                                                              "fields": {
+                                                                "VAR": {
+                                                                  "id": "v_i"
+                                                                }
+                                                              }
+                                                            }
+                                                          },
+                                                          "COLOUR": {
+                                                            "block": {
+                                                              "type": "evn_color",
+                                                              "fields": {
+                                                                "COLOR": "GREEN"
+                                                              }
+                                                            }
+                                                          }
+                                                        },
+                                                        "next": {
+                                                          "block": {
+                                                            "type": "evn_wait",
+                                                            "inputs": {
+                                                              "TIME": {
+                                                                "shadow": {
+                                                                  "type": "math_number",
+                                                                  "fields": {
+                                                                    "NUM": 150
+                                                                  }
+                                                                }
+                                                              }
+                                                            }
+                                                          }
+                                                        }
+                                                      }
+                                                    }
+                                                  },
+                                                  "next": {
+                                                    "block": {
+                                                      "type": "evn_rgb_set",
+                                                      "fields": {
+                                                        "PORT": "1"
+                                                      },
+                                                      "inputs": {
+                                                        "LED": {
+                                                          "shadow": {
+                                                            "type": "math_number",
+                                                            "fields": {
+                                                              "NUM": 0
+                                                            }
+                                                          }
+                                                        },
+                                                        "COLOUR": {
+                                                          "block": {
+                                                            "type": "evn_color_rgb",
+                                                            "inputs": {
+                                                              "R": {
+                                                                "shadow": {
+                                                                  "type": "math_number",
+                                                                  "fields": {
+                                                                    "NUM": 255
+                                                                  }
+                                                                }
+                                                              },
+                                                              "G": {
+                                                                "shadow": {
+                                                                  "type": "math_number",
+                                                                  "fields": {
+                                                                    "NUM": 0
+                                                                  }
+                                                                }
+                                                              },
+                                                              "B": {
+                                                                "shadow": {
+                                                                  "type": "math_number",
+                                                                  "fields": {
+                                                                    "NUM": 255
+                                                                  }
+                                                                }
+                                                              }
+                                                            }
+                                                          }
+                                                        }
+                                                      },
+                                                      "next": {
+                                                        "block": {
+                                                          "type": "evn_wait",
+                                                          "inputs": {
+                                                            "TIME": {
+                                                              "shadow": {
+                                                                "type": "math_number",
+                                                                "fields": {
+                                                                  "NUM": 1000
+                                                                }
+                                                              }
+                                                            }
+                                                          },
+                                                          "next": {
+                                                            "block": {
+                                                              "type": "evn_comment",
+                                                              "fields": {
+                                                                "TEXT": "fade in: the brightness from 0 (dark) up to 80; the colours stay as they are"
+                                                              },
+                                                              "next": {
+                                                                "block": {
+                                                                  "type": "controls_for",
+                                                                  "fields": {
+                                                                    "VAR": {
+                                                                      "id": "v_level"
+                                                                    }
+                                                                  },
+                                                                  "inputs": {
+                                                                    "FROM": {
+                                                                      "shadow": {
+                                                                        "type": "math_number",
+                                                                        "fields": {
+                                                                          "NUM": 0
+                                                                        }
+                                                                      }
+                                                                    },
+                                                                    "TO": {
+                                                                      "shadow": {
+                                                                        "type": "math_number",
+                                                                        "fields": {
+                                                                          "NUM": 80
+                                                                        }
+                                                                      }
+                                                                    },
+                                                                    "BY": {
+                                                                      "shadow": {
+                                                                        "type": "math_number",
+                                                                        "fields": {
+                                                                          "NUM": 4
+                                                                        }
+                                                                      }
+                                                                    },
+                                                                    "DO": {
+                                                                      "block": {
+                                                                        "type": "evn_rgb_brightness",
+                                                                        "fields": {
+                                                                          "PORT": "1"
+                                                                        },
+                                                                        "inputs": {
+                                                                          "LEVEL": {
+                                                                            "block": {
+                                                                              "type": "variables_get",
+                                                                              "fields": {
+                                                                                "VAR": {
+                                                                                  "id": "v_level"
+                                                                                }
+                                                                              }
+                                                                            }
+                                                                          }
+                                                                        },
+                                                                        "next": {
+                                                                          "block": {
+                                                                            "type": "evn_wait",
+                                                                            "inputs": {
+                                                                              "TIME": {
+                                                                                "shadow": {
+                                                                                  "type": "math_number",
+                                                                                  "fields": {
+                                                                                    "NUM": 50
+                                                                                  }
+                                                                                }
+                                                                              }
+                                                                            }
+                                                                          }
+                                                                        }
+                                                                      }
+                                                                    }
+                                                                  },
+                                                                  "next": {
+                                                                    "block": {
+                                                                      "type": "evn_comment",
+                                                                      "fields": {
+                                                                        "TEXT": "the end: every LED off"
+                                                                      },
+                                                                      "next": {
+                                                                        "block": {
+                                                                          "type": "evn_rgb_off",
+                                                                          "fields": {
+                                                                            "PORT": "1"
+                                                                          }
+                                                                        }
+                                                                      }
+                                                                    }
+                                                                  }
+                                                                }
+                                                              }
+                                                            }
+                                                          }
+                                                        }
+                                                      }
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "variables": [
+      {
+        "name": "i",
+        "id": "v_i"
+      },
+      {
+        "name": "level",
+        "id": "v_level"
+      }
+    ]
+  }
+}

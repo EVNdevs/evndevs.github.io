@@ -1,0 +1,158 @@
+{
+  "format": "evn-blocks",
+  "version": 2,
+  "title": "RGB LEDs: minimal",
+  "needs": "the RGB LED module (8 LEDs) on servo port 1",
+  "description": "The RGB LEDs turn red, green and blue, one second each, then go off.",
+  "workspace": {
+    "blocks": {
+      "languageVersion": 0,
+      "blocks": [
+        {
+          "type": "evn_setup_start",
+          "x": 30,
+          "y": 30,
+          "next": {
+            "block": {
+              "type": "evn_rgb_setup",
+              "fields": {
+                "PORT": "1",
+                "COUNT": 8
+              }
+            }
+          }
+        },
+        {
+          "type": "evn_program_start",
+          "x": 30,
+          "y": 115,
+          "next": {
+            "block": {
+              "type": "evn_rgb_brightness",
+              "fields": {
+                "PORT": "1"
+              },
+              "inputs": {
+                "LEVEL": {
+                  "shadow": {
+                    "type": "math_number",
+                    "fields": {
+                      "NUM": 40
+                    }
+                  }
+                }
+              },
+              "next": {
+                "block": {
+                  "type": "evn_rgb_fill",
+                  "fields": {
+                    "PORT": "1"
+                  },
+                  "inputs": {
+                    "COLOUR": {
+                      "block": {
+                        "type": "evn_color",
+                        "fields": {
+                          "COLOR": "RED"
+                        }
+                      }
+                    }
+                  },
+                  "next": {
+                    "block": {
+                      "type": "evn_wait",
+                      "inputs": {
+                        "TIME": {
+                          "shadow": {
+                            "type": "math_number",
+                            "fields": {
+                              "NUM": 1000
+                            }
+                          }
+                        }
+                      },
+                      "next": {
+                        "block": {
+                          "type": "evn_rgb_fill",
+                          "fields": {
+                            "PORT": "1"
+                          },
+                          "inputs": {
+                            "COLOUR": {
+                              "block": {
+                                "type": "evn_color",
+                                "fields": {
+                                  "COLOR": "GREEN"
+                                }
+                              }
+                            }
+                          },
+                          "next": {
+                            "block": {
+                              "type": "evn_wait",
+                              "inputs": {
+                                "TIME": {
+                                  "shadow": {
+                                    "type": "math_number",
+                                    "fields": {
+                                      "NUM": 1000
+                                    }
+                                  }
+                                }
+                              },
+                              "next": {
+                                "block": {
+                                  "type": "evn_rgb_fill",
+                                  "fields": {
+                                    "PORT": "1"
+                                  },
+                                  "inputs": {
+                                    "COLOUR": {
+                                      "block": {
+                                        "type": "evn_color",
+                                        "fields": {
+                                          "COLOR": "BLUE"
+                                        }
+                                      }
+                                    }
+                                  },
+                                  "next": {
+                                    "block": {
+                                      "type": "evn_wait",
+                                      "inputs": {
+                                        "TIME": {
+                                          "shadow": {
+                                            "type": "math_number",
+                                            "fields": {
+                                              "NUM": 1000
+                                            }
+                                          }
+                                        }
+                                      },
+                                      "next": {
+                                        "block": {
+                                          "type": "evn_rgb_off",
+                                          "fields": {
+                                            "PORT": "1"
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

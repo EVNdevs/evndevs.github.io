@@ -15,9 +15,9 @@
     <link rel="icon" href="vscode/favicon.ico" type="image/x-icon">
     <link data-name="vs/workbench/workbench.web.main" rel="stylesheet" href="vscode/out/vs/workbench/workbench.web.main.internal.css">
     <style>
-        body { background: #1f1f1f; }
+        body { background: #111518; }
         #evn-loading { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
-            font: 15px/1.5 system-ui, sans-serif; color: #cccccc; }
+            font: 15px/1.5 system-ui, sans-serif; color: #d7dade; }
     </style>
 </head>
 <body aria-label="">
@@ -81,6 +81,19 @@
             defaultLayout: undefined
         };
         delete config.defaultLayout;
+        /* Developer mode (docs/WEB.md): ?evn-dev=sim (or #evn-dev=sim) turns on the hidden setting
+           evn.developer.simulatedBoard for this page, so the extension lists a simulated board,
+           "EVN simulator", next to the Web Serial ports. The workbench drops a default for a key
+           no manifest declares, so it goes in as the default of a made-up language override,
+           [evn-dev], which src/platform/web/ports.ts reads it through. It is a default only: a
+           value in the user's or the workspace's settings still wins (ports.ts simulatorEnabled()
+           ranks the inspect() levels itself, since VS Code lets any language-specific value,
+           defaults included, beat a plain one), and without the parameter nothing changes. */
+        var query = new URLSearchParams(window.location.search);
+        var hash = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+        if (query.get('evn-dev') === 'sim' || hash.get('evn-dev') === 'sim') {
+            config.configurationDefaults = { '[evn-dev]': { 'evn.developer.simulatedBoard': true } };
+        }
         void origin;
         document.getElementById('vscode-workbench-web-configuration')
             .setAttribute('data-settings', JSON.stringify(config));

@@ -1,0 +1,427 @@
+{
+  "note": "The Examples tree's folders, in this order: one per object of the API, each with <slug>_minimal and <slug>_complete in Python, and in blocks where \"blocks\" lists the blocks of that object. scripts/build.js copies dir/title/description into index.json; scripts/test_examples.js checks every example against this file: classes and module = what the complete Python example must call (every public method, less \"skip\", each with its reason), blocks = what the complete blocks example must use.",
+  "folders": [
+    {
+      "dir": "01_board",
+      "slug": "board",
+      "title": "Board, button, LED and timing",
+      "description": "battery, button, LED, wait, StopWatch",
+      "classes": [
+        "battery",
+        "button",
+        "led",
+        "StopWatch"
+      ],
+      "module": [
+        "wait",
+        "stop_all",
+        "clock",
+        "core1_status",
+        "reset_cause",
+        "autostart"
+      ],
+      "blocks": [
+        "evn_wait",
+        "evn_forever",
+        "evn_wait_until",
+        "evn_wait_forever",
+        "evn_stopwatch_reset",
+        "evn_stopwatch_time",
+        "evn_wait_for_button",
+        "evn_led",
+        "evn_led_set",
+        "evn_button_pressed",
+        "evn_battery_voltage",
+        "text_print"
+      ],
+      "skip": {
+        "reset": "restarts the board, which ends the example",
+        "bootloader": "restarts the board into BOOTSEL, which ends the example"
+      }
+    },
+    {
+      "dir": "02_motor",
+      "slug": "motor",
+      "title": "Motor",
+      "description": "EV3 / NXT motors on ports 1-4",
+      "classes": [
+        "Motor",
+        "Control",
+        "Model"
+      ],
+      "module": [
+        "calibration",
+        "motor_config",
+        "stop_all"
+      ],
+      "blocks": [
+        "evn_motor_setup",
+        "evn_motor_run_angle",
+        "evn_motor_run_target",
+        "evn_motor_run_time",
+        "evn_motor_run",
+        "evn_motor_stop",
+        "evn_motor_run_until_stalled",
+        "evn_motor_wait_done",
+        "evn_motor_reset_angle",
+        "evn_stop_all",
+        "evn_motor_measure",
+        "evn_motor_is",
+        "evn_motor_calibrate",
+        "evn_motor_calibrated",
+        "evn_motor_limit",
+        "evn_motor_dc",
+        "evn_motor_track_target",
+        "evn_motor_law"
+      ],
+      "skip": {
+        "configure_motor": "changes what the board stores for the port; do it from the Board view (gear button) on purpose",
+        "clear_calibration": "erases the stored calibration of the port"
+      }
+    },
+    {
+      "dir": "03_robot",
+      "slug": "robot",
+      "title": "Robot (DriveBase)",
+      "description": "two wheel motors driven together",
+      "classes": [
+        "DriveBase"
+      ],
+      "module": [],
+      "blocks": [
+        "evn_drivebase_setup",
+        "evn_drivebase_straight",
+        "evn_drivebase_turn",
+        "evn_drivebase_arc",
+        "evn_drivebase_drive",
+        "evn_drivebase_stop",
+        "evn_drivebase_speeds",
+        "evn_drivebase_accel",
+        "evn_drivebase_reset",
+        "evn_drivebase_gyro",
+        "evn_drivebase_measure",
+        "evn_drivebase_is",
+        "evn_imu_setup"
+      ],
+      "skip": {}
+    },
+    {
+      "dir": "04_pose",
+      "slug": "pose",
+      "title": "Pose (where the robot is)",
+      "description": "position and heading from the wheels, an IMU and a compass",
+      "classes": [
+        "Pose"
+      ],
+      "module": [],
+      "blocks": null,
+      "skip": {}
+    },
+    {
+      "dir": "05_colour_sensor",
+      "slug": "colour_sensor",
+      "title": "Colour sensor",
+      "description": "TCS34725 on an I2C port",
+      "classes": [
+        "ColorSensor"
+      ],
+      "module": [],
+      "blocks": [
+        "evn_colorsensor_setup",
+        "evn_colorsensor_sees",
+        "evn_colorsensor_color",
+        "evn_colorsensor_ambient",
+        "evn_colorsensor_detect",
+        "evn_colorsensor_channel"
+      ],
+      "skip": {}
+    },
+    {
+      "dir": "06_distance_sensor",
+      "slug": "distance_sensor",
+      "title": "Distance sensor",
+      "description": "VL53L0X time of flight on an I2C port",
+      "classes": [
+        "DistanceSensor"
+      ],
+      "module": [],
+      "blocks": [
+        "evn_distance_setup",
+        "evn_distance_mm",
+        "evn_distance_profile"
+      ],
+      "skip": {}
+    },
+    {
+      "dir": "07_gesture_sensor",
+      "slug": "gesture_sensor",
+      "title": "Gesture sensor",
+      "description": "APDS-9960 on an I2C port",
+      "classes": [
+        "GestureSensor"
+      ],
+      "module": [],
+      "blocks": [
+        "evn_gesture_setup",
+        "evn_gesture_gesture",
+        "evn_gesture_wait",
+        "evn_gesture_proximity",
+        "evn_gesture_color"
+      ],
+      "skip": {}
+    },
+    {
+      "dir": "08_weather_sensor",
+      "slug": "weather_sensor",
+      "title": "Weather sensor",
+      "description": "BME280: temperature, humidity, pressure",
+      "classes": [
+        "EnvSensor"
+      ],
+      "module": [],
+      "blocks": [
+        "evn_env_setup",
+        "evn_env_value"
+      ],
+      "skip": {}
+    },
+    {
+      "dir": "09_compass",
+      "slug": "compass",
+      "title": "Compass",
+      "description": "magnetometer on an I2C port, with its calibration",
+      "classes": [
+        "Compass"
+      ],
+      "module": [
+        "compass_calibration"
+      ],
+      "blocks": [
+        "evn_compass_setup",
+        "evn_compass_heading",
+        "evn_compass_north",
+        "evn_compass_calibrate",
+        "evn_compass_coverage",
+        "evn_compass_calibrate_stop",
+        "evn_compass_calibrate_cancel"
+      ],
+      "skip": {
+        "clear_calibration": "erases the calibration stored for the port"
+      }
+    },
+    {
+      "dir": "10_touch_pads",
+      "slug": "touch_pads",
+      "title": "Touch pads",
+      "description": "MPR121, 12 pads",
+      "classes": [
+        "TouchArray"
+      ],
+      "module": [],
+      "blocks": [
+        "evn_touch_setup",
+        "evn_touch_any",
+        "evn_touch_pad"
+      ],
+      "skip": {}
+    },
+    {
+      "dir": "11_imu",
+      "slug": "imu",
+      "title": "IMU",
+      "description": "gyro and accelerometer, with its calibration",
+      "classes": [
+        "IMU"
+      ],
+      "module": [
+        "imu_calibration"
+      ],
+      "blocks": [
+        "evn_imu_setup",
+        "evn_imu_angle",
+        "evn_imu_up",
+        "evn_imu_stationary",
+        "evn_imu_reset_heading",
+        "evn_imu_calibrate"
+      ],
+      "skip": {
+        "clear_calibration": "erases the calibration stored for the port"
+      }
+    },
+    {
+      "dir": "12_adc",
+      "slug": "adc",
+      "title": "ADC",
+      "description": "ADS1115: four analogue inputs",
+      "classes": [
+        "ADC"
+      ],
+      "module": [],
+      "blocks": [
+        "evn_adc_setup",
+        "evn_adc_voltage"
+      ],
+      "skip": {}
+    },
+    {
+      "dir": "13_display",
+      "slug": "display",
+      "title": "Display",
+      "description": "128x64 OLED",
+      "classes": [
+        "Display"
+      ],
+      "module": [],
+      "blocks": [
+        "evn_display_setup",
+        "evn_display_print",
+        "evn_display_text",
+        "evn_display_clear"
+      ],
+      "skip": {
+        "command": "sends a raw SSD1306 command byte; for driver work, not a program"
+      }
+    },
+    {
+      "dir": "14_led_matrix",
+      "slug": "led_matrix",
+      "title": "LED matrix",
+      "description": "8x8 matrix (HT16K33)",
+      "classes": [
+        "MatrixLED"
+      ],
+      "module": [],
+      "blocks": [
+        "evn_matrix_setup",
+        "evn_matrix_icon",
+        "evn_matrix_number",
+        "evn_matrix_text",
+        "evn_matrix_char",
+        "evn_matrix_pixel",
+        "evn_matrix_brightness",
+        "evn_matrix_clear"
+      ],
+      "skip": {}
+    },
+    {
+      "dir": "15_seven_segment",
+      "slug": "seven_segment",
+      "title": "7-segment display",
+      "description": "four digits (HT16K33)",
+      "classes": [
+        "SevenSegmentLED"
+      ],
+      "module": [],
+      "blocks": [
+        "evn_seven_setup",
+        "evn_seven_number",
+        "evn_seven_text",
+        "evn_seven_colon",
+        "evn_seven_brightness",
+        "evn_seven_clear"
+      ],
+      "skip": {}
+    },
+    {
+      "dir": "16_rgb_leds",
+      "slug": "rgb_leds",
+      "title": "RGB LEDs",
+      "description": "WS2812B strip on a servo port",
+      "classes": [
+        "RGBLED"
+      ],
+      "module": [],
+      "blocks": [
+        "evn_rgb_setup",
+        "evn_rgb_fill",
+        "evn_rgb_set",
+        "evn_rgb_brightness",
+        "evn_rgb_off",
+        "evn_color",
+        "evn_color_rgb"
+      ],
+      "skip": {}
+    },
+    {
+      "dir": "17_servo",
+      "slug": "servo",
+      "title": "Servo",
+      "description": "hobby servos on ports 1-4",
+      "classes": [
+        "Servo"
+      ],
+      "module": [],
+      "blocks": [
+        "evn_servo_setup",
+        "evn_servo_angle",
+        "evn_servo_move",
+        "evn_servo_done",
+        "evn_servo_duty",
+        "evn_servo_pulse",
+        "evn_servo_stop"
+      ],
+      "skip": {}
+    },
+    {
+      "dir": "18_bluetooth",
+      "slug": "bluetooth",
+      "title": "Bluetooth",
+      "description": "HC-05 module on a serial port",
+      "classes": [
+        "Bluetooth"
+      ],
+      "module": [],
+      "blocks": [
+        "evn_bluetooth_setup",
+        "evn_bluetooth_send",
+        "evn_bluetooth_any",
+        "evn_bluetooth_line"
+      ],
+      "skip": {
+        "factory_reset": "wipes the module's name, PIN and speed",
+        "command": "sends raw AT commands; the module's own manual",
+        "exit_command_mode": "only after command()",
+        "set_baudrate": "reprograms the module's speed for good",
+        "repl": "moves the board's REPL onto the module; see the Bluetooth section of the API reference",
+        "address": "command mode only: needs Bluetooth(n, stay_in_command=True) with the module's button held, which reconfigures the module",
+        "version": "command mode only, as address()"
+      }
+    },
+    {
+      "dir": "19_uart",
+      "slug": "uart",
+      "title": "UART (serial ports)",
+      "description": "Serial 1 and 2 as plain UARTs",
+      "classes": [
+        "UART"
+      ],
+      "module": [],
+      "blocks": null,
+      "skip": {
+        "repl": "moves the board's REPL onto the port"
+      }
+    },
+    {
+      "dir": "20_i2c",
+      "slug": "i2c",
+      "title": "I2C (any device)",
+      "description": "raw I2C on ports 1-16, for devices without a class",
+      "classes": [
+        "I2C"
+      ],
+      "module": [],
+      "blocks": null,
+      "skip": {}
+    },
+    {
+      "dir": "21_files",
+      "slug": "files",
+      "title": "Files on the board",
+      "description": "open(), os and the flash file system",
+      "classes": [],
+      "module": [],
+      "blocks": null,
+      "skip": {}
+    }
+  ]
+}

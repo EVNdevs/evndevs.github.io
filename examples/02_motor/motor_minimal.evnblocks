@@ -1,0 +1,115 @@
+{
+  "format": "evn-blocks",
+  "version": 2,
+  "title": "Motor: minimal",
+  "needs": "a motor on port 1, wheel off the ground",
+  "description": "One motor turns a full turn, comes back to where it started, and says where it is.",
+  "workspace": {
+    "blocks": {
+      "languageVersion": 0,
+      "blocks": [
+        {
+          "type": "evn_setup_start",
+          "x": 30,
+          "y": 30,
+          "next": {
+            "block": {
+              "type": "evn_motor_setup",
+              "fields": {
+                "PORT": "1",
+                "DIRECTION": "CW",
+                "UNIT": "DEG_S"
+              }
+            }
+          }
+        },
+        {
+          "type": "evn_program_start",
+          "x": 30,
+          "y": 115,
+          "next": {
+            "block": {
+              "type": "evn_motor_run_angle",
+              "fields": {
+                "PORT": "1",
+                "THEN": "HOLD",
+                "WAIT": true
+              },
+              "inputs": {
+                "SPEED": {
+                  "shadow": {
+                    "type": "math_number",
+                    "fields": {
+                      "NUM": 500
+                    }
+                  }
+                },
+                "ANGLE": {
+                  "shadow": {
+                    "type": "math_number",
+                    "fields": {
+                      "NUM": 360
+                    }
+                  }
+                }
+              },
+              "next": {
+                "block": {
+                  "type": "evn_motor_run_target",
+                  "fields": {
+                    "PORT": "1",
+                    "THEN": "HOLD",
+                    "WAIT": true
+                  },
+                  "inputs": {
+                    "SPEED": {
+                      "shadow": {
+                        "type": "math_number",
+                        "fields": {
+                          "NUM": 500
+                        }
+                      }
+                    },
+                    "ANGLE": {
+                      "shadow": {
+                        "type": "math_number",
+                        "fields": {
+                          "NUM": 0
+                        }
+                      }
+                    }
+                  },
+                  "next": {
+                    "block": {
+                      "type": "text_print",
+                      "inputs": {
+                        "TEXT": {
+                          "block": {
+                            "type": "evn_motor_measure",
+                            "fields": {
+                              "PORT": "1",
+                              "WHAT": "angle"
+                            }
+                          }
+                        }
+                      },
+                      "next": {
+                        "block": {
+                          "type": "evn_motor_stop",
+                          "fields": {
+                            "ACTION": "stop",
+                            "PORT": "1"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,70 @@
+{
+  "format": "evn-blocks",
+  "version": 2,
+  "title": "Weather sensor: minimal",
+  "needs": "the weather sensor (BME280) on I2C port 1",
+  "description": "Says the temperature in degrees Celsius once a second, for ever (stop it with the stop button).",
+  "workspace": {
+    "blocks": {
+      "languageVersion": 0,
+      "blocks": [
+        {
+          "type": "evn_setup_start",
+          "x": 30,
+          "y": 30,
+          "next": {
+            "block": {
+              "type": "evn_env_setup",
+              "fields": {
+                "PORT": "1"
+              }
+            }
+          }
+        },
+        {
+          "type": "evn_program_start",
+          "x": 30,
+          "y": 115,
+          "next": {
+            "block": {
+              "type": "evn_forever",
+              "inputs": {
+                "DO": {
+                  "block": {
+                    "type": "text_print",
+                    "inputs": {
+                      "TEXT": {
+                        "block": {
+                          "type": "evn_env_value",
+                          "fields": {
+                            "PORT": "1",
+                            "WHAT": "temperature"
+                          }
+                        }
+                      }
+                    },
+                    "next": {
+                      "block": {
+                        "type": "evn_wait",
+                        "inputs": {
+                          "TIME": {
+                            "shadow": {
+                              "type": "math_number",
+                              "fields": {
+                                "NUM": 1000
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

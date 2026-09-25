@@ -1,0 +1,440 @@
+{
+  "format": "evn-blocks",
+  "version": 2,
+  "title": "Board: every block",
+  "needs": "nothing but the board; you press the user button when it asks",
+  "description": "Every board and timing block once: the battery, the user button, the LED, waiting and the stopwatch. After the tour the LED follows the button until 20 s have gone by, then the program waits forever: press Stop to end it.",
+  "workspace": {
+    "blocks": {
+      "languageVersion": 0,
+      "blocks": [
+        {
+          "type": "evn_setup_start",
+          "x": 30,
+          "y": 30
+        },
+        {
+          "type": "evn_program_start",
+          "x": 30,
+          "y": 115,
+          "next": {
+            "block": {
+              "type": "evn_comment",
+              "fields": {
+                "TEXT": "the battery pack, in millivolts (0 without a pack)"
+              },
+              "next": {
+                "block": {
+                  "type": "text_print",
+                  "inputs": {
+                    "TEXT": {
+                      "block": {
+                        "type": "text_join",
+                        "inputs": {
+                          "ADD0": {
+                            "shadow": {
+                              "type": "text",
+                              "fields": {
+                                "TEXT": "battery (mV): "
+                              }
+                            }
+                          },
+                          "ADD1": {
+                            "block": {
+                              "type": "evn_battery_voltage"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "next": {
+                    "block": {
+                      "type": "evn_comment",
+                      "fields": {
+                        "TEXT": "start from the board: wait for a press and release of the user button"
+                      },
+                      "next": {
+                        "block": {
+                          "type": "text_print",
+                          "inputs": {
+                            "TEXT": {
+                              "shadow": {
+                                "type": "text",
+                                "fields": {
+                                  "TEXT": "press the user button to start"
+                                }
+                              }
+                            }
+                          },
+                          "next": {
+                            "block": {
+                              "type": "evn_wait_for_button",
+                              "next": {
+                                "block": {
+                                  "type": "evn_stopwatch_reset",
+                                  "fields": {
+                                    "ACTION": "reset"
+                                  },
+                                  "next": {
+                                    "block": {
+                                      "type": "evn_comment",
+                                      "fields": {
+                                        "TEXT": "the LED: on, off, toggle, or set from a true/false value"
+                                      },
+                                      "next": {
+                                        "block": {
+                                          "type": "evn_led",
+                                          "fields": {
+                                            "ACTION": "on"
+                                          },
+                                          "next": {
+                                            "block": {
+                                              "type": "evn_wait",
+                                              "inputs": {
+                                                "TIME": {
+                                                  "shadow": {
+                                                    "type": "math_number",
+                                                    "fields": {
+                                                      "NUM": 500
+                                                    }
+                                                  }
+                                                }
+                                              },
+                                              "next": {
+                                                "block": {
+                                                  "type": "evn_led",
+                                                  "fields": {
+                                                    "ACTION": "off"
+                                                  },
+                                                  "next": {
+                                                    "block": {
+                                                      "type": "evn_wait",
+                                                      "inputs": {
+                                                        "TIME": {
+                                                          "shadow": {
+                                                            "type": "math_number",
+                                                            "fields": {
+                                                              "NUM": 500
+                                                            }
+                                                          }
+                                                        }
+                                                      },
+                                                      "next": {
+                                                        "block": {
+                                                          "type": "controls_repeat_ext",
+                                                          "inputs": {
+                                                            "TIMES": {
+                                                              "shadow": {
+                                                                "type": "math_number",
+                                                                "fields": {
+                                                                  "NUM": 6
+                                                                }
+                                                              }
+                                                            },
+                                                            "DO": {
+                                                              "block": {
+                                                                "type": "evn_led",
+                                                                "fields": {
+                                                                  "ACTION": "toggle"
+                                                                },
+                                                                "next": {
+                                                                  "block": {
+                                                                    "type": "evn_wait",
+                                                                    "inputs": {
+                                                                      "TIME": {
+                                                                        "shadow": {
+                                                                          "type": "math_number",
+                                                                          "fields": {
+                                                                            "NUM": 200
+                                                                          }
+                                                                        }
+                                                                      }
+                                                                    }
+                                                                  }
+                                                                }
+                                                              }
+                                                            }
+                                                          },
+                                                          "next": {
+                                                            "block": {
+                                                              "type": "evn_led_set",
+                                                              "inputs": {
+                                                                "ON": {
+                                                                  "block": {
+                                                                    "type": "logic_boolean",
+                                                                    "fields": {
+                                                                      "BOOL": "FALSE"
+                                                                    }
+                                                                  }
+                                                                }
+                                                              },
+                                                              "next": {
+                                                                "block": {
+                                                                  "type": "text_print",
+                                                                  "inputs": {
+                                                                    "TEXT": {
+                                                                      "block": {
+                                                                        "type": "text_join",
+                                                                        "inputs": {
+                                                                          "ADD0": {
+                                                                            "shadow": {
+                                                                              "type": "text",
+                                                                              "fields": {
+                                                                                "TEXT": "stopwatch (ms): "
+                                                                              }
+                                                                            }
+                                                                          },
+                                                                          "ADD1": {
+                                                                            "block": {
+                                                                              "type": "evn_stopwatch_time"
+                                                                            }
+                                                                          }
+                                                                        }
+                                                                      }
+                                                                    }
+                                                                  },
+                                                                  "next": {
+                                                                    "block": {
+                                                                      "type": "evn_comment",
+                                                                      "fields": {
+                                                                        "TEXT": "a paused stopwatch does not count: this wait is left out"
+                                                                      },
+                                                                      "next": {
+                                                                        "block": {
+                                                                          "type": "evn_stopwatch_reset",
+                                                                          "fields": {
+                                                                            "ACTION": "pause"
+                                                                          },
+                                                                          "next": {
+                                                                            "block": {
+                                                                              "type": "evn_wait",
+                                                                              "inputs": {
+                                                                                "TIME": {
+                                                                                  "shadow": {
+                                                                                    "type": "math_number",
+                                                                                    "fields": {
+                                                                                      "NUM": 1000
+                                                                                    }
+                                                                                  }
+                                                                                }
+                                                                              },
+                                                                              "next": {
+                                                                                "block": {
+                                                                                  "type": "evn_stopwatch_reset",
+                                                                                  "fields": {
+                                                                                    "ACTION": "resume"
+                                                                                  },
+                                                                                  "next": {
+                                                                                    "block": {
+                                                                                      "type": "text_print",
+                                                                                      "inputs": {
+                                                                                        "TEXT": {
+                                                                                          "block": {
+                                                                                            "type": "text_join",
+                                                                                            "inputs": {
+                                                                                              "ADD0": {
+                                                                                                "shadow": {
+                                                                                                  "type": "text",
+                                                                                                  "fields": {
+                                                                                                    "TEXT": "stopwatch (ms), still about the same: "
+                                                                                                  }
+                                                                                                }
+                                                                                              },
+                                                                                              "ADD1": {
+                                                                                                "block": {
+                                                                                                  "type": "evn_stopwatch_time"
+                                                                                                }
+                                                                                              }
+                                                                                            }
+                                                                                          }
+                                                                                        }
+                                                                                      },
+                                                                                      "next": {
+                                                                                        "block": {
+                                                                                          "type": "evn_comment",
+                                                                                          "fields": {
+                                                                                            "TEXT": "wait until a condition is true: here, 5 s on the stopwatch"
+                                                                                          },
+                                                                                          "next": {
+                                                                                            "block": {
+                                                                                              "type": "evn_wait_until",
+                                                                                              "inputs": {
+                                                                                                "COND": {
+                                                                                                  "block": {
+                                                                                                    "type": "logic_compare",
+                                                                                                    "fields": {
+                                                                                                      "OP": "GT"
+                                                                                                    },
+                                                                                                    "inputs": {
+                                                                                                      "A": {
+                                                                                                        "block": {
+                                                                                                          "type": "evn_stopwatch_time"
+                                                                                                        }
+                                                                                                      },
+                                                                                                      "B": {
+                                                                                                        "shadow": {
+                                                                                                          "type": "math_number",
+                                                                                                          "fields": {
+                                                                                                            "NUM": 5000
+                                                                                                          }
+                                                                                                        }
+                                                                                                      }
+                                                                                                    }
+                                                                                                  }
+                                                                                                }
+                                                                                              },
+                                                                                              "next": {
+                                                                                                "block": {
+                                                                                                  "type": "text_print",
+                                                                                                  "inputs": {
+                                                                                                    "TEXT": {
+                                                                                                      "shadow": {
+                                                                                                        "type": "text",
+                                                                                                        "fields": {
+                                                                                                          "TEXT": "now the LED follows the button for 20 s"
+                                                                                                        }
+                                                                                                      }
+                                                                                                    }
+                                                                                                  },
+                                                                                                  "next": {
+                                                                                                    "block": {
+                                                                                                      "type": "evn_forever",
+                                                                                                      "inputs": {
+                                                                                                        "DO": {
+                                                                                                          "block": {
+                                                                                                            "type": "evn_led_set",
+                                                                                                            "inputs": {
+                                                                                                              "ON": {
+                                                                                                                "block": {
+                                                                                                                  "type": "evn_button_pressed"
+                                                                                                                }
+                                                                                                              }
+                                                                                                            },
+                                                                                                            "next": {
+                                                                                                              "block": {
+                                                                                                                "type": "controls_if",
+                                                                                                                "inputs": {
+                                                                                                                  "IF0": {
+                                                                                                                    "block": {
+                                                                                                                      "type": "logic_compare",
+                                                                                                                      "fields": {
+                                                                                                                        "OP": "GT"
+                                                                                                                      },
+                                                                                                                      "inputs": {
+                                                                                                                        "A": {
+                                                                                                                          "block": {
+                                                                                                                            "type": "evn_stopwatch_time"
+                                                                                                                          }
+                                                                                                                        },
+                                                                                                                        "B": {
+                                                                                                                          "shadow": {
+                                                                                                                            "type": "math_number",
+                                                                                                                            "fields": {
+                                                                                                                              "NUM": 25000
+                                                                                                                            }
+                                                                                                                          }
+                                                                                                                        }
+                                                                                                                      }
+                                                                                                                    }
+                                                                                                                  },
+                                                                                                                  "DO0": {
+                                                                                                                    "block": {
+                                                                                                                      "type": "evn_led",
+                                                                                                                      "fields": {
+                                                                                                                        "ACTION": "off"
+                                                                                                                      },
+                                                                                                                      "next": {
+                                                                                                                        "block": {
+                                                                                                                          "type": "text_print",
+                                                                                                                          "inputs": {
+                                                                                                                            "TEXT": {
+                                                                                                                              "shadow": {
+                                                                                                                                "type": "text",
+                                                                                                                                "fields": {
+                                                                                                                                  "TEXT": "done: press Stop to end the program"
+                                                                                                                                }
+                                                                                                                              }
+                                                                                                                            }
+                                                                                                                          },
+                                                                                                                          "next": {
+                                                                                                                            "block": {
+                                                                                                                              "type": "evn_wait_forever"
+                                                                                                                            }
+                                                                                                                          }
+                                                                                                                        }
+                                                                                                                      }
+                                                                                                                    }
+                                                                                                                  }
+                                                                                                                },
+                                                                                                                "next": {
+                                                                                                                  "block": {
+                                                                                                                    "type": "evn_wait",
+                                                                                                                    "inputs": {
+                                                                                                                      "TIME": {
+                                                                                                                        "shadow": {
+                                                                                                                          "type": "math_number",
+                                                                                                                          "fields": {
+                                                                                                                            "NUM": 20
+                                                                                                                          }
+                                                                                                                        }
+                                                                                                                      }
+                                                                                                                    }
+                                                                                                                  }
+                                                                                                                }
+                                                                                                              }
+                                                                                                            }
+                                                                                                          }
+                                                                                                        }
+                                                                                                      }
+                                                                                                    }
+                                                                                                  }
+                                                                                                }
+                                                                                              }
+                                                                                            }
+                                                                                          }
+                                                                                        }
+                                                                                      }
+                                                                                    }
+                                                                                  }
+                                                                                }
+                                                                              }
+                                                                            }
+                                                                          }
+                                                                        }
+                                                                      }
+                                                                    }
+                                                                  }
+                                                                }
+                                                              }
+                                                            }
+                                                          }
+                                                        }
+                                                      }
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

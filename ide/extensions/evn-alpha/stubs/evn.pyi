@@ -21,18 +21,20 @@ version: str
 
 class Port:
     """Port names as integers: A..D are the EVN port numbers 1..4 (M1..M4)."""
-    A: int  # = 1  (M1, EV3 Large on the reference rig)
-    B: int  # = 2  (M2, EV3 Large)
-    C: int  # = 3  (M3, EV3 Medium)
-    D: int  # = 4  (M4, EV3 Medium)
+    A: int  # = 1  motor port 1 (M1)
+    B: int  # = 2  motor port 2 (M2)
+    C: int  # = 3  motor port 3 (M3)
+    D: int  # = 4  motor port 4 (M4)
 
 
 class Direction:
+    """The positive direction of a ``Motor`` (``Motor(port, positive_direction=...)``)."""
     CLOCKWISE: int  # = 0, the firmware's positive direction (physically clockwise looking at the shaft)
     COUNTERCLOCKWISE: int  # = 1, flips angle, speed, load, duty and targets
 
 
 class Stop:
+    """What a motor does at the end of a maneuver (the ``then=`` argument of ``run_angle()``, ``straight()`` ...)."""
     COAST: int  # = 0  release the motor
     BRAKE: int  # = 1  passive brake (both bridge inputs high)
     HOLD: int  # = 2   keep regulating at the target (default for profiled moves)
@@ -127,9 +129,12 @@ class Control:
         """Stall detection: below ``speed`` deg/s for ``time`` ms, 0..10000 (defaults 50, 50). The speed reads
         back as the float it was set to, the time as int ms."""
 
-    def done(self) -> bool: ...
-    def stalled(self) -> bool: ...
-    def load(self) -> int: ...
+    def done(self) -> bool:
+        """Same as ``Motor.done()``: the last profiled move is complete and the shaft is within ``target_tolerances()``."""
+    def stalled(self) -> bool:
+        """Same as ``Motor.stalled()``: at the allowed limit and not turning, for ``stall_tolerances()``."""
+    def load(self) -> int:
+        """Same as ``Motor.load()``: the load torque estimate in mNm (positive = opposing the motor)."""
     def state(self) -> Tuple[float, float, float, float, int, bool, bool]:
         """``(reference_deg, x1_deg, x2_degs, x3_degs2, applied_mv, hold, assist)``: the controller's position
         reference, the ADRC extended-state observer's position / speed / total-disturbance estimates (output
@@ -167,7 +172,9 @@ class Motor:
     """
 
     control: Control
+    """The controller settings of this motor: ``motor.control.limits()``, ``target_tolerances()``, ``stall_tolerances()``, ``law()`` ... (see ``Control``)."""
     model: Model
+    """The observer (motor model) estimates of this motor (see ``Model``)."""
 
     def __init__(self, port: int, positive_direction: int = Direction.CLOCKWISE, gears: _Gears = None,
                  reset_angle: bool = True, profile: Optional[float] = None, speed_unit: int = SpeedUnit.DEG_S,
@@ -181,9 +188,10 @@ class Motor:
         ``"JGA25-370 6V 77RPM"`` (``"large"``, ``"medium"``, ``"nxt"``, ``"jga25"`` also work; the JGA25 is
         a 6 V gearmotor, 3432 counts per revolution, the port capped at 6 V). Every gain and limit starts from the model's compiled
         defaults; ``calibrate()`` refines them for this motor and stores the result with the model.
-        ``None`` keeps the model the port runs: the one its stored calibration was made for, else the
-        firmware's fallback table (EV3 Large on ports 1-2, EV3 Medium on 3-4). Naming another model
-        switches the port to that model's defaults and prints a WARNING that its stored calibration
+        ``None`` keeps the motor the port runs: the one it was configured for (``evn.configure_motor()`` or
+        the Board view's gear, stored on the board), else the one its stored calibration was made for, else
+        the firmware's fallback table (EV3 Large on ports 1-2, EV3 Medium on 3-4). Naming another model
+        switches the port to that model's defaults until the next reboot and prints a WARNING that its stored calibration
         (made for the other model) is not applied until ``calibrate()`` runs again. ``ValueError`` for
         an unknown name; ``RuntimeError`` if the port is moving.
         """
@@ -434,24 +442,31 @@ class battery:
     def age() -> Optional[int]:
         """Age of the reading in ms, or ``None`` when no pack is present."""
     @staticmethod
-    def present() -> bool: ...
+    def present() -> bool:
+        """True when a battery pack is connected and read (``voltage()`` is 0 and ``cells()`` / ``age()`` are ``None`` otherwise)."""
 
 
 class button:
+    """The board's user button (a module-like object: ``evn.button.pressed()``)."""
     @staticmethod
     def pressed() -> bool:
         """User button state (the button is also the emergency stop: coast all)."""
 
 
 class led:
+    """The board LED (a module-like object: ``evn.led.on()``). Until a program uses it, it blinks as the board's heartbeat (faster while a computer has the USB port open)."""
     @staticmethod
-    def on() -> None: ...
+    def on() -> None:
+        """Light the board LED. The first call takes the LED over from the heartbeat blink."""
     @staticmethod
-    def off() -> None: ...
+    def off() -> None:
+        """Turn the board LED off (the heartbeat blink stops once the program uses the LED)."""
     @staticmethod
-    def toggle() -> None: ...
+    def toggle() -> None:
+        """Switch the board LED to the other state."""
     @staticmethod
-    def set(value: object, /) -> None: ...
+    def set(value: object, /) -> None:
+        """Light the board LED when ``value`` is true, turn it off when it is false."""
 
 
 class Servo:
@@ -468,12 +483,12 @@ class Servo:
     ``RGBLED`` holds the port every call raises ``OSError("servo port %d is used by an RGBLED strip")``.
     ``close()`` and a soft reset (Ctrl-D) drop the claim. A new object drives its port even after
     ``disable()`` on an earlier one, and the constructor waits up to 10 ms for a just-closed strip
-    to hand the channel back (its dark frame goes out first).
+    to hand the channel back (its dark frame goes out first); a strip that is still open raises at once.
 
     Raises: ``ValueError`` for a port outside 1..4, an unknown profile name, a pulse range outside
     ``200 <= min_us < max_us <= 2800``, a range outside 0..3600, a start outside the range, a
-    ``max_dps`` below 1, a non-finite number; ``ValueError("Servo is closed")`` from every writing
-    call after ``close()``; ``TypeError`` for ``duty()`` on a fixed-range profile or ``angle()`` /
+    ``max_dps`` below 1, a non-finite number; ``ValueError("Servo is closed")`` from every call
+    after ``close()``; ``TypeError`` for ``duty()`` on a fixed-range profile or ``angle()`` /
     ``move()`` on a continuous one; ``OSError`` when the port is not available.
 
     Bench-validated against an encoder: 270-degree 277..281 degrees of travel; continuous-rotation
@@ -493,7 +508,8 @@ class Servo:
         """The tracked position in degrees (fixed-range profiles)."""
     @overload
     def angle(self, degrees: float, reverse: bool = False, /) -> None:
-        """Jump to ``degrees`` (0..range)."""
+        """Jump to ``degrees`` (0..range). ``reverse=True`` mirrors this one pulse, but the servo still
+        records ``degrees`` as its position, so a following ``move()`` starts from the wrong place."""
     def move(self, angle: float, speed: Optional[float] = None, wait: bool = True) -> None:
         """Sweep to ``angle`` at ``speed`` deg/s (default the profile's maximum); blocks until there when
         ``wait``. ``speed=0`` raises ``ValueError`` (use ``angle()`` to jump)."""
@@ -510,14 +526,14 @@ class Servo:
         """``(name, range, min_us, max_us, start, max_dps, reverse)``."""
     def set_range(self, min_us: int, max_us: int, /) -> None:
         """New pulse range, ``200 <= min_us < max_us <= 2800``."""
-    def enable(self) -> None: ...
+    def enable(self) -> None:
+        """Start the pulses again after ``disable()``."""
     def disable(self) -> None:
         """Stop the pulses and drive the pin low (sticky until ``enable()`` or a new ``Servo`` object)."""
     def close(self) -> None:
         """Give the channel back (the pulse stops, the pin goes low) so an ``RGBLED`` strip or a new
         ``Servo`` object can take the port without a soft reset. Idempotent; every other method then
-        raises ``ValueError("Servo is closed")`` except ``done()`` and ``profile()``, which still
-        answer from the port as it is now."""
+        raises ``ValueError("Servo is closed")``, ``done()`` and ``profile()`` included."""
 
 
 class I2C:
@@ -548,7 +564,8 @@ class I2C:
         """Every address 0x08..0x77 that ACKs on this port, except 0x70 (the multiplexer). A probe
         that times out resets the bus and drops the multiplexer channel, so the scan of that port is
         abandoned there rather than carried on against the bare bus."""
-    def probe(self, addr: int, /) -> bool: ...
+    def probe(self, addr: int, /) -> bool:
+        """True when a device ACKs ``addr`` on this port (a 1-byte read, 1 ms deadline)."""
     def readfrom(self, addr: int, nbytes: int, /) -> bytes:
         """``nbytes`` 1..256."""
     def writeto(self, addr: int, buf: bytes, /) -> None:
@@ -628,8 +645,11 @@ class Color:
     A value that is one of the named constants is that object, so it prints as ``Color.RED``.
     """
     h: int
+    """Hue, 0..359 degrees."""
     s: int
+    """Saturation, 0..100 %."""
     v: int
+    """Value (brightness), -100..100 %."""
     NONE: "Color"     # (0, 0, 0)
     BLACK: "Color"    # (0, 0, 10)
     GRAY: "Color"     # (0, 0, 50)
@@ -754,7 +774,8 @@ class ColorSensor:
         integration whatever the thresholds are, so this reads ``True`` as soon as ``thresholds()``
         has been called: pass a persistence of 1 or more for a flag that means "the clear count left
         the window"."""
-    def clear_interrupt(self) -> None: ...
+    def clear_interrupt(self) -> None:
+        """Clear the latched ``interrupt()`` flag on the chip. ``OSError`` while the sensor is unplugged."""
     def id(self) -> int:
         """0x44 (TCS34725 / 34721) or 0x4D (TCS34727 / 34723)."""
     def close(self) -> None:
@@ -814,7 +835,8 @@ class ADC:
         no data-ready flag in this mode, so a read can repeat or skip a conversion."""
     def age(self, input: Optional[int] = None, /) -> int:
         """ms since the cached conversion of ``input``."""
-    def close(self) -> None: ...
+    def close(self) -> None:
+        """Put the ADS1115 in power-down and release the port. Idempotent; every other call then raises ``ValueError("ADC is closed")``."""
 
 
 class EnvSensor:
@@ -875,8 +897,10 @@ class EnvSensor:
     def measurement_time(self) -> float:
         """Worst-case ms for one measurement at the current oversampling (the datasheet's bound, not
         the typical time the schedule uses)."""
-    def age(self) -> int: ...
-    def close(self) -> None: ...
+    def age(self) -> int:
+        """Milliseconds since the cached reading was taken."""
+    def close(self) -> None:
+        """Put the BME280 in sleep mode and release the port. Idempotent; every other call then raises ``ValueError("environment sensor is closed")``."""
 
 
 class Compass:
@@ -885,7 +909,8 @@ class Compass:
     Body frame: X forward, Y left, Z up (``axes()`` says which sensor axes those are).
     ``heading()`` is 0..360 degrees clockwise from ``north()``. Calibrate once with
     ``calibrate()`` ... ``calibrate_stop()`` while tumbling the sensor (or ``planar=True``
-    while spinning a floor robot); store ``calibration()`` and restore it at start-up.
+    while spinning a floor robot); ``calibrate_stop()`` stores the result on the board for the port and
+    every later ``Compass(port)`` installs it (``evn.compass_calibration(port)`` reads it).
     ``calibrate_stop()`` raises ``ValueError`` when the sensor did not move through enough
     directions (coverage 0 for a still sensor) **and keeps collecting**, so turn some more and stop
     again, or give up with ``calibrate_cancel()``. A flat ring of samples is refused by the 3-D fit;
@@ -893,8 +918,8 @@ class Compass:
     A calibration corrects the sensor, not the room: keep the compass at one place on the robot,
     away from motors (their magnets change the field as the robot moves).
 
-    A second ``Compass(port)`` on an open port keeps the calibration and the ``north()`` reference;
-    ``close()`` drops them. ``axes()`` set to what it already is is a no-op; a real change clears the
+    A second ``Compass(port)`` on an open port keeps the calibration, the ``axes()`` it was made in
+    and the ``north()`` reference; ``close()`` drops them. ``axes()`` set to what it already is is a no-op; a real change clears the
     fit. HMC5883L: 75 Hz, a setter returns after two periods (~30 ms) with the first reading under
     the new setting. Bench-validated on the EVN HMC5883L module (2026-09-17); the QMC5883L variant
     has not been on hardware yet.
@@ -965,8 +990,8 @@ class Compass:
     @overload
     def bias(self, mode: int, /) -> None:
         """HMC5883L self-test strap: 0 normal, 1 positive, 2 negative. The strap adds about 1.16 Ga and
-        saturates every range under 4.0 G, so a non-zero bias needs ``range(4.7)`` first (else
-        ``ValueError``) - or use ``self_test()``, which sets the datasheet's gain itself."""
+        saturates every range under 4.0 G, so a non-zero bias needs ``range(4.0)`` or higher first (else
+        ``ValueError``, whose message names 4.7) - or use ``self_test()``, which sets the datasheet's gain itself."""
     def self_test(self, *, negative: bool = False, raw: bool = False) -> Tuple[object, object, object]:
         """HMC5883L only (``ValueError`` on a QMC): the datasheet's self test, run at the gain the
         datasheet prescribes with the settings put back afterwards. Returns ``(ok_x, ok_y, ok_z)``
@@ -976,20 +1001,35 @@ class Compass:
         ellipse for a robot that only turns on the floor)."""
     def calibrate_progress(self) -> Tuple[int, float]:
         """``(samples, coverage 0..1)``."""
+    def calibrate_directions(self) -> Tuple[int, int, bool]:
+        """``(mask, current, planar)``: the directions seen so far as a bit mask (bit n = cx + 3*cy + 9*cz,
+        each 0/1/2 for below/inside/above the dead band of that axis of the field around its centre,
+        body frame; 26 bits, the 8 with cz = 1 in planar mode), the latest reading's direction (-1 =
+        none) and the mode - for a live coverage view. ``ValueError`` when no collection runs."""
     def calibrate_stop(self) -> Tuple[float, float, int]:
-        """Fit and install the calibration; ``(residual, coverage, samples)``. ``ValueError`` when
+        """Fit and install the calibration, and store it in flash for this port with the date (every
+        later ``Compass(port)`` with the same axes starts with it); ``(residual, coverage, samples)``. ``ValueError`` when
         ``calibrate()`` was not started, and ``ValueError("calibration refused: ...")`` when there are
         not enough samples or directions - collection then continues, so turn more and call again."""
     def calibrate_cancel(self) -> None:
         """End a collection without fitting (the way out of a refused ``calibrate_stop()``)."""
+    def stored_calibration(self) -> dict:
+        """This port's stored calibration: ``{"port", "calibrated", "busy", "stored", "pending", "stamp",
+        "planar", "coverage" (0..1), "residual", "field" (gauss), "samples", "chip", "top", "front",
+        "offset" (gauss), "error"}``."""
+    def clear_calibration(self) -> bool:
+        """Forget this port's stored calibration and the one in force; ``False`` when a running motor
+        kept the flash write back."""
     @overload
     def calibration(self) -> Optional[Tuple[Tuple[float, float, float], Tuple[Tuple[float, float, float], Tuple[float, float, float], Tuple[float, float, float]]]]: ...
     @overload
     def calibration(self, offset: Optional[Sequence[float]], matrix: Optional[Sequence[Sequence[float]]] = None, /) -> None:
         """Install a stored ``(offset, matrix)`` or clear it with ``calibration(None)``. An offset alone
         installs the identity matrix (a hard-iron-only calibration)."""
-    def age(self) -> int: ...
-    def close(self) -> None: ...
+    def age(self) -> int:
+        """Milliseconds since the cached reading was taken."""
+    def close(self) -> None:
+        """Put the magnetometer in standby and release the port (the calibration in use and the ``north()`` reference go with it). Idempotent; every other call then raises ``ValueError("Compass is closed")``."""
 
 
 class TouchArray:
@@ -1013,7 +1053,8 @@ class TouchArray:
     def __init__(self, port: int, /) -> None: ...
     def touched(self) -> int:
         """Bitmask, bit n = electrode n touched (bit 12 = proximity)."""
-    def read(self, channel: int, /) -> bool: ...
+    def read(self, channel: int, /) -> bool:
+        """True while electrode ``channel`` (0..11, 12 = the proximity channel) is touched. A channel outside 0..12 raises ``ValueError``."""
     def pressed(self) -> bool:
         """Any electrode touched (the proximity channel excluded)."""
     def proximity(self) -> bool:
@@ -1027,11 +1068,11 @@ class TouchArray:
         """No argument: channel 0's ``(touch, release)`` pair, which an all-channel set applies to
         every channel."""
     @overload
-    def thresholds(self, channel: int, /) -> Tuple[int, int]:
+    def thresholds(self, channel: int, /) -> Tuple[int, int]:  # type: ignore[overload-overlap]  # one bare int is the channel (the binding's rule)
         """One bare positional argument is the **channel to read**, not ``touch``: it returns that
         channel's ``(touch, release)``."""
     @overload
-    def thresholds(self, *, channel: int) -> Tuple[int, int]:
+    def thresholds(self, *, channel: int) -> Tuple[int, int]:  # type: ignore[overload-overlap]
         """``channel=n`` without ``touch`` / ``release`` is a getter too: that channel's
         ``(touch, release)``."""
     @overload
@@ -1081,9 +1122,12 @@ class TouchArray:
         """An over-current fault has been seen since the object was opened or ``clear_overcurrent()``
         was called. The driver recovers from the fault by itself (clear, reset, reconfigure), so a
         fault would otherwise be invisible to a program that was not reading at that instant."""
-    def clear_overcurrent(self) -> None: ...
-    def age(self) -> int: ...
-    def close(self) -> None: ...
+    def clear_overcurrent(self) -> None:
+        """Forget a recorded over-current fault, so ``overcurrent()`` reads False until the next one."""
+    def age(self) -> int:
+        """Milliseconds since the cached reading was taken."""
+    def close(self) -> None:
+        """Put the MPR121 in stop mode and release the port. Idempotent; every other call then raises ``ValueError("touch array is closed")``."""
 
 
 class GestureSensor:
@@ -1122,8 +1166,10 @@ class GestureSensor:
         ``OSError("... is in gesture mode ...")`` instead of a stale value."""
     def raw(self) -> Tuple[int, int, int, int]:
         """``(clear, red, green, blue)`` counts (needs the colour engine)."""
-    def rgb(self) -> Tuple[int, int, int]: ...
-    def hsv(self) -> Color: ...
+    def rgb(self) -> Tuple[int, int, int]:
+        """``(r, g, b)`` 0..255, each channel relative to the clear channel (needs the colour engine)."""
+    def hsv(self) -> Color:
+        """The reading as a ``Color`` (``.h`` 0..359, ``.s`` 0..100, ``.v`` 0..100); value is the strongest channel as a % of full scale."""
     def color(self) -> Optional[Color]:
         """Nearest of ``detectable_colors()``, or ``None`` when that set is empty."""
     def color_match(self) -> Tuple[Optional[Color], float]:
@@ -1132,7 +1178,8 @@ class GestureSensor:
     @overload
     def detectable_colors(self) -> Sequence[Color]: ...
     @overload
-    def detectable_colors(self, colors: Sequence[Color], /) -> None: ...
+    def detectable_colors(self, colors: Sequence[Color], /) -> None:
+        """The colours ``color()`` chooses from (default: red, yellow, green, blue, white, none); pass a sequence of ``Color`` to change them. Anything that is not a ``Color`` raises ``TypeError``."""
     def ambient(self) -> int:
         """Clear channel as a percentage of full scale."""
     @overload
@@ -1187,7 +1234,8 @@ class GestureSensor:
         """``(als_int, prox_int, als_saturated, prox_saturated, in_gesture)``; ``in_gesture`` is the
         chip's ``GCONF4.GMODE`` bit - ``True`` while the chip is decoding a gesture and its proximity
         and colour engines are suspended."""
-    def clear_interrupts(self) -> None: ...
+    def clear_interrupts(self) -> None:
+        """Clear the latched ALS and proximity interrupts on the chip (``status()``). ``OSError`` while the sensor is unplugged."""
     @overload
     def offsets(self) -> Tuple[int, int, int, int, int, int]: ...
     @overload
@@ -1206,10 +1254,12 @@ class GestureSensor:
     def wait_time(self, ms: float, /) -> float:
         """Pause between ALS / proximity cycles, 0..8540 ms (0 = off); returns the value actually set
         (the int ``0`` when off)."""
-    def age(self) -> int: ...
+    def age(self) -> int:
+        """Milliseconds since the cached reading was taken."""
     def id(self) -> int:
         """0xAB, or 0xA8 on the alternate part the EVN module carries."""
-    def close(self) -> None: ...
+    def close(self) -> None:
+        """Put the APDS-9960 to sleep and release the port. Idempotent; every other call then raises ``ValueError("gesture sensor is closed")``."""
 
 
 class DistanceSensor:
@@ -1257,8 +1307,10 @@ class DistanceSensor:
         """Pause between ranges, 0..60000 ms (0 = back to back)."""
     def profile(self, name: str, /) -> None:
         """``'default'``, ``'high_speed'``, ``'high_accuracy'`` or ``'long_range'`` (setter only)."""
-    def age(self) -> int: ...
-    def close(self) -> None: ...
+    def age(self) -> int:
+        """Milliseconds since the cached reading was taken."""
+    def close(self) -> None:
+        """Stop ranging (software standby) and release the port. Idempotent; every other call then raises ``ValueError("distance sensor is closed")``."""
 
 
 class IMU:
@@ -1287,7 +1339,36 @@ class IMU:
     ``evn.I2C(port).scan()`` of this port pops one byte of the FIFO (the driver heals it with a FIFO
     reset). One call can hold the I2C bus for up to ~3.7 ms while it drains the FIFO.
     """
-    def __init__(self, port: int, /) -> None: ...
+    def __init__(self, port: int, /, *, calibrate: bool = False) -> None:
+        """Start the IMU on I2C port 1..16. The port's stored calibration (``calibrate()``) is applied
+        by default: its gyro and accelerometer offsets and its axes. ``calibrate=True`` runs a new one
+        first (~2 s, the robot still on a level surface); a failed one raises ``RuntimeError``."""
+    def calibrate(self, wait: bool = True, *, pose: int = 0) -> Optional[dict]:
+        """About 2 s with the robot still on a level surface: measures the gyro bias, the
+        accelerometer offsets and which sensor axis points up, stores them in flash for this port with
+        the date and applies them (every later ``IMU(port)`` starts with them). ``axes()`` follows: top
+        from gravity, front kept where it still fits - check it. Returns ``calibration()``; raises
+        ``RuntimeError("IMU calibration failed: ...")`` only when it moved. Off level it calibrates
+        what it can - over 8 degrees the gyro and the up axis, over 30 the gyro alone - and says what
+        it left out in ``warning``. ``wait=False``
+        returns ``None`` at once; ``calibration()`` reports ``busy`` and finishes it. ``pose=1``, then
+        turn the robot about half a turn on the same spot on its wheels, then ``pose=2``: the two-pose
+        calibration, which leaves a sloped surface out (up to 20 degrees, reported as ``slope``) and
+        stores only the sensor's and the mount's error."""
+    def calibration(self) -> dict:
+        """This port's stored calibration: ``{"port", "calibrated", "busy", "stored", "stamp" (seconds
+        since 1970 UTC, 0 = the clock was not set), "gyro" (deg/s bias, sensor axes), "accel" (g error,
+        sensor axes), "top", "front", "temperature", "error" (why the last calibration failed, else
+        None), "pending" (a change on any port is not in flash yet), "accel_calibrated", "tilt" (degrees
+        off level the accelerometer was calibrated at, None when it was not), "warning" (what the last
+        calibration left out, or a caution; else None), "two_pose", "slope" (degrees a two-pose
+        calibration left out this session, else None), "waiting" (between pose=1 and pose=2)}``."""
+    def cancel_calibration(self) -> None:
+        """Drop a calibration in progress (a ``wait=False`` run, or a first pose waiting for its turn);
+        nothing is stored."""
+    def clear_calibration(self) -> bool:
+        """Forget this port's calibration: back to the factory trim; ``axes()`` stays. ``False`` when a
+        running motor kept the flash write back (retried by the next ``calibration()``)."""
     def quaternion(self) -> Tuple[float, float, float, float]:
         """``(w, x, y, z)``, unit (DMP mode only)."""
     def heading(self) -> float:
@@ -1341,8 +1422,9 @@ class IMU:
         orientation change not yet returned, else ``None`` - each event is reported once, as ``tap()``
         does. **Chip frame**: the DMP's own x/y, which ``axes()`` does not remap (taps are remapped)."""
     def calibrate_gyro(self, samples: int = 500, /) -> Optional[Tuple[int, int, int]]:
-        """Raw mode: average ``samples`` (1..65535) still readings and subtract the bias; returns the
-        bias in counts, or ``None`` in DMP mode, where the DMP's own calibration owns the bias."""
+        """Average ``samples`` (1..65535) still readings and subtract the bias; returns the bias in
+        counts, or ``None`` while the DMP's own gyro calibration owns the bias (``dmp(True)`` with its
+        default ``gyro_cal=True``); with ``dmp(True, gyro_cal=False)`` it measures and returns it."""
     @overload
     def ranges(self) -> Tuple[int, int]: ...
     @overload
@@ -1375,8 +1457,10 @@ class IMU:
     def axes(self, *, top: Optional[str] = None, front: Optional[str] = None) -> None:
         """Which chip axes point up and forward (``'x'``, ``'y'``, ``'z'``, ``'-x'`` ...); ``None``
         keeps the current value, two equal axes raise ``ValueError``."""
-    def age(self) -> int: ...
-    def close(self) -> None: ...
+    def age(self) -> int:
+        """Milliseconds since the cached reading was taken."""
+    def close(self) -> None:
+        """Put the MPU-6500 to sleep and release the port. Idempotent; every other call then raises ``ValueError("IMU is closed")``."""
 
 
 class MatrixLED:
@@ -1411,9 +1495,12 @@ class MatrixLED:
         """0 (off), 2, 1 or 0.5 Hz."""
     def on(self, enable: bool = True, /) -> None:
         """Display enable (the chip's, not the frame)."""
-    def off(self) -> None: ...
-    def clear(self) -> None: ...
-    def fill(self) -> None: ...
+    def off(self) -> None:
+        """Display off (the chip's enable; the frame is kept and ``on()`` shows it again)."""
+    def clear(self) -> None:
+        """Every pixel off."""
+    def fill(self) -> None:
+        """Every pixel on."""
     def show(self) -> None:
         """Push the frame to the chip now."""
     @overload
@@ -1432,12 +1519,15 @@ class MatrixLED:
     @overload
     def keys(self, enable: bool, /) -> None:
         """Turn the chip's key scan on or off."""
-    def pixel(self, row: int, column: int, brightness: Union[int, float, bool] = 100, /) -> None:
+    def pixel(self, row: int, column: int, brightness: Union[int, float, bool] = 100) -> None:
         """Pybricks order: row 0..7 from the top, column 0..7 from the left; 0 / 0.0 / False turns the
         pixel off (the chip has one global brightness, so any non-zero value lights it)."""
-    def get(self, row: int, column: int, /) -> bool: ...
-    def hline(self, row: int, col0: int, col1: int, on: bool = True, /) -> None: ...
-    def vline(self, column: int, row0: int, row1: int, on: bool = True, /) -> None: ...
+    def get(self, row: int, column: int, /) -> bool:
+        """True when the frame's pixel at ``row``, ``column`` (0..7) is on."""
+    def hline(self, row: int, col0: int, col1: int, on: bool = True, /) -> None:
+        """Horizontal line on ``row`` from ``col0`` to ``col1`` (0..7); ``on=False`` erases."""
+    def vline(self, column: int, row0: int, row1: int, on: bool = True, /) -> None:
+        """Vertical line in ``column`` from ``row0`` to ``row1`` (0..7); ``on=False`` erases."""
     def rect(self, row0: int, col0: int, row1: int, col1: int, on: bool = True, /) -> None:
         """Filled rectangle."""
     def bitmap(self, rows: Union[bytes, Sequence[int], Sequence[Sequence[int]]], /) -> None:
@@ -1459,7 +1549,8 @@ class MatrixLED:
     def animate(self, matrices: Sequence[Union[bytes, Sequence[int], Sequence[Sequence[int]]]], interval: int, /) -> None:
         """Cycle 1..32 images forever, ``interval`` ms (>= 1) each, in the background; any drawing call
         ends it."""
-    def animating(self) -> bool: ...
+    def animating(self) -> bool:
+        """True while an ``animate()`` or ``text(wait=False)`` sequence is running."""
     def stop(self) -> None:
         """End an animation or text sequence, leaving the frame as it is."""
     @overload
@@ -1473,7 +1564,8 @@ class MatrixLED:
     @overload
     def orientation(self, *, invert_x: bool = False, invert_y: bool = False, swap_xy: bool = False) -> None:
         """Mirrored mountings."""
-    def close(self) -> None: ...
+    def close(self) -> None:
+        """Display and oscillator off (standby) and release the port. Idempotent; every other call then raises ``ValueError("MatrixLED is closed")``."""
 
 
 class SevenSegmentLED:
@@ -1491,22 +1583,30 @@ class SevenSegmentLED:
     @overload
     def brightness(self) -> int: ...
     @overload
-    def brightness(self, level: int, /) -> None: ...
+    def brightness(self, level: int, /) -> None:
+        """1..16."""
     @overload
     def blink(self) -> float: ...
     @overload
-    def blink(self, hz: float, /) -> None: ...
-    def on(self, enable: bool = True, /) -> None: ...
-    def off(self) -> None: ...
-    def clear(self) -> None: ...
-    def fill(self) -> None: ...
-    def show(self) -> None: ...
+    def blink(self, hz: float, /) -> None:
+        """0 (off), 2, 1 or 0.5 Hz."""
+    def on(self, enable: bool = True, /) -> None:
+        """Display enable (the chip's, not the frame); ``on(False)`` is ``off()``."""
+    def off(self) -> None:
+        """Display off (the frame is kept and ``on()`` shows it again)."""
+    def clear(self) -> None:
+        """Every segment off."""
+    def fill(self) -> None:
+        """Every segment on."""
+    def show(self) -> None:
+        """Push the frame to the chip now."""
     @overload
     def raw(self) -> bytes: ...
     @overload
     def raw(self, frame: bytes, /) -> None: ...
     @overload
-    def raw(self, led: int, on: bool, /) -> None: ...
+    def raw(self, led: int, on: bool, /) -> None:
+        """Direct display RAM: no argument returns the 16 bytes, ``raw(frame)`` writes all 16, ``raw(led, on)`` sets one of the 128 LEDs (0..127)."""
     @overload
     def keys(self) -> bytes:
         """As ``MatrixLED.keys()``: ``ValueError("key scan is off: keys(True)")`` until ``keys(True)``
@@ -1517,7 +1617,8 @@ class SevenSegmentLED:
         """``position`` 0..3, ``value`` 0..9."""
     def char(self, position: int, letter: str, /) -> None:
         """A character with a seven-segment glyph: a digit 0-9 or A B C D E F G H J L N O P R T U Y
-        (upper or lower case, shown the same) - _ space; anything else raises ``ValueError``."""
+        (upper or lower case, shown the same) - _ space; anything else raises ``ValueError``. Only the
+        first character of ``letter`` is used."""
     def text(self, text: str, /) -> None:
         """Up to 4 characters, left aligned; a ``'.'`` after a character lights its point."""
     def number(self, value: Union[int, float], /) -> None:
@@ -1527,12 +1628,16 @@ class SevenSegmentLED:
         range still falls back to the documented layout (99999.0 shows 9999)."""
     def integer(self, value: int, /) -> None:
         """-999..9999, right aligned."""
-    def point(self, position: int, on: bool = True, /) -> None: ...
-    def colon(self, on: bool = True, /) -> None: ...
+    def point(self, position: int, on: bool = True, /) -> None:
+        """Light (or with ``on=False`` clear) the decimal point of digit ``position`` 0..3."""
+    def colon(self, on: bool = True, /) -> None:
+        """Light (or with ``on=False`` clear) the colon."""
     def segments(self, position: int, mask: int, /) -> None:
         """Raw segments: a..g = bits 0..6, point = bit 7 (0..255)."""
-    def clear_position(self, position: int, clear_point: bool = True, /) -> None: ...
-    def close(self) -> None: ...
+    def clear_position(self, position: int, clear_point: bool = True, /) -> None:
+        """Blank digit ``position`` 0..3, and its decimal point unless ``clear_point=False``."""
+    def close(self) -> None:
+        """Display and oscillator off (standby) and release the port. Idempotent; every other call then raises ``ValueError("SevenSegmentLED is closed")``."""
 
 
 class Display:
@@ -1571,17 +1676,22 @@ class Display:
         characters were written. ``invert`` may be given positionally or as a keyword."""
     def clear(self) -> None:
         """Clear the frame and home the ``print()`` cursor."""
-    def clear_row(self, row: int, /) -> None: ...
+    def clear_row(self, row: int, /) -> None:
+        """Clear text row 0..7 and its label."""
     @overload
     def pixel(self, x: int, y: int, /) -> bool: ...
     @overload
-    def pixel(self, x: int, y: int, on: bool, /) -> None: ...
+    def pixel(self, x: int, y: int, on: bool, /) -> None:
+        """``pixel(x, y)`` reads the frame's pixel (x 0..127, y 0..63); ``pixel(x, y, on)`` sets it."""
     def line(self, x0: int, y0: int, x1: int, y1: int, on: bool = True, /) -> None:
         """Every coordinate must be on the screen (x 0..127, y 0..63)."""
-    def rect(self, x0: int, y0: int, x1: int, y1: int, on: bool = True, *, fill: bool = False) -> None: ...
+    def rect(self, x0: int, y0: int, x1: int, y1: int, on: bool = True, *, fill: bool = False) -> None:
+        """Rectangle from ``(x0, y0)`` to ``(x1, y1)`` (on the screen: x 0..127, y 0..63); ``fill=True`` (keyword) fills it, ``on=False`` erases."""
     width: int
+    """128 (pixels)."""
     height: int
-    def draw_pixel(self, x: int, y: int, color: Union[Color, bool] = True, /) -> None:
+    """64 (pixels)."""
+    def draw_pixel(self, x: int, y: int, color: Union[Color, bool] = True) -> None:
         """EV3 screen names: ``Color.BLACK`` (the default ink) lights a pixel; ``Color.NONE`` (value 0)
         and any grey with value >= 50 (``Color.WHITE``, ``Color.GRAY``) erase, as does ``False``.
         Coordinates off the screen are clipped, not refused."""
@@ -1629,23 +1739,29 @@ class Display:
     @overload
     def invert(self) -> bool: ...
     @overload
-    def invert(self, enable: bool, /) -> None: ...
-    def on(self, enable: bool = True, /) -> None: ...
-    def off(self) -> None: ...
+    def invert(self, enable: bool, /) -> None:
+        """Inverted panel (``True``: unlit pixels light and lit ones go dark) or normal (``False``, default); the frame is untouched."""
+    def on(self, enable: bool = True, /) -> None:
+        """Panel on (``on(False)`` is ``off()``); the frame is kept."""
+    def off(self) -> None:
+        """Panel off (sleep); the frame is kept and ``on()`` shows it again."""
     def scroll(self, left: bool = False, rows: Optional[Tuple[int, int]] = None, speed: int = 0,
                vertical: int = 0) -> None:
         """Hardware scroll: ``rows`` ``(first, last)`` of 0..7 ascending (``None`` = the whole screen),
         ``speed`` 0..7 (a frame-interval code), ``vertical`` -63..63. While it runs the frame is not
         written to the panel; the next drawing call stops it and repaints."""
-    def scroll_stop(self) -> None: ...
+    def scroll_stop(self) -> None:
+        """Stop a hardware ``scroll()``; the next drawing call repaints the frame."""
     def fade(self, mode: str, interval: int = 0, /) -> None:
         """``'off'``, ``'fade'`` or ``'blink'`` with the frame-interval code 0..15."""
-    def zoom(self, enable: bool = True, /) -> None: ...
+    def zoom(self, enable: bool = True, /) -> None:
+        """The panel's zoom-in mode (SSD1306 command 0xD6): each row shown twice as tall; ``zoom(False)`` ends it."""
     def all_on(self, enable: bool = True, /) -> None:
         """Light every pixel (the panel's entire-display-on command; the frame is untouched)."""
     def command(self, data: bytes, /) -> None:
         """Raw command bytes (1..32) for anything not wrapped."""
-    def close(self) -> None: ...
+    def close(self) -> None:
+        """Panel off and release the port (a ``mirror()`` on this display ends). Idempotent; every other call then raises ``ValueError("Display is closed")``."""
 
 
 class RGBLED:
@@ -1672,17 +1788,22 @@ class RGBLED:
     @overload
     def set(self, led: int, r: int, g: int, b: int, /) -> None: ...
     @overload
-    def set(self, led: int, color: Union[Color, Tuple[int, int, int]], /) -> None: ...
+    def set(self, led: int, color: Union[Color, Tuple[int, int, int]], /) -> None:
+        """Colour of LED ``led`` (0..count-1): ``r, g, b`` 0..255, an ``(r, g, b)`` tuple or a ``Color``. The strip is updated at the next poll (about a millisecond), or at once by ``show()``."""
     @overload
     def fill(self, r: int, g: int, b: int, /) -> None: ...
     @overload
-    def fill(self, color: Union[Color, Tuple[int, int, int]], /) -> None: ...
+    def fill(self, color: Union[Color, Tuple[int, int, int]], /) -> None:
+        """Every LED the same colour: ``r, g, b`` 0..255, an ``(r, g, b)`` tuple or a ``Color``."""
     @overload
     def range(self, first: int, last: int, r: int, g: int, b: int, /) -> None: ...
     @overload
-    def range(self, first: int, last: int, color: Union[Color, Tuple[int, int, int]], /) -> None: ...
-    def clear(self) -> None: ...
-    def get(self, led: int, /) -> Tuple[int, int, int]: ...
+    def range(self, first: int, last: int, color: Union[Color, Tuple[int, int, int]], /) -> None:
+        """LEDs ``first`` to ``last`` (inclusive) the same colour: ``r, g, b``, an ``(r, g, b)`` tuple or a ``Color``."""
+    def clear(self) -> None:
+        """Every LED off."""
+    def get(self, led: int, /) -> Tuple[int, int, int]:
+        """The stored ``(r, g, b)`` of LED ``led`` (before ``brightness()`` scaling)."""
     @overload
     def brightness(self) -> int: ...
     @overload
@@ -1692,13 +1813,18 @@ class RGBLED:
     def count(self) -> int: ...
     @overload
     def count(self, n: int, /) -> None:
-        """1..64; LEDs beyond the new count keep their stored colour but are not sent."""
+        """1..64. Growing the count turns the newly exposed LEDs off until they are set; LEDs beyond a
+        smaller count are no longer sent, so they keep showing their last colour (turn them off first).
+        ``close()`` blacks out only ``count()`` LEDs."""
     @overload
     def invert(self) -> bool: ...
     @overload
-    def invert(self, enable: bool, /) -> None: ...
+    def invert(self, enable: bool, /) -> None:
+        """``True`` numbers the LEDs from the far end (a module mounted the other way round)."""
     def show(self) -> None:
-        """Start the transfer now and wait for the strip to have the frame."""
+        """Start the transfer now instead of at the next poll. It waits only for a frame still going out
+        (at most 20 ms, else ``OSError(ETIMEDOUT)``) and returns once the transfer has started; the strip
+        has the frame 30 us per LED + 340 us later."""
     def hsv(self, h: int, s: int, v: int, /) -> Tuple[int, int, int]:
         """h (wrapped into 0..359), s and v 0..100 -> ``(r, g, b)``."""
     def on(self, color: Union[Color, Tuple[int, int, int], Sequence[Union[Color, Tuple[int, int, int], None]], None], /) -> None:
@@ -1716,7 +1842,8 @@ class RGBLED:
         """``'blink'``, ``'animate'`` or ``None``."""
     def stop(self) -> None:
         """End the pattern, keeping the current colours."""
-    def close(self) -> None: ...
+    def close(self) -> None:
+        """Push a black frame and hand the servo channel back (the strip is dark about a millisecond later). Idempotent; every other call then raises ``ValueError("RGBLED is closed")``, even after a new ``RGBLED(n)`` has opened the same port, and a second ``close()`` never touches the new object's strip."""
 
 
 class Bluetooth:
@@ -1749,7 +1876,7 @@ class Bluetooth:
     ``ValueError("Bluetooth is closed")`` from every call after ``close()``;
     ``OSError("module is not in command mode")`` from the command-mode calls in data mode.
     """
-    def __init__(self, port: int, baud: int = 230400, name: Optional[str] = None, mode: Optional[str] = None,
+    def __init__(self, port: int, baud: Optional[int] = None, name: Optional[str] = None, mode: Optional[str] = None,
                  addr: Optional[str] = None, *, stay_in_command: bool = False, wait: bool = True) -> None:
         """``name=None`` keeps "EVN Bluetooth", ``mode=None`` keeps ``'remote'``; ``baud`` left out means 230400, or
         the port's own baud when the module already carries the REPL."""
@@ -1805,7 +1932,8 @@ class Bluetooth:
         reply (``"ERROR:(n)"``, ``"FAIL"`` or ``""`` for a timeout); empty when everything was accepted."""
     def configured(self) -> bool:
         """True when the module was in command mode and every setting was accepted."""
-    def in_command_mode(self) -> bool: ...
+    def in_command_mode(self) -> bool:
+        """True while the module is in AT command mode (it was powered with its button held)."""
     def command(self, cmd: str, /) -> Tuple[bool, str]:
         """Run one AT command (command mode only): ``(ok, payload)``."""
     def address(self) -> Optional[str]:
@@ -1818,7 +1946,8 @@ class Bluetooth:
         """``AT+ORGL`` (name "HC-05", 9600 baud, slave)."""
     def startup_time(self) -> int:
         """ms the module took to reach data mode."""
-    def close(self) -> None: ...
+    def close(self) -> None:
+        """Release the serial port (the REPL is taken off it if it was on); the port keeps running for an ``evn.UART`` object. Every other call then raises ``ValueError("Bluetooth is closed")``, even after a new ``Bluetooth(n)`` has opened the same port, and a second ``close()`` is a no-op that never touches the new object's module."""
 
 
 class UART:
@@ -1916,6 +2045,14 @@ def motor_config(port: int, /) -> dict:
     "stored" (True when it is in flash and the port runs it), "session" (True while a program's
     ``Motor(port, model=)`` runs a standard model in its place until the next reboot)}``."""
 
+def compass_calibration(port: int, /) -> dict:
+    """The stored compass calibration of I2C port 1..16 (``Compass.calibrate_stop()``), without opening
+    a Compass: the same dict as ``Compass.stored_calibration()``."""
+
+def imu_calibration(port: int, /) -> dict:
+    """The stored IMU calibration of I2C port 1..16 (``IMU.calibrate()``), without building an IMU: the
+    same dict as ``IMU.calibration()``."""
+
 def calibration(port: int, /) -> dict:
     """The calibration motor port 1..4 runs: ``{"port", "calibrated" (a calibrate() result drives the port),
     "busy" (a calibrate(wait=False) is running on it), "stored" (it is in flash), "stamp" (seconds since 1970 UTC when it was made; 0 = the board's clock
@@ -1981,9 +2118,12 @@ class StopWatch:
     def __init__(self) -> None: ...
     def time(self) -> int:
         """Elapsed ms."""
-    def pause(self) -> None: ...
-    def resume(self) -> None: ...
-    def reset(self) -> None: ...
+    def pause(self) -> None:
+        """Stop counting; ``time()`` holds its value until ``resume()``."""
+    def resume(self) -> None:
+        """Continue counting after ``pause()`` (no effect while running)."""
+    def reset(self) -> None:
+        """Back to 0; a running stopwatch keeps running, a paused one stays paused."""
 
 
 class Pose:
@@ -2061,7 +2201,8 @@ class Pose:
         re-framing, never a command: a ``DriveBase`` with ``use_gyro(True)`` re-anchors its ideal robot on the new
         pose and nothing moves - to close an offset an outside reference revealed, follow the reset with an
         explicit ``straight()``/``turn()``."""
-    def close(self) -> None: ...
+    def close(self) -> None:
+        """Stop the pose service and release it, so a new ``Pose`` can be made. Idempotent; every other call then raises ``ValueError("Pose is closed")``."""
     def _stats(self) -> Tuple[int, int, int, int, int, int, int, int, int]:
         """Bench diagnostic: (steps, rejected wheel updates, rejected lateral updates, rejected magnetometer updates,
         the yaw-rate row's reject run, wheel-gate escapes taken, steps with a stale IMU, steps that integrated a

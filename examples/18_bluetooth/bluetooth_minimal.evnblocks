@@ -1,0 +1,178 @@
+{
+  "format": "evn-blocks",
+  "version": 2,
+  "title": "Bluetooth: minimal",
+  "needs": "the Bluetooth module on serial port 2, and a phone (Android) or PC paired with it (PIN 1234) running a Bluetooth serial terminal app that ends each line it sends with a newline",
+  "description": "A Bluetooth echo: the board says hello to the phone, then answers every line the phone sends with \"you said: ...\" and prints it on the computer too. Runs until you press Stop. Switch the board on without holding the module's button (held, the set-up reprograms the module's name, speed and role), and do not have the board's REPL on this module: while it runs over the module it takes what the phone sends, and its own Bluetooth object holds the port: Bluetooth(2) here then fails with \"OSError: serial port 2 is already open\". The Board view's broadcast button puts it there by writing `bt = evn.Bluetooth(2); bt.repl(True)` into boot.py; take that line out of boot.py and reset the board (a plain reset: the REPL stays on the module across a soft reboot).",
+  "workspace": {
+    "blocks": {
+      "languageVersion": 0,
+      "blocks": [
+        {
+          "type": "evn_setup_start",
+          "x": 30,
+          "y": 30,
+          "next": {
+            "block": {
+              "type": "evn_bluetooth_setup",
+              "fields": {
+                "PORT": "2"
+              }
+            }
+          }
+        },
+        {
+          "type": "evn_program_start",
+          "x": 30,
+          "y": 115,
+          "next": {
+            "block": {
+              "type": "evn_bluetooth_send",
+              "fields": {
+                "PORT": "2"
+              },
+              "inputs": {
+                "TEXT": {
+                  "shadow": {
+                    "type": "text",
+                    "fields": {
+                      "TEXT": "Hello from EVN! Send me a line."
+                    }
+                  }
+                }
+              },
+              "next": {
+                "block": {
+                  "type": "evn_forever",
+                  "inputs": {
+                    "DO": {
+                      "block": {
+                        "type": "controls_if",
+                        "inputs": {
+                          "IF0": {
+                            "block": {
+                              "type": "evn_bluetooth_any",
+                              "fields": {
+                                "PORT": "2"
+                              }
+                            }
+                          },
+                          "DO0": {
+                            "block": {
+                              "type": "variables_set",
+                              "fields": {
+                                "VAR": {
+                                  "id": "v_line"
+                                }
+                              },
+                              "inputs": {
+                                "VALUE": {
+                                  "block": {
+                                    "type": "evn_bluetooth_line",
+                                    "fields": {
+                                      "PORT": "2"
+                                    },
+                                    "inputs": {
+                                      "TIMEOUT": {
+                                        "shadow": {
+                                          "type": "math_number",
+                                          "fields": {
+                                            "NUM": 1000
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              },
+                              "next": {
+                                "block": {
+                                  "type": "text_print",
+                                  "inputs": {
+                                    "TEXT": {
+                                      "block": {
+                                        "type": "variables_get",
+                                        "fields": {
+                                          "VAR": {
+                                            "id": "v_line"
+                                          }
+                                        }
+                                      }
+                                    }
+                                  },
+                                  "next": {
+                                    "block": {
+                                      "type": "evn_bluetooth_send",
+                                      "fields": {
+                                        "PORT": "2"
+                                      },
+                                      "inputs": {
+                                        "TEXT": {
+                                          "block": {
+                                            "type": "text_join",
+                                            "inputs": {
+                                              "ADD0": {
+                                                "shadow": {
+                                                  "type": "text",
+                                                  "fields": {
+                                                    "TEXT": "you said: "
+                                                  }
+                                                }
+                                              },
+                                              "ADD1": {
+                                                "block": {
+                                                  "type": "variables_get",
+                                                  "fields": {
+                                                    "VAR": {
+                                                      "id": "v_line"
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            },
+                                            "extraState": {
+                                              "itemCount": 2
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "next": {
+                          "block": {
+                            "type": "evn_wait",
+                            "inputs": {
+                              "TIME": {
+                                "shadow": {
+                                  "type": "math_number",
+                                  "fields": {
+                                    "NUM": 20
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "variables": [
+      {
+        "name": "line",
+        "id": "v_line"
+      }
+    ]
+  }
+}

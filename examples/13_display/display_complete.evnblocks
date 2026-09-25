@@ -1,0 +1,289 @@
+{
+  "format": "evn-blocks",
+  "version": 2,
+  "title": "Display: every block",
+  "needs": "the OLED display on I2C port 1",
+  "description": "Every display block once: clear, print lines one under the other, and show text at a place. (Ticking \"mirror the console\" on the set-up block would also copy every print() of the board to the display, until the board is reset.)",
+  "workspace": {
+    "blocks": {
+      "languageVersion": 0,
+      "blocks": [
+        {
+          "type": "evn_setup_start",
+          "x": 30,
+          "y": 30,
+          "next": {
+            "block": {
+              "type": "evn_display_setup",
+              "fields": {
+                "PORT": "1",
+                "MIRROR": "FALSE"
+              }
+            }
+          }
+        },
+        {
+          "type": "evn_program_start",
+          "x": 30,
+          "y": 115,
+          "next": {
+            "block": {
+              "type": "evn_comment",
+              "fields": {
+                "TEXT": "a blank screen; the print cursor goes back to the top left"
+              },
+              "next": {
+                "block": {
+                  "type": "evn_display_clear",
+                  "fields": {
+                    "PORT": "1"
+                  },
+                  "next": {
+                    "block": {
+                      "type": "evn_comment",
+                      "fields": {
+                        "TEXT": "print: one line each, like print() on the computer"
+                      },
+                      "next": {
+                        "block": {
+                          "type": "evn_display_print",
+                          "fields": {
+                            "PORT": "1"
+                          },
+                          "inputs": {
+                            "TEXT": {
+                              "shadow": {
+                                "type": "text",
+                                "fields": {
+                                  "TEXT": "EVN ALPHA"
+                                }
+                              }
+                            }
+                          },
+                          "next": {
+                            "block": {
+                              "type": "evn_display_print",
+                              "fields": {
+                                "PORT": "1"
+                              },
+                              "inputs": {
+                                "TEXT": {
+                                  "shadow": {
+                                    "type": "text",
+                                    "fields": {
+                                      "TEXT": "battery mV:"
+                                    }
+                                  }
+                                }
+                              },
+                              "next": {
+                                "block": {
+                                  "type": "evn_display_print",
+                                  "fields": {
+                                    "PORT": "1"
+                                  },
+                                  "inputs": {
+                                    "TEXT": {
+                                      "block": {
+                                        "type": "evn_battery_voltage"
+                                      }
+                                    }
+                                  },
+                                  "next": {
+                                    "block": {
+                                      "type": "evn_wait",
+                                      "inputs": {
+                                        "TIME": {
+                                          "shadow": {
+                                            "type": "math_number",
+                                            "fields": {
+                                              "NUM": 2000
+                                            }
+                                          }
+                                        }
+                                      },
+                                      "next": {
+                                        "block": {
+                                          "type": "evn_comment",
+                                          "fields": {
+                                            "TEXT": "show at a place: column 0..15, row 0..7"
+                                          },
+                                          "next": {
+                                            "block": {
+                                              "type": "evn_display_text",
+                                              "fields": {
+                                                "PORT": "1"
+                                              },
+                                              "inputs": {
+                                                "TEXT": {
+                                                  "shadow": {
+                                                    "type": "text",
+                                                    "fields": {
+                                                      "TEXT": "count:"
+                                                    }
+                                                  }
+                                                },
+                                                "COL": {
+                                                  "shadow": {
+                                                    "type": "math_number",
+                                                    "fields": {
+                                                      "NUM": 0
+                                                    }
+                                                  }
+                                                },
+                                                "ROW": {
+                                                  "shadow": {
+                                                    "type": "math_number",
+                                                    "fields": {
+                                                      "NUM": 5
+                                                    }
+                                                  }
+                                                }
+                                              },
+                                              "next": {
+                                                "block": {
+                                                  "type": "controls_for",
+                                                  "fields": {
+                                                    "VAR": {
+                                                      "id": "v_i"
+                                                    }
+                                                  },
+                                                  "inputs": {
+                                                    "FROM": {
+                                                      "shadow": {
+                                                        "type": "math_number",
+                                                        "fields": {
+                                                          "NUM": 1
+                                                        }
+                                                      }
+                                                    },
+                                                    "TO": {
+                                                      "shadow": {
+                                                        "type": "math_number",
+                                                        "fields": {
+                                                          "NUM": 10
+                                                        }
+                                                      }
+                                                    },
+                                                    "BY": {
+                                                      "shadow": {
+                                                        "type": "math_number",
+                                                        "fields": {
+                                                          "NUM": 1
+                                                        }
+                                                      }
+                                                    },
+                                                    "DO": {
+                                                      "block": {
+                                                        "type": "evn_display_text",
+                                                        "fields": {
+                                                          "PORT": "1"
+                                                        },
+                                                        "inputs": {
+                                                          "TEXT": {
+                                                            "block": {
+                                                              "type": "variables_get",
+                                                              "fields": {
+                                                                "VAR": {
+                                                                  "id": "v_i"
+                                                                }
+                                                              }
+                                                            }
+                                                          },
+                                                          "COL": {
+                                                            "shadow": {
+                                                              "type": "math_number",
+                                                              "fields": {
+                                                                "NUM": 7
+                                                              }
+                                                            }
+                                                          },
+                                                          "ROW": {
+                                                            "shadow": {
+                                                              "type": "math_number",
+                                                              "fields": {
+                                                                "NUM": 5
+                                                              }
+                                                            }
+                                                          }
+                                                        },
+                                                        "next": {
+                                                          "block": {
+                                                            "type": "evn_wait",
+                                                            "inputs": {
+                                                              "TIME": {
+                                                                "shadow": {
+                                                                  "type": "math_number",
+                                                                  "fields": {
+                                                                    "NUM": 300
+                                                                  }
+                                                                }
+                                                              }
+                                                            }
+                                                          }
+                                                        }
+                                                      }
+                                                    }
+                                                  },
+                                                  "next": {
+                                                    "block": {
+                                                      "type": "evn_wait",
+                                                      "inputs": {
+                                                        "TIME": {
+                                                          "shadow": {
+                                                            "type": "math_number",
+                                                            "fields": {
+                                                              "NUM": 1000
+                                                            }
+                                                          }
+                                                        }
+                                                      },
+                                                      "next": {
+                                                        "block": {
+                                                          "type": "evn_comment",
+                                                          "fields": {
+                                                            "TEXT": "the end: a blank screen"
+                                                          },
+                                                          "next": {
+                                                            "block": {
+                                                              "type": "evn_display_clear",
+                                                              "fields": {
+                                                                "PORT": "1"
+                                                              }
+                                                            }
+                                                          }
+                                                        }
+                                                      }
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "variables": [
+      {
+        "name": "i",
+        "id": "v_i"
+      }
+    ]
+  }
+}

@@ -18,13 +18,15 @@
     var MAX_SAMPLES = 240;        // the same ring the extension keeps: a minute at 4 Hz
     var MAX_SERIES = 4;           // one colour each
     var GUTTER = 38;              // room on the right for the two scale numbers
+    /* The EVN series (media/theme/evn-palette.json, set per scheme in console.css); the view's own
+     * chrome follows the VS Code theme, the data takes the brand's colours (theming audit 2026-09-24). */
     var SERIES_VARS = [
-        '--vscode-charts-blue', '--vscode-charts-green',
-        '--vscode-charts-orange', '--vscode-charts-purple',
+        '--evn-series-1', '--evn-series-2',
+        '--evn-series-3', '--evn-series-4',
     ];
-    // used only if the theme defines none of the chart colours (they are standard, but a canvas
-    // with no stroke colour would draw nothing at all, which looks like a bug)
-    var SERIES_FALLBACK = ['#3794ff', '#89d185', '#d18616', '#b180d7'];
+    // used only if console.css did not load (a canvas with no stroke colour would draw nothing at
+    // all, which looks like a bug)
+    var SERIES_FALLBACK = ['#3a93a6', '#58937f', '#c25e4f', '#8d5b8f'];
 
     var live = false;
     var running = false;
@@ -182,7 +184,8 @@
 
     /** The four series colours of the current theme, read once per frame. */
     function palette() {
-        var style = window.getComputedStyle(document.documentElement);
+        /* the body: the dark series sit on body.vscode-dark (console.css), which <html> does not see */
+        var style = window.getComputedStyle(document.body);
         var out = [];
         for (var i = 0; i < SERIES_VARS.length; i++) {
             var c = (style.getPropertyValue(SERIES_VARS[i]) || '').trim();

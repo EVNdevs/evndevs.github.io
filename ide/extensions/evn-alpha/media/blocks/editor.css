@@ -1,8 +1,8 @@
 /* EVN ALPHA Blocks: editor chrome.
  *
- * Palette taken from the CORE website (edu.coresg.tech): white page, ink #111518 text,
- * #3f4245 body copy, the tan #a8977b accent (buttons, active nav; #907d62 pressed), warm greys
- * (#eeeeee / #d3d3d3) and the grey logo marks (#9e9e9e / #808080 / #3d3d3d), set in Jost.
+ * Palette: media/theme/evn-palette.json, whose light values are the CORE website's (edu.coresg.tech,
+ * checked 2026-09-24): white page, ink #111518 headings, #3f4245 body copy, the tan #a8977b accent with
+ * #7f715c for hover and text, #eaeaec borders, #f4f4f5 surfaces, set in Jost.
  * Two schemes, switched with html[data-theme="light"|"dark"] (editor.js follows VS Code or the
  * evn.blocks.theme setting). Every colour below is a token; the dark scheme only redefines tokens. */
 
@@ -29,29 +29,31 @@
 
     /* CORE brand */
     --accent: #a8977b;
-    --accent-strong: #907d62;
+    --accent-strong: #7f715c;   /* CORE's hover tan: under white text (4.75:1) and as text on white */
+    --accent-deep: #6a5e4c;     /* the primary button's hover (the website's .btn-primary:hover) */
     --accent-soft: rgba(168, 151, 123, 0.16);
     --accent-fg: #ffffff;
 
     /* light scheme (the website) */
     --bg: #ffffff;
-    --surface: #f7f6f3;
+    --surface: #f4f4f5;
     --surface-2: #eeeeee;
-    --border: #e4e2dd;
+    --border: #eaeaec;
     --border-strong: #d3d3d3;
     --ink: #111518;
     --text: #3f4245;
     --muted: #6d7072;
-    --grid: #e8e6e1;
+    --grid: #eaeaec;
     --shadow: 0 1px 2px rgba(17, 21, 24, 0.06), 0 4px 16px rgba(17, 21, 24, 0.06);
     --danger: #b5493f;
     --ok: #5f9e88;
 
-    --code-kw: #907d62;
-    --code-str: #5f9e88;
-    --code-num: #3f9fb4;
-    --code-cmt: #9e9e9e;
-    --code-fn: #5f7fb8;
+    --code-kw: #6a5e4c;   /* on the code pane's surface: the hover tan is 4.32:1 there */
+    --ok-ink: #497968;
+    --code-str: #497968;
+    --code-num: #307989;
+    --code-cmt: #6f6f6f;
+    --code-fn: #4d6fad;
 
     --radius: 10px;
     --radius-sm: 7px;
@@ -60,28 +62,30 @@
 }
 
 :root[data-theme="dark"] {
-    --accent: #c2b195;
-    --accent-strong: #d4c5ab;
-    --accent-soft: rgba(194, 177, 149, 0.16);
-    --accent-fg: #16181a;
+    --accent: #c9b99c;
+    --accent-strong: #c9b99c;
+    --accent-deep: #ddd0b8;
+    --accent-soft: rgba(201, 185, 156, 0.16);
+    --accent-fg: #111518;
 
-    --bg: #16181a;
-    --surface: #1d2023;
-    --surface-2: #25292d;
-    --border: #2d3135;
-    --border-strong: #3d4247;
-    --ink: #f2f0ec;
-    --text: #cfd0cc;
-    --muted: #8f9397;
-    --grid: #22262a;
+    --bg: #111518;
+    --surface: #1a1f24;
+    --surface-2: #22282e;
+    --border: #2a3138;
+    --border-strong: #3a424a;
+    --ink: #f4f5f6;
+    --text: #d7dade;
+    --muted: #a3a8ad;
+    --grid: #1d2329;
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 6px 20px rgba(0, 0, 0, 0.35);
     --danger: #d8776d;
     --ok: #7fbba6;
+    --ok-ink: #7fbba6;
 
-    --code-kw: #c2b195;
+    --code-kw: #ddd0b8;
     --code-str: #7fbba6;
     --code-num: #6cc3d6;
-    --code-cmt: #7a7f84;
+    --code-cmt: #83888c;
     --code-fn: #8faae0;
     color-scheme: dark;
 }
@@ -156,13 +160,15 @@ button { font-family: inherit; }
 #toolbar .btn svg { width: 15px; height: 15px; flex: none; }
 #toolbar .btn:hover { background: var(--surface-2); }
 #toolbar .btn:active { transform: translateY(0.5px); }
-#toolbar .btn.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); padding-right: 14px; }
-#toolbar .btn.primary:hover { background: var(--accent-strong); border-color: var(--accent-strong); }
+/* white on the plain tan is 2.85:1: the primary button sits on the text tan, as the website's does */
+#toolbar .btn.primary { background: var(--accent-strong); color: var(--accent-fg); border-color: var(--accent-strong); padding-right: 14px; }
+#toolbar .btn.primary:hover { background: var(--accent-deep); border-color: var(--accent-deep); }
 #toolbar .btn.outline { border-color: var(--border-strong); }
-#toolbar .btn.outline:hover { border-color: var(--accent); color: var(--accent-strong); background: var(--accent-soft); }
+/* text on the tan tint takes the deep tan: the text tan there is 4.1:1 */
+#toolbar .btn.outline:hover { border-color: var(--accent); color: var(--accent-deep); background: var(--accent-soft); }
 #toolbar .btn.icon { width: 30px; padding: 0; justify-content: center; color: var(--muted); }
 #toolbar .btn.icon:hover { color: var(--ink); }
-#toolbar .btn.active { background: var(--accent-soft); color: var(--accent-strong); border-color: transparent; }
+#toolbar .btn.active { background: var(--accent-soft); color: var(--accent-deep); border-color: transparent; }
 #toolbar .btn.danger:hover { color: var(--danger); border-color: var(--danger); background: transparent; }
 #toolbar .spacer { flex: 1; }
 #toolbar .group { display: inline-flex; align-items: center; gap: 2px; }
@@ -184,7 +190,7 @@ button { font-family: inherit; }
 }
 #status:empty { display: none; }
 #status.error { color: var(--danger); background: rgba(181, 73, 63, 0.10); }
-#status.ok { color: var(--ok); }
+#status.ok { color: var(--ok-ink); }
 
 /* ---- main split -------------------------------------------------------------------------- */
 
@@ -237,7 +243,7 @@ body.resizing #blocklyDiv, body.resizing #codePane { pointer-events: none; }
     transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
 }
 #codePill svg { width: 14px; height: 14px; flex: none; color: var(--accent-strong); }
-#codePill:hover { border-color: var(--accent); color: var(--accent-strong); background: var(--accent-soft); }
+#codePill:hover { border-color: var(--accent); color: var(--accent-deep); background: var(--accent-soft); }
 #codePill:active { transform: translateY(0.5px); }
 
 #codePane {
@@ -285,9 +291,9 @@ body.resizing #blocklyDiv, body.resizing #codePane { pointer-events: none; }
     cursor: pointer;
 }
 #codePane header .btn svg { width: 13px; height: 13px; }
-#codePane header .btn:hover { border-color: var(--accent); color: var(--accent-strong); background: var(--accent-soft); }
+#codePane header .btn:hover { border-color: var(--accent); color: var(--accent-deep); background: var(--accent-soft); }
 #codePane header .btn.icon { width: 26px; padding: 0; justify-content: center; border-color: transparent; color: var(--muted); }
-#codePane header .btn.icon:hover { color: var(--accent-strong); background: var(--accent-soft); }
+#codePane header .btn.icon:hover { color: var(--accent-deep); background: var(--accent-soft); }
 #code {
     flex: 1;
     margin: 0;
@@ -359,6 +365,47 @@ body.resizing #blocklyDiv, body.resizing #codePane { pointer-events: none; }
 .blocklyToolboxSelected { background: var(--accent-soft) !important; }
 .blocklyToolboxSelected::before { height: 20px; }
 .blocklyToolboxSelected .blocklyToolboxCategoryLabel { color: var(--ink) !important; font-weight: 600 !important; }
+/* Headers and the items under them (owner, 2026-09-24: "the menu headers are not visually distinct
+ * enough from the menu items"). A top-level category is a header: semibold ink, the colour bar, and a
+ * chevron when it opens onto sub-categories. A sub-category (Colour sensor, Display, ...) is an item:
+ * indented behind a guide line, a smaller regular-weight label in the body grey, a dot for its colour,
+ * a shorter row. Blockly's own indent (inline padding-left) is overridden above, so it is redone here. */
+.blocklyToolboxCategoryContainer[aria-level="1"] > .blocklyToolboxCategory .blocklyToolboxCategoryLabel { font-weight: 600 !important; font-size: 13.5px !important; }
+.blocklyToolboxCategory .blocklyTreeRowContentContainer { flex: 1 1 auto; }
+.blocklyToolboxCategoryIcon.blocklyToolboxCategoryIconClosed,
+.blocklyToolboxCategoryIcon.blocklyToolboxCategoryIconOpen {
+    display: inline-block !important;
+    order: 2;
+    flex: 0 0 auto;
+    width: 6px !important; height: 6px !important;
+    margin: 0 2px 0 auto !important;
+    background: none !important;
+    border-right: 1.5px solid var(--muted);
+    border-bottom: 1.5px solid var(--muted);
+    transform: rotate(-45deg);
+    transition: transform 0.12s ease;
+}
+.blocklyToolboxCategoryIcon.blocklyToolboxCategoryIconOpen { transform: rotate(45deg) translate(-2px, -1px); }
+/* only a nested group: Blockly 13 gives the toolbox's own top-level contents the same class */
+.blocklyToolboxCategoryContainer > .blocklyToolboxCategoryGroup { margin: 0 0 4px 21px; border-left: 1px solid var(--border-strong); }
+.blocklyToolboxCategoryContainer[aria-level="2"] > .blocklyToolboxCategory {
+    height: 28px !important;
+    margin: 1px 8px 1px 6px !important;
+    padding-left: 8px !important;
+}
+.blocklyToolboxCategoryContainer[aria-level="2"] > .blocklyToolboxCategory::before {
+    width: 0; height: 6px;
+    margin-right: 9px;
+    border-left: 6px solid;       /* a 6 px dot in the category colour, which Blockly gives only as the left border */
+    border-left-color: inherit;
+    border-radius: 50%;
+}
+.blocklyToolboxCategoryContainer[aria-level="2"] > .blocklyToolboxCategory .blocklyToolboxCategoryLabel {
+    font-weight: 400 !important;
+    font-size: 12.5px !important;
+    color: var(--text) !important;
+}
+.blocklyToolboxCategoryContainer[aria-level="2"] > .blocklyToolboxSelected .blocklyToolboxCategoryLabel { color: var(--ink) !important; font-weight: 600 !important; }
 .blocklyTreeSeparator { border-bottom: 1px solid var(--border) !important; margin: 8px 16px !important; }
 
 /* flyout, workspace, grid */
@@ -387,6 +434,17 @@ pattern[id^="blocklyGridPattern"] line { stroke: var(--grid) !important; }
 .blocklyMenuItem { color: var(--ink) !important; border-radius: var(--radius-sm); padding: 6px 28px 6px 12px !important; font-size: 13px !important; }
 .blocklyMenuItemHighlight, .blocklyMenuItem:hover { background: var(--accent-soft) !important; }
 .blocklyMenuItemDisabled { color: var(--muted) !important; }
+/* Zelos paints a field's dropdown in the block's colour with WHITE item text
+ * (.zelos-renderer.blocklyDropDownDiv .blocklyMenuItemContent { color: #fff }), more specific than the rule
+ * above: on the page-coloured dropdown this page draws, that was white on white in the light scheme
+ * (owner, 2026-09-24). The content takes the page's ink. */
+.blocklyDropDownDiv .blocklyMenuItemContent, .blocklyWidgetDiv .blocklyMenuItemContent { color: var(--ink) !important; }
+.blocklyDropDownDiv .blocklyMenuItemDisabled .blocklyMenuItemContent,
+.blocklyWidgetDiv .blocklyMenuItemDisabled .blocklyMenuItemContent { color: var(--muted) !important; }
+/* the context menu's shortcut hints are Blockly's #ccc (1.6:1 on white); the checkmark of the selected
+ * dropdown item is a black sprite, inverted on the dark scheme as the zoom and trash icons are */
+.blocklyMenuItemContent .blocklyShortcut { color: var(--muted) !important; }
+:root[data-theme="dark"] .blocklyMenuItemSelected .blocklyMenuItemCheckbox { filter: invert(1); }
 .blocklyWidgetDiv .blocklyMenu {
     background: var(--bg) !important;
     border: 1px solid var(--border-strong) !important;

@@ -4,9 +4,11 @@
  *                               {type:'getCode', id}           reply with the current Python
  *                               {type:'status', message, error, ok}
  *                               {type:'theme', value}          'auto' | 'light' | 'dark' (setting changed)
+ *                               {type:'board', connected}      a board is on the port in use (the play icon's look)
  * Messages to the extension:    {type:'ready'}                 scripts loaded, send the document
  *                               {type:'edit', text, python}    the workspace changed (text = new document contents)
- *                               {type:'code', id, python}      reply to getCode
+ *                               {type:'state', broken}         after each load: true = not the whole file (never run it)
+ *                               {type:'code', id, python, broken}  reply to getCode
  *                               {type:'run'|'stop'|'upload'|'export'}   toolbar buttons
  *                               {type:'showCode', value}       Python pane shown or minimised
  *                               {type:'codeWidth', value}      Python pane resized (px, null = default)
@@ -18,16 +20,17 @@
     const cfg = window.evnBlocksConfig || {};
 
     const FILE_FORMAT = 'evn-blocks';
-    const FILE_VERSION = 1;
+    const FILE_VERSION = 2;   // 2: the "set up" / "program" sections (a version-1 file is upgraded on load)
 
     /* ---- colour schemes -------------------------------------------------------------------
      * The page colours live in editor.css (html[data-theme]); Blockly's own chrome takes the
-     * same tokens through a theme per scheme. Block colours come from evnBlocks.PALETTE. */
+     * same tokens through a theme per scheme. Block colours come from evnBlocks.PALETTE. Every value
+     * is media/theme/evn-palette.json's (scripts/test_theme.js checks them). */
 
     const SCHEMES = {
         light: {
             workspaceBackgroundColour: '#ffffff',
-            toolboxBackgroundColour: '#f7f6f3',
+            toolboxBackgroundColour: '#f4f4f5',
             toolboxForegroundColour: '#111518',
             flyoutBackgroundColour: '#ffffff',
             flyoutForegroundColour: '#3f4245',
@@ -44,21 +47,21 @@
             replacementGlowOpacity: 0.6,
         },
         dark: {
-            workspaceBackgroundColour: '#16181a',
-            toolboxBackgroundColour: '#1d2023',
-            toolboxForegroundColour: '#f2f0ec',
-            flyoutBackgroundColour: '#1d2023',
-            flyoutForegroundColour: '#cfd0cc',
+            workspaceBackgroundColour: '#111518',
+            toolboxBackgroundColour: '#1a1f24',
+            toolboxForegroundColour: '#f4f5f6',
+            flyoutBackgroundColour: '#1a1f24',
+            flyoutForegroundColour: '#d7dade',
             flyoutOpacity: 1,
-            scrollbarColour: '#f2f0ec',
+            scrollbarColour: '#f4f5f6',
             scrollbarOpacity: 0.2,
-            insertionMarkerColour: '#f2f0ec',
+            insertionMarkerColour: '#f4f5f6',
             insertionMarkerOpacity: 0.3,
-            markerColour: '#c2b195',
-            cursorColour: '#c2b195',
-            selectedGlowColour: '#c2b195',
+            markerColour: '#c9b99c',
+            cursorColour: '#c9b99c',
+            selectedGlowColour: '#c9b99c',
             selectedGlowOpacity: 0.6,
-            replacementGlowColour: '#c2b195',
+            replacementGlowColour: '#c9b99c',
             replacementGlowOpacity: 0.6,
         },
     };
@@ -102,6 +105,8 @@
     /* ---- workspace ----------------------------------------------------------------------- */
 
     let loading = false;          // true while applying a document sent by the extension
+    let broken = false;           // the last load failed part-way (or the file is newer): the workspace is not the file, so it
+                                  // is never saved, run, uploaded or exported
     let lastText = '';            // document text last received or sent (feedback filter)
     let python = '';
     let pendingText = null;       // a document that arrived before the workspace existed
@@ -113,14 +118,26 @@
             media: cfg.mediaUri,
             renderer: cfg.renderer || 'zelos',
             theme: themes[currentScheme()],
-            grid: { spacing: 24, length: 3, colour: '#e8e6e1', snap: true },     // colour is restyled in editor.css
+            grid: { spacing: 24, length: 3, colour: '#eaeaec', snap: true },     // colour is restyled in editor.css
             zoom: { controls: true, wheel: true, startScale: cfg.renderer === 'zelos' || !cfg.renderer ? 0.75 : 0.9, minScale: 0.3, maxScale: 2, pinch: true },
             move: { scrollbars: true, drag: true, wheel: false },
             trashcan: true,
             sounds: false,
+            plugins: { connectionChecker: evnBlocks.CONNECTION_CHECKER },   // set-up blocks only under "set up", the rest never there
+            maxInstances: { [evnBlocks.SETUP_HAT]: 1, [evnBlocks.PROGRAM_HAT]: 1 },
+        });
+        evnBlocks.setBoardConnected(workspace, boardConnected);
+        // a stack attached to neither hat is greyed out and not run (evn_blocks.js applySections), kept in
+        // the event group of the move that caused it, so one undo puts both back
+        workspace.addChangeListener(function (e) {
+            // not while a block is still being dragged (it would show greyed until dropped); the drop's own move event follows
+            if (loading || e.isUiEvent || workspace.isDragging()) { return; }
+            const group = Blockly.Events.getGroup();
+            Blockly.Events.setGroup(e.group);
+            try { evnBlocks.applySections(workspace); } finally { Blockly.Events.setGroup(group); }
         });
         workspace.addChangeListener(function (e) {
-            if (loading || e.isUiEvent || e.type === Blockly.Events.FINISHED_LOADING) { return; }
+            if (loading || broken || e.isUiEvent || e.type === Blockly.Events.FINISHED_LOADING) { return; }
             const text = serialize();
             const code = generate();
             if (text !== lastText) {
@@ -195,29 +212,38 @@
             if (trimmed) {
                 const doc = JSON.parse(trimmed);
                 const ours = doc && doc.format === FILE_FORMAT;
-                if (ours && Number(doc.version) > FILE_VERSION) {
-                    // a newer format: Blockly would load what it recognises and the next save
-                    // would write the rest away, silently. Say so instead.
-                    warning = 'This file was made by a newer version of the extension (format '
-                        + doc.version + '; this one knows ' + FILE_VERSION + '). Update the EVN ALPHA '
-                        + 'extension before editing it, or blocks it does not know may be lost.';
-                }
+                const newer = ours && Number(doc.version) > FILE_VERSION;
                 const state = ours ? doc.workspace : doc;   // tolerate a bare Blockly state
                 if (ours) {
                     lastDoc = Object.assign({}, doc);
                     delete lastDoc.workspace;              // the workspace is regenerated on save
                 }
-                if (state && typeof state === 'object') {
-                    Blockly.serialization.workspaces.load(state, workspace);
+                // read as written and put right (evn_blocks.js loadWorkspace): a rule-breaking block comes loose instead
+                // of the load stopping there; a version-1 file is upgraded, a new one gets its two hats
+                const notes = evnBlocks.loadWorkspace(state, workspace, ours ? doc.version : 1);
+                if (notes.length && !warning) { warning = 'Opened with changes: ' + notes.join('; ') + '.'; }
+                if (newer) {
+                    // a newer format: shown as far as this editor knows it, read-only (see catch), never saved
+                    throw new Error('it was made by a newer version of the extension (format ' + doc.version + '; this one knows '
+                        + FILE_VERSION + '); it is shown read-only');
                 }
+            } else {
+                evnBlocks.loadWorkspace(null, workspace, FILE_VERSION);
             }
+            evnBlocks.setBoardConnected(workspace, boardConnected);
+            broken = false;
+            workspace.setIsReadOnly(false);
             lastText = text || '';
             setStatus(warning, !!warning);
         } catch (e) {
-            setStatus('This file is not a valid blocks file: ' + (e && e.message ? e.message : e), true);
+            // what loaded is only part of the file: never save it over the file (broken stops the edit messages)
+            broken = true;
+            workspace.setIsReadOnly(true);
+            setStatus('This file could not be opened (' + (e && e.message ? e.message : e) + '). Nothing will be saved from this editor; update the EVN ALPHA extension, or fix the file as text.', true);
         } finally {
             Blockly.Events.enable();
             loading = false;
+            vscode.postMessage({ type: 'state', broken: broken });
         }
         generate();
     }
@@ -230,12 +256,25 @@
         el.className = isError ? 'error' : isOk ? 'ok' : '';
     }
 
+    /* a broken file's workspace is only part of it: running that part could leave a motor running with the
+     * block that stops it missing, so run, upload and export refuse (the extension refuses its own commands too) */
+    function send(type) {
+        if (broken && ['run', 'upload', 'export'].indexOf(type) >= 0) {
+            setStatus('This file did not open completely, so it is not run, uploaded or exported. Update the EVN ALPHA extension, or fix the file as text.', true);
+            return;
+        }
+        vscode.postMessage({ type: type, python: generate() });
+    }
     function button(id, type) {
-        document.getElementById(id).addEventListener('click', function () {
-            vscode.postMessage({ type: type, python: generate() });
-        });
+        document.getElementById(id).addEventListener('click', function () { send(type); });
     }
     button('btnRun', 'run');
+
+    /* the play button on the "program" block: runs the program, as Run on board does, when a board is connected */
+    let boardConnected = false;
+    /* the icon only shows the state: the run goes to the extension either way, as Run on board does, which picks or
+     * asks for the port (a board plugged in within the last 4 s, or the browser IDE's port chooser) */
+    evnBlocks.onRunClicked = function () { send('run'); };
     button('btnStop', 'stop');
     button('btnUpload', 'upload');
     button('btnExport', 'export');
@@ -317,7 +356,7 @@
 
     window.addEventListener('resize', function () { applyCodePane(); });
     window.addEventListener('keydown', function (ev) {
-        if (ev.key === 'F5' && ev.ctrlKey && !ev.shiftKey) { ev.preventDefault(); vscode.postMessage({ type: 'run', python: generate() }); }
+        if (ev.key === 'F5' && ev.ctrlKey && !ev.shiftKey) { ev.preventDefault(); send('run'); }
         if (ev.key === 'F5' && ev.ctrlKey && ev.shiftKey) { ev.preventDefault(); vscode.postMessage({ type: 'stop' }); }
     });
 
@@ -330,10 +369,14 @@
                 if (msg.text !== lastText) { load(msg.text); }
                 break;
             case 'getCode':
-                vscode.postMessage({ type: 'code', id: msg.id, python: generate() });
+                vscode.postMessage({ type: 'code', id: msg.id, python: generate(), broken: broken });
                 break;
             case 'status':
                 setStatus(msg.message || '', !!msg.error, !!msg.ok);
+                break;
+            case 'board':
+                boardConnected = !!msg.connected;
+                if (workspace) { evnBlocks.setBoardConnected(workspace, boardConnected); }
                 break;
             case 'theme':
                 if (['auto', 'light', 'dark'].indexOf(msg.value) >= 0 && msg.value !== mode) { mode = msg.value; applyScheme(); }

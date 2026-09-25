@@ -1,0 +1,661 @@
+{
+  "format": "evn-blocks",
+  "version": 2,
+  "title": "Motor: every block",
+  "needs": "motors on ports 1 and 2, wheels off the ground; when the program asks, hold the wheel on port 1 until it stops",
+  "description": "Every motor block once: set-up, the four moves, stall detection, measuring, the advanced controls and the calibration. Port 2 is mounted mirrored (counterclockwise is forward) and counts in % of full speed.",
+  "workspace": {
+    "blocks": {
+      "languageVersion": 0,
+      "blocks": [
+        {
+          "type": "evn_setup_start",
+          "x": 30,
+          "y": 30,
+          "next": {
+            "block": {
+              "type": "evn_motor_setup",
+              "fields": {
+                "PORT": "1",
+                "DIRECTION": "CW",
+                "UNIT": "DEG_S"
+              },
+              "next": {
+                "block": {
+                  "type": "evn_motor_setup",
+                  "fields": {
+                    "PORT": "2",
+                    "DIRECTION": "CCW",
+                    "UNIT": "PERCENT"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "evn_program_start",
+          "x": 30,
+          "y": 170,
+          "next": {
+            "block": {
+              "type": "evn_comment",
+              "fields": {
+                "TEXT": "calibrate each motor once (the shaft moves up to a turn each way): skipped when the board already has one"
+              },
+              "next": {
+                "block": {
+                  "type": "controls_if",
+                  "inputs": {
+                    "IF0": {
+                      "block": {
+                        "type": "logic_negate",
+                        "inputs": {
+                          "BOOL": {
+                            "block": {
+                              "type": "evn_motor_calibrated",
+                              "fields": {
+                                "PORT": "1"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "DO0": {
+                      "block": {
+                        "type": "evn_motor_calibrate",
+                        "fields": {
+                          "PORT": "1",
+                          "WAIT": true
+                        }
+                      }
+                    }
+                  },
+                  "next": {
+                    "block": {
+                      "type": "controls_if",
+                      "inputs": {
+                        "IF0": {
+                          "block": {
+                            "type": "logic_negate",
+                            "inputs": {
+                              "BOOL": {
+                                "block": {
+                                  "type": "evn_motor_calibrated",
+                                  "fields": {
+                                    "PORT": "2"
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "DO0": {
+                          "block": {
+                            "type": "evn_motor_calibrate",
+                            "fields": {
+                              "PORT": "2",
+                              "WAIT": true
+                            }
+                          }
+                        }
+                      },
+                      "next": {
+                        "block": {
+                          "type": "evn_motor_reset_angle",
+                          "fields": {
+                            "PORT": "1"
+                          },
+                          "inputs": {
+                            "ANGLE": {
+                              "shadow": {
+                                "type": "math_number",
+                                "fields": {
+                                  "NUM": 0
+                                }
+                              }
+                            }
+                          },
+                          "next": {
+                            "block": {
+                              "type": "evn_comment",
+                              "fields": {
+                                "TEXT": "the four moves: by an angle, to an angle, for a time, and at a speed"
+                              },
+                              "next": {
+                                "block": {
+                                  "type": "evn_motor_run_angle",
+                                  "fields": {
+                                    "PORT": "1",
+                                    "THEN": "HOLD",
+                                    "WAIT": true
+                                  },
+                                  "inputs": {
+                                    "SPEED": {
+                                      "shadow": {
+                                        "type": "math_number",
+                                        "fields": {
+                                          "NUM": 500
+                                        }
+                                      }
+                                    },
+                                    "ANGLE": {
+                                      "shadow": {
+                                        "type": "math_number",
+                                        "fields": {
+                                          "NUM": 360
+                                        }
+                                      }
+                                    }
+                                  },
+                                  "next": {
+                                    "block": {
+                                      "type": "evn_motor_run_target",
+                                      "fields": {
+                                        "PORT": "1",
+                                        "THEN": "BRAKE",
+                                        "WAIT": true
+                                      },
+                                      "inputs": {
+                                        "SPEED": {
+                                          "shadow": {
+                                            "type": "math_number",
+                                            "fields": {
+                                              "NUM": 300
+                                            }
+                                          }
+                                        },
+                                        "ANGLE": {
+                                          "shadow": {
+                                            "type": "math_number",
+                                            "fields": {
+                                              "NUM": 90
+                                            }
+                                          }
+                                        }
+                                      },
+                                      "next": {
+                                        "block": {
+                                          "type": "evn_motor_run_time",
+                                          "fields": {
+                                            "PORT": "2",
+                                            "THEN": "COAST",
+                                            "WAIT": false
+                                          },
+                                          "inputs": {
+                                            "SPEED": {
+                                              "shadow": {
+                                                "type": "math_number",
+                                                "fields": {
+                                                  "NUM": 50
+                                                }
+                                              }
+                                            },
+                                            "TIME": {
+                                              "shadow": {
+                                                "type": "math_number",
+                                                "fields": {
+                                                  "NUM": 1000
+                                                }
+                                              }
+                                            }
+                                          },
+                                          "next": {
+                                            "block": {
+                                              "type": "evn_motor_wait_done",
+                                              "fields": {
+                                                "PORT": "2"
+                                              },
+                                              "next": {
+                                                "block": {
+                                                  "type": "evn_motor_run",
+                                                  "fields": {
+                                                    "PORT": "1"
+                                                  },
+                                                  "inputs": {
+                                                    "SPEED": {
+                                                      "shadow": {
+                                                        "type": "math_number",
+                                                        "fields": {
+                                                          "NUM": 200
+                                                        }
+                                                      }
+                                                    }
+                                                  },
+                                                  "next": {
+                                                    "block": {
+                                                      "type": "evn_wait",
+                                                      "inputs": {
+                                                        "TIME": {
+                                                          "shadow": {
+                                                            "type": "math_number",
+                                                            "fields": {
+                                                              "NUM": 1000
+                                                            }
+                                                          }
+                                                        }
+                                                      },
+                                                      "next": {
+                                                        "block": {
+                                                          "type": "text_print",
+                                                          "inputs": {
+                                                            "TEXT": {
+                                                              "block": {
+                                                                "type": "evn_motor_measure",
+                                                                "fields": {
+                                                                  "PORT": "1",
+                                                                  "WHAT": "speed"
+                                                                }
+                                                              }
+                                                            }
+                                                          },
+                                                          "next": {
+                                                            "block": {
+                                                              "type": "evn_motor_stop",
+                                                              "fields": {
+                                                                "ACTION": "brake",
+                                                                "PORT": "1"
+                                                              },
+                                                              "next": {
+                                                                "block": {
+                                                                  "type": "evn_comment",
+                                                                  "fields": {
+                                                                    "TEXT": "what the motor reports"
+                                                                  },
+                                                                  "next": {
+                                                                    "block": {
+                                                                      "type": "text_print",
+                                                                      "inputs": {
+                                                                        "TEXT": {
+                                                                          "block": {
+                                                                            "type": "evn_motor_measure",
+                                                                            "fields": {
+                                                                              "PORT": "1",
+                                                                              "WHAT": "angle"
+                                                                            }
+                                                                          }
+                                                                        }
+                                                                      },
+                                                                      "next": {
+                                                                        "block": {
+                                                                          "type": "text_print",
+                                                                          "inputs": {
+                                                                            "TEXT": {
+                                                                              "block": {
+                                                                                "type": "evn_motor_measure",
+                                                                                "fields": {
+                                                                                  "PORT": "1",
+                                                                                  "WHAT": "load"
+                                                                                }
+                                                                              }
+                                                                            }
+                                                                          },
+                                                                          "next": {
+                                                                            "block": {
+                                                                              "type": "text_print",
+                                                                              "inputs": {
+                                                                                "TEXT": {
+                                                                                  "block": {
+                                                                                    "type": "evn_motor_measure",
+                                                                                    "fields": {
+                                                                                      "PORT": "1",
+                                                                                      "WHAT": "full_speed"
+                                                                                    }
+                                                                                  }
+                                                                                }
+                                                                              },
+                                                                              "next": {
+                                                                                "block": {
+                                                                                  "type": "text_print",
+                                                                                  "inputs": {
+                                                                                    "TEXT": {
+                                                                                      "block": {
+                                                                                        "type": "evn_motor_is",
+                                                                                        "fields": {
+                                                                                          "PORT": "1",
+                                                                                          "WHAT": "done"
+                                                                                        }
+                                                                                      }
+                                                                                    }
+                                                                                  },
+                                                                                  "next": {
+                                                                                    "block": {
+                                                                                      "type": "evn_comment",
+                                                                                      "fields": {
+                                                                                        "TEXT": "gentler moves: one limit at a time, the others kept"
+                                                                                      },
+                                                                                      "next": {
+                                                                                        "block": {
+                                                                                          "type": "evn_motor_limit",
+                                                                                          "fields": {
+                                                                                            "PORT": "1",
+                                                                                            "WHAT": "acceleration"
+                                                                                          },
+                                                                                          "inputs": {
+                                                                                            "VALUE": {
+                                                                                              "shadow": {
+                                                                                                "type": "math_number",
+                                                                                                "fields": {
+                                                                                                  "NUM": 1000
+                                                                                                }
+                                                                                              }
+                                                                                            }
+                                                                                          },
+                                                                                          "next": {
+                                                                                            "block": {
+                                                                                              "type": "evn_motor_run_angle",
+                                                                                              "fields": {
+                                                                                                "PORT": "1",
+                                                                                                "THEN": "HOLD",
+                                                                                                "WAIT": true
+                                                                                              },
+                                                                                              "inputs": {
+                                                                                                "SPEED": {
+                                                                                                  "shadow": {
+                                                                                                    "type": "math_number",
+                                                                                                    "fields": {
+                                                                                                      "NUM": 500
+                                                                                                    }
+                                                                                                  }
+                                                                                                },
+                                                                                                "ANGLE": {
+                                                                                                  "shadow": {
+                                                                                                    "type": "math_number",
+                                                                                                    "fields": {
+                                                                                                      "NUM": -360
+                                                                                                    }
+                                                                                                  }
+                                                                                                }
+                                                                                              },
+                                                                                              "next": {
+                                                                                                "block": {
+                                                                                                  "type": "evn_comment",
+                                                                                                  "fields": {
+                                                                                                    "TEXT": "run until something stops the shaft; on a free shaft that is your hand, so the program asks"
+                                                                                                  },
+                                                                                                  "next": {
+                                                                                                    "block": {
+                                                                                                      "type": "text_print",
+                                                                                                      "inputs": {
+                                                                                                        "TEXT": {
+                                                                                                          "shadow": {
+                                                                                                            "type": "text",
+                                                                                                            "fields": {
+                                                                                                              "TEXT": "Hold the wheel on port 1 until it stops ..."
+                                                                                                            }
+                                                                                                          }
+                                                                                                        }
+                                                                                                      },
+                                                                                                      "next": {
+                                                                                                        "block": {
+                                                                                                          "type": "evn_motor_run_until_stalled",
+                                                                                                          "fields": {
+                                                                                                            "PORT": "1",
+                                                                                                            "THEN": "COAST"
+                                                                                                          },
+                                                                                                          "inputs": {
+                                                                                                            "SPEED": {
+                                                                                                              "shadow": {
+                                                                                                                "type": "math_number",
+                                                                                                                "fields": {
+                                                                                                                  "NUM": 150
+                                                                                                                }
+                                                                                                              }
+                                                                                                            },
+                                                                                                            "DUTY": {
+                                                                                                              "shadow": {
+                                                                                                                "type": "math_number",
+                                                                                                                "fields": {
+                                                                                                                  "NUM": 40
+                                                                                                                }
+                                                                                                              }
+                                                                                                            }
+                                                                                                          },
+                                                                                                          "next": {
+                                                                                                            "block": {
+                                                                                                              "type": "controls_if",
+                                                                                                              "inputs": {
+                                                                                                                "IF0": {
+                                                                                                                  "block": {
+                                                                                                                    "type": "evn_motor_is",
+                                                                                                                    "fields": {
+                                                                                                                      "PORT": "1",
+                                                                                                                      "WHAT": "stalled"
+                                                                                                                    }
+                                                                                                                  }
+                                                                                                                },
+                                                                                                                "DO0": {
+                                                                                                                  "block": {
+                                                                                                                    "type": "text_print",
+                                                                                                                    "inputs": {
+                                                                                                                      "TEXT": {
+                                                                                                                        "shadow": {
+                                                                                                                          "type": "text",
+                                                                                                                          "fields": {
+                                                                                                                            "TEXT": "stalled"
+                                                                                                                          }
+                                                                                                                        }
+                                                                                                                      }
+                                                                                                                    }
+                                                                                                                  }
+                                                                                                                }
+                                                                                                              },
+                                                                                                              "next": {
+                                                                                                                "block": {
+                                                                                                                  "type": "evn_comment",
+                                                                                                                  "fields": {
+                                                                                                                    "TEXT": "no speed control: a duty cycle; and following a moving target"
+                                                                                                                  },
+                                                                                                                  "next": {
+                                                                                                                    "block": {
+                                                                                                                      "type": "evn_motor_dc",
+                                                                                                                      "fields": {
+                                                                                                                        "PORT": "2"
+                                                                                                                      },
+                                                                                                                      "inputs": {
+                                                                                                                        "DUTY": {
+                                                                                                                          "shadow": {
+                                                                                                                            "type": "math_number",
+                                                                                                                            "fields": {
+                                                                                                                              "NUM": 30
+                                                                                                                            }
+                                                                                                                          }
+                                                                                                                        }
+                                                                                                                      },
+                                                                                                                      "next": {
+                                                                                                                        "block": {
+                                                                                                                          "type": "evn_wait",
+                                                                                                                          "inputs": {
+                                                                                                                            "TIME": {
+                                                                                                                              "shadow": {
+                                                                                                                                "type": "math_number",
+                                                                                                                                "fields": {
+                                                                                                                                  "NUM": 500
+                                                                                                                                }
+                                                                                                                              }
+                                                                                                                            }
+                                                                                                                          },
+                                                                                                                          "next": {
+                                                                                                                            "block": {
+                                                                                                                              "type": "evn_motor_stop",
+                                                                                                                              "fields": {
+                                                                                                                                "ACTION": "stop",
+                                                                                                                                "PORT": "2"
+                                                                                                                              },
+                                                                                                                              "next": {
+                                                                                                                                "block": {
+                                                                                                                                  "type": "controls_repeat_ext",
+                                                                                                                                  "inputs": {
+                                                                                                                                    "TIMES": {
+                                                                                                                                      "shadow": {
+                                                                                                                                        "type": "math_number",
+                                                                                                                                        "fields": {
+                                                                                                                                          "NUM": 10
+                                                                                                                                        }
+                                                                                                                                      }
+                                                                                                                                    },
+                                                                                                                                    "DO": {
+                                                                                                                                      "block": {
+                                                                                                                                        "type": "evn_motor_track_target",
+                                                                                                                                        "fields": {
+                                                                                                                                          "PORT": "1"
+                                                                                                                                        },
+                                                                                                                                        "inputs": {
+                                                                                                                                          "ANGLE": {
+                                                                                                                                            "block": {
+                                                                                                                                              "type": "math_arithmetic",
+                                                                                                                                              "fields": {
+                                                                                                                                                "OP": "ADD"
+                                                                                                                                              },
+                                                                                                                                              "inputs": {
+                                                                                                                                                "A": {
+                                                                                                                                                  "block": {
+                                                                                                                                                    "type": "evn_motor_measure",
+                                                                                                                                                    "fields": {
+                                                                                                                                                      "PORT": "1",
+                                                                                                                                                      "WHAT": "angle"
+                                                                                                                                                    }
+                                                                                                                                                  }
+                                                                                                                                                },
+                                                                                                                                                "B": {
+                                                                                                                                                  "shadow": {
+                                                                                                                                                    "type": "math_number",
+                                                                                                                                                    "fields": {
+                                                                                                                                                      "NUM": 10
+                                                                                                                                                    }
+                                                                                                                                                  }
+                                                                                                                                                }
+                                                                                                                                              }
+                                                                                                                                            }
+                                                                                                                                          }
+                                                                                                                                        },
+                                                                                                                                        "next": {
+                                                                                                                                          "block": {
+                                                                                                                                            "type": "evn_wait",
+                                                                                                                                            "inputs": {
+                                                                                                                                              "TIME": {
+                                                                                                                                                "shadow": {
+                                                                                                                                                  "type": "math_number",
+                                                                                                                                                  "fields": {
+                                                                                                                                                    "NUM": 50
+                                                                                                                                                  }
+                                                                                                                                                }
+                                                                                                                                              }
+                                                                                                                                            }
+                                                                                                                                          }
+                                                                                                                                        }
+                                                                                                                                      }
+                                                                                                                                    }
+                                                                                                                                  },
+                                                                                                                                  "next": {
+                                                                                                                                    "block": {
+                                                                                                                                      "type": "evn_motor_law",
+                                                                                                                                      "fields": {
+                                                                                                                                        "LAW": "adrc",
+                                                                                                                                        "PORT": "1"
+                                                                                                                                      },
+                                                                                                                                      "next": {
+                                                                                                                                        "block": {
+                                                                                                                                          "type": "evn_motor_stop",
+                                                                                                                                          "fields": {
+                                                                                                                                            "ACTION": "hold",
+                                                                                                                                            "PORT": "1"
+                                                                                                                                          },
+                                                                                                                                          "next": {
+                                                                                                                                            "block": {
+                                                                                                                                              "type": "evn_wait",
+                                                                                                                                              "inputs": {
+                                                                                                                                                "TIME": {
+                                                                                                                                                  "shadow": {
+                                                                                                                                                    "type": "math_number",
+                                                                                                                                                    "fields": {
+                                                                                                                                                      "NUM": 500
+                                                                                                                                                    }
+                                                                                                                                                  }
+                                                                                                                                                }
+                                                                                                                                              },
+                                                                                                                                              "next": {
+                                                                                                                                                "block": {
+                                                                                                                                                  "type": "evn_comment",
+                                                                                                                                                  "fields": {
+                                                                                                                                                    "TEXT": "the end: every motor coasts"
+                                                                                                                                                  },
+                                                                                                                                                  "next": {
+                                                                                                                                                    "block": {
+                                                                                                                                                      "type": "evn_stop_all"
+                                                                                                                                                    }
+                                                                                                                                                  }
+                                                                                                                                                }
+                                                                                                                                              }
+                                                                                                                                            }
+                                                                                                                                          }
+                                                                                                                                        }
+                                                                                                                                      }
+                                                                                                                                    }
+                                                                                                                                  }
+                                                                                                                                }
+                                                                                                                              }
+                                                                                                                            }
+                                                                                                                          }
+                                                                                                                        }
+                                                                                                                      }
+                                                                                                                    }
+                                                                                                                  }
+                                                                                                                }
+                                                                                                              }
+                                                                                                            }
+                                                                                                          }
+                                                                                                        }
+                                                                                                      }
+                                                                                                    }
+                                                                                                  }
+                                                                                                }
+                                                                                              }
+                                                                                            }
+                                                                                          }
+                                                                                        }
+                                                                                      }
+                                                                                    }
+                                                                                  }
+                                                                                }
+                                                                              }
+                                                                            }
+                                                                          }
+                                                                        }
+                                                                      }
+                                                                    }
+                                                                  }
+                                                                }
+                                                              }
+                                                            }
+                                                          }
+                                                        }
+                                                      }
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

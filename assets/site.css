@@ -33,10 +33,10 @@
   --surface: #f4f4f5;
   --surface-2: #ffffff;
   --line: #eaeaec;
-  --line-strong: #d8d8dc;
+  --line-strong: #d3d3d3;
   --heading: #111518;
   --text: #3f4245;
-  --muted: #5c6166;
+  --muted: #6d7072;
   --accent: #a8977b;          /* decoration: rules, underlines, the mark */
   --accent-ink: #7f715c;      /* anything that carries text on the page background (AA on white) */
   --accent-deep: #6a5e4c;
@@ -389,7 +389,7 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 /* a touch device has no hover: the button was invisible and still tappable */
 @media (hover: none) { .copy-btn { opacity: 1; } }
 .copy-btn:hover { color: var(--heading); border-color: var(--accent); }
-.copy-btn.done { color: var(--accent-ink); border-color: var(--accent); opacity: 1; }
+.copy-btn.done { color: var(--accent-deep); border-color: var(--accent); opacity: 1; }
 .doc-body table {
   border-collapse: collapse; display: block; overflow-x: auto; max-width: 100%;
   margin: 22px 0; font-size: 15.5px;
@@ -450,7 +450,7 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 
 /* ---- Footer --------------------------------------------------------------------------------------- */
 .site-footer {
-  background: rgba(18, 21, 25, .98); color: rgba(255, 255, 255, .74); margin-top: 40px;
+  background: rgba(17, 21, 24, .98); color: rgba(255, 255, 255, .74); margin-top: 40px;
   border-top: 1px solid var(--line);   /* the only thing that separates it from a dark page */
 }
 .site-footer .wrap { padding-top: 46px; padding-bottom: 38px; display: grid; gap: 30px;
@@ -469,7 +469,7 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 .f-brand span { font-size: 14.5px; line-height: 1.6; display: block; margin-top: 4px; }
 .f-credit { margin-top: 12px !important; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, .12);
             font-size: 14px !important; color: rgba(255, 255, 255, .62); }
-.f-credit a { color: #d8cdb6; }
+.f-credit a { color: #ddd0b8; }
 .f-col h4 { color: #fff; font-size: 11.5px; font-weight: 600; letter-spacing: .14em;
             text-transform: uppercase; margin: 0 0 12px; }
 .f-col ul { list-style: none; margin: 0; padding: 0; font-size: 15px; }

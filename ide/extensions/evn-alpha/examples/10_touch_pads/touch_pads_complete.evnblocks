@@ -1,0 +1,257 @@
+{
+  "format": "evn-blocks",
+  "version": 2,
+  "title": "Touch pads: every block",
+  "needs": "the touch pads (MPR121) on I2C port 1",
+  "description": "Every touch pad block once: waiting for any pad, then naming each pad that is touched (0 to 11) for 10 s.",
+  "workspace": {
+    "blocks": {
+      "languageVersion": 0,
+      "blocks": [
+        {
+          "type": "evn_setup_start",
+          "x": 30,
+          "y": 30,
+          "next": {
+            "block": {
+              "type": "evn_touch_setup",
+              "fields": {
+                "PORT": "1"
+              }
+            }
+          }
+        },
+        {
+          "type": "evn_program_start",
+          "x": 30,
+          "y": 115,
+          "next": {
+            "block": {
+              "type": "evn_comment",
+              "fields": {
+                "TEXT": "wait for a finger on any pad, then for it to let go"
+              },
+              "next": {
+                "block": {
+                  "type": "text_print",
+                  "inputs": {
+                    "TEXT": {
+                      "shadow": {
+                        "type": "text",
+                        "fields": {
+                          "TEXT": "touch any pad"
+                        }
+                      }
+                    }
+                  },
+                  "next": {
+                    "block": {
+                      "type": "evn_wait_until",
+                      "inputs": {
+                        "COND": {
+                          "block": {
+                            "type": "evn_touch_any",
+                            "fields": {
+                              "PORT": "1"
+                            }
+                          }
+                        }
+                      },
+                      "next": {
+                        "block": {
+                          "type": "text_print",
+                          "inputs": {
+                            "TEXT": {
+                              "shadow": {
+                                "type": "text",
+                                "fields": {
+                                  "TEXT": "touched"
+                                }
+                              }
+                            }
+                          },
+                          "next": {
+                            "block": {
+                              "type": "controls_whileUntil",
+                              "fields": {
+                                "MODE": "WHILE"
+                              },
+                              "inputs": {
+                                "BOOL": {
+                                  "block": {
+                                    "type": "evn_touch_any",
+                                    "fields": {
+                                      "PORT": "1"
+                                    }
+                                  }
+                                },
+                                "DO": {
+                                  "block": {
+                                    "type": "evn_wait",
+                                    "inputs": {
+                                      "TIME": {
+                                        "shadow": {
+                                          "type": "math_number",
+                                          "fields": {
+                                            "NUM": 10
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              },
+                              "next": {
+                                "block": {
+                                  "type": "evn_comment",
+                                  "fields": {
+                                    "TEXT": "for 10 s: say which pads are touched, ten times a second"
+                                  },
+                                  "next": {
+                                    "block": {
+                                      "type": "controls_repeat_ext",
+                                      "inputs": {
+                                        "TIMES": {
+                                          "shadow": {
+                                            "type": "math_number",
+                                            "fields": {
+                                              "NUM": 100
+                                            }
+                                          }
+                                        },
+                                        "DO": {
+                                          "block": {
+                                            "type": "controls_for",
+                                            "fields": {
+                                              "VAR": {
+                                                "id": "v_pad"
+                                              }
+                                            },
+                                            "inputs": {
+                                              "FROM": {
+                                                "shadow": {
+                                                  "type": "math_number",
+                                                  "fields": {
+                                                    "NUM": 0
+                                                  }
+                                                }
+                                              },
+                                              "TO": {
+                                                "shadow": {
+                                                  "type": "math_number",
+                                                  "fields": {
+                                                    "NUM": 11
+                                                  }
+                                                }
+                                              },
+                                              "BY": {
+                                                "shadow": {
+                                                  "type": "math_number",
+                                                  "fields": {
+                                                    "NUM": 1
+                                                  }
+                                                }
+                                              },
+                                              "DO": {
+                                                "block": {
+                                                  "type": "controls_if",
+                                                  "inputs": {
+                                                    "IF0": {
+                                                      "block": {
+                                                        "type": "evn_touch_pad",
+                                                        "fields": {
+                                                          "PORT": "1"
+                                                        },
+                                                        "inputs": {
+                                                          "PAD": {
+                                                            "block": {
+                                                              "type": "variables_get",
+                                                              "fields": {
+                                                                "VAR": {
+                                                                  "id": "v_pad"
+                                                                }
+                                                              }
+                                                            }
+                                                          }
+                                                        }
+                                                      }
+                                                    },
+                                                    "DO0": {
+                                                      "block": {
+                                                        "type": "text_print",
+                                                        "inputs": {
+                                                          "TEXT": {
+                                                            "block": {
+                                                              "type": "text_join",
+                                                              "inputs": {
+                                                                "ADD0": {
+                                                                  "shadow": {
+                                                                    "type": "text",
+                                                                    "fields": {
+                                                                      "TEXT": "pad "
+                                                                    }
+                                                                  }
+                                                                },
+                                                                "ADD1": {
+                                                                  "block": {
+                                                                    "type": "variables_get",
+                                                                    "fields": {
+                                                                      "VAR": {
+                                                                        "id": "v_pad"
+                                                                      }
+                                                                    }
+                                                                  }
+                                                                }
+                                                              }
+                                                            }
+                                                          }
+                                                        }
+                                                      }
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            },
+                                            "next": {
+                                              "block": {
+                                                "type": "evn_wait",
+                                                "inputs": {
+                                                  "TIME": {
+                                                    "shadow": {
+                                                      "type": "math_number",
+                                                      "fields": {
+                                                        "NUM": 100
+                                                      }
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "variables": [
+      {
+        "name": "pad",
+        "id": "v_pad"
+      }
+    ]
+  }
+}
