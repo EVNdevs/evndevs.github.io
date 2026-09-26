@@ -1,7 +1,7 @@
 EVN_ALPHA_MicroPython.uf2
-source: main (0.2.48) + calibrate() measures the rotor's detent period (a 20-kick detent survey, calibration page v8, a custom motor runs the feed-forward and the half-pitch endpoint on it) + the cogging feed-forward's phase is the middle of the step the shaft rests in (no drift after a coast); GC heap 146 KB
+source: main (0.2.49) + the friction pre-load on a rotor that cogs is v_break - cog_amp (the same-session fling from a settled detent rest, found and fixed) + lane A: the pre-load counts the profile's acceleration feed-forward (evn_adrc_preload count_ff); GC heap 144 KB
 built: 2026-09-27 (MicroPython v1.26.1, pico-sdk 2.3.0; SOURCE_DATE_EPOCH=1790510400 = noon UTC 2026-09-27)
 flash: single-line 03h boot2, PICO_FLASH_SPI_CLKDIV=4
-md5: 3582e2e31c63a8ddcde311828798e037
+md5: 395dc192615c277fe2712baf94e9c3d4
 reproduce: cmake -G Ninja -DEVN_MICROPYTHON=ON + ninja with SOURCE_DATE_EPOCH = noon UTC of the built: date (py/makeversionhdr.py embeds MICROPY_BUILD_DATE); release_public.py does this and refuses on an md5 mismatch
-version: 0.2.49
+version: 0.2.50
