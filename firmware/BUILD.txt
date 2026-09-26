@@ -1,7 +1,7 @@
 EVN_ALPHA_MicroPython.uf2
-source: main (0.2.42) + the CHR-GM16-030PA 9V 1:63 library motor (1764 counts = 7 ppr x 4 x 63, 9 V cap, no-load 1290 deg/s, EV3 Large class, 900 deg/s / 5000 deg/s^2, plant block from tools/motor_model_gen.py), help()'s calibration line at about 7 s; GC heap 146 KB
+source: main (0.2.43) + the cruise cap at the whole speed budget K (0.95 V - v_f): run() tapers its ramp into it per tick (ramp_taper_dv, 10 % floor, the budget from the tick's pack), a profiled move cruises at min(budget, K (V - v_f) - accel tau) with its trapezoid unchanged; GC heap 146 KB
 built: 2026-09-26 (MicroPython v1.26.1, pico-sdk 2.3.0; SOURCE_DATE_EPOCH=1790424000 = noon UTC 2026-09-26)
 flash: single-line 03h boot2, PICO_FLASH_SPI_CLKDIV=4
-md5: 4925bf18d648a510158969e78d2a8ffd
+md5: 0a499d5d7abe443c8775079dca40f1a4
 reproduce: cmake -G Ninja -DEVN_MICROPYTHON=ON + ninja with SOURCE_DATE_EPOCH = noon UTC of the built: date (py/makeversionhdr.py embeds MICROPY_BUILD_DATE); release_public.py does this and refuses on an md5 mismatch
-version: 0.2.43
+version: 0.2.44
