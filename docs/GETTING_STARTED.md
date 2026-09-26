@@ -84,7 +84,7 @@ Every row is also a way to drive that port. The buttons only appear while the li
 - **Servo ports**: press the gear on a port and say what is on it — *Geekservo 270°*, *Geekservo continuous*, *generic 180°*, *RGB LED strip*, or *nothing*. The console then builds the object for you, so servo port 3 is `s3` (an LED strip is `l3`). **Drive this servo port...** then asks for an angle (the 270° and generic profiles), a duty in percent (the continuous one) or a colour (an LED strip), and **Stop this servo port** ends it.
 - **Serial ports** are Serial 1 and Serial 2. The gear says what is on the header: *EVN Bluetooth module*, *UART (raw serial)* or *nothing*, and the console creates `bt1` / `bt2` or `u1` / `u2` for it. A UART is asked for its baud rate straight after (9600, 19200, 38400, 57600, 115200, which is what most things use, 230400, 460800, 921600, or *Other...* for anything from 300 to 3000000), and the row then reads `UART 9600 · 0 bytes waiting`. Change it later with the same gear: the board reopens the port at the new baud and keeps whatever was already queued. A Bluetooth row says what state the module is in, whether the board's REPL is on it, how many bytes are waiting and which COM port is this board's wireless link; its three buttons pair it in Windows, put the REPL on the module and pick its COM port for the board: that is §5a, the way to work without the USB cable.
 - **I2C devices** lists the sensors and displays it found on ports 1 to 16, each identified by its own ID register, and re-checks about every 5 s. Plug a colour sensor in and it appears with its name and port. On a device it recognises, **Set a property of this device...** offers what that device can be set to (the colour sensor's gain 1, 4, 16 or 60, its integration time, and so on) and then asks for the value, and **Read this device live...** asks what the row should show — `hsv`, `rgb`, `lux`, `distance`, `heading`, whatever that sensor has — and the row shows it four times a second from then on, with a small chart of it in the *Console* view. The eye-closed button stops it. A live reading is remembered for that board and comes back by itself when the console reconnects. An **IMU** or **compass** row also has a **pulse** button that calibrates it — the IMU still and level in about 2 s (*One pose*, or *Two poses* with a half turn in between), the compass while you turn the robot (*Full* or *Planar*, with a live map of the directions) — and the row then reads *calibrated \<date\>*; right-click for **Clear calibration**. [Calibrating your robot](CALIBRATION.md) walks through all three calibrations.
-- the **battery** row, the **firmware** row and **Files on the board**, kept up to date without you pressing anything. If the pack falls below `evn.battery.warnVolts` while the console is connected — 7.0 V by default, and the pack is two cells, so that is 3.5 V each — a warning appears in the status bar as well, with both cell voltages in its tooltip. Set it to 0 if you would rather not be told.
+- the **battery** row, the **firmware** row and **Files on the board**, kept up to date without you pressing anything. *Files on the board* starts with a **Storage** row (`Storage · 10.6 MB free of 11.0 MB (96 %)`), which turns into a warning, with one message offering **Download all data logs**, when less than a tenth of the space or less than 256 kB is free: a data log the board cannot save when your program ends is lost. Next is the **data** folder, where `evn.DataLog` saves its files (`data · 3 data logs, 412 kB`, newest first). Click a log, or its cloud button, to download it into the **Data** folder of your projects folder; a `.csv` opens in the data viewer at once, and if a file of that name is already there you choose **Replace** or **Keep both**. Every other file on the board has the same cloud button, and every file a delete button. The **data** row downloads all the logs with one button, and its right-click menu deletes them all (you confirm once). If the pack falls below `evn.battery.warnVolts` while the console is connected — 7.0 V by default, and the pack is two cells, so that is 3.5 V each — a warning appears in the status bar as well, with both cell voltages in its tooltip. Set it to 0 if you would rather not be told.
 
 **Command line** is the row to try things with: click it (or **EVN: Send a command to the board**), type one line of Python and press Enter. `m1` to `m4` are the four motors, `s1` to `s4` the servos you configured (`l1` to `l4` for an LED strip), `bt1` / `bt2` and `u1` / `u2` the serial ports, `d5` the device on I2C port 5, and `evn` is already imported, so `m1.run_angle(200, 90)` turns port 1 by 90°, and `m1.angle()` prints where it is. The answer, and anything the board prints, appear in the **EVN Console** panel (**EVN: Show the console output**). The last 20 commands are offered again when you open the row.
 
@@ -122,7 +122,11 @@ lowest priority (it never delays the motors), and the logger fetches what it rec
   motors drive, it is not built for that. The chart shows a preview meanwhile. The note says how long the
   memory lasts at full rate (about 10 s for one reading at max, longer at lower rates); when a reading's
   share is full, the board keeps every second sample and **halves its rate**, so the recording never stops
-  by itself - a long run comes back evenly thinned, and the file says where (`# rate halved: ...`). After
+  by itself - a long run comes back evenly thinned, and the file says where (`# rate halved: ...`). A run of
+  identical readings is kept as two rows, its first and its last, so a motor at rest or a button nobody
+  presses costs two rows however long you record: the file and the chart show the value flat between the
+  two, and every reading in between was taken and was the same to the last bit. The file's last line says
+  how many samples the board took (`# samples taken: ...`), which is more than the rows. After
   **Stop** the logger waits until every motor has stopped, then fetches the samples and writes them. A
   recording also ends by itself when the console lets go of the board (you press **Run**, open the REPL, or
   unplug); what was streamed stays in the file, what the board still held is lost.
@@ -166,8 +170,11 @@ log.stop()
 print(log.save())
 ```
 
-A log not yet saved (recording or stopped) is saved by itself (`autosave=True`) when `main.py` ends, the editor's Run finishes, the board soft-reboots or a `with` block ends, once the motors coast. Copy the file to your
-computer with `mpremote cp :/data/run1_....csv .` and open it in the viewer below. `log.log(x, y)` adds rows
+A log not yet saved (recording or stopped) is saved by itself (`autosave=True`) when `main.py` ends, the editor's Run finishes, the board soft-reboots or a `with` block ends, once the motors coast. To get the file,
+open the **data** folder under *Files on the board* in the *Board* view (§3b) and click the log, or its cloud
+button: it is copied into the **Data** folder of your projects folder and opens in the viewer below
+(`mpremote cp :/data/run1_....csv .` does the same from a terminal). The board keeps the same rule as the
+logger: a run of identical samples is two rows, its first and its last; `log.log()` rows are always kept. `log.log(x, y)` adds rows
 of your own values (the columns are `DataLog('x', 'y', ...)`); the whole class is in the API reference
 (*DataLog*), and `examples/22_data_log/` has a minimal and a complete program, in Python and in blocks (the
 *Data log* category).
@@ -177,8 +184,10 @@ of your own values (the columns are `DataLog('x', 'y', ...)`); the whole class i
 for the values at that moment, **drag** across the lanes to zoom into a span, the **wheel** zooms around the
 pointer, **double-click** shows everything, and the strip underneath shows the whole log with the span in
 view (drag it to pan). Click a name in the legend to hide or show that line. The table under the chart is
-the statistics of the span in view: samples, rate, min, max, mean, standard deviation, change, slope and
-the last value - zoom into the part you care about and read it off.
+the statistics of the span in view: rows, rate, min, max, mean, standard deviation, change, slope and
+the last value - zoom into the part you care about and read it off. The mean, standard deviation and slope
+weight each row by the time it holds (until the next row), so a flat run of identical readings counts for its
+whole span, and the rate comes from the shortest gap between rows, which such a run does not stretch.
 
 ## 4. Ports and units
 
@@ -286,7 +295,7 @@ Notes: the first connection to the module takes a second or two (Windows opens t
 | Upload current file as main.py / Remove main.py from the board | the program the user button starts (§5) |
 | Flash MicroPython firmware / Install mpremote | §2 and §1 |
 
-The buttons on the *Board* rows — run a motor, drive a servo port, set or read a device, put the REPL on the Bluetooth module — are not in the palette: each belongs to its row and needs the live console (§3b).
+The buttons on the *Board* rows — run a motor, drive a servo port, set or read a device, put the REPL on the Bluetooth module, download or delete a file or the data logs — are not in the palette: each belongs to its row and needs the live console (§3b), except the file downloads and deletes, which also work with the console off while nothing else holds the port.
 
 ## 6a. Updates
 

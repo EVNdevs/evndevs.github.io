@@ -2293,6 +2293,11 @@ class DataLog:
     channels through the console (about 60 Hz for the heading with a compass also on the bus in the program
     bench), never twice within 2 ms.
 
+    A run of identical samples is two rows: a sample bit-identical to the channel's previous row adds no
+    row, the run's first row stays and its end row's time stamp moves forward to the newest sample, so the
+    file shows the value flat from the first stamp to the last (every sample in it was taken and compared;
+    a change of one bit is recorded). ``log()`` rows are never folded.
+
     One recording at a time: ``start()`` of another DataLog raises ``RuntimeError`` while one records; the
     same object's second ``start()`` returns ``None``. Every other call after ``close()`` raises
     ``ValueError('DataLog is closed')``; ``running()`` answers False and ``close()`` is idempotent."""
@@ -2337,8 +2342,9 @@ class DataLog:
     def info(self) -> dict:
         """What is recorded: ``running``, ``size`` (bytes), ``saved`` (since the last start) and ``channels``
         (one dict per channel: ``device``, ``port`` (None for the battery / button), ``quantity``, ``unit``,
-        ``rate`` (samples a second now), ``halvings``, ``samples`` (held), ``taken`` (since the start) and
-        ``dropped``); once started also ``seconds`` (recorded so far), ``polls``, ``cost_us`` (the longest
+        ``rate`` (samples a second now), ``halvings``, ``samples`` (the rows held), ``taken`` (the samples
+        taken since the start), ``same`` (the samples folded into a run's end row: a run of identical samples
+        is two rows) and ``dropped``); once started also ``seconds`` (recorded so far), ``polls``, ``cost_us`` (the longest
         poll's cost) and ``cost_mean_us``."""
     def save(self, path: Optional[str] = None, /) -> str:
         """Write the recording to a file and return its path: ``/data/<name>[_<date>_<time>].<extension>`` or

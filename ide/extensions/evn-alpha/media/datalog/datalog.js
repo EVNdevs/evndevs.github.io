@@ -572,23 +572,41 @@
     ui.table.append(h('tr', null, ['reading', 'n', 'rate', 'min', 'max', 'mean', 'std dev', 'change', 'slope', 'last'].map((x) => h('th', { text: x }))));
     for (const s of st.order) {
       const i0 = lower(s, a), i1 = lower(s, b + 1e-9);
-      let n = 0, sum = 0, sq = 0, mn = Infinity, mx = -Infinity, st_ = 0, stt = 0, sv = 0, stv = 0, first = NaN, lastV = NaN, t0 = NaN, t1 = NaN;
+      // The board stores a run of identical samples as two rows (its first and its last), so a row
+      // stands for the time until the next one: the statistics weight each row by that hold (the
+      // last row by the typical gap), and the rate is the shortest gap between rows: a series that
+      // changes shows its sampling rate, a folded one its rows.
+      const gaps = [];
+      for (let i = i0 + 1; i < i1; i++) { const g = s.t[i] - s.t[i - 1]; if (g > 0) gaps.push(g); }
+      gaps.sort((x, y) => x - y);
+      const typical = gaps.length ? gaps[Math.floor(gaps.length / 2)] : 0;
+      let n = 0, sw = 0, sum = 0, sq = 0, mn = Infinity, mx = -Infinity, st_ = 0, stt = 0, sv = 0, stv = 0, first = NaN, lastV = NaN, t0 = NaN, t1 = NaN;
       const tm = (a + b) / 2;
       for (let i = i0; i < i1; i++) {
         const v = s.v[i];
         if (Number.isNaN(v)) continue;
         const t = s.t[i] - tm;
-        n++; sum += v; sq += v * v; if (v < mn) mn = v; if (v > mx) mx = v;
-        st_ += t; stt += t * t; sv += v; stv += t * v;
+        const w = i + 1 < i1 ? Math.max(0, s.t[i + 1] - s.t[i]) : typical;
+        n++; sw += w; sum += w * v; sq += w * v * v; if (v < mn) mn = v; if (v > mx) mx = v;
+        st_ += w * t; stt += w * t * t; sv += w * v; stv += w * t * v;
         if (Number.isNaN(first)) { first = v; t0 = s.t[i]; }
         lastV = v; t1 = s.t[i];
       }
+      if (n && !(sw > 0)) {                       // one row, or all at one instant: plain averages
+        sw = 0; sum = 0; sq = 0; st_ = 0; stt = 0; sv = 0; stv = 0;
+        for (let i = i0; i < i1; i++) {
+          const v = s.v[i];
+          if (Number.isNaN(v)) continue;
+          const t = s.t[i] - tm;
+          sw += 1; sum += v; sq += v * v; st_ += t; stt += t * t; sv += v; stv += t * v;
+        }
+      }
       const count = i1 - i0;
-      const mean = n ? sum / n : NaN;
-      const sd = n > 1 ? Math.sqrt(Math.max(0, (sq - n * mean * mean) / (n - 1))) : NaN;
-      const den = n * stt - st_ * st_;
-      const slope = n > 1 && den > 0 ? (n * stv - st_ * sv) / den : NaN;
-      const rate = count > 1 && t1 > t0 ? (count - 1) / (s.t[i1 - 1] - s.t[i0]) : NaN;
+      const mean = n ? sum / sw : NaN;
+      const sd = n > 1 ? Math.sqrt(Math.max(0, sq / sw - mean * mean)) : NaN;
+      const den = sw * stt - st_ * st_;
+      const slope = n > 1 && den > 0 ? (sw * stv - st_ * sv) / den : NaN;
+      const rate = gaps.length ? 1 / gaps[0] : NaN;
       const u = s.unit;
       ui.table.append(h('tr', s.on ? null : { style: 'opacity:0.55' },
         h('td', null, h('span', { class: 'sw', style: 'background:' + colorOf(s) }), s.label + (u ? ' (' + u + ')' : '')),

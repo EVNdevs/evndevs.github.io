@@ -2,7 +2,7 @@
   "name": "evn-alpha-micropython",
   "displayName": "EVN ALPHA MicroPython",
   "description": "Early-access tooling for the EVN ALPHA robotics controller: flash the MicroPython firmware, run programs, open the REPL, autocomplete for the evn motor API, and a Blockly block editor that generates MicroPython.",
-  "version": "0.2.39",
+  "version": "0.2.40",
   "publisher": "evn-alpha",
   "license": "MIT",
   "preview": true,
@@ -261,6 +261,24 @@
         "category": "EVN",
         "command": "evn.deleteBoardFile",
         "title": "Delete from the board",
+        "icon": "$(trash)"
+      },
+      {
+        "category": "EVN",
+        "command": "evn.downloadBoardFile",
+        "title": "Download from the board (to the Data folder)",
+        "icon": "$(cloud-download)"
+      },
+      {
+        "category": "EVN",
+        "command": "evn.downloadBoardData",
+        "title": "Download all data logs from the board",
+        "icon": "$(cloud-download)"
+      },
+      {
+        "category": "EVN",
+        "command": "evn.deleteBoardData",
+        "title": "Delete all data logs from the board",
         "icon": "$(trash)"
       },
       {
@@ -617,6 +635,14 @@
           "when": "false"
         },
         {
+          "command": "evn.downloadBoardFile",
+          "when": "false"
+        },
+        {
+          "command": "evn.deleteBoardData",
+          "when": "false"
+        },
+        {
           "command": "evn.configurePort",
           "when": "false"
         },
@@ -923,14 +949,44 @@
           "group": "1_run@2"
         },
         {
-          "command": "evn.deleteBoardFile",
-          "when": "view == evn.board && viewItem =~ /^evnBoardFile/",
-          "group": "inline"
+          "command": "evn.downloadBoardFile",
+          "when": "view == evn.board && viewItem =~ /^evnBoardFile|^evnBoardDataFile/",
+          "group": "inline@1"
         },
         {
           "command": "evn.deleteBoardFile",
-          "when": "view == evn.board && viewItem =~ /^evnBoardFile/",
-          "group": "1_edit"
+          "when": "view == evn.board && viewItem =~ /^evnBoardFile|^evnBoardDataFile|^evnBoardFolder/",
+          "group": "inline@2"
+        },
+        {
+          "command": "evn.downloadBoardFile",
+          "when": "view == evn.board && viewItem =~ /^evnBoardFile|^evnBoardDataFile/",
+          "group": "1_edit@1"
+        },
+        {
+          "command": "evn.deleteBoardFile",
+          "when": "view == evn.board && viewItem =~ /^evnBoardFile|^evnBoardDataFile|^evnBoardFolder/",
+          "group": "1_edit@2"
+        },
+        {
+          "command": "evn.downloadBoardData",
+          "when": "view == evn.board && viewItem == evnBoardDataFolder",
+          "group": "inline@1"
+        },
+        {
+          "command": "evn.downloadBoardData",
+          "when": "view == evn.board && viewItem == evnBoardDataFolder",
+          "group": "1_edit@1"
+        },
+        {
+          "command": "evn.deleteBoardData",
+          "when": "view == evn.board && viewItem == evnBoardDataFolder",
+          "group": "1_edit@2"
+        },
+        {
+          "command": "evn.downloadBoardData",
+          "when": "view == evn.board && viewItem =~ /^evnBoardStorage/",
+          "group": "1_edit@1"
         },
         {
           "command": "evn.flashFirmware",
