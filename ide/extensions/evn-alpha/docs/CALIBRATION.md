@@ -4,7 +4,7 @@ Three parts of an EVN ALPHA robot are worth calibrating: each **motor**, the **I
 
 | What | Why | Takes | Stored for | Do it again when |
 | :--- | :--- | :--- | :--- | :--- |
-| [Motor](#motors) | measures this motor's strength, time constant and friction, so moves are fast and land on target; finds which way its encoder counts | about 11 s, shaft free to turn | motor port 1–4 | you swap the motor, or choose a different motor for the port |
+| [Motor](#motors) | measures this motor's strength, time constant and friction, so moves are fast and land on target; finds which way its encoder counts | about 11–12 s per port, shaft free to turn | motor port 1–4 | you swap the motor, or choose a different motor for the port |
 | [IMU](#imu) | removes the gyro's bias and the accelerometer's error, and finds which way the module is mounted, so the heading does not drift from the start and a level robot reads level | about 2 s still (one pose), or about 10 s with a half turn (two poses) | I2C port 1–16 | you move the module to another port, plug in another module, or change how it is mounted |
 | [Compass](#compass) | removes the pull of the robot's own iron (motors, battery, screws), so the heading points to magnetic north | about 20 s (planar) to a minute (full) of turning the robot | I2C port 1–16 | you move the motors, the battery or other metal parts, or the compass itself |
 
@@ -32,6 +32,8 @@ A motor's calibration measures how strongly it accelerates for each volt (`b0`),
 4. When it is done, a message gives the numbers (`b0`, `tau`, the breakaway voltage, the no-load speed) and says *and stored*.
 
 ![The dialog "Calibrate motor port 1 (EV3 Medium)? The motor turns by itself for about eleven seconds, up to about a turn and a half each way: the shaft must be free", with Cancel and Calibrate](images/calibration-motor-dialog.png)
+
+A calibration takes about 11–12 s per port; a breakaway that has to be measured again (a reading below the running friction is re-run) adds about 0.8 s each time, at most four times. The Board view waits up to 60 s, which covers every calibration seen on the bench; the theoretical bound with every internal timeout hit is about 66 s; from Python several ports calibrate one after another (only one drives at a time), so they take about the sum. A calibration page written by this firmware (record version 8) is refused by an older firmware: after a downgrade, choose the motor again and calibrate again.
 
 The Board view calibrates one motor at a time. The row then shows one of:
 

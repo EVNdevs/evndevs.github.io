@@ -121,7 +121,7 @@ class Control:
     @overload
     def target_tolerances(self, speed: Optional[float] = None, position: Optional[float] = None) -> None:
         """The ``done()`` criterion: speed (deg/s, default 50) and position (deg, default two encoder edges and at
-        least 1, or half the detent pitch on a motor whose rotor cogs - a library motor with detents, or a custom
+        least 1, or half the detent pitch plus a quarter edge on a motor whose rotor cogs - a library motor with detents, or a custom
         motor whose calibrate() measured them: 1 on a LEGO motor, 3.3 on the Pololu 25D,
         which rests in its nearest detent) tolerance. Both read back as the floats they were set to
         (``position=0.25`` reads 0.25; a LEGO encoder edge is 0.5 deg). A position below the controller's own
@@ -187,7 +187,7 @@ class Motor:
         """``gears``: ``[12, 36]`` or ``[[12, 36], [20, 16, 40]]``; values are then in output degrees.
         ``reset_angle=True`` zeroes ``angle()`` at construction. ``profile``: position tolerance (deg)
         for ``done()``, must be positive; by default two encoder edges and at least 1 deg, or half the detent
-        pitch on a motor whose rotor cogs (1 deg on a LEGO motor, 3.3 deg on the Pololu 25D, which rests in its
+        pitch plus a quarter edge on a motor whose rotor cogs (1 deg on a LEGO motor, 3.3 deg on the Pololu 25D, which rests in its
         nearest detent). ``speed_unit=SpeedUnit.PERCENT`` makes every speed a
         percentage of ``full_speed()``.
 
@@ -290,7 +290,9 @@ class Motor:
     def calibrate(self) -> Tuple[int, int, int, int]: ...
     @overload
     def calibrate(self, wait: bool = True) -> Optional[Tuple[int, int, int, int]]:
-        """Self-calibration of this port (about 11 s; the shaft must be free to turn, it moves up to about a
+        """Self-calibration of this port (about 11-12 s; a breakaway that has to be re-measured adds
+        about 0.8 s each time, at most four times; the Board view waits up to 60 s, which covers every calibration
+        seen on the bench, and the theoretical bound with every internal timeout hit is about 66 s; one port drives at a time, so several ports take about the sum; the shaft must be free to turn, it moves up to about a
         turn and a half each way and ends near where it started). Returns (b0 in deg/s^2 per volt, time constant in ms,
         breakaway voltage in mV, kinetic friction voltage in mV); the result is stored in flash, loaded at
         every boot, and sets this port's ``full_speed()``. Re-run after swapping the motor.
@@ -299,13 +301,14 @@ class Motor:
         not break away or the fit fails. The calibration also measures the port's encoder phase tables
         (the four quadrature phase widths, one table per direction of turning: a Hall sensor's edges sit
         at slightly different angles each way) and installs and stores them with the record, which is
-        what keeps ``speed()``, ``Pose.velocity()`` and the position between two encoder steps exact; see
-        ``evn._encoder_table()``. It ends with a detent survey (20 short kicks, the shaft resting after each):
+        what keeps ``speed()``, ``Pose.velocity()`` and the position between two encoder steps exact
+        (``evn.calibration(port)["calibrated"]`` / ``["stored"]`` say the record they belong to is in force
+        and in flash). It ends with a detent survey (20 short kicks, the shaft resting after each):
         a motor whose rotor cogs (magnetic detents, like the Pololu 25D's every 8 encoder edges) always comes
         to rest in a detent, so the rests line up with the detent period, and the calibration measures that
         period. A custom motor that cogs then gets what a library motor with detents has: the cogging
         feed-forward (amplitude = breakaway minus running friction) and the detent rest at the end of a move
-        (half a detent pitch of tolerance); a library motor keeps its library figure and the measurement only
+        (half a detent pitch plus a quarter edge of tolerance); a library motor keeps its library figure and the measurement only
         checks it. ``evn.calibration(port)["cogging_edges"]`` says what the port runs on."""
 
     # settings
@@ -2467,7 +2470,7 @@ def calibration(port: int, /) -> dict:
     encoder counting against the drive and flipped the port's decoder - a non-LEGO motor wired the other
     way round; stored with the record, back at boot, gone with the record), "cogging_edges" (the rotor's
     detent period the port runs on, in encoder edges, 0 = none: the library motor's figure, or the period
-    calibrate() measured on a custom motor; non-zero widens the endpoint band and done() to half a detent pitch and,
+    calibrate() measured on a custom motor; non-zero widens the endpoint band and done() to half a detent pitch plus a quarter edge and,
     when the breakaway is above the running friction, turns on the cogging feed-forward and the detent hold),
     "cogging_measured" (the period calibrate()'s detent survey measured, 0 = the rotor did not rest in
     detents, None = a record older than the survey, or the survey was abandoned), "cogging_confidence" (how sure the survey was, 0..1,
@@ -2494,20 +2497,41 @@ def bootloader() -> None:
     """Coast the motors and reboot into BOOTSEL (the RPI-RP2 drive) for flashing."""
 
 def _calibration(port: int, /) -> Optional[Tuple[bool, bool, int, int, int, int, int, int, int, int, Optional[str], Optional[str], int]]:
-    """Debug, nothing moves: the ADRC calibration port 1..4 is running as
+    """Bench hook, not for programs (``calibration(port)`` is the public view). Nothing moves: the ADRC calibration port 1..4 is running as
     (valid, stored, b0, tau_ms, v_break_mv, v_f_mv, k_vss, dt_mean_us, vbus_mv, vbus_pulse_mv,
     warning, error, fit_max_us). ``warning`` says what is wrong with the record found in flash (made for another
     motor model: refused; gains implausible for this port's model: applied anyway); ``error`` why the
     last calibrate() on this port failed or was refused. None entries when there is nothing to say."""
 
 def _encoder_table(port: int, /) -> Tuple[Tuple[int, int, int, int], Tuple[int, int, int, int], int, Tuple[int, int, int, int], Tuple[int, int, int, int], Optional[str], int, int]:
-    """Debug, nothing moves: ``(table_fwd, table_rev, rev_shift, widths_fwd, widths_rev, note, pin_state,
+    """Bench hook, not for programs. Nothing moves: ``(table_fwd, table_rev, rev_shift, widths_fwd, widths_rev, note, pin_state,
     step_mod_4)`` for motor port 1..4 — the substep phase tables the port runs, one per direction of turning
     (``(0, 64, 128, 192)`` is the balanced default) and the reverse table's gauge in substeps (0 unless the
     calibration found the hysteresis on the pinned channel), the phase widths the last ``Motor.calibrate()``
     measured in each direction (all zero when none this boot), ``None`` or which direction could not be
     timed / why the default was kept, and the boot-consistency values ``tools/bench/mpy_encoder_seed.py``
     checks."""
+
+def _encoder_phases(port: int, duty: Optional[float] = None, install: bool = False) -> Tuple[int, int, int, int, int]:
+    """Bench hook, not for programs. THE SHAFT TURNS: spins free port 1..4 open loop at ``duty`` (default 0.4,
+    the sign picks the direction, 0.15..0.80) and returns its four quadrature phase widths in substeps and
+    the raw direction ``(p0, p1, p2, p3, dir)``; nothing is stored, the port's table is put back
+    (``install=True`` keeps the measured one in RAM until the next reset). Coasts on every path."""
+
+def _cogging(port: int, amp_mv: Optional[int] = None, /) -> Tuple[float, int, bool, float]:
+    """Bench hook, not for programs. Nothing moves: the cogging feed-forward in force on port 1..4 as
+    ``(period_edges, amp_mv, phase_ok, phase_edges)`` (period 0 = off). ``amp_mv`` (0..12000, 0 = the
+    feed-forward off, the phase kept) overrides the amplitude until the next ``calibrate()`` /
+    ``configure_motor()``."""
+
+def _cogging_survey(port: int, /) -> Optional[Tuple[float, ...]]:
+    """Bench hook, not for programs. Nothing moves: the rest positions (encoder edges from where the
+    calibration started) the detent survey of port 1..4's last finished ``calibrate()`` noted; None when
+    no calibration has finished there since boot."""
+
+def _nudges(port: int, /) -> int:
+    """Bench hook, not for programs. Nothing moves: the hold nudges Core 1 has fired on port 1..4 since
+    boot."""
 def reset(*, start: bool = False) -> None:
     """Coast the motors and reboot the board. After the reboot ``main.py`` waits for a press of the
     user button as after a power-on; ``start=True`` makes that one boot run it at once (what the
@@ -2519,7 +2543,7 @@ def autostart(on: Optional[bool] = None, /) -> bool:
     stored: put ``evn.autostart(True)`` in ``boot.py`` for a board that must run unattended."""
 
 def _chip_reset() -> dict:
-    """Debug: the RP2040's last chip-level reset as ``{"had_por", "had_run", "had_psm_restart"}``
+    """Bench hook, not for programs: the RP2040's last chip-level reset as ``{"had_por", "had_run", "had_psm_restart"}``
     (power-on or brown-out, the RESET key, a debugger). A software reboot leaves them as they were."""
 
 
