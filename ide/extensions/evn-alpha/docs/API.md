@@ -66,7 +66,7 @@ More in `examples/01_board/`.
 
 ## Motor
 
-An EV3, NXT or other encoder motor on a motor port. The motor **model** (EV3 Large, EV3 Medium, NXT, JGA25-370 or a custom motor) is the base of every gain and limit; a short self-calibration (`calibrate()`) then refines them for your motor. More in `examples/02_motor/`.
+An EV3, NXT or other encoder motor on a motor port. The motor **model** (EV3 Large, EV3 Medium, NXT, JGA25-370, Pololu 25D or a custom motor) is the base of every gain and limit; a short self-calibration (`calibrate()`) then refines them for your motor. More in `examples/02_motor/`.
 
 **Constructor**
 
@@ -80,9 +80,9 @@ Motor(port, positive_direction=Direction.CLOCKWISE, gears=None, reset_angle=True
 | `positive_direction` | `Direction.CLOCKWISE` | `CLOCKWISE` is physically clockwise looking at the shaft; `COUNTERCLOCKWISE` flips angle, speed, load, duty and targets |
 | `gears` | `None` | `[12, 36]` or `[[12, 36], [20, 16, 40]]`; every value is then in output degrees and the limits are divided by `control.scale` |
 | `reset_angle` | `True` | `True` zeroes `angle()` at construction; `False` keeps the count accumulated since power-on |
-| `profile` | `None` (1°) | position tolerance in degrees for `done()`, must be positive; the default of 1° is two encoder edges (the controller lands inside its own 0.75° deadband) |
+| `profile` | `None` (1°) | position tolerance in degrees for `done()`, must be positive; the default is two encoder edges and at least 1° (the controller lands inside its own 1.5-edge deadband): 1° on a LEGO motor or the JGA25, 1.55° on the Pololu 25D |
 | `speed_unit` | `SpeedUnit.DEG_S` | or `SpeedUnit.PERCENT`: the unit of every speed this motor takes or reports (see [Speed in percent](#speed-in-percent)) |
-| `model` | `None` | keyword-only: `"EV3 Large"`, `"EV3 Medium"`, `"NXT"` or `"JGA25-370 6V 77RPM"` (`"large"`, `"medium"`, `"nxt"`, `"jga25"` also work; an unknown name is `ValueError`). `None` runs the motor the port is set up for (below) |
+| `model` | `None` | keyword-only: `"EV3 Large"`, `"EV3 Medium"`, `"NXT"`, `"JGA25-370 6V 77RPM"` or `"Pololu 25D 9.7:1 HP 12V"` (`"large"`, `"medium"`, `"nxt"`, `"jga25"`, `"pololu25d_9_7"` also work; an unknown name is `ValueError`). `None` runs the motor the port is set up for (below) |
 
 **Which motor a port runs.** With `model=None` the port runs, in this order: the motor it was **configured** for (`evn.configure_motor()` or the gear button in the extension's Board view, stored on the board: a library model or a custom motor), else the model its stored calibration was made for, else the firmware's fallback — EV3 Large on ports 1–2, EV3 Medium on 3–4. Naming another model with `model=` switches the port to that model's compiled defaults until the next reboot (`evn.motor_config(port)["session"]` is then `True`) and prints a `WARNING` that the stored calibration, made for the other model, is not applied until `calibrate()` runs again. `print(m)` shows the model: `Motor(1, EV3 Large)`, `Motor(3, custom)`.
 
@@ -199,15 +199,15 @@ Say once what is plugged into a port, and every `Motor(port)` — in any program
 
 | `configure_motor` argument | Meaning |
 | :--- | :--- |
-| `model` | a library motor — `"EV3 Large"`, `"EV3 Medium"`, `"NXT"`, `"JGA25-370 6V 77RPM"` (`"jga25"`: a 6 V, 77 rpm, 1:78 gearmotor with an 11 cpr hall encoder, 3432 counts per revolution, the port capped at 6 V, EV3 Large control class) — or `"custom"` for any other DC motor with a quadrature encoder, or `None` |
+| `model` | a library motor — `"EV3 Large"`, `"EV3 Medium"`, `"NXT"`, `"JGA25-370 6V 77RPM"` (`"jga25"`: a 6 V, 77 rpm, 1:78 gearmotor with an 11 cpr hall encoder, 3432 counts per revolution, the port capped at 6 V, EV3 Large control class), `"Pololu 25D 9.7:1 HP 12V"` (`"pololu25d_9_7"`: Pololu #4842, a 12 V high-power 9.68:1 gearmotor with a 48 CPR encoder, 464.64 counts per revolution, 1000 rpm = 6000 deg/s no-load at 12 V — about 3500 deg/s on the pack, its 12 V rating above the pack so no cap binds —, EV3 Medium control class; its stall current is above the port's 3 A rating, so never hold it stalled) — or `"custom"` for any other DC motor with a quadrature encoder, or `None` |
 | `counts_per_rev` | custom only, **required**: encoder edges per **output** revolution (one channel's pulses × 4 × the gear ratio; a LEGO motor is 720) |
 | `rated_voltage` | custom only: mV, 1000..12000, the port's voltage cap (0 = no cap) |
 | `no_load_speed` | custom only: deg/s at the rated voltage (left out or 0 = not known). It is the speed limit, 100 % and the control's first guess until `calibrate()` measures the motor; a custom motor runs on the EV3 Large control class, or the EV3 Medium class from 1300 deg/s |
 
 - The three custom arguments with a library model raise `ValueError("counts_per_rev, rated_voltage and no_load_speed are for model='custom'")`; a custom motor without `counts_per_rev` raises `ValueError`.
-- **A change to a different motor clears the port's calibration** — the old motor's numbers must not run the new one — so `calibrate()` afterwards. Until a custom or JGA25 motor is calibrated the firmware only knows the wiring convention for its encoder direction, so calibrate before the first closed-loop move; the constructor warns once that a custom motor is not calibrated.
+- **A change to a different motor clears the port's calibration** — the old motor's numbers must not run the new one — so `calibrate()` afterwards. Until a custom, JGA25 or Pololu 25D motor is calibrated the firmware only knows the wiring convention for its encoder direction, so calibrate before the first closed-loop move; the constructor warns once that a custom motor is not calibrated.
 - Nothing moves. The port must be free (`OSError(EBUSY)` while a `Motor` holds it) and every motor stopped (it is a flash write); `RuntimeError` says why a refusal changed nothing.
-- `evn.motor_config(port)` returns `{"port", "model", "custom", "control_class", "counts_per_rev", "rated_voltage", "no_load_speed", "stored", "session"}`: `model` is `'EV3 Large'`, `'EV3 Medium'`, `'NXT'`, `'JGA25-370 6V 77RPM'` or `'custom'`; `control_class` the standard model the control starts from (a custom motor's, or a library motor's own — the JGA25 runs the EV3 Large class); `rated_voltage` the port's voltage cap (a custom motor's rated voltage, the JGA25's 6000, 0 for a LEGO motor); `no_load_speed` at that voltage (at 9 V when uncapped); `stored` whether it is in flash; `session` whether a program's `Motor(port, model=)` runs a library model in its place until the next reboot.
+- `evn.motor_config(port)` returns `{"port", "model", "custom", "control_class", "counts_per_rev", "rated_voltage", "no_load_speed", "stored", "session"}`: `model` is `'EV3 Large'`, `'EV3 Medium'`, `'NXT'`, `'JGA25-370 6V 77RPM'`, `'Pololu 25D 9.7:1 HP 12V'` or `'custom'`; `control_class` the standard model the control starts from (a custom motor's, or a library motor's own — the JGA25 runs the EV3 Large class, the Pololu 25D the EV3 Medium class); `rated_voltage` the port's voltage cap (a custom motor's rated voltage, the JGA25's 6000, the Pololu 25D's 12000 — above the pack, so it never binds —, 0 for a LEGO motor); `no_load_speed` at that voltage (at 9 V when uncapped); `stored` whether it is in flash; `session` whether a program's `Motor(port, model=)` runs a library model in its place until the next reboot.
 
 **Example**
 
@@ -1459,7 +1459,7 @@ print(log.save())                    # /data/run1_2026-09-26_14-03-11.csv
 | Topic | Pybricks | EVN ALPHA |
 | :--- | :--- | :--- |
 | `Motor(port)` | `Port.A`..`Port.D` | port numbers 1..4 (`Port.A`..`D` exist as the same integers) |
-| `Motor(port)` model | the motor identifies itself over the port | `model="EV3 Medium"` / `"EV3 Large"` / `"NXT"` / `"JGA25-370 6V 77RPM"` (keyword-only) names it for the session; without it the port runs the motor it was configured for (`evn.configure_motor()` or the Board view's gear), else the model its stored calibration was made for, else the firmware's fallback (EV3 Large on 1-2, EV3 Medium on 3-4). The gain base is the model, never the port; `calibrate()` stores its record with the model, so nothing is re-run at boot |
+| `Motor(port)` model | the motor identifies itself over the port | `model="EV3 Medium"` / `"EV3 Large"` / `"NXT"` / `"JGA25-370 6V 77RPM"` / `"Pololu 25D 9.7:1 HP 12V"` (keyword-only) names it for the session; without it the port runs the motor it was configured for (`evn.configure_motor()` or the Board view's gear), else the model its stored calibration was made for, else the firmware's fallback (EV3 Large on 1-2, EV3 Medium on 3-4). The gain base is the model, never the port; `calibrate()` stores its record with the model, so nothing is re-run at boot |
 | `reset_angle()` with no argument | resets to the absolute marker angle | makes the current position 0 (EV3/NXT encoders have no absolute marker) |
 | `reset_angle(angle=…)` | `angle` may be given as a keyword | `angle` is positional only: `reset_angle(90)` (a keyword raises `TypeError`) |
 | `speed(window)` | averages over `window` ms | `speed()` only; the controller's own estimate is reported |

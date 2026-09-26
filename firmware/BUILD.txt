@@ -1,7 +1,7 @@
 EVN_ALPHA_MicroPython.uf2
-source: main (0.2.39) + the data logger folds a run of identical samples into two records (2026-09-26: the first and the last, whose stamp moves on; user rows never folded), _state() carries the samples taken per channel, info() a channel's `same`, the CSV header says "rows of samples"; the console agent lists /data, fetches a file (get) and deletes data/<name>
+source: main (0.2.40) + the Pololu 25D 9.7:1 HP 12V library motor (464.64 counts, 12 V, EV3 Medium class, 3000 deg/s / 20000 deg/s^2), its cogging feed-forward (amplitude = v_break - v_f from calibrate(), phase from a coasted rest, faded out 400-900 deg/s), the endpoint spring-back rule gated on authority starvation, done() tolerance = max(1 deg, two encoder edges), an exact substeps-per-turn angle conversion; GC heap 146 KB
 built: 2026-09-26 (MicroPython v1.26.1, pico-sdk 2.3.0; SOURCE_DATE_EPOCH=1790424000 = noon UTC 2026-09-26)
 flash: single-line 03h boot2, PICO_FLASH_SPI_CLKDIV=4
-md5: 3dddc880f6597e03ac6c470429db7a3f
+md5: b49cbe7fe88d985f573e58d99d57d881
 reproduce: cmake -G Ninja -DEVN_MICROPYTHON=ON + ninja with SOURCE_DATE_EPOCH = noon UTC of the built: date (py/makeversionhdr.py embeds MICROPY_BUILD_DATE); release_public.py does this and refuses on an md5 mismatch
-version: 0.2.40
+version: 0.2.41

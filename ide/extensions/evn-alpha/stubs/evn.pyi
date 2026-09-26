@@ -119,8 +119,10 @@ class Control:
     def target_tolerances(self) -> Tuple[float, float]: ...
     @overload
     def target_tolerances(self, speed: Optional[float] = None, position: Optional[float] = None) -> None:
-        """The ``done()`` criterion: speed (deg/s, default 50) and position (deg, default 1) tolerance. Both read
-        back as the floats they were set to (``position=0.25`` reads 0.25; the encoder edge is 0.5 deg)."""
+        """The ``done()`` criterion: speed (deg/s, default 50) and position (deg, default two encoder edges and at
+        least 1: 1 on a LEGO motor, 1.55 on the Pololu 25D) tolerance. Both read back as the floats they were set
+        to (``position=0.25`` reads 0.25; a LEGO encoder edge is 0.5 deg). A position below two encoder edges can
+        leave a move that stops inside the controller's own endpoint band never reporting done."""
 
     @overload
     def stall_tolerances(self) -> Tuple[float, int]: ...
@@ -162,7 +164,7 @@ class Model:
 class Motor:
     """An EV3/NXT motor on EVN port ``port`` (1..4). ``Port.A..D`` are the same numbers.
 
-    The motor model (EV3 Large / EV3 Medium / NXT / JGA25-370 6V 77RPM, or a custom motor) is the one the port was configured for
+    The motor model (EV3 Large / EV3 Medium / NXT / JGA25-370 6V 77RPM / Pololu 25D 9.7:1 HP 12V, or a custom motor) is the one the port was configured for
     (``evn.configure_motor()`` / the extension's Board view, stored on the board), else the one its stored
     calibration was made for, else the firmware's fallback table; ``model=`` names a standard one for this
     session (below). A custom motor's no-load speed is its speed limit and 100 %, its rated voltage its cap.
@@ -181,12 +183,15 @@ class Motor:
                  *, model: Optional[str] = None) -> None:
         """``gears``: ``[12, 36]`` or ``[[12, 36], [20, 16, 40]]``; values are then in output degrees.
         ``reset_angle=True`` zeroes ``angle()`` at construction. ``profile``: position tolerance (deg)
-        for ``done()``, must be positive. ``speed_unit=SpeedUnit.PERCENT`` makes every speed a
+        for ``done()``, must be positive; by default two encoder edges and at least 1 deg (1 deg on a LEGO
+        motor, 1.55 deg on the Pololu 25D's coarser encoder). ``speed_unit=SpeedUnit.PERCENT`` makes every speed a
         percentage of ``full_speed()``.
 
-        ``model``: the motor on the port, ``"EV3 Large"``, ``"EV3 Medium"``, ``"NXT"`` or
-        ``"JGA25-370 6V 77RPM"`` (``"large"``, ``"medium"``, ``"nxt"``, ``"jga25"`` also work; the JGA25 is
-        a 6 V gearmotor, 3432 counts per revolution, the port capped at 6 V). Every gain and limit starts from the model's compiled
+        ``model``: the motor on the port, ``"EV3 Large"``, ``"EV3 Medium"``, ``"NXT"``,
+        ``"JGA25-370 6V 77RPM"`` or ``"Pololu 25D 9.7:1 HP 12V"`` (``"large"``, ``"medium"``, ``"nxt"``,
+        ``"jga25"``, ``"pololu25d_9_7"`` also work; the JGA25 is a 6 V gearmotor, 3432 counts per revolution,
+        the port capped at 6 V; the Pololu 25D is a 12 V high-power gearmotor, 9.7:1, 464.64 counts per
+        revolution, EV3 Medium control class). Every gain and limit starts from the model's compiled
         defaults; ``calibrate()`` refines them for this motor and stores the result with the model.
         ``None`` keeps the motor the port runs: the one it was configured for (``evn.configure_motor()`` or
         the Board view's gear, stored on the board), else the one its stored calibration was made for, else
@@ -271,7 +276,7 @@ class Motor:
     def full_speed(self, deg_s: float, /) -> None:
         """What 100 % means, in deg/s, at the present battery voltage: the no-load speed measured by
         ``calibrate()`` (stored in flash per port), or until then the motor model's rated no-load speed
-        (EV3 Large 1050, EV3 Medium 1560, NXT 1020 deg/s at 9 V; JGA25 462 deg/s at its 6 V cap) scaled
+        (EV3 Large 1050, EV3 Medium 1560, NXT 1020 deg/s at 9 V; JGA25 462 deg/s at its 6 V cap; Pololu 6000 deg/s at 12 V) scaled
         by the voltage the motor sees (the pack, or its cap).
         Setting it stores deg/s per volt, so it keeps tracking the battery; a non-positive value raises
         ``ValueError``."""
@@ -2060,9 +2065,12 @@ def stop_all() -> None:
 def configure_motor(port: int, model: Optional[str], *, counts_per_rev: Optional[float] = None,
                     rated_voltage: int = 0, no_load_speed: Optional[float] = None) -> None:
     """Say what is on motor port 1..4 and store it on the board, so a plain ``Motor(port)`` runs that motor
-    from any host and after every reboot. ``model``: ``"EV3 Large"``, ``"EV3 Medium"``, ``"NXT"`` or
+    from any host and after every reboot. ``model``: ``"EV3 Large"``, ``"EV3 Medium"``, ``"NXT"``,
     ``"JGA25-370 6V 77RPM"`` (``"jga25"``: a 6 V, 77 rpm, 1:78 gearmotor with an 11 cpr hall encoder, 3432
-    counts per revolution, the port capped at 6 V) for a library motor; ``"custom"`` for any other DC motor with a quadrature encoder, described by
+    counts per revolution, the port capped at 6 V) or ``"Pololu 25D 9.7:1 HP 12V"`` (``"pololu25d_9_7"``:
+    Pololu #4842, a 12 V high-power 9.68:1 gearmotor with a 48 CPR encoder, 464.64 counts per revolution,
+    1000 rpm no-load at 12 V - about 3500 deg/s on the pack -, EV3 Medium control class; its stall current is
+    above the port's 3 A rating, so never hold it stalled) for a library motor; ``"custom"`` for any other DC motor with a quadrature encoder, described by
     ``counts_per_rev`` (encoder edges per OUTPUT revolution = one channel's pulses x 4 x the gear ratio;
     a LEGO motor is 720), ``rated_voltage`` (mV, the port's voltage cap; 0 = none) and ``no_load_speed``
     (deg/s at the rated voltage, 0 = not known: it sets the speed limit, 100 % and the control's first
@@ -2070,17 +2078,18 @@ def configure_motor(port: int, model: Optional[str], *, counts_per_rev: Optional
     the port back to the firmware's fallback (EV3 Large on 1-2, EV3 Medium on 3-4).
     A change to a different motor clears the port's calibration (the old motor's numbers must not run
     the new one): ``calibrate()`` afterwards - it also finds which way the motor's encoder counts, so a
-    custom or JGA25 motor is only fully trusted once calibrated. Nothing moves. The port must be free (``OSError(EBUSY)``
+    custom, JGA25 or Pololu 25D motor is only fully trusted once calibrated. Nothing moves. The port must be free (``OSError(EBUSY)``
     while a Motor holds it: ``close()`` it first) and every motor stopped (the flash write);
     ``RuntimeError`` says why a refused change did nothing, ``ValueError`` what was wrong with the
     numbers."""
 
 def motor_config(port: int, /) -> dict:
     """What motor port 1..4 runs now: ``{"port", "model" ('EV3 Large' / 'EV3 Medium' / 'NXT' /
-    'JGA25-370 6V 77RPM' / 'custom'), "custom" (bool), "control_class" (the standard model the control
-    starts from: a custom motor's, or a library motor's own - the JGA25 runs the EV3 Large class),
-    "counts_per_rev", "rated_voltage" (mV, the port's voltage cap: a custom motor's rated voltage, the
-    JGA25's 6000, 0 for a LEGO motor), "no_load_speed" (deg/s at that voltage, at 9 V when uncapped; 0 =
+    'JGA25-370 6V 77RPM' / 'Pololu 25D 9.7:1 HP 12V' / 'custom'), "custom" (bool), "control_class" (the
+    standard model the control starts from: a custom motor's, or a library motor's own - the JGA25 runs the
+    EV3 Large class, the Pololu 25D the EV3 Medium class), "counts_per_rev", "rated_voltage" (mV, the
+    port's voltage cap: a custom motor's rated voltage, the JGA25's 6000, the Pololu 25D's 12000 - above
+    the pack, so it never binds -, 0 for a LEGO motor), "no_load_speed" (deg/s at that voltage, at 9 V when uncapped; 0 =
     a custom motor gave none),
     "stored" (True when it is in flash and the port runs it), "session" (True while a program's
     ``Motor(port, model=)`` runs a standard model in its place until the next reboot)}``."""

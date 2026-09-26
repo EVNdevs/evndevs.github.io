@@ -26,7 +26,7 @@ A motor's calibration measures how strongly it accelerates for each volt (`b0`),
 
 ### From the Board view
 
-1. **Say which motor is on the port.** Press the **gear** on the motor's row and pick *EV3 Large*, *EV3 Medium*, *NXT*, *JGA25-370 6V 77RPM*, or *Custom…* for any other DC motor with a quadrature encoder. The choice is stored on the board. A port nobody has configured runs the firmware's default (EV3 Large on ports 1–2, EV3 Medium on 3–4), shown as *EV3 Large (default)*.
+1. **Say which motor is on the port.** Press the **gear** on the motor's row and pick *EV3 Large*, *EV3 Medium*, *NXT*, *JGA25-370 6V 77RPM*, *Pololu 25D 9.7:1 HP 12V*, or *Custom…* for any other DC motor with a quadrature encoder. The choice is stored on the board. A port nobody has configured runs the firmware's default (EV3 Large on ports 1–2, EV3 Medium on 3–4), shown as *EV3 Large (default)*.
 2. **Press the pulse button** on the row (or right-click → **Calibrate this motor (shaft free, ~5 s)...**). A dialog asks you to free the shaft; press **Calibrate**.
 3. A notification shows **EVN: calibrating motor port N... (about 5 s, shaft free)** while the row reads *calibrating... (shaft free)*.
 4. When it is done, a message gives the numbers (`b0`, `tau`, the breakaway voltage, the no-load speed) and says *and stored*.
@@ -42,7 +42,7 @@ The Board view calibrates one motor at a time. The row then shows one of:
 | *calibrated (not yet in flash)* | in use, stored once every motor has stopped |
 | *not calibrated* | runs on the motor model's defaults |
 | *calibration is for another motor - calibrate again* | the stored record was made for a different motor model and is not used |
-| *encoder reversed* | the calibration found this motor's encoder counting against its drive (a non-LEGO motor wired the other way round, such as the JGA25 on the EVN cable) and flipped it; the motor simply works |
+| *encoder reversed* | the calibration found this motor's encoder counting against its drive (a non-LEGO motor wired the other way round, such as the JGA25 or the Pololu 25D on the EVN cable) and flipped it; the motor simply works |
 
 The row's tooltip lists the measured numbers, and why the last calibration failed if it did.
 
@@ -81,7 +81,7 @@ If the shaft cannot turn, or the measurement does not fit, `calibrate()` raises 
 ### When to calibrate a motor again
 
 - **You put a different motor on the port.** Say so with the gear first: choosing a different motor clears the port's calibration, because the old motor's numbers must not run the new one. Then calibrate.
-- **You changed a port to a custom or JGA25 motor.** Calibrate before its first real move: until then the firmware only knows the usual wiring for its encoder direction, and `Motor(port)` warns once that it is not calibrated.
+- **You changed a port to a custom, JGA25 or Pololu 25D motor.** Calibrate before its first real move: until then the firmware only knows the usual wiring for its encoder direction, and `Motor(port)` warns once that it is not calibrated.
 - **Never** plug a LEGO motor into a port whose row says *encoder reversed* without telling the gear: the flip belongs to the port's record, and would make the new motor run away. Changing the motor with the gear (or **Clear calibration**) removes it.
 - A program's `Motor(port, model="EV3 Medium")` that names another model than the port's stored one runs that model's defaults for the session and prints a `WARNING`; the stored calibration comes back when the program names the right model again or the board reboots.
 
