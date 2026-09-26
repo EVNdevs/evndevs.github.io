@@ -1,7 +1,7 @@
 EVN_ALPHA_MicroPython.uf2
-source: main (0.2.50) + the endpoint release brake (the static-minus-kinetic excess pushed back for up to 6 ms after an endpoint breakaway on a motor that does not cog; the observer sees the applied voltage) + detent_rest set on MOVE and at the record apply + calibrate()'s tau refined between the fit's 10 % grid points; GC heap 143 KB
+source: main (0.2.51) + calibrate()'s breakaway ramp made robust (displacement in the ramp's direction in the encoder's frame, a 20 ms stall re-base of the ramp's origin, a re-run of a direction that reads below the kinetic friction, at most twice, the largest reading kept) + the CHR-GM16-030PA's acceleration default 10000 deg/s^2; GC heap 143 KB
 built: 2026-09-27 (MicroPython v1.26.1, pico-sdk 2.3.0; SOURCE_DATE_EPOCH=1790510400 = noon UTC 2026-09-27)
 flash: single-line 03h boot2, PICO_FLASH_SPI_CLKDIV=4
-md5: 6154165983eb832105c14e4c0ffbff09
+md5: 10cbc20280ad7c5a2346f82098a20c68
 reproduce: cmake -G Ninja -DEVN_MICROPYTHON=ON + ninja with SOURCE_DATE_EPOCH = noon UTC of the built: date (py/makeversionhdr.py embeds MICROPY_BUILD_DATE); release_public.py does this and refuses on an md5 mismatch
-version: 0.2.51
+version: 0.2.52

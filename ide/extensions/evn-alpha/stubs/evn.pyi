@@ -76,7 +76,7 @@ class Control:
         returns ``(speed, acceleration, torque)``; ``acceleration`` is a tuple when the two differ.
         Defaults (EV3 Large / Medium): speed 1000 / 1400 (or the calibrated no-load speed when higher),
         acceleration 2400 / 3000, torque 449 / 206; the NXT runs the Large's speed and acceleration, the
-        JGA25-370 460 and 2400, the Pololu 25D 3000 and 20000, the CHR-GM16 900 and 5000. A non-positive limit raises ``ValueError``;
+        JGA25-370 460 and 2400, the Pololu 25D 3000 and 20000, the CHR-GM16 900 and 10000. A non-positive limit raises ``ValueError``;
         an acceleration sequence that is not two values raises ``ValueError``.
         """
 
@@ -2424,7 +2424,7 @@ def configure_motor(port: int, model: Optional[str], *, counts_per_rev: Optional
     above the port's 3 A rating, so never hold it stalled) or ``"CHR-GM16-030PA 9V 1:63"`` (``"chr16_63"``:
     a 16 mm 9 V gearmotor, 1:63, with a 7 ppr hall encoder on the motor shaft, 1764 counts per revolution,
     215 rpm = 1290 deg/s no-load at 9 V, the port capped at 9 V (above the 2S pack: it never binds), EV3 Large
-    control class, limits 900 deg/s and 5000 deg/s^2; another ratio of the family (1:10 to 1:360) is a
+    control class, limits 900 deg/s and 10000 deg/s^2; another ratio of the family (1:10 to 1:360) is a
     custom motor with 7 x 4 x the ratio counts) for a library motor; ``"custom"`` for any other DC motor with a quadrature encoder, described by
     ``counts_per_rev`` (encoder edges per OUTPUT revolution = one channel's pulses x 4 x the gear ratio;
     a LEGO motor is 720), ``rated_voltage`` (mV, the port's voltage cap; 0 = none) and ``no_load_speed``
