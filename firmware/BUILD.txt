@@ -1,7 +1,7 @@
 EVN_ALPHA_MicroPython.uf2
-source: main (0.2.44) + EVN Extended Peripherals: HiTechnic Color V1 / V2 and Compass, HuskyLens, VL53L1X, TCS3430 (evn_extended.c, hal_hitechnic / hal_huskylens / hal_vl53l1x / hal_tcs3430), a clock per I2C port (evn.I2C freq=), addresses 0x01..0x07; black / white colour calibration on the TCS3430 and the HiTechnic colour sensor; GC heap 145 KB
+source: main (0.2.45) + the Geekservo 360 servo profile (hal_servo "geekservo_360": 360 deg over 500..2500 us, start 180, 400 deg/s; evn.Servo, console E p 360, help); GC heap 145 KB
 built: 2026-09-26 (MicroPython v1.26.1, pico-sdk 2.3.0; SOURCE_DATE_EPOCH=1790424000 = noon UTC 2026-09-26)
 flash: single-line 03h boot2, PICO_FLASH_SPI_CLKDIV=4
-md5: 14355480cc1e493e5c868ee9f9e60c9a
+md5: c542a092d40bc73b3990d7aea8074a26
 reproduce: cmake -G Ninja -DEVN_MICROPYTHON=ON + ninja with SOURCE_DATE_EPOCH = noon UTC of the built: date (py/makeversionhdr.py embeds MICROPY_BUILD_DATE); release_public.py does this and refuses on an md5 mismatch
-version: 0.2.45
+version: 0.2.46

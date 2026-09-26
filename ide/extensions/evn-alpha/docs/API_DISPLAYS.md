@@ -259,11 +259,12 @@ Nothing is read back from the strip, so there is no unplug detection: writes to 
 
 ## Servo — hobby servo (Geekservo 270° / continuous-rotation)
 
-Plug a servo into servo port 1..4 and name its profile; `Servo(port)` is the kit's Geekservo 270° servo. The port sends 50 Hz pulses, and a new position is on the wire within one 20 ms frame.
+Plug a servo into servo port 1..4 and name its profile; `Servo(port)` is the kit's Geekservo 270° servo, `Servo(port, "geekservo_360")` the grey Geekservo 2KG that turns to an angle over a full 360°, and any other servo is the `generic` profile with its own `range`, `min_us` and `max_us` (the Board view's *Custom servo...* builds that line for you). The port sends 50 Hz pulses, and a new position is on the wire within one 20 ms frame.
 
 | Profile | Travel | Pulse | Start | Sweep limit | Drive with |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | `"geekservo_270"` (default) | 0..270° | 600..2400 µs | 135° | 500 deg/s | `angle()`, `move()` |
+| `"geekservo_360"` | 0..360° (the grey Geekservo 2KG) | 500..2500 µs | 180° | 400 deg/s | `angle()`, `move()` |
 | `"generic"` | 0..180° | 500..2500 µs | 90° | 500 deg/s | `angle()`, `move()` |
 | `"geekservo_cr"` | continuous rotation | 600..2400 µs, stop = 1500 µs | stopped | — | `duty()` |
 
@@ -271,7 +272,7 @@ Plug a servo into servo port 1..4 and name its profile; `Servo(port)` is the kit
 
 | Call | Notes |
 | :--- | :--- |
-| `servo = Servo(port, profile="geekservo_270", reverse=False, *, range=None, min_us=None, max_us=None, start=None, max_dps=None)` | `port` 1..4; `profile` one of the three above. `reverse=True` mirrors the direction (0° at the `max_us` end; a positive duty the other way). The keyword-only overrides replace one field of the profile: `range` 0..3600 degrees (0 = continuous rotation), `min_us` / `max_us` 200..2800 with `min_us < max_us`, `start` degrees within the range, `max_dps` ≥ 1. `range=R` without `start=` starts at R/2. The servo goes to its start position (or its stop pulse) at once. `ValueError` for any value out of range, an unknown profile or a non-finite number; `OSError` while an `RGBLED` strip holds the port or the port is not available |
+| `servo = Servo(port, profile="geekservo_270", reverse=False, *, range=None, min_us=None, max_us=None, start=None, max_dps=None)` | `port` 1..4; `profile` one of the four above. `reverse=True` mirrors the direction (0° at the `max_us` end; a positive duty the other way). The keyword-only overrides replace one field of the profile: `range` 0..3600 degrees (0 = continuous rotation), `min_us` / `max_us` 200..2800 with `min_us < max_us`, `start` degrees within the range, `max_dps` ≥ 1. `range=R` without `start=` starts at R/2. The servo goes to its start position (or its stop pulse) at once. `ValueError` for any value out of range, an unknown profile or a non-finite number; `OSError` while an `RGBLED` strip holds the port or the port is not available |
 
 ### Moving
 

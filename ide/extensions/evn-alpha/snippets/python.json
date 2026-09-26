@@ -284,7 +284,7 @@
         "body": [
             "from evn import Servo",
             "",
-            "s = Servo(${1:1}, \"${2|geekservo_270,geekservo_cr,generic|}\")",
+            "s = Servo(${1:1}, \"${2|geekservo_270,geekservo_360,geekservo_cr,generic|}\")",
             "s.move(${3:270}, speed=${4:200})     # 270-degree servo: sweep and wait",
             "$0"
         ]

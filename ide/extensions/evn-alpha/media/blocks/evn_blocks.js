@@ -1043,7 +1043,7 @@
                 portField(SERVO_PORTS),
                 {
                     type: 'field_dropdown', name: 'PROFILE', options: [
-                        ['Geekservo 270 degrees', 'geekservo_270'], ['generic 180 degrees', 'generic'], ['Geekservo continuous', 'geekservo_cr'],
+                        ['Geekservo 270 degrees', 'geekservo_270'], ['Geekservo 360 degrees', 'geekservo_360'], ['generic 180 degrees', 'generic'], ['Geekservo continuous', 'geekservo_cr'],
                     ],
                 },
             ],
@@ -2622,7 +2622,7 @@
                 ],
             },
             {
-                // EVN Extended Peripherals (docs/EXTENDED_PERIPHERALS.md): kit people already own, a smaller API
+                // EVN Extended Peripherals (docs/EXTENDED_PERIPHERALS.md): kit people already own (not stocked by EVN)
                 kind: 'category', name: 'Extended', categorystyle: 'evn_sense_category',
                 contents: [
                     group('HiTechnic colour', 'evn_sense_category', [

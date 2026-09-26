@@ -516,8 +516,9 @@ class Servo:
 
     ``profile``: ``"geekservo_270"`` (the kit's Geekservo 270-degree servo and **the default**:
     600..2400 us, starts at 135 degrees, sweeps up to 500 deg/s), ``"generic"`` (180 degrees,
-    500..2500 us) or ``"geekservo_cr"`` (the Geekservo continuous-rotation servo: ``duty()``
-    -100..100 %). ``reverse=True`` mirrors the direction; the keyword arguments override any
+    500..2500 us), ``"geekservo_360"`` (the grey Geekservo 2KG: 360 degrees over 500..2500 us,
+    starts at 180, sweeps up to 400 deg/s) or ``"geekservo_cr"`` (the Geekservo continuous-rotation
+    servo: ``duty()`` -100..100 %). ``reverse=True`` mirrors the direction; the keyword arguments override any
     profile field, and ``range=R`` without ``start=`` starts at R/2.
 
     The object owns the channel while it lives: ``RGBLED(n)`` on the same port raises ``OSError``,
@@ -2066,7 +2067,7 @@ class Flash:
 
 
 # ---- EVN Extended Peripherals (docs/EXTENDED_PERIPHERALS.md) ------------------------------------
-# Devices the firmware drives natively with a smaller API than an EVN Standard Peripheral: each is
+# Devices the firmware drives natively that EVN does not stock (treated like EVN Standard Peripherals): each is
 # identified by an ID string, an ID register or a handshake (never by its address), read from a cache the firmware
 # refreshes in the background, and re-found after an unplug.
 

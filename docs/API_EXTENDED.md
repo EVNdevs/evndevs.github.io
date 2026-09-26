@@ -2,11 +2,11 @@
 
 Part 4 of the [EVN ALPHA MicroPython API reference](API.md), which has the units, the port numbers and the differences from Pybricks. Previous: [Standard peripherals: displays, lights, servo and Bluetooth](API_DISPLAYS.md) · Next: [Ports, programs, the data logger and timing](API_SYSTEM.md).
 
-Devices the firmware drives natively with a smaller API: the HiTechnic NXT colour sensor and compass, the HuskyLens camera, the VL53L1X distance sensor and the TCS3430 colour sensor.
+Devices the firmware drives natively that EVN does not stock: the HiTechnic NXT colour sensor and compass, the HuskyLens camera, the VL53L1X distance sensor and the TCS3430 colour sensor.
 
 ## EVN Extended Peripherals
 
-*Extended peripherals* are devices the firmware drives natively, like the standard ones, but with a smaller API and a shorter test record: kit people already own, such as LEGO-era NXT sensors and AI cameras, or chips that go further than a standard peripheral (the 4 m VL53L1X, the XYZ TCS3430). They keep the standard rules that matter to a program: each is **identified by an ID string, an ID register or a handshake** (never by its address alone, and a device of another kind is refused at the constructor), read from a **cache** the firmware refreshes in the background, and found again after an unplug. What they do not have: per-register settings, a calibration stored on the board, and [`DataLog`](API_SYSTEM.md#datalog--recording-on-the-board) channels (record them yourself with `DataLog.log()`). `docs/EXTENDED_PERIPHERALS.md` in the firmware repository is the full reference.
+*Extended peripherals* are devices the firmware drives natively, like the standard ones, that EVN does not stock and has no LEGO-compatible mounts for — kit people may already own. The firmware treats them like standard peripherals; a few features of each are still being added (see each section's notes).
 
 | Class | Device | Port | Examples |
 | :--- | :--- | :--- | :--- |

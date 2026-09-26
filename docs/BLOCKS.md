@@ -199,7 +199,7 @@ The calibration blocks here (compass, IMU) and under *Advanced* (motor) store th
 | RGB LEDs *1* set LED *0* to *colour green* | `rgb_1.set(0, Color.GREEN)` (LED 0 is the one at the plug) |
 | RGB LEDs *1* brightness *64* | `rgb_1.brightness(64)` (0 to 255) |
 | turn RGB LEDs *1* off | `rgb_1.off()` |
-| set up servo on port *1* type *Geekservo 270 degrees* | `servo_1 = Servo(1)` (*generic 180 degrees*: `Servo(1, 'generic')`, *Geekservo continuous*: `Servo(1, 'geekservo_cr')`) |
+| set up servo on port *1* type *Geekservo 270 degrees* | `servo_1 = Servo(1)` (*generic 180 degrees*: `Servo(1, 'generic')`, *Geekservo 360 degrees*: `Servo(1, 'geekservo_360')`, *Geekservo continuous*: `Servo(1, 'geekservo_cr')`) |
 | move servo *1* to *90* degrees | `servo_1.angle(90)` (not for a continuous servo) |
 | sweep servo *1* to *180* degrees at *60* deg/s wait ☑ | `servo_1.move(180, 60)` (unticked: `, wait=False`) |
 | servo *1* has finished its sweep | `servo_1.done()` |
@@ -215,7 +215,7 @@ The colour input of the RGB LED blocks takes either colour block: **colour *red*
 
 ### Extended (the EVN Extended Peripherals)
 
-Devices the firmware drives with a smaller API than the standard ones ([API reference](API_EXTENDED.md#evn-extended-peripherals)): the HiTechnic NXT colour sensor and compass (through an NXT cable adapter; the firmware runs their port at 100 kHz) the DFRobot HuskyLens camera (set its Protocol Type to I2C), the ST VL53L1X distance sensor (up to 4 m) and the ams-OSRAM TCS3430 XYZ colour sensor. They work like the sensors above: one object per port, named after it, a sub-category each.
+Devices the firmware drives natively that EVN does not stock ([API reference](API_EXTENDED.md#evn-extended-peripherals)): the HiTechnic NXT colour sensor and compass (through an NXT cable adapter; the firmware runs their port at 100 kHz) the DFRobot HuskyLens camera (set its Protocol Type to I2C), the ST VL53L1X distance sensor (up to 4 m) and the ams-OSRAM TCS3430 XYZ colour sensor. They work like the sensors above: one object per port, named after it, a sub-category each.
 
 | Block | Python |
 | :--- | :--- |
