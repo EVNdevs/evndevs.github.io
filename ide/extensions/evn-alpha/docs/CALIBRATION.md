@@ -4,7 +4,7 @@ Three parts of an EVN ALPHA robot are worth calibrating: each **motor**, the **I
 
 | What | Why | Takes | Stored for | Do it again when |
 | :--- | :--- | :--- | :--- | :--- |
-| [Motor](#motors) | measures this motor's strength, time constant and friction, so moves are fast and land on target; finds which way its encoder counts | about 5 s, shaft free to turn | motor port 1–4 | you swap the motor, or choose a different motor for the port |
+| [Motor](#motors) | measures this motor's strength, time constant and friction, so moves are fast and land on target; finds which way its encoder counts | about 7 s, shaft free to turn | motor port 1–4 | you swap the motor, or choose a different motor for the port |
 | [IMU](#imu) | removes the gyro's bias and the accelerometer's error, and finds which way the module is mounted, so the heading does not drift from the start and a level robot reads level | about 2 s still (one pose), or about 10 s with a half turn (two poses) | I2C port 1–16 | you move the module to another port, plug in another module, or change how it is mounted |
 | [Compass](#compass) | removes the pull of the robot's own iron (motors, battery, screws), so the heading points to magnetic north | about 20 s (planar) to a minute (full) of turning the robot | I2C port 1–16 | you move the motors, the battery or other metal parts, or the compass itself |
 
@@ -26,12 +26,12 @@ A motor's calibration measures how strongly it accelerates for each volt (`b0`),
 
 ### From the Board view
 
-1. **Say which motor is on the port.** Press the **gear** on the motor's row and pick *EV3 Large*, *EV3 Medium*, *NXT*, *JGA25-370 6V 77RPM*, *Pololu 25D 9.7:1 HP 12V*, or *Custom…* for any other DC motor with a quadrature encoder. The choice is stored on the board. A port nobody has configured runs the firmware's default (EV3 Large on ports 1–2, EV3 Medium on 3–4), shown as *EV3 Large (default)*.
-2. **Press the pulse button** on the row (or right-click → **Calibrate this motor (shaft free, ~5 s)...**). A dialog asks you to free the shaft; press **Calibrate**.
-3. A notification shows **EVN: calibrating motor port N... (about 5 s, shaft free)** while the row reads *calibrating... (shaft free)*.
+1. **Say which motor is on the port.** Press the **gear** on the motor's row and pick *EV3 Large*, *EV3 Medium*, *NXT*, *JGA25-370 6V 77RPM*, *Pololu 25D 9.7:1 HP 12V*, *CHR-GM16-030PA 9V 1:63*, or *Custom…* for any other DC motor with a quadrature encoder. The choice is stored on the board. A port nobody has configured runs the firmware's default (EV3 Large on ports 1–2, EV3 Medium on 3–4), shown as *EV3 Large (default)*.
+2. **Press the pulse button** on the row (or right-click → **Calibrate this motor (shaft free, ~7 s)...**). A dialog asks you to free the shaft; press **Calibrate**.
+3. A notification shows **EVN: calibrating motor port N... (about 7 s, shaft free)** while the row reads *calibrating... (shaft free)*.
 4. When it is done, a message gives the numbers (`b0`, `tau`, the breakaway voltage, the no-load speed) and says *and stored*.
 
-![The dialog "Calibrate motor port 1 (EV3 Medium)? The motor turns by itself for about five seconds, up to a turn each way: the shaft must be free", with Cancel and Calibrate](images/calibration-motor-dialog.png)
+![The dialog "Calibrate motor port 1 (EV3 Medium)? The motor turns by itself for about seven seconds, up to about a turn and a half each way: the shaft must be free", with Cancel and Calibrate](images/calibration-motor-dialog.png)
 
 The Board view calibrates one motor at a time. The row then shows one of:
 
@@ -81,7 +81,7 @@ If the shaft cannot turn, or the measurement does not fit, `calibrate()` raises 
 ### When to calibrate a motor again
 
 - **You put a different motor on the port.** Say so with the gear first: choosing a different motor clears the port's calibration, because the old motor's numbers must not run the new one. Then calibrate.
-- **You changed a port to a custom, JGA25 or Pololu 25D motor.** Calibrate before its first real move: until then the firmware only knows the usual wiring for its encoder direction, and `Motor(port)` warns once that it is not calibrated.
+- **You changed a port to a custom, JGA25, Pololu 25D or CHR-GM16 motor.** Calibrate before its first real move: until then the firmware only knows the usual wiring for its encoder direction, and `Motor(port)` warns once that it is not calibrated.
 - **Never** plug a LEGO motor into a port whose row says *encoder reversed* without telling the gear: the flip belongs to the port's record, and would make the new motor run away. Changing the motor with the gear (or **Clear calibration**) removes it.
 - A program's `Motor(port, model="EV3 Medium")` that names another model than the port's stored one runs that model's defaults for the session and prints a `WARNING`; the stored calibration comes back when the program names the right model again or the board reboots.
 

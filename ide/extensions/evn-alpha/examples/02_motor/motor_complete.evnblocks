@@ -41,7 +41,7 @@
             "block": {
               "type": "evn_comment",
               "fields": {
-                "TEXT": "calibrate each motor once (the shaft moves up to a turn each way): skipped when the board already has one"
+                "TEXT": "calibrate each motor once (the shaft moves up to about a turn and a half each way): skipped when the board already has one"
               },
               "next": {
                 "block": {

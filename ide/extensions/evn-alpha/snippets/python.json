@@ -86,7 +86,7 @@
         "description": "Motor whose speeds are % of its full speed (calibrated)",
         "body": [
             "${1:m} = Motor(${2:1}, speed_unit=SpeedUnit.PERCENT)",
-            "${1:m}.calibrate()   # 4.5 s, shaft must be free; stored for this port",
+            "${1:m}.calibrate()   # about 7 s, shaft must be free; stored for this port",
             "print(\"100 % =\", ${1:m}.full_speed(), \"deg/s\")",
             "${1:m}.run_angle(${3:50}, ${4:360})   # 50 % of full speed"
         ]

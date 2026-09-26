@@ -1,7 +1,7 @@
 EVN_ALPHA_MicroPython.uf2
-source: main (0.2.41) + encoder phase tables per direction of turning (Hall hysteresis: one table per raw direction, the estimator uses the last edge's direction, a reversal read at zero speed, the reverse table re-gauged when the pinned channel is the moving one, two tables within 4 substeps averaged into one), the phase dwells timed by the Core 0 microsecond poll at the tail of calibrate()'s four pulses in 100 ms chunks (the 1 kHz tick collector is gone: a fast encoder and a narrow phase are timed too), calibration page v7 (enc_phase_rev, enc_phase_shift); GC heap 146 KB
+source: main (0.2.42) + the CHR-GM16-030PA 9V 1:63 library motor (1764 counts = 7 ppr x 4 x 63, 9 V cap, no-load 1290 deg/s, EV3 Large class, 900 deg/s / 5000 deg/s^2, plant block from tools/motor_model_gen.py), help()'s calibration line at about 7 s; GC heap 146 KB
 built: 2026-09-26 (MicroPython v1.26.1, pico-sdk 2.3.0; SOURCE_DATE_EPOCH=1790424000 = noon UTC 2026-09-26)
 flash: single-line 03h boot2, PICO_FLASH_SPI_CLKDIV=4
-md5: 1ce4751e7d5a6c70cecc31fbd7ab70aa
+md5: 4925bf18d648a510158969e78d2a8ffd
 reproduce: cmake -G Ninja -DEVN_MICROPYTHON=ON + ninja with SOURCE_DATE_EPOCH = noon UTC of the built: date (py/makeversionhdr.py embeds MICROPY_BUILD_DATE); release_public.py does this and refuses on an md5 mismatch
-version: 0.2.42
+version: 0.2.43

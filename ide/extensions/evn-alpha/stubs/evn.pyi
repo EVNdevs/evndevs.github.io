@@ -164,7 +164,7 @@ class Model:
 class Motor:
     """An EV3/NXT motor on EVN port ``port`` (1..4). ``Port.A..D`` are the same numbers.
 
-    The motor model (EV3 Large / EV3 Medium / NXT / JGA25-370 6V 77RPM / Pololu 25D 9.7:1 HP 12V, or a custom motor) is the one the port was configured for
+    The motor model (EV3 Large / EV3 Medium / NXT / JGA25-370 6V 77RPM / Pololu 25D 9.7:1 HP 12V / CHR-GM16-030PA 9V 1:63, or a custom motor) is the one the port was configured for
     (``evn.configure_motor()`` / the extension's Board view, stored on the board), else the one its stored
     calibration was made for, else the firmware's fallback table; ``model=`` names a standard one for this
     session (below). A custom motor's no-load speed is its speed limit and 100 %, its rated voltage its cap.
@@ -188,10 +188,11 @@ class Motor:
         percentage of ``full_speed()``.
 
         ``model``: the motor on the port, ``"EV3 Large"``, ``"EV3 Medium"``, ``"NXT"``,
-        ``"JGA25-370 6V 77RPM"`` or ``"Pololu 25D 9.7:1 HP 12V"`` (``"large"``, ``"medium"``, ``"nxt"``,
-        ``"jga25"``, ``"pololu25d_9_7"`` also work; the JGA25 is a 6 V gearmotor, 3432 counts per revolution,
-        the port capped at 6 V; the Pololu 25D is a 12 V high-power gearmotor, 9.7:1, 464.64 counts per
-        revolution, EV3 Medium control class). Every gain and limit starts from the model's compiled
+        ``"JGA25-370 6V 77RPM"``, ``"Pololu 25D 9.7:1 HP 12V"`` or ``"CHR-GM16-030PA 9V 1:63"`` (``"large"``,
+        ``"medium"``, ``"nxt"``, ``"jga25"``, ``"pololu25d_9_7"``, ``"chr16_63"`` also work; the JGA25 is a 6 V
+        gearmotor, 3432 counts per revolution, the port capped at 6 V; the Pololu 25D is a 12 V high-power
+        gearmotor, 9.7:1, 464.64 counts per revolution, EV3 Medium control class; the CHR-GM16 is a 16 mm 9 V
+        gearmotor, 1:63, 1764 counts per revolution, the port capped at 9 V, EV3 Large control class). Every gain and limit starts from the model's compiled
         defaults; ``calibrate()`` refines them for this motor and stores the result with the model.
         ``None`` keeps the motor the port runs: the one it was configured for (``evn.configure_motor()`` or
         the Board view's gear, stored on the board), else the one its stored calibration was made for, else
@@ -276,7 +277,7 @@ class Motor:
     def full_speed(self, deg_s: float, /) -> None:
         """What 100 % means, in deg/s, at the present battery voltage: the no-load speed measured by
         ``calibrate()`` (stored in flash per port), or until then the motor model's rated no-load speed
-        (EV3 Large 1050, EV3 Medium 1560, NXT 1020 deg/s at 9 V; JGA25 462 deg/s at its 6 V cap; Pololu 6000 deg/s at 12 V) scaled
+        (EV3 Large 1050, EV3 Medium 1560, NXT 1020 deg/s at 9 V; JGA25 462 deg/s at its 6 V cap; Pololu 6000 deg/s at 12 V; CHR-GM16 1290 deg/s at its 9 V cap) scaled
         by the voltage the motor sees (the pack, or its cap).
         Setting it stores deg/s per volt, so it keeps tracking the battery; a non-positive value raises
         ``ValueError``."""
@@ -2068,10 +2069,14 @@ def configure_motor(port: int, model: Optional[str], *, counts_per_rev: Optional
     """Say what is on motor port 1..4 and store it on the board, so a plain ``Motor(port)`` runs that motor
     from any host and after every reboot. ``model``: ``"EV3 Large"``, ``"EV3 Medium"``, ``"NXT"``,
     ``"JGA25-370 6V 77RPM"`` (``"jga25"``: a 6 V, 77 rpm, 1:78 gearmotor with an 11 cpr hall encoder, 3432
-    counts per revolution, the port capped at 6 V) or ``"Pololu 25D 9.7:1 HP 12V"`` (``"pololu25d_9_7"``:
+    counts per revolution, the port capped at 6 V), ``"Pololu 25D 9.7:1 HP 12V"`` (``"pololu25d_9_7"``:
     Pololu #4842, a 12 V high-power 9.68:1 gearmotor with a 48 CPR encoder, 464.64 counts per revolution,
     1000 rpm no-load at 12 V - about 3500 deg/s on the pack -, EV3 Medium control class; its stall current is
-    above the port's 3 A rating, so never hold it stalled) for a library motor; ``"custom"`` for any other DC motor with a quadrature encoder, described by
+    above the port's 3 A rating, so never hold it stalled) or ``"CHR-GM16-030PA 9V 1:63"`` (``"chr16_63"``:
+    a 16 mm 9 V gearmotor, 1:63, with a 7 ppr hall encoder on the motor shaft, 1764 counts per revolution,
+    215 rpm = 1290 deg/s no-load at 9 V, the port capped at 9 V (above the 2S pack: it never binds), EV3 Large
+    control class, limits 900 deg/s and 5000 deg/s^2; another ratio of the family (1:10 to 1:360) is a
+    custom motor with 7 x 4 x the ratio counts) for a library motor; ``"custom"`` for any other DC motor with a quadrature encoder, described by
     ``counts_per_rev`` (encoder edges per OUTPUT revolution = one channel's pulses x 4 x the gear ratio;
     a LEGO motor is 720), ``rated_voltage`` (mV, the port's voltage cap; 0 = none) and ``no_load_speed``
     (deg/s at the rated voltage, 0 = not known: it sets the speed limit, 100 % and the control's first
@@ -2079,18 +2084,19 @@ def configure_motor(port: int, model: Optional[str], *, counts_per_rev: Optional
     the port back to the firmware's fallback (EV3 Large on 1-2, EV3 Medium on 3-4).
     A change to a different motor clears the port's calibration (the old motor's numbers must not run
     the new one): ``calibrate()`` afterwards - it also finds which way the motor's encoder counts, so a
-    custom, JGA25 or Pololu 25D motor is only fully trusted once calibrated. Nothing moves. The port must be free (``OSError(EBUSY)``
+    custom, JGA25, Pololu 25D or CHR-GM16 motor is only fully trusted once calibrated. Nothing moves. The port must be free (``OSError(EBUSY)``
     while a Motor holds it: ``close()`` it first) and every motor stopped (the flash write);
     ``RuntimeError`` says why a refused change did nothing, ``ValueError`` what was wrong with the
     numbers."""
 
 def motor_config(port: int, /) -> dict:
     """What motor port 1..4 runs now: ``{"port", "model" ('EV3 Large' / 'EV3 Medium' / 'NXT' /
-    'JGA25-370 6V 77RPM' / 'Pololu 25D 9.7:1 HP 12V' / 'custom'), "custom" (bool), "control_class" (the
-    standard model the control starts from: a custom motor's, or a library motor's own - the JGA25 runs the
-    EV3 Large class, the Pololu 25D the EV3 Medium class), "counts_per_rev", "rated_voltage" (mV, the
-    port's voltage cap: a custom motor's rated voltage, the JGA25's 6000, the Pololu 25D's 12000 - above
-    the pack, so it never binds -, 0 for a LEGO motor), "no_load_speed" (deg/s at that voltage, at 9 V when uncapped; 0 =
+    'JGA25-370 6V 77RPM' / 'Pololu 25D 9.7:1 HP 12V' / 'CHR-GM16-030PA 9V 1:63' / 'custom'), "custom"
+    (bool), "control_class" (the standard model the control starts from: a custom motor's, or a library
+    motor's own - the JGA25 and the CHR-GM16 run the EV3 Large class, the Pololu 25D the EV3 Medium class),
+    "counts_per_rev", "rated_voltage" (mV, the port's voltage cap: a custom motor's rated voltage, the
+    JGA25's 6000, the CHR-GM16's 9000, the Pololu 25D's 12000 - above the pack, so it never binds -, 0 for
+    a LEGO motor), "no_load_speed" (deg/s at that voltage, at 9 V when uncapped; 0 =
     a custom motor gave none),
     "stored" (True when it is in flash and the port runs it), "session" (True while a program's
     ``Motor(port, model=)`` runs a standard model in its place until the next reboot)}``."""
