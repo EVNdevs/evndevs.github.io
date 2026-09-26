@@ -1,7 +1,7 @@
 ## The documentation
 
 **Open the documentation** takes you to [evn.coresg.tech](https://evn.coresg.tech): every motor call,
-the board itself, the battery, button and LED, all fifteen standard peripherals, and the blocks.
+the board itself, the battery, button and LED, all fifteen standard peripherals, the extended ones (HiTechnic, HuskyLens, VL53L1X, TCS3430), and the blocks.
 
 It is also the **Documentation** button in the Start section of the EVN ALPHA sidebar.
 

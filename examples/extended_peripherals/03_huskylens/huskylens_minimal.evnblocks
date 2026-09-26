@@ -1,0 +1,77 @@
+{
+  "format": "evn-blocks",
+  "version": 2,
+  "title": "HuskyLens: minimal",
+  "needs": "a DFRobot HuskyLens set to Protocol Type I2C on I2C port 11",
+  "description": "Prints how many objects the HuskyLens sees, five times a second for ten seconds.",
+  "workspace": {
+    "blocks": {
+      "languageVersion": 0,
+      "blocks": [
+        {
+          "type": "evn_setup_start",
+          "x": 30,
+          "y": 30,
+          "next": {
+            "block": {
+              "type": "evn_huskylens_setup",
+              "fields": {
+                "PORT": "11"
+              }
+            }
+          }
+        },
+        {
+          "type": "evn_program_start",
+          "x": 30,
+          "y": 160,
+          "next": {
+            "block": {
+              "type": "controls_repeat_ext",
+              "inputs": {
+                "TIMES": {
+                  "shadow": {
+                    "type": "math_number",
+                    "fields": {
+                      "NUM": 50
+                    }
+                  }
+                },
+                "DO": {
+                  "block": {
+                    "type": "text_print",
+                    "inputs": {
+                      "TEXT": {
+                        "block": {
+                          "type": "evn_huskylens_count",
+                          "fields": {
+                            "PORT": "11"
+                          }
+                        }
+                      }
+                    },
+                    "next": {
+                      "block": {
+                        "type": "evn_wait",
+                        "inputs": {
+                          "TIME": {
+                            "shadow": {
+                              "type": "math_number",
+                              "fields": {
+                                "NUM": 200
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

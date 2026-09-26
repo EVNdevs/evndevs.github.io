@@ -69,7 +69,7 @@ while any(evn.calibration(p)["busy"] for p in (1, 2, 3, 4)):
     wait(50)
 ```
 
-If the shaft cannot turn, or the measurement does not fit, `calibrate()` raises `RuntimeError("calibration failed: …")` and the reason is also kept in `evn.calibration(port)["error"]`. Ctrl-C or the user button stop it: the motor coasts and `calibrate()` raises `KeyboardInterrupt`. The full description is in the [API reference](API.md#calibrating-the-motor-calibrate).
+If the shaft cannot turn, or the measurement does not fit, `calibrate()` raises `RuntimeError("calibration failed: …")` and the reason is also kept in `evn.calibration(port)["error"]`. Ctrl-C or the user button stop it: the motor coasts and `calibrate()` raises `KeyboardInterrupt`. The full description is in the [API reference](API_ROBOT.md#calibrating-the-motor-calibrate).
 
 ### From blocks
 
@@ -135,7 +135,7 @@ imu.calibrate(pose=1)           # still
 imu.calibrate(pose=2)
 ```
 
-`IMU(port, calibrate=True)` calibrates when the program starts. `imu.calibrate(wait=False)` starts it and returns at once (`imu.calibration()["busy"]` until it is done); `imu.cancel_calibration()` drops a calibration in progress or a first pose that is waiting. A robot that moved or turned during the measurement raises `RuntimeError("IMU calibration failed: …")`. The full description is in the [API reference](API.md#imu-calibration).
+`IMU(port, calibrate=True)` calibrates when the program starts. `imu.calibrate(wait=False)` starts it and returns at once (`imu.calibration()["busy"]` until it is done); `imu.cancel_calibration()` drops a calibration in progress or a first pose that is waiting. A robot that moved or turned during the measurement raises `RuntimeError("IMU calibration failed: …")`. The full description is in the [API reference](API_SENSORS.md#imu-calibration).
 
 ### From blocks
 
@@ -195,7 +195,7 @@ while c.calibrate_progress()[1] < 0.75:
 print(c.calibrate_stop())       # (residual, coverage, samples); stored for port 6
 ```
 
-`calibrate_progress()` returns `(samples, coverage)` with the coverage from 0 to 1. `calibrate_stop()` refuses a fit with too few samples or directions (`ValueError("calibration refused: …")`) and keeps collecting, so turn some more and call it again, or end with `calibrate_cancel()`. `calibrate_directions()` gives the map's data (which directions are lit, and the current one). A residual of 0.02 means the fitted field is within 2 % everywhere. The full description is in the [API reference](API.md#compass-calibration).
+`calibrate_progress()` returns `(samples, coverage)` with the coverage from 0 to 1. `calibrate_stop()` refuses a fit with too few samples or directions (`ValueError("calibration refused: …")`) and keeps collecting, so turn some more and call it again, or end with `calibrate_cancel()`. `calibrate_directions()` gives the map's data (which directions are lit, and the current one). A residual of 0.02 means the fitted field is within 2 % everywhere. The full description is in the [API reference](API_SENSORS.md#compass-calibration).
 
 ### From blocks
 
@@ -243,4 +243,4 @@ Where it is kept: each kind has its own page in the board's flash (motor, IMU an
 | a high fit error | calibrate again away from magnets and steel, turning more slowly |
 | the calibration buttons are missing | the live console is not connected: see [Getting started](GETTING_STARTED.md), §3b |
 
-The complete calls, with every argument and error, are in the [API reference](API.md#calibration-records-evncalibration).
+The complete calls, with every argument and error, are in the [API reference](API_ROBOT.md#calibration-records-evncalibration).

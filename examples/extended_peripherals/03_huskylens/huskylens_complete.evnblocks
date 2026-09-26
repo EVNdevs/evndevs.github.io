@@ -1,0 +1,163 @@
+{
+  "format": "evn-blocks",
+  "version": 2,
+  "title": "HuskyLens: every block",
+  "needs": "a DFRobot HuskyLens set to Protocol Type I2C on I2C port 11",
+  "description": "Every block of the HuskyLens: the camera switched to object tracking, then for twenty seconds how many objects it sees and the centre of its first block (-1 when it sees none). Frame an object on the camera's screen and press the user button to learn it as ID 1.",
+  "workspace": {
+    "blocks": {
+      "languageVersion": 0,
+      "blocks": [
+        {
+          "type": "evn_setup_start",
+          "x": 30,
+          "y": 30,
+          "next": {
+            "block": {
+              "type": "evn_huskylens_setup",
+              "fields": {
+                "PORT": "11"
+              }
+            }
+          }
+        },
+        {
+          "type": "evn_program_start",
+          "x": 30,
+          "y": 160,
+          "next": {
+            "block": {
+              "type": "evn_huskylens_algorithm",
+              "fields": {
+                "PORT": "11",
+                "ALGORITHM": "OBJECT_TRACKING"
+              },
+              "next": {
+                "block": {
+                  "type": "controls_repeat_ext",
+                  "inputs": {
+                    "TIMES": {
+                      "shadow": {
+                        "type": "math_number",
+                        "fields": {
+                          "NUM": 40
+                        }
+                      }
+                    },
+                    "DO": {
+                      "block": {
+                        "type": "text_print",
+                        "inputs": {
+                          "TEXT": {
+                            "block": {
+                              "type": "evn_huskylens_count",
+                              "fields": {
+                                "PORT": "11"
+                              }
+                            }
+                          }
+                        },
+                        "next": {
+                          "block": {
+                            "type": "text_print",
+                            "inputs": {
+                              "TEXT": {
+                                "block": {
+                                  "type": "evn_huskylens_block",
+                                  "fields": {
+                                    "PORT": "11",
+                                    "WHAT": "0"
+                                  }
+                                }
+                              }
+                            },
+                            "next": {
+                              "block": {
+                                "type": "text_print",
+                                "inputs": {
+                                  "TEXT": {
+                                    "block": {
+                                      "type": "evn_huskylens_block",
+                                      "fields": {
+                                        "PORT": "11",
+                                        "WHAT": "1"
+                                      }
+                                    }
+                                  }
+                                },
+                                "next": {
+                                  "block": {
+                                    "type": "controls_if",
+                                    "inputs": {
+                                      "IF0": {
+                                        "block": {
+                                          "type": "evn_button_pressed"
+                                        }
+                                      },
+                                      "DO0": {
+                                        "block": {
+                                          "type": "text_print",
+                                          "inputs": {
+                                            "TEXT": {
+                                              "shadow": {
+                                                "type": "text",
+                                                "fields": {
+                                                  "TEXT": "learning what the camera frames as ID 1"
+                                                }
+                                              }
+                                            }
+                                          },
+                                          "next": {
+                                            "block": {
+                                              "type": "evn_huskylens_learn",
+                                              "fields": {
+                                                "PORT": "11"
+                                              },
+                                              "inputs": {
+                                                "ID": {
+                                                  "shadow": {
+                                                    "type": "math_number",
+                                                    "fields": {
+                                                      "NUM": 1
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    },
+                                    "next": {
+                                      "block": {
+                                        "type": "evn_wait",
+                                        "inputs": {
+                                          "TIME": {
+                                            "shadow": {
+                                              "type": "math_number",
+                                              "fields": {
+                                                "NUM": 500
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

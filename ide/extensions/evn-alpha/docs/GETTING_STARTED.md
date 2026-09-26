@@ -1,6 +1,6 @@
 # EVN ALPHA MicroPython: getting started
 
-This is an early-access build for user testing. It covers the **motor layer** (four EV3/NXT motor ports, the `evn.Motor` API), the battery, button and LED, a file system on the board, the servo and serial ports, raw `evn.I2C`, and the fifteen **EVN Standard Peripherals** — colour, distance, gesture, environment, touch, compass and IMU sensors, the ADC, the OLED, the 8x8 matrix and the seven-segment display, the RGB LED module, the Bluetooth module and the two Geekservo profiles. All of them are now bench-validated on EVN modules.
+This is an early-access build for user testing. It covers the **motor layer** (four EV3/NXT motor ports, the `evn.Motor` API), the battery, button and LED, a file system on the board, the servo and serial ports, raw `evn.I2C`, and the fifteen **EVN Standard Peripherals** — colour, distance, gesture, environment, touch, compass and IMU sensors, the ADC, the OLED, the 8x8 matrix and the seven-segment display, the RGB LED module, the Bluetooth module and the two Geekservo profiles. All of them are now bench-validated on EVN modules. Beside them, five **EVN Extended Peripherals** with a smaller API: the HiTechnic NXT colour sensor and compass, the DFRobot HuskyLens camera, the ST VL53L1X distance sensor and the ams-OSRAM TCS3430 XYZ colour sensor.
 
 **The quickest way through all of this is the guided walkthrough:** **EVN: Getting started walkthrough** in the command palette, or the link under *Start* in the **EVN ALPHA** sidebar. Six steps — install mpremote, choose the board port, flash the firmware, run an example, write your own program, learn more — and they tick themselves off as you go: the first three as soon as mpremote is found and the board appears, the rest when you run the matching command. It opens by itself the first time the extension starts with no board connected. This document covers the same ground in writing, with more detail.
 
@@ -70,7 +70,7 @@ Hover over an `evn` name (`Motor`, `run_angle`, `imu.heading`, `robot.straight`)
 
 Open `motor_minimal` (the blocks file) in the **Motor** folder under *Examples*, or press **New blocks program** for an empty one. The block editor shows Scratch-style blocks on the left and the MicroPython they generate on the right. Build a program by dragging blocks from the toolbox, then press **Run on board** in the editor's toolbar (or **Ctrl+F5**); **Stop motors** interrupts it. **Upload as main.py** puts it on the board as the program the user button starts, **Export Python** turns it into a `.py` file you can keep editing as text. A blocks example saves the same way a Python one does: under a new name, into your projects folder. Every block and the Python it produces: **EVN: Open blocks reference**.
 
-**Every object has its own examples folder.** *Examples* has one folder per part of the API — the board, the motor, the robot, the pose, the data log, and every standard peripheral (colour sensor, compass, IMU, display, …) — each with a `…_minimal` program (the few lines you need) and a `…_complete` one (every call of that object), in Python and, where the object has blocks, as blocks too. On disk they are `examples/01_board/` to `examples/22_data_log/`, for example `examples/05_colour_sensor/colour_sensor_minimal.py`.
+**Every object has its own examples folder.** *Examples* has one folder per part of the API — the board, the motor, the robot, the pose, the data log, and every standard peripheral (colour sensor, compass, IMU, display, …) — each with a `…_minimal` program (the few lines you need) and a `…_complete` one (every call of that object), in Python and, where the object has blocks, as blocks too. On disk they are `examples/01_board/` to `examples/22_data_log/`, and the *Extended Peripherals* group holds one folder per device (`examples/extended_peripherals/01_hitechnic_color/` to `05_tcs3430/`); for example `examples/05_colour_sensor/colour_sensor_minimal.py`.
 
 ## 3b. The live console, the command line and the Console view
 
@@ -221,6 +221,16 @@ if cs.color() == Color.RED:
 ```
 
 The RGB LED module and the servos sit on the servo ports 1 to 4, the Bluetooth module on Serial 1 or 2. Each has its own folder of examples, `examples/05_colour_sensor/` to `examples/18_bluetooth/`, with a minimal and a complete program. The full list of calls is in **EVN: Open API reference**.
+
+**Extended peripherals.** Kit you may already own works too, with a smaller API: a HiTechnic NXT Color Sensor (V1 or V2) or Compass Sensor through an NXT cable adapter (`HiTechnicColorSensor(port)`, `HiTechnicCompass(port)`; the board runs that port at 100 kHz by itself) a DFRobot HuskyLens camera with its Protocol Type set to I2C (`HuskyLens(port)`), an ST VL53L1X distance sensor that reaches 4 m (`VL53L1X(port)`) and an ams-OSRAM TCS3430 XYZ colour sensor (`TCS3430(port)`). The *Board* view names them, the block editor has an *Extended* category, and the *Extended Peripherals* group under *Examples* (`examples/extended_peripherals/`) has a folder for each. The calls are in the API reference, section *EVN Extended Peripherals*.
+
+```python
+from evn import HuskyLens
+
+cam = HuskyLens(11)
+cam.algorithm(HuskyLens.OBJECT_TRACKING)
+print(cam.blocks())                       # [(x, y, width, height, id), ...]
+```
 
 **Looking a call up while you type:** put the cursor on a word in a Python file — `Motor`, `run_angle`, `battery`, `StopWatch` — and press **Ctrl+F1** (or use *Open online documentation for the symbol under the cursor* in the right-click menu). The online documentation opens at that section of the API reference. The site it opens is the `evn.docsUrl` setting, so a staging copy can be used instead.
 

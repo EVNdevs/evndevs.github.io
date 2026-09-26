@@ -2,8 +2,12 @@
    EVN ALPHA MicroPython - the documentation site's renderer.
 
    It owns the URL contract documented at the top of index.html:
-       #/api/<slug>  #/blocks/<slug>  #/calibration/<slug>  #/getting-started  #/changelog  #/downloads
-       and the home page.
+       #/api/<slug>  #/api-<part>/<slug>  #/blocks/<slug>  #/calibration/<slug>  #/getting-started
+       #/changelog  #/downloads  and the home page.
+   The API reference is an index (docs/API.md, route `api`) and five parts (docs/API_<PART>.md, route
+   `api-<part>`). A link of the one-page era, #/api/<slug> for a heading that now lives in a part, is
+   forwarded to its part by assets/api-moved.json (old slug -> "<route>/<new slug>", written when the
+   page was split; tools/check.py checks that every target still exists).
    Every path it fetches is relative, so the site works at any root.
    ------------------------------------------------------------------------------------------------ */
 (function () {
@@ -20,14 +24,26 @@
                          blurb: 'Motors, IMU and compass: from the Board view, from Python and from blocks.' },
     'api':             { file: 'docs/API.md',             title: 'API reference',  nav: 'API',
                          blurb: 'Every class and function of the evn module, with units and defaults.' },
+    /* the API reference's parts: `part` names the index they belong to (nav highlight, crumb, not listed
+       on the home page); the extension's src/docsLinks.ts API_PARTS lists the same files */
+    'api-robot':       { file: 'docs/API_ROBOT.md',       title: 'The board, the motors, the drive base and the pose', part: 'api' },
+    'api-sensors':     { file: 'docs/API_SENSORS.md',     title: 'Standard peripherals: sensors', part: 'api' },
+    'api-displays':    { file: 'docs/API_DISPLAYS.md',    title: 'Standard peripherals: displays, lights, servo and Bluetooth', part: 'api' },
+    'api-extended':    { file: 'docs/API_EXTENDED.md',    title: 'Extended peripherals', part: 'api' },
+    'api-system':      { file: 'docs/API_SYSTEM.md',      title: 'Ports, programs, the data logger and timing', part: 'api' },
     'blocks':          { file: 'docs/BLOCKS.md',          title: 'Blocks reference', nav: 'Blocks',
                          blurb: 'The block editor and the MicroPython each block generates.' },
     'changelog':       { file: 'docs/CHANGELOG.md',       title: 'Changelog',      nav: 'Changelog',
                          blurb: 'What changed in every release of the extension and the firmware.' }
   };
-  var ORDER = ['getting-started', 'calibration', 'api', 'blocks', 'changelog'];
+  var ORDER = ['getting-started', 'calibration', 'api', 'api-robot', 'api-sensors', 'api-displays', 'api-extended',
+               'api-system', 'blocks', 'changelog'];
   /* The documents whose route takes a heading slug (#/api/<slug>): their bare route ends in a slash. */
-  var SECTIONED = { api: true, blocks: true, calibration: true };
+  var SECTIONED = { api: true, 'api-robot': true, 'api-sensors': true, 'api-displays': true, 'api-extended': true,
+                    'api-system': true, blocks: true, calibration: true };
+  /* docs/<NAME>.md -> its route, for the links between the documents */
+  var BY_FILE = {};
+  Object.keys(DOCS).forEach(function (k) { BY_FILE[DOCS[k].file.replace(/^docs\//, '').replace(/\.md$/, '')] = k; });
   var REPO = 'https://github.com/EVNdevs/evndevs.github.io';
   var SITE = 'EVN ALPHA MicroPython';
 
@@ -124,6 +140,7 @@
   }
 
   function markCurrentNav(doc) {
+    if (DOCS[doc] && DOCS[doc].part) { doc = DOCS[doc].part; }      // a part of the API reference lights "API"
     var links = nav.querySelectorAll('a[data-doc]');
     for (var i = 0; i < links.length; i++) {
       var on = links[i].getAttribute('data-doc') === doc;
@@ -141,11 +158,9 @@
     for (var i = 0; i < links.length; i++) {
       var a = links[i], href = a.getAttribute('href');
       if (!href) { continue; }
-      var m = /^(?:\.\.\/)?(?:docs\/)?(API|BLOCKS|CALIBRATION|GETTING_STARTED|CHANGELOG)\.md(?:#(.*))?$/.exec(href);
-      if (m) {
-        var doc = m[1] === 'API' ? 'api' : m[1] === 'BLOCKS' ? 'blocks' : m[1] === 'CALIBRATION' ? 'calibration'
-                : m[1] === 'CHANGELOG' ? 'changelog' : 'getting-started';
-        a.setAttribute('href', '#/' + doc + '/' + (m[2] ? slugify(decodeURIComponent(m[2])) : ''));
+      var m = /^(?:\.\.\/)?(?:docs\/)?([A-Z_]+)\.md(?:#(.*))?$/.exec(href);
+      if (m && BY_FILE[m[1]]) {
+        a.setAttribute('href', '#/' + BY_FILE[m[1]] + '/' + (m[2] ? slugify(decodeURIComponent(m[2])) : ''));
         continue;
       }
       if (/^#/.test(href)) { continue; }                       // same-document anchor, fixed below
@@ -313,9 +328,27 @@
     }
   }
 
-  function scrollToSlug(slug) {
+  function scrollToSlug(slug, doc) {
     var target = slug ? document.getElementById(slug) : null;
-    if (target) { target.scrollIntoView(); window.scrollBy(0, -8); } else { window.scrollTo(0, 0); }
+    if (target) { target.scrollIntoView(); window.scrollBy(0, -8); return; }
+    window.scrollTo(0, 0);
+    if (doc === 'api' && slug) { forwardMoved(slug); }
+  }
+
+  /* #/api/<slug> of the one-page API reference (older extension builds, bookmarks): the heading is in a
+     part now, so the route is replaced by that part's. An unknown slug stays on the index, at its top. */
+  var moved = null;
+  function forwardMoved(slug) {
+    if (!moved) {
+      moved = fetch('assets/api-moved.json', { cache: 'no-cache' }).then(function (r) {
+        if (!r.ok) { throw new Error(r.status + ' ' + r.statusText); }
+        return r.json();
+      }).catch(function () { moved = null; return {}; });
+    }
+    moved.then(function (map) {
+      var to = map[slug];
+      if (to && current && current.doc === 'api' && current.slug === slug) { location.replace('#/' + to); }
+    });
   }
 
   /* ---- a document -------------------------------------------------------------------------------- */
@@ -327,7 +360,7 @@
 
     var sameDoc = current && current.doc === route.doc;
     current = route;
-    if (sameDoc) { scrollToSlug(route.slug); return; }
+    if (sameDoc) { scrollToSlug(route.slug, route.doc); return; }
 
     stopSpy();
     main.textContent = '';
@@ -345,7 +378,14 @@
       var article = el('article', 'doc');
 
       var head = el('div', 'doc-head');
-      head.appendChild(el('p', 'crumb', 'Documentation'));
+      var crumb = el('p', 'crumb', 'Documentation');
+      if (info.part) {                                  // a part of the API reference: the way back to its index
+        crumb.appendChild(document.createTextNode(' / '));
+        var up = el('a', null, DOCS[info.part].title);
+        up.href = '#/' + info.part + '/';
+        crumb.appendChild(up);
+      }
+      head.appendChild(crumb);
       var edit = el('a', 'edit-link');
       edit.href = REPO + '/blob/main/' + info.file;
       edit.target = '_blank';
@@ -380,7 +420,7 @@
       main.textContent = '';
       main.appendChild(layout);
 
-      scrollToSlug(route.slug);
+      scrollToSlug(route.slug, route.doc);
       startSpy(toc);
     }).catch(function (e) {
       if (current !== route) { return; }
@@ -483,7 +523,7 @@
     left.appendChild(el('p', 'pitch',
       'MicroPython for the EVN ALPHA robotics controller, and the VS Code extension that runs your ' +
       'programs on it: four EV3/NXT motor ports with a tuned controller and a Pybricks-style drive base, ' +
-      'servos, fifteen standard peripherals, Bluetooth, blocks or Python, and the board live in the editor.'));
+      'servos, fifteen standard peripherals plus five extended ones (HiTechnic, HuskyLens, VL53L1X, TCS3430), Bluetooth, blocks or Python, and the board live in the editor.'));
 
     var actions = el('div', 'actions');
     var b1 = el('a', 'btn btn-primary', 'Get started');
@@ -606,7 +646,8 @@
     var p = section('Fifteen standard peripherals, bench-validated');
     p.body.appendChild(el('p', 'gallery-intro',
       'Every EVN module is recognised by its ID register rather than its address, appears by name in ' +
-      'the Board panel, has blocks of its own and is covered by the API reference. Six of the fifteen:'));
+      'the Board panel, has blocks of its own and is covered by the API reference. Kit you already own works too: ' +
+      'the HiTechnic NXT colour sensor and compass, the HuskyLens camera, the VL53L1X distance sensor and the TCS3430 XYZ colour sensor, as extended peripherals. Six of the fifteen:'));
     var gal = el('div', 'gallery');
     GALLERY.forEach(function (g) {
       var figure = el('figure', 'shot');
@@ -691,7 +732,7 @@
     /* --- documentation --- */
     var docs = section('Documentation');
     var list = el('div', 'doc-list');
-    ORDER.forEach(function (name, n) {
+    ORDER.filter(function (name) { return !DOCS[name].part; }).forEach(function (name, n) {
       var a = el('a', 'doc-row');
       a.href = '#/' + name + (SECTIONED[name] ? '/' : '');
       a.appendChild(el('span', 'n', '0' + (n + 1)));

@@ -9,10 +9,15 @@
   The documentation site: static files, no build step. It is published at the root of the public repo
   (github.com/EVNdevs/evndevs.github.io, the organisation's GitHub Pages root, which the custom domain
   evn.coresg.tech points at) and served by GitHub Pages; it fetches the Markdown documents next to it
-  (docs/API.md, docs/BLOCKS.md, docs/GETTING_STARTED.md, docs/CHANGELOG.md) and renders them in the browser.
+  (docs/API.md and its parts docs/API_*.md, docs/BLOCKS.md, docs/CALIBRATION.md, docs/GETTING_STARTED.md,
+  docs/CHANGELOG.md) and renders them in the browser.
 
   The URL contract with the VS Code extension (docs/PUBLISHING.md in the extension source):
-      /#/api/<slug>          docs/API.md scrolled to the heading whose slug is <slug>
+      /#/api/<slug>          docs/API.md (the API reference's index) scrolled to the heading whose slug is
+                             <slug>; a slug of the one-page reference that now lives in a part is forwarded
+                             to that part (assets/api-moved.json)
+      /#/api-<part>/<slug>   docs/API_<PART>.md, same rule (api-robot, api-sensors, api-displays,
+                             api-extended, api-system)
       /#/blocks/<slug>       docs/BLOCKS.md, same rule
       /#/calibration/<slug>  docs/CALIBRATION.md, same rule
       /#/getting-started     docs/GETTING_STARTED.md from the top
@@ -38,7 +43,7 @@
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="EVN ALPHA MicroPython">
 <meta property="og:title" content="EVN ALPHA MicroPython">
-<meta property="og:description" content="MicroPython for the EVN ALPHA robotics controller, with a VS Code extension: blocks or Python, a live board panel, console and data logger, and fifteen standard peripherals.">
+<meta property="og:description" content="MicroPython for the EVN ALPHA robotics controller, with a VS Code extension: blocks or Python, a live board panel, console and data logger, and fifteen standard peripherals plus five extended ones (HiTechnic, HuskyLens, VL53L1X, TCS3430).">
 <meta property="og:url" content="https://evn.coresg.tech/">
 <meta property="og:image" content="https://evn.coresg.tech/assets/og.png">
 <meta property="og:image:width" content="1200">

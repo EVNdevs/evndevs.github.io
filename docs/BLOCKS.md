@@ -213,6 +213,38 @@ The calibration blocks here (compass, IMU) and under *Advanced* (motor) store th
 
 The colour input of the RGB LED blocks takes either colour block: **colour *red*** (an `evn` `Color`) or **colour red / green / blue** (an `(r, g, b)` tuple, 0 to 255 each). Blockly's own colour-picker field is not part of Blockly 13 core, so there is no swatch picker.
 
+### Extended (the EVN Extended Peripherals)
+
+Devices the firmware drives with a smaller API than the standard ones ([API reference](API_EXTENDED.md#evn-extended-peripherals)): the HiTechnic NXT colour sensor and compass (through an NXT cable adapter; the firmware runs their port at 100 kHz) the DFRobot HuskyLens camera (set its Protocol Type to I2C), the ST VL53L1X distance sensor (up to 4 m) and the ams-OSRAM TCS3430 XYZ colour sensor. They work like the sensors above: one object per port, named after it, a sub-category each.
+
+| Block | Python |
+| :--- | :--- |
+| set up HiTechnic colour sensor on port *1* | `ht_color_1 = HiTechnicColorSensor(1)` |
+| calibrate HiTechnic colour sensor *1* *black (nothing in front)* / *white (a white sheet)* | `ht_color_1.calibrate_black()` / `ht_color_1.calibrate_white()`: black then white at the start of the program, at the distance the colours will be read |
+| HiTechnic colour sensor *1* sees *white* | `ht_color_1.color() == Color.WHITE` |
+| HiTechnic colour sensor *1* colour | `ht_color_1.color()` |
+| HiTechnic colour sensor *1* colour number / reflection (%) | `ht_color_1.color_number()` (0 black ... 17 white, the sensor's own chart) / `ht_color_1.reflection()` |
+| HiTechnic colour sensor *1* red / green / blue | `ht_color_1.rgb()[0]` / `[1]` / `[2]` |
+| HiTechnic colour sensor *1* hue / saturation / brightness | `ht_color_1.hsv().h` / `.hsv().s` / `.hsv().v` |
+| set up HiTechnic compass on port *1* | `ht_compass_1 = HiTechnicCompass(1)` |
+| HiTechnic compass *1* heading | `ht_compass_1.heading()` (0 to 359, whole degrees) |
+| set HiTechnic compass *1* heading to *0* | `ht_compass_1.north()`; another value `ht_compass_1.north(90)` |
+| set up HuskyLens on port *1* | `huskylens_1 = HuskyLens(1)` |
+| set HuskyLens *1* to *object tracking* | `huskylens_1.algorithm(HuskyLens.OBJECT_TRACKING)` (face recognition, object tracking, object recognition, line tracking, colour recognition, tag recognition, object classification) |
+| HuskyLens *1* objects seen | `huskylens_1.count()` |
+| HuskyLens *1* first block x / y / width / height / ID | `(huskylens_1.blocks() or [(-1, -1, -1, -1, -1)])[0][0]` (`[1]` … `[4]`): -1 when the camera sees no block |
+| HuskyLens *1* learn what it sees as ID *1* | `huskylens_1.learn(1)` |
+| set up VL53L1X distance sensor on port *1* | `vl53l1x_1 = VL53L1X(1)` (long mode, 33 ms per reading) |
+| VL53L1X *1* distance (mm) | `vl53l1x_1.distance() or -1`: -1 when the reading is not valid |
+| set VL53L1X *1* to *long* / *short* range | `vl53l1x_1.distance_mode('long')` (up to ~4 m in the dark) / `vl53l1x_1.distance_mode('short')` (up to ~1.3 m, better in daylight) |
+| set up TCS3430 colour sensor on port *1* | `tcs3430_1 = TCS3430(1)` (2.78 ms at 64x, for a target close in front) |
+| calibrate TCS3430 *1* *black (nothing in front)* / *white (a white sheet)* | `tcs3430_1.calibrate_black()` / `tcs3430_1.calibrate_white()`: take black then white at the start of the program, at the distance the colours will be read (without them the module's warm LED makes white read yellow) |
+| TCS3430 *1* sees *white* | `tcs3430_1.color() == Color.WHITE` |
+| TCS3430 *1* colour | `tcs3430_1.color()` |
+| TCS3430 *1* X / Y (brightness) / Z / infrared | `tcs3430_1.xyz()[0]` / `[1]` / `[2]` / `tcs3430_1.ir()` (raw counts) |
+| TCS3430 *1* hue / saturation / brightness | `tcs3430_1.hsv().h` / `.hsv().s` / `.hsv().v` |
+| set TCS3430 *1* gain to *64x* | `tcs3430_1.gain(64)` (1x, 4x, 16x, 64x, 128x) |
+
 ### Advanced
 
 | Block | Python |
@@ -241,6 +273,7 @@ Each device has the few calls a program usually needs; everything else in the AP
 - **Servo**: `set_range()`, `enable()` / `disable()`, and the constructor's `reverse=` / `range=` / `min_us=` / `max_us=`.
 - **Board**: `battery.cells()` / `present()` / `age()`.
 - **Data log**: `info()`, `running()`, `quantities()`, `close()`, `save(path)` with a path of your own, more than three columns in one row, and the constructor's `timestamp=` / `extension=` / `append=` / `size=` / `autosave=` / `on_full=`.
+- **Extended peripherals**: HiTechnic colour sensor `version()`, `firmware()`, `color_match()`, `detectable_colors()`, `black_reference()` / `white_reference()`, `ambient()`, `raw()`, `mains()`; HiTechnic compass `calibrate()` / `calibrate_stop()` / `calibrating()` (the sensor's own calibration), `firmware()`; HuskyLens `blocks(id)` / `arrows()` as whole lists, `learned()`, `frame()`, `forget()`, `algorithm()` as a getter; VL53L1X `status()`, `raw()`, `timing_budget()`, `distance_mode()` as a getter; TCS3430 `color_match()`, `detectable_colors()` (teach it colours from its own `hsv()`), `black_reference()` / `white_reference()`, `xyz()` as a tuple, `raw()`, `xy()`, `saturated()`, `integration_time()`, `gain()` as a getter; `age()` and `close()` of every one.
 - **Bluetooth**: `read()`, `read_all()`, `clear()`, `wait_until()`, `repl()`, `command()`, `address()`, `configured()`, `set_baudrate()`, and the constructor's `name=` / `baud=` / `mode=` (a block always uses the defaults).
 - **The rest of the module**: `Pose` (the pose estimator: position and heading from the encoders, an IMU and a compass; with the robot's gyro block the drive base builds one, `drive_base.pose`), `I2C`, `UART`, `Flash`, `evn.calibration()` / `imu_calibration()` / `compass_calibration()` (the stored records as dicts), `clock()`, `reset()`, `reset_cause()`, `bootloader()`, `autostart()`, `core1_status()`, `evn.version`.
 

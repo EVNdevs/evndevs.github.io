@@ -1,0 +1,155 @@
+{
+  "format": "evn-blocks",
+  "version": 2,
+  "title": "TCS3430 colour sensor: minimal",
+  "needs": "an ams-OSRAM TCS3430 colour sensor on I2C port 16",
+  "description": "Takes the black (nothing in front) and the white (a white sheet), then prints the colour the TCS3430 sees five times a second for ten seconds.",
+  "workspace": {
+    "blocks": {
+      "languageVersion": 0,
+      "blocks": [
+        {
+          "type": "evn_setup_start",
+          "x": 30,
+          "y": 30,
+          "next": {
+            "block": {
+              "type": "evn_tcs3430_setup",
+              "fields": {
+                "PORT": "16"
+              }
+            }
+          }
+        },
+        {
+          "type": "evn_program_start",
+          "x": 30,
+          "y": 160,
+          "next": {
+            "block": {
+              "type": "text_print",
+              "inputs": {
+                "TEXT": {
+                  "block": {
+                    "type": "text",
+                    "fields": {
+                      "TEXT": "Nothing in front of the TCS3430..."
+                    }
+                  }
+                }
+              },
+              "next": {
+                "block": {
+                  "type": "evn_wait",
+                  "inputs": {
+                    "TIME": {
+                      "shadow": {
+                        "type": "math_number",
+                        "fields": {
+                          "NUM": 2000
+                        }
+                      }
+                    }
+                  },
+                  "next": {
+                    "block": {
+                      "type": "evn_tcs3430_calibrate",
+                      "fields": {
+                        "PORT": "16",
+                        "WHAT": "black"
+                      },
+                      "next": {
+                        "block": {
+                          "type": "text_print",
+                          "inputs": {
+                            "TEXT": {
+                              "block": {
+                                "type": "text",
+                                "fields": {
+                                  "TEXT": "Hold a white sheet about 1 cm in front of the TCS3430..."
+                                }
+                              }
+                            }
+                          },
+                          "next": {
+                            "block": {
+                              "type": "evn_wait",
+                              "inputs": {
+                                "TIME": {
+                                  "shadow": {
+                                    "type": "math_number",
+                                    "fields": {
+                                      "NUM": 3000
+                                    }
+                                  }
+                                }
+                              },
+                              "next": {
+                                "block": {
+                                  "type": "evn_tcs3430_calibrate",
+                                  "fields": {
+                                    "PORT": "16",
+                                    "WHAT": "white"
+                                  },
+                                  "next": {
+                                    "block": {
+                                      "type": "controls_repeat_ext",
+                                      "inputs": {
+                                        "TIMES": {
+                                          "shadow": {
+                                            "type": "math_number",
+                                            "fields": {
+                                              "NUM": 50
+                                            }
+                                          }
+                                        },
+                                        "DO": {
+                                          "block": {
+                                            "type": "text_print",
+                                            "inputs": {
+                                              "TEXT": {
+                                                "block": {
+                                                  "type": "evn_tcs3430_color",
+                                                  "fields": {
+                                                    "PORT": "16"
+                                                  }
+                                                }
+                                              }
+                                            },
+                                            "next": {
+                                              "block": {
+                                                "type": "evn_wait",
+                                                "inputs": {
+                                                  "TIME": {
+                                                    "shadow": {
+                                                      "type": "math_number",
+                                                      "fields": {
+                                                        "NUM": 200
+                                                      }
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

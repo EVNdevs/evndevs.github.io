@@ -1,7 +1,7 @@
 EVN_ALPHA_MicroPython.uf2
-source: main (0.2.43) + the cruise cap at the whole speed budget K (0.95 V - v_f): run() tapers its ramp into it per tick (ramp_taper_dv, 10 % floor, the budget from the tick's pack), a profiled move cruises at min(budget, K (V - v_f) - accel tau) with its trapezoid unchanged; GC heap 146 KB
+source: main (0.2.44) + EVN Extended Peripherals: HiTechnic Color V1 / V2 and Compass, HuskyLens, VL53L1X, TCS3430 (evn_extended.c, hal_hitechnic / hal_huskylens / hal_vl53l1x / hal_tcs3430), a clock per I2C port (evn.I2C freq=), addresses 0x01..0x07; black / white colour calibration on the TCS3430 and the HiTechnic colour sensor; GC heap 145 KB
 built: 2026-09-26 (MicroPython v1.26.1, pico-sdk 2.3.0; SOURCE_DATE_EPOCH=1790424000 = noon UTC 2026-09-26)
 flash: single-line 03h boot2, PICO_FLASH_SPI_CLKDIV=4
-md5: 0a499d5d7abe443c8775079dca40f1a4
+md5: 14355480cc1e493e5c868ee9f9e60c9a
 reproduce: cmake -G Ninja -DEVN_MICROPYTHON=ON + ninja with SOURCE_DATE_EPOCH = noon UTC of the built: date (py/makeversionhdr.py embeds MICROPY_BUILD_DATE); release_public.py does this and refuses on an md5 mismatch
-version: 0.2.44
+version: 0.2.45

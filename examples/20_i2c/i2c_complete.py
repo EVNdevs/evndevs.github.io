@@ -1,10 +1,11 @@
 """I2C: the whole API
 
-Raw I2C, for a device the evn module has no class for. Every I2C method once: scan() lists the
-addresses that answer, and each one that has an ID register is named by reading it (an address alone proves
-nothing: another chip can sit at it), then the EVN IMU module (an MPU-6500) is read register by
-register - its configuration, then acceleration, temperature and turn rate - and last stats()
-reports the bus health.
+Raw I2C, for a device the evn module has no class for. Every I2C method once: freq() tells the
+port's clock (each port has its own; I2C(port, freq=100000) slows one for a device that needs it),
+scan() lists the addresses that answer, and each one that has an ID register is named by reading it
+(an address alone proves nothing: another chip can sit at it), then the EVN IMU module (an MPU-6500)
+is read register by register - its configuration, then acceleration, temperature and turn rate - and
+last stats() reports the bus health.
 
 The only writes are harmless ones: a register number before a read, and waking the MPU-6500 when
 an IMU object's close() left it asleep (put back as it was at the end). The board refuses 0x70
@@ -46,10 +47,11 @@ def identify(bus, addr):
     return None
 
 
-bus = I2C(PORT)
+bus = I2C(PORT)                                  # I2C(PORT, freq=100000) would slow this port only
+print("port %d runs at %d Hz" % (PORT, bus.freq()))   # 400000 unless slowed
 
 # --- scan: who answers, and what is it -------------------------------------------------------------
-for addr in bus.scan():                          # every address 0x08..0x77 that answers
+for addr in bus.scan():                          # every address 0x01..0x77 that answers
     name = identify(bus, addr)
     print(hex(addr), name if name else "- not identified (no ID register known here)")
 

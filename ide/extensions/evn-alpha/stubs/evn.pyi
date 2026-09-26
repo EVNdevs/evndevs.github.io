@@ -584,7 +584,7 @@ class I2C:
     Bench-validated as the transport under every standard peripheral (2026-09-18). The layer
     recovers by itself: a transaction that times out aborts, resets the controller, clocks a held
     SDA free and re-initialises the bus, and the multiplexer channel cache is dropped after any
-    failed transaction. The transaction deadline grows with the length (1 ms + 40 us per byte, at
+    failed transaction. The transaction deadline grows with the length (1 ms + 40 us per byte at 400 kHz, more at a slower clock, at
     least 5 ms), so a long transfer never times out by being long.
 
     Addresses the board itself uses are refused with ``ValueError``: **0x70** (the multiplexers,
@@ -596,14 +596,24 @@ class I2C:
     (``stats()`` counts it). ``stats()``'s ``errors`` are failed transactions since boot; the expected NACK of
     a probe, of a constructor's ID-register identify on an empty port or of a driver's re-probe of an unplugged
     device is not one, so a climbing count means a real fault. ``ValueError`` for a port outside 1..16, an address outside
-    0x08..0x77, a register outside 0..255 or a length outside the limits below.
+    0x01..0x77 (0x01..0x07 reach NXT-era sensors: 0x01 is the NXT's 8-bit address 0x02; 0x00, the
+    general call, stays refused), a register outside 0..255 or a length outside the limits below.
+
+    Every port has its own clock: 400 kHz unless ``I2C(port, freq=...)`` or an extended peripheral
+    (``HiTechnicColorSensor``, ``HiTechnicCompass``: 100 kHz) slowed it; the other ports keep theirs.
+    The soft reset at the end of a program puts every port back at 400 kHz.
 
     A scan of a port that carries an ``IMU`` pops one byte of the chip's FIFO (the driver heals it
     with a FIFO reset).
     """
-    def __init__(self, port: int, /) -> None: ...
+    def __init__(self, port: int, /, *, freq: Optional[int] = None) -> None:
+        """``freq`` sets this port's I2C clock, 10000..400000 Hz (``ValueError`` outside); ``None`` keeps
+        the rate the port runs at. The transaction deadline's per-byte allowance scales with the rate."""
+    def freq(self) -> int:
+        """The clock this port runs at, in Hz (400000 unless slowed by ``I2C(port, freq=...)`` or by an
+        extended peripheral on the port)."""
     def scan(self) -> List[int]:
-        """Every address 0x08..0x77 that ACKs on this port, except 0x70 (the multiplexer). A probe
+        """Every address 0x01..0x77 that ACKs on this port, except 0x70 (the multiplexer). A probe
         that times out resets the bus and drops the multiplexer channel, so the scan of that port is
         abandoned there rather than carried on against the bare bus."""
     def probe(self, addr: int, /) -> bool:
@@ -2053,6 +2063,331 @@ class Flash:
     refused. Write logs after the move (``stop()``/``hold()``/``wait=True``, then write) or catch the error
     and write later."""
     def __init__(self) -> None: ...
+
+
+# ---- EVN Extended Peripherals (docs/EXTENDED_PERIPHERALS.md) ------------------------------------
+# Devices the firmware drives natively with a smaller API than an EVN Standard Peripheral: each is
+# identified by an ID string, an ID register or a handshake (never by its address), read from a cache the firmware
+# refreshes in the background, and re-found after an unplug.
+
+
+class HiTechnicColorSensor:
+    """HiTechnic NXT Color Sensor V1 or V2 (an EVN Extended Peripheral) on I2C port 1..16.
+
+    Address 0x01 (the NXT's 0x02), run at **100 kHz** on its port (the other ports stay at
+    400 kHz). Identified by its "HiTechnc" manufacturer string; V1 and V2 are told apart by the
+    type string ("Color" / "ColorPD"): ``version()`` returns 1 or 2. Readings come from a cache
+    refreshed every 10 ms. Bench-validated 2026-09-26 on a V2 (firmware V1.5); V1 support is from
+    the register map alone.
+
+    The V2 has three modes and switches on demand: ``color_number()``, ``rgb()``, ``hsv()``,
+    ``reflection()``, ``color()``, ``color_match()``, ``calibrate_black()`` and ``calibrate_white()``
+    read the active mode (LED on, ambient
+    cancelled), ``ambient()`` the passive mode (LED off), ``raw()`` the raw mode. A call that needs
+    another mode than the last one waits about **125 ms** for the first reading under it, so group
+    calls by mode (``rgb()`` and ``ambient()`` alternately in a loop run at ~4 Hz).
+
+    Raises: ``ValueError("port must be 1..16")``; ``OSError("no HiTechnic sensor on port %d (I2C
+    0x01)")``; ``OSError("port %d has a HiTechnic Compass, not a HiTechnicColorSensor")``;
+    ``OSError("no free HiTechnic slot (4 at once)")``; ``OSError("HiTechnicColorSensor on port %d
+    not responding")`` while unplugged; ``NotImplementedError`` from ``ambient()``, ``raw()`` and
+    ``mains()`` on a V1; ``ValueError("HiTechnicColorSensor is closed")`` after ``close()``.
+    """
+    def __init__(self, port: int, /) -> None: ...
+    def version(self) -> int:
+        """1 (V1, type "Color") or 2 (V2, type "ColorPD")."""
+    def firmware(self) -> str:
+        """The sensor's firmware text, e.g. ``'V1.5'``."""
+    def calibrate_black(self) -> None:
+        """Take the current active-mode ``(R, G, B)`` as the black reference: nothing in front of the
+        sensor (or a black target) where the colours will be read. A V2 is switched to active mode
+        first. Kept in RAM by this object (not stored on the board); V1 and V2. Call it, then
+        ``calibrate_white()``, at the start of a program."""
+    def calibrate_white(self) -> None:
+        """Take the current active-mode ``(R, G, B)`` of a white target as the reference white. From
+        then on each channel is (reading - black) / (white - black), clamped 0..100 %, before ``hsv()``,
+        ``color()`` and ``color_match()``. A V2 is switched to active mode first. ``ValueError("the white
+        target is not brighter than the black reference: hold a white sheet in front")`` when a channel is
+        not at least 10 % above the black."""
+    @overload
+    def black_reference(self) -> Optional[Tuple[float, float, float]]: ...
+    @overload
+    def black_reference(self, value: None, /) -> None:
+        """The black reference as ``(R, G, B)`` in counts, or ``None`` when none is taken;
+        ``black_reference(None)`` clears it. Any other argument raises ``ValueError`` (use
+        ``calibrate_black()``)."""
+    @overload
+    def white_reference(self) -> Optional[Tuple[float, float, float]]: ...
+    @overload
+    def white_reference(self, value: None, /) -> None:
+        """The reference white as ``(R, G, B)`` in counts, or ``None`` when none is taken;
+        ``white_reference(None)`` clears it. Any other argument raises ``ValueError`` (use
+        ``calibrate_white()``)."""
+    def color(self) -> Optional[Color]:
+        """The ``detectable_colors()`` entry nearest the reading's HSV (Pybricks' matcher; calibrated
+        after ``calibrate_black()`` / ``calibrate_white()``), or ``None`` when that set is empty."""
+    def color_match(self) -> Tuple[Optional[Color], float]:
+        """``(color(), confidence)`` from one reading: the confidence is ``1 - d_best / d_second``
+        (1.0 on the chosen colour, 0.0 halfway between two). ``(None, 0.0)`` with no detectable colours."""
+    @overload
+    def detectable_colors(self) -> Sequence[Color]: ...
+    @overload
+    def detectable_colors(self, colors: Sequence[Color], /) -> None:
+        """The colours ``color()`` chooses from. Default ``(Color.RED, Color.YELLOW, Color.GREEN,
+        Color.BLUE, Color.WHITE, Color.NONE)``; anything that is not a ``Color`` raises ``TypeError``."""
+    def color_number(self) -> int:
+        """The sensor's own colour number 0..17 (HiTechnic chart: 0 black ... 17 white)."""
+    def rgb(self) -> Tuple[int, int, int]:
+        """``(r, g, b)`` 0..255, LED on, ambient light cancelled (V2)."""
+    def hsv(self) -> Color:
+        """The active reading as a ``Color`` (``.h`` 0..359, ``.s`` 0..100, ``.v`` 0..100), through the
+        black / white references when they are taken (``rgb()`` stays the sensor's own 0..255)."""
+    def reflection(self) -> float:
+        """Reflected light 0..100 %: V2 the white channel / 255, V1 the mean of R, G, B / 255."""
+    def ambient(self) -> int:
+        """V2 only: the white channel with the LED off (passive mode), 16-bit counts."""
+    def raw(self) -> Tuple[int, int, int, int]:
+        """V2 only: ``(r, g, b, white)`` 16-bit counts, LED on, no ambient cancellation."""
+    def mains(self, hz: int, /) -> None:
+        """V2 only: 50 or 60, the mains frequency whose flicker the sensor cancels. Stored by the
+        sensor itself and **not readable back**; anything else raises ``ValueError``."""
+    def age(self) -> int:
+        """Milliseconds since the cached reading was taken."""
+    def close(self) -> None:
+        """Leave the V2 in passive mode (LED off), set the port back to 400 kHz and release it."""
+
+
+class HiTechnicCompass:
+    """HiTechnic NXT Compass Sensor (NMC1034, an EVN Extended Peripheral) on I2C port 1..16.
+
+    Address 0x01 (the NXT's 0x02), run at **100 kHz** on its port; identified by the "HiTechnc"
+    manufacturer string and the "Compass" type string. The heading is read every 10 ms into a
+    cache. A heading only, in whole degrees (the sensor's resolution): no field vector and no
+    ``heading_confidence()`` (the standard ``Compass`` has both). Keep it away from the motors.
+    Bench-validated 2026-09-26 (firmware V1.23).
+
+    Calibration is the sensor's own: ``calibrate()``, then turn the robot level through a little
+    more than one full turn taking at least 20 s, then ``calibrate_stop()``. The sensor stores the
+    result itself; nothing is stored on the board.
+
+    Raises: ``ValueError("port must be 1..16")``; ``OSError("no HiTechnic sensor on port %d (I2C
+    0x01)")``; ``OSError("port %d has a HiTechnic Color V2, not a HiTechnicCompass")``;
+    ``OSError("HiTechnicCompass on port %d not responding")`` while unplugged;
+    ``ValueError("HiTechnicCompass is closed")`` after ``close()``.
+    """
+    def __init__(self, port: int, /) -> None: ...
+    def heading(self) -> float:
+        """0..359 degrees clockwise, relative to the direction set by ``north()``."""
+    def north(self, heading: float = 0, /) -> None:
+        """From now the direction the sensor points at reads ``heading`` (kept while the object is open)."""
+    def calibrate(self) -> None:
+        """Start the sensor's hard-iron calibration: turn the robot level through a little more than one
+        full turn, taking at least 20 s, then call ``calibrate_stop()``."""
+    def calibrate_stop(self) -> bool:
+        """End the calibration: ``True`` when the sensor accepted it, ``False`` when it rejected it.
+        ``ValueError("not calibrating: call calibrate() first")`` outside a calibration."""
+    def calibrating(self) -> bool:
+        """``True`` between ``calibrate()`` and ``calibrate_stop()``."""
+    def firmware(self) -> str:
+        """The sensor's firmware text, e.g. ``'V1.23'``."""
+    def age(self) -> int:
+        """Milliseconds since the cached reading was taken."""
+    def close(self) -> None:
+        """Set the port back to 400 kHz and release it (a compass closed mid-calibration is put back in
+        measure mode)."""
+
+
+class HuskyLens:
+    """DFRobot HuskyLens AI camera (an EVN Extended Peripheral) on I2C port 1..16.
+
+    Set the camera's **Protocol Type to I2C** in its General Settings. Address 0x32 at 400 kHz;
+    identified by a KNOCK the camera answers with a checksummed OK. The firmware asks for a new
+    result every 10 ms and publishes each frame whole, so ``blocks()``, ``arrows()``, ``count()``,
+    ``learned()`` and ``frame()`` are memory copies. The screen is 320 x 240; at most 16 objects are
+    kept per frame. One HuskyLens at a time. Bench-validated 2026-09-26 on the standard model.
+
+    Raises: ``ValueError("port must be 1..16")``; ``OSError("no HuskyLens on port %d (I2C 0x32)")``;
+    ``OSError("a HuskyLens is already open on another port (1 at once)")``; ``OSError("HuskyLens on
+    port %d not responding")`` while unplugged; ``OSError("HuskyLens is busy: try again")`` /
+    ``OSError("this needs a HuskyLens Pro")`` from a command the camera refused;
+    ``ValueError("HuskyLens is closed")`` after ``close()``.
+    """
+    FACE_RECOGNITION: int = 0
+    OBJECT_TRACKING: int = 1
+    OBJECT_RECOGNITION: int = 2
+    LINE_TRACKING: int = 3
+    COLOR_RECOGNITION: int = 4
+    TAG_RECOGNITION: int = 5
+    OBJECT_CLASSIFICATION: int = 6
+    def __init__(self, port: int, /) -> None: ...
+    @overload
+    def algorithm(self) -> Optional[int]: ...
+    @overload
+    def algorithm(self, n: int, /) -> None:
+        """Switch the camera to algorithm ``n`` (0..6, the class constants) and wait for its OK. The getter
+        returns the algorithm last set through this driver, or ``None`` until one is: **the camera cannot
+        report it**."""
+    def blocks(self, id: Optional[int] = None, /) -> List[Tuple[int, int, int, int, int]]:
+        """The blocks of the latest frame, all or only ``id``: ``[(x, y, width, height, id), ...]`` with
+        ``x``, ``y`` the block's centre on the 320 x 240 screen; id 0 = seen but not learned."""
+    def arrows(self, id: Optional[int] = None, /) -> List[Tuple[int, int, int, int, int]]:
+        """The arrows of the latest frame (line tracking), all or only ``id``:
+        ``[(x_origin, y_origin, x_target, y_target, id), ...]``."""
+    def count(self) -> int:
+        """How many objects the camera saw in the latest frame (``blocks()`` / ``arrows()`` hold at most 16)."""
+    def learned(self) -> int:
+        """How many IDs the current algorithm has learned."""
+    def frame(self) -> int:
+        """The camera's frame number of the latest result (wraps at 65536)."""
+    def learn(self, id: int = 1, /) -> None:
+        """Learn what the camera frames now as ``id`` (1..65535)."""
+    def forget(self) -> None:
+        """Forget everything learned in the current algorithm."""
+    def age(self) -> int:
+        """Milliseconds since the latest result was received."""
+    def close(self) -> None:
+        """Release the port (nothing is written to the camera: its algorithm and learned objects stay)."""
+
+
+class VL53L1X:
+    """ST VL53L1X time-of-flight distance sensor, up to 4 m (an EVN Extended Peripheral) on I2C port 1..16.
+
+    Address 0x29 at 400 kHz, shared with the VL53L0X and the TCS34725: identified by its model ID 0xEACC
+    at the 16-bit index 0x010F, read only after the one-byte ID registers of those two chips ruled them
+    out (a 16-bit index would write a register on them). The sensor ranges continuously and the firmware
+    keeps the latest result in a cache, so every getter is a memory copy. Defaults: **long** mode and a
+    **33 ms** timing budget (about 31 readings a second). Two at once. Bench-validated 2026-09-26 (rig
+    port 1).
+
+    Raises: ``ValueError("port must be 1..16")``; ``OSError("no VL53L1X on port %d (I2C 0x29, model ID
+    0xEACC)")``; ``OSError("VL53L1X on port %d: no free slot (2 at once)")``; ``OSError("VL53L1X on port
+    %d not responding")`` while unplugged; ``ValueError("VL53L1X is closed")`` after ``close()``.
+    """
+    def __init__(self, port: int, /) -> None: ...
+    def distance(self) -> Optional[int]:
+        """The distance in mm, or ``None`` when the measurement is not valid (``status()`` says why)."""
+    def status(self) -> str:
+        """ST's range status of the latest measurement: ``'valid'``, ``'sigma fail'``, ``'signal fail'``,
+        ``'min range fail'``, ``'out of bounds'``, ``'hardware fail'``, ``'valid, no wrap check'``,
+        ``'wrap around'``, ``'crosstalk fail'``, ``'synchronisation'``, ``'merged pulse'``, ``'too close'``
+        or ``'unknown'``. Only ``'valid'`` gives a ``distance()``."""
+    def raw(self) -> Tuple[int, int, int, int]:
+        """``(distance mm, status number, signal kcps, ambient kcps)`` of the latest measurement, whatever
+        the status (status 0 = valid)."""
+    @overload
+    def distance_mode(self) -> str: ...
+    @overload
+    def distance_mode(self, mode: str, /) -> None:
+        """``'short'`` (up to ~1.3 m, copes better with sunlight) or ``'long'`` (up to ~4 m in the dark,
+        the default); waits for the first reading under the new mode. Switching to ``'long'`` with a
+        15 ms budget raises ``ValueError`` (15 ms is short mode only: set ``timing_budget(20)`` first);
+        anything else than the two names raises ``ValueError``."""
+    @overload
+    def timing_budget(self) -> int: ...
+    @overload
+    def timing_budget(self, ms: int, /) -> None:
+        """The time per measurement in ms: 15 (short mode only), 20, 33 (the default), 50, 100, 200 or
+        500. Longer = more precise and longer range, fewer readings. Waits for the first reading under the
+        new budget; a value that does not exist in the current mode raises ``ValueError``."""
+    def age(self) -> int:
+        """Milliseconds since the cached measurement was taken."""
+    def close(self) -> None:
+        """Stop ranging and release the port."""
+
+
+class TCS3430:
+    """ams-OSRAM TCS3430 XYZ tristimulus colour / ambient light sensor with an IR channel (an EVN
+    Extended Peripheral) on I2C port 1..16.
+
+    Address 0x39 at 400 kHz, shared with the APDS-9960: identified by its ID register (0x92 bits 7:2 =
+    110111, 0xDC). Readings come from a cache the firmware refreshes each integration cycle. Defaults:
+    **one cycle, 2.78 ms at 64x** - the fastest cadence, a new reading about every 3 ms, for the EVN
+    module that lights its target with its own LED and is used close to it. On a bright close target
+    ``saturated()`` reports a clip (lower ``gain()``); for far-field or ambient light use
+    ``integration_time(100)`` or more (the full 16-bit scale needs 178 ms). Counts are raw: no lux or
+    colour-temperature conversion, and ``xy()`` is uncalibrated. Two at once. Bench-validated
+    2026-09-26 (rig port 16).
+
+    Raises: ``ValueError("port must be 1..16")``; ``OSError("no TCS3430 on port %d (I2C 0x39, ID
+    0xDC)")``; ``OSError("TCS3430 on port %d: no free slot (2 at once)")``; ``OSError("TCS3430 on port %d
+    not responding")`` while unplugged; ``ValueError("TCS3430 is closed")`` after ``close()``.
+    """
+    def __init__(self, port: int, /) -> None: ...
+    def calibrate_black(self) -> None:
+        """Take the current reading as the black reference: nothing in front of the sensor (or a black
+        target) where the colours will be read. It is subtracted per channel from every reading and from
+        the white. Kept in RAM by this object (not stored on the board), valid across ``gain()`` and
+        ``integration_time()`` changes. Call it, then ``calibrate_white()``, at the start of a program:
+        uncalibrated, nothing in front reads ``Color.BLUE``. ``ValueError`` when the reading is saturated
+        (lower ``gain()``)."""
+    def calibrate_white(self) -> None:
+        """Take the current reading of a white target, under the module's own LED, as the reference
+        white: each channel is divided by the white's and scaled to D65, so the white target reads
+        ``s`` 0, ``v`` 100. Uncalibrated, the warm LED makes a white sheet read ``Color.YELLOW``. Kept in
+        RAM by this object, valid across ``gain()`` / ``integration_time()`` changes. ``ValueError`` when
+        the reading is saturated (lower ``gain()``) or a channel is not at least 10 % above the black (not brighter than the black reference)."""
+    @overload
+    def black_reference(self) -> Optional[Tuple[float, float, float]]: ...
+    @overload
+    def black_reference(self, value: None, /) -> None:
+        """The black reference as ``(X, Y, Z)`` per 1x-gain cycle, or ``None`` when none is taken;
+        ``black_reference(None)`` clears it. Any other argument raises ``ValueError`` (use
+        ``calibrate_black()``)."""
+    @overload
+    def white_reference(self) -> Optional[Tuple[float, float, float]]: ...
+    @overload
+    def white_reference(self, value: None, /) -> None:
+        """The reference white as ``(X, Y, Z)`` per 1x-gain cycle, or ``None`` when none is taken;
+        ``white_reference(None)`` clears it. Any other argument raises ``ValueError`` (use
+        ``calibrate_white()``)."""
+    def color(self) -> Optional[Color]:
+        """The ``detectable_colors()`` entry the reading's ``hsv()`` matches - the same matcher as
+        ``ColorSensor`` (Pybricks' rule) - or ``None`` when that set is empty. Call ``calibrate_black()``
+        and ``calibrate_white()`` first."""
+    def color_match(self) -> Tuple[Optional[Color], float]:
+        """``(color(), confidence)`` from one reading: the confidence is 1.0 on the chosen colour and
+        0.0 halfway between two (the shared ``ColorSensor`` definition). ``(None, 0.0)`` with no
+        detectable colours."""
+    @overload
+    def detectable_colors(self) -> Sequence[Color]: ...
+    @overload
+    def detectable_colors(self, colors: Sequence[Color], /) -> None:
+        """The colours ``color()`` chooses from. Default ``(Color.RED, Color.YELLOW, Color.GREEN,
+        Color.BLUE, Color.WHITE, Color.NONE)``; anything that is not a ``Color`` raises ``TypeError``.
+        A ``Color`` read from ``hsv()`` over a real target can be taught the same way."""
+    def hsv(self) -> Color:
+        """The reading as a ``Color`` (``.h`` 0..359, ``.s`` 0..100, ``.v`` 0..100): X, Y, Z net of the
+        black reference, relative to the reference white (without one, to the full scale against D65),
+        mapped to RGB with the sRGB standard's matrix and clamped to 0..100 %."""
+    def xyz(self) -> Tuple[int, int, int]:
+        """``(X, Y, Z)`` raw counts."""
+    def raw(self) -> Tuple[int, int, int, int]:
+        """``(X, Y, Z, IR1)`` raw counts."""
+    def ir(self) -> int:
+        """The IR1 channel, raw counts."""
+    def xy(self) -> Optional[Tuple[float, float]]:
+        """``(x, y)`` = X / (X + Y + Z), Y / (X + Y + Z) of the raw counts - **uncalibrated** chromaticity
+        (no per-unit matrix) - or ``None`` in the dark."""
+    def saturated(self) -> bool:
+        """``True`` when the latest reading clipped (analog saturation or a channel at the digital full
+        scale): lower ``gain()`` or shorten ``integration_time()``."""
+    @overload
+    def gain(self) -> int: ...
+    @overload
+    def gain(self, n: int, /) -> None:
+        """The analog gain: 1, 4, 16, 64 (the default) or 128 (typical ratios 1 : 4 : 16 : 66 : 137);
+        anything else raises ``ValueError``. Waits for the first reading at the new gain."""
+    @overload
+    def integration_time(self) -> float: ...
+    @overload
+    def integration_time(self, ms: float, /) -> float:
+        """The integration time in ms, 2.78..711.7 in 2.78 ms steps (``ValueError`` outside): the nearest
+        step is set and returned. Full scale is (steps x 1024 - 1) counts, 65535 from 178 ms up. Waits for
+        the first reading under the new time."""
+    def age(self) -> int:
+        """Milliseconds since the cached reading was taken."""
+    def close(self) -> None:
+        """Power the chip down and release the port."""
 
 
 def core1_status() -> Optional[Tuple[int, int, int, int, int, int]]:

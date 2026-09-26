@@ -1,0 +1,78 @@
+{
+  "format": "evn-blocks",
+  "version": 2,
+  "title": "HiTechnic colour sensor: minimal",
+  "needs": "a HiTechnic NXT Color Sensor (V1 or V2) on I2C port 8, through an NXT cable adapter",
+  "description": "Prints the HiTechnic colour sensor's own colour number five times a second for ten seconds.",
+  "workspace": {
+    "blocks": {
+      "languageVersion": 0,
+      "blocks": [
+        {
+          "type": "evn_setup_start",
+          "x": 30,
+          "y": 30,
+          "next": {
+            "block": {
+              "type": "evn_htcolor_setup",
+              "fields": {
+                "PORT": "8"
+              }
+            }
+          }
+        },
+        {
+          "type": "evn_program_start",
+          "x": 30,
+          "y": 160,
+          "next": {
+            "block": {
+              "type": "controls_repeat_ext",
+              "inputs": {
+                "TIMES": {
+                  "shadow": {
+                    "type": "math_number",
+                    "fields": {
+                      "NUM": 50
+                    }
+                  }
+                },
+                "DO": {
+                  "block": {
+                    "type": "text_print",
+                    "inputs": {
+                      "TEXT": {
+                        "block": {
+                          "type": "evn_htcolor_value",
+                          "fields": {
+                            "PORT": "8",
+                            "WHAT": "color_number()"
+                          }
+                        }
+                      }
+                    },
+                    "next": {
+                      "block": {
+                        "type": "evn_wait",
+                        "inputs": {
+                          "TIME": {
+                            "shadow": {
+                              "type": "math_number",
+                              "fields": {
+                                "NUM": 200
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

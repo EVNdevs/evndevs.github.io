@@ -560,6 +560,208 @@
             previousStatement: null, nextStatement: null, style: 'evn_sense_blocks',
             tooltip: 'Stop collecting and keep the calibration the compass had before.',
         },
+
+        /* ---- EVN Extended Peripherals (docs/EXTENDED_PERIPHERALS.md) ---------------------------- */
+        {
+            type: 'evn_htcolor_setup',
+            message0: 'set up HiTechnic colour sensor on port %1',
+            args0: [portField(I2C_PORTS)],
+            style: 'evn_sense_blocks',
+            tooltip: 'A HiTechnic NXT Color Sensor (V1 or V2) on an I2C port, 1 to 16, through an NXT cable adapter. The firmware runs that port at 100 kHz, the sensor\'s own speed.',
+        },
+        {
+            type: 'evn_htcolor_calibrate',
+            message0: 'calibrate HiTechnic colour sensor %1 %2',
+            args0: [
+                portField(I2C_PORTS),
+                { type: 'field_dropdown', name: 'WHAT', options: [['black (nothing in front)', 'black'], ['white (a white sheet)', 'white']] },
+            ],
+            previousStatement: null, nextStatement: null, style: 'evn_sense_blocks',
+            tooltip: 'Take the reading now as the black (nothing in front of the sensor) or the white (a white sheet where the colours will be read). Do black, then white, at the start of the program: the colour, hue, saturation and brightness are then measured between the two.',
+        },
+        {
+            type: 'evn_htcolor_color',
+            message0: 'HiTechnic colour sensor %1 colour',
+            args0: [portField(I2C_PORTS)],
+            output: null, style: 'evn_sense_blocks',
+            tooltip: 'The colour the sensor sees: red, yellow, green, blue, white or nothing.',
+        },
+        {
+            type: 'evn_htcolor_sees',
+            message0: 'HiTechnic colour sensor %1 sees %2',
+            args0: [portField(I2C_PORTS), { type: 'field_dropdown', name: 'COLOR', options: SENSOR_COLORS }],
+            output: 'Boolean', style: 'evn_sense_blocks',
+            tooltip: 'True when the sensor sees this colour.',
+        },
+        {
+            type: 'evn_htcolor_value',
+            message0: 'HiTechnic colour sensor %1 %2',
+            args0: [
+                portField(I2C_PORTS),
+                {
+                    type: 'field_dropdown', name: 'WHAT', options: [
+                        ['colour number (0-17)', 'color_number()'], ['reflection (%)', 'reflection()'],
+                        ['red (0-255)', 'rgb()[0]'], ['green (0-255)', 'rgb()[1]'], ['blue (0-255)', 'rgb()[2]'],
+                        ['hue (0-359)', 'hsv().h'], ['saturation (0-100)', 'hsv().s'], ['brightness (0-100)', 'hsv().v'],
+                    ],
+                },
+            ],
+            output: 'Number', style: 'evn_sense_blocks',
+            tooltip: 'One number out of the reading: the sensor\'s own colour number (0 black ... 17 white), the reflected light in %, one of the red, green and blue channels, or hue / saturation / brightness.',
+        },
+        {
+            type: 'evn_htcompass_setup',
+            message0: 'set up HiTechnic compass on port %1',
+            args0: [portField(I2C_PORTS)],
+            style: 'evn_sense_blocks',
+            tooltip: 'A HiTechnic NXT Compass Sensor on an I2C port, 1 to 16, through an NXT cable adapter. Keep it away from the motors.',
+        },
+        {
+            type: 'evn_htcompass_heading',
+            message0: 'HiTechnic compass %1 heading',
+            args0: [portField(I2C_PORTS)],
+            output: 'Number', style: 'evn_sense_blocks',
+            tooltip: 'Degrees clockwise, 0 to 359, in whole degrees.',
+        },
+        {
+            type: 'evn_htcompass_north',
+            message0: 'set HiTechnic compass %1 heading to %2',
+            args0: [portField(I2C_PORTS), { type: 'input_value', name: 'HEADING', check: 'Number' }],
+            inputsInline: true, previousStatement: null, nextStatement: null, style: 'evn_sense_blocks',
+            tooltip: 'The direction the robot points right now becomes this heading (0 = call it north).',
+        },
+        {
+            type: 'evn_huskylens_setup',
+            message0: 'set up HuskyLens on port %1',
+            args0: [portField(I2C_PORTS)],
+            style: 'evn_sense_blocks',
+            tooltip: 'A DFRobot HuskyLens AI camera on an I2C port, 1 to 16. Set its Protocol Type to I2C in its General Settings first.',
+        },
+        {
+            type: 'evn_huskylens_algorithm',
+            message0: 'set HuskyLens %1 to %2',
+            args0: [
+                portField(I2C_PORTS),
+                {
+                    type: 'field_dropdown', name: 'ALGORITHM', options: [
+                        ['face recognition', 'FACE_RECOGNITION'], ['object tracking', 'OBJECT_TRACKING'],
+                        ['object recognition', 'OBJECT_RECOGNITION'], ['line tracking', 'LINE_TRACKING'],
+                        ['colour recognition', 'COLOR_RECOGNITION'], ['tag recognition', 'TAG_RECOGNITION'],
+                        ['object classification', 'OBJECT_CLASSIFICATION'],
+                    ],
+                },
+            ],
+            previousStatement: null, nextStatement: null, style: 'evn_sense_blocks',
+            tooltip: 'Switch the camera to one of its algorithms (the same as turning its function dial).',
+        },
+        {
+            type: 'evn_huskylens_count',
+            message0: 'HuskyLens %1 objects seen',
+            args0: [portField(I2C_PORTS)],
+            output: 'Number', style: 'evn_sense_blocks',
+            tooltip: 'How many objects (blocks or arrows) the camera sees in its latest frame.',
+        },
+        {
+            type: 'evn_huskylens_block',
+            message0: 'HuskyLens %1 first block %2',
+            args0: [
+                portField(I2C_PORTS),
+                {
+                    type: 'field_dropdown', name: 'WHAT', options: [
+                        ['x (0-319)', '0'], ['y (0-239)', '1'], ['width', '2'], ['height', '3'], ['ID', '4'],
+                    ],
+                },
+            ],
+            output: 'Number', style: 'evn_sense_blocks',
+            tooltip: 'One number of the first block the camera sees: x and y are its centre on the 320 x 240 screen; ID 0 means seen but not learned. It is -1 when the camera sees no block.',
+        },
+        {
+            type: 'evn_huskylens_learn',
+            message0: 'HuskyLens %1 learn what it sees as ID %2',
+            args0: [portField(I2C_PORTS), { type: 'input_value', name: 'ID', check: 'Number' }],
+            inputsInline: true, previousStatement: null, nextStatement: null, style: 'evn_sense_blocks',
+            tooltip: 'Learn what the camera frames right now as this ID (1 or more), in the current algorithm.',
+        },
+        {
+            type: 'evn_vl53l1x_setup',
+            message0: 'set up VL53L1X distance sensor on port %1',
+            args0: [portField(I2C_PORTS)],
+            style: 'evn_sense_blocks',
+            tooltip: 'An ST VL53L1X time-of-flight distance sensor (up to 4 m) on an I2C port, 1 to 16. It starts in long mode, 33 ms per reading.',
+        },
+        {
+            type: 'evn_vl53l1x_distance',
+            message0: 'VL53L1X %1 distance (mm)',
+            args0: [portField(I2C_PORTS)],
+            output: 'Number', style: 'evn_sense_blocks',
+            tooltip: 'Distance to what is in front, in millimetres. It is -1 when the reading is not valid (nothing in range, too much light).',
+        },
+        {
+            type: 'evn_vl53l1x_mode',
+            message0: 'set VL53L1X %1 to %2 range',
+            args0: [
+                portField(I2C_PORTS),
+                { type: 'field_dropdown', name: 'MODE', options: [['long (up to 4 m)', 'long'], ['short (up to 1.3 m)', 'short']] },
+            ],
+            previousStatement: null, nextStatement: null, style: 'evn_sense_blocks',
+            tooltip: 'Long reaches about 4 m in the dark; short reaches about 1.3 m and copes better with sunlight.',
+        },
+        {
+            type: 'evn_tcs3430_setup',
+            message0: 'set up TCS3430 colour sensor on port %1',
+            args0: [portField(I2C_PORTS)],
+            style: 'evn_sense_blocks',
+            tooltip: 'An ams-OSRAM TCS3430 XYZ colour and light sensor on an I2C port, 1 to 16. It starts with its fastest reading (2.78 ms at 64x gain), for a target close in front.',
+        },
+        {
+            type: 'evn_tcs3430_color',
+            message0: 'TCS3430 %1 colour',
+            args0: [portField(I2C_PORTS)],
+            output: null, style: 'evn_sense_blocks',
+            tooltip: 'The colour the sensor sees: red, yellow, green, blue, white or nothing.',
+        },
+        {
+            type: 'evn_tcs3430_sees',
+            message0: 'TCS3430 %1 sees %2',
+            args0: [portField(I2C_PORTS), { type: 'field_dropdown', name: 'COLOR', options: SENSOR_COLORS }],
+            output: 'Boolean', style: 'evn_sense_blocks',
+            tooltip: 'True when the sensor sees this colour.',
+        },
+        {
+            type: 'evn_tcs3430_value',
+            message0: 'TCS3430 %1 %2',
+            args0: [
+                portField(I2C_PORTS),
+                {
+                    type: 'field_dropdown', name: 'WHAT', options: [
+                        ['X', 'xyz()[0]'], ['Y (brightness)', 'xyz()[1]'], ['Z', 'xyz()[2]'], ['infrared', 'ir()'],
+                        ['hue (0-359)', 'hsv().h'], ['saturation (0-100)', 'hsv().s'], ['brightness (0-100)', 'hsv().v'],
+                    ],
+                },
+            ],
+            output: 'Number', style: 'evn_sense_blocks',
+            tooltip: 'One number out of the reading: X, Y and Z (raw counts) follow the way the eye sees colour, Y being the brightness; infrared is the IR channel; or hue / saturation / brightness.',
+        },
+        {
+            type: 'evn_tcs3430_calibrate',
+            message0: 'calibrate TCS3430 %1 %2',
+            args0: [
+                portField(I2C_PORTS),
+                { type: 'field_dropdown', name: 'WHAT', options: [['black (nothing in front)', 'black'], ['white (a white sheet)', 'white']] },
+            ],
+            previousStatement: null, nextStatement: null, style: 'evn_sense_blocks',
+            tooltip: 'Take the reading now as the black (nothing in front of the sensor) or the white (a white sheet where the colours will be read). Do black, then white, at the start of the program: without them the warm LED makes white read yellow.',
+        },
+        {
+            type: 'evn_tcs3430_gain',
+            message0: 'set TCS3430 %1 gain to %2',
+            args0: [
+                portField(I2C_PORTS),
+                { type: 'field_dropdown', name: 'GAIN', options: [['64x', '64'], ['128x', '128'], ['16x', '16'], ['4x', '4'], ['1x', '1']] },
+            ],
+            previousStatement: null, nextStatement: null, style: 'evn_sense_blocks',
+            tooltip: 'How much the sensor amplifies the light: lower it when a bright target close up saturates the readings.',
+        },
         {
             type: 'evn_touch_setup',
             message0: 'set up touch pads on port %1',
@@ -1439,6 +1641,7 @@
      * a Python block spelling `autostart(True)` raised NameError on the board). */
     const DEVICE_NAMES = ['Color', 'Icon', 'Side', 'ColorSensor', 'DistanceSensor', 'GestureSensor', 'EnvSensor',
         'Compass', 'TouchArray', 'IMU', 'ADC', 'Display', 'MatrixLED', 'SevenSegmentLED', 'RGBLED', 'Servo', 'Bluetooth',
+        'HiTechnicColorSensor', 'HiTechnicCompass', 'HuskyLens', 'VL53L1X', 'TCS3430',
         'DriveBase', 'Pose', 'DataLog', 'UART', 'I2C', 'Flash', 'reset', 'reset_cause', 'bootloader', 'autostart', 'core1_status', 'version',
         'configure_motor', 'motor_config', 'calibration', 'clear_calibration', 'imu_calibration', 'compass_calibration', 'clock'];
     const EVN_NAMES = CORE_NAMES.concat(DEVICE_NAMES);
@@ -1460,6 +1663,11 @@
         RGBLED: ['rgb', 'evn_rgb_setup'],
         Servo: ['servo', 'evn_servo_setup'],
         Bluetooth: ['bluetooth', 'evn_bluetooth_setup'],
+        HiTechnicColorSensor: ['ht_color', 'evn_htcolor_setup'],
+        HiTechnicCompass: ['ht_compass', 'evn_htcompass_setup'],
+        HuskyLens: ['huskylens', 'evn_huskylens_setup'],
+        VL53L1X: ['vl53l1x', 'evn_vl53l1x_setup'],
+        TCS3430: ['tcs3430', 'evn_tcs3430_setup'],
     };
 
     /* The generated object names themselves, not just their prefixes: a user variable called
@@ -1969,6 +2177,65 @@
     };
     generator.forBlock['evn_compass_calibrate_stop'] = doCall('Compass', 'calibrate_stop');
 
+    /* ---- EVN Extended Peripherals ---------------------------------------------------------- */
+    generator.forBlock['evn_htcolor_setup'] = setupGenerator('HiTechnicColorSensor');
+    generator.forBlock['evn_htcolor_color'] = call('HiTechnicColorSensor', 'color');
+    generator.forBlock['evn_htcolor_value'] = pick('HiTechnicColorSensor', 'WHAT');
+    generator.forBlock['evn_htcolor_calibrate'] = function (block) {
+        const what = block.getFieldValue('WHAT') === 'white' ? 'white' : 'black';
+        return deviceRef(block, 'HiTechnicColorSensor') + '.calibrate_' + what + '()\n';
+    };
+    generator.forBlock['evn_htcolor_sees'] = function (block) {
+        use('Color');
+        return [deviceRef(block, 'HiTechnicColorSensor') + '.color() == Color.' + block.getFieldValue('COLOR'), Order.RELATIONAL];
+    };
+
+    generator.forBlock['evn_htcompass_setup'] = setupGenerator('HiTechnicCompass');
+    generator.forBlock['evn_htcompass_heading'] = call('HiTechnicCompass', 'heading');
+    generator.forBlock['evn_htcompass_north'] = function (block) {
+        const heading = generator.valueToCode(block, 'HEADING', Order.NONE);
+        return deviceRef(block, 'HiTechnicCompass') + '.north(' + (heading && heading !== '0' ? heading : '') + ')\n';
+    };
+
+    generator.forBlock['evn_huskylens_setup'] = setupGenerator('HuskyLens');
+    generator.forBlock['evn_huskylens_algorithm'] = function (block) {
+        return deviceRef(block, 'HuskyLens') + '.algorithm(HuskyLens.' + block.getFieldValue('ALGORITHM') + ')\n';
+    };
+    generator.forBlock['evn_huskylens_count'] = call('HuskyLens', 'count');
+    generator.forBlock['evn_huskylens_block'] = function (block) {
+        // blocks() is [] when the camera sees nothing: the stand-in tuple answers -1 instead of an IndexError
+        const i = String(Math.max(0, Math.min(4, Number(block.getFieldValue('WHAT')) || 0)));
+        return ['(' + deviceRef(block, 'HuskyLens') + '.blocks() or [(-1, -1, -1, -1, -1)])[0][' + i + ']', Order.MEMBER];
+    };
+    generator.forBlock['evn_huskylens_learn'] = doInt('HuskyLens', 'learn', 'ID', '1');
+
+    generator.forBlock['evn_vl53l1x_setup'] = setupGenerator('VL53L1X');
+    generator.forBlock['evn_vl53l1x_distance'] = function (block) {
+        // distance() is None when the reading is not valid: -1 instead, so a comparison or a sum never
+        // raises TypeError (a valid reading is never 0 mm: the sensor's minimum range is ~4 cm)
+        return [deviceRef(block, 'VL53L1X') + '.distance() or -1', Order.LOGICAL_OR];
+    };
+    generator.forBlock['evn_vl53l1x_mode'] = function (block) {
+        const mode = block.getFieldValue('MODE') === 'short' ? 'short' : 'long';
+        return deviceRef(block, 'VL53L1X') + '.distance_mode(' + generator.quote_(mode) + ')\n';
+    };
+
+    generator.forBlock['evn_tcs3430_setup'] = setupGenerator('TCS3430');
+    generator.forBlock['evn_tcs3430_color'] = call('TCS3430', 'color');
+    generator.forBlock['evn_tcs3430_sees'] = function (block) {
+        use('Color');
+        return [deviceRef(block, 'TCS3430') + '.color() == Color.' + block.getFieldValue('COLOR'), Order.RELATIONAL];
+    };
+    generator.forBlock['evn_tcs3430_value'] = pick('TCS3430', 'WHAT');
+    generator.forBlock['evn_tcs3430_calibrate'] = function (block) {
+        const what = block.getFieldValue('WHAT') === 'white' ? 'white' : 'black';
+        return deviceRef(block, 'TCS3430') + '.calibrate_' + what + '()\n';
+    };
+    generator.forBlock['evn_tcs3430_gain'] = function (block) {
+        const g = ['1', '4', '16', '64', '128'].includes(block.getFieldValue('GAIN')) ? block.getFieldValue('GAIN') : '64';
+        return deviceRef(block, 'TCS3430') + '.gain(' + g + ')\n';
+    };
+
     generator.forBlock['evn_touch_setup'] = setupGenerator('TouchArray');
     generator.forBlock['evn_touch_any'] = call('TouchArray', 'pressed');
     generator.forBlock['evn_touch_pad'] = function (block) {
@@ -2351,6 +2618,44 @@
                         { kind: 'block', type: 'evn_bluetooth_send', fields: { PORT: '2' }, inputs: { TEXT: shadowText('hello') } },
                         { kind: 'block', type: 'evn_bluetooth_any', fields: { PORT: '2' } },
                         { kind: 'block', type: 'evn_bluetooth_line', fields: { PORT: '2' }, inputs: { TIMEOUT: shadowNum(5000) } },
+                    ]),
+                ],
+            },
+            {
+                // EVN Extended Peripherals (docs/EXTENDED_PERIPHERALS.md): kit people already own, a smaller API
+                kind: 'category', name: 'Extended', categorystyle: 'evn_sense_category',
+                contents: [
+                    group('HiTechnic colour', 'evn_sense_category', [
+                        { kind: 'block', type: 'evn_htcolor_setup' },
+                        { kind: 'block', type: 'evn_htcolor_calibrate' },
+                        { kind: 'block', type: 'evn_htcolor_sees' },
+                        { kind: 'block', type: 'evn_htcolor_color' },
+                        { kind: 'block', type: 'evn_htcolor_value' },
+                    ]),
+                    group('HiTechnic compass', 'evn_sense_category', [
+                        { kind: 'block', type: 'evn_htcompass_setup' },
+                        { kind: 'block', type: 'evn_htcompass_heading' },
+                        { kind: 'block', type: 'evn_htcompass_north', inputs: { HEADING: shadowNum(0) } },
+                    ]),
+                    group('HuskyLens', 'evn_sense_category', [
+                        { kind: 'block', type: 'evn_huskylens_setup' },
+                        { kind: 'block', type: 'evn_huskylens_algorithm' },
+                        { kind: 'block', type: 'evn_huskylens_count' },
+                        { kind: 'block', type: 'evn_huskylens_block' },
+                        { kind: 'block', type: 'evn_huskylens_learn', inputs: { ID: shadowNum(1) } },
+                    ]),
+                    group('VL53L1X distance', 'evn_sense_category', [
+                        { kind: 'block', type: 'evn_vl53l1x_setup' },
+                        { kind: 'block', type: 'evn_vl53l1x_distance' },
+                        { kind: 'block', type: 'evn_vl53l1x_mode' },
+                    ]),
+                    group('TCS3430 colour', 'evn_sense_category', [
+                        { kind: 'block', type: 'evn_tcs3430_setup' },
+                        { kind: 'block', type: 'evn_tcs3430_calibrate' },
+                        { kind: 'block', type: 'evn_tcs3430_sees' },
+                        { kind: 'block', type: 'evn_tcs3430_color' },
+                        { kind: 'block', type: 'evn_tcs3430_value' },
+                        { kind: 'block', type: 'evn_tcs3430_gain' },
                     ]),
                 ],
             },

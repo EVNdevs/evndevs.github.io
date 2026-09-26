@@ -7,8 +7,8 @@
  :root { color-scheme: dark; }
  body { margin: 0 auto; padding: 2rem 1rem; max-width: 46rem; background: #111518; color: #d7dade;
         font: 16px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif; }
- h1 { font-size: 1.5rem; } h2 { font-size: 1.1rem; margin-top: 2rem; }
- h2 small { font-weight: 400; color: #a3a8ad; }
+ h1 { font-size: 1.5rem; } h2 { font-size: 1.1rem; margin-top: 2rem; } h3 { font-size: 1rem; margin-top: 1.5rem; }
+ h2 small, h3 small { font-weight: 400; color: #a3a8ad; }
  a { color: #c9b99c; } ul { list-style: none; padding: 0; }
  li { padding: .35rem 0; border-bottom: 1px solid #2a3138; }
  li span { display: block; color: #a3a8ad; font-size: .9rem; }
@@ -163,5 +163,41 @@
   <li><a href="22_data_log/datalog_minimal.evnblocks">datalog_minimal.evnblocks</a>  <span>Data log: minimal - Needs: a motor on port 1, free to turn; an EVN IMU module on I2C port 1, kept still</span></li>
   <li><a href="22_data_log/datalog_complete.py">datalog_complete.py</a>  <span>Data log: complete - Needs: a motor on port 1, free to turn; an EVN IMU module on I2C port 1, kept still; a battery</span></li>
   <li><a href="22_data_log/datalog_complete.evnblocks">datalog_complete.evnblocks</a>  <span>Data log: complete - Needs: a motor on port 1, free to turn; an EVN IMU module on I2C port 1, kept still; a battery pack</span></li>
+</ul>
+<h2>Extended Peripherals <small>HiTechnic NXT colour sensor and compass, HuskyLens, VL53L1X, TCS3430</small></h2>
+<h3>HiTechnic colour sensor <small>HiTechnic NXT Color Sensor V1 / V2 (NXT cable adapter, 100 kHz)</small></h3>
+<ul>
+  <li><a href="extended_peripherals/01_hitechnic_color/hitechnic_color_minimal.py">hitechnic_color_minimal.py</a>  <span>HiTechnic colour sensor: minimal - Needs: a HiTechnic NXT Color Sensor (V1 or V2) on I2C port 8, through an NXT cable adapter</span></li>
+  <li><a href="extended_peripherals/01_hitechnic_color/hitechnic_color_minimal.evnblocks">hitechnic_color_minimal.evnblocks</a>  <span>HiTechnic colour sensor: minimal - Needs: a HiTechnic NXT Color Sensor (V1 or V2) on I2C port 8, through an NXT cable adapter</span></li>
+  <li><a href="extended_peripherals/01_hitechnic_color/hitechnic_color_complete.py">hitechnic_color_complete.py</a>  <span>HiTechnic colour sensor: the whole API - Needs: a HiTechnic NXT Color Sensor (V1 or V2) on I2C port 8, through an NXT cable adapter, a white</span></li>
+  <li><a href="extended_peripherals/01_hitechnic_color/hitechnic_color_complete.evnblocks">hitechnic_color_complete.evnblocks</a>  <span>HiTechnic colour sensor: every block - Needs: a HiTechnic NXT Color Sensor (V1 or V2) on I2C port 8, through an NXT cable adapter</span></li>
+</ul>
+<h3>HiTechnic compass <small>HiTechnic NXT Compass Sensor (NXT cable adapter, 100 kHz)</small></h3>
+<ul>
+  <li><a href="extended_peripherals/02_hitechnic_compass/hitechnic_compass_minimal.py">hitechnic_compass_minimal.py</a>  <span>HiTechnic compass: minimal - Needs: a HiTechnic NXT Compass Sensor on I2C port 5, through an NXT cable adapter; room to turn the robot on the floor</span></li>
+  <li><a href="extended_peripherals/02_hitechnic_compass/hitechnic_compass_minimal.evnblocks">hitechnic_compass_minimal.evnblocks</a>  <span>HiTechnic compass: minimal - Needs: a HiTechnic NXT Compass Sensor on I2C port 5, through an NXT cable adapter; room to turn the robot on the floor</span></li>
+  <li><a href="extended_peripherals/02_hitechnic_compass/hitechnic_compass_complete.py">hitechnic_compass_complete.py</a>  <span>HiTechnic compass: the whole API - Needs: a HiTechnic NXT Compass Sensor on I2C port 5, through an NXT cable adapter; room to turn the robot on the floor</span></li>
+  <li><a href="extended_peripherals/02_hitechnic_compass/hitechnic_compass_complete.evnblocks">hitechnic_compass_complete.evnblocks</a>  <span>HiTechnic compass: every block - Needs: a HiTechnic NXT Compass Sensor on I2C port 5, through an NXT cable adapter; room to turn the robot on the floor</span></li>
+</ul>
+<h3>HuskyLens <small>DFRobot HuskyLens AI camera (I2C mode)</small></h3>
+<ul>
+  <li><a href="extended_peripherals/03_huskylens/huskylens_minimal.py">huskylens_minimal.py</a>  <span>HuskyLens: minimal - Needs: a DFRobot HuskyLens set to Protocol Type I2C on I2C port 11</span></li>
+  <li><a href="extended_peripherals/03_huskylens/huskylens_minimal.evnblocks">huskylens_minimal.evnblocks</a>  <span>HuskyLens: minimal - Needs: a DFRobot HuskyLens set to Protocol Type I2C on I2C port 11</span></li>
+  <li><a href="extended_peripherals/03_huskylens/huskylens_complete.py">huskylens_complete.py</a>  <span>HuskyLens: the whole API - Needs: a DFRobot HuskyLens set to Protocol Type I2C on I2C port 11</span></li>
+  <li><a href="extended_peripherals/03_huskylens/huskylens_complete.evnblocks">huskylens_complete.evnblocks</a>  <span>HuskyLens: every block - Needs: a DFRobot HuskyLens set to Protocol Type I2C on I2C port 11</span></li>
+</ul>
+<h3>VL53L1X distance sensor <small>ST VL53L1X time-of-flight distance sensor, up to 4 m</small></h3>
+<ul>
+  <li><a href="extended_peripherals/04_vl53l1x/vl53l1x_minimal.py">vl53l1x_minimal.py</a>  <span>VL53L1X distance sensor: minimal - Needs: an ST VL53L1X distance sensor on I2C port 1</span></li>
+  <li><a href="extended_peripherals/04_vl53l1x/vl53l1x_minimal.evnblocks">vl53l1x_minimal.evnblocks</a>  <span>VL53L1X distance sensor: minimal - Needs: an ST VL53L1X distance sensor on I2C port 1</span></li>
+  <li><a href="extended_peripherals/04_vl53l1x/vl53l1x_complete.py">vl53l1x_complete.py</a>  <span>VL53L1X distance sensor: the whole API - Needs: an ST VL53L1X distance sensor on I2C port 1</span></li>
+  <li><a href="extended_peripherals/04_vl53l1x/vl53l1x_complete.evnblocks">vl53l1x_complete.evnblocks</a>  <span>VL53L1X distance sensor: every block - Needs: an ST VL53L1X distance sensor on I2C port 1</span></li>
+</ul>
+<h3>TCS3430 colour sensor <small>ams-OSRAM TCS3430 XYZ colour and light sensor</small></h3>
+<ul>
+  <li><a href="extended_peripherals/05_tcs3430/tcs3430_minimal.py">tcs3430_minimal.py</a>  <span>TCS3430 colour sensor: minimal - Needs: an ams-OSRAM TCS3430 colour sensor on I2C port 16</span></li>
+  <li><a href="extended_peripherals/05_tcs3430/tcs3430_minimal.evnblocks">tcs3430_minimal.evnblocks</a>  <span>TCS3430 colour sensor: minimal - Needs: an ams-OSRAM TCS3430 colour sensor on I2C port 16</span></li>
+  <li><a href="extended_peripherals/05_tcs3430/tcs3430_complete.py">tcs3430_complete.py</a>  <span>TCS3430 colour sensor: the whole API - Needs: an ams-OSRAM TCS3430 colour sensor on I2C port 16, a white sheet of paper</span></li>
+  <li><a href="extended_peripherals/05_tcs3430/tcs3430_complete.evnblocks">tcs3430_complete.evnblocks</a>  <span>TCS3430 colour sensor: every block - Needs: an ams-OSRAM TCS3430 colour sensor on I2C port 16</span></li>
 </ul>
 </body></html>

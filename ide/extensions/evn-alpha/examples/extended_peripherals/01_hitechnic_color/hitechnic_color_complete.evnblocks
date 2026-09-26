@@ -1,0 +1,250 @@
+{
+  "format": "evn-blocks",
+  "version": 2,
+  "title": "HiTechnic colour sensor: every block",
+  "needs": "a HiTechnic NXT Color Sensor (V1 or V2) on I2C port 8, through an NXT cable adapter",
+  "description": "Every block of the HiTechnic colour sensor: the black and the white taken first (nothing in front, then a white sheet), then for twenty seconds its colour, colour number, reflection, red channel and hue, and a message whenever it sees red.",
+  "workspace": {
+    "blocks": {
+      "languageVersion": 0,
+      "blocks": [
+        {
+          "type": "evn_setup_start",
+          "x": 30,
+          "y": 30,
+          "next": {
+            "block": {
+              "type": "evn_htcolor_setup",
+              "fields": {
+                "PORT": "8"
+              }
+            }
+          }
+        },
+        {
+          "type": "evn_program_start",
+          "x": 30,
+          "y": 160,
+          "next": {
+            "block": {
+              "type": "text_print",
+              "inputs": {
+                "TEXT": {
+                  "block": {
+                    "type": "text",
+                    "fields": {
+                      "TEXT": "Nothing in front of the HiTechnic colour sensor..."
+                    }
+                  }
+                }
+              },
+              "next": {
+                "block": {
+                  "type": "evn_wait",
+                  "inputs": {
+                    "TIME": {
+                      "shadow": {
+                        "type": "math_number",
+                        "fields": {
+                          "NUM": 2000
+                        }
+                      }
+                    }
+                  },
+                  "next": {
+                    "block": {
+                      "type": "evn_htcolor_calibrate",
+                      "fields": {
+                        "PORT": "8",
+                        "WHAT": "black"
+                      },
+                      "next": {
+                        "block": {
+                          "type": "text_print",
+                          "inputs": {
+                            "TEXT": {
+                              "block": {
+                                "type": "text",
+                                "fields": {
+                                  "TEXT": "Hold a white sheet in front of the HiTechnic colour sensor..."
+                                }
+                              }
+                            }
+                          },
+                          "next": {
+                            "block": {
+                              "type": "evn_wait",
+                              "inputs": {
+                                "TIME": {
+                                  "shadow": {
+                                    "type": "math_number",
+                                    "fields": {
+                                      "NUM": 3000
+                                    }
+                                  }
+                                }
+                              },
+                              "next": {
+                                "block": {
+                                  "type": "evn_htcolor_calibrate",
+                                  "fields": {
+                                    "PORT": "8",
+                                    "WHAT": "white"
+                                  },
+                                  "next": {
+                                    "block": {
+                                      "type": "controls_repeat_ext",
+                                      "inputs": {
+                                        "TIMES": {
+                                          "shadow": {
+                                            "type": "math_number",
+                                            "fields": {
+                                              "NUM": 40
+                                            }
+                                          }
+                                        },
+                                        "DO": {
+                                          "block": {
+                                            "type": "text_print",
+                                            "inputs": {
+                                              "TEXT": {
+                                                "block": {
+                                                  "type": "evn_htcolor_color",
+                                                  "fields": {
+                                                    "PORT": "8"
+                                                  }
+                                                }
+                                              }
+                                            },
+                                            "next": {
+                                              "block": {
+                                                "type": "text_print",
+                                                "inputs": {
+                                                  "TEXT": {
+                                                    "block": {
+                                                      "type": "evn_htcolor_value",
+                                                      "fields": {
+                                                        "PORT": "8",
+                                                        "WHAT": "color_number()"
+                                                      }
+                                                    }
+                                                  }
+                                                },
+                                                "next": {
+                                                  "block": {
+                                                    "type": "text_print",
+                                                    "inputs": {
+                                                      "TEXT": {
+                                                        "block": {
+                                                          "type": "evn_htcolor_value",
+                                                          "fields": {
+                                                            "PORT": "8",
+                                                            "WHAT": "reflection()"
+                                                          }
+                                                        }
+                                                      }
+                                                    },
+                                                    "next": {
+                                                      "block": {
+                                                        "type": "text_print",
+                                                        "inputs": {
+                                                          "TEXT": {
+                                                            "block": {
+                                                              "type": "evn_htcolor_value",
+                                                              "fields": {
+                                                                "PORT": "8",
+                                                                "WHAT": "rgb()[0]"
+                                                              }
+                                                            }
+                                                          }
+                                                        },
+                                                        "next": {
+                                                          "block": {
+                                                            "type": "text_print",
+                                                            "inputs": {
+                                                              "TEXT": {
+                                                                "block": {
+                                                                  "type": "evn_htcolor_value",
+                                                                  "fields": {
+                                                                    "PORT": "8",
+                                                                    "WHAT": "hsv().h"
+                                                                  }
+                                                                }
+                                                              }
+                                                            },
+                                                            "next": {
+                                                              "block": {
+                                                                "type": "controls_if",
+                                                                "inputs": {
+                                                                  "IF0": {
+                                                                    "block": {
+                                                                      "type": "evn_htcolor_sees",
+                                                                      "fields": {
+                                                                        "PORT": "8",
+                                                                        "COLOR": "RED"
+                                                                      }
+                                                                    }
+                                                                  },
+                                                                  "DO0": {
+                                                                    "block": {
+                                                                      "type": "text_print",
+                                                                      "inputs": {
+                                                                        "TEXT": {
+                                                                          "shadow": {
+                                                                            "type": "text",
+                                                                            "fields": {
+                                                                              "TEXT": "the colour sensor sees red"
+                                                                            }
+                                                                          }
+                                                                        }
+                                                                      }
+                                                                    }
+                                                                  }
+                                                                },
+                                                                "next": {
+                                                                  "block": {
+                                                                    "type": "evn_wait",
+                                                                    "inputs": {
+                                                                      "TIME": {
+                                                                        "shadow": {
+                                                                          "type": "math_number",
+                                                                          "fields": {
+                                                                            "NUM": 500
+                                                                          }
+                                                                        }
+                                                                      }
+                                                                    }
+                                                                  }
+                                                                }
+                                                              }
+                                                            }
+                                                          }
+                                                        }
+                                                      }
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

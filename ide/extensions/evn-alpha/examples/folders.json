@@ -441,6 +441,103 @@
         "evn_datalog_save"
       ],
       "skip": {}
+    },
+    {
+      "dir": "extended_peripherals",
+      "group": true,
+      "title": "Extended Peripherals",
+      "description": "HiTechnic NXT colour sensor and compass, HuskyLens, VL53L1X, TCS3430"
+    },
+    {
+      "dir": "extended_peripherals/01_hitechnic_color",
+      "slug": "hitechnic_color",
+      "title": "HiTechnic colour sensor",
+      "description": "HiTechnic NXT Color Sensor V1 / V2 (NXT cable adapter, 100 kHz)",
+      "classes": [
+        "HiTechnicColorSensor"
+      ],
+      "module": [],
+      "blocks": [
+        "evn_htcolor_setup",
+        "evn_htcolor_sees",
+        "evn_htcolor_color",
+        "evn_htcolor_value",
+        "evn_htcolor_calibrate"
+      ],
+      "skip": {
+        "mains": "stored in the sensor itself: set it once for the mains frequency where you are (50 or 60 Hz)"
+      }
+    },
+    {
+      "dir": "extended_peripherals/02_hitechnic_compass",
+      "slug": "hitechnic_compass",
+      "title": "HiTechnic compass",
+      "description": "HiTechnic NXT Compass Sensor (NXT cable adapter, 100 kHz)",
+      "classes": [
+        "HiTechnicCompass"
+      ],
+      "module": [],
+      "blocks": [
+        "evn_htcompass_setup",
+        "evn_htcompass_heading",
+        "evn_htcompass_north"
+      ],
+      "skip": {}
+    },
+    {
+      "dir": "extended_peripherals/03_huskylens",
+      "slug": "huskylens",
+      "title": "HuskyLens",
+      "description": "DFRobot HuskyLens AI camera (I2C mode)",
+      "classes": [
+        "HuskyLens"
+      ],
+      "module": [],
+      "blocks": [
+        "evn_huskylens_setup",
+        "evn_huskylens_algorithm",
+        "evn_huskylens_count",
+        "evn_huskylens_block",
+        "evn_huskylens_learn"
+      ],
+      "skip": {
+        "forget": "erases everything the camera has learned in the current algorithm"
+      }
+    },
+    {
+      "dir": "extended_peripherals/04_vl53l1x",
+      "slug": "vl53l1x",
+      "title": "VL53L1X distance sensor",
+      "description": "ST VL53L1X time-of-flight distance sensor, up to 4 m",
+      "classes": [
+        "VL53L1X"
+      ],
+      "module": [],
+      "blocks": [
+        "evn_vl53l1x_setup",
+        "evn_vl53l1x_distance",
+        "evn_vl53l1x_mode"
+      ],
+      "skip": {}
+    },
+    {
+      "dir": "extended_peripherals/05_tcs3430",
+      "slug": "tcs3430",
+      "title": "TCS3430 colour sensor",
+      "description": "ams-OSRAM TCS3430 XYZ colour and light sensor",
+      "classes": [
+        "TCS3430"
+      ],
+      "module": [],
+      "blocks": [
+        "evn_tcs3430_setup",
+        "evn_tcs3430_color",
+        "evn_tcs3430_sees",
+        "evn_tcs3430_value",
+        "evn_tcs3430_gain",
+        "evn_tcs3430_calibrate"
+      ],
+      "skip": {}
     }
   ]
 }

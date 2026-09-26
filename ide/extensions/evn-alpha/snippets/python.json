@@ -340,5 +340,70 @@
             "print(${3:log}.save())                # /data/${4:run1}_<date>_<time>.csv"
         ],
         "description": "evn.DataLog: record motors and sensors on the board at their own rates, then save a CSV once the motors coast"
+    },
+    "EVN HiTechnic colour sensor": {
+        "prefix": "evn-hitechnic-color",
+        "description": "HiTechnic NXT Color Sensor V1 / V2 on an I2C port (extended peripheral, NXT cable adapter)",
+        "body": [
+            "from evn import HiTechnicColorSensor",
+            "",
+            "hc = HiTechnicColorSensor(${1:8})  # I2C port 1..16; the port runs at 100 kHz",
+            "hc.calibrate_black()               # nothing in front of the sensor",
+            "hc.calibrate_white()               # a white sheet in front",
+            "print(hc.version(), hc.color(), hc.color_number(), hc.reflection(), hc.rgb())",
+            "$0"
+        ]
+    },
+    "EVN HiTechnic compass": {
+        "prefix": "evn-hitechnic-compass",
+        "description": "HiTechnic NXT Compass Sensor on an I2C port (extended peripheral, NXT cable adapter)",
+        "body": [
+            "from evn import HiTechnicCompass",
+            "",
+            "hc = HiTechnicCompass(${1:5})      # I2C port 1..16; keep it away from the motors",
+            "hc.north()                         # the way it points now reads 0",
+            "print(hc.heading())                # 0..359 degrees clockwise",
+            "$0"
+        ]
+    },
+    "EVN HuskyLens": {
+        "prefix": "evn-huskylens",
+        "description": "DFRobot HuskyLens AI camera on an I2C port (extended peripheral; set its Protocol Type to I2C)",
+        "body": [
+            "from evn import HuskyLens",
+            "",
+            "cam = HuskyLens(${1:11})           # I2C port 1..16",
+            "cam.algorithm(HuskyLens.${2|OBJECT_TRACKING,FACE_RECOGNITION,OBJECT_RECOGNITION,LINE_TRACKING,COLOR_RECOGNITION,TAG_RECOGNITION,OBJECT_CLASSIFICATION|})",
+            "for x, y, w, h, id in cam.blocks():  # centre, size on the 320 x 240 screen; id 0 = not learned",
+            "    print(x, y, w, h, id)",
+            "$0"
+        ]
+    },
+    "EVN VL53L1X distance sensor": {
+        "prefix": "evn-vl53l1x",
+        "description": "ST VL53L1X time-of-flight distance sensor, up to 4 m, on an I2C port (extended peripheral)",
+        "body": [
+            "from evn import VL53L1X",
+            "",
+            "tof = VL53L1X(${1:1})              # I2C port 1..16; long mode, 33 ms per reading",
+            "tof.distance_mode('${2|long,short|}')   # long ~4 m in the dark, short ~1.3 m in daylight",
+            "d = tof.distance()                 # mm, or None when the reading is not valid",
+            "print(d if d is not None else tof.status())",
+            "$0"
+        ]
+    },
+    "EVN TCS3430 colour sensor": {
+        "prefix": "evn-tcs3430",
+        "description": "ams-OSRAM TCS3430 XYZ colour / ambient light sensor on an I2C port (extended peripheral)",
+        "body": [
+            "from evn import TCS3430",
+            "",
+            "tcs = TCS3430(${1:16})             # I2C port 1..16; 2.78 ms at 64x (close to a target)",
+            "tcs.calibrate_black()              # nothing in front of the sensor",
+            "tcs.calibrate_white()              # a white sheet ~1 cm in front (else white reads yellow)",
+            "x, y, z = tcs.xyz()                # raw counts",
+            "print(tcs.color(), x, y, z, tcs.ir(), tcs.xy(), tcs.saturated())",
+            "$0"
+        ]
     }
 }
