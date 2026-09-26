@@ -1,7 +1,7 @@
 EVN_ALPHA_MicroPython.uf2
-source: main (0.2.46) + a motor that cogs rests in its nearest detent: the endpoint deadband and done()'s default tolerance are half the detent pitch on a library motor with cogging_edges (3.3 deg on the Pololu 25D), the cogging feed-forward off in the ADRC hold state; GC heap 146 KB
-built: 2026-09-26 (MicroPython v1.26.1, pico-sdk 2.3.0; SOURCE_DATE_EPOCH=1790424000 = noon UTC 2026-09-26)
+source: main (0.2.47) + no false speed on the first encoder edge after a rest longer than 139.6 s (hal_encoder.c substep_update keeps the last edge's direction on a tick with no transition; the PIO cycle word's sign wraps); GC heap 146 KB
+built: 2026-09-27 (MicroPython v1.26.1, pico-sdk 2.3.0; SOURCE_DATE_EPOCH=1790510400 = noon UTC 2026-09-27)
 flash: single-line 03h boot2, PICO_FLASH_SPI_CLKDIV=4
-md5: d03b201d07f79e318217837697cf757f
+md5: c9907aaf4fa7e5a03ab77bae816540bf
 reproduce: cmake -G Ninja -DEVN_MICROPYTHON=ON + ninja with SOURCE_DATE_EPOCH = noon UTC of the built: date (py/makeversionhdr.py embeds MICROPY_BUILD_DATE); release_public.py does this and refuses on an md5 mismatch
-version: 0.2.47
+version: 0.2.48

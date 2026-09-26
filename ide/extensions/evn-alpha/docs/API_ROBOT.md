@@ -98,7 +98,7 @@ Constants: `Port.A..D` = 1..4, `Direction.CLOCKWISE=0 / COUNTERCLOCKWISE=1`, `St
 | `Stop.COAST` | release |
 | `Stop.BRAKE` | passive brake |
 | `Stop.NONE` | no deceleration phase: reach the target at speed and keep running until the next command; `done()` is `True` from the target on |
-| `Stop.COAST_SMART` | release, and start the next relative move from this target — only while the shaft still stands within twice the position tolerance (`control.target_tolerances()`, 2° by default) of it, as in Pybricks; a shaft moved further while coasting (a slope, a hand, an unwinding gearbox) starts from where it is |
+| `Stop.COAST_SMART` | release, and start the next relative move from this target — only while the shaft still stands within twice the position tolerance (`control.target_tolerances()`: 2° by default on a LEGO motor) of it, as in Pybricks; a shaft moved further while coasting (a slope, a hand, an unwinding gearbox) starts from where it is |
 
 **How the moves count.**
 
@@ -165,7 +165,14 @@ Default limits, at the motor shaft:
 | `control.pid()` | (73837, 295, 3692, 0.75, 20) | (31402, 184, 342, 0.75, 20) |
 | `control.evn()` | (923, 12, 20, 50) | (170, 83, 50, 20) |
 
-The rated no-load speeds behind `full_speed()` are EV3 Large 1050, EV3 Medium 1560 and NXT 1020 deg/s at 9 V. The firmware also caps every move at what the calibrated motor can do at the present battery voltage, so a program never asks for a speed the battery cannot deliver. Higher limits are accepted but are outside the tested range.
+Every library motor's default `control.limits()` speed and acceleration (the speed rises to the calibrated no-load speed when that is higher):
+
+| | EV3 Large | EV3 Medium | NXT | JGA25-370 6V 77RPM | Pololu 25D 9.7:1 HP 12V | CHR-GM16-030PA 9V 1:63 |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| speed limit | 1000 deg/s | 1400 deg/s | 1000 deg/s | 460 deg/s | 3000 deg/s | 900 deg/s |
+| acceleration limit | 2400 deg/s² | 3000 deg/s² | 2400 deg/s² | 2400 deg/s² | 20000 deg/s² | 5000 deg/s² |
+
+The rated no-load speeds behind `full_speed()` are EV3 Large 1050, EV3 Medium 1560 and NXT 1020 deg/s at 9 V, the JGA25 462 deg/s at its 6 V cap, the Pololu 25D 6000 deg/s at 12 V and the CHR-GM16 1290 deg/s at its 9 V cap, scaled by the voltage the motor sees (the pack, or its cap). The firmware also caps every move at what the calibrated motor can do at the present battery voltage, so a program never asks for a speed the battery cannot deliver. Higher limits are accepted but are outside the tested range.
 
 ### Motor configuration (`configure_motor`)
 
@@ -178,7 +185,7 @@ Say once what is plugged into a port, and every `Motor(port)` — in any program
 
 | `configure_motor` argument | Meaning |
 | :--- | :--- |
-| `model` | a library motor — `"EV3 Large"`, `"EV3 Medium"`, `"NXT"`, `"JGA25-370 6V 77RPM"` (`"jga25"`: a 6 V, 77 rpm, 1:78 gearmotor with an 11 cpr hall encoder, 3432 counts per revolution, the port capped at 6 V, EV3 Large control class), `"Pololu 25D 9.7:1 HP 12V"` (`"pololu25d_9_7"`: Pololu #4842, a 12 V high-power 9.68:1 gearmotor with a 48 CPR encoder, 464.64 counts per revolution, 1000 rpm = 6000 deg/s no-load at 12 V — about 3500 deg/s on the pack, its 12 V rating above the pack so no cap binds —, EV3 Medium control class; its stall current is above the port's 3 A rating, so never hold it stalled), `"CHR-GM16-030PA 9V 1:63"` (`"chr16_63"`: a 16 mm 9 V gearmotor, 1:63, with a 7 ppr hall encoder on the motor shaft, 1764 counts per revolution, 215 rpm = 1290 deg/s no-load at 9 V, the port capped at 9 V, above the 2S pack, so it never binds, EV3 Large control class, limits 900 deg/s and 5000 deg/s²; the family runs 1:10 to 1:360, and another ratio is a custom motor with 7 × 4 × the ratio counts) — or `"custom"` for any other DC motor with a quadrature encoder, or `None` |
+| `model` | a library motor — `"EV3 Large"`, `"EV3 Medium"`, `"NXT"`, `"JGA25-370 6V 77RPM"` (`"jga25"`: a 6 V, 77 rpm, 1:78 gearmotor with an 11 cpr hall encoder, 3432 counts per revolution, the port capped at 6 V, EV3 Large control class, limits 460 deg/s and 2400 deg/s²), `"Pololu 25D 9.7:1 HP 12V"` (`"pololu25d_9_7"`: Pololu #4842, a 12 V high-power 9.68:1 gearmotor with a 48 CPR encoder, 464.64 counts per revolution, 1000 rpm = 6000 deg/s no-load at 12 V — about 3500 deg/s on the pack, its 12 V rating above the pack so no cap binds —, EV3 Medium control class, limits 3000 deg/s and 20000 deg/s²; its stall current is above the port's 3 A rating, so never hold it stalled), `"CHR-GM16-030PA 9V 1:63"` (`"chr16_63"`: a 16 mm 9 V gearmotor, 1:63, with a 7 ppr hall encoder on the motor shaft, 1764 counts per revolution, 215 rpm = 1290 deg/s no-load at 9 V, the port capped at 9 V, above the 2S pack, so it never binds, EV3 Large control class, limits 900 deg/s and 5000 deg/s²; the family runs 1:10 to 1:360, and another ratio is a custom motor with 7 × 4 × the ratio counts) — or `"custom"` for any other DC motor with a quadrature encoder, or `None` |
 | `counts_per_rev` | custom only, **required**: encoder edges per **output** revolution (one channel's pulses × 4 × the gear ratio; a LEGO motor is 720) |
 | `rated_voltage` | custom only: mV, 1000..12000, the port's voltage cap (0 = no cap) |
 | `no_load_speed` | custom only: deg/s at the rated voltage (left out or 0 = not known). It is the speed limit, 100 % and the control's first guess until `calibrate()` measures the motor; a custom motor runs on the EV3 Large control class, or the EV3 Medium class from 1300 deg/s |

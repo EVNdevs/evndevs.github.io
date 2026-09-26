@@ -75,7 +75,8 @@ class Control:
         Acceleration and deceleration are honoured independently by the profiler. The getter
         returns ``(speed, acceleration, torque)``; ``acceleration`` is a tuple when the two differ.
         Defaults (EV3 Large / Medium): speed 1000 / 1400 (or the calibrated no-load speed when higher),
-        acceleration 2400 / 3000, torque 449 / 206. A non-positive limit raises ``ValueError``;
+        acceleration 2400 / 3000, torque 449 / 206; the NXT runs the Large's speed and acceleration, the
+        JGA25-370 460 and 2400, the Pololu 25D 3000 and 20000, the CHR-GM16 900 and 5000. A non-positive limit raises ``ValueError``;
         an acceleration sequence that is not two values raises ``ValueError``.
         """
 
@@ -194,7 +195,8 @@ class Motor:
         ``"medium"``, ``"nxt"``, ``"jga25"``, ``"pololu25d_9_7"``, ``"chr16_63"`` also work; the JGA25 is a 6 V
         gearmotor, 3432 counts per revolution, the port capped at 6 V; the Pololu 25D is a 12 V high-power
         gearmotor, 9.7:1, 464.64 counts per revolution, EV3 Medium control class; the CHR-GM16 is a 16 mm 9 V
-        gearmotor, 1:63, 1764 counts per revolution, the port capped at 9 V, EV3 Large control class). Every gain and limit starts from the model's compiled
+        gearmotor, 1:63, 1764 counts per revolution, the port capped at 9 V (above the 2S pack: it never binds),
+        EV3 Large control class). Every gain and limit starts from the model's compiled
         defaults; ``calibrate()`` refines them for this motor and stores the result with the model.
         ``None`` keeps the motor the port runs: the one it was configured for (``evn.configure_motor()`` or
         the Board view's gear, stored on the board), else the one its stored calibration was made for, else
@@ -2407,9 +2409,11 @@ def configure_motor(port: int, model: Optional[str], *, counts_per_rev: Optional
     """Say what is on motor port 1..4 and store it on the board, so a plain ``Motor(port)`` runs that motor
     from any host and after every reboot. ``model``: ``"EV3 Large"``, ``"EV3 Medium"``, ``"NXT"``,
     ``"JGA25-370 6V 77RPM"`` (``"jga25"``: a 6 V, 77 rpm, 1:78 gearmotor with an 11 cpr hall encoder, 3432
-    counts per revolution, the port capped at 6 V), ``"Pololu 25D 9.7:1 HP 12V"`` (``"pololu25d_9_7"``:
+    counts per revolution, the port capped at 6 V, EV3 Large control class, limits 460 deg/s and 2400
+    deg/s^2), ``"Pololu 25D 9.7:1 HP 12V"`` (``"pololu25d_9_7"``:
     Pololu #4842, a 12 V high-power 9.68:1 gearmotor with a 48 CPR encoder, 464.64 counts per revolution,
-    1000 rpm no-load at 12 V - about 3500 deg/s on the pack -, EV3 Medium control class; its stall current is
+    1000 rpm no-load at 12 V - about 3500 deg/s on the pack -, EV3 Medium control class, limits 3000 deg/s
+    and 20000 deg/s^2; its stall current is
     above the port's 3 A rating, so never hold it stalled) or ``"CHR-GM16-030PA 9V 1:63"`` (``"chr16_63"``:
     a 16 mm 9 V gearmotor, 1:63, with a 7 ppr hall encoder on the motor shaft, 1764 counts per revolution,
     215 rpm = 1290 deg/s no-load at 9 V, the port capped at 9 V (above the 2S pack: it never binds), EV3 Large

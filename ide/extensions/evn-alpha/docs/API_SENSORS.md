@@ -26,7 +26,7 @@ Every constructor raises `OSError` when nothing answers on the port or the drive
 | [`MatrixLED`](API_DISPLAYS.md#matrixled--88-led-matrix-ht16k33) | EVN 8×8 LED matrix (HT16K33) | I2C 1–16 | `examples/14_led_matrix/` |
 | [`SevenSegmentLED`](API_DISPLAYS.md#sevensegmentled--4-digit-seven-segment-display-ht16k33) | EVN 4-digit display (HT16K33) | I2C 1–16 | `examples/15_seven_segment/` |
 | [`RGBLED`](API_DISPLAYS.md#rgbled--rgb-led-module-ws2812b) | EVN RGB LED module / WS2812B strip | servo 1–4 | `examples/16_rgb_leds/` |
-| [`Servo`](API_DISPLAYS.md#servo--hobby-servo-geekservo-270--continuous-rotation) | Geekservo 270° / continuous-rotation | servo 1–4 | `examples/17_servo/` |
+| [`Servo`](API_DISPLAYS.md#servo--hobby-servo-geekservo-270--continuous-rotation) | Geekservo 270° / 360° / continuous-rotation, or any hobby servo (`generic`) | servo 1–4 | `examples/17_servo/` |
 | [`Bluetooth`](API_DISPLAYS.md#bluetooth--bluetooth-module-hc-05) | EVN Bluetooth module (HC-05) | serial 1–2 | `examples/18_bluetooth/` |
 
 ## IMU — gyro and accelerometer (MPU-6500)
