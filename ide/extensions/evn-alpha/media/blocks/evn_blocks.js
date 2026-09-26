@@ -339,7 +339,7 @@
             message0: 'calibrate motor %1 wait %2',
             args0: [{ type: 'field_dropdown', name: 'PORT', options: PORTS }, { type: 'field_checkbox', name: 'WAIT', checked: true }],
             previousStatement: null, nextStatement: null, style: 'evn_advanced_blocks',
-            tooltip: 'Self-calibration (about 7 s; the shaft must be free to turn, it moves up to about a turn and a half each way). Measures the motor and its full speed; stored on the board for this port. Untick "wait" to start it and go on while it runs (the ports are measured one after another in the background). A later "calibrate motor" with wait ticked on the same port waits for that run if it is still going; once it has finished it would start a new one, so wait with "motor ... is calibrated" instead.',
+            tooltip: 'Self-calibration (about 11 s; the shaft must be free to turn, it moves up to about a turn and a half each way). Measures the motor and its full speed; stored on the board for this port. Untick "wait" to start it and go on while it runs (the ports are measured one after another in the background). A later "calibrate motor" with wait ticked on the same port waits for that run if it is still going; once it has finished it would start a new one, so wait with "motor ... is calibrated" instead.',
         },
         {
             type: 'evn_motor_calibrated',

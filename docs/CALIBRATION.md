@@ -4,7 +4,7 @@ Three parts of an EVN ALPHA robot are worth calibrating: each **motor**, the **I
 
 | What | Why | Takes | Stored for | Do it again when |
 | :--- | :--- | :--- | :--- | :--- |
-| [Motor](#motors) | measures this motor's strength, time constant and friction, so moves are fast and land on target; finds which way its encoder counts | about 7 s, shaft free to turn | motor port 1–4 | you swap the motor, or choose a different motor for the port |
+| [Motor](#motors) | measures this motor's strength, time constant and friction, so moves are fast and land on target; finds which way its encoder counts | about 11 s, shaft free to turn | motor port 1–4 | you swap the motor, or choose a different motor for the port |
 | [IMU](#imu) | removes the gyro's bias and the accelerometer's error, and finds which way the module is mounted, so the heading does not drift from the start and a level robot reads level | about 2 s still (one pose), or about 10 s with a half turn (two poses) | I2C port 1–16 | you move the module to another port, plug in another module, or change how it is mounted |
 | [Compass](#compass) | removes the pull of the robot's own iron (motors, battery, screws), so the heading points to magnetic north | about 20 s (planar) to a minute (full) of turning the robot | I2C port 1–16 | you move the motors, the battery or other metal parts, or the compass itself |
 
@@ -20,18 +20,18 @@ You can calibrate from the extension's **Board view** (buttons on each row, no c
 
 ## Motors
 
-A motor's calibration measures how strongly it accelerates for each volt (`b0`), how quickly it responds (`tau_ms`), the voltage that breaks the shaft free and the voltage its running friction costs, and its no-load speed. It also finds the direction its encoder counts and the encoder's exact phase widths, in each direction of turning (a Hall sensor's edges sit at slightly different angles each way, and a stopped shaft is placed by them). The motor controller is built from these numbers, so a calibrated motor moves faster and lands more exactly than one running on its model's defaults. The measured no-load speed becomes the motor's 100 % (`full_speed()`), and, when it is higher than the model's default, its speed limit.
+A motor's calibration measures how strongly it accelerates for each volt (`b0`), how quickly it responds (`tau_ms`), the voltage that breaks the shaft free and the voltage its running friction costs, and its no-load speed. It also finds the direction its encoder counts and the encoder's exact phase widths, in each direction of turning (a Hall sensor's edges sit at slightly different angles each way, and a stopped shaft is placed by them), and whether the rotor cogs: it ends with 20 short kicks, and a rotor with magnetic detents (the Pololu 25D) comes to rest in one every time, so the rests line up at the detent period. A custom motor that cogs is then controlled like a library motor with detents (the detents are cancelled while it moves, and the shaft rests in its nearest detent at the end of a move); `evn.calibration(port)["cogging_edges"]` gives the period. The motor controller is built from these numbers, so a calibrated motor moves faster and lands more exactly than one running on its model's defaults. The measured no-load speed becomes the motor's 100 % (`full_speed()`), and, when it is higher than the model's default, its speed limit.
 
-**The shaft must be free to turn.** The motor moves by itself for about seven seconds, up to about a turn and a half each way, and stops near where it started. Take anything off it that must not move, and lift a robot's wheels off the ground.
+**The shaft must be free to turn.** The motor moves by itself for about eleven seconds, up to about a turn and a half each way, and stops near where it started. Take anything off it that must not move, and lift a robot's wheels off the ground.
 
 ### From the Board view
 
 1. **Say which motor is on the port.** Press the **gear** on the motor's row and pick *EV3 Large*, *EV3 Medium*, *NXT*, *JGA25-370 6V 77RPM*, *Pololu 25D 9.7:1 HP 12V*, *CHR-GM16-030PA 9V 1:63*, or *Custom…* for any other DC motor with a quadrature encoder. The choice is stored on the board. A port nobody has configured runs the firmware's default (EV3 Large on ports 1–2, EV3 Medium on 3–4), shown as *EV3 Large (default)*.
-2. **Press the pulse button** on the row (or right-click → **Calibrate this motor (shaft free, ~7 s)...**). A dialog asks you to free the shaft; press **Calibrate**.
-3. A notification shows **EVN: calibrating motor port N... (about 7 s, shaft free)** while the row reads *calibrating... (shaft free)*.
+2. **Press the pulse button** on the row (or right-click → **Calibrate this motor (shaft free, ~11 s)...**). A dialog asks you to free the shaft; press **Calibrate**.
+3. A notification shows **EVN: calibrating motor port N... (about 11 s, shaft free)** while the row reads *calibrating... (shaft free)*.
 4. When it is done, a message gives the numbers (`b0`, `tau`, the breakaway voltage, the no-load speed) and says *and stored*.
 
-![The dialog "Calibrate motor port 1 (EV3 Medium)? The motor turns by itself for about seven seconds, up to about a turn and a half each way: the shaft must be free", with Cancel and Calibrate](images/calibration-motor-dialog.png)
+![The dialog "Calibrate motor port 1 (EV3 Medium)? The motor turns by itself for about eleven seconds, up to about a turn and a half each way: the shaft must be free", with Cancel and Calibrate](images/calibration-motor-dialog.png)
 
 The Board view calibrates one motor at a time. The row then shows one of:
 
@@ -53,7 +53,7 @@ The row's tooltip lists the measured numbers, and why the last calibration faile
 ```python
 from evn import Motor
 m = Motor(1)
-print(m.calibrate())      # (b0, tau_ms, v_break_mv, v_f_mv), after about 7 s
+print(m.calibrate())      # (b0, tau_ms, v_break_mv, v_f_mv), after about 11 s
 ```
 
 Several motors in one go: start each with `wait=False` (the board measures them one after another in the background), then wait until none is busy. Do not call `calibrate()` again to wait: on a port that has already finished, that starts a new run.
@@ -75,7 +75,7 @@ If the shaft cannot turn, or the measurement does not fit, `calibrate()` raises 
 
 | Block | Does |
 | :--- | :--- |
-| **calibrate motor** *1* **wait** ☑ | calibrates the motor and waits for it (about 7 s). Unticked, it starts the calibration and goes on: start each motor that way, then a ticked block on the same port waits for that run, so several motors calibrate together |
+| **calibrate motor** *1* **wait** ☑ | calibrates the motor and waits for it (about 11 s). Unticked, it starts the calibration and goes on: start each motor that way, then a ticked block on the same port waits for that run, so several motors calibrate together |
 | **motor** *1* **is calibrated** | `True` when the port has a calibration — use it to calibrate only once: *if not motor 1 is calibrated: calibrate motor 1* |
 
 ### When to calibrate a motor again
@@ -218,7 +218,7 @@ The Board view's rows always show the state. In Python, three functions read the
 
 | Call | Returns |
 | :--- | :--- |
-| `evn.calibration(port)` | motor port 1–4: `calibrated`, `stored`, `stamp` (the date as seconds since 1970, 0 when unknown), the measured numbers, `encoder_reversed`, `warning` and `error` |
+| `evn.calibration(port)` | motor port 1–4: `calibrated`, `stored`, `stamp` (the date as seconds since 1970, 0 when unknown), the measured numbers, `encoder_reversed`, the detent period (`cogging_edges`, `cogging_measured`, `cogging_confidence`, `cogging_note`), `warning` and `error` |
 | `evn.imu_calibration(port)` | I2C port 1–16: `calibrated`, `stored`, `stamp`, the gyro bias and accelerometer error, the axes, `accel_calibrated`, `tilt`, `warning`, `error` |
 | `evn.compass_calibration(port)` | I2C port 1–16: `calibrated`, `stored`, `stamp`, `planar`, `coverage`, `residual`, `field`, the axes, the chip, `error` |
 

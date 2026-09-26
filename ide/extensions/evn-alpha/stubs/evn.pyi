@@ -121,7 +121,8 @@ class Control:
     @overload
     def target_tolerances(self, speed: Optional[float] = None, position: Optional[float] = None) -> None:
         """The ``done()`` criterion: speed (deg/s, default 50) and position (deg, default two encoder edges and at
-        least 1, or half the detent pitch on a motor whose rotor cogs: 1 on a LEGO motor, 3.3 on the Pololu 25D,
+        least 1, or half the detent pitch on a motor whose rotor cogs - a library motor with detents, or a custom
+        motor whose calibrate() measured them: 1 on a LEGO motor, 3.3 on the Pololu 25D,
         which rests in its nearest detent) tolerance. Both read back as the floats they were set to
         (``position=0.25`` reads 0.25; a LEGO encoder edge is 0.5 deg). A position below the controller's own
         endpoint band can leave a move that stops inside it never reporting done."""
@@ -289,7 +290,7 @@ class Motor:
     def calibrate(self) -> Tuple[int, int, int, int]: ...
     @overload
     def calibrate(self, wait: bool = True) -> Optional[Tuple[int, int, int, int]]:
-        """Self-calibration of this port (about 7 s; the shaft must be free to turn, it moves up to about a
+        """Self-calibration of this port (about 11 s; the shaft must be free to turn, it moves up to about a
         turn and a half each way and ends near where it started). Returns (b0 in deg/s^2 per volt, time constant in ms,
         breakaway voltage in mV, kinetic friction voltage in mV); the result is stored in flash, loaded at
         every boot, and sets this port's ``full_speed()``. Re-run after swapping the motor.
@@ -299,7 +300,13 @@ class Motor:
         (the four quadrature phase widths, one table per direction of turning: a Hall sensor's edges sit
         at slightly different angles each way) and installs and stores them with the record, which is
         what keeps ``speed()``, ``Pose.velocity()`` and the position between two encoder steps exact; see
-        ``evn._encoder_table()``."""
+        ``evn._encoder_table()``. It ends with a detent survey (20 short kicks, the shaft resting after each):
+        a motor whose rotor cogs (magnetic detents, like the Pololu 25D's every 8 encoder edges) always comes
+        to rest in a detent, so the rests line up with the detent period, and the calibration measures that
+        period. A custom motor that cogs then gets what a library motor with detents has: the cogging
+        feed-forward (amplitude = breakaway minus running friction) and the detent rest at the end of a move
+        (half a detent pitch of tolerance); a library motor keeps its library figure and the measurement only
+        checks it. ``evn.calibration(port)["cogging_edges"]`` says what the port runs on."""
 
     # settings
     @overload
@@ -2458,7 +2465,14 @@ def calibration(port: int, /) -> dict:
     "tau_ms", "v_break_mv", "v_f_mv", "no_load_speed" (deg/s at 9 V, or at the motor's rated
     voltage), "vbus_mv" (the pack during it), "encoder_reversed" (True when the calibration found the
     encoder counting against the drive and flipped the port's decoder - a non-LEGO motor wired the other
-    way round; stored with the record, back at boot, gone with the record), "warning" (what is wrong with the record found in flash:
+    way round; stored with the record, back at boot, gone with the record), "cogging_edges" (the rotor's
+    detent period the port runs on, in encoder edges, 0 = none: the library motor's figure, or the period
+    calibrate() measured on a custom motor; non-zero widens the endpoint band and done() to half a detent pitch and,
+    when the breakaway is above the running friction, turns on the cogging feed-forward and the detent hold),
+    "cogging_measured" (the period calibrate()'s detent survey measured, 0 = the rotor did not rest in
+    detents, None = a record older than the survey, or the survey was abandoned), "cogging_confidence" (how sure the survey was, 0..1,
+    None after a reboot), "cogging_note" (None, or why the measurement and the motor library disagree - the
+    library figure is kept - or why the survey was abandoned), "warning" (what is wrong with the record found in flash:
     made for another motor, refused; implausible for the model, applied anyway; else None),
     "error" (why the last calibrate() on this port failed or was refused, else None)}``."""
 
