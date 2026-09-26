@@ -20,9 +20,9 @@ You can calibrate from the extension's **Board view** (buttons on each row, no c
 
 ## Motors
 
-A motor's calibration measures how strongly it accelerates for each volt (`b0`), how quickly it responds (`tau_ms`), the voltage that breaks the shaft free and the voltage its running friction costs, and its no-load speed. It also finds the direction its encoder counts and the encoder's exact phase widths. The motor controller is built from these numbers, so a calibrated motor moves faster and lands more exactly than one running on its model's defaults. The measured no-load speed becomes the motor's 100 % (`full_speed()`), and, when it is higher than the model's default, its speed limit.
+A motor's calibration measures how strongly it accelerates for each volt (`b0`), how quickly it responds (`tau_ms`), the voltage that breaks the shaft free and the voltage its running friction costs, and its no-load speed. It also finds the direction its encoder counts and the encoder's exact phase widths, in each direction of turning (a Hall sensor's edges sit at slightly different angles each way, and a stopped shaft is placed by them). The motor controller is built from these numbers, so a calibrated motor moves faster and lands more exactly than one running on its model's defaults. The measured no-load speed becomes the motor's 100 % (`full_speed()`), and, when it is higher than the model's default, its speed limit.
 
-**The shaft must be free to turn.** The motor moves by itself for about five seconds, up to about a turn each way, and stops near where it started. Take anything off it that must not move, and lift a robot's wheels off the ground.
+**The shaft must be free to turn.** The motor moves by itself for about seven seconds, up to about a turn and a half each way, and stops near where it started. Take anything off it that must not move, and lift a robot's wheels off the ground.
 
 ### From the Board view
 
@@ -53,7 +53,7 @@ The row's tooltip lists the measured numbers, and why the last calibration faile
 ```python
 from evn import Motor
 m = Motor(1)
-print(m.calibrate())      # (b0, tau_ms, v_break_mv, v_f_mv), after about 4.5 s
+print(m.calibrate())      # (b0, tau_ms, v_break_mv, v_f_mv), after about 7 s
 ```
 
 Several motors in one go: start each with `wait=False` (the board measures them one after another in the background), then wait until none is busy. Do not call `calibrate()` again to wait: on a port that has already finished, that starts a new run.
@@ -75,7 +75,7 @@ If the shaft cannot turn, or the measurement does not fit, `calibrate()` raises 
 
 | Block | Does |
 | :--- | :--- |
-| **calibrate motor** *1* **wait** ☑ | calibrates the motor and waits for it (about 4.5 s). Unticked, it starts the calibration and goes on: start each motor that way, then a ticked block on the same port waits for that run, so several motors calibrate together |
+| **calibrate motor** *1* **wait** ☑ | calibrates the motor and waits for it (about 7 s). Unticked, it starts the calibration and goes on: start each motor that way, then a ticked block on the same port waits for that run, so several motors calibrate together |
 | **motor** *1* **is calibrated** | `True` when the port has a calibration — use it to calibrate only once: *if not motor 1 is calibrated: calibrate motor 1* |
 
 ### When to calibrate a motor again

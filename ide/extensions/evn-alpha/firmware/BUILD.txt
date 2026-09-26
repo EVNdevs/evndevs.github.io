@@ -1,7 +1,7 @@
 EVN_ALPHA_MicroPython.uf2
-source: main (0.2.40) + the Pololu 25D 9.7:1 HP 12V library motor (464.64 counts, 12 V, EV3 Medium class, 3000 deg/s / 20000 deg/s^2), its cogging feed-forward (amplitude = v_break - v_f from calibrate(), phase from a coasted rest, faded out 400-900 deg/s), the endpoint spring-back rule gated on authority starvation, done() tolerance = max(1 deg, two encoder edges), an exact substeps-per-turn angle conversion; GC heap 146 KB
+source: main (0.2.41) + encoder phase tables per direction of turning (Hall hysteresis: one table per raw direction, the estimator uses the last edge's direction, a reversal read at zero speed, the reverse table re-gauged when the pinned channel is the moving one, two tables within 4 substeps averaged into one), the phase dwells timed by the Core 0 microsecond poll at the tail of calibrate()'s four pulses in 100 ms chunks (the 1 kHz tick collector is gone: a fast encoder and a narrow phase are timed too), calibration page v7 (enc_phase_rev, enc_phase_shift); GC heap 146 KB
 built: 2026-09-26 (MicroPython v1.26.1, pico-sdk 2.3.0; SOURCE_DATE_EPOCH=1790424000 = noon UTC 2026-09-26)
 flash: single-line 03h boot2, PICO_FLASH_SPI_CLKDIV=4
-md5: b49cbe7fe88d985f573e58d99d57d881
+md5: 1ce4751e7d5a6c70cecc31fbd7ab70aa
 reproduce: cmake -G Ninja -DEVN_MICROPYTHON=ON + ninja with SOURCE_DATE_EPOCH = noon UTC of the built: date (py/makeversionhdr.py embeds MICROPY_BUILD_DATE); release_public.py does this and refuses on an md5 mismatch
-version: 0.2.41
+version: 0.2.42

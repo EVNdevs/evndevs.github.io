@@ -284,15 +284,16 @@ class Motor:
     def calibrate(self) -> Tuple[int, int, int, int]: ...
     @overload
     def calibrate(self, wait: bool = True) -> Optional[Tuple[int, int, int, int]]:
-        """Self-calibration of this port (about 4.5 s; the shaft must be free to turn, it moves up to about a
-        turn each way and ends near where it started). Returns (b0 in deg/s^2 per volt, time constant in ms,
+        """Self-calibration of this port (about 7 s; the shaft must be free to turn, it moves up to about a
+        turn and a half each way and ends near where it started). Returns (b0 in deg/s^2 per volt, time constant in ms,
         breakaway voltage in mV, kinetic friction voltage in mV); the result is stored in flash, loaded at
         every boot, and sets this port's ``full_speed()``. Re-run after swapping the motor.
         ``wait=False`` starts it and returns None; a later ``calibrate()`` on the same port joins it and
         returns the result, so several ports can calibrate together. ``RuntimeError`` when the shaft does
-        not break away or the fit fails. The calibration also measures the port's encoder phase table
-        (the four quadrature phase widths, both directions) and installs and stores it with the record,
-        which is what keeps ``speed()`` while coasting and ``Pose.velocity()`` smooth; see
+        not break away or the fit fails. The calibration also measures the port's encoder phase tables
+        (the four quadrature phase widths, one table per direction of turning: a Hall sensor's edges sit
+        at slightly different angles each way) and installs and stores them with the record, which is
+        what keeps ``speed()``, ``Pose.velocity()`` and the position between two encoder steps exact; see
         ``evn._encoder_table()``."""
 
     # settings
@@ -2137,11 +2138,13 @@ def _calibration(port: int, /) -> Optional[Tuple[bool, bool, int, int, int, int,
     motor model: refused; gains implausible for this port's model: applied anyway); ``error`` why the
     last calibrate() on this port failed or was refused. None entries when there is nothing to say."""
 
-def _encoder_table(port: int, /) -> Tuple[Tuple[int, int, int, int], Tuple[int, int, int, int], Tuple[int, int, int, int], Optional[str], int, int]:
-    """Debug, nothing moves: ``(table, widths_fwd, widths_rev, note, pin_state, step_mod_4)`` for motor
-    port 1..4 — the substep phase table the port runs (``(0, 64, 128, 192)`` is the balanced default), the
-    phase widths the last ``Motor.calibrate()`` measured in each direction (all zero when none this boot),
-    ``None`` or why the default was kept, and the boot-consistency values ``tools/bench/mpy_encoder_seed.py``
+def _encoder_table(port: int, /) -> Tuple[Tuple[int, int, int, int], Tuple[int, int, int, int], int, Tuple[int, int, int, int], Tuple[int, int, int, int], Optional[str], int, int]:
+    """Debug, nothing moves: ``(table_fwd, table_rev, rev_shift, widths_fwd, widths_rev, note, pin_state,
+    step_mod_4)`` for motor port 1..4 — the substep phase tables the port runs, one per direction of turning
+    (``(0, 64, 128, 192)`` is the balanced default) and the reverse table's gauge in substeps (0 unless the
+    calibration found the hysteresis on the pinned channel), the phase widths the last ``Motor.calibrate()``
+    measured in each direction (all zero when none this boot), ``None`` or which direction could not be
+    timed / why the default was kept, and the boot-consistency values ``tools/bench/mpy_encoder_seed.py``
     checks."""
 def reset(*, start: bool = False) -> None:
     """Coast the motors and reboot the board. After the reboot ``main.py`` waits for a press of the

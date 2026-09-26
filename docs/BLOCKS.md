@@ -217,7 +217,7 @@ The colour input of the RGB LED blocks takes either colour block: **colour *red*
 
 | Block | Python |
 | :--- | :--- |
-| calibrate motor *1* wait ☑ | `motor_1.calibrate()` (about 4.5 s, shaft free to turn, up to about a turn each way; stored on the board for that port); unticked: `motor_1.calibrate(wait=False)`, which starts it and goes on while the ports are measured one after another in the background — a ticked one on the same port waits for that run while it is still going (after it has finished it starts a new one, so wait with *motor … is calibrated* instead) |
+| calibrate motor *1* wait ☑ | `motor_1.calibrate()` (about 7 s, shaft free to turn, up to about a turn and a half each way; stored on the board for that port); unticked: `motor_1.calibrate(wait=False)`, which starts it and goes on while the ports are measured one after another in the background — a ticked one on the same port waits for that run while it is still going (after it has finished it starts a new one, so wait with *motor … is calibrated* instead) |
 | motor *1* is calibrated | `evn.calibration(1)['calibrated']` |
 | set motor *1* *speed* / *acceleration* / *torque* limit to *500* | `motor_1.control.limits(speed=500)` (one limit, the other two kept; the defaults are the motor's tested maximum). Files from before carry *limit motor … speed … acceleration … torque …*, which still works: `control.limits(...)` with each input that is filled in |
 | set motor *1* duty to *50* % | `motor_1.dc(50)` |

@@ -205,7 +205,7 @@ m.run(300); wait(1000); m.stop()          # 1 s at 300 deg/s
 print(m.angle(), m.speed(), m.load())
 ```
 
-Speeds can also be given in **percent** of the motor's full speed instead of deg/s: `Motor(1, speed_unit=SpeedUnit.PERCENT)`. 100 % is the motor's no-load speed at the present battery voltage (a model estimate until `m.calibrate()` measures it on your motor, about 4.5 s with the shaft free to turn: see [Calibrating your robot](CALIBRATION.md)). See `examples/02_motor/motor_complete.py`.
+Speeds can also be given in **percent** of the motor's full speed instead of deg/s: `Motor(1, speed_unit=SpeedUnit.PERCENT)`. 100 % is the motor's no-load speed at the present battery voltage (a model estimate until `m.calibrate()` measures it on your motor, about 7 s with the shaft free to turn: see [Calibrating your robot](CALIBRATION.md)). See `examples/02_motor/motor_complete.py`.
 
 ### Sensors, displays and servos
 
