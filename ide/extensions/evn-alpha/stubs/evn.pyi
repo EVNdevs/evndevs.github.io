@@ -120,9 +120,10 @@ class Control:
     @overload
     def target_tolerances(self, speed: Optional[float] = None, position: Optional[float] = None) -> None:
         """The ``done()`` criterion: speed (deg/s, default 50) and position (deg, default two encoder edges and at
-        least 1: 1 on a LEGO motor, 1.55 on the Pololu 25D) tolerance. Both read back as the floats they were set
-        to (``position=0.25`` reads 0.25; a LEGO encoder edge is 0.5 deg). A position below two encoder edges can
-        leave a move that stops inside the controller's own endpoint band never reporting done."""
+        least 1, or half the detent pitch on a motor whose rotor cogs: 1 on a LEGO motor, 3.3 on the Pololu 25D,
+        which rests in its nearest detent) tolerance. Both read back as the floats they were set to
+        (``position=0.25`` reads 0.25; a LEGO encoder edge is 0.5 deg). A position below the controller's own
+        endpoint band can leave a move that stops inside it never reporting done."""
 
     @overload
     def stall_tolerances(self) -> Tuple[float, int]: ...
@@ -183,8 +184,9 @@ class Motor:
                  *, model: Optional[str] = None) -> None:
         """``gears``: ``[12, 36]`` or ``[[12, 36], [20, 16, 40]]``; values are then in output degrees.
         ``reset_angle=True`` zeroes ``angle()`` at construction. ``profile``: position tolerance (deg)
-        for ``done()``, must be positive; by default two encoder edges and at least 1 deg (1 deg on a LEGO
-        motor, 1.55 deg on the Pololu 25D's coarser encoder). ``speed_unit=SpeedUnit.PERCENT`` makes every speed a
+        for ``done()``, must be positive; by default two encoder edges and at least 1 deg, or half the detent
+        pitch on a motor whose rotor cogs (1 deg on a LEGO motor, 3.3 deg on the Pololu 25D, which rests in its
+        nearest detent). ``speed_unit=SpeedUnit.PERCENT`` makes every speed a
         percentage of ``full_speed()``.
 
         ``model``: the motor on the port, ``"EV3 Large"``, ``"EV3 Medium"``, ``"NXT"``,
