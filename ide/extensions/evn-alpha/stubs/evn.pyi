@@ -790,9 +790,12 @@ class ColorSensor:
         """The colours ``color()`` chooses from. Default ``(Color.RED, Color.YELLOW, Color.GREEN,
         Color.BLUE, Color.WHITE, Color.NONE)``; any ``Color``, e.g. ``Color(h=348, s=96, v=40)``.
         Anything that is not a ``Color`` raises ``TypeError``."""
-    def hsv(self, normalized: bool = False) -> Color:
-        """The reading as a ``Color`` (``.h`` 0..359, ``.s`` 0..100, ``.v`` 0..100); value is the strongest
-        channel's % of full scale, or of its calibration range with ``normalized=True``."""
+    def hsv(self, normalized: bool = True) -> Color:
+        """The reading as a ``Color`` (``.h`` 0..359, ``.s`` 0..100, ``.v`` 0..100), through the black /
+        white calibration in force on this sensor when it has one - the port's stored record, or a
+        ``ranges()`` the program set - so a calibrated white reads ``s`` 0, ``v`` 100 (the reading
+        ``color()`` classifies); with none, each channel as its % of full scale. ``normalized=False`` is
+        the raw full-scale reading regardless (value = the strongest channel's % of full scale)."""
     @overload
     def ranges(self) -> Tuple[Optional[Tuple[int, int]], Optional[Tuple[int, int]], Optional[Tuple[int, int]], Optional[Tuple[int, int]]]: ...
     @overload
@@ -812,7 +815,7 @@ class ColorSensor:
     def calibrate_black(self) -> None:
         """Take the current reading as the black on all four channels: nothing in front of the sensor (or
         a black target) where the colours will be read. It is subtracted from every reading
-        (``normalized()``, ``hsv(normalized=True)``, ``color()``, ``color_match()``) and sets the lows of
+        (``normalized()``, ``hsv()``, ``color()``, ``color_match()``) and sets the lows of
         ``ranges()``. **Stored for the port** (flash, survives a reboot and a re-plug; every later
         ``ColorSensor(port)`` starts with it; the whole calibration in force is stored, a hand-set
         ``ranges()`` included) and valid across ``gain()`` / ``integration_time()`` changes.
@@ -1293,10 +1296,12 @@ class GestureSensor:
         """``(clear, red, green, blue)`` counts (needs the colour engine)."""
     def rgb(self) -> Tuple[int, int, int]:
         """``(r, g, b)`` 0..255, each channel relative to the clear channel (needs the colour engine)."""
-    def hsv(self, normalized: bool = False) -> Color:
-        """The reading as a ``Color`` (``.h`` 0..359, ``.s`` 0..100, ``.v`` 0..100); value is the strongest
-        channel as a % of full scale, or through the black / white calibration with ``normalized=True``
-        (the reading ``color()`` classifies), as ``ColorSensor.hsv()``."""
+    def hsv(self, normalized: bool = True) -> Color:
+        """The reading as a ``Color`` (``.h`` 0..359, ``.s`` 0..100, ``.v`` 0..100), through the black /
+        white calibration installed on this sensor when it has one (the port's stored record; the
+        reading ``color()`` classifies), each channel as its % of full scale with none;
+        ``normalized=False`` is the raw full-scale reading regardless (value = the strongest channel),
+        as ``ColorSensor.hsv()``."""
     def color(self) -> Optional[Color]:
         """Nearest of ``detectable_colors()`` to the calibrated reading, or ``None`` when that set is
         empty. Call ``calibrate_black()`` and ``calibrate_white()`` once first (stored for the port)."""

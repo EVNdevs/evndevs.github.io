@@ -122,9 +122,9 @@ The first five are Pybricks' (`pybricks.tools.DataLog`); `size`, `autosave`, `on
 | `evn.button` | `pressed` (0/1) | 1000 |
 | `IMU` | `heading` (deg), `tilt` (deg: `.pitch`, `.roll`), `euler` (deg: `.heading`, `.pitch`, `.roll`), `acceleration` (mm/s²: `.x`, `.y`, `.z`), `angular_velocity` (deg/s: `.x`, `.y`, `.z`), `up` (the side's name), `stationary` (0/1), `temperature` (°C) | 200 |
 | `Compass` | `heading` (deg), `heading_confidence`, `field` (G: `.x`, `.y`, `.z`), `raw` (`.x`, `.y`, `.z`), `temperature` (°C, QMC5883L) | 75 |
-| `ColorSensor` | `hsv`, `rgb`, `raw` / `read` (`.c`, `.r`, `.g`, `.b`), `percent` (%: `.c`, `.r`, `.g`, `.b`), `color` (the colour's name, from the object's detectable colours; a colour outside the named set is written as its palette index), `ambient` (%), `lux` (lx), `color_temperature` (K) | its integration time |
+| `ColorSensor` | `hsv` (as `hsv()`: through the port's colour calibration when it has one), `rgb`, `raw` / `read` (`.c`, `.r`, `.g`, `.b`), `percent` (%: `.c`, `.r`, `.g`, `.b`), `color` (the colour's name, from the object's detectable colours; a colour outside the named set is written as its palette index), `ambient` (%), `lux` (lx), `color_temperature` (K) | its integration time |
 | `DistanceSensor` | `distance` (mm; empty when out of range), `status` (the status's name) | its timing budget |
-| `GestureSensor` | `gesture` (its name), `proximity`, `hsv`, `rgb`, `ambient` (%) | its cycle |
+| `GestureSensor` | `gesture` (its name), `proximity`, `hsv` (as `hsv()`: through the port's colour calibration when it has one), `rgb`, `ambient` (%) | its cycle |
 | `EnvSensor` | `temperature` (°C), `pressure` (Pa), `humidity` (%), `all` (the three) | its cycle |
 | `TouchArray` | `touched` (the bit mask of the pads), `proximity` (0/1), `pressed` (0/1: any pad) | its cycle |
 | `ADC` | `voltage` (V), `raw` | its data rate |

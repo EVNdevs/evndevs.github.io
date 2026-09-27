@@ -62,7 +62,7 @@ print("hsv", g.hsv())                   # a Color: .h 0..359, .s 0..100, .v 0..1
 # completely (a hand or a black card on it); the white a white sheet a few cm above it in the room
 # light, not shading the module. The gesture engine must be off (it is, since engines(gesture=False)
 # above): gesture mode freezes the colour and the calibration refuses the stale reading. color() and
-# hsv(normalized=True) read through it (the white then reads s 0, v 100), and it is STORED for the
+# hsv() read through it (the white then reads s 0, v 100; hsv(normalized=False) stays raw), and it is STORED for the
 # port: the next program's GestureSensor(1) starts with it (one colour calibration per port).
 print("stored now:", g.stored_calibration())
 print("cover the sensor completely (a hand or a black card on it)"); wait(3000)
@@ -71,7 +71,7 @@ try:
     print("hold a white sheet a few cm above the sensor, in the room light"); wait(3000)
     g.calibrate_white()
     print("black", g.black_reference(), "white", g.white_reference())   # per 2.78 ms cycle at 1x gain
-    print("calibrated hsv", g.hsv(normalized=True))
+    print("calibrated hsv", g.hsv(), "raw hsv", g.hsv(normalized=False))
 except ValueError as e:
     print("calibration refused:", e)
 print("hold something coloured close above the sensor again ..."); wait(3000)

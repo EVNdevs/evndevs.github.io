@@ -138,7 +138,7 @@ Every peripheral works like a motor: one object per port, created once at the to
 | colour sensor *1* colour | `color_sensor_1.color()` |
 | colour sensor *1* light level (%) | `color_sensor_1.ambient()` — the brightness it sees in % of its full scale, not calibrated: compare with values measured on your own surface |
 | colour sensor *1* only reports red ☐ yellow ☐ green ☐ blue ☑ white ☑ nothing ☑ | `color_sensor_1.detectable_colors((Color.BLUE, Color.WHITE, Color.NONE))` (Pybricks' block: *colour* then only chooses from these) |
-| colour sensor *1* hue / saturation / brightness | `color_sensor_1.hsv().h` / `.hsv().s` / `.hsv().v` |
+| colour sensor *1* hue / saturation / brightness | `color_sensor_1.hsv().h` / `.hsv().s` / `.hsv().v` (through the port's colour calibration when it has one: a calibrated white reads saturation 0, brightness 100) |
 | colour sensor *1* red / green / blue | `color_sensor_1.rgb()[0]` / `[1]` / `[2]` |
 | set up distance sensor on port *1* | `distance_sensor_1 = DistanceSensor(1)` |
 | distance sensor *1* distance (mm) | `distance_sensor_1.distance()` (`None` when nothing is in range) |

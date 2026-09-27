@@ -47,8 +47,8 @@ cs.detectable_colors(old_colours)       # back to the six
 # --- calibration on black and white --------------------------------------------------------------
 # A white sheet takes the colour of the light and WHITE / NONE differ only in brightness, so the
 # colours need a calibration: the reading with nothing in front (black) and on a white sheet
-# (white). normalized(), hsv(normalized=True), color() and color_match() then read between them,
-# and the white reads s 0, v 100. The calibration is STORED for the port: every later program's
+# (white). normalized(), hsv(), color() and color_match() then read between them, and the white
+# reads s 0, v 100 (hsv(normalized=False) is the raw full-scale reading). The calibration is STORED for the port: every later program's
 # ColorSensor(1) starts with it (evn.color_calibration(1) shows it without a sensor object).
 print("stored now:", cs.stored_calibration())
 print("nothing in front of the sensor"); wait(3000)
@@ -58,7 +58,8 @@ try:
     cs.calibrate_white()
     print("black", cs.black_reference(), "white", cs.white_reference())   # per 2.4 ms cycle at 1x gain
     print("ranges", cs.ranges())        # the same calibration in counts: (low, high) per channel
-    print("normalized", cs.normalized(), "hsv", cs.hsv(normalized=True), "colour", cs.color_match())
+    print("normalized", cs.normalized(), "hsv", cs.hsv(), "colour", cs.color_match())
+    print("raw hsv (full scale, not calibrated)", cs.hsv(normalized=False))
 except ValueError as e:
     print("calibration refused:", e)   # a white too dark, saturated, or not above the black
 # ranges() is the same calibration written as counts; a channel given as None loses its range.

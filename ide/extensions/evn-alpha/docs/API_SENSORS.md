@@ -228,7 +228,7 @@ Plug an Adafruit TCS34725 breakout (or any TCS34725 board) into an I2C port; onl
 | `cs.read()` | waits for the **next** reading (≤ 4.8 ms at the defaults; longer right after changing gain or integration time) and returns `(clear, red, green, blue)` — use this in a loop that should see a new sample each time |
 | `cs.percent()` | `(clear, red, green, blue)` as % of full scale |
 | `cs.rgb()` | `(r, g, b)` 0..255, relative to the clear channel |
-| `cs.hsv(normalized=False)` | the reading as a `Color` (`.h` 0..359, `.s` %, `.v` %); value = strongest channel's % of full scale; with `normalized=True` through the black / white calibration (a calibrated white reads `s` 0, `v` 100) — the reading `color()` classifies |
+| `cs.hsv(normalized=True)` | the reading as a `Color` (`.h` 0..359, `.s` %, `.v` %), through the black / white calibration in force on this sensor when it has one — the port's stored record, or a `ranges()` the program set — so a calibrated white reads `s` 0, `v` 100 (the reading `color()` classifies); with none, each channel as its % of full scale. `normalized=False` is the raw full-scale reading regardless (value = strongest channel's % of full scale) |
 | `cs.ambient()` | clear channel as % of full scale |
 | `cs.lux()`, `cs.color_temperature()` | estimates (uncalibrated) in lux and kelvin |
 | `cs.age()` | ms since the reading was taken (the firmware refreshes it every 4.8 ms at the defaults) |
@@ -243,7 +243,7 @@ Plug an Adafruit TCS34725 breakout (or any TCS34725 board) into an I2C port; onl
 | `cs.stored_calibration()` | this port's stored calibration, the dict of `evn.color_calibration(port)`: `{"port", "calibrated", "chip" ('TCS34725' / 'APDS9960' / None), "stored", "pending" (a motor was driving: not in flash yet), "stamp" (seconds since 1970 UTC, 0 when the board's clock was not set), "black", "white" (per-cycle 1× tuples or None), "error" (why the last change was not stored, or None)}` |
 | `cs.clear_calibration()` | forget the stored calibration and then the one in force (every range); `True` when it is out of flash, `False` while a motor drives (the next `stored_calibration()` writes it); `RuntimeError` when another calibration waits for the flash and `OSError` when the write fails - both leave the calibration in force as it was |
 | `cs.ranges(clear=(low, high), red=…, green=…, blue=…)`, `cs.ranges()` | the same calibration as `calibrate_black()` (low) / `calibrate_white()` (high), written as raw counts at the gain and integration time in force (a channel with only a black reads the full scale as its high, one with only a white 0 as its low). A `ranges()` change lives in the object only: it is never written to the board (the next `ColorSensor(port)` starts with the stored calibration; a later `calibrate_black()` / `calibrate_white()` stores what is in force). Every argument is checked before any is applied. `None` clears a channel; a pair must satisfy `0 <= low < high <= 65535`, else `ValueError`. `cs.ranges()` → four entries in clear, red, green, blue order, each `(low, high)` or `None` |
-| `cs.normalized()` | `(clear, red, green, blue)` mapped 0..100 between each channel's calibration low and high; `cs.hsv(normalized=True)` uses these (white balance) |
+| `cs.normalized()` | `(clear, red, green, blue)` mapped 0..100 between each channel's calibration low and high; `cs.hsv()` uses these (white balance) |
 | `cs.gain([x])` | 1, 4, 16 (default) or 60 |
 | `cs.integration_time([ms])` | 2.4 (default) .. 614.4 in 2.4 ms steps (`ValueError` outside); longer = more resolution, slower. The setter returns the time actually set (rounded to the step) |
 | `cs.wait_time([ms])` | pause between readings, 0 (default) .. 7372.8 (2.4 ms steps up to 614.4, 28.8 ms steps above). The getter returns the int `0` when there is no pause; the setter returns the pause actually set |
@@ -259,7 +259,7 @@ cs.calibrate_black()          # once, nothing in front ...
 cs.calibrate_white()          # ... then a white sheet in front: kept on the board for port 5
 c, p = cs.color_match()
 if c == Color.RED and p > 0.6:
-    print("red", cs.hsv(normalized=True))
+    print("red", cs.hsv())        # calibrated: the white sheet reads s 0, v 100
 ```
 
 **Notes**
@@ -343,7 +343,7 @@ Plug the EVN gesture module (or any APDS-9960 breakout at 0x39) into an I2C port
 | `gs.detectable_colors([colors])` | default `(Color.RED, Color.YELLOW, Color.GREEN, Color.BLUE, Color.WHITE, Color.NONE)`; give your own tuple of `Color`s |
 | `gs.raw()` | `(clear, red, green, blue)` counts of the latest reading |
 | `gs.rgb()` | `(r, g, b)` 0..255, relative to the clear channel |
-| `gs.hsv(normalized=False)` | the reading as a `Color`; value = strongest channel's % of full scale; with `normalized=True` through the black / white calibration (the reading `color()` classifies), as `ColorSensor.hsv()` |
+| `gs.hsv(normalized=True)` | the reading as a `Color`, through the black / white calibration installed on this sensor when it has one (the port's stored record; the reading `color()` classifies), each channel as its % of full scale with none; `normalized=False` is the raw full-scale reading regardless, as `ColorSensor.hsv()` |
 | `gs.ambient()` | clear channel as % of full scale, 0..100 |
 | `gs.calibrate_black()`, `gs.calibrate_white()` | the colour calibration, as `ColorSensor`'s, but the gesture sensor's LED is **infrared**: its colour sees the room light, so "nothing in front" is its brightest reading. Call `gs.engines(gesture=False)` first (gesture mode freezes the colour), then black = the sensor **covered completely** (a hand or a black card on it), white = a white sheet a few cm in front in the room light, not shading the module; the white then reads `s` 0, `v` 100. **Stored for the port** (one colour calibration per port: calibrating a `GestureSensor` on a port replaces a `ColorSensor`'s record there and the reverse; a record of the other chip is not installed but `stored_calibration()['chip']` shows it); the same `ValueError`s (a too-bright black says "cover the sensor completely (a hand or a black card on it)"), plus `ValueError("colour reading is stale: engines(gesture=False) first, or move the card")` in gesture mode or on a reading older than one colour cycle. Not yet benched (no APDS-9960 on the rig) |
 | `gs.black_reference()`, `gs.white_reference()` | `(clear, red, green, blue)` counts per 2.78 ms cycle at 1× gain, or `None`; `(None)` clears it (and the stored one) |
