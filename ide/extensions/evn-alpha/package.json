@@ -2,7 +2,7 @@
   "name": "evn-alpha-micropython",
   "displayName": "EVN ALPHA MicroPython",
   "description": "Early-access tooling for the EVN ALPHA robotics controller: flash the MicroPython firmware, run programs, open the REPL, autocomplete for the evn motor API, and a Blockly block editor that generates MicroPython.",
-  "version": "0.2.54",
+  "version": "0.2.55",
   "publisher": "evn-alpha",
   "license": "MIT",
   "preview": true,
@@ -485,6 +485,18 @@
       },
       {
         "category": "EVN",
+        "command": "evn.color.calibrate",
+        "title": "Calibrate this colour sensor (black, then white)...",
+        "icon": "$(pulse)"
+      },
+      {
+        "category": "EVN",
+        "command": "evn.color.clearCalibration",
+        "title": "Clear this colour sensor's calibration...",
+        "icon": "$(clear-all)"
+      },
+      {
+        "category": "EVN",
         "command": "evn.bluetooth.preferWireless",
         "title": "Switch the board to Bluetooth now (test the wireless link)",
         "icon": "$(arrow-swap)"
@@ -716,6 +728,14 @@
         },
         {
           "command": "evn.compass.clearCalibration",
+          "when": "false"
+        },
+        {
+          "command": "evn.color.calibrate",
+          "when": "false"
+        },
+        {
+          "command": "evn.color.clearCalibration",
           "when": "false"
         },
         {
@@ -1090,17 +1110,17 @@
         },
         {
           "command": "evn.device.set",
-          "when": "view == evn.board && viewItem =~ /^evnBoardDevice(Known|Watched)(Imu|Compass)?$/ && evn.console.state == live",
+          "when": "view == evn.board && viewItem =~ /^evnBoardDevice(Known|Watched)(Imu|Compass|Color)?$/ && evn.console.state == live",
           "group": "inline@1"
         },
         {
           "command": "evn.device.watch",
-          "when": "view == evn.board && viewItem =~ /^evnBoardDeviceKnown(Imu|Compass)?$/ && evn.console.state == live",
+          "when": "view == evn.board && viewItem =~ /^evnBoardDeviceKnown(Imu|Compass|Color)?$/ && evn.console.state == live",
           "group": "inline@2"
         },
         {
           "command": "evn.device.unwatch",
-          "when": "view == evn.board && viewItem =~ /^evnBoardDeviceWatched(Imu|Compass)?$/ && evn.console.state == live",
+          "when": "view == evn.board && viewItem =~ /^evnBoardDeviceWatched(Imu|Compass|Color)?$/ && evn.console.state == live",
           "group": "inline@2"
         },
         {
@@ -1124,8 +1144,23 @@
           "group": "2_calibrate@2"
         },
         {
+          "command": "evn.color.calibrate",
+          "when": "view == evn.board && viewItem =~ /^evnBoardDevice(Known|Watched)Color$/ && evn.console.state == live",
+          "group": "inline@3"
+        },
+        {
+          "command": "evn.color.calibrate",
+          "when": "view == evn.board && viewItem =~ /^evnBoardDevice(Known|Watched)Color$/ && evn.console.state == live",
+          "group": "2_calibrate@1"
+        },
+        {
+          "command": "evn.color.clearCalibration",
+          "when": "view == evn.board && viewItem =~ /^evnBoardDevice(Known|Watched)Color$/ && evn.console.state == live",
+          "group": "2_calibrate@2"
+        },
+        {
           "command": "evn.device.set",
-          "when": "view == evn.board && viewItem =~ /^evnBoardDevice(Known|Watched)(Imu|Compass)?$/ && evn.console.state == live",
+          "when": "view == evn.board && viewItem =~ /^evnBoardDevice(Known|Watched)(Imu|Compass|Color)?$/ && evn.console.state == live",
           "group": "1_device@1"
         },
         {
@@ -1140,12 +1175,12 @@
         },
         {
           "command": "evn.device.watch",
-          "when": "view == evn.board && viewItem =~ /^evnBoardDevice(Known|Watched)(Imu|Compass)?$/ && evn.console.state == live",
+          "when": "view == evn.board && viewItem =~ /^evnBoardDevice(Known|Watched)(Imu|Compass|Color)?$/ && evn.console.state == live",
           "group": "1_device@2"
         },
         {
           "command": "evn.device.unwatch",
-          "when": "view == evn.board && viewItem =~ /^evnBoardDeviceWatched(Imu|Compass)?$/ && evn.console.state == live",
+          "when": "view == evn.board && viewItem =~ /^evnBoardDeviceWatched(Imu|Compass|Color)?$/ && evn.console.state == live",
           "group": "1_device@3"
         },
         {
@@ -1225,7 +1260,7 @@
         },
         {
           "command": "evn.dataLogger.add",
-          "when": "view == evn.board && viewItem =~ /^evnBoard(MotorPort(Set)?|Battery|DeviceKnown(Imu|Compass)?|DeviceWatched(Imu|Compass)?)$/",
+          "when": "view == evn.board && viewItem =~ /^evnBoard(MotorPort(Set)?|Battery|DeviceKnown(Imu|Compass|Color)?|DeviceWatched(Imu|Compass|Color)?)$/",
           "group": "4_log@1"
         }
       ],

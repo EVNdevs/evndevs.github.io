@@ -1,7 +1,7 @@
 EVN_ALPHA_MicroPython.uf2
-source: main (0.2.53) + the ColorSensor (TCS34725) / GestureSensor (APDS-9960) black-white calibration stored per I2C port in the flash sector at 0x10FFC000 (hal_color_cal; calibrate_black / calibrate_white / black_reference / white_reference / stored_calibration / clear_calibration, evn.color_calibration(port); ranges() reads the same state on the ColorSensor, RAM only - the calibrate / clear calls store); GC heap 143 KB
+source: main (0.2.54: the ColorSensor / GestureSensor black-white calibration stored per I2C port at 0x10FFC000) with only the version string changed - 0.2.55 is an extension release (the Board view's colour-calibration flow, the simulated gesture sensor); GC heap 143 KB
 built: 2026-09-27 (MicroPython v1.26.1, pico-sdk 2.3.0; SOURCE_DATE_EPOCH=1790510400 = noon UTC 2026-09-27)
 flash: single-line 03h boot2, PICO_FLASH_SPI_CLKDIV=4
-md5: ac57a583e97941d43014acb9ce9557ca
+md5: e00583fef9dcf6a9707c142847322450
 reproduce: cmake -G Ninja -DEVN_MICROPYTHON=ON + ninja with SOURCE_DATE_EPOCH = noon UTC of the built: date (py/makeversionhdr.py embeds MICROPY_BUILD_DATE); release_public.py does this and refuses on an md5 mismatch
-version: 0.2.54
+version: 0.2.55

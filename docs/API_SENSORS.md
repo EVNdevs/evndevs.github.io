@@ -264,7 +264,7 @@ if c == Color.RED and p > 0.6:
 
 **Notes**
 
-The calibration is one record per I2C port in the board's flash (0x10FFC000, `evn.color_calibration(port)` reads it without a sensor object); it is written only when it changes, never while a motor drives (it waits and `stored_calibration()` then shows `"pending": True`), and a `GestureSensor` calibrated on the same port replaces it. Nothing identifies the module itself: another sensor on the port, or another distance to the target, needs a new calibration.
+The Board view's pulse button on the sensor's row runs the same two steps, black then white, and shows a refusal's reason as it is ([Calibrating your robot](CALIBRATION.md#colour-sensors)). The calibration is one record per I2C port in the board's flash (0x10FFC000, `evn.color_calibration(port)` reads it without a sensor object); it is written only when it changes, never while a motor drives (it waits and `stored_calibration()` then shows `"pending": True`), and a `GestureSensor` calibrated on the same port replaces it. Nothing identifies the module itself: another sensor on the port, or another distance to the target, needs a new calibration.
 
 Every setter (`gain()`, `integration_time()`, `wait_time()`, `thresholds()`) returns only once a sample measured **under the new setting** exists. With a persistence of 0 ("every reading") `interrupt()` reads `True` as soon as `thresholds()` has been called, whatever the count: pass 1 or more (the setter's default) for a flag that means "the clear count left the window".
 

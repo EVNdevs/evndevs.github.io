@@ -9,7 +9,7 @@ Four parts of an EVN ALPHA robot are worth calibrating: each **motor**, the **IM
 | [Compass](#compass) | removes the pull of the robot's own iron (motors, battery, screws), so the heading points to magnetic north | about 20 s (planar) to a minute (full) of turning the robot | I2C port 1–16 | you move the motors, the battery or other metal parts, or the compass itself |
 | [Colour sensor](#colour-sensors) | takes the black (nothing in front) and the white (a white sheet), so a white reads white under the module's own light and colours are named reliably | two readings, a few seconds | I2C port 1–16 | you move the sensor to another height above the surface, change the light, or plug another sensor into the port |
 
-You can calibrate from the extension's **Board view** (buttons on each row, no code), from **Python**, or from **blocks** (the colour sensors from Python and blocks only). All three store the same record.
+You can calibrate from the extension's **Board view** (buttons on each row, no code), from **Python**, or from **blocks**. All three store the same record.
 
 ## Before you start
 
@@ -221,6 +221,17 @@ The colour sensor (`ColorSensor`, TCS34725) and the gesture sensor's colour (`Ge
 
 Hold the sensor where the colours will be read (the same height above the surface as on the robot): the calibration is only right at that distance and light.
 
+### From the Board view
+
+1. Press the **pulse** button on the colour sensor's (or the gesture sensor's) row, or right-click → **Calibrate this colour sensor (black, then white)...**. The row reads *calibrating... black, then white*.
+2. **Step 1 of 2, the black.** The dialog says what to set up: for the colour sensor, nothing in front of it (or a black target) at the height it reads from; for the gesture sensor, the sensor **covered completely** (a hand or a black card on it). Press **Take the black**.
+3. **Step 2 of 2, the white.** Hold a white sheet in front: close to the colour sensor, at that same height; a few cm in front of the gesture sensor, in the room light, without shading the module. Press **Take the white**.
+4. A message gives the record the board stored: the chip, the black and the white (four numbers each: clear, red, green, blue, in counts per cycle at 1× gain), and says *and stored*, or *not yet in flash* when a motor was driving. Its **Clear calibration** button undoes it.
+
+Each reading is stored the moment it is taken. When the board refuses one, a dialog shows the sensor's own reason word for word — *the white reading is saturated: lower gain() first*, *the white target is too dark or not brighter than the black reference: hold a white sheet in front*, *the black reading is too bright: nothing (or a black target) in front* — with **Try again**: fix what it says (for a saturated white, lower the gain with the row's pencil button first) and press it. A black as bright as the stored white is not refused: the black is taken and the old white cleared, and step 2 says so. Closing a dialog stops the calibration: before the black nothing is changed; after it the new black is kept and the white is as it was — unless the port's record was made by the other sensor (a gesture sensor's record on a colour sensor's port, or the reverse): then the black starts a fresh record of this sensor, with no white. For the gesture sensor the Board view turns its gesture engine off (and its colour engine on, if it was off) for the two readings, and puts them back afterwards.
+
+The row then shows *calibrated \<date\>*, with *(black only)* or *(white only)* when only one end is stored, or *calibration is for the gesture sensor - calibrate again* (on a gesture sensor's row: *for the colour sensor*) when the port's record was made on the other chip (see *One colour calibration per port* below). The tooltip lists the black and the white. **Clear calibration** on such a row clears nothing: the record belongs to the other sensor, and only that sensor, plugged into the port, can clear it (its row, or its `clear_calibration()` from Python); calibrating this sensor replaces it.
+
 ### From Python
 
 ```python
@@ -238,7 +249,7 @@ Both are stored at once for the port, and every later `ColorSensor(5)` starts wi
 
 ### The gesture sensor is different
 
-The gesture sensor's only LED is **infrared** (for proximity and gestures): its colour channels see the **room light**, so "nothing in front" is its *brightest* reading, not its black. Calibrate it this way, with the gesture engine off (gesture mode freezes the colour reading, and a calibration then refuses the stale reading with `ValueError("colour reading is stale: engines(gesture=False) first, or move the card")`). At the sensor's defaults (one 2.78 ms cycle, 4× gain) a dim room may leave the white sheet under the 5 % the white needs, and `calibrate_white()` then says "too dark": raise `integration_time()` (or `gain()`) first and calibrate at that setting. This procedure has not yet been run on a module (none on the bench); the first one should check it.
+The gesture sensor's only LED is **infrared** (for proximity and gestures): its colour channels see the **room light**, so "nothing in front" is its *brightest* reading, not its black. Calibrate it this way, with the gesture engine off (gesture mode freezes the colour reading, and a calibration then refuses the stale reading with `ValueError("colour reading is stale: engines(gesture=False) first, or move the card")`; the Board view turns the engine off and on by itself). At the sensor's defaults (one 2.78 ms cycle, 4× gain) a dim room may leave the white sheet under the 5 % the white needs, and `calibrate_white()` then says "too dark": raise `integration_time()` (or `gain()`) first and calibrate at that setting. This procedure has not yet been run on a module (none on the bench); the first one should check it.
 
 ```python
 from evn import GestureSensor, wait
@@ -280,7 +291,7 @@ import evn
 print(evn.calibration(1)["calibrated"], evn.imu_calibration(3)["stamp"])
 ```
 
-To **clear** a calibration: right-click the row → **Clear calibration** (**Clear this motor port's calibration...**, **Clear this IMU's calibration...**, **Clear this compass's calibration...**), or in Python `evn.clear_calibration(port)` for a motor, `imu.clear_calibration()`, `c.clear_calibration()`, `cs.clear_calibration()` for a colour or gesture sensor. A motor goes back to its model's defaults, an IMU to its factory trim, a compass to the raw field, a colour sensor to its uncalibrated reading. Like storing, clearing is a flash write that waits for every motor to stop.
+To **clear** a calibration: right-click the row → **Clear calibration** (**Clear this motor port's calibration...**, **Clear this IMU's calibration...**, **Clear this compass's calibration...**, **Clear this colour sensor's calibration...**), or in Python `evn.clear_calibration(port)` for a motor, `imu.clear_calibration()`, `c.clear_calibration()`, `cs.clear_calibration()` for a colour or gesture sensor. A motor goes back to its model's defaults, an IMU to its factory trim, a compass to the raw field, a colour sensor to its uncalibrated reading. Like storing, clearing is a flash write that waits for every motor to stop.
 
 Where it is kept: each kind has its own page in the board's flash (motor, IMU, compass and colour records, one entry per port), apart from your files. Flashing a new firmware keeps them, as it keeps your files.
 
@@ -294,6 +305,7 @@ Where it is kept: each kind has its own page in the board's flash (motor, IMU, c
 | an IMU warning, or a row ending in *(gyro only, accelerometer not)* | the robot was more than 5° off level (8° for the accelerometer to be left out): calibrate on a level surface, or use two poses |
 | *the compass on port N was not calibrated: …* / `ValueError: calibration refused: …` | too few directions: keep turning, lighting the dark dots (full: tip the robot onto its sides and upside down too) |
 | a high fit error | calibrate again away from magnets and steel, turning more slowly |
+| *the black / white of the colour sensor on port N was refused: ValueError: …* | the sensor's reason, word for word: a saturated white needs a lower `gain()` (the row's pencil button), a dark white a white sheet closer (or, on the gesture sensor, a longer `integration_time()`), a bright black nothing in front (the gesture sensor covered); then **Try again** |
 | the calibration buttons are missing | the live console is not connected: see [Getting started](GETTING_STARTED.md), §3b |
 
 The complete calls, with every argument and error, are in the [API reference](API_ROBOT.md#calibration-records-evncalibration).
