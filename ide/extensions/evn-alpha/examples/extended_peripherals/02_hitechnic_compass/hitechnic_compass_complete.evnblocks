@@ -3,7 +3,7 @@
   "version": 2,
   "title": "HiTechnic compass: every block",
   "needs": "a HiTechnic NXT Compass Sensor on I2C port 5, through an NXT cable adapter; room to turn the robot on the floor",
-  "description": "Every block of the HiTechnic compass: the direction the robot points at the start becomes heading 0, then the heading twice a second for twenty seconds while you turn the robot.",
+  "description": "Every block of the HiTechnic compass: the direction the robot points at the start becomes heading 0, then the heading twice a second for twenty seconds while you turn the robot. Then the sensor's own calibration, started by the user button: press it when you are ready, turn the robot slowly and level through a little more than one full turn during the 25 seconds it runs, and the program says whether the sensor accepted it.",
   "workspace": {
     "blocks": {
       "languageVersion": 0,
@@ -75,6 +75,127 @@
                                   "type": "math_number",
                                   "fields": {
                                     "NUM": 500
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "next": {
+                    "block": {
+                      "type": "text_print",
+                      "inputs": {
+                        "TEXT": {
+                          "shadow": {
+                            "type": "text",
+                            "fields": {
+                              "TEXT": "CALIBRATION: press the user button when you are ready, then turn the robot slowly and level through a little more than one full turn, taking at least 20 seconds"
+                            }
+                          }
+                        }
+                      },
+                      "next": {
+                        "block": {
+                          "type": "evn_wait_for_button",
+                          "next": {
+                            "block": {
+                              "type": "evn_htcompass_calibrate",
+                              "fields": {
+                                "PORT": "5"
+                              },
+                              "next": {
+                                "block": {
+                                  "type": "text_print",
+                                  "inputs": {
+                                    "TEXT": {
+                                      "shadow": {
+                                        "type": "text",
+                                        "fields": {
+                                          "TEXT": "calibrating: turn the robot now (25 seconds)"
+                                        }
+                                      }
+                                    }
+                                  },
+                                  "next": {
+                                    "block": {
+                                      "type": "evn_wait",
+                                      "inputs": {
+                                        "TIME": {
+                                          "shadow": {
+                                            "type": "math_number",
+                                            "fields": {
+                                              "NUM": 25000
+                                            }
+                                          }
+                                        }
+                                      },
+                                      "next": {
+                                        "block": {
+                                          "type": "controls_if",
+                                          "extraState": {
+                                            "hasElse": true
+                                          },
+                                          "inputs": {
+                                            "IF0": {
+                                              "block": {
+                                                "type": "evn_htcompass_calibrate_stop",
+                                                "fields": {
+                                                  "PORT": "5"
+                                                }
+                                              }
+                                            },
+                                            "DO0": {
+                                              "block": {
+                                                "type": "text_print",
+                                                "inputs": {
+                                                  "TEXT": {
+                                                    "shadow": {
+                                                      "type": "text",
+                                                      "fields": {
+                                                        "TEXT": "calibration accepted"
+                                                      }
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            },
+                                            "ELSE": {
+                                              "block": {
+                                                "type": "text_print",
+                                                "inputs": {
+                                                  "TEXT": {
+                                                    "shadow": {
+                                                      "type": "text",
+                                                      "fields": {
+                                                        "TEXT": "calibration rejected: turn more slowly, level, and try again"
+                                                      }
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          },
+                                          "next": {
+                                            "block": {
+                                              "type": "text_print",
+                                              "inputs": {
+                                                "TEXT": {
+                                                  "block": {
+                                                    "type": "evn_htcompass_heading",
+                                                    "fields": {
+                                                      "PORT": "5"
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
                                   }
                                 }
                               }

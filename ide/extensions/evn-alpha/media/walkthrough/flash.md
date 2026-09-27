@@ -24,7 +24,12 @@ The extension waits up to 90 seconds for that drive, so there is no rush.
 
 ## Good to know
 
-- **Your files are kept.** `main.py` and anything else you copied onto the board survive a flash.
+- **Your programs, files and calibrations are kept.** A flash writes only the firmware: `main.py`,
+  anything else you copied onto the board, and its motor, IMU, compass and colour calibrations survive it.
+- **In BOOTSEL mode by mistake?** A board that already has its firmware does not need a flash to leave
+  the RPI-RP2 drive: **Restart the board without flashing** (the button on the *Board* view's port row,
+  or *EVN: Restart the board without flashing*) starts the firmware already on it and writes nothing.
+  The board's RESET button does the same.
 - **Motors coast** while the board reboots - a robot up on blocks will free-wheel for a moment. Keep
   wheels off the ground.
 - The battery pack powers the motors; USB alone powers the board but not the motors.

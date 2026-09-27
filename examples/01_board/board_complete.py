@@ -27,8 +27,14 @@ print("main.py starts without a press:", evn.autostart())
 if evn.battery.present():
     print("battery %d mV, cells %s mV, reading %d ms old"
           % (evn.battery.voltage(), evn.battery.cells(), evn.battery.age()))
+    # low(): the pack over about the last second below 6600 mV (or a cell below half of it), where
+    # a pack starts to run out fast - about 30 min of driving before it switches the board off at
+    # ~6.1 V. Once true it stays true until the pack is 150 mV above the level again.
+    if evn.battery.low():
+        print("the battery is low: charge it soon")
+    print("below 7.4 V (a level of your own)?", evn.battery.low(7400))
 else:
-    print("no battery pack: voltage() is", evn.battery.voltage())   # 0; cells(), age() None
+    print("no battery pack: voltage() is", evn.battery.voltage())   # 0; cells(), age() None; low() False
 
 # --- the wall clock -------------------------------------------------------------------------------
 # Seconds since 1970 UTC. The board has no clock battery: it reads 0 until a host sets it (the

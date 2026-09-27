@@ -43,6 +43,7 @@ The reference used to be one page. Every section kept its heading when it moved,
 - **Ctrl-D** (soft reboot) coasts all motors.
 - The **user button** coasts all motors; held 2 s it reboots the board.
 - A 3 s hardware **watchdog** reboots a frozen board; motors coast on reset and `main.py` is skipped on that boot.
+- A motor whose encoder counts against its drive (a non-LEGO motor before its first `calibrate()`) is **coasted by the runaway guard** within about a quarter of a second of running away under a closed-loop command, and the program gets a `RuntimeError` telling it to calibrate the motor ([details](API_ROBOT.md)).
 - A program run from the extension (**Run**, Ctrl+F5, in VS Code or the browser IDE) ends with every motor coasting, finished or raised, and the REPL that follows still has the program's variables. Typing at the REPL yourself is different: there is no program boundary, so motors keep their last command until you `stop()` or `close()` them (or use `with Motor(1) as m:`), press Ctrl-C, or call `evn.stop_all()`.
 
 ## Deviations from Pybricks

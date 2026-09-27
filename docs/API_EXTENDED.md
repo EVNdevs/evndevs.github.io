@@ -175,7 +175,7 @@ Plug the sensor into an I2C port. It measures the distance to what is in front o
 | `tof.status()` | ST's range status of the latest measurement: `'valid'`, `'sigma fail'`, `'signal fail'`, `'min range fail'`, `'out of bounds'`, `'hardware fail'`, `'valid, no wrap check'`, `'wrap around'`, `'crosstalk fail'`, `'synchronisation'`, `'merged pulse'`, `'too close'` or `'unknown'`; only `'valid'` gives a `distance()` |
 | `tof.raw()` | `(distance mm, status number, signal kcps, ambient kcps)`, whatever the status (status 0 = valid) |
 | `tof.distance_mode([mode])` | `'short'` (up to ~1.3 m, copes better with sunlight) or `'long'` (up to ~4 m in the dark, the default); without an argument returns the mode. Any other name raises `ValueError`; switching to `'long'` with a 15 ms budget raises `ValueError` (15 ms is short mode only) |
-| `tof.timing_budget([ms])` | the time per measurement in ms: 15 (short mode only), 20, 33 (the default), 50, 100, 200 or 500 (else `ValueError`); without an argument returns it. Longer = more precise and longer range, fewer readings |
+| `tof.timing_budget([ms])` | the time per measurement in ms: 15 (short mode only), 20, 33 (the default), 50, 100, 200 or 500 (else `ValueError`; 15 in long mode raises `ValueError`: call `distance_mode('short')` first); without an argument returns it. Longer = more precise and longer range, fewer readings |
 | `tof.age()` | ms since the cached measurement was taken (a new one every timing budget) |
 | `tof.close()` | stops ranging and frees the slot |
 

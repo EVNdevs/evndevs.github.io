@@ -2,7 +2,7 @@
   "name": "evn-alpha-micropython",
   "displayName": "EVN ALPHA MicroPython",
   "description": "Early-access tooling for the EVN ALPHA robotics controller: flash the MicroPython firmware, run programs, open the REPL, autocomplete for the evn motor API, and a Blockly block editor that generates MicroPython.",
-  "version": "0.2.57",
+  "version": "0.2.58",
   "publisher": "evn-alpha",
   "license": "MIT",
   "preview": true,
@@ -108,6 +108,12 @@
         "command": "evn.flashFirmware",
         "title": "Flash MicroPython firmware",
         "category": "EVN"
+      },
+      {
+        "command": "evn.restartBootsel",
+        "title": "Restart the board without flashing",
+        "category": "EVN",
+        "icon": "$(debug-restart)"
       },
       {
         "command": "evn.diagnostics",
@@ -1011,6 +1017,11 @@
         {
           "command": "evn.flashFirmware",
           "when": "view == evn.board && viewItem =~ /^evnBoardFirmwareOutdated|^evnBoardPortBootsel/",
+          "group": "inline"
+        },
+        {
+          "command": "evn.restartBootsel",
+          "when": "view == evn.board && viewItem =~ /^evnBoardPortBootsel/",
           "group": "inline"
         },
         {

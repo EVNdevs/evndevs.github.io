@@ -21,7 +21,7 @@
             "block": {
               "type": "evn_comment",
               "fields": {
-                "TEXT": "the battery pack, in millivolts (0 without a pack)"
+                "TEXT": "the battery pack, in millivolts (0 without a pack), and whether it is low"
               },
               "next": {
                 "block": {
@@ -43,7 +43,33 @@
                             "block": {
                               "type": "evn_battery_voltage"
                             }
+                          },
+                          "ADD2": {
+                            "shadow": {
+                              "type": "text",
+                              "fields": {
+                                "TEXT": ", low (below 6.6 V: about 30 min of driving left): "
+                              }
+                            }
+                          },
+                          "ADD3": {
+                            "block": {
+                              "type": "evn_battery_low",
+                              "inputs": {
+                                "THRESHOLD": {
+                                  "shadow": {
+                                    "type": "math_number",
+                                    "fields": {
+                                      "NUM": 6600
+                                    }
+                                  }
+                                }
+                              }
+                            }
                           }
+                        },
+                        "extraState": {
+                          "itemCount": 4
                         }
                       }
                     }

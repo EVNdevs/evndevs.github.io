@@ -198,7 +198,10 @@
   function addSeries(d) {
     if (st.series.has(d.key)) return;
     const s = { key: d.key, label: d.label, unit: d.unit || '', quantity: d.quantity || '', text: !!d.text, idx: st.order.length,
-      on: !d.text, t: new Float64Array(1024), v: new Float64Array(1024), n: 0 };
+      on: !d.text, t: new Float64Array(1024), v: new Float64Array(1024), n: 0,
+      // a file: its rows of this series, and the samples the board took when the file says (a run of identical samples is two
+      // rows, and each halving of the channel's rate kept every second row)
+      rows: d.rows > 0 ? d.rows : 0, taken: d.taken > 0 ? d.taken : 0, halvings: d.halvings > 0 ? d.halvings : 0 };
     st.series.set(d.key, s);
     st.order.push(s);
   }
@@ -569,7 +572,7 @@
     ui.statsTitle.append('Statistics ', h('span', { text: Number.isFinite(st.tMin) ? 'of ' + fmtTime(a) + ' to ' + fmtTime(b) + ' (the span in view)' : '' }));
     ui.table.textContent = '';
     if (!st.order.length) return;
-    ui.table.append(h('tr', null, ['reading', 'n', 'rate', 'min', 'max', 'mean', 'std dev', 'change', 'slope', 'last'].map((x) => h('th', { text: x }))));
+    ui.table.append(h('tr', null, ['reading', 'rows', 'rate', 'min', 'max', 'mean', 'std dev', 'change', 'slope', 'last'].map((x) => h('th', { text: x }))));
     for (const s of st.order) {
       const i0 = lower(s, a), i1 = lower(s, b + 1e-9);
       // The board stores a run of identical samples as two rows (its first and its last), so a row
@@ -608,9 +611,28 @@
       const slope = n > 1 && den > 0 ? (sw * stv - st_ * sv) / den : NaN;
       const rate = gaps.length ? 1 / gaps[0] : NaN;
       const u = s.unit;
+      // The file may say how many samples the board took (# samples taken, or the board's own "N rows of M
+      // samples"): more than the rows when runs of identical samples were folded, or when the board halved
+      // the channel's rate (the count is "halvings included", hal_datalog.h). That count is the whole
+      // file's, so the cell shows it beside the rows only while every row of the series is in view; the
+      // tooltip gives both counts whenever the file says.
+      const folded = s.taken > s.rows && s.rows > 0;
+      const whole = i0 === 0 && i1 === s.n && s.n === s.rows;
+      const halved = s.halvings > 0
+        ? 'the board halved this channel\'s rate ' + (s.halvings === 1 ? 'once' : s.halvings + ' times')
+          + ' when its share of the RAM was full, each time keeping every second row' : '';
+      const rowsTip = !s.taken || !s.rows ? null : folded
+        ? 'The file has ' + s.rows.toLocaleString() + ' rows of this reading for ' + s.taken.toLocaleString()
+          + ' samples the board took: a run of identical samples is two rows, its first and its last' + (halved ? ', and ' + halved : '')
+          + '. The samples are counted over the whole file, so they show beside the rows only while all of it is in view.'
+        : 'The board took ' + s.taken.toLocaleString() + ' samples of this reading; the file has ' + s.rows.toLocaleString() + ' rows of it'
+          + (halved ? ' (' + halved + ')' : '') + '.';
       ui.table.append(h('tr', s.on ? null : { style: 'opacity:0.55' },
         h('td', null, h('span', { class: 'sw', style: 'background:' + colorOf(s) }), s.label + (u ? ' (' + u + ')' : '')),
-        h('td', { text: count.toLocaleString() }),
+        h('td', {
+          text: count.toLocaleString() + (folded && whole ? ' (' + s.taken.toLocaleString() + ' samples)' : ''),
+          title: rowsTip,
+        }),
         h('td', { text: Number.isFinite(rate) ? fmt(rate, 'Hz') : '-' }),
         s.text ? h('td', { colspan: 7, text: 'text - in the file' }) : [
           h('td', { text: fmt(n ? mn : NaN) }), h('td', { text: fmt(n ? mx : NaN) }), h('td', { text: fmt(mean) }), h('td', { text: fmt(sd) }),

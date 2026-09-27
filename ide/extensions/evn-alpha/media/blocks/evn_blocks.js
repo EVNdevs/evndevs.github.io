@@ -292,6 +292,13 @@
             tooltip: 'Pack voltage in millivolts.',
         },
         {
+            type: 'evn_battery_low',
+            message0: 'battery low? (below %1 mV)',
+            args0: [{ type: 'input_value', name: 'THRESHOLD', check: 'Number' }],
+            inputsInline: true, output: 'Boolean', style: 'evn_board_blocks',
+            tooltip: 'True when the pack, over about the last second, is below this many millivolts (or one of its two cells is below half of it); it stays true until the pack is 150 mV above it again and its weaker cell at half of that, so it does not flicker. The cell usually decides first, so it can be true while the battery voltage still reads slightly above the level. 6600 is where a pack starts to run out fast: about 30 minutes of driving before the pack switches the board off by itself at about 6.1 V. False with no pack.',
+        },
+        {
             type: 'evn_motor_dc',
             message0: 'set motor %1 duty to %2 %%',
             args0: [
@@ -651,6 +658,20 @@
             tooltip: 'The direction the robot points right now becomes this heading (0 = call it north).',
         },
         {
+            type: 'evn_htcompass_calibrate',
+            message0: 'start calibrating HiTechnic compass %1',
+            args0: [portField(I2C_PORTS)],
+            previousStatement: null, nextStatement: null, style: 'evn_sense_blocks',
+            tooltip: 'Start the sensor\'s own calibration: then turn the robot slowly and level through a little more than one full turn, taking at least 20 s, and finish with "finish calibrating HiTechnic compass". The heading cannot be read in between. The sensor stores the result itself.',
+        },
+        {
+            type: 'evn_htcompass_calibrate_stop',
+            message0: 'finish calibrating HiTechnic compass %1 (accepted?)',
+            args0: [portField(I2C_PORTS)],
+            output: 'Boolean', style: 'evn_sense_blocks',
+            tooltip: 'End the calibration: true when the sensor accepted it, false when it rejected it (turn more slowly, keep it level, and calibrate again). Put it in an "if" or print it.',
+        },
+        {
             type: 'evn_huskylens_setup',
             message0: 'set up HuskyLens on port %1',
             args0: [portField(I2C_PORTS)],
@@ -703,6 +724,34 @@
             tooltip: 'Learn what the camera frames right now as this ID (1 or more), in the current algorithm.',
         },
         {
+            type: 'evn_huskylens_forget',
+            message0: 'HuskyLens %1 forget everything learned',
+            args0: [portField(I2C_PORTS)],
+            previousStatement: null, nextStatement: null, style: 'evn_sense_blocks',
+            tooltip: 'Erase every ID the camera has learned in its current algorithm.',
+        },
+        {
+            type: 'evn_huskylens_learned',
+            message0: 'HuskyLens %1 IDs learned',
+            args0: [portField(I2C_PORTS)],
+            output: 'Number', style: 'evn_sense_blocks',
+            tooltip: 'How many IDs the camera has learned in its current algorithm (0 when none).',
+        },
+        {
+            type: 'evn_huskylens_arrow',
+            message0: 'HuskyLens %1 first arrow %2',
+            args0: [
+                portField(I2C_PORTS),
+                {
+                    type: 'field_dropdown', name: 'WHAT', options: [
+                        ['x origin (0-319)', '0'], ['y origin (0-239)', '1'], ['x target (0-319)', '2'], ['y target (0-239)', '3'], ['ID', '4'],
+                    ],
+                },
+            ],
+            output: 'Number', style: 'evn_sense_blocks',
+            tooltip: 'Line tracking: one number of the first arrow the camera sees, which runs from its origin to its target on the 320 x 240 screen; ID 0 means seen but not learned. It is -1 when the camera sees no arrow.',
+        },
+        {
             type: 'evn_vl53l1x_setup',
             message0: 'set up VL53L1X distance sensor on port %1',
             args0: [portField(I2C_PORTS)],
@@ -725,6 +774,21 @@
             ],
             previousStatement: null, nextStatement: null, style: 'evn_sense_blocks',
             tooltip: 'Long reaches about 4 m in the dark; short reaches about 1.3 m and copes better with sunlight.',
+        },
+        {
+            type: 'evn_vl53l1x_budget',
+            message0: 'set VL53L1X %1 timing budget to %2',
+            args0: [
+                portField(I2C_PORTS),
+                {
+                    type: 'field_dropdown', name: 'MS', options: [
+                        ['33 ms', '33'], ['15 ms (short range only)', '15'], ['20 ms', '20'], ['50 ms', '50'],
+                        ['100 ms', '100'], ['200 ms', '200'], ['500 ms', '500'],
+                    ],
+                },
+            ],
+            previousStatement: null, nextStatement: null, style: 'evn_sense_blocks',
+            tooltip: 'The time per reading: longer is steadier and reaches further, with fewer readings a second. 33 ms is the start-up value. 15 ms works in short range only: set short range first, and 20 ms or more before switching back to long.',
         },
         {
             type: 'evn_tcs3430_setup',
@@ -781,6 +845,13 @@
             ],
             previousStatement: null, nextStatement: null, style: 'evn_sense_blocks',
             tooltip: 'How much the sensor amplifies the light: lower it when a bright target close up saturates the readings.',
+        },
+        {
+            type: 'evn_tcs3430_integration',
+            message0: 'set TCS3430 %1 integration time to %2 ms',
+            args0: [portField(I2C_PORTS), { type: 'input_value', name: 'MS', check: 'Number' }],
+            inputsInline: true, previousStatement: null, nextStatement: null, style: 'evn_sense_blocks',
+            tooltip: 'How long the sensor collects light for each reading, 2.78 to 711.7 ms (the nearest 2.78 ms step is used). The start-up 2.78 ms suits a target close in front, lit by the module\'s own LED; 100 ms or more suits room light or a target further away. A longer time saturates sooner on a bright target: lower the gain then.',
         },
         {
             type: 'evn_touch_setup',
@@ -2078,6 +2149,10 @@
         use('battery');
         return ['battery.voltage()', Order.FUNCTION_CALL];
     };
+    generator.forBlock['evn_battery_low'] = function (block) {
+        use('battery');
+        return ['battery.low(' + value(block, 'THRESHOLD', '6600') + ')', Order.FUNCTION_CALL];
+    };
     generator.forBlock['evn_motor_dc'] = function (block) {
         return motorRef(block) + '.dc(' + value(block, 'DUTY', '0') + ')\n';
     };
@@ -2224,6 +2299,8 @@
         const heading = generator.valueToCode(block, 'HEADING', Order.NONE);
         return deviceRef(block, 'HiTechnicCompass') + '.north(' + (heading && heading !== '0' ? heading : '') + ')\n';
     };
+    generator.forBlock['evn_htcompass_calibrate'] = doCall('HiTechnicCompass', 'calibrate');
+    generator.forBlock['evn_htcompass_calibrate_stop'] = call('HiTechnicCompass', 'calibrate_stop');
 
     generator.forBlock['evn_huskylens_setup'] = setupGenerator('HuskyLens');
     generator.forBlock['evn_huskylens_algorithm'] = function (block) {
@@ -2236,6 +2313,13 @@
         return ['(' + deviceRef(block, 'HuskyLens') + '.blocks() or [(-1, -1, -1, -1, -1)])[0][' + i + ']', Order.MEMBER];
     };
     generator.forBlock['evn_huskylens_learn'] = doInt('HuskyLens', 'learn', 'ID', '1');
+    generator.forBlock['evn_huskylens_forget'] = doCall('HuskyLens', 'forget');
+    generator.forBlock['evn_huskylens_learned'] = call('HuskyLens', 'learned');
+    generator.forBlock['evn_huskylens_arrow'] = function (block) {
+        // arrows() is [] when the camera sees none (and outside line tracking): -1, as the first-block block
+        const i = String(Math.max(0, Math.min(4, Number(block.getFieldValue('WHAT')) || 0)));
+        return ['(' + deviceRef(block, 'HuskyLens') + '.arrows() or [(-1, -1, -1, -1, -1)])[0][' + i + ']', Order.MEMBER];
+    };
 
     generator.forBlock['evn_vl53l1x_setup'] = setupGenerator('VL53L1X');
     generator.forBlock['evn_vl53l1x_distance'] = function (block) {
@@ -2246,6 +2330,10 @@
     generator.forBlock['evn_vl53l1x_mode'] = function (block) {
         const mode = block.getFieldValue('MODE') === 'short' ? 'short' : 'long';
         return deviceRef(block, 'VL53L1X') + '.distance_mode(' + generator.quote_(mode) + ')\n';
+    };
+    generator.forBlock['evn_vl53l1x_budget'] = function (block) {
+        const ms = ['15', '20', '33', '50', '100', '200', '500'].includes(block.getFieldValue('MS')) ? block.getFieldValue('MS') : '33';
+        return deviceRef(block, 'VL53L1X') + '.timing_budget(' + ms + ')\n';
     };
 
     generator.forBlock['evn_tcs3430_setup'] = setupGenerator('TCS3430');
@@ -2263,6 +2351,8 @@
         const g = ['1', '4', '16', '64', '128'].includes(block.getFieldValue('GAIN')) ? block.getFieldValue('GAIN') : '64';
         return deviceRef(block, 'TCS3430') + '.gain(' + g + ')\n';
     };
+    // integration_time(ms) takes a float (the nearest 2.78 ms step is set), so the input is not rounded
+    generator.forBlock['evn_tcs3430_integration'] = doNumber('TCS3430', 'integration_time', 'MS', '100');
 
     generator.forBlock['evn_touch_setup'] = setupGenerator('TouchArray');
     generator.forBlock['evn_touch_any'] = call('TouchArray', 'pressed');
@@ -2505,6 +2595,7 @@
                     { kind: 'block', type: 'evn_drivebase_is' },
                     { kind: 'block', type: 'evn_button_pressed' },
                     { kind: 'block', type: 'evn_battery_voltage' },
+                    { kind: 'block', type: 'evn_battery_low', inputs: { THRESHOLD: shadowNum(6600) } },
                     { kind: 'block', type: 'evn_stopwatch_time' },
                 ],
             },
@@ -2527,6 +2618,7 @@
                     { kind: 'block', type: 'text_print', inputs: { TEXT: { shadow: { type: 'text', fields: { TEXT: 'hello' } } } } },
                     { kind: 'block', type: 'evn_button_pressed' },
                     { kind: 'block', type: 'evn_battery_voltage' },
+                    { kind: 'block', type: 'evn_battery_low', inputs: { THRESHOLD: shadowNum(6600) } },
                 ],
             },
             {
@@ -2666,18 +2758,24 @@
                         { kind: 'block', type: 'evn_htcompass_setup' },
                         { kind: 'block', type: 'evn_htcompass_heading' },
                         { kind: 'block', type: 'evn_htcompass_north', inputs: { HEADING: shadowNum(0) } },
+                        { kind: 'block', type: 'evn_htcompass_calibrate' },
+                        { kind: 'block', type: 'evn_htcompass_calibrate_stop' },
                     ]),
                     group('HuskyLens', 'evn_sense_category', [
                         { kind: 'block', type: 'evn_huskylens_setup' },
                         { kind: 'block', type: 'evn_huskylens_algorithm' },
                         { kind: 'block', type: 'evn_huskylens_count' },
                         { kind: 'block', type: 'evn_huskylens_block' },
+                        { kind: 'block', type: 'evn_huskylens_arrow' },
                         { kind: 'block', type: 'evn_huskylens_learn', inputs: { ID: shadowNum(1) } },
+                        { kind: 'block', type: 'evn_huskylens_learned' },
+                        { kind: 'block', type: 'evn_huskylens_forget' },
                     ]),
                     group('VL53L1X distance', 'evn_sense_category', [
                         { kind: 'block', type: 'evn_vl53l1x_setup' },
                         { kind: 'block', type: 'evn_vl53l1x_distance' },
                         { kind: 'block', type: 'evn_vl53l1x_mode' },
+                        { kind: 'block', type: 'evn_vl53l1x_budget' },
                     ]),
                     group('TCS3430 colour', 'evn_sense_category', [
                         { kind: 'block', type: 'evn_tcs3430_setup' },
@@ -2686,6 +2784,7 @@
                         { kind: 'block', type: 'evn_tcs3430_color' },
                         { kind: 'block', type: 'evn_tcs3430_value' },
                         { kind: 'block', type: 'evn_tcs3430_gain' },
+                        { kind: 'block', type: 'evn_tcs3430_integration', inputs: { MS: shadowNum(100) } },
                     ]),
                 ],
             },

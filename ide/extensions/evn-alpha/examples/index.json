@@ -32,6 +32,7 @@
         "evn_led_set",
         "evn_button_pressed",
         "evn_battery_voltage",
+        "evn_battery_low",
         "text_print"
       ],
       "skip": {
@@ -488,7 +489,9 @@
       "blocks": [
         "evn_htcompass_setup",
         "evn_htcompass_heading",
-        "evn_htcompass_north"
+        "evn_htcompass_north",
+        "evn_htcompass_calibrate",
+        "evn_htcompass_calibrate_stop"
       ],
       "skip": {}
     },
@@ -506,10 +509,15 @@
         "evn_huskylens_algorithm",
         "evn_huskylens_count",
         "evn_huskylens_block",
-        "evn_huskylens_learn"
+        "evn_huskylens_learn",
+        "evn_huskylens_learned",
+        "evn_huskylens_arrow"
       ],
       "skip": {
         "forget": "erases everything the camera has learned in the current algorithm"
+      },
+      "skipBlocks": {
+        "evn_huskylens_forget": "erases everything the camera has learned in the current algorithm"
       }
     },
     {
@@ -524,7 +532,8 @@
       "blocks": [
         "evn_vl53l1x_setup",
         "evn_vl53l1x_distance",
-        "evn_vl53l1x_mode"
+        "evn_vl53l1x_mode",
+        "evn_vl53l1x_budget"
       ],
       "skip": {}
     },
@@ -543,7 +552,8 @@
         "evn_tcs3430_sees",
         "evn_tcs3430_value",
         "evn_tcs3430_gain",
-        "evn_tcs3430_calibrate"
+        "evn_tcs3430_calibrate",
+        "evn_tcs3430_integration"
       ],
       "skip": {}
     }

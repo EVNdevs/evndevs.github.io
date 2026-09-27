@@ -1,7 +1,7 @@
 EVN_ALPHA_MicroPython.uf2
-source: main (0.2.56) + calibrate()'s pulses nested (low +, high -, high +, low -) and the first pulse repeated at its own duty as a drift check (evn.calibration(port)["drift"], a warning above 3 %: a mechanism warming up while it is measured no longer tilts the friction line; about 1 s longer) + Motor.load() at the motor (load(output=True) at the output; the data logger's load quantity at the motor too); GC heap 143 KB
+source: main (0.2.58) + the runaway guard (an encoder counting against its drive coasts in ~0.25 s and raises), calibrate() prints its drift warning, evn.battery.low(threshold=6600), main.py's start wait takes only Enter / Ctrl-A..E, the calibration stores answer per port (pending / stored / clear_calibration()), the GestureSensor stale refusal by gesture ordering, the Extended constructors' Ctrl-C fix, the VL53L1X budget refusals from the HAL; GC heap 142 KB
 built: 2026-09-27 (MicroPython v1.26.1, pico-sdk 2.3.0; SOURCE_DATE_EPOCH=1790510400 = noon UTC 2026-09-27)
 flash: single-line 03h boot2, PICO_FLASH_SPI_CLKDIV=4
-md5: 87ce201e990ec7797001f0398e80939c
+md5: de0f2b58f12f95d0afd18133c0114c69
 reproduce: cmake -G Ninja -DEVN_MICROPYTHON=ON + ninja with SOURCE_DATE_EPOCH = noon UTC of the built: date (py/makeversionhdr.py embeds MICROPY_BUILD_DATE); release_public.py does this and refuses on an md5 mismatch
-version: 0.2.57
+version: 0.2.58

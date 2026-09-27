@@ -8,7 +8,7 @@ A block editor for the EVN ALPHA, built on [Blockly](https://github.com/Raspberr
 - A program has two parts, as in Pybricks (see *Set up, then program* below): the set-up blocks go under **set up**, the program under **program**. Drag blocks from the toolbox on the left. The **Python** pane on the right shows the generated program as you build it; **Copy** puts it on the clipboard.
 - **Run on board** (or **Ctrl+F5**) saves the file, writes the program to `<name>.evnblocks.py` next to it and runs it in the *EVN ALPHA* terminal. **Stop motors** (Ctrl+Shift+F5) interrupts it and coasts every motor.
 - **Upload as main.py** puts the program on the board, where a press of the user button starts it after every power-on; **Export Python** saves it as a `.py` file you can edit as text.
-- A `.evnblocks` file is JSON (the Blockly workspace); it can be committed, diffed and shared. `<name>.evnblocks.py` is rewritten at every run: edit the blocks, not that file.
+- A `.evnblocks` file is JSON (the Blockly workspace); it can be committed, diffed and shared. `<name>.evnblocks.py` is rewritten at every run: edit the blocks, not that file. For the same reason *My projects* hides it, and a Python program of yours cannot be created, renamed or saved under a name ending in `.evnblocks` (the name box refuses it).
 
 ![The blocks editor: the toolbox on the left, the set up and program start blocks with motor_minimal's blocks, and the MicroPython they generate on the right](images/blocks-editor.png)
 
@@ -90,6 +90,7 @@ One robot per program. Without a **set up robot** block the robot is left motor 
 | robot is done / is stalled | `drive_base.done()` / `drive_base.stalled()` |
 | button pressed? | `button.pressed()` |
 | battery voltage (mV) | `battery.voltage()` |
+| battery low? (below *6600* mV) | `battery.low(6600)`: true once the pack, over about the last second, is below the level (or a cell below half of it), until the pack is 150 mV above it again and the weaker cell at half of that; the cell usually decides first, so it can read true while the voltage is still slightly above the level. Any number fits (a computed level is rounded to the nearest mV). 6600 leaves about 30 minutes of driving before the pack switches the board off at about 6.1 V |
 | stopwatch time (ms) | `stopwatch.time()` (a `StopWatch` created at the top of the program) |
 
 ### Timing
@@ -231,14 +232,20 @@ Devices the firmware drives natively that EVN does not stock ([API reference](AP
 | set up HiTechnic compass on port *1* | `ht_compass_1 = HiTechnicCompass(1)` |
 | HiTechnic compass *1* heading | `ht_compass_1.heading()` (0 to 359, whole degrees) |
 | set HiTechnic compass *1* heading to *0* | `ht_compass_1.north()`; another value `ht_compass_1.north(90)` |
+| start calibrating HiTechnic compass *1* | `ht_compass_1.calibrate()`: the sensor's own calibration. Then turn the robot slowly and level through a little more than one full turn, taking at least 20 s; the heading cannot be read until it is finished |
+| finish calibrating HiTechnic compass *1* (accepted?) | `ht_compass_1.calibrate_stop()`: true when the sensor accepted the calibration, false when it rejected it (turn more slowly and level, then calibrate again). The sensor stores the result itself, nothing on the board. A value block: put it in an *if* or print it |
 | set up HuskyLens on port *1* | `huskylens_1 = HuskyLens(1)` |
 | set HuskyLens *1* to *object tracking* | `huskylens_1.algorithm(HuskyLens.OBJECT_TRACKING)` (face recognition, object tracking, object recognition, line tracking, colour recognition, tag recognition, object classification) |
 | HuskyLens *1* objects seen | `huskylens_1.count()` |
 | HuskyLens *1* first block x / y / width / height / ID | `(huskylens_1.blocks() or [(-1, -1, -1, -1, -1)])[0][0]` (`[1]` … `[4]`): -1 when the camera sees no block |
+| HuskyLens *1* first arrow x origin / y origin / x target / y target / ID | `(huskylens_1.arrows() or [(-1, -1, -1, -1, -1)])[0][0]` (`[1]` … `[4]`): line tracking; the arrow runs from its origin to its target; -1 when the camera sees no arrow |
 | HuskyLens *1* learn what it sees as ID *1* | `huskylens_1.learn(1)` |
+| HuskyLens *1* IDs learned | `huskylens_1.learned()` (in the current algorithm) |
+| HuskyLens *1* forget everything learned | `huskylens_1.forget()`: erases every ID learned in the current algorithm |
 | set up VL53L1X distance sensor on port *1* | `vl53l1x_1 = VL53L1X(1)` (long mode, 33 ms per reading) |
 | VL53L1X *1* distance (mm) | `vl53l1x_1.distance() or -1`: -1 when the reading is not valid |
 | set VL53L1X *1* to *long* / *short* range | `vl53l1x_1.distance_mode('long')` (up to ~4 m in the dark) / `vl53l1x_1.distance_mode('short')` (up to ~1.3 m, better in daylight) |
+| set VL53L1X *1* timing budget to *33 ms* | `vl53l1x_1.timing_budget(33)` (15 short range only, 20, 33, 50, 100, 200, 500 ms): longer is steadier and reaches further, with fewer readings a second. From 15 ms, set 20 or more before switching to long range |
 | set up TCS3430 colour sensor on port *1* | `tcs3430_1 = TCS3430(1)` (2.78 ms at 64x, for a target close in front) |
 | calibrate TCS3430 *1* *black (nothing in front)* / *white (a white sheet)* | `tcs3430_1.calibrate_black()` / `tcs3430_1.calibrate_white()`: take black then white at the start of the program, at the distance the colours will be read (without them the module's warm LED makes white read yellow) |
 | TCS3430 *1* sees *white* | `tcs3430_1.color() == Color.WHITE` |
@@ -246,6 +253,7 @@ Devices the firmware drives natively that EVN does not stock ([API reference](AP
 | TCS3430 *1* X / Y (brightness) / Z / infrared | `tcs3430_1.xyz()[0]` / `[1]` / `[2]` / `tcs3430_1.ir()` (raw counts) |
 | TCS3430 *1* hue / saturation / brightness | `tcs3430_1.hsv().h` / `.hsv().s` / `.hsv().v` |
 | set TCS3430 *1* gain to *64x* | `tcs3430_1.gain(64)` (1x, 4x, 16x, 64x, 128x) |
+| set TCS3430 *1* integration time to *100* ms | `tcs3430_1.integration_time(100)` (2.78 to 711.7 ms, the nearest 2.78 ms step; not rounded to a whole number): 2.78 ms, the start-up value, for a target close in front; 100 ms or more for room light or a target further away |
 
 ### Advanced
 
@@ -275,7 +283,7 @@ Each device has the few calls a program usually needs; everything else in the AP
 - **Servo**: `set_range()`, `enable()` / `disable()`, and the constructor's `reverse=` / `range=` / `min_us=` / `max_us=`.
 - **Board**: `battery.cells()` / `present()` / `age()`.
 - **Data log**: `info()`, `running()`, `quantities()`, `close()`, `save(path)` with a path of your own, more than three columns in one row, and the constructor's `timestamp=` / `extension=` / `append=` / `size=` / `autosave=` / `on_full=`.
-- **Extended peripherals**: HiTechnic colour sensor `version()`, `firmware()`, `color_match()`, `detectable_colors()`, `black_reference()` / `white_reference()`, `ambient()`, `raw()`, `mains()`; HiTechnic compass `calibrate()` / `calibrate_stop()` / `calibrating()` (the sensor's own calibration), `firmware()`; HuskyLens `blocks(id)` / `arrows()` as whole lists, `learned()`, `frame()`, `forget()`, `algorithm()` as a getter; VL53L1X `status()`, `raw()`, `timing_budget()`, `distance_mode()` as a getter; TCS3430 `color_match()`, `detectable_colors()` (teach it colours from its own `hsv()`), `black_reference()` / `white_reference()`, `xyz()` as a tuple, `raw()`, `xy()`, `saturated()`, `integration_time()`, `gain()` as a getter; `age()` and `close()` of every one.
+- **Extended peripherals**: HiTechnic colour sensor `version()`, `firmware()`, `color_match()`, `detectable_colors()`, `black_reference()` / `white_reference()`, `ambient()`, `raw()`, `mains()`; HiTechnic compass `calibrating()`, `firmware()`; HuskyLens `blocks(id)` / `arrows(id)` as whole lists, `frame()`, `algorithm()` as a getter; VL53L1X `status()`, `raw()`, `timing_budget()` / `distance_mode()` as getters; TCS3430 `color_match()`, `detectable_colors()` (teach it colours from its own `hsv()`), `black_reference()` / `white_reference()`, `xyz()` as a tuple, `raw()`, `xy()`, `saturated()`, `integration_time()` / `gain()` as getters; `age()` and `close()` of every one.
 - **Bluetooth**: `read()`, `read_all()`, `clear()`, `wait_until()`, `repl()`, `command()`, `address()`, `configured()`, `set_baudrate()`, and the constructor's `name=` / `baud=` / `mode=` (a block always uses the defaults).
 - **The rest of the module**: `Pose` (the pose estimator: position and heading from the encoders, an IMU and a compass; with the robot's gyro block the drive base builds one, `drive_base.pose`), `I2C`, `UART`, `Flash`, `evn.calibration()` / `imu_calibration()` / `compass_calibration()` / `color_calibration()` (the stored records as dicts), `clock()`, `reset()`, `reset_cause()`, `bootloader()`, `autostart()`, `core1_status()`, `evn.version`.
 

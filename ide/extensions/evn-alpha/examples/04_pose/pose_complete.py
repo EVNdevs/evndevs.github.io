@@ -38,6 +38,7 @@ except OSError:
 robot = DriveBase(left, right, wheel_diameter=62.4, axle_track=170, imu=3,
                   compass=14 if compass else None, declination=0 if compass else None)
 pose = robot.pose
+assert pose is not None                          # imu= above made the base build one (None without)
 print("built from", pose.configured())
 
 print("keep the robot still until the IMU is ready ...")
@@ -82,7 +83,8 @@ print("back at (%.1f, %.1f) mm, heading %.2f (started at %.2f)"
       % (x, y, pose.heading(), start_heading))
 # the filter's own uncertainty: (sigma x mm, sigma y mm, sigma heading degrees)
 print("uncertainty:", pose.covariance())
-# the wheel radii and the track as the filter estimates them now (they only move with turns)
+# the wheel radii and the track the filter runs on: with an IMU in the set they are the base's
+# geometry as given (a compass can nudge them only after a stall or while the IMU is silent)
 print("r_left, r_right, track (mm):", pose.parameters())
 
 # --- the wheel geometry ---------------------------------------------------------------------------

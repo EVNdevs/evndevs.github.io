@@ -89,7 +89,9 @@ robot.settings(*defaults)                        # back to what it was
 # the ROBOT follows the path, not just the wheels: scrub on a turn and the gyro's drift no longer
 # add up. use_gyro(True) waits (up to 30 s, still) for the IMU to be ready.
 robot.use_gyro(True)
-robot.pose.reset(0, 0, 0)                        # here is (0, 0), heading 0
+pose = robot.pose
+assert pose is not None                          # the base's imu= built it (None without)
+pose.reset(0, 0, 0)                              # here is (0, 0), heading 0
 print("following the pose:", robot.use_gyro())
 # (b, zeta, k_min, correction_speed, correction_rate, trim_limit, trim_slew, position_tolerance,
 #  heading_tolerance, settle_time)
@@ -103,7 +105,7 @@ robot.turn(-180)
 # where the ideal robot is, seen from the estimate: (forward mm, left mm, heading deg, settled,
 # the correction on the left and right wheel in degrees)
 print("pose error:", robot.pose_error())
-print("pose: (%.1f, %.1f) mm, heading %.2f degrees" % (robot.pose.position() + (robot.pose.heading(),)))
+print("pose: (%.1f, %.1f) mm, heading %.2f degrees" % (pose.position() + (pose.heading(),)))
 robot.follower(position_tolerance=knobs[7], heading_tolerance=knobs[8])   # back to what they were
 robot.use_gyro(False)                            # wheel-only moves again (corrections dropped)
 

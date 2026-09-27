@@ -100,6 +100,20 @@
             "    $0"
         ]
     },
+    "EVN battery low": {
+        "prefix": "evn-battery-low",
+        "description": "Warn before the pack switches the board off: battery.low() (the last second below 6.6 V)",
+        "body": [
+            "from evn import battery, led, stop_all",
+            "",
+            "if battery.low():                  # about 30 min of driving left before the pack cuts out at ~6.1 V",
+            "    led.on()",
+            "if battery.low(${1:6400}):              # a lower level of your own (mV): stop driving",
+            "    stop_all()",
+            "print(battery.voltage(), \"mV\", battery.cells())",
+            "$0"
+        ]
+    },
     "EVN colour sensor": {
         "prefix": "evn-color",
         "description": "TCS34725 colour sensor on an I2C port (standard peripheral)",

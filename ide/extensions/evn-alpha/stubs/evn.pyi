@@ -175,6 +175,17 @@ class Motor:
     A port already held by an open Motor raises ``OSError(EBUSY)`` until it is ``close()``d;
     a port outside 1..4 raises ``ValueError``. Every call after ``close()`` raises
     ``RuntimeError("motor closed; create a new Motor")``.
+
+    Runaway guard: a motor whose encoder counts against its drive (a JGA25 or Pololu 25D on the EVN cable
+    before ``calibrate()`` flipped it) runs away under any closed-loop command. The motion engine coasts it
+    once the drive has sat at the motor's full voltage with the shaft turning against it for 192 ms at 0.75
+    of its free speed or more, not slowing down; the waiting call, or else the next motion command on the
+    port (``run*``, ``dc``, ``hold``, ``track_target``, a DriveBase command), raises ``RuntimeError("Motor(n)
+    ran against its own drive at full voltage (its encoder counts backwards?) and was coasted: run
+    calibrate() with the shaft free")`` once. ``stop()`` / ``brake()`` never raise it, ``calibrate()`` clears
+    it. Under a lower voltage cap (``duty_limit``, ``settings(max_voltage=)``) the guard stands aside. It
+    judges the speed as the port's configured motor's: a different motor plugged in without telling the
+    gear (a LEGO motor on a port whose record says reversed) is generally not caught.
     """
 
     control: Control
@@ -306,7 +317,10 @@ class Motor:
         every boot, and sets this port's ``full_speed()``. Re-run after swapping the motor.
         ``wait=False`` starts it and returns None; a later ``calibrate()`` on the same port joins it and
         returns the result, so several ports can calibrate together. ``RuntimeError`` when the shaft does
-        not break away or the fit fails. The calibration also measures the port's encoder phase tables
+        not break away or the fit fails. A result with a warning (the drift check: the mechanism ran more
+        than 3 % faster or slower at the end than at the start - calibrate again after a minute of running)
+        prints ``WARNING: Motor(n): ...`` once (``evn.calibration(port)["warning"]`` holds it). The
+        calibration also measures the port's encoder phase tables
         (the four quadrature phase widths, one table per direction of turning: a Hall sensor's edges sit
         at slightly different angles each way) and installs and stores them with the record, which is
         what keeps ``speed()``, ``Pose.velocity()`` and the position between two encoder steps exact
@@ -429,7 +443,9 @@ class DriveBase:
         maneuver returns is the stall timeout (``Motor.settings(stall_timeout=)``). With ``use_gyro(True)`` the
         wheels are judged against their target plus the trim and ``done()`` also waits for the pose error to
         settle inside ``follower()`` tolerances - or the trim at its bound, or 2 s after the profiles ended (a pose
-        that never settles must not hang the program); that 2 s escape exists only under ``use_gyro``."""
+        that never settles must not hang the program); that 2 s escape exists only under ``use_gyro``. A wheel
+        coasted by the runaway guard during a ``wait=False`` maneuver: ``done()`` coasts the other wheel too and
+        returns True, and the base's next command raises the wheel's ``RuntimeError``."""
     def stalled(self) -> bool:
         """True when either wheel is stalled (``Motor.stalled()``: at its allowed limit and not turning)."""
     @overload
@@ -508,6 +524,20 @@ class battery:
     @staticmethod
     def present() -> bool:
         """True when a battery pack is connected and read (``voltage()`` is 0 and ``cells()`` / ``age()`` are ``None`` otherwise)."""
+    @staticmethod
+    def low(threshold: float = 6600) -> bool:
+        """True when the pack is low: its mean over about the last second of readings is below
+        ``threshold`` mV (like ``voltage()``; a float is rounded to the nearest mV), or its weaker
+        cell is below half of it. Once True it stays True until the pack is back 150 mV above the
+        threshold and the weaker cell at half of that, so a motor's sag or the readings' noise does
+        not make it flicker. The cell usually decides first (the pack reads a little more than its
+        two cells together), so ``low()`` can be True while ``voltage()`` still reads slightly above
+        the threshold, and a pack whose cells have drifted apart stays low with a healthy-looking
+        total. The default 6600 mV is where the pack's run-down drops off a cliff: about 30 minutes
+        of four motors at full speed before the pack's own protection switches the board off (at
+        about 6.14 V, with no warning). Each threshold keeps
+        its own state (up to four), so a program can warn at one level and stop at another.
+        ``False`` when no pack is present; a negative threshold raises ``ValueError``."""
 
 
 class button:
@@ -857,13 +887,15 @@ class ColorSensor:
         argument raises ``ValueError`` (use ``calibrate_white()``)."""
     def stored_calibration(self) -> dict:
         """This port's stored colour calibration, as ``evn.color_calibration(port)``: ``{"port",
-        "calibrated", "chip" ('TCS34725' / 'APDS9960' / None), "stored", "pending" (a running motor kept
-        the flash write back), "stamp" (seconds since 1970 UTC; 0 = the clock was not set), "black",
-        "white" (per-cycle 1x-gain tuples or None), "error" (why the last change was not stored, or
-        None)}``."""
+        "calibrated", "chip" ('TCS34725' / 'APDS9960' / None), "stored" (this port's record is in
+        flash), "pending" (a running motor kept this port's flash write back), "stamp" (seconds since
+        1970 UTC; 0 = the clock was not set), "black", "white" (per-cycle 1x-gain tuples or None),
+        "error" (why the last change was not stored, or None)}``."""
     def clear_calibration(self) -> bool:
-        """Forget the port's stored calibration, then the one in force (every range); ``False`` when a
-        running motor kept the flash write back (the next ``stored_calibration()`` writes it).
+        """Forget the port's stored calibration, then the one in force (every range); ``False`` while a
+        running motor keeps the clear back and this sensor's old record is still in flash (the next
+        ``stored_calibration()`` writes it once the motors stop); ``True`` when nothing of this
+        sensor's is left in flash - also for a port with nothing stored, whatever another port waits for.
         ``RuntimeError`` when another calibration waits for the flash, ``OSError`` when the write fails:
         both leave the calibration in force as it was."""
     def ambient(self) -> int:
@@ -1150,12 +1182,16 @@ class Compass:
     def calibrate_cancel(self) -> None:
         """End a collection without fitting (the way out of a refused ``calibrate_stop()``)."""
     def stored_calibration(self) -> dict:
-        """This port's stored calibration: ``{"port", "calibrated", "busy", "stored", "pending", "stamp",
-        "planar", "coverage" (0..1), "residual", "field" (gauss), "samples", "chip", "top", "front",
-        "offset" (gauss), "error"}``."""
+        """This port's stored calibration: ``{"port", "calibrated", "busy", "stored" (this port's record
+        is in flash), "pending" (this port's change waits for the flash: a motor was driving; another
+        port's waiting write does not count), "stamp", "planar", "coverage" (0..1), "residual", "field"
+        (gauss), "samples", "chip", "top", "front", "offset" (gauss), "error"}``."""
     def clear_calibration(self) -> bool:
-        """Forget this port's stored calibration and the one in force; ``False`` when a running motor
-        kept the flash write back."""
+        """Forget this port's stored calibration and the one in force. ``True`` when nothing of it is
+        left in flash (also for a port with nothing stored, or a record that never reached flash);
+        ``False`` while a motor drives and the old record is still in flash, its clear waiting (the next
+        ``stored_calibration()`` writes it). ``RuntimeError`` when another calibration waits for the
+        flash, ``OSError`` when the write fails."""
     @overload
     def calibration(self) -> Optional[Tuple[Tuple[float, float, float], Tuple[Tuple[float, float, float], Tuple[float, float, float], Tuple[float, float, float]]]]: ...
     @overload
@@ -1322,8 +1358,10 @@ class GestureSensor:
         The gesture sensor's LED is infrared, so its colour sees the ROOM light and "nothing in front" is
         its brightest reading: the black is the sensor **covered completely** (a hand or a black card on
         it). Call ``engines(gesture=False)`` first: gesture mode freezes the colour reading, and a reading
-        in gesture mode or older than one colour cycle raises ``ValueError("colour reading is stale:
-        engines(gesture=False) first, or move the card")``. One colour calibration per port: calibrating a ``GestureSensor`` on a port replaces a
+        taken in gesture mode, or before the chip last left it (until the next colour cycle ends), or
+        more than two colour cycles old raises ``ValueError("colour reading is stale:
+        engines(gesture=False) first, or move the card")``; a long ``integration_time()`` or
+        ``wait_time()`` is fine. One colour calibration per port: calibrating a ``GestureSensor`` on a port replaces a
         ``ColorSensor``'s record there and the reverse; a record of the other chip is not installed but
         ``stored_calibration()['chip']`` shows it. Not yet
         benched (no APDS-9960 on the rig)."""
@@ -1347,8 +1385,10 @@ class GestureSensor:
     def stored_calibration(self) -> dict:
         """This port's stored colour calibration, the dict of ``evn.color_calibration(port)``."""
     def clear_calibration(self) -> bool:
-        """Forget the port's stored calibration, then the one in force; ``False`` when a running motor kept
-        the flash write back. ``RuntimeError`` / ``OSError`` leave both as they were."""
+        """Forget the port's stored calibration, then the one in force; ``False`` while a running motor
+        keeps the clear back and this sensor's old record is still in flash, ``True`` when nothing of it
+        is left in flash (also for a port with nothing stored, whatever another port waits for).
+        ``RuntimeError`` / ``OSError`` leave both as they were."""
     @overload
     def detectable_colors(self) -> Sequence[Color]: ...
     @overload
@@ -1533,7 +1573,8 @@ class IMU:
         """This port's stored calibration: ``{"port", "calibrated", "busy", "stored", "stamp" (seconds
         since 1970 UTC, 0 = the clock was not set), "gyro" (deg/s bias, sensor axes), "accel" (g error,
         sensor axes), "top", "front", "temperature", "error" (why the last calibration failed, else
-        None), "pending" (a change on any port is not in flash yet), "accel_calibrated", "tilt" (degrees
+        None), "pending" (this port's change waits for the flash: a motor was driving; another port's
+        waiting write does not count), "accel_calibrated", "tilt" (degrees
         off level the accelerometer was calibrated at, None when it was not), "warning" (what the last
         calibration left out, or a caution; else None), "two_pose", "slope" (degrees a two-pose
         calibration left out this session, else None), "waiting" (between pose=1 and pose=2)}``."""
@@ -1541,8 +1582,11 @@ class IMU:
         """Drop a calibration in progress (a ``wait=False`` run, or a first pose waiting for its turn);
         nothing is stored."""
     def clear_calibration(self) -> bool:
-        """Forget this port's calibration: back to the factory trim; ``axes()`` stays. ``False`` when a
-        running motor kept the flash write back (retried by the next ``calibration()``)."""
+        """Forget this port's calibration: back to the factory trim; ``axes()`` stays. ``True`` when
+        nothing of it is left in flash (also for a port with nothing stored, or a record that never
+        reached flash); ``False`` while a motor drives and the old record is still in flash, its clear
+        waiting (the next ``calibration()`` writes it). ``RuntimeError`` when another calibration waits
+        for the flash, ``OSError`` when the write fails."""
     def quaternion(self) -> Tuple[float, float, float, float]:
         """``(w, x, y, z)``, unit (DMP mode only)."""
     def heading(self) -> float:
@@ -2405,7 +2449,8 @@ class VL53L1X:
     def timing_budget(self, ms: int, /) -> None:
         """The time per measurement in ms: 15 (short mode only), 20, 33 (the default), 50, 100, 200 or
         500. Longer = more precise and longer range, fewer readings. Waits for the first reading under the
-        new budget; a value that does not exist in the current mode raises ``ValueError``."""
+        new budget; a value that does not exist in the current mode raises ``ValueError`` (15 ms in long mode:
+        call ``distance_mode('short')`` first)."""
     def age(self) -> int:
         """Milliseconds since the cached measurement was taken."""
     def close(self) -> None:
@@ -2637,7 +2682,8 @@ def _cogging(port: int, amp_mv: Optional[int] = None, /) -> Tuple[float, int, bo
     """Bench hook, not for programs. Nothing moves: the cogging feed-forward in force on port 1..4 as
     ``(period_edges, amp_mv, phase_ok, phase_edges)`` (period 0 = off). ``amp_mv`` (0..12000, 0 = the
     feed-forward off, the phase kept) overrides the amplitude until the next ``calibrate()`` /
-    ``configure_motor()``."""
+    ``configure_motor()``; the call waits (at most 5 ms) for the motion engine to apply it, so the tuple
+    it returns reads the new amplitude."""
 
 def _cogging_survey(port: int, /) -> Optional[Tuple[float, ...]]:
     """Bench hook, not for programs. Nothing moves: the rest positions (encoder edges from where the
@@ -2716,7 +2762,11 @@ class Pose:
     def covariance(self) -> Tuple[float, float, float]:
         """(sigma x mm, sigma y mm, sigma heading deg): the filter's own uncertainty."""
     def parameters(self) -> Tuple[float, float, float]:
-        """(r_left, r_right, track) in mm as the filter estimates them (they only move with turns)."""
+        """(r_left, r_right, track) in mm: the wheel geometry the filter runs on, starting from the geometry the pose
+        was given (the constructor's, the DriveBase's or ``settings()``). With the wheels and a compass WITHOUT an IMU
+        the compass heading refines it as the robot drives. With an IMU it stays as given, except that a compass can
+        nudge it slightly after a time gap (a program that stalled) or while the IMU is silent, the steps where the
+        wheels carry the heading. Without a compass nothing changes it."""
     @overload
     def settings(self) -> Tuple[float, float]: ...
     @overload

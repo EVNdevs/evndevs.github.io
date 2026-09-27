@@ -1,5 +1,8 @@
 {
-  "note": "The Examples tree's folders, in this order: one per object of the API, each with <slug>_minimal and <slug>_complete in Python, and in blocks where \"blocks\" lists the blocks of that object. scripts/build.js copies dir/title/description into index.json; scripts/test_examples.js checks every example against this file: classes and module = what the complete Python example must call (every public method, less \"skip\", each with its reason), blocks = what the complete blocks example must use.",
+  "note": "The Examples tree's folders, in this order: one per object of the API, each with <slug>_minimal and <slug>_complete in Python, and in blocks where \"blocks\" lists the blocks of that object. scripts/build.js copies the folder entries into index.json; scripts/test_examples.js checks every example against this file: classes and module = what the complete Python example must call (every public method, less \"skip\", each with its reason), blocks = what the complete blocks example must use. Every EVN block of the editor's toolbox is used by some blocks example or listed under a \"skipBlocks\" (a folder's, or the one below for a block of no object), each with its reason.",
+  "skipBlocks": {
+    "evn_python_value": "a Python expression typed in by hand; its statement twin (evn_python) is in the gesture sensor and IMU examples"
+  },
   "folders": [
     {
       "dir": "01_board",
@@ -32,6 +35,7 @@
         "evn_led_set",
         "evn_button_pressed",
         "evn_battery_voltage",
+      "evn_battery_low",
         "text_print"
       ],
       "skip": {
@@ -488,7 +492,9 @@
       "blocks": [
         "evn_htcompass_setup",
         "evn_htcompass_heading",
-        "evn_htcompass_north"
+        "evn_htcompass_north",
+        "evn_htcompass_calibrate",
+        "evn_htcompass_calibrate_stop"
       ],
       "skip": {}
     },
@@ -506,10 +512,15 @@
         "evn_huskylens_algorithm",
         "evn_huskylens_count",
         "evn_huskylens_block",
-        "evn_huskylens_learn"
+        "evn_huskylens_learn",
+        "evn_huskylens_learned",
+        "evn_huskylens_arrow"
       ],
       "skip": {
         "forget": "erases everything the camera has learned in the current algorithm"
+      },
+      "skipBlocks": {
+        "evn_huskylens_forget": "erases everything the camera has learned in the current algorithm"
       }
     },
     {
@@ -524,7 +535,8 @@
       "blocks": [
         "evn_vl53l1x_setup",
         "evn_vl53l1x_distance",
-        "evn_vl53l1x_mode"
+        "evn_vl53l1x_mode",
+        "evn_vl53l1x_budget"
       ],
       "skip": {}
     },
@@ -543,7 +555,8 @@
         "evn_tcs3430_sees",
         "evn_tcs3430_value",
         "evn_tcs3430_gain",
-        "evn_tcs3430_calibrate"
+        "evn_tcs3430_calibrate",
+        "evn_tcs3430_integration"
       ],
       "skip": {}
     }
