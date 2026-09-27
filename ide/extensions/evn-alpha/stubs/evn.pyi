@@ -772,8 +772,10 @@ class ColorSensor:
         """The detectable colour nearest the reading (Pybricks' matcher): one of ``detectable_colors()``,
         or ``None`` when that set is empty.
 
-        Hue matches work at any distance or light level. For ``Color.WHITE`` vs ``Color.NONE`` the
-        reading's value must be meaningful: calibrate with ``ranges()`` on white and black first."""
+        The reading is the calibrated (white-adapted) one: call ``calibrate_black()`` and
+        ``calibrate_white()`` once where the colours will be read - the calibration is stored for the
+        port, so later programs start with it. Uncalibrated, hue matches still work, but a white sheet
+        takes the light's colour and ``Color.WHITE`` vs ``Color.NONE`` depends on gain and distance."""
     def color_match(self) -> Tuple[Optional[Color], float]:
         """``(color(), confidence)`` from one reading. The confidence is the margin to the runner-up in
         ``detectable_colors()``: ``1 - d_best / d_second`` in the matcher's own distance, so 1.0 means the
@@ -796,12 +798,63 @@ class ColorSensor:
     @overload
     def ranges(self, *, clear: Optional[Tuple[int, int]] = None, red: Optional[Tuple[int, int]] = None,
                green: Optional[Tuple[int, int]] = None, blue: Optional[Tuple[int, int]] = None) -> None:
-        """Calibration ``(low, high)`` per channel for ``normalized()``, in C, R, G, B order. A keyword
-        left out keeps that channel's range; an explicit ``None`` clears it. ``0 <= low < high <= 65535``,
-        else ``ValueError``."""
+        """Calibration ``(low, high)`` per channel for ``normalized()``, in C, R, G, B order - the same
+        calibration as ``calibrate_black()`` (low) and ``calibrate_white()`` (high), in counts at the gain
+        and integration time in force (a channel with only a black reads the full scale as its high, one
+        with only a white 0 as its low). A keyword left out keeps that channel's range; an explicit
+        ``None`` clears it. A ``ranges()`` change lives in this program only: it is never written to the
+        board (the next ``ColorSensor(port)`` starts with the stored calibration; a later
+        ``calibrate_black()`` / ``calibrate_white()`` stores what is in force). Every argument is checked
+        before any is applied: ``0 <= low < high <= 65535``, else ``ValueError``."""
     def normalized(self) -> Tuple[float, float, float, float]:
         """``(clear, red, green, blue)`` mapped 0..100 between each channel's calibration low and high
         (channels without a range: % of full scale)."""
+    def calibrate_black(self) -> None:
+        """Take the current reading as the black on all four channels: nothing in front of the sensor (or
+        a black target) where the colours will be read. It is subtracted from every reading
+        (``normalized()``, ``hsv(normalized=True)``, ``color()``, ``color_match()``) and sets the lows of
+        ``ranges()``. **Stored for the port** (flash, survives a reboot and a re-plug; every later
+        ``ColorSensor(port)`` starts with it; the whole calibration in force is stored, a hand-set
+        ``ranges()`` included) and valid across ``gain()`` / ``integration_time()`` changes.
+        One colour calibration per port: calibrating a ``GestureSensor`` on a port replaces a
+        ``ColorSensor``'s record there and the reverse; a record of the other chip is not installed but
+        ``stored_calibration()['chip']`` shows it.
+        ``ValueError("the black reading is too bright: nothing (or a black target) in front")`` when a
+        channel is within 10 % of full scale; ``ValueError("this black is as bright as the white
+        reference: the white was cleared, calibrate_white() again")`` when it leaves the white no room
+        (the black is taken, the white cleared)."""
+    def calibrate_white(self) -> None:
+        """Take the current reading of a white target as the white on all four channels, so the white
+        reads ``s`` 0, ``v`` 100 (white-adapted) and sets the highs of ``ranges()``. Stored for the port
+        like ``calibrate_black()``. ``ValueError("the white reading is saturated: lower gain() first")``;
+        ``ValueError("the white target is too dark or not brighter than the black reference: hold a white
+        sheet in front")`` when the clear channel is under 5 % of full scale or a channel is not 10 %
+        above its black."""
+    @overload
+    def black_reference(self) -> Optional[Tuple[float, float, float, float]]: ...
+    @overload
+    def black_reference(self, value: None, /) -> None:
+        """The black as ``(clear, red, green, blue)`` counts per 2.4 ms cycle at 1x gain, or ``None``
+        unless every channel has one; ``black_reference(None)`` clears it (and the stored one). Any other
+        argument raises ``ValueError`` (use ``calibrate_black()``)."""
+    @overload
+    def white_reference(self) -> Optional[Tuple[float, float, float, float]]: ...
+    @overload
+    def white_reference(self, value: None, /) -> None:
+        """The white as ``(clear, red, green, blue)`` counts per 2.4 ms cycle at 1x gain, or ``None``
+        unless every channel has one; ``white_reference(None)`` clears it (and the stored one). Any other
+        argument raises ``ValueError`` (use ``calibrate_white()``)."""
+    def stored_calibration(self) -> dict:
+        """This port's stored colour calibration, as ``evn.color_calibration(port)``: ``{"port",
+        "calibrated", "chip" ('TCS34725' / 'APDS9960' / None), "stored", "pending" (a running motor kept
+        the flash write back), "stamp" (seconds since 1970 UTC; 0 = the clock was not set), "black",
+        "white" (per-cycle 1x-gain tuples or None), "error" (why the last change was not stored, or
+        None)}``."""
+    def clear_calibration(self) -> bool:
+        """Forget the port's stored calibration, then the one in force (every range); ``False`` when a
+        running motor kept the flash write back (the next ``stored_calibration()`` writes it).
+        ``RuntimeError`` when another calibration waits for the flash, ``OSError`` when the write fails:
+        both leave the calibration in force as it was."""
     def ambient(self) -> int:
         """Clear channel as a percentage of full scale at the current integration time."""
     def lux(self) -> float:
@@ -1240,13 +1293,49 @@ class GestureSensor:
         """``(clear, red, green, blue)`` counts (needs the colour engine)."""
     def rgb(self) -> Tuple[int, int, int]:
         """``(r, g, b)`` 0..255, each channel relative to the clear channel (needs the colour engine)."""
-    def hsv(self) -> Color:
-        """The reading as a ``Color`` (``.h`` 0..359, ``.s`` 0..100, ``.v`` 0..100); value is the strongest channel as a % of full scale."""
+    def hsv(self, normalized: bool = False) -> Color:
+        """The reading as a ``Color`` (``.h`` 0..359, ``.s`` 0..100, ``.v`` 0..100); value is the strongest
+        channel as a % of full scale, or through the black / white calibration with ``normalized=True``
+        (the reading ``color()`` classifies), as ``ColorSensor.hsv()``."""
     def color(self) -> Optional[Color]:
-        """Nearest of ``detectable_colors()``, or ``None`` when that set is empty."""
+        """Nearest of ``detectable_colors()`` to the calibrated reading, or ``None`` when that set is
+        empty. Call ``calibrate_black()`` and ``calibrate_white()`` once first (stored for the port)."""
     def color_match(self) -> Tuple[Optional[Color], float]:
         """``(color(), confidence)`` from one reading, as ``ColorSensor.color_match()``: the margin to the
         runner-up (1.0 on the colour, 0.0 halfway between two)."""
+    def calibrate_black(self) -> None:
+        """Take the current colour reading as the black, as ``ColorSensor.calibrate_black()``: stored for
+        the port, valid across ``gain()`` / ``integration_time()`` changes, the same ``ValueError`` s.
+        The gesture sensor's LED is infrared, so its colour sees the ROOM light and "nothing in front" is
+        its brightest reading: the black is the sensor **covered completely** (a hand or a black card on
+        it). Call ``engines(gesture=False)`` first: gesture mode freezes the colour reading, and a reading
+        in gesture mode or older than one colour cycle raises ``ValueError("colour reading is stale:
+        engines(gesture=False) first, or move the card")``. One colour calibration per port: calibrating a ``GestureSensor`` on a port replaces a
+        ``ColorSensor``'s record there and the reverse; a record of the other chip is not installed but
+        ``stored_calibration()['chip']`` shows it. Not yet
+        benched (no APDS-9960 on the rig)."""
+    def calibrate_white(self) -> None:
+        """Take the current colour reading of a white sheet a few cm in front, in the room light and not
+        shading the module, as the white, as ``ColorSensor.calibrate_white()``: the white then reads
+        ``s`` 0, ``v`` 100; stored for the port. ``engines(gesture=False)`` first; a stale reading is
+        refused as for ``calibrate_black()``."""
+    @overload
+    def black_reference(self) -> Optional[Tuple[float, float, float, float]]: ...
+    @overload
+    def black_reference(self, value: None, /) -> None:
+        """The black as ``(clear, red, green, blue)`` counts per 2.78 ms cycle at 1x gain, or ``None``;
+        ``black_reference(None)`` clears it (and the stored one)."""
+    @overload
+    def white_reference(self) -> Optional[Tuple[float, float, float, float]]: ...
+    @overload
+    def white_reference(self, value: None, /) -> None:
+        """The white as ``(clear, red, green, blue)`` counts per 2.78 ms cycle at 1x gain, or ``None``;
+        ``white_reference(None)`` clears it (and the stored one)."""
+    def stored_calibration(self) -> dict:
+        """This port's stored colour calibration, the dict of ``evn.color_calibration(port)``."""
+    def clear_calibration(self) -> bool:
+        """Forget the port's stored calibration, then the one in force; ``False`` when a running motor kept
+        the flash write back. ``RuntimeError`` / ``OSError`` leave both as they were."""
     @overload
     def detectable_colors(self) -> Sequence[Color]: ...
     @overload
@@ -2456,6 +2545,14 @@ def motor_config(port: int, /) -> dict:
 def compass_calibration(port: int, /) -> dict:
     """The stored compass calibration of I2C port 1..16 (``Compass.calibrate_stop()``), without opening
     a Compass: the same dict as ``Compass.stored_calibration()``."""
+
+def color_calibration(port: int, /) -> dict:
+    """The stored colour calibration of I2C port 1..16 (``ColorSensor`` / ``GestureSensor``
+    ``calibrate_black()`` / ``calibrate_white()``), without opening a sensor: ``{"port", "calibrated",
+    "chip" ('TCS34725' / 'APDS9960' / None), "stored", "pending", "stamp", "black", "white", "error"}``,
+    the same dict as ``stored_calibration()``. One colour calibration per port: calibrating a
+    ``GestureSensor`` on a port replaces a ``ColorSensor``'s record there and the reverse; ``"chip"``
+    says whose it is."""
 
 def imu_calibration(port: int, /) -> dict:
     """The stored IMU calibration of I2C port 1..16 (``IMU.calibrate()``), without building an IMU: the

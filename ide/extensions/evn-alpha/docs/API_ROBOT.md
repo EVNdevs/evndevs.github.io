@@ -353,7 +353,7 @@ with Pose(1, 2, 56, 112, imu=3) as pose:
 
 ## Calibration records (evn.calibration)
 
-Three things on a robot are calibrated once and remembered by the board, per port, with the date: each **motor** (`Motor.calibrate()`), the **IMU** (`IMU.calibrate()`) and the **compass** (`Compass.calibrate()` … `calibrate_stop()`). [Calibrating your robot](CALIBRATION.md) is the step-by-step guide (from the extension's Board view, from Python and from blocks). These module functions read and clear the stored records without opening the device:
+Three things on a robot are calibrated once and remembered by the board, per port, with the date: each **motor** (`Motor.calibrate()`), the **IMU** (`IMU.calibrate()`), the **compass** (`Compass.calibrate()` … `calibrate_stop()`) and the **colour sensors** (`ColorSensor` / `GestureSensor` `calibrate_black()` / `calibrate_white()`). [Calibrating your robot](CALIBRATION.md) is the step-by-step guide (from the extension's Board view, from Python and from blocks). These module functions read and clear the stored records without opening the device:
 
 | Call | Returns / does |
 | :--- | :--- |
@@ -361,6 +361,7 @@ Three things on a robot are calibrated once and remembered by the board, per por
 | `evn.clear_calibration(port)` | forget motor port 1..4's calibration (record and running numbers): back to the motor's compiled defaults as if `calibrate()` had never run. Nothing moves; the port must be free (`OSError(EBUSY)` while a `Motor` holds it) and every motor stopped; `RuntimeError` says why a refusal changed nothing |
 | `evn.imu_calibration(port)` | the stored IMU calibration of I2C port 1..16, the same dict as [`IMU.calibration()`](API_SENSORS.md#imu-calibration) |
 | `evn.compass_calibration(port)` | the stored compass calibration of I2C port 1..16, the same dict as [`Compass.stored_calibration()`](API_SENSORS.md#compass-calibration) |
+| `evn.color_calibration(port)` | the stored colour calibration (black / white) of I2C port 1..16, the same dict as [`ColorSensor.stored_calibration()`](API_SENSORS.md#colorsensor--colour-sensor-tcs34725) / `GestureSensor.stored_calibration()` |
 | `evn.clock()` | the date source of every record's `stamp` ([Board](#clock-version-and-restarts)) |
 
 `evn.calibration(port)` returns `{"port", "calibrated", "busy", "stored", "stamp", "b0", "tau_ms", "v_break_mv", "v_f_mv", "no_load_speed", "vbus_mv", "encoder_reversed", "cogging_edges", "cogging_measured", "cogging_confidence", "cogging_note", "warning", "error"}`:

@@ -1,14 +1,16 @@
 """Colour sensor: the whole API
 
-Every ColorSensor method once: naming a colour, the numbers behind it, your own list of colours, a
-white / black calibration, the chip settings (gain, integration time, wait time) and its
+Every ColorSensor method once: naming a colour, the numbers behind it, your own list of colours, the
+black / white calibration (stored on the board for the port), the chip settings (gain, integration time, wait time) and its
 light-level alarm. The firmware keeps the latest reading fresh in the background, so reading in a
-loop costs nothing; read() waits for the next new one. Anything the example changes it puts back.
+loop costs nothing; read() waits for the next new one. The chip settings it changes it puts back;
+the black / white calibration it makes STAYS STORED on the board for port 1 (clear_calibration()
+forgets it).
 Some steps ask you to hold something under the sensor: the text says what, and when.
 
-Needs: the colour sensor on I2C port 1, a white and a black surface, and something coloured.
+Needs: the colour sensor on I2C port 1, a white sheet, and something coloured.
 """
-from evn import ColorSensor, Color, StopWatch, wait
+from evn import ColorSensor, Color, StopWatch, wait, color_calibration
 
 cs = ColorSensor(1)                     # I2C port 1..16; OSError if no TCS34725 answers there
 print(cs)                               # ColorSensor(1, id=0x44, gain=16x, integration_time=2.4) (or id=0x4d)
@@ -42,21 +44,33 @@ cs.detectable_colors((Color.GREEN, Color.MAGENTA, Color(h=348, s=96, v=40), Colo
 print("now choosing from", cs.detectable_colors(), "->", cs.color())
 cs.detectable_colors(old_colours)       # back to the six
 
-# --- calibration on white and black --------------------------------------------------------------
-# WHITE and NONE differ only in brightness, so telling them apart needs a calibration: the counts
-# on black and on white, per channel. normalized() then reads 0..100 between them, and color() and
-# hsv(normalized=True) use it. (The ranges live in the object only; nothing is stored on the board.)
-old_ranges = cs.ranges()                # ((low, high) or None) for clear, red, green, blue
-print("hold the sensor over WHITE"); wait(3000); white = cs.read()
-print("hold the sensor over BLACK"); wait(3000); black = cs.read()
-if all(w > b for w, b in zip(white, black)):    # each range needs low < high
-    cs.ranges(clear=(black[0], white[0]), red=(black[1], white[1]),
-              green=(black[2], white[2]), blue=(black[3], white[3]))
-    print("ranges", cs.ranges())
-    print("normalized", cs.normalized(), "hsv", cs.hsv(normalized=True), "colour", cs.color())
-else:
-    print("white", white, "is not brighter than black", black, "on every channel: calibration skipped")
-cs.ranges(clear=old_ranges[0], red=old_ranges[1], green=old_ranges[2], blue=old_ranges[3])   # None clears a range
+# --- calibration on black and white --------------------------------------------------------------
+# A white sheet takes the colour of the light and WHITE / NONE differ only in brightness, so the
+# colours need a calibration: the reading with nothing in front (black) and on a white sheet
+# (white). normalized(), hsv(normalized=True), color() and color_match() then read between them,
+# and the white reads s 0, v 100. The calibration is STORED for the port: every later program's
+# ColorSensor(1) starts with it (evn.color_calibration(1) shows it without a sensor object).
+print("stored now:", cs.stored_calibration())
+print("nothing in front of the sensor"); wait(3000)
+try:
+    cs.calibrate_black()
+    print("hold the sensor over WHITE"); wait(3000)
+    cs.calibrate_white()
+    print("black", cs.black_reference(), "white", cs.white_reference())   # per 2.4 ms cycle at 1x gain
+    print("ranges", cs.ranges())        # the same calibration in counts: (low, high) per channel
+    print("normalized", cs.normalized(), "hsv", cs.hsv(normalized=True), "colour", cs.color_match())
+except ValueError as e:
+    print("calibration refused:", e)   # a white too dark, saturated, or not above the black
+# ranges() is the same calibration written as counts; a channel given as None loses its range.
+# A ranges() change lives in this program only: it is never written to the board.
+old_ranges = cs.ranges()
+cs.ranges(red=(10, 900))
+print("red range set by hand", cs.ranges()[1])
+cs.ranges(clear=old_ranges[0], red=old_ranges[1], green=old_ranges[2], blue=old_ranges[3])
+print("white now:", cs.white_reference())   # white_reference(None) would forget the white (stored)
+# cs.clear_calibration()                # forgets both from the board's flash (False while a motor drives) -
+#                                       # left out so the calibration you just made survives this example
+print("port 1 now:", color_calibration(1))  # the stored calibration of a port, no sensor object needed
 
 # --- gain and integration time ---------------------------------------------------------------------
 # More gain or a longer integration = more counts from the same light (for dim scenes); in bright

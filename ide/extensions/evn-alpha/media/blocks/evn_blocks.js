@@ -389,6 +389,16 @@
             tooltip: 'The colour the sensor sees: red, yellow, green, blue, white or nothing.',
         },
         {
+            type: 'evn_colorsensor_calibrate',
+            message0: 'calibrate colour sensor %1 %2',
+            args0: [
+                portField(I2C_PORTS),
+                { type: 'field_dropdown', name: 'WHAT', options: [['black (nothing in front)', 'black'], ['white (a white sheet)', 'white']] },
+            ],
+            previousStatement: null, nextStatement: null, style: 'evn_sense_blocks',
+            tooltip: 'Take the reading now as the black (nothing in front of the sensor) or the white (a white sheet where the colours will be read). Do black, then white, once: the board keeps the calibration for this port, so later programs start with it.',
+        },
+        {
             type: 'evn_colorsensor_sees',
             message0: 'colour sensor %1 sees %2',
             args0: [portField(I2C_PORTS), { type: 'field_dropdown', name: 'COLOR', options: SENSOR_COLORS }],
@@ -489,6 +499,16 @@
             args0: [portField(I2C_PORTS)],
             output: null, style: 'evn_sense_blocks',
             tooltip: 'The colour in front of the gesture sensor.',
+        },
+        {
+            type: 'evn_gesture_calibrate',
+            message0: 'calibrate gesture sensor %1 colour %2',
+            args0: [
+                portField(I2C_PORTS),
+                { type: 'field_dropdown', name: 'WHAT', options: [['black (sensor covered)', 'black'], ['white (a white sheet)', 'white']] },
+            ],
+            previousStatement: null, nextStatement: null, style: 'evn_sense_blocks',
+            tooltip: 'Turn the gesture engine off first (a Python block: gesture_sensor_1.engines(gesture=False)): gesture mode freezes the colour and the calibration refuses a stale reading. The LED of the gesture sensor is infrared, so its colour sees the room light: black = the sensor covered completely (a hand or a black card on it), white = a white sheet a few cm in front in the room light, not shading the module. Do black, then white, once: the board keeps the calibration for this port (one colour calibration per port).',
         },
         {
             type: 'evn_env_setup',
@@ -1643,7 +1663,7 @@
         'Compass', 'TouchArray', 'IMU', 'ADC', 'Display', 'MatrixLED', 'SevenSegmentLED', 'RGBLED', 'Servo', 'Bluetooth',
         'HiTechnicColorSensor', 'HiTechnicCompass', 'HuskyLens', 'VL53L1X', 'TCS3430',
         'DriveBase', 'Pose', 'DataLog', 'UART', 'I2C', 'Flash', 'reset', 'reset_cause', 'bootloader', 'autostart', 'core1_status', 'version',
-        'configure_motor', 'motor_config', 'calibration', 'clear_calibration', 'imu_calibration', 'compass_calibration', 'clock'];
+        'configure_motor', 'motor_config', 'calibration', 'clear_calibration', 'imu_calibration', 'compass_calibration', 'color_calibration', 'clock'];
     const EVN_NAMES = CORE_NAMES.concat(DEVICE_NAMES);
 
     /* class -> [variable prefix, "set up" block type]. One object per port, named after the port
@@ -2131,6 +2151,10 @@
     generator.forBlock['evn_colorsensor_setup'] = setupGenerator('ColorSensor');
     generator.forBlock['evn_colorsensor_color'] = call('ColorSensor', 'color');
     generator.forBlock['evn_colorsensor_ambient'] = call('ColorSensor', 'ambient');
+    generator.forBlock['evn_colorsensor_calibrate'] = function (block) {
+        const what = block.getFieldValue('WHAT') === 'white' ? 'white' : 'black';
+        return deviceRef(block, 'ColorSensor') + '.calibrate_' + what + '()\n';
+    };
     generator.forBlock['evn_colorsensor_detect'] = function (block) {
         use('Color');
         const picked = ['RED', 'YELLOW', 'GREEN', 'BLUE', 'WHITE', 'NONE'].filter((c) => block.getFieldValue(c) === 'TRUE').map((c) => 'Color.' + c);
@@ -2152,6 +2176,10 @@
     generator.forBlock['evn_gesture_gesture'] = call('GestureSensor', 'gesture');
     generator.forBlock['evn_gesture_proximity'] = call('GestureSensor', 'proximity');
     generator.forBlock['evn_gesture_color'] = call('GestureSensor', 'color');
+    generator.forBlock['evn_gesture_calibrate'] = function (block) {
+        const what = block.getFieldValue('WHAT') === 'white' ? 'white' : 'black';
+        return deviceRef(block, 'GestureSensor') + '.calibrate_' + what + '()\n';
+    };
     generator.forBlock['evn_gesture_wait'] = function (block) {
         return [deviceRef(block, 'GestureSensor') + '.read_gesture(' + intValue(block, 'TIMEOUT', '5000') + ')', Order.FUNCTION_CALL];
     };
@@ -2518,6 +2546,7 @@
                 contents: [
                     group('Colour sensor', 'evn_sense_category', [
                         { kind: 'block', type: 'evn_colorsensor_setup' },
+                        { kind: 'block', type: 'evn_colorsensor_calibrate' },
                         { kind: 'block', type: 'evn_colorsensor_sees' },
                         { kind: 'block', type: 'evn_colorsensor_color' },
                         { kind: 'block', type: 'evn_colorsensor_ambient' },
@@ -2535,6 +2564,7 @@
                         { kind: 'block', type: 'evn_gesture_wait', inputs: { TIMEOUT: shadowNum(5000) } },
                         { kind: 'block', type: 'evn_gesture_proximity' },
                         { kind: 'block', type: 'evn_gesture_color' },
+                        { kind: 'block', type: 'evn_gesture_calibrate' },
                     ]),
                     group('Weather sensor', 'evn_sense_category', [
                         { kind: 'block', type: 'evn_env_setup' },

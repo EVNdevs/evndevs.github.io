@@ -112,6 +112,25 @@
             "$0"
         ]
     },
+    "EVN colour sensor calibration": {
+        "prefix": "evn-color-cal",
+        "description": "Black / white calibration of a ColorSensor or GestureSensor, stored for the port",
+        "body": [
+            "from evn import ColorSensor, wait",
+            "",
+            "cs = ColorSensor(${1:5})            # I2C port 1..16 (GestureSensor: see below)",
+            "# GestureSensor: call g.engines(gesture=False) first; its LED is infrared, so its black is the",
+            "# sensor COVERED completely and its white a white sheet in the room light",
+            "cs.calibrate_black()               # nothing (or a black target) where colours are read",
+            "print(\"hold a white sheet in front\")",
+            "wait(5000)",
+            "cs.calibrate_white()               # the white now reads s 0, v 100",
+            "print(cs.stored_calibration())     # kept on the board: later programs start calibrated",
+            "c, p = cs.color_match()            # the colour and how sure (0..1)",
+            "print(c, p)",
+            "$0"
+        ]
+    },
     "EVN ADC": {
         "prefix": "evn-adc",
         "description": "ADS1115 16-bit ADC on an I2C port (standard peripheral)",

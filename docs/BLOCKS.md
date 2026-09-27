@@ -133,6 +133,7 @@ Every peripheral works like a motor: one object per port, created once at the to
 | Block | Python |
 | :--- | :--- |
 | set up colour sensor on port *1* | `color_sensor_1 = ColorSensor(1)` |
+| calibrate colour sensor *1* *black (nothing in front)* / *white (a white sheet)* | `color_sensor_1.calibrate_black()` / `color_sensor_1.calibrate_white()`: black, then white, once, at the height the colours will be read; the board keeps it for the port, so later programs start calibrated |
 | colour sensor *1* sees *white* | `color_sensor_1.color() == Color.WHITE` (the six colours `color()` picks from: red, yellow, green, blue, white, nothing) |
 | colour sensor *1* colour | `color_sensor_1.color()` |
 | colour sensor *1* light level (%) | `color_sensor_1.ambient()` — the brightness it sees in % of its full scale, not calibrated: compare with values measured on your own surface |
@@ -147,6 +148,7 @@ Every peripheral works like a motor: one object per port, created once at the to
 | gesture sensor *1* wait up to *5000* ms for a gesture | `gesture_sensor_1.read_gesture(5000)` |
 | gesture sensor *1* proximity | `gesture_sensor_1.proximity()` |
 | gesture sensor *1* colour | `gesture_sensor_1.color()` |
+| calibrate gesture sensor *1* colour *black (sensor covered)* / *white (a white sheet)* | `gesture_sensor_1.calibrate_black()` / `gesture_sensor_1.calibrate_white()`: the colour calibration, stored for the port like the colour sensor's. Turn the gesture engine off first (gesture mode freezes the colour); the sensor's LED is infrared, so black = the sensor covered completely, white = a white sheet in the room light |
 | set up weather sensor on port *1* | `env_sensor_1 = EnvSensor(1)` |
 | weather sensor *1* temperature (C) / humidity (%) / air pressure (Pa) | `env_sensor_1.temperature()` / `.humidity()` / `.pressure()` |
 | set up compass on port *1* | `compass_1 = Compass(1)` |
@@ -275,7 +277,7 @@ Each device has the few calls a program usually needs; everything else in the AP
 - **Data log**: `info()`, `running()`, `quantities()`, `close()`, `save(path)` with a path of your own, more than three columns in one row, and the constructor's `timestamp=` / `extension=` / `append=` / `size=` / `autosave=` / `on_full=`.
 - **Extended peripherals**: HiTechnic colour sensor `version()`, `firmware()`, `color_match()`, `detectable_colors()`, `black_reference()` / `white_reference()`, `ambient()`, `raw()`, `mains()`; HiTechnic compass `calibrate()` / `calibrate_stop()` / `calibrating()` (the sensor's own calibration), `firmware()`; HuskyLens `blocks(id)` / `arrows()` as whole lists, `learned()`, `frame()`, `forget()`, `algorithm()` as a getter; VL53L1X `status()`, `raw()`, `timing_budget()`, `distance_mode()` as a getter; TCS3430 `color_match()`, `detectable_colors()` (teach it colours from its own `hsv()`), `black_reference()` / `white_reference()`, `xyz()` as a tuple, `raw()`, `xy()`, `saturated()`, `integration_time()`, `gain()` as a getter; `age()` and `close()` of every one.
 - **Bluetooth**: `read()`, `read_all()`, `clear()`, `wait_until()`, `repl()`, `command()`, `address()`, `configured()`, `set_baudrate()`, and the constructor's `name=` / `baud=` / `mode=` (a block always uses the defaults).
-- **The rest of the module**: `Pose` (the pose estimator: position and heading from the encoders, an IMU and a compass; with the robot's gyro block the drive base builds one, `drive_base.pose`), `I2C`, `UART`, `Flash`, `evn.calibration()` / `imu_calibration()` / `compass_calibration()` (the stored records as dicts), `clock()`, `reset()`, `reset_cause()`, `bootloader()`, `autostart()`, `core1_status()`, `evn.version`.
+- **The rest of the module**: `Pose` (the pose estimator: position and heading from the encoders, an IMU and a compass; with the robot's gyro block the drive base builds one, `drive_base.pose`), `I2C`, `UART`, `Flash`, `evn.calibration()` / `imu_calibration()` / `compass_calibration()` / `color_calibration()` (the stored records as dicts), `clock()`, `reset()`, `reset_cause()`, `bootloader()`, `autostart()`, `core1_status()`, `evn.version`.
 
 ### Logic, Loops, Math, Text, Variables, Functions
 

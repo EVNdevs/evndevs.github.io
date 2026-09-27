@@ -1,13 +1,14 @@
 """Gesture sensor: the whole API
 
 Every GestureSensor method once: swipes (waiting for one, or checking without waiting), proximity,
-colour, the three engines, and the chip settings (gains, integration time, LED current, pulses,
+colour and its black / white calibration (stored on the board for the port), the three engines, and the chip settings (gains, integration time, LED current, pulses,
 gesture thresholds, alarm windows, offsets, photodiodes, wait time). The firmware keeps the latest
-readings fresh in the background. Anything the example changes it puts back. Some steps ask you to
-move your hand over the sensor: the text says what, and when.
+readings fresh in the background. The settings it changes it puts back; the black / white colour
+calibration it makes STAYS STORED on the board for port 1 (clear_calibration() forgets it). Some
+steps ask you to move your hand over the sensor: the text says what, and when.
 
-Needs: the gesture sensor on I2C port 1 (nothing over it at the start), a hand, and something
-coloured.
+Needs: the gesture sensor on I2C port 1 (nothing over it at the start), a hand, a white sheet, and
+something coloured.
 """
 from evn import GestureSensor, Color, StopWatch, wait
 
@@ -56,6 +57,24 @@ wait(2000)
 print("raw", g.raw())                   # (clear, red, green, blue) counts
 print("rgb", g.rgb())                   # (r, g, b) 0..255
 print("hsv", g.hsv())                   # a Color: .h 0..359, .s 0..100, .v 0..100
+# The black / white calibration, as ColorSensor's, but this sensor's LED is infrared: its colour sees
+# the ROOM light, so "nothing in front" is its brightest reading. The black is the sensor covered
+# completely (a hand or a black card on it); the white a white sheet a few cm above it in the room
+# light, not shading the module. The gesture engine must be off (it is, since engines(gesture=False)
+# above): gesture mode freezes the colour and the calibration refuses the stale reading. color() and
+# hsv(normalized=True) read through it (the white then reads s 0, v 100), and it is STORED for the
+# port: the next program's GestureSensor(1) starts with it (one colour calibration per port).
+print("stored now:", g.stored_calibration())
+print("cover the sensor completely (a hand or a black card on it)"); wait(3000)
+try:
+    g.calibrate_black()
+    print("hold a white sheet a few cm above the sensor, in the room light"); wait(3000)
+    g.calibrate_white()
+    print("black", g.black_reference(), "white", g.white_reference())   # per 2.78 ms cycle at 1x gain
+    print("calibrated hsv", g.hsv(normalized=True))
+except ValueError as e:
+    print("calibration refused:", e)
+print("hold something coloured close above the sensor again ..."); wait(3000)
 print("ambient", g.ambient(), "%")      # the clear channel in % of full scale
 colour, confidence = g.color_match()    # the nearest colour, and how sure (1.0 sure, 0.0 a coin flip)
 print("colour", g.color(), "match", colour, "confidence %.2f" % confidence)
@@ -141,4 +160,6 @@ print("the reading got up to", oldest, "ms old")
 g.wait_time(old_wait)
 
 # --- the end: the sensor is switched off and the port is free again ---------------------------------------
+# (the colour calibration stays in the board's flash for your own programs; g.clear_calibration() forgets it,
+#  False while a motor drives)
 g.close()

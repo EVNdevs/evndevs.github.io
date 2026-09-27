@@ -125,16 +125,21 @@
       "classes": [
         "ColorSensor"
       ],
-      "module": [],
+      "module": [
+        "color_calibration"
+      ],
       "blocks": [
         "evn_colorsensor_setup",
+        "evn_colorsensor_calibrate",
         "evn_colorsensor_sees",
         "evn_colorsensor_color",
         "evn_colorsensor_ambient",
         "evn_colorsensor_detect",
         "evn_colorsensor_channel"
       ],
-      "skip": {}
+      "skip": {
+        "clear_calibration": "erases the stored colour calibration of the port; the example keeps the one it just made"
+      }
     },
     {
       "dir": "06_distance_sensor",
@@ -166,9 +171,12 @@
         "evn_gesture_gesture",
         "evn_gesture_wait",
         "evn_gesture_proximity",
-        "evn_gesture_color"
+        "evn_gesture_color",
+        "evn_gesture_calibrate"
       ],
-      "skip": {}
+      "skip": {
+        "clear_calibration": "erases the stored colour calibration of the port; the example keeps the one it just made"
+      }
     },
     {
       "dir": "08_weather_sensor",
