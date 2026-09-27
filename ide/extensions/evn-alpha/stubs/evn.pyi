@@ -138,8 +138,9 @@ class Control:
         """Same as ``Motor.done()``: the last profiled move is complete and the shaft is within ``target_tolerances()``."""
     def stalled(self) -> bool:
         """Same as ``Motor.stalled()``: at the allowed limit and not turning, for ``stall_tolerances()``."""
-    def load(self) -> int:
-        """Same as ``Motor.load()``: the load torque estimate in mNm (positive = opposing the motor)."""
+    def load(self, *, output: bool = False) -> int:
+        """Same as ``Motor.load()``: the torque the calibrated motor does not account for, in mNm at the motor
+        (positive = opposing a positive turn); ``output=True`` gives it at the output of the gears."""
     def state(self) -> Tuple[float, float, float, float, int, bool, bool]:
         """``(reference_deg, x1_deg, x2_degs, x3_degs2, applied_mv, hold, assist)``: the controller's position
         reference, the ADRC extended-state observer's position / speed / total-disturbance estimates (output
@@ -215,8 +216,15 @@ class Motor:
     def speed(self) -> int:
         """Speed in deg/s (the controller's own estimate). Pybricks' ``window`` argument is not
         offered: ``speed(100)`` raises ``TypeError``."""
-    def load(self) -> int:
-        """Load torque in mNm (positive = opposing the motor): the controller's disturbance estimate."""
+    def load(self, *, output: bool = False) -> int:
+        """Load torque in mNm, at the motor (as ``control.limits()[2]`` and the torque limit): the controller's
+        disturbance estimate, the torque the CALIBRATED motor does not account for (its own friction as
+        calibrated is not load). ``output=True`` gives it at the output of the gears (x the ratio). Positive =
+        a torque opposing a positive turn, whichever way the shaft turns; in a hold it is the holding voltage
+        as torque. A motor calibrated with its mechanism attached reads about zero driving that mechanism and
+        shows only what is added; what remains is the calibrated line's error at that speed (a JGA25 under a
+        gear train calibrated cold: -25 mNm at 100 deg/s, -7 at 400, mirrored the other way; calibrated warm,
+        within a few mNm)."""
     def stalled(self) -> bool:
         """True when the motor is pushing as hard as it is allowed to and the shaft still does not turn, for
         ``control.stall_tolerances()`` (Pybricks meaning): the applied voltage at the cap in force
@@ -290,9 +298,9 @@ class Motor:
     def calibrate(self) -> Tuple[int, int, int, int]: ...
     @overload
     def calibrate(self, wait: bool = True) -> Optional[Tuple[int, int, int, int]]:
-        """Self-calibration of this port (about 11-12 s; a breakaway that has to be re-measured adds
-        about 0.8 s each time, at most four times; the Board view waits up to 60 s, which covers every calibration
-        seen on the bench, and the theoretical bound with every internal timeout hit is about 66 s; one port drives at a time, so several ports take about the sum; the shaft must be free to turn, it moves up to about a
+        """Self-calibration of this port (about 12-13 s; a breakaway that has to be re-measured adds
+        about 0.8 s each time, at most four times; the Board view waits up to 75 s, above the theoretical bound
+        with every internal timeout hit, about 74 s - every calibration seen on the bench is under 15 s; one port drives at a time, so several ports take about the sum; the shaft must be free to turn, it moves up to about a
         turn and a half each way and ends near where it started). Returns (b0 in deg/s^2 per volt, time constant in ms,
         breakaway voltage in mV, kinetic friction voltage in mV); the result is stored in flash, loaded at
         every boot, and sets this port's ``full_speed()``. Re-run after swapping the motor.
@@ -2577,9 +2585,14 @@ def calibration(port: int, /) -> dict:
     "cogging_measured" (the period calibrate()'s detent survey measured, 0 = the rotor did not rest in
     detents, None = a record older than the survey, or the survey was abandoned), "cogging_confidence" (how sure the survey was, 0..1,
     None after a reboot), "cogging_note" (None, or why the measurement and the motor library disagree - the
-    library figure is kept - or why the survey was abandoned), "warning" (what is wrong with the record found in flash:
-    made for another motor, refused; implausible for the model, applied anyway; else None),
-    "error" (why the last calibrate() on this port failed or was refused, else None)}``."""
+    library figure is kept - or why the survey was abandoned), "drift" (the calibration's drift check: its first
+    pulse is run once more at the end, and this is the repeat's speed per volt over the first's, minus 1 - +0.04
+    = the mechanism ran 4 % faster at the end, a gear train warming up; the repeat runs at the first pulse's duty and
+    the ratio is of the speed per volt above the fitted friction; None when the repeat could not be taken, and after
+    a power-up - neither it nor its warning is stored),
+    "warning" (what is wrong with the record: made for another motor, refused; implausible for the model, applied
+    anyway; the mechanism drifted more than 3 % during the calibration - calibrate again after a minute of
+    running; else None), "error" (why the last calibrate() on this port failed or was refused, else None)}``."""
 
 def clock(seconds: Optional[int] = None, /) -> int:
     """The board's wall clock as seconds since 1970-01-01 UTC; 0 until a host sets it (no battery-backed

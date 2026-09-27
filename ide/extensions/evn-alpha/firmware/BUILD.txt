@@ -1,7 +1,7 @@
 EVN_ALPHA_MicroPython.uf2
-source: main (0.2.55) + hsv() calibrated by default on ColorSensor / GestureSensor (through the port's stored black-white record when it has one, raw on a port without one; hsv(normalized=False) the explicit raw reading - the owner's decision of 2026-09-27 on review R17's open point; one default flip per binding, the HAL's fallback unchanged); GC heap 143 KB
+source: main (0.2.56) + calibrate()'s pulses nested (low +, high -, high +, low -) and the first pulse repeated at its own duty as a drift check (evn.calibration(port)["drift"], a warning above 3 %: a mechanism warming up while it is measured no longer tilts the friction line; about 1 s longer) + Motor.load() at the motor (load(output=True) at the output; the data logger's load quantity at the motor too); GC heap 143 KB
 built: 2026-09-27 (MicroPython v1.26.1, pico-sdk 2.3.0; SOURCE_DATE_EPOCH=1790510400 = noon UTC 2026-09-27)
 flash: single-line 03h boot2, PICO_FLASH_SPI_CLKDIV=4
-md5: 9dac580ff13128bcfa249b36637bd692
+md5: 87ce201e990ec7797001f0398e80939c
 reproduce: cmake -G Ninja -DEVN_MICROPYTHON=ON + ninja with SOURCE_DATE_EPOCH = noon UTC of the built: date (py/makeversionhdr.py embeds MICROPY_BUILD_DATE); release_public.py does this and refuses on an md5 mismatch
-version: 0.2.56
+version: 0.2.57

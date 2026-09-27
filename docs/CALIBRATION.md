@@ -4,7 +4,7 @@ Four parts of an EVN ALPHA robot are worth calibrating: each **motor**, the **IM
 
 | What | Why | Takes | Stored for | Do it again when |
 | :--- | :--- | :--- | :--- | :--- |
-| [Motor](#motors) | measures this motor's strength, time constant and friction, so moves are fast and land on target; finds which way its encoder counts | about 11–12 s per port, shaft free to turn | motor port 1–4 | you swap the motor, or choose a different motor for the port |
+| [Motor](#motors) | measures this motor's strength, time constant and friction, so moves are fast and land on target; finds which way its encoder counts | about 12–13 s per port, shaft free to turn | motor port 1–4 | you swap the motor, or choose a different motor for the port; a mechanism that was cold when you calibrated it |
 | [IMU](#imu) | removes the gyro's bias and the accelerometer's error, and finds which way the module is mounted, so the heading does not drift from the start and a level robot reads level | about 2 s still (one pose), or about 10 s with a half turn (two poses) | I2C port 1–16 | you move the module to another port, plug in another module, or change how it is mounted |
 | [Compass](#compass) | removes the pull of the robot's own iron (motors, battery, screws), so the heading points to magnetic north | about 20 s (planar) to a minute (full) of turning the robot | I2C port 1–16 | you move the motors, the battery or other metal parts, or the compass itself |
 | [Colour sensor](#colour-sensors) | takes the black (nothing in front) and the white (a white sheet), so a white reads white under the module's own light and colours are named reliably | two readings, a few seconds | I2C port 1–16 | you move the sensor to another height above the surface, change the light, or plug another sensor into the port |
@@ -23,18 +23,20 @@ You can calibrate from the extension's **Board view** (buttons on each row, no c
 
 A motor's calibration measures how strongly it accelerates for each volt (`b0`), how quickly it responds (`tau_ms`), the voltage that breaks the shaft free and the voltage its running friction costs, and its no-load speed. It also finds the direction its encoder counts and the encoder's exact phase widths, in each direction of turning (a Hall sensor's edges sit at slightly different angles each way, and a stopped shaft is placed by them), and whether the rotor cogs: it ends with 20 short kicks, and a rotor with magnetic detents (the Pololu 25D) comes to rest in one every time, so the rests line up at the detent period. A custom motor that cogs is then controlled like a library motor with detents (the detents are cancelled while it moves, and the shaft rests in its nearest detent at the end of a move); `evn.calibration(port)["cogging_edges"]` gives the period. The motor controller is built from these numbers, so a calibrated motor moves faster and lands more exactly than one running on its model's defaults. The measured no-load speed becomes the motor's 100 % (`full_speed()`), and, when it is higher than the model's default, its speed limit.
 
-**The shaft must be free to turn.** The motor moves by itself for about eleven seconds, up to about a turn and a half each way, and stops near where it started. Take anything off it that must not move, and lift a robot's wheels off the ground.
+**The shaft must be free to turn.** The motor moves by itself for about twelve seconds, up to about a turn and a half each way, and stops near where it started. Take anything off it that must not move, and lift a robot's wheels off the ground.
+
+**A motor can be calibrated with its mechanism attached** (a gear train, a wheel in the air): the mechanism's friction and inertia then become part of the motor's model, and `load()` reads only what is added on top. Calibrate it **warm**, after it has run for a minute: a cold gear train's friction falls over its first seconds of motion, and a calibration taken then describes a state the motor leaves behind. The calibration measures this itself (its first pulse is run once more at the end) and, when the mechanism changed by more than 3 % meanwhile, the row reads *calibrate again warm*, its tooltip and `evn.calibration(port)["warning"]` say *calibrate again after a minute of running*, and `["drift"]` is the change. The warning and the number are not stored with the record: they last until the board is switched off, so a record taken cold looks clean after a power-up.
 
 ### From the Board view
 
 1. **Say which motor is on the port.** Press the **gear** on the motor's row and pick *EV3 Large*, *EV3 Medium*, *NXT*, *JGA25-370 6V 77RPM*, *Pololu 25D 9.7:1 HP 12V*, *CHR-GM16-030PA 9V 1:63*, or *Custom…* for any other DC motor with a quadrature encoder. The choice is stored on the board. A port nobody has configured runs the firmware's default (EV3 Large on ports 1–2, EV3 Medium on 3–4), shown as *EV3 Large (default)*.
-2. **Press the pulse button** on the row (or right-click → **Calibrate this motor (shaft free, ~11 s)...**). A dialog asks you to free the shaft; press **Calibrate**.
-3. A notification shows **EVN: calibrating motor port N... (about 11 s, shaft free)** while the row reads *calibrating... (shaft free)*.
+2. **Press the pulse button** on the row (or right-click → **Calibrate this motor (shaft free, ~12 s)...**). A dialog asks you to free the shaft; press **Calibrate**.
+3. A notification shows **EVN: calibrating motor port N... (about 12 s, shaft free)** while the row reads *calibrating... (shaft free)*.
 4. When it is done, a message gives the numbers (`b0`, `tau`, the breakaway voltage, the no-load speed) and says *and stored*.
 
-![The dialog "Calibrate motor port 1 (EV3 Medium)? The motor turns by itself for about eleven seconds, up to about a turn and a half each way: the shaft must be free", with Cancel and Calibrate](images/calibration-motor-dialog.png)
+![The dialog "Calibrate motor port 1 (EV3 Medium)? The motor turns by itself for about twelve seconds, up to about a turn and a half each way: the shaft must be free to turn", with Cancel and Calibrate (the screenshot shows the 0.2.56 wording, eleven seconds)](images/calibration-motor-dialog.png)
 
-A calibration takes about 11–12 s per port; a breakaway that has to be measured again (a reading below the running friction is re-run) adds about 0.8 s each time, at most four times. The Board view waits up to 60 s, which covers every calibration seen on the bench; the theoretical bound with every internal timeout hit is about 66 s; from Python several ports calibrate one after another (only one drives at a time), so they take about the sum. A calibration page written by this firmware (record version 8) is refused by an older firmware: after a downgrade, choose the motor again and calibrate again.
+A calibration takes about 12–13 s per port; a breakaway that has to be measured again (a reading below the running friction is re-run) adds about 0.8 s each time, at most four times. The Board view waits up to 75 s, above the theoretical bound with every internal timeout hit (about 74 s); every calibration seen on the bench is under 15 s; from Python several ports calibrate one after another (only one drives at a time), so they take about the sum. A calibration page written by this firmware (record version 8) is refused by an older firmware: after a downgrade, choose the motor again and calibrate again.
 
 The Board view calibrates one motor at a time. The row then shows one of:
 
@@ -56,7 +58,7 @@ The row's tooltip lists the measured numbers, and why the last calibration faile
 ```python
 from evn import Motor
 m = Motor(1)
-print(m.calibrate())      # (b0, tau_ms, v_break_mv, v_f_mv), after about 11 s
+print(m.calibrate())      # (b0, tau_ms, v_break_mv, v_f_mv), after about 12 s
 ```
 
 Several motors in one go: start each with `wait=False` (the board measures them one after another in the background), then wait until none is busy. Do not call `calibrate()` again to wait: on a port that has already finished, that starts a new run.
@@ -78,13 +80,14 @@ If the shaft cannot turn, or the measurement does not fit, `calibrate()` raises 
 
 | Block | Does |
 | :--- | :--- |
-| **calibrate motor** *1* **wait** ☑ | calibrates the motor and waits for it (about 11 s). Unticked, it starts the calibration and goes on: start each motor that way, then a ticked block on the same port waits for that run, so several motors calibrate together |
+| **calibrate motor** *1* **wait** ☑ | calibrates the motor and waits for it (about 12 s). Unticked, it starts the calibration and goes on: start each motor that way, then a ticked block on the same port waits for that run, so several motors calibrate together |
 | **motor** *1* **is calibrated** | `True` when the port has a calibration — use it to calibrate only once: *if not motor 1 is calibrated: calibrate motor 1* |
 
 ### When to calibrate a motor again
 
 - **You put a different motor on the port.** Say so with the gear first: choosing a different motor clears the port's calibration, because the old motor's numbers must not run the new one. Then calibrate.
 - **You changed a port to a custom, JGA25, Pololu 25D or CHR-GM16 motor.** Calibrate before its first real move: until then the firmware only knows the usual wiring for its encoder direction, and `Motor(port)` warns once that it is not calibrated.
+- **The row says *calibrate again after a minute of running*.** The mechanism on the shaft (a gear train) was still warming up while it was measured: run it for a minute, then calibrate again. `evn.calibration(port)["drift"]` is how much it changed.
 - **Never** plug a LEGO motor into a port whose row says *encoder reversed* without telling the gear: the flip belongs to the port's record, and would make the new motor run away. Changing the motor with the gear (or **Clear calibration**) removes it.
 - A program's `Motor(port, model="EV3 Medium")` that names another model than the port's stored one runs that model's defaults for the session and prints a `WARNING`; the stored calibration comes back when the program names the right model again or the board reboots.
 
@@ -169,6 +172,8 @@ Two kinds:
 | Takes | about a minute | about 20 s |
 | For | a robot that tilts or climbs | a robot that only drives on the floor; the heading is right only while it stays flat |
 
+A drive base can do the planar spin itself: start the calibration, run one wheel forward and the other backward at a low speed (about 60 °/s at the wheels turns a base with 62 mm wheels and a 17 cm track at about 22 °/s) for 20 s, then the other way for 20 s, stop the motors and finish. On the bench base that lit all 8 directions in 18 s with a fit error under 1 %; the motors' own magnets are part of what the calibration corrects, so calibrating while they run is the realistic case.
+
 ### From the Board view, with the map of directions
 
 1. Press the **pulse** button on the compass's row (or right-click → **Calibrate this compass (full or planar)...**).
@@ -194,8 +199,23 @@ from evn import Compass, wait
 c = Compass(6)
 c.calibrate()                   # full; c.calibrate(planar=True) for planar
 while c.calibrate_progress()[1] < 0.75:
-    wait(500)                   # keep turning the robot
+    wait(500)                   # keep turning the robot (a planar one: 1.0, all 8 directions)
 print(c.calibrate_stop())       # (residual, coverage, samples); stored for port 6
+```
+
+A drive base spinning itself, planar:
+
+```python
+from evn import Compass, Motor, wait, stop_all
+c = Compass(3)
+right, left = Motor(2), Motor(3)      # the left motor mounted mirrored: the same sign on both pivots the base
+c.calibrate(planar=True)
+for speed in (60, -60):               # one way, then back
+    right.run(speed); left.run(speed)
+    wait(20000)
+    stop_all()
+    wait(800)
+print(c.calibrate_stop())             # the flash write happens with the motors stopped
 ```
 
 `calibrate_progress()` returns `(samples, coverage)` with the coverage from 0 to 1. `calibrate_stop()` refuses a fit with too few samples or directions (`ValueError("calibration refused: …")`) and keeps collecting, so turn some more and call it again, or end with `calibrate_cancel()`. `calibrate_directions()` gives the map's data (which directions are lit, and the current one). A residual of 0.02 means the fitted field is within 2 % everywhere. The full description is in the [API reference](API_SENSORS.md#compass-calibration).

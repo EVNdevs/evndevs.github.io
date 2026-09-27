@@ -117,7 +117,7 @@ The first five are Pybricks' (`pybricks.tools.DataLog`); `size`, `autosave`, `on
 
 | Source | Quantities (unit) | New readings a second |
 | :--- | :--- | :--- |
-| `Motor` | `angle` (deg), `speed` (deg/s), `load` (mNm) - unrounded, where the methods round to an int - `stalled` (0/1) | every new reading: up to 1000 (the motor engine's tick; about 460 with an IMU on the bus) |
+| `Motor` | `angle` (deg), `speed` (deg/s), `load` (mNm, at the motor as `Motor.load()`) - unrounded, where the methods round to an int - `stalled` (0/1) | every new reading: up to 1000 (the motor engine's tick; about 460 with an IMU on the bus) |
 | `evn.battery` | `voltage` (mV), `cells` (mV: `cells.cell1`, `cells.cell2`) | 25 |
 | `evn.button` | `pressed` (0/1) | 1000 |
 | `IMU` | `heading` (deg), `tilt` (deg: `.pitch`, `.roll`), `euler` (deg: `.heading`, `.pitch`, `.roll`), `acceleration` (mm/s²: `.x`, `.y`, `.z`), `angular_velocity` (deg/s: `.x`, `.y`, `.z`), `up` (the side's name), `stationary` (0/1), `temperature` (°C) | 200 |
