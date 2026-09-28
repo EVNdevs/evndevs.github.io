@@ -78,7 +78,7 @@ Motors are `motor_1` .. `motor_4`, one object per port, created once at the top 
 
 One robot per program. Without a **set up robot** block the robot is left motor 1, right motor 2, 56 mm wheels 112 mm apart. `then` here is *hold*, *coast*, *brake* or *coast (smart)* (a drive base has no *keep running*: use **drive at**). Both wheels run on one time base, so a straight is straight and an arc is an arc; the distance between the wheels is measured between the tyres' contact patches — check it with one *turn robot 360 degrees* against a mark on the floor.
 
-**Robot follows its gyro** makes the robot itself, not just its wheels, drive the path: the wheel encoders and an EVN IMU fixed to the chassis track where the robot really is (`evn.Pose`), and every straight, turn and arc is corrected as it goes, so scrub on a turn, a dragged cable and the gyro's drift no longer add up over minutes (on the floor, 40 moves ended about a centimetre from the mark with no visible heading error; the pose's own closure was 3 mm / 0.24 degrees). Put it before the first move and keep the robot still while the program starts: it waits, up to 30 s, for the IMU to settle (an `OSError` if the robot was moving). A robot pushed sideways is the one thing the pose cannot see. The `drive_base_gyro` example is the `drive_base` one with this block.
+**Robot follows its gyro** makes the robot itself, not just its wheels, drive the path: the wheel encoders and an EVN IMU fixed to the chassis track where the robot really is (`evn.Pose`), and every straight, turn and arc is corrected as it goes, so scrub on a turn, a dragged cable and the gyro's drift no longer add up over minutes (on the floor, 40 moves ended about a centimetre from the mark with no visible heading error; the pose's own closure was 3 mm / 0.24 degrees). Put it before the first move and keep the robot still while the program starts: it waits, up to 35 s, for the IMU to settle (an `OSError` if the robot was moving). A robot pushed sideways is the one thing the pose cannot see. The `drive_base_gyro` example is the `drive_base` one with this block.
 
 ### Sensing (values)
 
@@ -120,7 +120,7 @@ The board records while the program runs (`evn.DataLog`): each reading at the ra
 | :--- | :--- |
 | set up data log named *run1* columns *x, y* | `data_log = DataLog('x', 'y', name='run1')` at the top (the columns are what **add row** records; left empty, no columns - or one called `value` when the program adds rows) |
 | data log: record motor *1* *angle* *0* times a second | `data_log.add(motor_1, 'angle')` (0 = every new reading: up to 1000 a second for a motor, about 460 with an IMU on the bus; *speed* deg/s, *load* mNm, *stalled*) |
-| data log: record *IMU* on port *1* *heading* *50* times a second | `data_log.add(imu_1, 'heading', 50)` (the reading is the sensor's method name: `heading`, `tilt`, `acceleration` ...; *battery* `voltage` / `cells` and *button* `pressed` ignore the port; a rate above the sensor's own gives the sensor's) |
+| data log: record *IMU* on port *1* *heading* *50* times a second | `data_log.add(imu_1, 'heading', 50)` (the reading is the sensor's method name: `heading`, `tilt`, `acceleration` ...; *battery* `voltage` / `cells` and *button* `pressed` ignore the port; a rate above the sensor's own gives the sensor's). The sources include the Extended *HiTechnic colour sensor* (`data_log.add(ht_color_8, 'rgb')`: `rgb`, `color`, `color_number`, `hsv`, `reflection` and, on a V2, `color_index`, `normalized_rgb`, taken while the program keeps its light on; `ambient`, `ambient_raw` while it keeps it off) and *HiTechnic compass* (`data_log.add(ht_compass_5, 'heading')`) |
 | *start* / *stop* data log | `data_log.start()` / `data_log.stop()` (put the **record** blocks before *start*) |
 | data log: add row *a* *b* *c* | `data_log.log(a, b)`: one value per column of **set up data log** (an empty slot is `None`, an empty cell; a slot beyond the columns is ignored); starts the log if it was never started; after *stop* it is an error (`RuntimeError`) |
 | save data log | `data_log.save()` (after *stop data log* and with the motors stopped: the board refuses to write its flash while a motor drives, `OSError` 16; a stop just issued is fine). A data log not yet saved (recording or stopped) is saved by itself when main.py ends, the editor's Run finishes, the board soft-reboots or a with block ends, once the motors coast |
@@ -223,12 +223,15 @@ Devices the firmware drives natively that EVN does not stock ([API reference](AP
 | Block | Python |
 | :--- | :--- |
 | set up HiTechnic colour sensor on port *1* | `ht_color_1 = HiTechnicColorSensor(1)` |
-| calibrate HiTechnic colour sensor *1* *black (nothing in front)* / *white (a white sheet)* | `ht_color_1.calibrate_black()` / `ht_color_1.calibrate_white()`: black then white at the start of the program, at the distance the colours will be read |
+| calibrate HiTechnic colour sensor *1* *black (nothing in front)* / *white (a white sheet)* | `ht_color_1.calibrate_black()` / `ht_color_1.calibrate_white()`: black then white, once, at the distance the colours will be read; the board keeps the calibration for this port, so later programs start with it |
 | HiTechnic colour sensor *1* sees *white* | `ht_color_1.color() == Color.WHITE` |
 | HiTechnic colour sensor *1* colour | `ht_color_1.color()` |
 | HiTechnic colour sensor *1* colour number / reflection (%) | `ht_color_1.color_number()` (0 black ... 17 white, the sensor's own chart) / `ht_color_1.reflection()` |
 | HiTechnic colour sensor *1* red / green / blue | `ht_color_1.rgb()[0]` / `[1]` / `[2]` |
 | HiTechnic colour sensor *1* hue / saturation / brightness | `ht_color_1.hsv().h` / `.hsv().s` / `.hsv().v` |
+| HiTechnic colour sensor *1* colour index (0-63, V2) | `ht_color_1.color_index()`: the sensor's red, green and blue levels 0-3 packed into one number |
+| HiTechnic colour sensor *1* normalised red / green / blue (0-255, V2) | `ht_color_1.normalized_rgb()[0]` / `[1]` / `[2]`: the strongest channel set to 255 |
+| HiTechnic colour sensor *1* ambient light / ambient red / green / blue, LED off (V2) | `ht_color_1.ambient()` / `ht_color_1.ambient_raw()[0]` / `[1]` / `[2]`: the light around the sensor with its LED off (switching the LED takes about 0.1 s: read these together) |
 | set up HiTechnic compass on port *1* | `ht_compass_1 = HiTechnicCompass(1)` |
 | HiTechnic compass *1* heading | `ht_compass_1.heading()` (0 to 359, whole degrees) |
 | set HiTechnic compass *1* heading to *0* | `ht_compass_1.north()`; another value `ht_compass_1.north(90)` |
@@ -246,20 +249,34 @@ Devices the firmware drives natively that EVN does not stock ([API reference](AP
 | VL53L1X *1* distance (mm) | `vl53l1x_1.distance() or -1`: -1 when the reading is not valid |
 | set VL53L1X *1* to *long* / *short* range | `vl53l1x_1.distance_mode('long')` (up to ~4 m in the dark) / `vl53l1x_1.distance_mode('short')` (up to ~1.3 m, better in daylight) |
 | set VL53L1X *1* timing budget to *33 ms* | `vl53l1x_1.timing_budget(33)` (15 short range only, 20, 33, 50, 100, 200, 500 ms): longer is steadier and reaches further, with fewer readings a second. From 15 ms, set 20 or more before switching to long range |
+| set VL53L1X *1* time between readings to *100* ms | `vl53l1x_1.inter_measurement(100)`: from the start of one reading to the next; 0 (the start-up value) = back to back, else at least the timing budget, up to 60000 |
+| set VL53L1X *1* field of view to *16* x *16* | `vl53l1x_1.roi(16, 16)`: 4..16 light detectors a side, centred; 16 x 16 (start-up) sees the whole ~27° cone, a smaller region a narrower one |
+| set VL53L1X *1* *signal threshold (kcps)* / *sigma threshold (mm)* to *1024* | `vl53l1x_1.signal_threshold(1024)` (the weakest return accepted, start-up 1024) / `vl53l1x_1.sigma_threshold(90)` (the most spread accepted, start-up 90) |
+| VL53L1X *1* detect things *closer than* / *further than* *200* mm | `vl53l1x_1.distance_threshold('below', 200)` / `vl53l1x_1.distance_threshold('above', 200)`: the sensor itself checks each reading; the others have no distance (-1: "not detected", or a reading the sensor rejects) |
+| VL53L1X *1* detect things *between* / *outside* *100* to *300* mm | `vl53l1x_1.distance_threshold('inside', 100, 300)` / `vl53l1x_1.distance_threshold('outside', 100, 300)` |
+| VL53L1X *1* detects | `vl53l1x_1.detected()`: the latest reading saw something, was valid and met the "detect things" setting (set one first); false with nothing in range |
+| VL53L1X *1* report every reading | `vl53l1x_1.distance_threshold(None)` (the start-up behaviour) |
+| calibrate VL53L1X *1* *offset* / *crosstalk (cover window)* with a flat target at *140* mm | `vl53l1x_1.calibrate_offset(140)` / `vl53l1x_1.calibrate_crosstalk(140)`: ST's calibration against a flat grey or white card at exactly that distance, about 2 s, stored on the board for the port (crosstalk only for a sensor behind a cover window) |
+| VL53L1X *1* clear calibration | `vl53l1x_1.clear_calibration()`: the sensor's own offset and crosstalk back, the port's record erased |
 | set up TCS3430 colour sensor on port *1* | `tcs3430_1 = TCS3430(1)` (2.78 ms at 64x, for a target close in front) |
-| calibrate TCS3430 *1* *black (nothing in front)* / *white (a white sheet)* | `tcs3430_1.calibrate_black()` / `tcs3430_1.calibrate_white()`: take black then white at the start of the program, at the distance the colours will be read (without them the module's warm LED makes white read yellow) |
+| calibrate TCS3430 *1* *black (nothing in front)* / *white (a white sheet)* | `tcs3430_1.calibrate_black()` / `tcs3430_1.calibrate_white()`: black, then white, at the distance the colours will be read (without them the module's warm LED makes white read yellow). The board stores it for the port, so later programs start calibrated: once is enough, and the Board view's Calibrate does the same |
 | TCS3430 *1* sees *white* | `tcs3430_1.color() == Color.WHITE` |
 | TCS3430 *1* colour | `tcs3430_1.color()` |
-| TCS3430 *1* X / Y (brightness) / Z / infrared | `tcs3430_1.xyz()[0]` / `[1]` / `[2]` / `tcs3430_1.ir()` (raw counts) |
+| TCS3430 *1* X / Y (brightness) / Z / infrared / far infrared (measured now) | `tcs3430_1.xyz()[0]` / `[1]` / `[2]` / `tcs3430_1.ir()` / `tcs3430_1.ir2()` (raw counts; far infrared is measured when asked: about two readings, X pauses meanwhile) |
 | TCS3430 *1* hue / saturation / brightness | `tcs3430_1.hsv().h` / `.hsv().s` / `.hsv().v` |
 | set TCS3430 *1* gain to *64x* | `tcs3430_1.gain(64)` (1x, 4x, 16x, 64x, 128x) |
 | set TCS3430 *1* integration time to *100* ms | `tcs3430_1.integration_time(100)` (2.78 to 711.7 ms, the nearest 2.78 ms step; not rounded to a whole number): 2.78 ms, the start-up value, for a target close in front; 100 ms or more for room light or a target further away |
+| set TCS3430 *1* wait between readings to *0* ms | `tcs3430_1.wait_time(0)` (0, the start-up value, to 8540 ms; not rounded): a reading every integration time + wait |
+| set TCS3430 *1* auto-zero *at the start only* / *every reading* / *every 10* / *every 100 readings* / *never* | `tcs3430_1.autozero(127)` / `(1)` / `(10)` / `(100)` / `(0)`: how often the chip re-measures its dark offset |
+| set TCS3430 *1* Z window *100* to *900* for *3 readings* | `tcs3430_1.thresholds(100, 900, 3)` (the ends rounded to whole counts; 1, 2, 3, 5, 10, 20 or 60 readings in a row) |
+| TCS3430 *1* Z left the window | `tcs3430_1.interrupt()`: true once Z stayed outside the window that many readings, until cleared |
+| clear TCS3430 *1* window flag | `tcs3430_1.clear_interrupt()` |
 
 ### Advanced
 
 | Block | Python |
 | :--- | :--- |
-| calibrate motor *1* wait ☑ | `motor_1.calibrate()` (about 12 s, shaft free to turn, up to about a turn and a half each way; stored on the board for that port); unticked: `motor_1.calibrate(wait=False)`, which starts it and goes on while the ports are measured one after another in the background — a ticked one on the same port waits for that run while it is still going (after it has finished it starts a new one, so wait with *motor … is calibrated* instead) |
+| calibrate motor *1* wait ☑ | `motor_1.calibrate()` (about 12 s, shaft free to turn, up to about a turn and a half each way; stored on the board for that port); unticked: `motor_1.calibrate(wait=False)`, which starts it and goes on while the ports are measured one after another in the background — a ticked one on the same port waits for that run while it is still going and, once it has finished, returns its result at once (a block that moves, holds or stops that motor in between - run, stop, hold, a drive base move or stop, stop all motors - drops that result, and the ticked one then measures again; a block that only reads the motor, such as its angle, or changes a setting does not); *motor … is calibrated* tells when a port is done |
 | motor *1* is calibrated | `evn.calibration(1)['calibrated']` |
 | set motor *1* *speed* / *acceleration* / *torque* limit to *500* | `motor_1.control.limits(speed=500)` (one limit, the other two kept; the defaults are the motor's tested maximum). Files from before carry *limit motor … speed … acceleration … torque …*, which still works: `control.limits(...)` with each input that is filled in |
 | set motor *1* duty to *50* % | `motor_1.dc(50)` |
@@ -283,9 +300,9 @@ Each device has the few calls a program usually needs; everything else in the AP
 - **Servo**: `set_range()`, `enable()` / `disable()`, and the constructor's `reverse=` / `range=` / `min_us=` / `max_us=`.
 - **Board**: `battery.cells()` / `present()` / `age()`.
 - **Data log**: `info()`, `running()`, `quantities()`, `close()`, `save(path)` with a path of your own, more than three columns in one row, and the constructor's `timestamp=` / `extension=` / `append=` / `size=` / `autosave=` / `on_full=`.
-- **Extended peripherals**: HiTechnic colour sensor `version()`, `firmware()`, `color_match()`, `detectable_colors()`, `black_reference()` / `white_reference()`, `ambient()`, `raw()`, `mains()`; HiTechnic compass `calibrating()`, `firmware()`; HuskyLens `blocks(id)` / `arrows(id)` as whole lists, `frame()`, `algorithm()` as a getter; VL53L1X `status()`, `raw()`, `timing_budget()` / `distance_mode()` as getters; TCS3430 `color_match()`, `detectable_colors()` (teach it colours from its own `hsv()`), `black_reference()` / `white_reference()`, `xyz()` as a tuple, `raw()`, `xy()`, `saturated()`, `integration_time()` / `gain()` as getters; `age()` and `close()` of every one.
+- **Extended peripherals**: HiTechnic colour sensor `version()`, `firmware()`, `color_match()`, `detectable_colors()`, `black_reference()` / `white_reference()`, `stored_calibration()` / `clear_calibration()`, `normalized_rgb()` / `ambient_raw()` as whole tuples, `raw()`, `mains()`; HiTechnic compass `calibrating()`, `firmware()`; HuskyLens `blocks(id)` / `arrows(id)` as whole lists, `frame()`, `algorithm()` as a getter; VL53L1X `status()`, `raw()`, `timing_budget()` / `distance_mode()` / `inter_measurement()` / `roi()` / `signal_threshold()` / `sigma_threshold()` / `distance_threshold()` as getters, `roi(w, h, center)` with a centre of your own, `offset()` / `crosstalk()` (getters and setters), `stored_calibration()`, `evn.vl53l1x_calibration(port)`; TCS3430 `color_match()`, `detectable_colors()` (teach it colours from its own `hsv()`), `black_reference()` / `white_reference()`, `xyz()` as a tuple, `raw()`, `xy()`, `saturated()`, `integration_time()` / `gain()` / `wait_time()` / `autozero()` / `thresholds()` as getters, `thresholds()` with persistence 0 (every reading), `stored_calibration()`, `clear_calibration()`; `age()` and `close()` of every one.
 - **Bluetooth**: `read()`, `read_all()`, `clear()`, `wait_until()`, `repl()`, `command()`, `address()`, `configured()`, `set_baudrate()`, and the constructor's `name=` / `baud=` / `mode=` (a block always uses the defaults).
-- **The rest of the module**: `Pose` (the pose estimator: position and heading from the encoders, an IMU and a compass; with the robot's gyro block the drive base builds one, `drive_base.pose`), `I2C`, `UART`, `Flash`, `evn.calibration()` / `imu_calibration()` / `compass_calibration()` / `color_calibration()` (the stored records as dicts), `clock()`, `reset()`, `reset_cause()`, `bootloader()`, `autostart()`, `core1_status()`, `evn.version`.
+- **The rest of the module**: `Pose` (the pose estimator: position and heading from the encoders, an IMU and a compass; with the robot's gyro block the drive base builds one, `drive_base.pose`), `I2C`, `UART`, `Flash`, `evn.calibration()` / `imu_calibration()` / `compass_calibration()` / `color_calibration()` / `vl53l1x_calibration()` (the stored records as dicts), `clock()`, `reset()`, `reset_cause()`, `bootloader()`, `autostart()`, `core1_status()`, `evn.version`.
 
 ### Logic, Loops, Math, Text, Variables, Functions
 

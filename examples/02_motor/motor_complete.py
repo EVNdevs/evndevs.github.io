@@ -22,8 +22,8 @@ print("port 1 runs:", evn.motor_config(1)["model"])    # what the board says is 
 # --- calibration: once per motor, stored on the board -------------------------------------------
 # calibrate(wait=False) starts a port's calibration and goes on; the motion engine runs the ports
 # one after the other while the program waits. Watch evn.calibration(port)["busy"] to know when all
-# are done (a waiting calibrate() joins a run only while it is still going: on a port that has
-# already finished it would start a new one).
+# are done (a waiting calibrate() on each port works too: it joins a run still going and hands over
+# the result of one that has finished).
 started = []
 for port, motor in ((1, m), (2, m2)):
     if not evn.calibration(port)["calibrated"]:

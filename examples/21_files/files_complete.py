@@ -90,8 +90,8 @@ except OSError as e:
     if e.errno != EBUSY:
         raise
     print("refused while the motor runs (EBUSY), as it should be")
-motor.stop()                                     # ... and write it once the motor has stopped:
-wait(10)                                         # the coast lands at the next 1 ms tick, so give it one
+motor.stop()                                     # ... and write it once the motor has stopped (stop() returns
+                                                 # once the motor has taken the coast, so no wait is needed)
 with open("log.txt", "w") as f:
     for a in angles:
         f.write("%d\n" % a)

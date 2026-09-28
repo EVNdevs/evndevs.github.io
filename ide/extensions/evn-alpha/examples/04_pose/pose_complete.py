@@ -43,7 +43,7 @@ print("built from", pose.configured())
 
 print("keep the robot still until the IMU is ready ...")
 watch = StopWatch()
-while not imu.ready() and watch.time() < 30000:
+while not imu.ready() and watch.time() < 35000:
     wait(100)
 # sources() is what contributes right now: the compass only once it has a calibration and while
 # its field looks like the Earth's (a motor's magnets or a steel table drop it out).

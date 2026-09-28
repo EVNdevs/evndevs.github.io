@@ -477,7 +477,8 @@
         "evn_htcolor_calibrate"
       ],
       "skip": {
-        "mains": "stored in the sensor itself: set it once for the mains frequency where you are (50 or 60 Hz)"
+        "mains": "stored in the sensor itself: set it once for the mains frequency where you are (50 or 60 Hz)",
+        "clear_calibration": "it would forget the black / white this example stores for the port: use it on purpose, or the Board view's Clear calibration"
       }
     },
     {
@@ -531,14 +532,30 @@
       "classes": [
         "VL53L1X"
       ],
-      "module": [],
+      "module": [
+        "vl53l1x_calibration"
+      ],
       "blocks": [
         "evn_vl53l1x_setup",
         "evn_vl53l1x_distance",
         "evn_vl53l1x_mode",
-        "evn_vl53l1x_budget"
+        "evn_vl53l1x_budget",
+        "evn_vl53l1x_inter",
+        "evn_vl53l1x_roi",
+        "evn_vl53l1x_threshold",
+        "evn_vl53l1x_detect",
+        "evn_vl53l1x_detect_window",
+        "evn_vl53l1x_detected",
+        "evn_vl53l1x_detect_off"
       ],
-      "skip": {}
+      "skip": {
+        "calibrate_crosstalk": "only for a sensor behind a cover window, at the distance where the window makes it read short; without one it measures about 0",
+        "clear_calibration": "erases the stored calibration of the port; the example keeps the one it just made"
+      },
+      "skipBlocks": {
+        "evn_vl53l1x_calibrate": "stores a calibration for the port: it needs a flat card held at a measured distance (the Python example calibrates the offset)",
+        "evn_vl53l1x_clear_calibration": "erases the stored calibration of the port"
+      }
     },
     {
       "dir": "extended_peripherals/05_tcs3430",
@@ -556,7 +573,12 @@
         "evn_tcs3430_value",
         "evn_tcs3430_gain",
         "evn_tcs3430_calibrate",
-        "evn_tcs3430_integration"
+        "evn_tcs3430_integration",
+        "evn_tcs3430_wait",
+        "evn_tcs3430_autozero",
+        "evn_tcs3430_window",
+        "evn_tcs3430_left_window",
+        "evn_tcs3430_clear_window"
       ],
       "skip": {}
     }

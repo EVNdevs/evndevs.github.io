@@ -25,7 +25,7 @@ robot = DriveBase(left, right, wheel_diameter=62.4, axle_track=170, imu=3)   # t
 # motor's direction, so none of it is typed twice; robot.pose is that Pose.
 print("keep the robot still until the IMU is ready ...")
 watch = StopWatch()
-while not imu.ready() and watch.time() < 30000:
+while not imu.ready() and watch.time() < 35000:
     wait(100)
 print("IMU ready after", watch.time(), "ms")
 
@@ -87,7 +87,7 @@ robot.settings(*defaults)                        # back to what it was
 # --- the robot follows its gyro -------------------------------------------------------------------
 # With the base's evn.Pose (robot.pose, encoders + IMU), every move is corrected as it goes, so
 # the ROBOT follows the path, not just the wheels: scrub on a turn and the gyro's drift no longer
-# add up. use_gyro(True) waits (up to 30 s, still) for the IMU to be ready.
+# add up. use_gyro(True) waits (up to 35 s, still) for the IMU to be ready.
 robot.use_gyro(True)
 pose = robot.pose
 assert pose is not None                          # the base's imu= built it (None without)

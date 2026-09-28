@@ -1,9 +1,11 @@
 """TCS3430 colour sensor: the whole API
 
 Every method of TCS3430 once: the black and white calibration (taken first: without it the module's
-warm LED makes a white sheet read yellow), X, Y, Z and infrared, the chromaticity, whether a reading
-clipped, the colour it sees and colours taught from its own readings, the gain and the integration
-time. The defaults (2.78 ms at 64x) suit a target close in front, lit by the module's own LED.
+warm LED makes a white sheet read yellow; the board stores it for the port, so later programs start
+with it), X, Y, Z, both infrared channels, the chromaticity, whether a reading clipped, the colour it
+sees and colours taught from its own readings, the gain, the integration time, the wait between
+readings, the auto-zero and the Z window with its flag. The defaults (2.78 ms at 64x, no wait) suit a
+target close in front, lit by the module's own LED.
 
 Needs: an ams-OSRAM TCS3430 colour sensor on I2C port 16, a white sheet of paper
 """
@@ -27,12 +29,14 @@ def press_button(what_to_do):
 xyz = TCS3430(PORT)                              # ID 0xDC: an APDS-9960 at the same address is refused
 print(xyz, "gain %dx, integration %.2f ms" % (xyz.gain(), xyz.integration_time()))   # 64x, 2.78 ms
 
-# calibrate first, at the distance the colours will be read (kept by this object, not on the board)
+# calibrate first, at the distance the colours will be read (stored for the port: TCS3430(PORT) starts with it)
+print("stored before:", xyz.stored_calibration())   # {'calibrated': ..., 'chip': 'TCS3430' or None, ...}
 press_button("Nothing in front of the colour sensor (point it at open space).")
 xyz.calibrate_black()                            # subtracted from every reading
 press_button("Hold a white sheet about 1 cm in front of the colour sensor.")
 xyz.calibrate_white()                            # the white now reads s 0, v 100
 print("black", xyz.black_reference(), "white", xyz.white_reference())   # (X, Y, Z) per 1x-gain cycle
+print("stored:", xyz.stored_calibration())       # 'chip': 'TCS3430', the same black and white
 print("white sheet:", xyz.color_match(), xyz.hsv())   # (Color.WHITE, ~1.0)
 
 press_button("Hold the colour sensor about 1 cm over a coloured surface.")
@@ -61,7 +65,21 @@ while clock.time() < 5000:
 xyz.gain(16)                                     # less gain for a bright target close up
 print("integration time set: %.2f ms" % xyz.integration_time(100))   # far-field / ambient light
 print("16x, 100 ms: xyz %s, xy %s" % (xyz.xyz(), xyz.xy()))   # xy() is uncalibrated chromaticity
-xyz.black_reference(None)                        # clear both references: raw readings again
+print("far infrared (IR2): %d" % xyz.ir2())      # measured now: about two cycles, X pauses meanwhile
+print("wait set: %s ms" % xyz.wait_time(400))    # a reading every 100 + 400 ms now
+print("auto-zero:", xyz.autozero())              # (127, 0): at the first cycle only
+xyz.autozero(10)                                 # re-measure the dark offset every 10 cycles
+# the Z window: Z outside 0..2 for 3 cycles in a row latches interrupt() (room light is above 2)
+xyz.thresholds(0, 2, 3)
+print("thresholds:", xyz.thresholds())           # (0, 2, 3)
+wait(2000)
+print("Z left the window:", xyz.interrupt())
+xyz.clear_interrupt()
+xyz.thresholds(0, 0, 0)                          # the start-up window: the flag set every cycle
+xyz.wait_time(0)                                 # back to the start-up settings
+xyz.autozero(127)
+xyz.black_reference(None)                        # clear both references (and the stored record): raw readings again
 xyz.white_reference(None)
 print("references cleared:", xyz.black_reference(), xyz.white_reference())   # None None
+print("stored record cleared:", xyz.clear_calibration())   # True: nothing of it left in flash
 xyz.close()                                      # powers the chip down

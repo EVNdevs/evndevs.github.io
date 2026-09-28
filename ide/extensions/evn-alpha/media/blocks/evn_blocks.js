@@ -346,7 +346,7 @@
             message0: 'calibrate motor %1 wait %2',
             args0: [{ type: 'field_dropdown', name: 'PORT', options: PORTS }, { type: 'field_checkbox', name: 'WAIT', checked: true }],
             previousStatement: null, nextStatement: null, style: 'evn_advanced_blocks',
-            tooltip: 'Self-calibration (about 11 s; the shaft must be free to turn, it moves up to about a turn and a half each way). Measures the motor and its full speed; stored on the board for this port. Untick "wait" to start it and go on while it runs (the ports are measured one after another in the background). A later "calibrate motor" with wait ticked on the same port waits for that run if it is still going; once it has finished it would start a new one, so wait with "motor ... is calibrated" instead.',
+            tooltip: 'Self-calibration (about 12 s; the shaft must be free to turn, it moves up to about a turn and a half each way). Measures the motor and its full speed; stored on the board for this port. Untick "wait" to start it and go on while it runs (the ports are measured one after another in the background). A later "calibrate motor" with wait ticked on the same port waits for that run if it is still going and, once it has finished, takes its result at once (a block that moves, holds or stops that motor in between - run, stop, hold, a drive base move or stop, stop all motors - drops it: the calibration then runs again; reading its angle or speed or changing a setting does not); "motor ... is calibrated" tells when a port is done.',
         },
         {
             type: 'evn_motor_calibrated',
@@ -604,7 +604,7 @@
                 { type: 'field_dropdown', name: 'WHAT', options: [['black (nothing in front)', 'black'], ['white (a white sheet)', 'white']] },
             ],
             previousStatement: null, nextStatement: null, style: 'evn_sense_blocks',
-            tooltip: 'Take the reading now as the black (nothing in front of the sensor) or the white (a white sheet where the colours will be read). Do black, then white, at the start of the program: the colour, hue, saturation and brightness are then measured between the two.',
+            tooltip: 'Take the reading now as the black (nothing in front of the sensor) or the white (a white sheet where the colours will be read). Do black, then white, once: the board keeps the calibration for this port, so later programs start with it; the colour, hue, saturation and brightness are then measured between the two.',
         },
         {
             type: 'evn_htcolor_color',
@@ -630,11 +630,16 @@
                         ['colour number (0-17)', 'color_number()'], ['reflection (%)', 'reflection()'],
                         ['red (0-255)', 'rgb()[0]'], ['green (0-255)', 'rgb()[1]'], ['blue (0-255)', 'rgb()[2]'],
                         ['hue (0-359)', 'hsv().h'], ['saturation (0-100)', 'hsv().s'], ['brightness (0-100)', 'hsv().v'],
+                        ['colour index (0-63, V2)', 'color_index()'],
+                        ['normalised red (0-255, V2)', 'normalized_rgb()[0]'], ['normalised green (0-255, V2)', 'normalized_rgb()[1]'],
+                        ['normalised blue (0-255, V2)', 'normalized_rgb()[2]'],
+                        ['ambient light, LED off (V2)', 'ambient()'], ['ambient red, LED off (V2)', 'ambient_raw()[0]'],
+                        ['ambient green, LED off (V2)', 'ambient_raw()[1]'], ['ambient blue, LED off (V2)', 'ambient_raw()[2]'],
                     ],
                 },
             ],
             output: 'Number', style: 'evn_sense_blocks',
-            tooltip: 'One number out of the reading: the sensor\'s own colour number (0 black ... 17 white), the reflected light in %, one of the red, green and blue channels, or hue / saturation / brightness.',
+            tooltip: 'One number out of the reading: the sensor\'s own colour number (0 black ... 17 white), the reflected light in %, one of the red, green and blue channels, or hue / saturation / brightness. A V2 also gives its colour index (red, green and blue levels 0-3 packed into 0-63), its normalised red, green and blue (the strongest set to 255), and, with its LED off, the light around it (ambient); switching between LED on and off takes about 0.1 s, so read the ambient values together.',
         },
         {
             type: 'evn_htcompass_setup',
@@ -791,6 +796,90 @@
             tooltip: 'The time per reading: longer is steadier and reaches further, with fewer readings a second. 33 ms is the start-up value. 15 ms works in short range only: set short range first, and 20 ms or more before switching back to long.',
         },
         {
+            type: 'evn_vl53l1x_inter',
+            message0: 'set VL53L1X %1 time between readings to %2 ms',
+            args0: [portField(I2C_PORTS), { type: 'input_value', name: 'MS', check: 'Number' }],
+            inputsInline: true, previousStatement: null, nextStatement: null, style: 'evn_sense_blocks',
+            tooltip: 'How often the sensor measures, from the start of one reading to the next: 0 (the start-up value) measures back to back, a new reading every timing budget; otherwise at least the timing budget, up to 60000 ms. Fewer readings a second, each as steady as the timing budget makes it.',
+        },
+        {
+            type: 'evn_vl53l1x_roi',
+            message0: 'set VL53L1X %1 field of view to %2 x %3',
+            args0: [
+                portField(I2C_PORTS),
+                { type: 'field_dropdown', name: 'W', options: [['16', '16'], ['12', '12'], ['8', '8'], ['6', '6'], ['4', '4']] },
+                { type: 'field_dropdown', name: 'H', options: [['16', '16'], ['12', '12'], ['8', '8'], ['6', '6'], ['4', '4']] },
+            ],
+            previousStatement: null, nextStatement: null, style: 'evn_sense_blocks',
+            tooltip: 'Which part of the sensor\'s 16 x 16 light detectors measures, width x height: 16 x 16 (the start-up value) sees the whole cone of about 27 degrees; a smaller region narrows it, to measure one thing past others beside it, with less signal. The region stays centred (move it in Python: roi(w, h, center)).',
+        },
+        {
+            type: 'evn_vl53l1x_threshold',
+            message0: 'set VL53L1X %1 %2 to %3',
+            args0: [
+                portField(I2C_PORTS),
+                { type: 'field_dropdown', name: 'WHAT', options: [['signal threshold (kcps)', 'signal_threshold'], ['sigma threshold (mm)', 'sigma_threshold']] },
+                { type: 'input_value', name: 'VALUE', check: 'Number' },
+            ],
+            inputsInline: true, previousStatement: null, nextStatement: null, style: 'evn_sense_blocks',
+            tooltip: 'When a reading counts as valid. Signal threshold: the weakest return accepted, 0 to 65535 kcps (start-up 1024); lower it for dark or far targets. Sigma threshold: the most spread accepted, 0 to 16383 mm (start-up 90); raise it to accept noisier readings. A reading that fails either has no distance (-1).',
+        },
+        {
+            type: 'evn_vl53l1x_detect',
+            message0: 'VL53L1X %1 detect things %2 %3 mm',
+            args0: [
+                portField(I2C_PORTS),
+                { type: 'field_dropdown', name: 'WINDOW', options: [['closer than', 'below'], ['further than', 'above']] },
+                { type: 'input_value', name: 'MM', check: 'Number' },
+            ],
+            inputsInline: true, previousStatement: null, nextStatement: null, style: 'evn_sense_blocks',
+            tooltip: 'The sensor itself checks every reading against this distance: from now on only readings that meet it have a distance, the others have none (-1: "not detected", or a reading the sensor itself rejects). Use "VL53L1X detects" to test it; "report every reading" undoes it.',
+        },
+        {
+            type: 'evn_vl53l1x_detect_window',
+            message0: 'VL53L1X %1 detect things %2 %3 to %4 mm',
+            args0: [
+                portField(I2C_PORTS),
+                { type: 'field_dropdown', name: 'WINDOW', options: [['between', 'inside'], ['outside', 'outside']] },
+                { type: 'input_value', name: 'LOW', check: 'Number' },
+                { type: 'input_value', name: 'HIGH', check: 'Number' },
+            ],
+            inputsInline: true, previousStatement: null, nextStatement: null, style: 'evn_sense_blocks',
+            tooltip: 'The sensor itself checks every reading against this window (the first distance smaller than the second): only readings that meet it have a distance, the others have none (-1). Use "VL53L1X detects" to test it.',
+        },
+        {
+            type: 'evn_vl53l1x_detect_off',
+            message0: 'VL53L1X %1 report every reading',
+            args0: [portField(I2C_PORTS)],
+            previousStatement: null, nextStatement: null, style: 'evn_sense_blocks',
+            tooltip: 'Stop detecting: every reading has its distance again (the start-up behaviour).',
+        },
+        {
+            type: 'evn_vl53l1x_detected',
+            message0: 'VL53L1X %1 detects',
+            args0: [portField(I2C_PORTS)],
+            output: 'Boolean', style: 'evn_sense_blocks',
+            tooltip: 'True when the latest reading saw something, was valid and met the "detect things" setting (the sensor\'s own check); with nothing in range it stays false. Set one of the "detect things" blocks first.',
+        },
+        {
+            type: 'evn_vl53l1x_calibrate',
+            message0: 'calibrate VL53L1X %1 %2 with a flat target at %3 mm',
+            args0: [
+                portField(I2C_PORTS),
+                { type: 'field_dropdown', name: 'WHAT', options: [['offset', 'offset'], ['crosstalk (cover window)', 'crosstalk']] },
+                { type: 'input_value', name: 'MM', check: 'Number' },
+            ],
+            inputsInline: true, previousStatement: null, nextStatement: null, style: 'evn_sense_blocks',
+            tooltip: 'ST\'s calibration, stored on the board for this port: hold a flat grey or white card square to the sensor at exactly this distance (measure it; ST suggests 100 mm for the offset), nothing else in view, for about 2 seconds. Offset: corrects the distance the sensor reads. Crosstalk: only for a sensor behind a cover window, at the distance where the window starts to make it read short. The program stops with an error when too few readings are valid.',
+        },
+        {
+            type: 'evn_vl53l1x_clear_calibration',
+            message0: 'VL53L1X %1 clear calibration',
+            args0: [portField(I2C_PORTS)],
+            previousStatement: null, nextStatement: null, style: 'evn_sense_blocks',
+            tooltip: 'Put the sensor\'s own offset and crosstalk back and erase this port\'s stored calibration.',
+        },
+        {
             type: 'evn_tcs3430_setup',
             message0: 'set up TCS3430 colour sensor on port %1',
             args0: [portField(I2C_PORTS)],
@@ -819,12 +908,13 @@
                 {
                     type: 'field_dropdown', name: 'WHAT', options: [
                         ['X', 'xyz()[0]'], ['Y (brightness)', 'xyz()[1]'], ['Z', 'xyz()[2]'], ['infrared', 'ir()'],
+                        ['far infrared (measured now)', 'ir2()'],
                         ['hue (0-359)', 'hsv().h'], ['saturation (0-100)', 'hsv().s'], ['brightness (0-100)', 'hsv().v'],
                     ],
                 },
             ],
             output: 'Number', style: 'evn_sense_blocks',
-            tooltip: 'One number out of the reading: X, Y and Z (raw counts) follow the way the eye sees colour, Y being the brightness; infrared is the IR channel; or hue / saturation / brightness.',
+            tooltip: 'One number out of the reading: X, Y and Z (raw counts) follow the way the eye sees colour, Y being the brightness; infrared is the IR channel; far infrared is the second IR channel, measured when asked (it takes about two readings, and X pauses meanwhile); or hue / saturation / brightness.',
         },
         {
             type: 'evn_tcs3430_calibrate',
@@ -834,7 +924,48 @@
                 { type: 'field_dropdown', name: 'WHAT', options: [['black (nothing in front)', 'black'], ['white (a white sheet)', 'white']] },
             ],
             previousStatement: null, nextStatement: null, style: 'evn_sense_blocks',
-            tooltip: 'Take the reading now as the black (nothing in front of the sensor) or the white (a white sheet where the colours will be read). Do black, then white, at the start of the program: without them the warm LED makes white read yellow.',
+            tooltip: 'Take the reading now as the black (nothing in front of the sensor) or the white (a white sheet where the colours will be read), black first. The board stores it for the port, so later programs start calibrated: once is enough (the Board view\'s Calibrate does the same). Without it the warm LED makes white read yellow.',
+        },
+        {
+            type: 'evn_tcs3430_wait',
+            message0: 'set TCS3430 %1 wait between readings to %2 ms',
+            args0: [portField(I2C_PORTS), { type: 'input_value', name: 'MS', check: 'Number' }],
+            inputsInline: true, previousStatement: null, nextStatement: null, style: 'evn_sense_blocks',
+            tooltip: 'A pause after each reading, 0 (none, the start-up value) to 8540 ms: a reading then comes every integration time plus this wait.',
+        },
+        {
+            type: 'evn_tcs3430_autozero',
+            message0: 'set TCS3430 %1 auto-zero %2',
+            args0: [
+                portField(I2C_PORTS),
+                { type: 'field_dropdown', name: 'NTH', options: [['at the start only', '127'], ['every reading', '1'], ['every 10 readings', '10'], ['every 100 readings', '100'], ['never', '0']] },
+            ],
+            previousStatement: null, nextStatement: null, style: 'evn_sense_blocks',
+            tooltip: 'How often the sensor re-measures its own dark offset. At the start only is the chip\'s own setting; more often follows a temperature drift.',
+        },
+        {
+            type: 'evn_tcs3430_window',
+            message0: 'set TCS3430 %1 Z window %2 to %3 for %4',
+            args0: [
+                portField(I2C_PORTS), { type: 'input_value', name: 'LOW', check: 'Number' }, { type: 'input_value', name: 'HIGH', check: 'Number' },
+                { type: 'field_dropdown', name: 'PERS', options: [['1 reading', '1'], ['2 readings', '2'], ['3 readings', '3'], ['5 readings', '5'], ['10 readings', '10'], ['20 readings', '20'], ['60 readings', '60']] },
+            ],
+            inputsInline: true, previousStatement: null, nextStatement: null, style: 'evn_sense_blocks',
+            tooltip: 'Watch the Z channel (raw counts): when it stays below the low end or above the high end for this many readings in a row, "Z left the window" becomes true and stays true until cleared.',
+        },
+        {
+            type: 'evn_tcs3430_left_window',
+            message0: 'TCS3430 %1 Z left the window',
+            args0: [portField(I2C_PORTS)],
+            output: 'Boolean', style: 'evn_sense_blocks',
+            tooltip: 'True once Z has stayed outside the window set with "set TCS3430 Z window" (it stays true until cleared).',
+        },
+        {
+            type: 'evn_tcs3430_clear_window',
+            message0: 'clear TCS3430 %1 window flag',
+            args0: [portField(I2C_PORTS)],
+            previousStatement: null, nextStatement: null, style: 'evn_sense_blocks',
+            tooltip: 'Make "Z left the window" false again, ready for the next time.',
         },
         {
             type: 'evn_tcs3430_gain',
@@ -903,7 +1034,7 @@
             message0: 'IMU %1 %2',
             args0: [portField(I2C_PORTS), { type: 'field_dropdown', name: 'WHAT', options: [['is still', 'stationary()'], ['is ready (gyro settled)', 'ready()']] }],
             output: 'Boolean', style: 'evn_sense_blocks',
-            tooltip: 'is still: the robot is not moving or turning right now. is ready: the gyro has settled (a calibrated IMU at once; otherwise after about 15 s still), which "robot follows its gyro" waits for.',
+            tooltip: 'is still: the robot is not moving or turning right now. is ready: the gyro has settled and the IMU\'s tilt agrees with gravity (a calibrated IMU about a second after the robot is still; otherwise 10 to 27 s still), which "robot follows its gyro" waits for.',
         },
         {
             type: 'evn_imu_reset_heading',
@@ -1221,7 +1352,10 @@
      * "set up data log" block (or `DataLog(name='log')` without one). */
     const DATALOG_SOURCES = [['IMU', 'IMU'], ['compass', 'Compass'], ['colour sensor', 'ColorSensor'],
         ['distance sensor', 'DistanceSensor'], ['gesture sensor', 'GestureSensor'], ['weather sensor', 'EnvSensor'],
-        ['touch pads', 'TouchArray'], ['ADC', 'ADC'], ['battery', 'battery'], ['button', 'button']];
+        ['touch pads', 'TouchArray'], ['ADC', 'ADC'], ['battery', 'battery'], ['button', 'button'],
+        // the EVN Extended Peripherals evn.DataLog records (hal_datalog.c q_ht_color / q_ht_compass): deviceRef()
+        // names them as their own set-up blocks do (ht_color_N, ht_compass_N)
+        ['HiTechnic colour sensor', 'HiTechnicColorSensor'], ['HiTechnic compass', 'HiTechnicCompass']];
     Blockly.common.defineBlocksWithJsonArray([
         {
             type: 'evn_datalog_setup',
@@ -1254,7 +1388,7 @@
                 { type: 'input_value', name: 'RATE', check: 'Number' },
             ],
             inputsInline: true, previousStatement: null, nextStatement: null, style: 'evn_board_blocks',
-            tooltip: 'Add a sensor reading to the data log, before "start data log": the reading is the sensor\'s method name (IMU: heading, tilt, acceleration, angular_velocity; compass: heading; colour sensor: hsv, rgb, color, lux; distance sensor: distance; weather sensor: temperature, pressure, humidity; battery: voltage, cells; button: pressed; the full list is in the API reference). The port is the I2C port (ignored for the battery and the button). A rate above the sensor\'s own gives the sensor\'s (an IMU makes 200 readings a second, a compass 75, the battery 25).',
+            tooltip: 'Add a sensor reading to the data log, before "start data log": the reading is the sensor\'s method name (IMU: heading, tilt, acceleration, angular_velocity; compass: heading; colour sensor: hsv, rgb, color, lux; distance sensor: distance; weather sensor: temperature, pressure, humidity; HiTechnic colour sensor: rgb, color, color_number, hsv, reflection and, on a V2, color_index, normalized_rgb - each recorded while the program keeps the sensor\'s light on - and ambient, ambient_raw (V2, while the program keeps it off: the log never switches the light); HiTechnic compass: heading; battery: voltage, cells; button: pressed; the full list is in the API reference). The port is the I2C port (ignored for the battery and the button). A rate above the sensor\'s own gives the sensor\'s (an IMU makes 200 readings a second, a compass 75, the battery 25).',
         },
         {
             type: 'evn_datalog_run',
@@ -1303,7 +1437,7 @@
             message0: 'robot %2 its gyro: IMU on port %1',
             args0: [portField(I2C_PORTS), { type: 'field_dropdown', name: 'ON', options: [['follows', 'True'], ['stops following', 'False']] }],
             previousStatement: null, nextStatement: null, style: 'evn_motor_blocks',
-            tooltip: 'The robot itself, not just its wheels, follows every straight, turn and arc: the wheel encoders and an EVN IMU on this port track where the robot really is (evn.Pose) and each move is corrected as it goes, so scrub on a turn, a dragged cable and the gyro\'s drift no longer add up over minutes. Put it before the first move and keep the robot still: it waits (up to 30 s) for the IMU to settle. Uses the "set up robot" geometry; one per program (a second block only repeats the switch-on).',
+            tooltip: 'The robot itself, not just its wheels, follows every straight, turn and arc: the wheel encoders and an EVN IMU on this port track where the robot really is (evn.Pose) and each move is corrected as it goes, so scrub on a turn, a dragged cable and the gyro\'s drift no longer add up over minutes. Put it before the first move and keep the robot still: it waits (up to 35 s) for the IMU to settle. Uses the "set up robot" geometry; one per program (a second block only repeats the switch-on).',
         },
         {
             type: 'evn_drivebase_straight',
@@ -1734,7 +1868,8 @@
         'Compass', 'TouchArray', 'IMU', 'ADC', 'Display', 'MatrixLED', 'SevenSegmentLED', 'RGBLED', 'Servo', 'Bluetooth',
         'HiTechnicColorSensor', 'HiTechnicCompass', 'HuskyLens', 'VL53L1X', 'TCS3430',
         'DriveBase', 'Pose', 'DataLog', 'UART', 'I2C', 'Flash', 'reset', 'reset_cause', 'bootloader', 'autostart', 'core1_status', 'version',
-        'configure_motor', 'motor_config', 'calibration', 'clear_calibration', 'imu_calibration', 'compass_calibration', 'color_calibration', 'clock'];
+        'configure_motor', 'motor_config', 'calibration', 'clear_calibration', 'imu_calibration', 'compass_calibration', 'color_calibration',
+        'vl53l1x_calibration', 'clock'];
     const EVN_NAMES = CORE_NAMES.concat(DEVICE_NAMES);
 
     /* class -> [variable prefix, "set up" block type]. One object per port, named after the port
@@ -2335,6 +2470,35 @@
         const ms = ['15', '20', '33', '50', '100', '200', '500'].includes(block.getFieldValue('MS')) ? block.getFieldValue('MS') : '33';
         return deviceRef(block, 'VL53L1X') + '.timing_budget(' + ms + ')\n';
     };
+    generator.forBlock['evn_vl53l1x_inter'] = doInt('VL53L1X', 'inter_measurement', 'MS', '0');
+    generator.forBlock['evn_vl53l1x_roi'] = function (block) {
+        const side = (f) => (['16', '12', '8', '6', '4'].includes(block.getFieldValue(f)) ? block.getFieldValue(f) : '16');
+        return deviceRef(block, 'VL53L1X') + '.roi(' + side('W') + ', ' + side('H') + ')\n';
+    };
+    generator.forBlock['evn_vl53l1x_threshold'] = function (block) {
+        const what = block.getFieldValue('WHAT') === 'sigma_threshold' ? 'sigma_threshold' : 'signal_threshold';
+        return deviceRef(block, 'VL53L1X') + '.' + what + '(' + intValue(block, 'VALUE', what === 'sigma_threshold' ? '90' : '1024') + ')\n';
+    };
+    generator.forBlock['evn_vl53l1x_detect'] = function (block) {
+        const w = block.getFieldValue('WINDOW') === 'above' ? 'above' : 'below';
+        return deviceRef(block, 'VL53L1X') + '.distance_threshold(' + generator.quote_(w) + ', ' + intValue(block, 'MM', '200') + ')\n';
+    };
+    generator.forBlock['evn_vl53l1x_detect_window'] = function (block) {
+        const w = block.getFieldValue('WINDOW') === 'outside' ? 'outside' : 'inside';
+        return deviceRef(block, 'VL53L1X') + '.distance_threshold(' + generator.quote_(w) + ', ' + intValue(block, 'LOW', '100') + ', ' +
+            intValue(block, 'HIGH', '300') + ')\n';
+    };
+    generator.forBlock['evn_vl53l1x_detect_off'] = function (block) {
+        return deviceRef(block, 'VL53L1X') + '.distance_threshold(None)\n';
+    };
+    generator.forBlock['evn_vl53l1x_detected'] = call('VL53L1X', 'detected');
+    generator.forBlock['evn_vl53l1x_calibrate'] = function (block) {
+        const what = block.getFieldValue('WHAT') === 'crosstalk' ? 'crosstalk' : 'offset';
+        return deviceRef(block, 'VL53L1X') + '.calibrate_' + what + '(' + intValue(block, 'MM', '140') + ')\n';
+    };
+    generator.forBlock['evn_vl53l1x_clear_calibration'] = function (block) {
+        return deviceRef(block, 'VL53L1X') + '.clear_calibration()\n';
+    };
 
     generator.forBlock['evn_tcs3430_setup'] = setupGenerator('TCS3430');
     generator.forBlock['evn_tcs3430_color'] = call('TCS3430', 'color');
@@ -2353,6 +2517,19 @@
     };
     // integration_time(ms) takes a float (the nearest 2.78 ms step is set), so the input is not rounded
     generator.forBlock['evn_tcs3430_integration'] = doNumber('TCS3430', 'integration_time', 'MS', '100');
+    // wait_time(ms) takes a float as well (2.78 ms steps, then 33.36 ms steps)
+    generator.forBlock['evn_tcs3430_wait'] = doNumber('TCS3430', 'wait_time', 'MS', '0');
+    generator.forBlock['evn_tcs3430_autozero'] = function (block) {
+        const nth = ['127', '1', '10', '100', '0'].includes(block.getFieldValue('NTH')) ? block.getFieldValue('NTH') : '127';
+        return deviceRef(block, 'TCS3430') + '.autozero(' + nth + ')\n';
+    };
+    // thresholds() takes ints: the ends are rounded (intValue), the persistence is one of the chip's counts
+    generator.forBlock['evn_tcs3430_window'] = function (block) {
+        const pers = ['1', '2', '3', '5', '10', '20', '60'].includes(block.getFieldValue('PERS')) ? block.getFieldValue('PERS') : '1';
+        return deviceRef(block, 'TCS3430') + '.thresholds(' + intValue(block, 'LOW', '0') + ', ' + intValue(block, 'HIGH', '65535') + ', ' + pers + ')\n';
+    };
+    generator.forBlock['evn_tcs3430_left_window'] = call('TCS3430', 'interrupt');
+    generator.forBlock['evn_tcs3430_clear_window'] = doCall('TCS3430', 'clear_interrupt');
 
     generator.forBlock['evn_touch_setup'] = setupGenerator('TouchArray');
     generator.forBlock['evn_touch_any'] = call('TouchArray', 'pressed');
@@ -2776,6 +2953,15 @@
                         { kind: 'block', type: 'evn_vl53l1x_distance' },
                         { kind: 'block', type: 'evn_vl53l1x_mode' },
                         { kind: 'block', type: 'evn_vl53l1x_budget' },
+                        { kind: 'block', type: 'evn_vl53l1x_inter', inputs: { MS: shadowNum(100) } },
+                        { kind: 'block', type: 'evn_vl53l1x_roi' },
+                        { kind: 'block', type: 'evn_vl53l1x_threshold', inputs: { VALUE: shadowNum(1024) } },
+                        { kind: 'block', type: 'evn_vl53l1x_detect', inputs: { MM: shadowNum(200) } },
+                        { kind: 'block', type: 'evn_vl53l1x_detect_window', inputs: { LOW: shadowNum(100), HIGH: shadowNum(300) } },
+                        { kind: 'block', type: 'evn_vl53l1x_detected' },
+                        { kind: 'block', type: 'evn_vl53l1x_detect_off' },
+                        { kind: 'block', type: 'evn_vl53l1x_calibrate', inputs: { MM: shadowNum(140) } },
+                        { kind: 'block', type: 'evn_vl53l1x_clear_calibration' },
                     ]),
                     group('TCS3430 colour', 'evn_sense_category', [
                         { kind: 'block', type: 'evn_tcs3430_setup' },
@@ -2785,6 +2971,11 @@
                         { kind: 'block', type: 'evn_tcs3430_value' },
                         { kind: 'block', type: 'evn_tcs3430_gain' },
                         { kind: 'block', type: 'evn_tcs3430_integration', inputs: { MS: shadowNum(100) } },
+                        { kind: 'block', type: 'evn_tcs3430_wait', inputs: { MS: shadowNum(0) } },
+                        { kind: 'block', type: 'evn_tcs3430_autozero' },
+                        { kind: 'block', type: 'evn_tcs3430_window', inputs: { LOW: shadowNum(100), HIGH: shadowNum(900) } },
+                        { kind: 'block', type: 'evn_tcs3430_left_window' },
+                        { kind: 'block', type: 'evn_tcs3430_clear_window' },
                     ]),
                 ],
             },

@@ -1,6 +1,6 @@
 # Calibrating your robot
 
-Four parts of an EVN ALPHA robot are worth calibrating: each **motor**, the **IMU** (gyro and accelerometer), the **compass** and the **colour sensors** (`ColorSensor`, `GestureSensor`). Each calibration takes a few seconds to a minute, is stored on the board for that port, and is used by every program from then on, from any computer, after every reboot. You calibrate once, and again only when something on the robot changes.
+Four parts of an EVN ALPHA robot are worth calibrating: each **motor**, the **IMU** (gyro and accelerometer), the **compass** and the **colour sensors** (`ColorSensor`, `GestureSensor`); the extended **VL53L1X** distance sensor has its own offset calibration too. Each calibration takes a few seconds to a minute, is stored on the board for that port, and is used by every program from then on, from any computer, after every reboot. You calibrate once, and again only when something on the robot changes.
 
 | What | Why | Takes | Stored for | Do it again when |
 | :--- | :--- | :--- | :--- | :--- |
@@ -8,6 +8,7 @@ Four parts of an EVN ALPHA robot are worth calibrating: each **motor**, the **IM
 | [IMU](#imu) | removes the gyro's bias and the accelerometer's error, and finds which way the module is mounted, so the heading does not drift from the start and a level robot reads level | about 2 s still (one pose), or about 10 s with a half turn (two poses) | I2C port 1–16 | you move the module to another port, plug in another module, or change how it is mounted |
 | [Compass](#compass) | removes the pull of the robot's own iron (motors, battery, screws), so the heading points to magnetic north | about 20 s (planar) to a minute (full) of turning the robot | I2C port 1–16 | you move the motors, the battery or other metal parts, or the compass itself |
 | [Colour sensor](#colour-sensors) | takes the black (nothing in front) and the white (a white sheet), so a white reads white under the module's own light and colours are named reliably | two readings, a few seconds | I2C port 1–16 | you move the sensor to another height above the surface, change the light, or plug another sensor into the port |
+| [VL53L1X distance sensor](#vl53l1x-distance-sensor) (an extended peripheral) | corrects the distance it reads (the offset) and, behind a cover window, the light the window reflects (the crosstalk) | about 2 s with a flat card at a measured distance | I2C port 1–16 | you put a window in front of it, or plug another sensor into the port |
 
 You can calibrate from the extension's **Board view** (buttons on each row, no code), from **Python**, or from **blocks**. All three store the same record.
 
@@ -61,7 +62,7 @@ m = Motor(1)
 print(m.calibrate())      # (b0, tau_ms, v_break_mv, v_f_mv), after about 12 s
 ```
 
-Several motors in one go: start each with `wait=False` (the board measures them one after another in the background), then wait until none is busy. Do not call `calibrate()` again to wait: on a port that has already finished, that starts a new run.
+Several motors in one go: start each with `wait=False` (the board measures them one after another in the background), then wait until none is busy. A `calibrate()` on each port collects the results as well: it joins a run that is still going and hands over the result of one that has already finished (a command that moves, holds or stops the motor in between - `m.run()`, `m.stop()`, `m.hold()`, or its `DriveBase`, `close()`, a take-over, `evn.stop_all()` - drops that result, and the `calibrate()` then measures again; reads and settings - `m.angle()`, `m.speed()`, `m.reset_angle()`, `m.settings()` - do not).
 
 ```python
 import evn
@@ -237,16 +238,16 @@ print(c.calibrate_stop())             # the flash write happens with the motors 
 
 ## Colour sensors
 
-The colour sensor (`ColorSensor`, TCS34725) and the gesture sensor's colour (`GestureSensor`, APDS-9960) name a colour by its hue, saturation and brightness. The light the sensor sees by is not white (the module's LED is warm), so an uncalibrated white sheet reads as a pale yellow or orange, and nothing in front can read as a dark blue. A two-point calibration fixes both: the **black** (nothing in front, or a black target) is subtracted from every reading, and the **white** (a white sheet) is scaled to 100 %, so the white reads `s` 0, `v` 100 and every colour is judged against the sensor's own white. `color()` and `color_match()` then use it.
+The colour sensor (`ColorSensor`, TCS34725), the gesture sensor's colour (`GestureSensor`, APDS-9960) and the Extended `TCS3430` XYZ colour sensor name a colour by its hue, saturation and brightness. The light the sensor sees by is not white (the module's LED is warm), so an uncalibrated white sheet reads as a pale yellow or orange, and nothing in front can read as a dark blue. A two-point calibration fixes both: the **black** (nothing in front, or a black target) is subtracted from every reading, and the **white** (a white sheet) is scaled to 100 %, so the white reads `s` 0, `v` 100 and every colour is judged against the sensor's own white. `color()` and `color_match()` then use it.
 
 Hold the sensor where the colours will be read (the same height above the surface as on the robot): the calibration is only right at that distance and light.
 
 ### From the Board view
 
-1. Press the **pulse** button on the colour sensor's (or the gesture sensor's) row, or right-click → **Calibrate this colour sensor (black, then white)...**. The row reads *calibrating... black, then white*.
-2. **Step 1 of 2, the black.** The dialog says what to set up: for the colour sensor, nothing in front of it (or a black target) at the height it reads from; for the gesture sensor, the sensor **covered completely** (a hand or a black card on it). Press **Take the black**.
-3. **Step 2 of 2, the white.** Hold a white sheet in front: close to the colour sensor, at that same height; a few cm in front of the gesture sensor, in the room light, without shading the module. Press **Take the white**.
-4. A message gives the record the board stored: the chip, the black and the white (four numbers each: clear, red, green, blue, in counts per cycle at 1× gain), and says *and stored*, or *not yet in flash* when a motor was driving. Its **Clear calibration** button undoes it.
+1. Press the **pulse** button on the colour sensor's (or the gesture sensor's, or the TCS3430's) row, or right-click → **Calibrate this colour sensor (black, then white)...**. The row reads *calibrating... black, then white*.
+2. **Step 1 of 2, the black.** The dialog says what to set up: for the colour sensor and the TCS3430, nothing in front of it (or a black target) at the height it reads from (about 1 cm for the TCS3430, lit by its own LED); for the gesture sensor, the sensor **covered completely** (a hand or a black card on it). Press **Take the black**.
+3. **Step 2 of 2, the white.** Hold a white sheet in front: close to the colour sensor or the TCS3430, at that same height; a few cm in front of the gesture sensor, in the room light, without shading the module. Press **Take the white**.
+4. A message gives the record the board stored: the chip, the black and the white (four numbers each: clear, red, green, blue, in counts per cycle at 1× gain; the TCS3430's three: X, Y, Z), and says *and stored*, or *not yet in flash* when a motor was driving. Its **Clear calibration** button undoes it.
 
 ![The dialog "Calibrate the colour sensor on port 1, step 1 of 2: the black. Hold the sensor where it reads from on the robot (the same height above the surface), with nothing in front of it, or a black target. Then press Take the black.", with Take the black and Cancel](images/calibration-color-dialog.png)
 
@@ -275,7 +276,11 @@ print(cs.stored_calibration())   # {'calibrated': True, 'stored': True, 'chip': 
 
 Both are stored at once for the port, and every later `ColorSensor(5)` starts with them. A refused reading raises `ValueError` and says why: a white that is too dark or not brighter than the black, a white that saturates (lower `gain()`), a black that is too bright. `black_reference()` / `white_reference()` give the two readings back, `ColorSensor.ranges()` shows the same calibration as raw counts and can change it by hand for the running program only (a `ranges()` change is never written to the board: the next `ColorSensor(5)` starts with the stored calibration again, and a later `calibrate_black()` / `calibrate_white()` stores whatever is in force), and `black_reference(None)` / `white_reference(None)` forget one of them (stored). A gain or integration-time change keeps the calibration (take the white again for an exact white after a large gain change).
 
-**One colour calibration per port.** Calibrating a `GestureSensor` on a port replaces a `ColorSensor`'s record there, and the reverse. A record of the other chip is not installed, but `stored_calibration()['chip']` (and `evn.color_calibration(port)['chip']`) shows whose it is.
+**One colour calibration per port.** Calibrating a `GestureSensor` on a port replaces a `ColorSensor`'s record there, and the reverse; the same for a `TCS3430` and a `HiTechnicColorSensor`. A record of another chip is not installed, but `stored_calibration()['chip']` (and `evn.color_calibration(port)['chip']`) shows whose it is.
+
+The Extended `TCS3430` works the same way (`TCS3430(port).calibrate_black()`, then `calibrate_white()`; `stored_calibration()` shows `'chip': 'TCS3430'` with the black and white as X, Y, Z per cycle at 1× gain, the white net of the black), with the module's own LED at about 1 cm ([its section](API_EXTENDED.md#tcs3430--xyz-colour-and-ambient-light-sensor)).
+
+The Extended `HiTechnicColorSensor` works the same way (2026-09-28): `HiTechnicColorSensor(port).calibrate_black()`, then `calibrate_white()`, at the distance the colours will be read (its own LED lights the target), or the Board view's **pulse** button on its row. `stored_calibration()` shows `'chip': 'HiTechnic Color V2'` (or `'HiTechnic Color V1'`) with the black and the white as the sensor's own R, G, B counts (0..255); a V2's record is not used by a V1 on the port and the reverse ([its section](API_EXTENDED.md#hitechniccolorsensor--hitechnic-nxt-color-sensor-v1--v2)).
 
 ### The gesture sensor is different
 
@@ -299,33 +304,57 @@ This procedure is not yet benched (no APDS-9960 on the bench rig).
 | :--- | :--- |
 | **calibrate colour sensor** *1* *black (nothing in front)* / *white (a white sheet)* | takes the black or the white of the colour sensor, stored for the port |
 | **calibrate gesture sensor** *1* **colour** *black (covered)* / *white (a white sheet)* | the same for the gesture sensor: turn its gesture engine off first, black with the sensor covered |
+| **calibrate TCS3430** *1* *black (nothing in front)* / *white (a white sheet)* | the same for the TCS3430, stored for the port |
 
 ### When to calibrate a colour sensor again
 
 - after changing how high the sensor sits above the surface, or the light around it;
-- after plugging another colour sensor (or a gesture sensor) into the port: the board keeps one colour calibration per port.
+- after plugging another colour sensor (or a gesture sensor, or a TCS3430) into the port: the board keeps one colour calibration per port.
+
+## VL53L1X distance sensor
+
+The VL53L1X (an [extended peripheral](API_EXTENDED.md#vl53l1x--time-of-flight-distance-sensor-up-to-4-m)) comes calibrated from the factory, and a port that was never calibrated keeps the sensor's own values. ST's two calibrations correct what the factory could not know: the **offset** (a sensor that reads a few millimetres long or short) and, for a sensor behind a cover window, the **crosstalk** (light the window reflects back, which makes near targets read short). There is no Board view button: calibrate from Python or blocks; the sensor's row shows the port's calibration (the offset, the crosstalk, the date) and its tooltip the target and the spread of the readings it came from.
+
+Hold a flat card, grey or white (ST's reference is grey, 17 % reflectance), square to the sensor at a distance you have measured from its glass with a ruler, nothing else in view, for about 2 seconds:
+
+```python
+from evn import VL53L1X
+tof = VL53L1X(1)
+print(tof.calibrate_offset(140), "mm")      # the card exactly 140 mm away; ST suggests 100 mm
+# behind a cover window only, and after the offset: the card where the window starts to make it read short
+# print(tof.calibrate_crosstalk(300), "cps")
+print(tof.stored_calibration())             # the target, the spread of the 50 readings, the sensor's own values
+```
+
+The block is **calibrate VL53L1X** *1* *offset* / *crosstalk (cover window)* **with a flat target at** *140* **mm**. A calibration takes 50 valid readings; it is refused (`ValueError`) when fewer than 50 of 100 were valid (no card, or the card not where you said) or the offset would pass ±1023 mm. `offset(mm)` and `crosstalk(cps)` set the values by hand, and `offset(None)` / `crosstalk(None)` put the sensor's own back.
+
+### When to calibrate the VL53L1X again
+
+- after putting a window in front of it (the crosstalk, then the offset again);
+- after plugging another VL53L1X into the port: nothing identifies the sensor, so the new one gets the port's calibration. Clear it, then unplug and replug the sensor to get its own values back.
 
 ## Checking and clearing calibrations
 
-The Board view's rows always show the state. In Python, four functions read the stored records without opening the device:
+The Board view's rows always show the state. In Python, five functions read the stored records without opening the device:
 
 | Call | Returns |
 | :--- | :--- |
 | `evn.calibration(port)` | motor port 1–4: `calibrated`, `stored`, `stamp` (the date as seconds since 1970, 0 when unknown), the measured numbers, `encoder_reversed`, the detent period (`cogging_edges`, `cogging_measured`, `cogging_confidence`, `cogging_note`), `warning` and `error` |
 | `evn.imu_calibration(port)` | I2C port 1–16: `calibrated`, `stored`, `pending`, `stamp`, the gyro bias and accelerometer error, the axes, `accel_calibrated`, `tilt`, `warning`, `error` |
 | `evn.compass_calibration(port)` | I2C port 1–16: `calibrated`, `stored`, `pending`, `stamp`, `planar`, `coverage`, `residual`, `field`, the axes, the chip, `error` |
-| `evn.color_calibration(port)` | I2C port 1–16: `calibrated`, `chip` (`'TCS34725'` or `'APDS9960'`), `stored`, `pending`, `stamp`, `black`, `white`, `error` |
+| `evn.color_calibration(port)` | I2C port 1–16: `calibrated`, `chip` (`'TCS34725'`, `'APDS9960'`, `'TCS3430'`, `'HiTechnic Color V2'` or `'HiTechnic Color V1'`), `stored`, `pending`, `stamp`, `black`, `white`, `error` |
+| `evn.vl53l1x_calibration(port)` | I2C port 1–16: `calibrated`, `stored`, `pending`, `stamp`, `offset`, `offset_target`, `offset_sd`, `crosstalk`, `crosstalk_target`, `crosstalk_sd`, `part_offset`, `part_crosstalk` |
 
-In the three I2C records, `pending` is about that port alone: its own change (a calibration or a clear) is waiting for the motors to stop before it reaches the flash; another port's waiting write does not count. `stored` is true when the port has a record and nothing of it waits.
+In the I2C records, `pending` is about that port alone: its own change (a calibration or a clear) is waiting for the motors to stop before it reaches the flash; another port's waiting write does not count. `stored` is true when the port has a record and nothing of it waits.
 
 ```python
 import evn
 print(evn.calibration(1)["calibrated"], evn.imu_calibration(3)["stamp"])
 ```
 
-To **clear** a calibration: right-click the row → **Clear calibration** (**Clear this motor port's calibration...**, **Clear this IMU's calibration...**, **Clear this compass's calibration...**, **Clear this colour sensor's calibration...**), or in Python `evn.clear_calibration(port)` for a motor, `imu.clear_calibration()`, `c.clear_calibration()`, `cs.clear_calibration()` for a colour or gesture sensor. A motor goes back to its model's defaults, an IMU to its factory trim, a compass to the raw field, a colour sensor to its uncalibrated reading. Like storing, clearing is a flash write that waits for every motor to stop. An IMU's, a compass's or a colour sensor's `clear_calibration()` returns `False` only while its own old record is still in flash, waiting for the motors to stop before it is cleared; when nothing of that calibration is in flash (nothing stored, a record that never got there, or, for a colour sensor, only the other sensor's record, which is left alone) it returns `True`, even while another port's write waits, and a port with nothing stored writes nothing. Each row's *not yet in flash* is about that row's own record too.
+To **clear** a calibration: right-click the row → **Clear calibration** (**Clear this motor port's calibration...**, **Clear this IMU's calibration...**, **Clear this compass's calibration...**, **Clear this colour sensor's calibration...**), or in Python `evn.clear_calibration(port)` for a motor, `imu.clear_calibration()`, `c.clear_calibration()`, `cs.clear_calibration()` for a colour or gesture sensor, `tof.clear_calibration()` for a VL53L1X (the sensor's own offset and crosstalk back). A motor goes back to its model's defaults, an IMU to its factory trim, a compass to the raw field, a colour sensor to its uncalibrated reading. Like storing, clearing is a flash write that waits for every motor to stop. An IMU's, a compass's or a colour sensor's `clear_calibration()` returns `False` only while its own old record is still in flash, waiting for the motors to stop before it is cleared; when nothing of that calibration is in flash (nothing stored, a record that never got there, or, for a colour sensor, only the other sensor's record, which is left alone) it returns `True`, even while another port's write waits, and a port with nothing stored writes nothing. Each row's *not yet in flash* is about that row's own record too. While a motor drives and another kind's calibration (say the colour sensor's) is still waiting for the flash, clearing a stored record is refused with `RuntimeError` and nothing changes - a calibration or collection in progress goes on: stop the motors and clear again. A flash write that fails (`OSError`) still clears the calibration in force; the board keeps the clear and retries it at every read of the calibration, so the Board view says *uncalibrated, but the flash write failed* (a power-off before the retry succeeds brings the old calibration back), or that the retry wrote it.
 
-Where it is kept: each kind has its own page in the board's flash (motor, IMU, compass and colour records, one entry per port), apart from your files. Flashing a new firmware keeps them, as it keeps your files.
+Where it is kept: each kind has its own page in the board's flash (motor, IMU, compass, colour and VL53L1X records, one entry per port), apart from your files. Flashing a new firmware keeps them, as it keeps your files.
 
 ## When something goes wrong
 
@@ -338,6 +367,7 @@ Where it is kept: each kind has its own page in the board's flash (motor, IMU, c
 | *the compass on port N was not calibrated: …* / `ValueError: calibration refused: …` | too few directions: keep turning, lighting the dark dots (full: tip the robot onto its sides and upside down too) |
 | a high fit error | calibrate again away from magnets and steel, turning more slowly |
 | *the black / white of the colour sensor on port N was refused: ValueError: …* | the sensor's reason, word for word: a saturated white needs a lower `gain()` (the row's pencil button), a dark white a white sheet closer (or, on the gesture sensor, a longer `integration_time()`), a bright black nothing in front (the gesture sensor covered); then **Try again** |
+| *calibrated for now, but not stored: a motor is driving and another calibration waits for the flash* / `RuntimeError: a motor is driving and another calibration waits for the flash` | stop every motor, then calibrate or clear again (the waiting calibration is written first) |
 | the calibration buttons are missing | the live console is not connected: see [Getting started](GETTING_STARTED.md), §3b |
 
 The complete calls, with every argument and error, are in the [API reference](API_ROBOT.md#calibration-records-evncalibration).

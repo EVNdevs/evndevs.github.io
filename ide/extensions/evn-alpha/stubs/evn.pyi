@@ -172,9 +172,12 @@ class Motor:
     (``evn.configure_motor()`` / the extension's Board view, stored on the board), else the one its stored
     calibration was made for, else the firmware's fallback table; ``model=`` names a standard one for this
     session (below). A custom motor's no-load speed is its speed limit and 100 %, its rated voltage its cap.
-    A port already held by an open Motor raises ``OSError(EBUSY)`` until it is ``close()``d;
-    a port outside 1..4 raises ``ValueError``. Every call after ``close()`` raises
-    ``RuntimeError("motor closed; create a new Motor")``.
+    A second ``Motor(port)`` while an older object holds the port takes the port over: the axis coasts, a
+    ``calibrate(wait=False)`` the older object started there stops, a ``DriveBase`` it is a wheel of closes (its
+    Pose with it), and every call on the older object raises ``RuntimeError("Motor(n) was replaced by a newer
+    Motor(n)")`` while its ``close()`` does nothing - so a re-run cell simply works. The new object starts as it
+    would after a ``close()`` of the older one. A port outside 1..4 raises ``ValueError``. Every call after
+    ``close()`` raises ``RuntimeError("motor closed; create a new Motor")``.
 
     Runaway guard: a motor whose encoder counts against its drive (a JGA25 or Pololu 25D on the EVN cable
     before ``calibrate()`` flipped it) runs away under any closed-loop command. The motion engine coasts it
@@ -247,9 +250,10 @@ class Motor:
 
     # stopping
     def stop(self) -> None:
-        """Coast (release the motor)."""
+        """Coast (release the motor). Returns once the motor has taken the command (at most 2 ms), so a file
+        write straight after it is not refused."""
     def brake(self) -> None:
-        """Passive brake."""
+        """Passive brake. Returns once the motor has taken it (at most 2 ms), as ``stop()``."""
     def hold(self) -> None:
         """Actively hold the current angle."""
 
@@ -316,7 +320,10 @@ class Motor:
         breakaway voltage in mV, kinetic friction voltage in mV); the result is stored in flash, loaded at
         every boot, and sets this port's ``full_speed()``. Re-run after swapping the motor.
         ``wait=False`` starts it and returns None; a later ``calibrate()`` on the same port joins it and
-        returns the result, so several ports can calibrate together. ``RuntimeError`` when the shaft does
+        returns the result, so several ports can calibrate together - and once that run has finished, the
+        next ``calibrate()`` returns its result at once instead of measuring again. A command that moves,
+        holds or stops the motor (or its DriveBase, ``close()``, a take-over, ``evn.stop_all()``) drops it;
+        reads and settings do not - after a drop, ``calibrate()`` measures afresh. One stored record per port. ``RuntimeError`` when the shaft does
         not break away or the fit fails. A result with a warning (the drift check: the mechanism ran more
         than 3 % faster or slower at the end than at the start - calibrate again after a minute of running)
         prints ``WARNING: Motor(n): ...`` once (``evn.calibration(port)["warning"]`` holds it). The
@@ -331,7 +338,10 @@ class Motor:
         period. A custom motor that cogs then gets what a library motor with detents has: the cogging
         feed-forward (amplitude = breakaway minus running friction) and the detent rest at the end of a move
         (half a detent pitch plus a quarter edge of tolerance); a library motor keeps its library figure and the measurement only
-        checks it. ``evn.calibration(port)["cogging_edges"]`` says what the port runs on."""
+        checks it. ``evn.calibration(port)["cogging_edges"]`` says what the port runs on. On a port with the
+        cogging feed-forward the waiting call returns once the coasted shaft has rested 0.3 s after the
+        calibration (the feed-forward's detent phase is taken from that rest; at most 0.6 s more), so the
+        first move after it runs with the feed-forward."""
 
     # settings
     @overload
@@ -345,7 +355,9 @@ class Motor:
         actions time out); 0 waits forever as Pybricks does. A ``DriveBase`` wait uses the shorter of its two
         wheels' timeouts."""
     def close(self) -> None:
-        """Coast, free the port. Every later call raises ``RuntimeError``."""
+        """Coast, free the port, and return once the coast has landed (a file write next is not refused).
+        Every later call raises ``RuntimeError``. On an object a newer ``Motor(port)`` took the port over
+        from, nothing (the port is the newer one's)."""
     def __enter__(self) -> "Motor": ...
     def __exit__(self, *args: object) -> None: ...
 
@@ -367,9 +379,11 @@ class DriveBase:
     started on the same 1 kHz tick, so the wheels stay proportional and a straight is straight. A direct
     ``Motor`` command on one wheel while a maneuver is in force coasts the other wheel (Pybricks).
     A motor that already belongs to a DriveBase is taken over (that base is closed), so re-running the
-    ``DriveBase(...)`` line with the same ``Motor`` objects works; re-running a whole cell raises
-    ``OSError(EBUSY)`` at its first ``Motor(port)`` whose port is still held. ``ValueError`` for a
-    motor used twice or a geometry outside 1..1000 / 1..2000 mm; ``RuntimeError`` after ``close()``.
+    ``DriveBase(...)`` line with the same ``Motor`` objects works, and so does a whole re-run cell: a new
+    ``Motor(port)`` on a wheel's port closes the base the old Motor belonged to (its next call raises
+    ``RuntimeError("drive base closed: Motor(n) was replaced by a newer Motor(n); create a new DriveBase")``).
+    ``ValueError`` for a motor used twice or a geometry outside 1..1000 / 1..2000 mm; ``RuntimeError`` after
+    ``close()``.
 
     **The base's pose.** ``imu=`` / ``compass=`` (the I2C ports 1..16 of existing ``IMU`` / ``Compass`` objects)
     make the base build and own an ``evn.Pose`` from its own geometry: the two motor ports, ``wheel_diameter``,
@@ -426,9 +440,9 @@ class DriveBase:
         command; both wheels ramp to their new speeds together, and if one would exceed the weaker wheel's
         limit both are scaled so the radius is kept."""
     def stop(self) -> None:
-        """Coast both wheels."""
+        """Coast both wheels; returns once they have taken it (at most 2 ms: a file write next is not refused)."""
     def brake(self) -> None:
-        """Passive brake on both wheels."""
+        """Passive brake on both wheels; returns once they have taken it, as ``stop()``."""
     def distance(self) -> int:
         """mm driven since ``reset()`` (the mean of the two wheels, from the encoders)."""
     def angle(self) -> int:
@@ -461,7 +475,8 @@ class DriveBase:
         it adopts that one after the full check (ports, directions, gears, wheel diameter and axle track: a
         ``ValueError`` names what differs) and holds it from then on, so ``robot.pose`` returns it. With no pose
         anywhere: ``ValueError`` ("DriveBase(..., imu=port) builds one, pose= takes yours"). With an IMU on the Pose it
-        first waits (up to 30 s) for ``IMU.ready()`` - the DMP calibrates its gyro 8..25 s into stillness, and a
+        first waits (up to 35 s) for ``IMU.ready()`` - about a second of stillness with a stored IMU calibration,
+        8..25 s while the DMP learns its gyro bias without one and the orientation settles a second or two after - and a
         loop armed before that would correct toward a drifting heading (Pybricks calibrates the hub IMU before any
         program runs, so its users never see this); ``OSError`` if it never comes (the robot was moving), when the
         pose has no estimate yet, and from the next maneuver if the base's ``Pose`` was closed or replaced meanwhile
@@ -504,7 +519,7 @@ class DriveBase:
         """Coast both wheels and release them (the ``Motor`` objects stay open; a new DriveBase can use them).
         Closes a ``Pose`` the base built (``imu=`` / ``compass=``), and one an old base built and handed over
         (``pose=old.pose``: the ownership comes with it); a Pose the program built and gave it (``pose=``) or
-        left for ``use_gyro`` to adopt stays the program's."""
+        left for ``use_gyro`` to adopt stays the program's. Returns once the coasts have landed."""
     def __enter__(self) -> DriveBase: ...
     def __exit__(self, *args: object) -> None: ...
     def _wheels(self) -> Tuple[float, float, float, float]:
@@ -579,6 +594,9 @@ class Servo:
     ``close()`` and a soft reset (Ctrl-D) drop the claim. A new object drives its port even after
     ``disable()`` on an earlier one, and the constructor waits up to 10 ms for a just-closed strip
     to hand the channel back (its dark frame goes out first); a strip that is still open raises at once.
+    A second ``Servo(n)`` while an older object lives takes the port over: the pulse is the new object's
+    from its first frame, every call on the older one raises ``ValueError("Servo(n) was replaced by a newer
+    Servo(n)")`` and its ``close()`` does nothing.
 
     Raises: ``ValueError`` for a port outside 1..4, an unknown profile name, a pulse range outside
     ``200 <= min_us < max_us <= 2800``, a range outside 0..3600, a start outside the range, a
@@ -628,7 +646,8 @@ class Servo:
     def close(self) -> None:
         """Give the channel back (the pulse stops, the pin goes low) so an ``RGBLED`` strip or a new
         ``Servo`` object can take the port without a soft reset. Idempotent; every other method then
-        raises ``ValueError("Servo is closed")``, ``done()`` and ``profile()`` included."""
+        raises ``ValueError("Servo is closed")``, ``done()`` and ``profile()`` included. On an object a
+        newer ``Servo(n)`` took the port over from, nothing."""
 
 
 class I2C:
@@ -646,7 +665,9 @@ class I2C:
 
     Errors: ``OSError(ENODEV)`` nothing answered at that address; ``OSError(EIO)`` the device
     answered but refused a byte; ``OSError(ETIMEDOUT)`` the bus was held and has been reset
-    (``stats()`` counts it). ``stats()``'s ``errors`` are failed transactions since boot; the expected NACK of
+    (``stats()`` counts it). A bus still held after its reset (``stats()``'s ``stuck``) raises
+    ``OSError(ETIMEDOUT)`` at once, without waiting out the deadline; the reset is tried again as
+    soon as the lines are free, else about every 130 ms. ``stats()``'s ``errors`` are failed transactions since boot; the expected NACK of
     a probe, of a constructor's ID-register identify on an empty port or of a driver's re-probe of an unplugged
     device is not one, so a climbing count means a real fault. ``ValueError`` for a port outside 1..16, an address outside
     0x01..0x77 (0x01..0x07 reach NXT-era sensors: 0x01 is the NXT's 8-bit address 0x02; 0x00, the
@@ -654,6 +675,8 @@ class I2C:
 
     Every port has its own clock: 400 kHz unless ``I2C(port, freq=...)`` or an extended peripheral
     (``HiTechnicColorSensor``, ``HiTechnicCompass``: 100 kHz) slowed it; the other ports keep theirs.
+    The clock period is exactly 1 / rate before the lines' own rise time adds to it, so a port never
+    runs faster than its rate.
     The soft reset at the end of a program puts every port back at 400 kHz.
 
     A scan of a port that carries an ``IMU`` pops one byte of the chip's FIFO (the driver heals it
@@ -887,17 +910,21 @@ class ColorSensor:
         argument raises ``ValueError`` (use ``calibrate_white()``)."""
     def stored_calibration(self) -> dict:
         """This port's stored colour calibration, as ``evn.color_calibration(port)``: ``{"port",
-        "calibrated", "chip" ('TCS34725' / 'APDS9960' / None), "stored" (this port's record is in
-        flash), "pending" (a running motor kept this port's flash write back), "stamp" (seconds since
-        1970 UTC; 0 = the clock was not set), "black", "white" (per-cycle 1x-gain tuples or None),
-        "error" (why the last change was not stored, or None)}``."""
+        "calibrated", "chip" ('TCS34725' / 'APDS9960' / 'TCS3430' / 'HiTechnic Color V2' / 'HiTechnic
+        Color V1' / None: whose record the port holds, one per port), "stored" (this port's record is in
+        flash), "pending" (a running motor kept this port's flash write back), "stamp" (seconds since 1970
+        UTC; 0 = the clock was not set), "black", "white" (``(C, R, G, B)`` per cycle at 1x gain, the
+        TCS3430's ``(X, Y, Z)``, a HiTechnic record's ``(R, G, B)`` counts, or None), "error" (why the last
+        change was not stored, or None; a failed flash write's note goes once the retry at a later read
+        writes it)}``."""
     def clear_calibration(self) -> bool:
         """Forget the port's stored calibration, then the one in force (every range); ``False`` while a
         running motor keeps the clear back and this sensor's old record is still in flash (the next
         ``stored_calibration()`` writes it once the motors stop); ``True`` when nothing of this
         sensor's is left in flash - also for a port with nothing stored, whatever another port waits for.
-        ``RuntimeError`` when another calibration waits for the flash, ``OSError`` when the write fails:
-        both leave the calibration in force as it was."""
+        ``RuntimeError`` when another calibration waits for the flash (a motor is driving): nothing changes.
+        ``OSError`` when the flash write fails: cleared all the same (stored and in force), and the next
+        ``stored_calibration()`` retries the write."""
     def ambient(self) -> int:
         """Clear channel as a percentage of full scale at the current integration time."""
     def lux(self) -> float:
@@ -1185,13 +1212,15 @@ class Compass:
         """This port's stored calibration: ``{"port", "calibrated", "busy", "stored" (this port's record
         is in flash), "pending" (this port's change waits for the flash: a motor was driving; another
         port's waiting write does not count), "stamp", "planar", "coverage" (0..1), "residual", "field"
-        (gauss), "samples", "chip", "top", "front", "offset" (gauss), "error"}``."""
+        (gauss), "samples", "chip", "top", "front", "offset" (gauss), "error" (why the last calibration was
+        not stored, or None; a failed flash write's note goes once the retry at a later read writes it)}``."""
     def clear_calibration(self) -> bool:
         """Forget this port's stored calibration and the one in force. ``True`` when nothing of it is
         left in flash (also for a port with nothing stored, or a record that never reached flash);
         ``False`` while a motor drives and the old record is still in flash, its clear waiting (the next
         ``stored_calibration()`` writes it). ``RuntimeError`` when another calibration waits for the
-        flash, ``OSError`` when the write fails."""
+        flash (a motor is driving): nothing changes, a collection in progress goes on. ``OSError`` when the
+        flash write fails: cleared all the same, and the next ``stored_calibration()`` retries the write."""
     @overload
     def calibration(self) -> Optional[Tuple[Tuple[float, float, float], Tuple[Tuple[float, float, float], Tuple[float, float, float], Tuple[float, float, float]]]]: ...
     @overload
@@ -1383,12 +1412,15 @@ class GestureSensor:
         """The white as ``(clear, red, green, blue)`` counts per 2.78 ms cycle at 1x gain, or ``None``;
         ``white_reference(None)`` clears it (and the stored one)."""
     def stored_calibration(self) -> dict:
-        """This port's stored colour calibration, the dict of ``evn.color_calibration(port)``."""
+        """This port's stored colour calibration, the dict of ``evn.color_calibration(port)``: "chip" is whose
+        record it is ('APDS9960', 'TCS34725', 'HiTechnic Color V2' / 'V1' or None), "black" / "white" are
+        ``(C, R, G, B)`` per cycle at 1x gain - a HiTechnic record's ``(R, G, B)`` counts - or None."""
     def clear_calibration(self) -> bool:
         """Forget the port's stored calibration, then the one in force; ``False`` while a running motor
         keeps the clear back and this sensor's old record is still in flash, ``True`` when nothing of it
         is left in flash (also for a port with nothing stored, whatever another port waits for).
-        ``RuntimeError`` / ``OSError`` leave both as they were."""
+        ``RuntimeError`` (another calibration waits for the flash) changes nothing; ``OSError`` (the flash
+        write failed) clears both all the same, and the next ``stored_calibration()`` retries the write."""
     @overload
     def detectable_colors(self) -> Sequence[Color]: ...
     @overload
@@ -1535,11 +1567,21 @@ class IMU:
     450..600 ms (DMP load), turning clockwise seen from above raises ``heading()`` (unwrapped past
     360), nose up gives a positive pitch, left side up a positive roll, ``up()`` names the side
     facing up, taps and the Android orientation are reported once each, and a hot-plug into the same
-    socket keeps the settings and the heading. The orientation starts at identity and settles within
-    ~10 s; the DMP calibrates its gyro 8..25 s into stillness (``ready()``), after which the heading
-    drifts about 0.2 degrees per 5 s. Keep the robot still for the first ~15 s (moved early, the DMP
-    may not calibrate for a long time - ``dmp(True, gyro_cal=False)`` then lets the driver average
-    the bias itself after 1 s still). A module mounted upside down needs ``axes(top='-z')``.
+    socket keeps the settings and the heading. The DMP starts from the side the module lies on (it
+    reads the accelerometer once at start), so ``tilt()``, ``up()`` and ``heading()`` are right from
+    the first reading whether the module is mounted upright or upside down. A module mounted on its
+    side, a robot started well off level or turned over just after ``IMU()`` takes a few seconds to
+    settle: meanwhile ``heading()`` follows the gyro's turn about the vertical (a turn is kept) and
+    ``ready()`` waits. Keep the robot still until ``ready()``: with a stored calibration
+    (``calibrate()``) that is about a second; without one the DMP learns its gyro bias 8..25 s into
+    stillness (moved early, it may not for a long time - ``dmp(True, gyro_cal=False)`` then lets the
+    driver average the bias itself after 1 s still, ``ready()`` in about 2 s). Once ready the heading
+    drifts about 0.2 degrees per 5 s - with a stored calibration or the DMP's own. With
+    ``dmp(True, gyro_cal=False)`` and no stored calibration the driver's bias corrects
+    ``angular_velocity()`` but not the orientation, so ``heading()`` drifts at the sensor's raw gyro
+    bias (about a degree per 5 s on the bench unit, more on others): ``calibrate()`` once removes it.
+    A module mounted upside down needs ``axes(top='-z')`` (``calibrate()`` sets it) for the body
+    frame to read upright.
 
     Raises: ``ValueError("port must be 1..16")``; ``OSError("no MPU-6500 on port %d (I2C 0x68)")``;
     ``OSError(EIO)`` when both slots are taken, ``OSError(ETIMEDOUT)`` for no first sample;
@@ -1551,7 +1593,11 @@ class IMU:
     Known limits: the gyro filter values 250 Hz and 3600 Hz are refused - they select the chip's
     8 kHz internal rate, where the sample-rate divider is ignored and the DMP's time base breaks.
     ``evn.I2C(port).scan()`` of this port pops one byte of the FIFO (the driver heals it with a FIFO
-    reset). One call can hold the I2C bus for up to ~3.7 ms while it drains the FIFO.
+    reset). One call can hold the I2C bus for about 1.5 ms (two 32-byte packets). When the board is
+    busy for a while - a file write, a display frame, a long ``print``, a big calculation - the waiting
+    packets (up to 140 ms of them) are read afterwards and none is lost, so ``heading()`` and the
+    quaternion carry on through it. After a longer pause the waiting packets are dropped, and a turn
+    made during that pause may be missing from ``heading()``.
     """
     def __init__(self, port: int, /, *, calibrate: bool = False) -> None:
         """Start the IMU on I2C port 1..16. The port's stored calibration (``calibrate()``) is applied
@@ -1572,8 +1618,8 @@ class IMU:
     def calibration(self) -> dict:
         """This port's stored calibration: ``{"port", "calibrated", "busy", "stored", "stamp" (seconds
         since 1970 UTC, 0 = the clock was not set), "gyro" (deg/s bias, sensor axes), "accel" (g error,
-        sensor axes), "top", "front", "temperature", "error" (why the last calibration failed, else
-        None), "pending" (this port's change waits for the flash: a motor was driving; another port's
+        sensor axes), "top", "front", "temperature", "error" (why the last calibration failed or was not
+        stored, else None; a failed flash write's note goes once the retry at a later read writes it), "pending" (this port's change waits for the flash: a motor was driving; another port's
         waiting write does not count), "accel_calibrated", "tilt" (degrees
         off level the accelerometer was calibrated at, None when it was not), "warning" (what the last
         calibration left out, or a caution; else None), "two_pose", "slope" (degrees a two-pose
@@ -1586,11 +1632,15 @@ class IMU:
         nothing of it is left in flash (also for a port with nothing stored, or a record that never
         reached flash); ``False`` while a motor drives and the old record is still in flash, its clear
         waiting (the next ``calibration()`` writes it). ``RuntimeError`` when another calibration waits
-        for the flash, ``OSError`` when the write fails."""
+        for the flash (a motor is driving): nothing changes, a calibration in progress goes on. ``OSError``
+        when the flash write fails: cleared all the same, and the next ``calibration()`` retries the write."""
     def quaternion(self) -> Tuple[float, float, float, float]:
         """``(w, x, y, z)``, unit (DMP mode only)."""
     def heading(self) -> float:
-        """Heading in degrees, clockwise positive; keeps growing past +/-180 (as Pybricks)."""
+        """Heading in degrees, clockwise positive; keeps growing past +/-180 (as Pybricks). Until the
+        orientation has settled (at once on a robot standing on its wheels, upright or upside-down module
+        alike) it follows the gyro's turn about the vertical instead of the orientation, so a turn made
+        meanwhile is kept."""
     def reset_heading(self, angle: float = 0, /) -> None:
         """The current pose reads as ``angle``."""
     def up(self) -> int:
@@ -1599,9 +1649,14 @@ class IMU:
         """True while angular velocity and acceleration vary less than the ``settings()`` thresholds
         over 250 ms."""
     def ready(self) -> bool:
-        """True once the gyro bias has settled: stationary with the calibrated gyro under the threshold
-        on every axis (the DMP calibrates 8..25 s into stillness; raw mode averages 1 s by itself
-        after 1 s still)."""
+        """True once the gyro bias has settled and the orientation has converged: stationary, the
+        calibrated gyro under the threshold on every axis, and (DMP) the orientation agreeing with the
+        accelerometer within 5 degrees (with ``dmp(True, gyro_cal=False)``, whose DMP never learns the
+        bias, also once it has settled where the bias holds it). With a stored calibration that is about
+        a second of stillness (a few more on a module mounted on its side); without one the DMP
+        calibrates 8..25 s into stillness and the orientation settles a second or two after; raw mode,
+        or ``dmp(True, gyro_cal=False)``, averages 1 s by itself after 1 s still. A ``reset_heading()``
+        once it is True holds."""
     @overload
     def settings(self) -> Tuple[float, float, float]: ...
     @overload
@@ -1638,7 +1693,8 @@ class IMU:
     def screen_orientation(self) -> Optional[str]:
         """``'portrait'``, ``'landscape'``, ``'reverse portrait'`` or ``'reverse landscape'`` of an
         orientation change not yet returned, else ``None`` - each event is reported once, as ``tap()``
-        does. **Chip frame**: the DMP's own x/y, which ``axes()`` does not remap (taps are remapped)."""
+        does. **The DMP's own x/y**, which ``axes()`` does not remap (taps are remapped): the sensor's x and y
+        for a module that started upright or on its side, its x and -y for one that started upside down."""
     def calibrate_gyro(self, samples: int = 500, /) -> Optional[Tuple[int, int, int]]:
         """Average ``samples`` (1..65535) still readings and subtract the bias; returns the bias in
         counts, or ``None`` while the DMP's own gyro calibration owns the bias (``dmp(True)`` with its
@@ -1660,7 +1716,8 @@ class IMU:
     def sample_rate(self) -> int: ...
     @overload
     def sample_rate(self, hz: int, /) -> None:
-        """DMP mode 12..200 Hz, raw mode 4..1000 Hz."""
+        """DMP mode 12..200 Hz, raw mode 4..1000 Hz. Raw mode reads the chip once a period, ~0.5 ms each:
+        at the default 1000 Hz about half of the processor time a program would otherwise get."""
     @overload
     def dmp(self) -> bool: ...
     @overload
@@ -1676,9 +1733,22 @@ class IMU:
         """Which chip axes point up and forward (``'x'``, ``'y'``, ``'z'``, ``'-x'`` ...); ``None``
         keeps the current value, two equal axes raise ``ValueError``."""
     def age(self) -> int:
-        """Milliseconds since the cached reading was taken."""
+        """Milliseconds since the sensor measured the cached reading (in DMP mode, when the chip produced
+        the packet - after a busy moment the queued packets are read a little late and ``age()`` says so)."""
     def close(self) -> None:
         """Put the MPU-6500 to sleep and release the port. Idempotent; every other call then raises ``ValueError("IMU is closed")``."""
+    def _fifo(self) -> Tuple[int, int, int, int, int, int, int, bool]:
+        """Bench hook, not for programs: ``(fifo_resets, dmp_restarts, pkt_index, pkt_epoch, pkt_time_us,
+        timestamp_us, dmp_up, attitude_ok)`` - the driver's FIFO resets (``dmp_restarts`` of them escalated to a DMP
+        restart), and its packet time base: packets decoded, the epoch (bumped whenever packets were dropped), when
+        the newest was produced and when it was read, on the board's microsecond clock; then the sensor axis the
+        DMP started from as up (3 = z, -3 = -z: upright or upside down, 0 = not chosen yet) and whether its
+        attitude gate is open (the orientation agreed with the accelerometer, or settled, since the DMP last
+        started; ``ready()`` also needs it to agree at that moment unless ``gyro_cal=False``)."""
+    def _factory_offsets(self) -> None:
+        """Bench hook, not for programs: this object runs as an uncalibrated module from now on (the chip's
+        factory trim, no gyro offset) until ``close()``; the port's stored calibration in flash is left alone
+        and the next ``IMU()`` applies it again."""
 
 
 class MatrixLED:
@@ -1942,7 +2012,9 @@ class Display:
     def splash(self) -> None:
         """The EVN logo."""
     def show(self) -> None:
-        """Push every pending change now and wait for it."""
+        """Push every pending change now and wait for it (about 30 ms for a whole new picture). While
+        an ``IMU`` or a ``Compass`` runs, their reads go between the picture's 16 chunks, so the IMU is
+        never left a whole picture behind; the picture then takes a few ms longer."""
     @overload
     def contrast(self) -> int: ...
     @overload
@@ -2235,23 +2307,32 @@ class Flash:
 class HiTechnicColorSensor:
     """HiTechnic NXT Color Sensor V1 or V2 (an EVN Extended Peripheral) on I2C port 1..16.
 
-    Address 0x01 (the NXT's 0x02), run at **100 kHz** on its port (the other ports stay at
-    400 kHz). Identified by its "HiTechnc" manufacturer string; V1 and V2 are told apart by the
-    type string ("Color" / "ColorPD"): ``version()`` returns 1 or 2. Readings come from a cache
-    refreshed every 10 ms. Bench-validated 2026-09-26 on a V2 (firmware V1.5); V1 support is from
-    the register map alone.
+    Address 0x01 (the NXT's 0x02), run at **100 kHz** on its port (the rate the bench found
+    reliable; the other ports stay at 400 kHz). Identified by its "HiTechnc" manufacturer string; V1
+    and V2 are told apart by the type string ("Color" / "ColorPD"): ``version()`` returns 1 or 2.
+    Readings come from a cache refreshed every 10 ms. Bench-validated 2026-09-26 and 2026-09-28
+    (colour index, normalised and passive R, G, B, 100 kHz data, stored calibration, DataLog) on a V2
+    (firmware V1.5); V1 support is from the register map alone (colour number and R, G, B only). A
+    garbled read (on a V2 a colour number above 17 or an index above 63, on a V1 all four bytes 0xFF)
+    is never returned: it counts as a bus error, and three in a row are treated as an unplug.
 
-    The V2 has three modes and switches on demand: ``color_number()``, ``rgb()``, ``hsv()``,
-    ``reflection()``, ``color()``, ``color_match()``, ``calibrate_black()`` and ``calibrate_white()``
-    read the active mode (LED on, ambient
-    cancelled), ``ambient()`` the passive mode (LED off), ``raw()`` the raw mode. A call that needs
-    another mode than the last one waits about **125 ms** for the first reading under it, so group
-    calls by mode (``rgb()`` and ``ambient()`` alternately in a loop run at ~4 Hz).
+    The V2 has three modes and switches on demand: ``color_number()``, ``color_index()``, ``rgb()``,
+    ``normalized_rgb()``, ``hsv()``, ``reflection()``, ``color()``, ``color_match()``,
+    ``calibrate_black()`` and ``calibrate_white()`` read the active mode (LED on, ambient
+    cancelled), ``ambient()`` / ``ambient_raw()`` the passive mode (LED off), ``raw()`` the raw mode.
+    A call that needs another mode than the last one waits about **125 ms** for the first reading
+    under it, so group calls by mode (``rgb()`` and ``ambient()`` alternately in a loop run at ~4 Hz).
+
+    The black / white calibration is **stored for the port** like a ``ColorSensor``'s: every later
+    ``HiTechnicColorSensor(port)`` starts with it (``stored_calibration()``, ``clear_calibration()``,
+    ``evn.color_calibration(port)``; one colour record per port, shared with the other colour
+    sensors).
 
     Raises: ``ValueError("port must be 1..16")``; ``OSError("no HiTechnic sensor on port %d (I2C
     0x01)")``; ``OSError("port %d has a HiTechnic Compass, not a HiTechnicColorSensor")``;
     ``OSError("no free HiTechnic slot (4 at once)")``; ``OSError("HiTechnicColorSensor on port %d
-    not responding")`` while unplugged; ``NotImplementedError`` from ``ambient()``, ``raw()`` and
+    not responding")`` while unplugged; ``NotImplementedError("... HiTechnic Color V2 only")`` from
+    ``color_index()``, ``normalized_rgb()``, ``ambient()``, ``ambient_raw()``, ``raw()`` and
     ``mains()`` on a V1; ``ValueError("HiTechnicColorSensor is closed")`` after ``close()``.
     """
     def __init__(self, port: int, /) -> None: ...
@@ -2262,28 +2343,46 @@ class HiTechnicColorSensor:
     def calibrate_black(self) -> None:
         """Take the current active-mode ``(R, G, B)`` as the black reference: nothing in front of the
         sensor (or a black target) where the colours will be read. A V2 is switched to active mode
-        first. Kept in RAM by this object (not stored on the board); V1 and V2. Call it, then
-        ``calibrate_white()``, at the start of a program."""
+        first. **Stored for the port** (flash, survives a reboot and a re-plug; every later
+        ``HiTechnicColorSensor(port)`` starts with it); V1 and V2 (a record is used only by the version
+        that made it). ``ValueError("the black reading is too bright: nothing (or a black target) in
+        front")`` when a channel reads 230 or more; ``ValueError("this black is as bright as the white
+        reference: the white was cleared, calibrate_white() again")`` when it leaves the white no room
+        (the black is taken and stored, the white cleared). One colour calibration per port: calibrating
+        a ``ColorSensor`` or ``GestureSensor`` on the port replaces this record and the reverse."""
     def calibrate_white(self) -> None:
         """Take the current active-mode ``(R, G, B)`` of a white target as the reference white. From
         then on each channel is (reading - black) / (white - black), clamped 0..100 %, before ``hsv()``,
-        ``color()`` and ``color_match()``. A V2 is switched to active mode first. ``ValueError("the white
-        target is not brighter than the black reference: hold a white sheet in front")`` when a channel is
-        not at least 10 % above the black."""
+        ``color()`` and ``color_match()``. A V2 is switched to active mode first. Stored for the port
+        like ``calibrate_black()``. ``ValueError("the white target is too dark or not brighter than the
+        black reference: hold a white sheet in front")`` when a channel is under 20 counts or not at
+        least 10 % above the black."""
     @overload
     def black_reference(self) -> Optional[Tuple[float, float, float]]: ...
     @overload
     def black_reference(self, value: None, /) -> None:
-        """The black reference as ``(R, G, B)`` in counts, or ``None`` when none is taken;
-        ``black_reference(None)`` clears it. Any other argument raises ``ValueError`` (use
-        ``calibrate_black()``)."""
+        """The black reference as ``(R, G, B)`` in active-mode counts 0..255, or ``None`` when none is
+        taken; ``black_reference(None)`` clears it (and the stored one). Any other argument raises
+        ``ValueError`` (use ``calibrate_black()``)."""
     @overload
     def white_reference(self) -> Optional[Tuple[float, float, float]]: ...
     @overload
     def white_reference(self, value: None, /) -> None:
-        """The reference white as ``(R, G, B)`` in counts, or ``None`` when none is taken;
-        ``white_reference(None)`` clears it. Any other argument raises ``ValueError`` (use
-        ``calibrate_white()``)."""
+        """The reference white as ``(R, G, B)`` in active-mode counts 0..255, or ``None`` when none is
+        taken; ``white_reference(None)`` clears it (and the stored one). Any other argument raises
+        ``ValueError`` (use ``calibrate_white()``)."""
+    def stored_calibration(self) -> dict:
+        """This port's stored colour calibration, as ``evn.color_calibration(port)``: ``{"port",
+        "calibrated", "chip" ('HiTechnic Color V2' / 'HiTechnic Color V1', or another colour sensor's
+        chip), "stored", "pending", "stamp", "black", "white" (``(R, G, B)`` counts or None), "error"}``."""
+    def clear_calibration(self) -> bool:
+        """Forget the port's stored calibration, then the one in force; ``False`` while a running motor
+        keeps the clear back and this sensor's old record is still in flash (the next
+        ``stored_calibration()`` writes it once the motors stop); ``True`` when nothing of this sensor's
+        is left in flash. A record another colour sensor made on the port is left alone. ``RuntimeError``
+        when another calibration waits for the flash (a motor is driving): nothing changes. ``OSError``
+        when the flash write fails: cleared all the same (stored and in force), and the next
+        ``stored_calibration()`` retries the write."""
     def color(self) -> Optional[Color]:
         """The ``detectable_colors()`` entry nearest the reading's HSV (Pybricks' matcher; calibrated
         after ``calibrate_black()`` / ``calibrate_white()``), or ``None`` when that set is empty."""
@@ -2297,9 +2396,17 @@ class HiTechnicColorSensor:
         """The colours ``color()`` chooses from. Default ``(Color.RED, Color.YELLOW, Color.GREEN,
         Color.BLUE, Color.WHITE, Color.NONE)``; anything that is not a ``Color`` raises ``TypeError``."""
     def color_number(self) -> int:
-        """The sensor's own colour number 0..17 (HiTechnic chart: 0 black ... 17 white)."""
+        """The sensor's own colour number 0..17 (HiTechnic chart: 0 black ... 17 white; a V1's is returned as
+        read, its chart unverified). The sensor gives no confidence with it; ``color_match()`` is the
+        classifier with one."""
+    def color_index(self) -> int:
+        """V2 only: the sensor's colour index 0..63, a 6-bit number of three 2-bit levels - bits 5-4 red,
+        3-2 green, 1-0 blue (``(i >> 4) & 3`` is the red level 0..3). Active mode."""
     def rgb(self) -> Tuple[int, int, int]:
         """``(r, g, b)`` 0..255, LED on, ambient light cancelled (V2)."""
+    def normalized_rgb(self) -> Tuple[int, int, int]:
+        """V2 only: the sensor's normalised ``(r, g, b)``: the strongest of the three set to 255 and the
+        other two in proportion - the colour without its brightness. Active mode."""
     def hsv(self) -> Color:
         """The active reading as a ``Color`` (``.h`` 0..359, ``.s`` 0..100, ``.v`` 0..100), through the
         black / white references when they are taken (``rgb()`` stays the sensor's own 0..255)."""
@@ -2307,6 +2414,9 @@ class HiTechnicColorSensor:
         """Reflected light 0..100 %: V2 the white channel / 255, V1 the mean of R, G, B / 255."""
     def ambient(self) -> int:
         """V2 only: the white channel with the LED off (passive mode), 16-bit counts."""
+    def ambient_raw(self) -> Tuple[int, int, int, int]:
+        """V2 only: ``(r, g, b, white)`` 16-bit counts with the LED off (passive mode): the colour of the
+        light falling on the sensor. ``ambient()`` is its white."""
     def raw(self) -> Tuple[int, int, int, int]:
         """V2 only: ``(r, g, b, white)`` 16-bit counts, LED on, no ambient cancellation."""
     def mains(self, hz: int, /) -> None:
@@ -2324,8 +2434,13 @@ class HiTechnicCompass:
     Address 0x01 (the NXT's 0x02), run at **100 kHz** on its port; identified by the "HiTechnc"
     manufacturer string and the "Compass" type string. The heading is read every 10 ms into a
     cache. A heading only, in whole degrees (the sensor's resolution): no field vector and no
-    ``heading_confidence()`` (the standard ``Compass`` has both). Keep it away from the motors.
-    Bench-validated 2026-09-26 (firmware V1.23).
+    ``heading_confidence()`` (the sensor gives nothing to base one on; the standard ``Compass`` has
+    both). Each read takes the heading in both of HiTechnic's forms - 2 x [0x42] + [0x43] and the word
+    at 0x44 / 0x45 - and a heading is used only when they agree: a mismatch (a read torn while the
+    sensor turns) is never returned and is read again at once; only a word that keeps disagreeing makes
+    the sensor be looked for again. Keep it away from the motors. Bench-validated 2026-09-26 (firmware
+    V1.23); the heading cross-check 2026-09-28 with the sensor lying still (the turn is not yet
+    benched).
 
     Calibration is the sensor's own: ``calibrate()``, then turn the robot level through a little
     more than one full turn taking at least 20 s, then ``calibrate_stop()``. The sensor stores the
@@ -2416,33 +2531,40 @@ class VL53L1X:
     Address 0x29 at 400 kHz, shared with the VL53L0X and the TCS34725: identified by its model ID 0xEACC
     at the 16-bit index 0x010F, read only after the one-byte ID registers of those two chips ruled them
     out (a 16-bit index would write a register on them). The sensor ranges continuously and the firmware
-    keeps the latest result in a cache, so every getter is a memory copy. Defaults: **long** mode and a
-    **33 ms** timing budget (about 31 readings a second). Two at once. Bench-validated 2026-09-26 (rig
-    port 1).
+    keeps the latest result in a cache, so every getter is a memory copy. Defaults: **long** mode, a
+    **33 ms** timing budget, back to back (about 31 readings a second), the whole 16 x 16 field of view, ST's
+    signal (1024 kcps) and sigma (90 mm) thresholds and no distance threshold. Every setter waits for the
+    first reading under the new setting (the measurement under way is let finish first: up to one more timing
+    budget of the old setting); that reading is always the new setting's own. Without a distance threshold, a
+    sensor that keeps answering but stops measuring is reset and configured again by the firmware, with its
+    settings and its stored calibration. Two at once. Bench-validated 2026-09-26 (rig port 1).
 
     Raises: ``ValueError("port must be 1..16")``; ``OSError("no VL53L1X on port %d (I2C 0x29, model ID
     0xEACC)")``; ``OSError("VL53L1X on port %d: no free slot (2 at once)")``; ``OSError("VL53L1X on port
-    %d not responding")`` while unplugged; ``ValueError("VL53L1X is closed")`` after ``close()``.
+    %d not responding")`` while unplugged (a setter that fails that way leaves the previous setting in
+    place); ``ValueError("VL53L1X is closed")`` after ``close()``.
     """
     def __init__(self, port: int, /) -> None: ...
     def distance(self) -> Optional[int]:
-        """The distance in mm, or ``None`` when the measurement is not valid (``status()`` says why)."""
+        """The distance in mm, or ``None`` when the measurement is not valid (``status()`` says why) or,
+        under a ``distance_threshold()``, when the latest measurement did not meet it."""
     def status(self) -> str:
         """ST's range status of the latest measurement: ``'valid'``, ``'sigma fail'``, ``'signal fail'``,
         ``'min range fail'``, ``'out of bounds'``, ``'hardware fail'``, ``'valid, no wrap check'``,
         ``'wrap around'``, ``'crosstalk fail'``, ``'synchronisation'``, ``'merged pulse'``, ``'too close'``
-        or ``'unknown'``. Only ``'valid'`` gives a ``distance()``."""
+        or ``'unknown'``; under a ``distance_threshold()`` also ``'not detected'`` (no measurement met it).
+        Only ``'valid'`` gives a ``distance()``. A ``roi()`` the chip cannot select reads ``'min range
+        fail'`` (ST's status 13, UM2555 section 4.2): ``raw()[1]`` is 13 then."""
     def raw(self) -> Tuple[int, int, int, int]:
         """``(distance mm, status number, signal kcps, ambient kcps)`` of the latest measurement, whatever
-        the status (status 0 = valid)."""
+        the status (status 0 = valid; 254 = not detected under a ``distance_threshold()``, the other three 0)."""
     @overload
     def distance_mode(self) -> str: ...
     @overload
     def distance_mode(self, mode: str, /) -> None:
         """``'short'`` (up to ~1.3 m, copes better with sunlight) or ``'long'`` (up to ~4 m in the dark,
-        the default); waits for the first reading under the new mode. Switching to ``'long'`` with a
-        15 ms budget raises ``ValueError`` (15 ms is short mode only: set ``timing_budget(20)`` first);
-        anything else than the two names raises ``ValueError``."""
+        the default); waits for the first reading under the new mode. Switching to ``'long'`` with a 15 ms budget raises ``ValueError`` (15 ms is short mode
+        only: set ``timing_budget(20)`` first); anything else than the two names raises ``ValueError``."""
     @overload
     def timing_budget(self) -> int: ...
     @overload
@@ -2450,62 +2572,204 @@ class VL53L1X:
         """The time per measurement in ms: 15 (short mode only), 20, 33 (the default), 50, 100, 200 or
         500. Longer = more precise and longer range, fewer readings. Waits for the first reading under the
         new budget; a value that does not exist in the current mode raises ``ValueError`` (15 ms in long mode:
-        call ``distance_mode('short')`` first)."""
+        call ``distance_mode('short')`` first), and so does a budget longer than a non-zero
+        ``inter_measurement()`` (ST: the period is at least the budget)."""
+    @overload
+    def inter_measurement(self) -> int: ...
+    @overload
+    def inter_measurement(self, ms: int, /) -> None:
+        """The time from the start of one measurement to the start of the next, in ms: 0 (the default) =
+        back to back, a new one every ``timing_budget()``; otherwise ``timing_budget()``..60000 (ST's rule:
+        never shorter than the budget; ``ValueError`` else). A longer period gives fewer readings, each as
+        precise as the budget makes it: ``timing_budget(33)`` with ``inter_measurement(100)`` measures 10
+        times a second."""
+    @overload
+    def roi(self) -> Tuple[int, int, int]: ...
+    @overload
+    def roi(self, width: int, height: int, center: Optional[int] = None, /) -> None:
+        """The region of interest: the part of the 16 x 16 SPAD array that measures, ``width`` and
+        ``height`` 4..16 (the default 16 x 16, the whole ~27 degree field of view; a smaller region narrows
+        it and receives less signal). ``center`` is the SPAD at its middle, numbered as in ST's
+        UM2555 table (the whole array's middle is 199; for an even size the SPAD to the right of / above
+        the middle); left out (or ``None``), ST's rule: 199 above 10 SPADs, else the sensor's own optical
+        centre. ``roi()`` returns ``(width, height, center)`` with the centre in force. ``ValueError`` for a
+        size outside 4..16, a centre outside 0..255, or a region that would leave the array."""
+    @overload
+    def signal_threshold(self) -> int: ...
+    @overload
+    def signal_threshold(self, kcps: int, /) -> None:
+        """The weakest return signal accepted, in kcps (``raw()``'s signal unit): 0..65535, stored in ST's
+        steps of 8 (the value read back is rounded down), default 1024. A weaker measurement reads
+        ``'signal fail'`` and ``distance()`` ``None``; lower it for dark or far targets."""
+    @overload
+    def sigma_threshold(self) -> int: ...
+    @overload
+    def sigma_threshold(self, mm: int, /) -> None:
+        """The largest estimated measurement spread (sigma) accepted, in mm: 0..16383, default 90 (ST's
+        configuration). A noisier measurement reads ``'sigma fail'``; raise it to accept noisier readings."""
+    @overload
+    def distance_threshold(self) -> Optional[Tuple[Union[str, int], ...]]: ...
+    @overload
+    def distance_threshold(self, window: None, /) -> None: ...
+    @overload
+    def distance_threshold(self, window: Union[str, bytes], distance: int, /) -> None: ...
+    @overload
+    def distance_threshold(self, window: Union[str, bytes], low: int, high: int, /) -> None:
+        """ST's window detection, done by the sensor: ``'below'`` / ``'above'`` one distance in mm, or
+        ``'outside'`` / ``'inside'`` a ``low`` < ``high`` window; ``None`` (the default) reports every
+        measurement again. Under a threshold the sensor reports the measurements that meet it; one that
+        does not becomes a reading with ``status()`` ``'not detected'`` (``distance()`` ``None``), so a
+        reading still comes every measurement and ``age()`` stays short. A measurement the sensor itself
+        flags (``'signal fail'``, ``'sigma fail'``, ...) can still be reported under a threshold: it reads
+        its own status and never counts as detected. With nothing in range nothing is detected, under
+        ``'above'`` and ``'outside'`` too (ST's manual: no object found, no report; not yet benched in open
+        air): waiting for a clear path needs a surface the sensor can see, or no threshold and
+        ``status() != 'valid' or distance() > mm``. ``detected()`` answers whether the latest one met it.
+        The getter returns ``None``, ``('below', mm)``, ``('above', mm)`` or ``('inside' | 'outside', low,
+        high)``. ``TypeError`` for the wrong number of distances; ``ValueError`` for another window name,
+        below 0, above 65535 or low >= high. Under a threshold, silence is never an error: a sensor that
+        stops measuring but keeps its settings reads ``'not detected'``, and only a failed transaction (an
+        unplug) raises ``OSError``."""
+    def detected(self) -> bool:
+        """Under a ``distance_threshold()``: ``True`` when the latest measurement met it and is valid. The
+        sensor decides whether a measurement meets the threshold; only a valid one counts, the same
+        measurements ``distance()`` gives a number for, so a measurement the sensor flags (a missing
+        target's) cannot trip ``'below'``. With nothing in range it stays ``False``, for ``'above'`` too
+        (ST's manual; not yet benched in open air). ``ValueError`` without a threshold."""
+    def calibrate_offset(self, target_mm: int, /) -> int:
+        """ST's offset calibration (``CalibrateOffset``): hold a flat target (ST: grey, 17 % reflectance)
+        square to the sensor at exactly ``target_mm`` (1..4000; ST recommends 100) with nothing else in
+        view, then call it. The sensor's own offsets are set to 0, 50 valid measurements are taken (under the
+        settings in force, the ``distance_threshold()`` lifted and back to back while it measures; a flagged
+        one is left out, at most 100), and the offset ``target_mm`` minus their mean (mm, rounded) is
+        applied and **stored for this I2C port** - a new ``VL53L1X`` object on the port, after a reboot or a
+        re-plug, starts with it. Returns the offset in mm. Takes 50 budgets (about 2 s at 33 ms).
+        ``ValueError`` when fewer than 50 of 100 measurements were valid (no target, or the wrong distance)
+        or the offset would pass +-1023 mm; ``RuntimeError`` while a motor drives and another calibration
+        waits for the flash. While a motor drives the record waits in RAM, in force at once, and reaches
+        flash once the motors stop (``stored_calibration()["pending"]``). Ctrl-C puts the values before back."""
+    def calibrate_crosstalk(self, target_mm: int, /) -> int:
+        """ST's crosstalk calibration (``CalibrateXtalk``), for a cover window in front of the sensor: hold
+        the target (grey 17 %) at ``target_mm``, the distance where the sensor starts to read short because
+        of the light the window reflects (ST: the "inflection point"). 50 valid measurements with the
+        crosstalk compensation off; crosstalk = 512 x signal x (1 - distance / target) / SPADs (ST's
+        formula, 0 when the target reads at or beyond ``target_mm``), applied and stored for this port like
+        ``calibrate_offset()``. Returns it in cps (counts per second per SPAD). Without a window it measures
+        about 0. Calibrate the offset first."""
+    @overload
+    def offset(self) -> Optional[int]: ...
+    @overload
+    def offset(self, mm: Optional[int], /) -> None:
+        """The offset correction in mm the port's calibration applies (ST's ``SetOffset`` / ``GetOffset``),
+        or ``None`` while the sensor runs on its own factory offset. ``offset(mm)`` sets it, -1023..1023,
+        stored for the port; ``offset(None)`` puts the sensor's own offset back. Waits for the first reading
+        under it."""
+    @overload
+    def crosstalk(self) -> Optional[int]: ...
+    @overload
+    def crosstalk(self, cps: Optional[int], /) -> None:
+        """The crosstalk compensation in cps the port's calibration applies (ST's ``SetXtalk`` /
+        ``GetXtalk``), or ``None`` while the sensor runs on its own. ``crosstalk(cps)`` sets it, 0..127999,
+        in ST's steps of 1.95 cps (the value read back is rounded down), stored for the port;
+        ``crosstalk(None)`` puts the sensor's own back."""
+    def stored_calibration(self) -> dict:
+        """This port's stored calibration (``evn.vl53l1x_calibration(port)``): ``{"port", "calibrated",
+        "stored" (in flash), "pending" (waiting for the motors to stop before it is written), "stamp",
+        "offset", "offset_target", "offset_sd", "crosstalk", "crosstalk_target", "crosstalk_sd",
+        "part_offset", "part_crosstalk"}`` - the ``*_target`` a calibration's distance (``None`` when the
+        value was set by hand), ``*_sd`` the spread (standard deviation, mm) of the 50 distances it came
+        from: the calibration's confidence; ``part_*`` the sensor's own values, read before the port was first
+        calibrated and put back by ``clear_calibration()``."""
+    def clear_calibration(self) -> bool:
+        """Put the sensor's own offset and crosstalk back and erase the port's stored calibration.
+        ``True`` when nothing of it is left in flash; ``False`` while a motor drives (it is written once
+        they stop). ``RuntimeError`` when another calibration waits for the flash (the sensor's own values
+        are back already: call it again once the motors stop), ``OSError`` when the write fails. Nothing
+        identifies the module: after swapping sensors on a calibrated port, clear the calibration and power
+        the new sensor off and on to get its own values."""
     def age(self) -> int:
         """Milliseconds since the cached measurement was taken."""
     def close(self) -> None:
         """Stop ranging and release the port."""
+    def _cal_registers(self) -> bytes:
+        """Private bench hook (``tools/bench/mpy_vl53l1x_cal.py``): the chip's 0x16..0x1B and 0x1E..0x23
+        (the crosstalk and offset register groups) read now, 12 bytes. Not part of the user API."""
+    def _resets(self) -> int:
+        """Private bench hook (``tools/bench/mpy_vl53l1x_features.py``): how many times the driver soft-reset
+        a sensor that answered but stopped measuring, since the port was attached. Not part of the user API."""
 
 
 class TCS3430:
-    """ams-OSRAM TCS3430 XYZ tristimulus colour / ambient light sensor with an IR channel (an EVN
+    """ams-OSRAM TCS3430 XYZ tristimulus colour / ambient light sensor with two IR channels (an EVN
     Extended Peripheral) on I2C port 1..16.
 
     Address 0x39 at 400 kHz, shared with the APDS-9960: identified by its ID register (0x92 bits 7:2 =
-    110111, 0xDC). Readings come from a cache the firmware refreshes each integration cycle. Defaults:
-    **one cycle, 2.78 ms at 64x** - the fastest cadence, a new reading about every 3 ms, for the EVN
-    module that lights its target with its own LED and is used close to it. On a bright close target
-    ``saturated()`` reports a clip (lower ``gain()``); for far-field or ambient light use
-    ``integration_time(100)`` or more (the full 16-bit scale needs 178 ms). Counts are raw: no lux or
-    colour-temperature conversion, and ``xy()`` is uncalibrated. Two at once. Bench-validated
-    2026-09-26 (rig port 16).
+    110111, 0xDC). Readings come from a cache the firmware refreshes each cycle. Defaults: **one cycle,
+    2.78 ms at 64x, no wait** - the fastest cadence, a new reading about every 3 ms, for the EVN module that
+    lights its target with its own LED and is used close to it. On a bright close target ``saturated()``
+    reports a clip (lower ``gain()``); for far-field or ambient light use ``integration_time(100)`` or more
+    (the full 16-bit scale needs 178 ms). Counts are raw: no lux or colour-temperature conversion (ams
+    publishes the method but not a matrix for the bare sensor), and ``xy()`` is uncalibrated. The black /
+    white calibration is **stored for the port** like ``ColorSensor``'s. Two at once; a second object on a
+    port that is already open shares its settings and calibration, but the chip is probed and set up again,
+    so the readings pause for about two cycles. Bench-validated 2026-09-26 (rig port 16).
 
     Raises: ``ValueError("port must be 1..16")``; ``OSError("no TCS3430 on port %d (I2C 0x39, ID
     0xDC)")``; ``OSError("TCS3430 on port %d: no free slot (2 at once)")``; ``OSError("TCS3430 on port %d
-    not responding")`` while unplugged; ``ValueError("TCS3430 is closed")`` after ``close()``.
+    not responding")`` while unplugged - the firmware notices at its next look at the chip, up to 90 % of a
+    cycle (integration + wait) after the last reading, and until then the readings return that last one
+    with ``age()`` growing; from then on every call raises at once, whatever the wait (the readings resume
+    by themselves when it is plugged back); ``ValueError("TCS3430 is closed")`` after ``close()``.
     """
     def __init__(self, port: int, /) -> None: ...
     def calibrate_black(self) -> None:
         """Take the current reading as the black reference: nothing in front of the sensor (or a black
         target) where the colours will be read. It is subtracted per channel from every reading and from
-        the white. Kept in RAM by this object (not stored on the board), valid across ``gain()`` and
-        ``integration_time()`` changes. Call it, then ``calibrate_white()``, at the start of a program:
-        uncalibrated, nothing in front reads ``Color.BLUE``. ``ValueError`` when the reading is saturated
-        (lower ``gain()``)."""
+        the white. **Stored for the port** (flash, survives a reboot and a re-plug; every later
+        ``TCS3430(port)`` starts with it), valid across ``gain()`` and ``integration_time()`` changes.
+        One colour calibration per port: calibrating a ``TCS3430`` on a port replaces a ``ColorSensor``'s
+        or ``GestureSensor``'s record there and the reverse. Uncalibrated, nothing in front reads
+        ``Color.BLUE``. ``ValueError`` when the reading is saturated (lower ``gain()``);
+        ``ValueError("this black is as bright as the white reference: the white was cleared,
+        calibrate_white() again")`` when it leaves the white no room (the black is taken, the white
+        cleared)."""
     def calibrate_white(self) -> None:
         """Take the current reading of a white target, under the module's own LED, as the reference
         white: each channel is divided by the white's and scaled to D65, so the white target reads
-        ``s`` 0, ``v`` 100. Uncalibrated, the warm LED makes a white sheet read ``Color.YELLOW``. Kept in
-        RAM by this object, valid across ``gain()`` / ``integration_time()`` changes. ``ValueError`` when
-        the reading is saturated (lower ``gain()``) or a channel is not at least 10 % above the black (not brighter than the black reference)."""
+        ``s`` 0, ``v`` 100. Uncalibrated, the warm LED makes a white sheet read ``Color.YELLOW``. Stored
+        for the port like ``calibrate_black()``, valid across ``gain()`` / ``integration_time()`` changes.
+        ``ValueError`` when the reading is saturated (lower ``gain()``) or a channel is not at least 10 %
+        above the black (not brighter than the black reference)."""
     @overload
     def black_reference(self) -> Optional[Tuple[float, float, float]]: ...
     @overload
     def black_reference(self, value: None, /) -> None:
         """The black reference as ``(X, Y, Z)`` per 1x-gain cycle, or ``None`` when none is taken;
-        ``black_reference(None)`` clears it. Any other argument raises ``ValueError`` (use
-        ``calibrate_black()``)."""
+        ``black_reference(None)`` clears it (and the stored one). Any other argument raises ``ValueError``
+        (use ``calibrate_black()``)."""
     @overload
     def white_reference(self) -> Optional[Tuple[float, float, float]]: ...
     @overload
     def white_reference(self, value: None, /) -> None:
-        """The reference white as ``(X, Y, Z)`` per 1x-gain cycle, or ``None`` when none is taken;
-        ``white_reference(None)`` clears it. Any other argument raises ``ValueError`` (use
-        ``calibrate_white()``)."""
+        """The reference white as ``(X, Y, Z)`` per 1x-gain cycle, net of the black, or ``None`` when none
+        is taken; ``white_reference(None)`` clears it (and the stored one). Any other argument raises
+        ``ValueError`` (use ``calibrate_white()``)."""
+    def stored_calibration(self) -> dict:
+        """This port's stored colour calibration, as ``evn.color_calibration(port)``: ``"chip"`` is
+        ``'TCS3430'`` for a record this sensor made, and ``"black"`` / ``"white"`` are then its ``(X, Y, Z)``
+        - exactly ``black_reference()`` / ``white_reference()``."""
+    def clear_calibration(self) -> bool:
+        """Forget the port's stored calibration, then the one in force (both references); ``False`` while
+        a running motor keeps the clear back and this sensor's old record is still in flash (the next
+        ``stored_calibration()`` writes it once the motors stop); ``True`` when nothing of this sensor's is
+        left in flash. A ``ColorSensor`` / ``GestureSensor`` record on the port is left alone.
+        ``RuntimeError`` when another calibration waits for the flash (a motor is driving): nothing changes.
+        ``OSError`` when the flash write fails: cleared all the same (stored and in force), and the next
+        ``stored_calibration()`` retries the write."""
     def color(self) -> Optional[Color]:
         """The ``detectable_colors()`` entry the reading's ``hsv()`` matches - the same matcher as
-        ``ColorSensor`` (Pybricks' rule) - or ``None`` when that set is empty. Call ``calibrate_black()``
-        and ``calibrate_white()`` first."""
+        ``ColorSensor`` (Pybricks' rule) - or ``None`` when that set is empty. Calibrate first (once per
+        port: ``calibrate_black()``, ``calibrate_white()``)."""
     def color_match(self) -> Tuple[Optional[Color], float]:
         """``(color(), confidence)`` from one reading: the confidence is 1.0 on the chosen colour and
         0.0 halfway between two (the shared ``ColorSensor`` definition). ``(None, 0.0)`` with no
@@ -2526,7 +2790,16 @@ class TCS3430:
     def raw(self) -> Tuple[int, int, int, int]:
         """``(X, Y, Z, IR1)`` raw counts."""
     def ir(self) -> int:
-        """The IR1 channel, raw counts."""
+        """The IR1 channel (687..830 nm at half response), raw counts."""
+    def ir2(self) -> int:
+        """The IR2 channel (from 827 nm), raw counts, **measured now**: the chip reads X and IR2 through one
+        ADC, so the firmware switches it to IR2 for one cycle and back. It returns after about two cycles
+        plus a few ms (~12 ms at the default 2.78 ms, ~0.2 s at 100 ms); ``xyz()`` keeps its last reading
+        meanwhile. Every call measures again; a call straight after another first lets one X reading
+        through, so it takes about four cycles plus a few ms (~25 ms at 2.78 ms) and ``xyz()`` gets a new
+        reading at least that often (up to ~30 ms apart at 2.78 ms), even with ``ir2()`` in a loop. No clip
+        flag of its own (``saturated()`` is about the X / Y / Z / IR1 reading): an IR2 at the full scale
+        (``integration_time()``) is clipped."""
     def xy(self) -> Optional[Tuple[float, float]]:
         """``(x, y)`` = X / (X + Y + Z), Y / (X + Y + Z) of the raw counts - **uncalibrated** chromaticity
         (no per-unit matrix) - or ``None`` in the dark."""
@@ -2546,6 +2819,37 @@ class TCS3430:
         """The integration time in ms, 2.78..711.7 in 2.78 ms steps (``ValueError`` outside): the nearest
         step is set and returned. Full scale is (steps x 1024 - 1) counts, 65535 from 178 ms up. Waits for
         the first reading under the new time."""
+    @overload
+    def wait_time(self) -> float: ...
+    @overload
+    def wait_time(self, ms: float, /) -> float:
+        """A pause between cycles, 0 (off, the default) .. 8540 ms: 2.78 ms steps up to 711.68 ms, then the
+        chip's long wait in 33.36 ms steps. A reading comes every integration + wait. Returns the value set
+        (the int ``0`` when off); ``ValueError`` outside the range. Waits for the first reading under it."""
+    @overload
+    def autozero(self) -> Tuple[int, int]: ...
+    @overload
+    def autozero(self, nth: int, mode: int = 0, /) -> None:
+        """The chip's auto-zero (the ADC offset search, AZ_CONFIG): ``nth`` 127 = only at the first cycle
+        after a start (the default), 1..126 = every nth cycle, 0 = never; ``mode`` 0 = each search starts
+        from zero, 1 = from the last offset (faster on average, slower in the worst case). The getter returns
+        ``(nth, mode)``. Out of range: ``ValueError``. Waits for the first reading under it."""
+    @overload
+    def thresholds(self) -> Tuple[int, int, int]: ...
+    @overload
+    def thresholds(self, low: int, high: int, persistence: int = 1, /) -> None:
+        """A window on the **Z** channel (CH0, the channel the chip's own ALS thresholds watch): Z below
+        ``low`` or above ``high`` for ``persistence`` consecutive cycles (0 = every cycle, 1, 2, 3, 5, 10 ..
+        60) latches ``interrupt()`` until ``clear_interrupt()``. The chip's rule, applied by the firmware to
+        every cycle it reads (the chip's own would take away the flag that marks a new reading, and its INT
+        pin is not wired). Setting them clears the flag. Defaults 0, 0, 0 (the chip's). ``thresholds(low)``
+        alone raises ``TypeError``; values outside 0..65535 or another persistence raise ``ValueError``."""
+    def interrupt(self) -> bool:
+        """The thresholds' latched flag. At the default persistence of 0 ("every cycle") it is set on every
+        cycle whatever the thresholds are, as the chip's: pass a persistence of 1 or more for a flag that
+        means "Z left the window". ``OSError`` while the sensor is unplugged."""
+    def clear_interrupt(self) -> None:
+        """Clear the latched ``interrupt()`` flag."""
     def age(self) -> int:
         """Milliseconds since the cached reading was taken."""
     def close(self) -> None:
@@ -2559,7 +2863,8 @@ def core1_status() -> Optional[Tuple[int, int, int, int, int, int]]:
     were pending when it came back - the count ``exec_max_us`` alone cannot give. Both must stay 0."""
 
 def stop_all() -> None:
-    """Coast every motor."""
+    """Coast every motor (and stop every servo sweep); returns once the motors have taken it (at most 2 ms),
+    so a file write next is not refused."""
 
 def configure_motor(port: int, model: Optional[str], *, counts_per_rev: Optional[float] = None,
                     rated_voltage: int = 0, no_load_speed: Optional[float] = None) -> None:
@@ -2586,7 +2891,8 @@ def configure_motor(port: int, model: Optional[str], *, counts_per_rev: Optional
     custom, JGA25, Pololu 25D or CHR-GM16 motor is only fully trusted once calibrated. Nothing moves. The port must be free (``OSError(EBUSY)``
     while a Motor holds it: ``close()`` it first) and every motor stopped (the flash write);
     ``RuntimeError`` says why a refused change did nothing, ``ValueError`` what was wrong with the
-    numbers."""
+    model or the numbers - checked before the port, so a wrong spec raises ``ValueError`` even while a
+    Motor holds it."""
 
 def motor_config(port: int, /) -> dict:
     """What motor port 1..4 runs now: ``{"port", "model" ('EV3 Large' / 'EV3 Medium' / 'NXT' /
@@ -2605,16 +2911,22 @@ def compass_calibration(port: int, /) -> dict:
     a Compass: the same dict as ``Compass.stored_calibration()``."""
 
 def color_calibration(port: int, /) -> dict:
-    """The stored colour calibration of I2C port 1..16 (``ColorSensor`` / ``GestureSensor``
-    ``calibrate_black()`` / ``calibrate_white()``), without opening a sensor: ``{"port", "calibrated",
-    "chip" ('TCS34725' / 'APDS9960' / None), "stored", "pending", "stamp", "black", "white", "error"}``,
-    the same dict as ``stored_calibration()``. One colour calibration per port: calibrating a
-    ``GestureSensor`` on a port replaces a ``ColorSensor``'s record there and the reverse; ``"chip"``
-    says whose it is."""
+    """The stored colour calibration of I2C port 1..16 (``ColorSensor`` / ``GestureSensor`` / ``TCS3430`` /
+    ``HiTechnicColorSensor`` ``calibrate_black()`` / ``calibrate_white()``), without opening a sensor:
+    ``{"port", "calibrated", "chip" ('TCS34725' / 'APDS9960' / 'TCS3430' / 'HiTechnic Color V2' /
+    'HiTechnic Color V1' / None), "stored", "pending", "stamp", "black", "white", "error"}``, the same dict
+    as ``stored_calibration()``; ``black`` / ``white`` are ``(C, R, G, B)`` per cycle at 1x gain, the
+    TCS3430's ``(X, Y, Z)``, a HiTechnic's ``(R, G, B)`` counts. One colour calibration per port:
+    calibrating another colour sensor on a port replaces the record there; ``"chip"`` says whose it is."""
 
 def imu_calibration(port: int, /) -> dict:
     """The stored IMU calibration of I2C port 1..16 (``IMU.calibrate()``), without building an IMU: the
     same dict as ``IMU.calibration()``."""
+
+def vl53l1x_calibration(port: int, /) -> dict:
+    """The stored VL53L1X offset / crosstalk calibration of I2C port 1..16 (``VL53L1X.calibrate_offset()``,
+    ``calibrate_crosstalk()``, ``offset(mm)``, ``crosstalk(cps)``), without opening a sensor: the same dict
+    as ``VL53L1X.stored_calibration()``."""
 
 def calibration(port: int, /) -> dict:
     """The calibration motor port 1..4 runs: ``{"port", "calibrated" (a calibrate() result drives the port),
@@ -2678,9 +2990,18 @@ def _encoder_phases(port: int, duty: Optional[float] = None, install: bool = Fal
     the raw direction ``(p0, p1, p2, p3, dir)``; nothing is stored, the port's table is put back
     (``install=True`` keeps the measured one in RAM until the next reset). Coasts on every path."""
 
-def _cogging(port: int, amp_mv: Optional[int] = None, /) -> Tuple[float, int, bool, float]:
+def _cogging(port: int, amp_mv: Optional[int] = None, /) -> Tuple[float, int, bool, float,
+                                                                 Optional[Tuple[float, float]],
+                                                                 Optional[Tuple[float, float]]]:
     """Bench hook, not for programs. Nothing moves: the cogging feed-forward in force on port 1..4 as
-    ``(period_edges, amp_mv, phase_ok, phase_edges)`` (period 0 = off). ``amp_mv`` (0..12000, 0 = the
+    ``(period_edges, amp_mv, phase_ok, phase_edges, fwd, rev)`` (period 0 = off). The phase is a running
+    mean of the shaft's coasted rests; ``fwd`` / ``rev`` are the means of the rests it reached turning
+    forward / back, each ``(phase_edges, weight)`` (weight 0..1 grows with the rests and their agreement)
+    or ``None`` while there is none. ``phase_ok`` is False and the means ``None`` from every
+    ``calibrate()`` that succeeds and every ``configure_motor()`` / ``Motor(port, model=)`` that changes
+    the port's motor (a new encoder frame; one naming the motor already in force changes nothing) until
+    the next 0.3 s coasted rest; a waiting ``calibrate()`` returns after that rest (at most 0.6 s), so
+    right after it ``phase_ok`` is True with one mean of weight 0.125. ``amp_mv`` (0..12000, 0 = the
     feed-forward off, the phase kept) overrides the amplitude until the next ``calibrate()`` /
     ``configure_motor()``; the call waits (at most 5 ms) for the motion engine to apply it, so the tuple
     it returns reads the new amplitude."""
@@ -2693,6 +3014,16 @@ def _cogging_survey(port: int, /) -> Optional[Tuple[float, ...]]:
 def _nudges(port: int, /) -> int:
     """Bench hook, not for programs. Nothing moves: the hold nudges Core 1 has fired on port 1..4 since
     boot."""
+
+def _imu_cal_record(port: int, record: Optional[bytes] = ..., /) -> Union[bytes, int, None]:
+    """Bench hook, not for programs (``imu_calibration(port)`` is the public view). Nothing moves. With
+    ``port`` (I2C 1..16) alone: the port's stored IMU calibration as bytes (the record's version, then the
+    record as the flash page holds it), or None when it has none. With ``record``: those bytes are written
+    back (None clears the port) and the store's result returned, 1 = in flash, 0 = waiting in RAM because
+    a motor is driving (the flash is never written then). A record of another length or version, or one
+    ``IMU.calibrate()`` could not have made, raises ``ValueError`` and nothing is written. The IMU benches
+    take the record first and put it back in their ``finally``; an open ``IMU`` keeps what it applied until
+    it is opened again."""
 def reset(*, start: bool = False) -> None:
     """Coast the motors and reboot the board. After the reboot ``main.py`` waits for a press of the
     user button as after a power-on; ``start=True`` makes that one boot run it at once (what the
@@ -2709,7 +3040,10 @@ def _chip_reset() -> dict:
 
 
 def wait(time: float) -> None:
-    """Pause the program for ``time`` milliseconds (motors keep doing what they were told)."""
+    """Pause the program for ``time`` milliseconds, a fraction included (``wait(1.5)`` is 1.5 ms) - never
+    less, and at most the one background refresh running when the time is up more: tens of microseconds
+    with little open, a few ms while a ``Pose`` runs, more if a sensor times out (motors keep doing what
+    they were told; the sensors keep being refreshed all the way)."""
 
 
 class StopWatch:
@@ -2746,6 +3080,10 @@ class Pose:
     (without a compass, x is +90 degrees from the heading at ``reset()``), heading clockwise from north in
     degrees, speed mm/s, yaw rate deg/s clockwise. A source whose driver is lost leaves the set by itself and
     rejoins when running; ``bounded()`` is False while the live set cannot bound the position (IMU alone).
+    When the board is busy for a moment (a long ``print``, a big calculation) the wheels carry the travel over
+    it, and with an ``IMU`` in its default DMP mode the heading over it is the gyro's once the readings the IMU
+    kept (up to 140 ms) are read - not the wheel difference, which a turning robot's scrubbing tyres would put
+    into the heading. In raw mode (``IMU.dmp(False)``) the IMU keeps no readings: the wheels' heading stands.
     Every method raises ``ValueError("Pose is closed")`` after ``close()``."""
     def __init__(self, left: Optional[int] = None, right: Optional[int] = None, wheel_diameter: Optional[float] = None,
                  axle_track: Optional[float] = None, *, gear_ratio: float = 1.0, imu: Optional[int] = None,
@@ -2867,10 +3205,17 @@ class DataLog:
     def __init__(self, *headers: str, name: str = 'log', timestamp: bool = True, extension: str = 'csv',
                  append: bool = False, size: int = 32768, autosave: bool = True, on_full: str = 'halve') -> None: ...
     def add(self, source: Union[Motor, Type[battery], Type[button], ColorSensor, DistanceSensor, GestureSensor,
-                                EnvSensor, Compass, IMU, TouchArray, ADC],
+                                EnvSensor, Compass, IMU, TouchArray, ADC, TCS3430, HiTechnicColorSensor,
+                                HiTechnicCompass, VL53L1X],
             quantity: str, rate: float = 0, *, input: Optional[int] = None) -> int:
         """Add a channel and return its index (before ``start()``; ``RuntimeError`` while recording, at most 16).
-        ``source``: a ``Motor``, ``evn.battery``, ``evn.button`` or a standard-peripheral object; ``quantity``:
+        ``source``: a ``Motor``, ``evn.battery``, ``evn.button``, a standard-peripheral object, a ``TCS3430``
+        (``xyz``, ``raw``, ``ir``, ``xy``, ``hsv``, ``color``), a ``VL53L1X`` (``'distance'``, ``'status'``,
+        ``'raw'``, ``'detected'``: 1 / 0 under a distance threshold) or a ``HiTechnicColorSensor`` /
+        ``HiTechnicCompass`` (a HiTechnic colour quantity is recorded only while the sensor is in that
+        quantity's mode - active for ``rgb``, ``color`` ..., passive for ``ambient`` / ``ambient_raw``, raw
+        for ``raw``: the program's getters choose the mode, the logger never switches it; a V1 has no
+        ``color_index``, ``normalized_rgb``, ``ambient``, ``ambient_raw`` or ``raw``); ``quantity``:
         the method name (``'angle'``, ``'speed'``, ``'heading'``, ``'acceleration'`` ...; ``quantities(source)``
         lists them, ``ValueError`` for another); ``rate``: samples a second, 0 = every new reading. A rate
         above the source's own gives the source's: a motor or the button every new reading (up to 1000 a
@@ -2881,9 +3226,11 @@ class DataLog:
         a multi-part reading (``hsv``, ``acceleration``, ``cells`` ...) is one channel of several values."""
     @staticmethod
     def quantities(source: Union[Motor, Type[battery], Type[button], ColorSensor, DistanceSensor,
-                                 GestureSensor, EnvSensor, Compass, IMU, TouchArray, ADC], /) -> Tuple[str, ...]:
+                                 GestureSensor, EnvSensor, Compass, IMU, TouchArray, ADC, TCS3430,
+                                 HiTechnicColorSensor, HiTechnicCompass, VL53L1X], /) -> Tuple[str, ...]:
         """The quantity names ``add()`` takes for this source, e.g. ``('angle', 'speed', 'load', 'stalled')``
-        for a ``Motor`` (a staticmethod: ``DataLog.quantities(motor)``)."""
+        for a ``Motor`` (a staticmethod: ``DataLog.quantities(motor)``); for a HiTechnic Color V1 only the ones
+        it has (``color``, ``color_number``, ``rgb``, ``hsv``, ``reflection``)."""
     def start(self) -> Optional[float]:
         """Start recording (a new recording: the samples of an earlier one are gone). Returns the seconds the
         fastest-filling channel records before its first halving (``None`` if it was already recording).

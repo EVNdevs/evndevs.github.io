@@ -1,7 +1,7 @@
 EVN_ALPHA_MicroPython.uf2
-source: main (0.2.58) + the runaway guard (an encoder counting against its drive coasts in ~0.25 s and raises), calibrate() prints its drift warning, evn.battery.low(threshold=6600), main.py's start wait takes only Enter / Ctrl-A..E, the calibration stores answer per port (pending / stored / clear_calibration()), the GestureSensor stale refusal by gesture ordering, the Extended constructors' Ctrl-C fix, the VL53L1X budget refusals from the HAL; GC heap 142 KB
-built: 2026-09-27 (MicroPython v1.26.1, pico-sdk 2.3.0; SOURCE_DATE_EPOCH=1790510400 = noon UTC 2026-09-27)
+source: main (0.2.58) + the 2026-09-28 lanes: the owner rulings (Motor / Servo take-over, stop() waits for the coast, a waiting calibrate() returns the finished run), the Pololu cogging phase as a per-direction circular mean, the IMU right side up at start-up and riding through Core 0 stalls (FIFO backlog, FIFO-only reset, packet time base), the IMU / compass-first I2C dispatcher, I2C at a true 400 kHz with a stuck bus failing fast and show() serving the IMU, TCS3430 / HiTechnic / VL53L1X at the standard's depth (VL53L1X offset / crosstalk calibration, the soft reset), the calibration-clear refusal; the extension's data-logger heavy-set fix
+built: 2026-09-28 (MicroPython v1.26.1, pico-sdk 2.3.0; SOURCE_DATE_EPOCH=1790596800 = noon UTC 2026-09-28)
 flash: single-line 03h boot2, PICO_FLASH_SPI_CLKDIV=4
-md5: de0f2b58f12f95d0afd18133c0114c69
+md5: 340e519b37af31f9aca150be1b64977b
 reproduce: cmake -G Ninja -DEVN_MICROPYTHON=ON + ninja with SOURCE_DATE_EPOCH = noon UTC of the built: date (py/makeversionhdr.py embeds MICROPY_BUILD_DATE); release_public.py does this and refuses on an md5 mismatch
-version: 0.2.58
+version: 0.2.59

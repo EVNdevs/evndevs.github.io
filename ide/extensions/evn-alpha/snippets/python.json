@@ -346,7 +346,7 @@
             "imu = IMU(${3:3})                                   # fixed flat to the chassis; build it before the base",
             "${6:db} = DriveBase(left, right, wheel_diameter=${4:62.4}, axle_track=${5:170}, imu=${3:3})   # the base builds its own Pose",
             "watch = StopWatch()",
-            "while not imu.ready() and watch.time() < 30000:    # keep the robot still: the gyro calibrates 8-25 s in",
+            "while not imu.ready() and watch.time() < 35000:    # keep the robot still: ~1 s calibrated, 10-27 s without",
             "    wait(100)",
             "${6:db}.use_gyro(True)     # the robot follows the path, not just the wheels",
             "${6:db}.straight(${7:300})",
@@ -381,8 +381,9 @@
             "from evn import HiTechnicColorSensor",
             "",
             "hc = HiTechnicColorSensor(${1:8})  # I2C port 1..16; the port runs at 100 kHz",
-            "hc.calibrate_black()               # nothing in front of the sensor",
-            "hc.calibrate_white()               # a white sheet in front",
+            "if hc.white_reference() is None:   # not calibrated on this port yet (the board keeps it per port)",
+            "    hc.calibrate_black()           # nothing in front of the sensor",
+            "    hc.calibrate_white()           # a white sheet in front",
             "print(hc.version(), hc.color(), hc.color_number(), hc.reflection(), hc.rgb())",
             "$0"
         ]
@@ -425,17 +426,54 @@
             "$0"
         ]
     },
+    "EVN VL53L1X detection and field of view": {
+        "prefix": "evn-vl53l1x-detect",
+        "description": "VL53L1X: the sensor's own distance-threshold detection, a narrower field of view and a slower rate (extended peripheral)",
+        "body": [
+            "from evn import VL53L1X, wait",
+            "",
+            "tof = VL53L1X(${1:1})",
+            "tof.roi(${2:8}, ${3:8})                   # field of view: 4..16 SPADs a side (16 x 16 = the whole ~27 degrees)",
+            "tof.inter_measurement(${4:100})         # a measurement every 100 ms (0 = back to back)",
+            "tof.distance_threshold('${5|below,above|}', ${6:200})   # or ('inside' | 'outside', low, high); 'above' needs a surface in range",
+            "while not tof.detected():",
+            "    wait(10)",
+            "print('detected at', tof.distance(), 'mm')",
+            "tof.distance_threshold(None)           # every measurement again",
+            "$0"
+        ]
+    },
+    "EVN VL53L1X offset and crosstalk calibration": {
+        "prefix": "evn-vl53l1x-calibrate",
+        "description": "VL53L1X: ST's offset calibration (and crosstalk, behind a cover window) against a flat card at a measured distance, stored on the board for the port (extended peripheral)",
+        "body": [
+            "from evn import VL53L1X",
+            "",
+            "tof = VL53L1X(${1:1})",
+            "# a flat grey or white card square to the sensor, exactly ${2:140} mm from its glass, nothing else in view",
+            "print('offset', tof.calibrate_offset(${2:140}), 'mm')   # 50 readings, about 2 s; stored for the port",
+            "# behind a cover window only: the card where the window starts to make it read short",
+            "# print('crosstalk', tof.calibrate_crosstalk(${3:300}), 'cps')",
+            "print(tof.stored_calibration())        # the targets, the spread of the readings, the sensor's own values",
+            "# tof.clear_calibration()             # the sensor's own offset and crosstalk back",
+            "$0"
+        ]
+    },
     "EVN TCS3430 colour sensor": {
         "prefix": "evn-tcs3430",
         "description": "ams-OSRAM TCS3430 XYZ colour / ambient light sensor on an I2C port (extended peripheral)",
         "body": [
-            "from evn import TCS3430",
+            "from evn import TCS3430, wait",
             "",
             "tcs = TCS3430(${1:16})             # I2C port 1..16; 2.78 ms at 64x (close to a target)",
-            "tcs.calibrate_black()              # nothing in front of the sensor",
-            "tcs.calibrate_white()              # a white sheet ~1 cm in front (else white reads yellow)",
+            "if tcs.white_reference() is None:  # this port's stored TCS3430 calibration: once is enough",
+            "    tcs.calibrate_black()          # nothing in front of the sensor",
+            "    print(\"hold a white sheet ~1 cm in front\")",
+            "    wait(5000)",
+            "    tcs.calibrate_white()          # else a white sheet reads yellow",
             "x, y, z = tcs.xyz()                # raw counts",
             "print(tcs.color(), x, y, z, tcs.ir(), tcs.xy(), tcs.saturated())",
+            "print(tcs.ir2())                   # the far-IR channel, measured now (~2 cycles)",
             "$0"
         ]
     }

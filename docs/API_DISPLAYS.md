@@ -42,7 +42,7 @@ Plug the EVN OLED into an I2C port; only SDA and SCL are used. Text sits on a gr
 | `oled.width`, `oled.height` | 128 and 64 |
 | `oled.frame([data])` | the whole picture as 1024 bytes, page by page: byte `page * 128 + x` holds the pixels (x, 8 × page .. 8 × page + 7), bit 0 the top one. `oled.frame()` returns it, `oled.frame(data)` replaces it (another length raises `ValueError`) |
 | `oled.splash()` | the EVN logo; forgets every label |
-| `oled.show()` | send every pending change to the panel now and wait: ≈ 30 ms for a whole new picture, ≈ 1 ms for one pixel. Stops a hardware scroll first. `OSError` while the display is unplugged |
+| `oled.show()` | send every pending change to the panel now and wait: ≈ 30 ms for a whole new picture, ≈ 1 ms for one pixel. While an `IMU` or a `Compass` runs, their reads go between the picture's 16 chunks (a few ms more for a whole picture), so the IMU and the pose never fall a whole picture behind. Stops a hardware scroll first. `OSError` while the display is unplugged |
 
 ### Panel
 
@@ -307,11 +307,11 @@ wheel.duty(50)                   # about 185 deg/s unloaded; wheel.stop() to sto
 
 **Notes**
 
-The emergency stop (Ctrl-C, the board button) ends every sweep and sends a continuous servo its stop pulse; a fixed-range servo keeps holding its position, the way a motor keeps its brake. A servo port pulses nothing until the first `Servo` object on it is built, and a new object drives its port even after `disable()` on an earlier one.
+The emergency stop (Ctrl-C, the board button) ends every sweep and sends a continuous servo its stop pulse; a fixed-range servo keeps holding its position, the way a motor keeps its brake. A servo port pulses nothing until the first `Servo` object on it is built, and a new object drives its port even after `disable()` on an earlier one. A second `Servo(n)` while an older object holds the port **takes it over**: the pulse is the new object's from its first frame (its profile's start), every call on the older object raises `ValueError("Servo(n) was replaced by a newer Servo(n)")` and its `close()` does nothing.
 
 The port has one owner at a time: `RGBLED(n)` raises `OSError("servo port n is used by a Servo object")` while this object is open, and while a strip holds the port the constructor and every writing call here raise `OSError("servo port n is used by an RGBLED strip")`. A strip's `close()` frees the port about 1–3 ms later (its black frame drains first); `Servo(port)` straight after `leds.close()` waits up to 10 ms for that, and raises only if the strip is still open or has not handed the port back within those 10 ms.
 
-A servo has no feedback line, so nothing detects an unplugged servo. After `close()` every call except `close()` itself raises `ValueError("Servo is closed")`.
+A servo has no feedback line, so nothing detects an unplugged servo. After `close()` every call except `close()` itself raises `ValueError("Servo is closed")` (on an object a newer `Servo(n)` replaced: `"... was replaced by a newer Servo(n)"`).
 
 ## Bluetooth — Bluetooth module (HC-05)
 

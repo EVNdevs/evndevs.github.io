@@ -30,7 +30,7 @@
             "block": {
               "type": "evn_comment",
               "fields": {
-                "TEXT": "the calibration stored for the port is applied from the start; the gyro settles in 8 to 25 s of stillness"
+                "TEXT": "the calibration stored for the port is applied from the start; ready about a second after the robot is still (10 to 27 s without a stored calibration)"
               },
               "next": {
                 "block": {

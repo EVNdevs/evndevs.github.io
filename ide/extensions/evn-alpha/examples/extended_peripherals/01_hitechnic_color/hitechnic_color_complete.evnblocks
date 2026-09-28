@@ -2,8 +2,8 @@
   "format": "evn-blocks",
   "version": 2,
   "title": "HiTechnic colour sensor: every block",
-  "needs": "a HiTechnic NXT Color Sensor (V1 or V2) on I2C port 8, through an NXT cable adapter",
-  "description": "Every block of the HiTechnic colour sensor: the black and the white taken first (nothing in front, then a white sheet), then for twenty seconds its colour, colour number, reflection, red channel and hue, and a message whenever it sees red.",
+  "needs": "a HiTechnic NXT Color Sensor V2 on I2C port 8, through an NXT cable adapter (a V1 has no normalised red or colour index: drop those two blocks for a V1)",
+  "description": "Every block of the HiTechnic colour sensor: the black and the white taken first (nothing in front, then a white sheet; the board keeps them for the port), then for twenty seconds its colour, colour number, reflection, red channel, normalised red (V2), colour index (V2) and hue, and a message whenever it sees red.",
   "workspace": {
     "blocks": {
       "languageVersion": 0,
@@ -167,49 +167,81 @@
                                                                   "type": "evn_htcolor_value",
                                                                   "fields": {
                                                                     "PORT": "8",
-                                                                    "WHAT": "hsv().h"
+                                                                    "WHAT": "normalized_rgb()[0]"
                                                                   }
                                                                 }
                                                               }
                                                             },
                                                             "next": {
                                                               "block": {
-                                                                "type": "controls_if",
+                                                                "type": "text_print",
                                                                 "inputs": {
-                                                                  "IF0": {
+                                                                  "TEXT": {
                                                                     "block": {
-                                                                      "type": "evn_htcolor_sees",
+                                                                      "type": "evn_htcolor_value",
                                                                       "fields": {
                                                                         "PORT": "8",
-                                                                        "COLOR": "RED"
-                                                                      }
-                                                                    }
-                                                                  },
-                                                                  "DO0": {
-                                                                    "block": {
-                                                                      "type": "text_print",
-                                                                      "inputs": {
-                                                                        "TEXT": {
-                                                                          "shadow": {
-                                                                            "type": "text",
-                                                                            "fields": {
-                                                                              "TEXT": "the colour sensor sees red"
-                                                                            }
-                                                                          }
-                                                                        }
+                                                                        "WHAT": "color_index()"
                                                                       }
                                                                     }
                                                                   }
                                                                 },
                                                                 "next": {
                                                                   "block": {
-                                                                    "type": "evn_wait",
+                                                                    "type": "text_print",
                                                                     "inputs": {
-                                                                      "TIME": {
-                                                                        "shadow": {
-                                                                          "type": "math_number",
+                                                                      "TEXT": {
+                                                                        "block": {
+                                                                          "type": "evn_htcolor_value",
                                                                           "fields": {
-                                                                            "NUM": 500
+                                                                            "PORT": "8",
+                                                                            "WHAT": "hsv().h"
+                                                                          }
+                                                                        }
+                                                                      }
+                                                                    },
+                                                                    "next": {
+                                                                      "block": {
+                                                                        "type": "controls_if",
+                                                                        "inputs": {
+                                                                          "IF0": {
+                                                                            "block": {
+                                                                              "type": "evn_htcolor_sees",
+                                                                              "fields": {
+                                                                                "PORT": "8",
+                                                                                "COLOR": "RED"
+                                                                              }
+                                                                            }
+                                                                          },
+                                                                          "DO0": {
+                                                                            "block": {
+                                                                              "type": "text_print",
+                                                                              "inputs": {
+                                                                                "TEXT": {
+                                                                                  "shadow": {
+                                                                                    "type": "text",
+                                                                                    "fields": {
+                                                                                      "TEXT": "the colour sensor sees red"
+                                                                                    }
+                                                                                  }
+                                                                                }
+                                                                              }
+                                                                            }
+                                                                          }
+                                                                        },
+                                                                        "next": {
+                                                                          "block": {
+                                                                            "type": "evn_wait",
+                                                                            "inputs": {
+                                                                              "TIME": {
+                                                                                "shadow": {
+                                                                                  "type": "math_number",
+                                                                                  "fields": {
+                                                                                    "NUM": 500
+                                                                                  }
+                                                                                }
+                                                                              }
+                                                                            }
                                                                           }
                                                                         }
                                                                       }

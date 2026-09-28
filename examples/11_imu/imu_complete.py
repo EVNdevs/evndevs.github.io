@@ -69,9 +69,9 @@ imu.axes(top=top, front=front)                   # the same axes: nothing change
                                                  # mounted upside down needs top='-z'
 
 press_button("Put the robot on the table; let go of it after the button.")
-print("Keep it still: the gyro settles (up to about 25 s) ...")
+print("Keep it still until ready(): about a second with the stored calibration, 10 to 27 s without ...")
 clock = StopWatch()
-while not imu.ready() and clock.time() < 30000:
+while not imu.ready() and clock.time() < 35000:
     wait(100)
 print("ready:", imu.ready(), "after %.1f s" % (clock.time() / 1000))
 
@@ -181,7 +181,7 @@ print("gyro bias measured (counts):", imu.calibrate_gyro(200))   # about 1 s, ke
 print("raw mode read() = ((g), (deg/s)):", imu.read())
 print("up:", imu.up() == Side.TOP)               # up() works in raw mode too
 
-imu.dmp(True)                                    # back to the DMP (it settles again ~10 s)
+imu.dmp(True)                                    # back to the DMP: ready() is measured again
 print("DMP on:", imu.dmp())
 
 imu.close()

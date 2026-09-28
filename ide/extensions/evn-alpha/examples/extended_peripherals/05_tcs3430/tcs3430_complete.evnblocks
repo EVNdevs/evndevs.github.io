@@ -3,7 +3,7 @@
   "version": 2,
   "title": "TCS3430 colour sensor: every block",
   "needs": "an ams-OSRAM TCS3430 colour sensor on I2C port 16",
-  "description": "Every block of the TCS3430: the black and the white taken first (nothing in front, then a white sheet: without them the module's warm LED makes white read yellow), the gain lowered to 16x (for a bright target close up), then for twenty seconds its colour, its X, Y, Z and infrared channels and its hue, and a message whenever it sees red. Last, the integration time set to 100 ms (the setting for room light or a target further away) and one brightness reading Y under it.",
+  "description": "Every block of the TCS3430: the black and the white taken first (nothing in front, then a white sheet: without them the module's warm LED makes white read yellow), the gain lowered to 16x (for a bright target close up), then for twenty seconds its colour, its X, Y, Z and infrared channels and its hue, and a message whenever it sees red. Last, the integration time set to 100 ms (the setting for room light or a target further away) and one brightness reading Y under it. Then a 50 ms wait between readings and the auto-zero every 10 readings, a Z window of 100 to 900 for 3 readings whose flag is printed after a second and cleared, one far-infrared reading (measured when asked), and the wait and the auto-zero back to their start-up values. The black and white calibration is stored for the port: later programs start with it.",
   "workspace": {
     "blocks": {
       "languageVersion": 0,
@@ -291,6 +291,156 @@
                                                             "fields": {
                                                               "PORT": "16",
                                                               "WHAT": "xyz()[1]"
+                                                            }
+                                                          }
+                                                        }
+                                                      },
+                                                      "next": {
+                                                        "block": {
+                                                          "type": "text_print",
+                                                          "inputs": {
+                                                            "TEXT": {
+                                                              "block": {
+                                                                "type": "text",
+                                                                "fields": {
+                                                                  "TEXT": "A reading every 2.78 ms + 50 ms now, the dark offset re-measured every 10 readings"
+                                                                }
+                                                              }
+                                                            }
+                                                          },
+                                                          "next": {
+                                                            "block": {
+                                                              "type": "evn_tcs3430_wait",
+                                                              "fields": {
+                                                                "PORT": "16"
+                                                              },
+                                                              "inputs": {
+                                                                "MS": {
+                                                                  "shadow": {
+                                                                    "type": "math_number",
+                                                                    "fields": {
+                                                                      "NUM": 50
+                                                                    }
+                                                                  }
+                                                                }
+                                                              },
+                                                              "next": {
+                                                                "block": {
+                                                                  "type": "evn_tcs3430_autozero",
+                                                                  "fields": {
+                                                                    "PORT": "16",
+                                                                    "NTH": "10"
+                                                                  },
+                                                                  "next": {
+                                                                    "block": {
+                                                                      "type": "evn_tcs3430_window",
+                                                                      "fields": {
+                                                                        "PORT": "16",
+                                                                        "PERS": "3"
+                                                                      },
+                                                                      "inputs": {
+                                                                        "LOW": {
+                                                                          "shadow": {
+                                                                            "type": "math_number",
+                                                                            "fields": {
+                                                                              "NUM": 100
+                                                                            }
+                                                                          }
+                                                                        },
+                                                                        "HIGH": {
+                                                                          "shadow": {
+                                                                            "type": "math_number",
+                                                                            "fields": {
+                                                                              "NUM": 900
+                                                                            }
+                                                                          }
+                                                                        }
+                                                                      },
+                                                                      "next": {
+                                                                        "block": {
+                                                                          "type": "evn_wait",
+                                                                          "inputs": {
+                                                                            "TIME": {
+                                                                              "shadow": {
+                                                                                "type": "math_number",
+                                                                                "fields": {
+                                                                                  "NUM": 1000
+                                                                                }
+                                                                              }
+                                                                            }
+                                                                          },
+                                                                          "next": {
+                                                                            "block": {
+                                                                              "type": "text_print",
+                                                                              "inputs": {
+                                                                                "TEXT": {
+                                                                                  "block": {
+                                                                                    "type": "evn_tcs3430_left_window",
+                                                                                    "fields": {
+                                                                                      "PORT": "16"
+                                                                                    }
+                                                                                  }
+                                                                                }
+                                                                              },
+                                                                              "next": {
+                                                                                "block": {
+                                                                                  "type": "evn_tcs3430_clear_window",
+                                                                                  "fields": {
+                                                                                    "PORT": "16"
+                                                                                  },
+                                                                                  "next": {
+                                                                                    "block": {
+                                                                                      "type": "text_print",
+                                                                                      "inputs": {
+                                                                                        "TEXT": {
+                                                                                          "block": {
+                                                                                            "type": "evn_tcs3430_value",
+                                                                                            "fields": {
+                                                                                              "PORT": "16",
+                                                                                              "WHAT": "ir2()"
+                                                                                            }
+                                                                                          }
+                                                                                        }
+                                                                                      },
+                                                                                      "next": {
+                                                                                        "block": {
+                                                                                          "type": "evn_tcs3430_wait",
+                                                                                          "fields": {
+                                                                                            "PORT": "16"
+                                                                                          },
+                                                                                          "inputs": {
+                                                                                            "MS": {
+                                                                                              "shadow": {
+                                                                                                "type": "math_number",
+                                                                                                "fields": {
+                                                                                                  "NUM": 0
+                                                                                                }
+                                                                                              }
+                                                                                            }
+                                                                                          },
+                                                                                          "next": {
+                                                                                            "block": {
+                                                                                              "type": "evn_tcs3430_autozero",
+                                                                                              "fields": {
+                                                                                                "PORT": "16",
+                                                                                                "NTH": "127"
+                                                                                              }
+                                                                                            }
+                                                                                          }
+                                                                                        }
+                                                                                      }
+                                                                                    }
+                                                                                  }
+                                                                                }
+                                                                              }
+                                                                            }
+                                                                          }
+                                                                        }
+                                                                      }
+                                                                    }
+                                                                  }
+                                                                }
+                                                              }
                                                             }
                                                           }
                                                         }

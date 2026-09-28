@@ -30,6 +30,14 @@ The extension waits up to 90 seconds for that drive, so there is no rush.
   the RPI-RP2 drive: **Restart the board without flashing** (the button on the *Board* view's port row,
   or *EVN: Restart the board without flashing*) starts the firmware already on it and writes nothing.
   The board's RESET button does the same.
+- **More than one board plugged in?** The confirmation names the board. The selected board is rebooted
+  into bootloader mode and only the drive it brings up is written; a board already in BOOTSEL mode is
+  left alone, also when a moment's slow read hides it, and a board unplugged before you click frees its
+  drive letter for the selected one. With several boards in BOOTSEL and none selected - or one beside a
+  drive letter that did not answer in time - you pick the drive (unplug the others if you are not sure
+  which is which). Whatever sits on a drive letter the confirmation names as not answering is never
+  written: the letter is used again only once it answers quickly and is seen empty twice (a slow letter
+  is skipped for up to a minute - if the flash then says the board did not appear, flash again). On macOS and Linux a second board's drive (`RPI-RP2 1`) is looked for too.
 - **Motors coast** while the board reboots - a robot up on blocks will free-wheel for a moment. Keep
   wheels off the ground.
 - The battery pack powers the motors; USB alone powers the board but not the motors.
