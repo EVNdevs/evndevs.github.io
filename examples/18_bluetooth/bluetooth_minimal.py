@@ -21,12 +21,18 @@ bluetooth_2 = Bluetooth(2)
 
 line = None
 
+def bytes_to_text(data):
+    try:
+        return data.decode()
+    except UnicodeError:
+        return ''.join(chr(byte) for byte in data)
+
 
 # The main program starts here.
 bluetooth_2.write((str('Hello from EVN! Send me a line.') + '\n').encode())
 while True:
     if bluetooth_2.any() > 0:
-        line = (bluetooth_2.readline(1000) or b'').decode()
+        line = bytes_to_text(bluetooth_2.readline(1000) or b'')
         print(line)
         bluetooth_2.write((str('you said: ' + str(line)) + '\n').encode())
     wait(20)

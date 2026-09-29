@@ -34,7 +34,9 @@ except OSError:
 # evn.Pose from its own ports, wheel, track and the mirrored motor's direction, and robot.pose is
 # that Pose. declination= (degrees) is added to the compass heading: true north instead of
 # magnetic north; it goes with compass=. (A Pose without a base - pushed by hand - is built on its
-# own: Pose(4, 3, wheel_diameter=62.4, axle_track=170, reverse_left=True, imu=3), see pose_minimal.py.)
+# own: Pose(4, 3, wheel_diameter=62.4, axle_track=170, reverse_left=True, imu=3); a base can also
+# adopt a Pose the program built, DriveBase(..., pose=pose), which is what the Pose blocks generate:
+# see pose_minimal.py.)
 robot = DriveBase(left, right, wheel_diameter=62.4, axle_track=170, imu=3,
                   compass=14 if compass else None, declination=0 if compass else None)
 pose = robot.pose

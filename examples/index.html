@@ -41,8 +41,10 @@
 </ul>
 <h2>Pose (where the robot is) <small>position and heading from the wheels, an IMU and a compass</small></h2>
 <ul>
-  <li><a href="04_pose/pose_minimal.py">pose_minimal.py</a>  <span>Pose: minimal - Needs: a robot: left wheel motor on port 4 (mounted mirrored), right on port 3, 62.4 mm wheels</span></li>
+  <li><a href="04_pose/pose_minimal.py">pose_minimal.py</a>  <span>Pose: minimal - Needs: a robot: left wheel motor on port 4 (mounted mirrored), right on port 3, 62.4 mm wheels 170 mm apart; you push it along the floor while the program runs.</span></li>
+  <li><a href="04_pose/pose_minimal.evnblocks">pose_minimal.evnblocks</a>  <span>Pose: minimal - Needs: a robot: left wheel motor on port 4 (mounted mirrored), right on port 3, 62.4 mm wheels 170 mm apart; you push it along the floor while the program runs.</span></li>
   <li><a href="04_pose/pose_complete.py">pose_complete.py</a>  <span>Pose: the whole API - Needs: a robot: left wheel motor on port 4 (mounted mirrored), right on port 3, 62.4 mm wheels</span></li>
+  <li><a href="04_pose/pose_complete.evnblocks">pose_complete.evnblocks</a>  <span>Pose: every block - Needs: a robot: left wheel motor on port 4 (mounted mirrored), right on port 3, 62.4 mm wheels 170 mm apart, an EVN IMU on I2C port 3 fixed flat to the chassis, an EVN compass on I2C port 14 calibrated on the robot and mounted away from the motors, and 40 cm of clear floor ahead. Keep the robot still while the program starts (the IMU settles in 8 to 25 s).</span></li>
 </ul>
 <h2>Colour sensor <small>TCS34725 on an I2C port</small></h2>
 <ul>
@@ -142,20 +144,26 @@
   <li><a href="18_bluetooth/bluetooth_complete.py">bluetooth_complete.py</a>  <span>Bluetooth: the whole API - Needs: the Bluetooth module on serial port 2, and a phone (Android) or PC paired with it (PIN 1234)</span></li>
   <li><a href="18_bluetooth/bluetooth_complete.evnblocks">bluetooth_complete.evnblocks</a>  <span>Bluetooth: every block - Needs: the Bluetooth module on serial port 2, and a phone (Android) or PC paired with it (PIN 1234) running a Bluetooth serial terminal app that ends each line it sends with a newline</span></li>
 </ul>
-<h2>UART (serial ports) <small>Serial 1 and 2 as plain UARTs</small></h2>
+<h2>UART (serial ports) <small>Serial 1 and 2 as plain UARTs (MicroPython's machine.UART)</small></h2>
 <ul>
   <li><a href="19_uart/uart_minimal.py">uart_minimal.py</a>  <span>UART: minimal - Needs: a jumper wire from TX to RX on Serial 1 (or a device talking 115200 baud lines there)</span></li>
+  <li><a href="19_uart/uart_minimal.evnblocks">uart_minimal.evnblocks</a>  <span>UART: minimal - Needs: a jumper wire from TX to RX on Serial 1 (or a device talking 115200 baud lines there)</span></li>
   <li><a href="19_uart/uart_complete.py">uart_complete.py</a>  <span>UART: the whole API - Needs: a jumper wire from TX to RX on Serial 1 (the board hears what it sends). Without the wire</span></li>
+  <li><a href="19_uart/uart_complete.evnblocks">uart_complete.evnblocks</a>  <span>UART: every block - Needs: a jumper wire from TX to RX on Serial 1 (the board hears what it sends). Without the wire the program still runs and says nothing came back.</span></li>
 </ul>
 <h2>I2C (any device) <small>raw I2C on ports 1-16, for devices without a class</small></h2>
 <ul>
   <li><a href="20_i2c/i2c_minimal.py">i2c_minimal.py</a>  <span>I2C: minimal - Needs: an EVN IMU module (MPU-6500) on I2C port 1</span></li>
+  <li><a href="20_i2c/i2c_minimal.evnblocks">i2c_minimal.evnblocks</a>  <span>I2C: minimal - Needs: an EVN IMU module (MPU-6500) on I2C port 1</span></li>
   <li><a href="20_i2c/i2c_complete.py">i2c_complete.py</a>  <span>I2C: the whole API - Needs: an EVN IMU module (MPU-6500) on I2C port 1. Other EVN modules on that port are named when</span></li>
+  <li><a href="20_i2c/i2c_complete.evnblocks">i2c_complete.evnblocks</a>  <span>I2C: every block - Needs: an EVN IMU module (MPU-6500) on I2C port 1</span></li>
 </ul>
 <h2>Files on the board <small>open(), os and the flash file system</small></h2>
 <ul>
   <li><a href="21_files/files_minimal.py">files_minimal.py</a>  <span>Files: minimal - Needs: nothing but the board</span></li>
+  <li><a href="21_files/files_minimal.evnblocks">files_minimal.evnblocks</a>  <span>Files: minimal - Needs: nothing but the board</span></li>
   <li><a href="21_files/files_complete.py">files_complete.py</a>  <span>Files: the whole tour - Needs: the board, and a motor on port 1 with its wheel off the ground (for the last part: a log</span></li>
+  <li><a href="21_files/files_complete.evnblocks">files_complete.evnblocks</a>  <span>Files: every block - Needs: nothing but the board</span></li>
 </ul>
 <h2>Data log (recorded on the board) <small>motors, sensors, the battery and your own rows, saved to a CSV file</small></h2>
 <ul>

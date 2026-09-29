@@ -1,0 +1,524 @@
+{
+  "format": "evn-blocks",
+  "version": 2,
+  "title": "I2C: every block",
+  "needs": "an EVN IMU module (MPU-6500) on I2C port 1",
+  "description": "Every I2C block once, on the EVN IMU module (an MPU-6500): the addresses that answer, whether one answers at 0x68, its WHO_AM_I register (0x75, which reads 0x70 = 112), its acceleration and temperature as signed 16-bit numbers, 14 raw bytes of acceleration, temperature and turn rate as a list, and a write that wakes the chip (PWR_MGMT_1, 0x6B), put back as it was at the end. Nothing is written unless WHO_AM_I says it is an MPU-6500.",
+  "workspace": {
+    "blocks": {
+      "languageVersion": 0,
+      "blocks": [
+        {
+          "type": "evn_setup_start",
+          "x": 30,
+          "y": 30,
+          "next": {
+            "block": {
+              "type": "evn_i2c_setup",
+              "fields": {
+                "PORT": "1"
+              }
+            }
+          }
+        },
+        {
+          "type": "evn_program_start",
+          "x": 30,
+          "y": 115,
+          "next": {
+            "block": {
+              "type": "text_print",
+              "inputs": {
+                "TEXT": {
+                  "block": {
+                    "type": "text_join",
+                    "inputs": {
+                      "ADD0": {
+                        "shadow": {
+                          "type": "text",
+                          "fields": {
+                            "TEXT": "addresses answering on port 1: "
+                          }
+                        }
+                      },
+                      "ADD1": {
+                        "block": {
+                          "type": "evn_i2c_scan",
+                          "fields": {
+                            "PORT": "1"
+                          }
+                        }
+                      }
+                    },
+                    "extraState": {
+                      "itemCount": 2
+                    }
+                  }
+                }
+              },
+              "next": {
+                "block": {
+                  "type": "controls_if",
+                  "extraState": {
+                    "hasElse": true
+                  },
+                  "inputs": {
+                    "IF0": {
+                      "block": {
+                        "type": "logic_operation",
+                        "fields": {
+                          "OP": "AND"
+                        },
+                        "inputs": {
+                          "A": {
+                            "block": {
+                              "type": "evn_i2c_probe",
+                              "fields": {
+                                "PORT": "1",
+                                "ADDR": "68"
+                              }
+                            }
+                          },
+                          "B": {
+                            "block": {
+                              "type": "logic_compare",
+                              "fields": {
+                                "OP": "EQ"
+                              },
+                              "inputs": {
+                                "A": {
+                                  "block": {
+                                    "type": "evn_i2c_read",
+                                    "fields": {
+                                      "PORT": "1",
+                                      "ADDR": "68",
+                                      "REG": "75",
+                                      "FORMAT": "B"
+                                    }
+                                  }
+                                },
+                                "B": {
+                                  "shadow": {
+                                    "type": "math_number",
+                                    "fields": {
+                                      "NUM": 112
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "DO0": {
+                      "block": {
+                        "type": "evn_comment",
+                        "fields": {
+                          "TEXT": "PWR_MGMT_1 (0x6B): awake from power-on, but an IMU object's close() leaves the chip asleep"
+                        },
+                        "next": {
+                          "block": {
+                            "type": "variables_set",
+                            "fields": {
+                              "VAR": {
+                                "id": "v_power"
+                              }
+                            },
+                            "inputs": {
+                              "VALUE": {
+                                "block": {
+                                  "type": "evn_i2c_read",
+                                  "fields": {
+                                    "PORT": "1",
+                                    "ADDR": "68",
+                                    "REG": "6B",
+                                    "FORMAT": "B"
+                                  }
+                                }
+                              }
+                            },
+                            "next": {
+                              "block": {
+                                "type": "text_print",
+                                "inputs": {
+                                  "TEXT": {
+                                    "block": {
+                                      "type": "text_join",
+                                      "inputs": {
+                                        "ADD0": {
+                                          "shadow": {
+                                            "type": "text",
+                                            "fields": {
+                                              "TEXT": "PWR_MGMT_1 was "
+                                            }
+                                          }
+                                        },
+                                        "ADD1": {
+                                          "block": {
+                                            "type": "variables_get",
+                                            "fields": {
+                                              "VAR": {
+                                                "id": "v_power"
+                                              }
+                                            }
+                                          }
+                                        }
+                                      },
+                                      "extraState": {
+                                        "itemCount": 2
+                                      }
+                                    }
+                                  }
+                                },
+                                "next": {
+                                  "block": {
+                                    "type": "evn_i2c_write",
+                                    "fields": {
+                                      "PORT": "1",
+                                      "ADDR": "68",
+                                      "REG": "6B",
+                                      "FORMAT": "B"
+                                    },
+                                    "inputs": {
+                                      "VALUE": {
+                                        "shadow": {
+                                          "type": "math_number",
+                                          "fields": {
+                                            "NUM": 1
+                                          }
+                                        }
+                                      }
+                                    },
+                                    "next": {
+                                      "block": {
+                                        "type": "evn_wait",
+                                        "inputs": {
+                                          "TIME": {
+                                            "shadow": {
+                                              "type": "math_number",
+                                              "fields": {
+                                                "NUM": 100
+                                              }
+                                            }
+                                          }
+                                        },
+                                        "next": {
+                                          "block": {
+                                            "type": "evn_comment",
+                                            "fields": {
+                                              "TEXT": "acceleration x, y, z: signed 16 bits, high byte first; 16384 is 1 g at the 2 g range"
+                                            },
+                                            "next": {
+                                              "block": {
+                                                "type": "controls_repeat_ext",
+                                                "inputs": {
+                                                  "TIMES": {
+                                                    "shadow": {
+                                                      "type": "math_number",
+                                                      "fields": {
+                                                        "NUM": 5
+                                                      }
+                                                    }
+                                                  },
+                                                  "DO": {
+                                                    "block": {
+                                                      "type": "text_print",
+                                                      "inputs": {
+                                                        "TEXT": {
+                                                          "block": {
+                                                            "type": "text_join",
+                                                            "inputs": {
+                                                              "ADD0": {
+                                                                "shadow": {
+                                                                  "type": "text",
+                                                                  "fields": {
+                                                                    "TEXT": "accel x "
+                                                                  }
+                                                                }
+                                                              },
+                                                              "ADD1": {
+                                                                "block": {
+                                                                  "type": "evn_i2c_read",
+                                                                  "fields": {
+                                                                    "PORT": "1",
+                                                                    "ADDR": "68",
+                                                                    "REG": "3B",
+                                                                    "FORMAT": ">h"
+                                                                  }
+                                                                }
+                                                              },
+                                                              "ADD2": {
+                                                                "shadow": {
+                                                                  "type": "text",
+                                                                  "fields": {
+                                                                    "TEXT": "  y "
+                                                                  }
+                                                                }
+                                                              },
+                                                              "ADD3": {
+                                                                "block": {
+                                                                  "type": "evn_i2c_read",
+                                                                  "fields": {
+                                                                    "PORT": "1",
+                                                                    "ADDR": "68",
+                                                                    "REG": "3D",
+                                                                    "FORMAT": ">h"
+                                                                  }
+                                                                }
+                                                              },
+                                                              "ADD4": {
+                                                                "shadow": {
+                                                                  "type": "text",
+                                                                  "fields": {
+                                                                    "TEXT": "  z "
+                                                                  }
+                                                                }
+                                                              },
+                                                              "ADD5": {
+                                                                "block": {
+                                                                  "type": "evn_i2c_read",
+                                                                  "fields": {
+                                                                    "PORT": "1",
+                                                                    "ADDR": "68",
+                                                                    "REG": "3F",
+                                                                    "FORMAT": ">h"
+                                                                  }
+                                                                }
+                                                              }
+                                                            },
+                                                            "extraState": {
+                                                              "itemCount": 6
+                                                            }
+                                                          }
+                                                        }
+                                                      },
+                                                      "next": {
+                                                        "block": {
+                                                          "type": "evn_wait",
+                                                          "inputs": {
+                                                            "TIME": {
+                                                              "shadow": {
+                                                                "type": "math_number",
+                                                                "fields": {
+                                                                  "NUM": 200
+                                                                }
+                                                              }
+                                                            }
+                                                          }
+                                                        }
+                                                      }
+                                                    }
+                                                  }
+                                                },
+                                                "next": {
+                                                  "block": {
+                                                    "type": "text_print",
+                                                    "inputs": {
+                                                      "TEXT": {
+                                                        "block": {
+                                                          "type": "text_join",
+                                                          "inputs": {
+                                                            "ADD0": {
+                                                              "shadow": {
+                                                                "type": "text",
+                                                                "fields": {
+                                                                  "TEXT": "temperature "
+                                                                }
+                                                              }
+                                                            },
+                                                            "ADD1": {
+                                                              "block": {
+                                                                "type": "math_round",
+                                                                "fields": {
+                                                                  "OP": "ROUND"
+                                                                },
+                                                                "inputs": {
+                                                                  "NUM": {
+                                                                    "block": {
+                                                                      "type": "math_arithmetic",
+                                                                      "fields": {
+                                                                        "OP": "ADD"
+                                                                      },
+                                                                      "inputs": {
+                                                                        "A": {
+                                                                          "block": {
+                                                                            "type": "math_arithmetic",
+                                                                            "fields": {
+                                                                              "OP": "DIVIDE"
+                                                                            },
+                                                                            "inputs": {
+                                                                              "A": {
+                                                                                "block": {
+                                                                                  "type": "evn_i2c_read",
+                                                                                  "fields": {
+                                                                                    "PORT": "1",
+                                                                                    "ADDR": "68",
+                                                                                    "REG": "41",
+                                                                                    "FORMAT": ">h"
+                                                                                  }
+                                                                                }
+                                                                              },
+                                                                              "B": {
+                                                                                "shadow": {
+                                                                                  "type": "math_number",
+                                                                                  "fields": {
+                                                                                    "NUM": 333.87
+                                                                                  }
+                                                                                }
+                                                                              }
+                                                                            }
+                                                                          }
+                                                                        },
+                                                                        "B": {
+                                                                          "shadow": {
+                                                                            "type": "math_number",
+                                                                            "fields": {
+                                                                              "NUM": 21
+                                                                            }
+                                                                          }
+                                                                        }
+                                                                      }
+                                                                    }
+                                                                  }
+                                                                }
+                                                              }
+                                                            },
+                                                            "ADD2": {
+                                                              "shadow": {
+                                                                "type": "text",
+                                                                "fields": {
+                                                                  "TEXT": " C"
+                                                                }
+                                                              }
+                                                            }
+                                                          },
+                                                          "extraState": {
+                                                            "itemCount": 3
+                                                          }
+                                                        }
+                                                      }
+                                                    },
+                                                    "next": {
+                                                      "block": {
+                                                        "type": "text_print",
+                                                        "inputs": {
+                                                          "TEXT": {
+                                                            "block": {
+                                                              "type": "text_join",
+                                                              "inputs": {
+                                                                "ADD0": {
+                                                                  "shadow": {
+                                                                    "type": "text",
+                                                                    "fields": {
+                                                                      "TEXT": "14 bytes from 0x3B: "
+                                                                    }
+                                                                  }
+                                                                },
+                                                                "ADD1": {
+                                                                  "block": {
+                                                                    "type": "evn_i2c_read_bytes",
+                                                                    "fields": {
+                                                                      "PORT": "1",
+                                                                      "ADDR": "68",
+                                                                      "REG": "3B"
+                                                                    },
+                                                                    "inputs": {
+                                                                      "COUNT": {
+                                                                        "shadow": {
+                                                                          "type": "math_number",
+                                                                          "fields": {
+                                                                            "NUM": 14
+                                                                          }
+                                                                        }
+                                                                      }
+                                                                    }
+                                                                  }
+                                                                }
+                                                              },
+                                                              "extraState": {
+                                                                "itemCount": 2
+                                                              }
+                                                            }
+                                                          }
+                                                        },
+                                                        "next": {
+                                                          "block": {
+                                                            "type": "evn_comment",
+                                                            "fields": {
+                                                              "TEXT": "put PWR_MGMT_1 back as it was"
+                                                            },
+                                                            "next": {
+                                                              "block": {
+                                                                "type": "evn_i2c_write",
+                                                                "fields": {
+                                                                  "PORT": "1",
+                                                                  "ADDR": "68",
+                                                                  "REG": "6B",
+                                                                  "FORMAT": "B"
+                                                                },
+                                                                "inputs": {
+                                                                  "VALUE": {
+                                                                    "block": {
+                                                                      "type": "variables_get",
+                                                                      "fields": {
+                                                                        "VAR": {
+                                                                          "id": "v_power"
+                                                                        }
+                                                                      }
+                                                                    }
+                                                                  }
+                                                                }
+                                                              }
+                                                            }
+                                                          }
+                                                        }
+                                                      }
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "ELSE": {
+                      "block": {
+                        "type": "text_print",
+                        "inputs": {
+                          "TEXT": {
+                            "shadow": {
+                              "type": "text",
+                              "fields": {
+                                "TEXT": "no MPU-6500 at 0x68 on port 1: nothing written"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "variables": [
+      {
+        "name": "power",
+        "id": "v_power"
+      }
+    ]
+  }
+}

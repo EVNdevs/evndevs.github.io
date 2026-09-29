@@ -1,53 +1,98 @@
 """UART: the whole API
 
-Every UART method once, on Serial 1 wired back to itself: writing, reading lines and raw bytes,
-what is waiting, dropping input, the receive ring's overflow count, and closing so the port can be
-opened again at another speed. Everything it sends comes straight back, so each step can check
-itself.
+MicroPython's machine.UART on Serial 1 wired back to itself: the settings and the read timeouts,
+writing and waiting for the bytes to leave, reading lines, raw bytes and into a buffer, lines in a
+loop, changing the speed and the format, a break, inverted lines, dropping input, the receive
+ring's overflow count, and handing the port back. Everything it sends comes straight back, so each
+step can check itself.
 
 Needs: a jumper wire from TX to RX on Serial 1 (the board hears what it sends). Without the wire
 the program still runs and says nothing came back.
 """
 from evn import UART, wait
 
-serial = UART(1)                                 # Serial 1 (2 = Serial 2), 115200 baud by default
+# machine.UART's constructor: the baud rate, then bits / parity / stop, and the read timeouts in ms:
+# a read waits at most `timeout` for its first byte and `timeout_char` for each next one. A read that
+# stops short of its count (or read() with no count) then waits one more `timeout` for further bytes.
+serial = UART(1, 115200, bits=8, parity=None, stop=1, timeout=500, timeout_char=10)
+print(serial)                                    # every setting, as machine.UART prints them
 
-# --- writing and reading lines --------------------------------------------------------------------
-# write() queues every byte (it never drops any) and returns how many it took.
+# --- writing ----------------------------------------------------------------------------------------
+# write() queues every byte (it never drops any) and returns how many it took; txdone() says whether
+# they have all left, flush() waits until they have.
 print("queued", serial.write(b"first line\r\nsecond line\n"), "bytes")
-print("line 1:", serial.readline())              # b'first line' (no \r\n); waits up to 5 s
-print("line 2:", serial.readline(timeout=500))   # None if no whole line came within 0.5 s
-print("line 3:", serial.readline(timeout=0))     # 0: only a line already complete, never waits
+print("all sent?", serial.txdone())              # False: 24 bytes take 2 ms at 115200
+serial.flush()
+print("after flush():", serial.txdone())         # True
 
-# --- raw bytes ------------------------------------------------------------------------------------
+# --- reading lines -----------------------------------------------------------------------------------
+# readline() keeps the line's end (machine.UART): strip() it for the text alone. It returns None when
+# nothing came within the timeout, and the part that came when a line stops half way.
+print("line 1:", serial.readline())              # b'first line\r\n'
+line = serial.readline()
+print("line 2:", line.strip() if line else line)  # b'second line'
+print("line 3:", serial.readline(timeout=0))     # None: nothing more (timeout= for this call only)
+
+# --- raw bytes ---------------------------------------------------------------------------------------
 serial.write(b"ABCDEFGH")
-wait(10)                                         # 8 bytes at 115200 baud take under 1 ms
+serial.flush()
 print(serial.any(), "bytes waiting")             # 8 with the wire
-print("read(3):", serial.read(3))                # at most 3 of them: b'ABC'
-print("read():", serial.read())                  # everything else: b'DEFGH'
-print("read() again:", serial.read())            # None: nothing is waiting
+print("read(3):", serial.read(3))                # b'ABC'
+buf = bytearray(4)
+print("readinto:", serial.readinto(buf), buf)    # 4 bytearray(b'DEFG')
+print("read():", serial.read())                  # b'H', about 0.5 s later: the quiet gap, then one more timeout
+print("read() again:", serial.read())            # None, after the 0.5 s timeout: nothing came
 
-# --- dropping input -------------------------------------------------------------------------------
+# --- lines in a loop ---------------------------------------------------------------------------------
+serial.write(b"one\ntwo\nthree\n")
+for received in serial:                          # a readline() each time, until one comes back empty
+    print("got", received)
+
+# --- another speed, another format ------------------------------------------------------------------
+# init() changes only what it is given; whatever is still queued goes out first, at the old settings.
+serial.init(9600, timeout=1000)
+serial.write(b"slow\n")
+print("at 9600 baud:", serial.readline())
+serial.init(115200, bits=7, parity=0, stop=2)    # 7 data bits, even parity, 2 stop bits
+serial.write(b"seven bits\n")
+print("7E2:", serial.readline())
+serial.init(bits=8, parity=None, stop=1)
+
+# --- a break -----------------------------------------------------------------------------------------
+# sendbreak() holds TX low for two characters' time; the receiver throws a break away (it is not data).
+serial.sendbreak()
+serial.write(b"after the break\n")
+print(serial.readline())
+
+# --- inverted lines ----------------------------------------------------------------------------------
+# invert= flips a line so that it idles low (INV_TX, INV_RX, or both): flipped at both ends of the
+# wire, the loop still hears itself.
+serial.init(invert=UART.INV_TX | UART.INV_RX)
+serial.write(b"inverted\n")
+print("inverted both ways:", serial.readline())
+serial.init(invert=0)
+
+# --- dropping input, the receive ring ----------------------------------------------------------------
 serial.write(b"stale data")
-wait(10)
-serial.flush_rx()                                # throw away whatever arrived
+serial.flush()
+wait(5)
+serial.flush_rx()                                # throw away whatever arrived (EVN's; flush() is for output)
 print("after flush_rx():", serial.any(), "bytes waiting")
-
-# --- the receive ring -----------------------------------------------------------------------------
 # Incoming bytes wait in a 256-byte ring until the program reads them. A program that reads too
 # rarely loses the rest; overflow() says how many were lost since it was last asked (and clears).
 print("overflow before:", serial.overflow())
 serial.write(b"x" * 300)                         # more than the ring holds, nobody reading
-wait(50)
-print("waiting", serial.any(), "- lost", serial.overflow(), "bytes")   # ring full, rest lost
+serial.flush()
+wait(5)
+print("waiting", serial.any(), "- lost", serial.overflow(), "bytes")   # 255 kept, 45 lost
 print("overflow again:", serial.overflow())      # 0: read and cleared
 serial.flush_rx()
 
-# --- another speed --------------------------------------------------------------------------------
-# One object per header: close() hands the port back (it keeps running and keeps any bytes still
-# queued to send), so it can be opened again - here at 9600 baud - or given to evn.Bluetooth.
-serial.close()
-slow = UART(1, 9600)
-slow.write(b"slow\n")
-print("at 9600 baud:", slow.readline(timeout=1000))
-slow.close()
+# --- handing the port back ---------------------------------------------------------------------------
+# One object per header: deinit() hands the port back (it keeps running and keeps any bytes still
+# queued to send), so a new object - or evn.Bluetooth - can take it. close() is the same call.
+serial.deinit()
+again = UART(1, 9600, timeout=1000)
+again.write(b"a new object\n")
+print(again.readline())
+again.close()

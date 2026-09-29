@@ -1,0 +1,366 @@
+{
+  "format": "evn-blocks",
+  "version": 2,
+  "title": "Files: every block",
+  "needs": "nothing but the board",
+  "description": "Every file block once: a fresh start (delete), writing a line, adding more in a loop the way a log grows, reading the file back, asking whether it exists, listing the files, and deleting it again, so the board is left as it was. The board does not write its flash while a motor drives: keep the values in variables during a move and write them after it.",
+  "workspace": {
+    "blocks": {
+      "languageVersion": 0,
+      "blocks": [
+        {
+          "type": "evn_setup_start",
+          "x": 30,
+          "y": 30
+        },
+        {
+          "type": "evn_program_start",
+          "x": 30,
+          "y": 100,
+          "next": {
+            "block": {
+              "type": "evn_file_delete",
+              "inputs": {
+                "NAME": {
+                  "shadow": {
+                    "type": "text",
+                    "fields": {
+                      "TEXT": "notes.txt"
+                    }
+                  }
+                }
+              },
+              "next": {
+                "block": {
+                  "type": "text_print",
+                  "inputs": {
+                    "TEXT": {
+                      "block": {
+                        "type": "text_join",
+                        "inputs": {
+                          "ADD0": {
+                            "shadow": {
+                              "type": "text",
+                              "fields": {
+                                "TEXT": "notes.txt exists: "
+                              }
+                            }
+                          },
+                          "ADD1": {
+                            "block": {
+                              "type": "evn_file_exists",
+                              "inputs": {
+                                "NAME": {
+                                  "shadow": {
+                                    "type": "text",
+                                    "fields": {
+                                      "TEXT": "notes.txt"
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "extraState": {
+                          "itemCount": 2
+                        }
+                      }
+                    }
+                  },
+                  "next": {
+                    "block": {
+                      "type": "evn_file_write",
+                      "fields": {
+                        "MODE": "w"
+                      },
+                      "inputs": {
+                        "NAME": {
+                          "shadow": {
+                            "type": "text",
+                            "fields": {
+                              "TEXT": "notes.txt"
+                            }
+                          }
+                        },
+                        "TEXT": {
+                          "shadow": {
+                            "type": "text",
+                            "fields": {
+                              "TEXT": "line one"
+                            }
+                          }
+                        }
+                      },
+                      "next": {
+                        "block": {
+                          "type": "evn_file_write",
+                          "fields": {
+                            "MODE": "a"
+                          },
+                          "inputs": {
+                            "NAME": {
+                              "shadow": {
+                                "type": "text",
+                                "fields": {
+                                  "TEXT": "notes.txt"
+                                }
+                              }
+                            },
+                            "TEXT": {
+                              "shadow": {
+                                "type": "text",
+                                "fields": {
+                                  "TEXT": "line two"
+                                }
+                              }
+                            }
+                          },
+                          "next": {
+                            "block": {
+                              "type": "controls_for",
+                              "fields": {
+                                "VAR": {
+                                  "id": "v_count"
+                                }
+                              },
+                              "inputs": {
+                                "FROM": {
+                                  "shadow": {
+                                    "type": "math_number",
+                                    "fields": {
+                                      "NUM": 1
+                                    }
+                                  }
+                                },
+                                "TO": {
+                                  "shadow": {
+                                    "type": "math_number",
+                                    "fields": {
+                                      "NUM": 3
+                                    }
+                                  }
+                                },
+                                "BY": {
+                                  "shadow": {
+                                    "type": "math_number",
+                                    "fields": {
+                                      "NUM": 1
+                                    }
+                                  }
+                                },
+                                "DO": {
+                                  "block": {
+                                    "type": "evn_file_write",
+                                    "fields": {
+                                      "MODE": "a"
+                                    },
+                                    "inputs": {
+                                      "NAME": {
+                                        "shadow": {
+                                          "type": "text",
+                                          "fields": {
+                                            "TEXT": "notes.txt"
+                                          }
+                                        }
+                                      },
+                                      "TEXT": {
+                                        "block": {
+                                          "type": "text_join",
+                                          "inputs": {
+                                            "ADD0": {
+                                              "shadow": {
+                                                "type": "text",
+                                                "fields": {
+                                                  "TEXT": "count "
+                                                }
+                                              }
+                                            },
+                                            "ADD1": {
+                                              "block": {
+                                                "type": "variables_get",
+                                                "fields": {
+                                                  "VAR": {
+                                                    "id": "v_count"
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          },
+                                          "extraState": {
+                                            "itemCount": 2
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              },
+                              "next": {
+                                "block": {
+                                  "type": "text_print",
+                                  "inputs": {
+                                    "TEXT": {
+                                      "block": {
+                                        "type": "text_join",
+                                        "inputs": {
+                                          "ADD0": {
+                                            "shadow": {
+                                              "type": "text",
+                                              "fields": {
+                                                "TEXT": "notes.txt exists now: "
+                                              }
+                                            }
+                                          },
+                                          "ADD1": {
+                                            "block": {
+                                              "type": "evn_file_exists",
+                                              "inputs": {
+                                                "NAME": {
+                                                  "shadow": {
+                                                    "type": "text",
+                                                    "fields": {
+                                                      "TEXT": "notes.txt"
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        },
+                                        "extraState": {
+                                          "itemCount": 2
+                                        }
+                                      }
+                                    }
+                                  },
+                                  "next": {
+                                    "block": {
+                                      "type": "text_print",
+                                      "inputs": {
+                                        "TEXT": {
+                                          "block": {
+                                            "type": "evn_file_read",
+                                            "inputs": {
+                                              "NAME": {
+                                                "shadow": {
+                                                  "type": "text",
+                                                  "fields": {
+                                                    "TEXT": "notes.txt"
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      },
+                                      "next": {
+                                        "block": {
+                                          "type": "text_print",
+                                          "inputs": {
+                                            "TEXT": {
+                                              "block": {
+                                                "type": "text_join",
+                                                "inputs": {
+                                                  "ADD0": {
+                                                    "shadow": {
+                                                      "type": "text",
+                                                      "fields": {
+                                                        "TEXT": "files on the board: "
+                                                      }
+                                                    }
+                                                  },
+                                                  "ADD1": {
+                                                    "block": {
+                                                      "type": "evn_file_list"
+                                                    }
+                                                  }
+                                                },
+                                                "extraState": {
+                                                  "itemCount": 2
+                                                }
+                                              }
+                                            }
+                                          },
+                                          "next": {
+                                            "block": {
+                                              "type": "evn_file_delete",
+                                              "inputs": {
+                                                "NAME": {
+                                                  "shadow": {
+                                                    "type": "text",
+                                                    "fields": {
+                                                      "TEXT": "notes.txt"
+                                                    }
+                                                  }
+                                                }
+                                              },
+                                              "next": {
+                                                "block": {
+                                                  "type": "text_print",
+                                                  "inputs": {
+                                                    "TEXT": {
+                                                      "block": {
+                                                        "type": "text_join",
+                                                        "inputs": {
+                                                          "ADD0": {
+                                                            "shadow": {
+                                                              "type": "text",
+                                                              "fields": {
+                                                                "TEXT": "after delete file: "
+                                                              }
+                                                            }
+                                                          },
+                                                          "ADD1": {
+                                                            "block": {
+                                                              "type": "evn_file_exists",
+                                                              "inputs": {
+                                                                "NAME": {
+                                                                  "shadow": {
+                                                                    "type": "text",
+                                                                    "fields": {
+                                                                      "TEXT": "notes.txt"
+                                                                    }
+                                                                  }
+                                                                }
+                                                              }
+                                                            }
+                                                          }
+                                                        },
+                                                        "extraState": {
+                                                          "itemCount": 2
+                                                        }
+                                                      }
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "variables": [
+      {
+        "name": "count",
+        "id": "v_count"
+      }
+    ]
+  }
+}

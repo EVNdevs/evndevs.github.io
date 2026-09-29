@@ -1,0 +1,102 @@
+{
+  "format": "evn-blocks",
+  "version": 2,
+  "title": "Files: minimal",
+  "needs": "nothing but the board",
+  "description": "Writes a short file to the board's flash, reads it back, and lists the files on the board. The file stays there after a power cycle (delete it from the extension's Board view, or with the \"delete file\" block).",
+  "workspace": {
+    "blocks": {
+      "languageVersion": 0,
+      "blocks": [
+        {
+          "type": "evn_setup_start",
+          "x": 30,
+          "y": 30
+        },
+        {
+          "type": "evn_program_start",
+          "x": 30,
+          "y": 100,
+          "next": {
+            "block": {
+              "type": "evn_file_write",
+              "fields": {
+                "MODE": "w"
+              },
+              "inputs": {
+                "NAME": {
+                  "shadow": {
+                    "type": "text",
+                    "fields": {
+                      "TEXT": "hello.txt"
+                    }
+                  }
+                },
+                "TEXT": {
+                  "shadow": {
+                    "type": "text",
+                    "fields": {
+                      "TEXT": "Hello from EVN ALPHA"
+                    }
+                  }
+                }
+              },
+              "next": {
+                "block": {
+                  "type": "text_print",
+                  "inputs": {
+                    "TEXT": {
+                      "block": {
+                        "type": "evn_file_read",
+                        "inputs": {
+                          "NAME": {
+                            "shadow": {
+                              "type": "text",
+                              "fields": {
+                                "TEXT": "hello.txt"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "next": {
+                    "block": {
+                      "type": "text_print",
+                      "inputs": {
+                        "TEXT": {
+                          "block": {
+                            "type": "text_join",
+                            "inputs": {
+                              "ADD0": {
+                                "shadow": {
+                                  "type": "text",
+                                  "fields": {
+                                    "TEXT": "files on the board: "
+                                  }
+                                }
+                              },
+                              "ADD1": {
+                                "block": {
+                                  "type": "evn_file_list"
+                                }
+                              }
+                            },
+                            "extraState": {
+                              "itemCount": 2
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

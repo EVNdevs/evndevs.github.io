@@ -13,7 +13,7 @@ Signatures follow the firmware bindings (`micropython/modules/evn_*.c`). A param
 before ``/`` is positional-only: the binding takes no keywords for it. A parameter written
 after ``*`` is keyword-only.
 """
-from typing import List, Optional, Sequence, Tuple, Type, Union, overload
+from typing import Iterator, List, Optional, Sequence, Tuple, Type, Union, overload
 
 version: str
 """Firmware API version string, e.g. "0.1.0"."""
@@ -123,9 +123,12 @@ class Control:
         """The ``done()`` criterion: speed (deg/s, default 50) and position (deg, default two encoder edges and at
         least 1, or half the detent pitch plus a quarter edge on a motor whose rotor cogs - a library motor with detents, or a custom
         motor whose calibrate() measured them: 1 on a LEGO motor, 3.3 on the Pololu 25D,
-        which rests in its nearest detent) tolerance. Both read back as the floats they were set to
+        which rests in the detent nearest its target) tolerance. Both read back as the floats they were set to
         (``position=0.25`` reads 0.25; a LEGO encoder edge is 0.5 deg). A position below the controller's own
-        endpoint band can leave a move that stops inside it never reporting done."""
+        endpoint band can leave a move that stops inside it never reporting done. On a motor that cogs, at the default
+        position or a looser one, ``done()`` also takes the shaft resting in the detent the controller aims at (the one
+        nearest the target): within 2.5 encoder edges of it (1.9 deg on the Pololu 25D), up to about 5.2 deg from the
+        target."""
 
     @overload
     def stall_tolerances(self) -> Tuple[float, int]: ...
@@ -155,7 +158,9 @@ class Model:
     """Observer (motor model) estimates (``motor.model``). ``RuntimeError`` after ``close()``."""
 
     def state(self) -> Tuple[float, float, float, bool]:
-        """``(angle deg, speed deg/s, current mA, stalled)`` as estimated by the observer."""
+        """``(angle deg, speed deg/s, current mA, stalled)`` as estimated by the observer. The angle is the
+        estimate for the observer's next 5 ms step: while the shaft turns it runs on average speed x 3 ms ahead
+        of ``angle()``."""
 
     @overload
     def settings(self) -> Tuple[int, int, int, int, int, int, int, int]: ...
@@ -202,8 +207,8 @@ class Motor:
         """``gears``: ``[12, 36]`` or ``[[12, 36], [20, 16, 40]]``; values are then in output degrees.
         ``reset_angle=True`` zeroes ``angle()`` at construction. ``profile``: position tolerance (deg)
         for ``done()``, must be positive; by default two encoder edges and at least 1 deg, or half the detent
-        pitch plus a quarter edge on a motor whose rotor cogs (1 deg on a LEGO motor, 3.3 deg on the Pololu 25D, which rests in its
-        nearest detent). ``speed_unit=SpeedUnit.PERCENT`` makes every speed a
+        pitch plus a quarter edge on a motor whose rotor cogs (1 deg on a LEGO motor, 3.3 deg on the Pololu 25D, which rests in the
+        detent nearest its target). ``speed_unit=SpeedUnit.PERCENT`` makes every speed a
         percentage of ``full_speed()``.
 
         ``model``: the motor on the port, ``"EV3 Large"``, ``"EV3 Medium"``, ``"NXT"``,
@@ -246,7 +251,8 @@ class Motor:
         speed and the load estimate absorbing the push. Works on any calibrated motor, also during ``dc()``
         (at full duty). A hold pushed to its limit by a load reads stalled too."""
     def done(self) -> bool:
-        """True when the last profiled move is complete and the shaft is within the target tolerances."""
+        """True when the last profiled move is complete and the shaft is within the target tolerances (on a motor that
+        cogs, or resting in the detent the controller aims at: ``control.target_tolerances()``)."""
 
     # stopping
     def stop(self) -> None:
@@ -324,9 +330,20 @@ class Motor:
         next ``calibrate()`` returns its result at once instead of measuring again. A command that moves,
         holds or stops the motor (or its DriveBase, ``close()``, a take-over, ``evn.stop_all()``) drops it;
         reads and settings do not - after a drop, ``calibrate()`` measures afresh. One stored record per port. ``RuntimeError`` when the shaft does
-        not break away or the fit fails. A result with a warning (the drift check: the mechanism ran more
-        than 3 % faster or slower at the end than at the start - calibrate again after a minute of running)
-        prints ``WARNING: Motor(n): ...`` once (``evn.calibration(port)["warning"]`` holds it). The
+        not break away, the fit fails, or the result is not plausible - then nothing is applied or stored and
+        the port keeps its previous calibration (refused as the pulses end, before the slow ramps):
+        "the four pulses disagree on the motor's response time" (the slowest over 3x the fastest: something
+        rubbed or caught while it turned, or a mechanism on the shaft has play; a first pulse that alone
+        disagrees takes the time constant of the calibration's repeat of it instead, and its speed from the
+        second half of its own record - the drift check still runs), or
+        "running friction far below this motor model's" (a port set to a CHR-GM16 or an EV3 Medium, whose
+        result otherwise looks like that motor: something rubbed or caught, the port is set to another motor,
+        or a load grows with the speed - a fan: calibrate without it; not applied when the repeat lent the
+        first pulse its time constant - behind gear play such a load is stored). A result with a
+        warning (outside the range the port's motor model is known for, "... is not plausible for this motor
+        model" - stored and used; or the drift check: the mechanism ran more than 3 % faster or slower at the
+        end than at the start - calibrate again after a minute of running; or one note naming both) prints
+        ``WARNING: Motor(n): ...`` once (``evn.calibration(port)["warning"]`` holds it). The
         calibration also measures the port's encoder phase tables
         (the four quadrature phase widths, one table per direction of turning: a Hall sensor's edges sit
         at slightly different angles each way) and installs and stores them with the record, which is
@@ -376,8 +393,13 @@ class DriveBase:
 
     Each maneuver is two profiled moves on one time base: the wheel with the longer travel gets the
     maneuver's speed and acceleration, the other the same numbers scaled by the ratio of the travels, both
-    started on the same 1 kHz tick, so the wheels stay proportional and a straight is straight. A direct
-    ``Motor`` command on one wheel while a maneuver is in force coasts the other wheel (Pybricks).
+    started on the same 1 kHz tick, so the wheels stay proportional and a straight is straight. The two
+    keep one clock: when a wheel is held back (blocked, or loaded more than it can drive) its move waits and
+    the other wheel's waits with it, so the robot pauses on its path instead of turning about the held wheel
+    (``drive()`` too). The shared wait is the default ``"adrc"`` control law's: wheels on
+    ``control.law("pid")`` do not share it, and with one wheel on each law the ``"adrc"`` wheel's wait holds
+    the ``"pid"`` one, never the reverse. A direct ``Motor`` command on one wheel while a maneuver is in
+    force coasts the other wheel (Pybricks).
     A motor that already belongs to a DriveBase is taken over (that base is closed), so re-running the
     ``DriveBase(...)`` line with the same ``Motor`` objects works, and so does a whole re-run cell: a new
     ``Motor(port)`` on a wheel's port closes the base the old Motor belonged to (its next call raises
@@ -437,8 +459,12 @@ class DriveBase:
         backwards. Pybricks ``arc()``."""
     def drive(self, speed: float, turn_rate: float) -> None:
         """Drive at ``speed`` mm/s along the path and ``turn_rate`` deg/s (clockwise positive) until the next
-        command; both wheels ramp to their new speeds together, and if one would exceed the weaker wheel's
-        limit both are scaled so the radius is kept."""
+        command; both wheels ramp from the speeds they are at to their new speeds together, also when called
+        again before the last ramp has ended, and the same call repeated in a loop keeps the ramp it started
+        (the path of one call; with ``use_gyro(True)`` each call restarts the pose correction, so such a loop is
+        not corrected yet). If one wheel would exceed the weaker wheel's speed limit both are scaled so the
+        radius is kept; if its ramp would exceed that wheel's acceleration limit both ramps are slowed
+        together."""
     def stop(self) -> None:
         """Coast both wheels; returns once they have taken it (at most 2 ms: a file write next is not refused)."""
     def brake(self) -> None:
@@ -656,8 +682,9 @@ class I2C:
     Bench-validated as the transport under every standard peripheral (2026-09-18). The layer
     recovers by itself: a transaction that times out aborts, resets the controller, clocks a held
     SDA free and re-initialises the bus, and the multiplexer channel cache is dropped after any
-    failed transaction. The transaction deadline grows with the length (1 ms + 40 us per byte at 400 kHz, more at a slower clock, at
-    least 5 ms), so a long transfer never times out by being long.
+    failed transaction. A call's deadline is the object's ``timeout`` (50 ms by default, as ``machine.I2C``),
+    never shorter than the transfer's own wire time (1 ms + 40 us per byte at 400 kHz, more at a slower
+    clock), so a long transfer never times out by being long.
 
     Addresses the board itself uses are refused with ``ValueError``: **0x70** (the multiplexers,
     which answer on every port) everywhere, and **0x6A on port 16** (the battery charger).
@@ -671,7 +698,9 @@ class I2C:
     a probe, of a constructor's ID-register identify on an empty port or of a driver's re-probe of an unplugged
     device is not one, so a climbing count means a real fault. ``ValueError`` for a port outside 1..16, an address outside
     0x01..0x77 (0x01..0x07 reach NXT-era sensors: 0x01 is the NXT's 8-bit address 0x02; 0x00, the
-    general call, stays refused), a register outside 0..255 or a length outside the limits below.
+    general call, stays refused), a ``memaddr`` that does not fit ``addrsize`` (0..255 at the default
+    8 bits), a ``timeout`` outside 1..2000000 us or a length outside the limits below (1..4096 bytes;
+    on a slowed port what fits one second of the bus, ``freq // 9`` bytes).
 
     Every port has its own clock: 400 kHz unless ``I2C(port, freq=...)`` or an extended peripheral
     (``HiTechnicColorSensor``, ``HiTechnicCompass``: 100 kHz) slowed it; the other ports keep theirs.
@@ -681,10 +710,40 @@ class I2C:
 
     A scan of a port that carries an ``IMU`` pops one byte of the chip's FIFO (the driver heals it
     with a FIFO reset).
+
+    The transfer methods are MicroPython's ``machine.I2C`` ones, with its signatures, so a stock
+    MicroPython driver that is handed an ``I2C`` object runs unmodified; ``stop`` is positional-only,
+    as there (``writeto(addr, buf, False)``). ``stop=False`` on ``writeto()`` / ``writevto()`` holds
+    the write (at most 4 writes / 32 bytes) and sends it at the head of this object's next transfer,
+    which ends with the STOP: the bus cannot stay open between two calls, so the held bytes reach the
+    wire with that next call. An error in them is raised by the object's next call, whichever driver
+    makes it, and that call's own transfer is not sent (one ``I2C`` object per driver keeps each
+    error with its driver). The board asks for no STOP between them and the call's own transfer (a
+    repeated start, as ``readfrom_mem()``); a bus capture proving it on the wire is still owed. A read
+    always ends with a STOP: ``stop=False`` on a read raises ``ValueError``. A refused byte raises
+    ``OSError(EIO)`` (``machine.I2C.writeto`` would return the short count), the first byte after the
+    address ``OSError(ENODEV)``, as an absent device (the controller reports both as nothing sent).
+    Nothing at the address is ``OSError(ENODEV)``, as ``SoftI2C``; the Pico's ``machine.I2C`` raises
+    ``OSError(EIO)`` for every failure but a timeout, so a driver testing for ``EIO`` should accept
+    ``ENODEV`` too. A zero-byte transfer (``writeto(addr, b'')``, ``writevto(addr, [])``,
+    ``readfrom(addr, 0)``, ``readfrom_mem(addr, reg, 0)``) raises ``ValueError``: test for a chip with
+    ``probe(addr)``, not an empty write. ``addrsize=0`` and a ``memaddr`` that does not fit
+    ``addrsize`` (a 16-bit register at the default 8, a negative one) raise ``ValueError``, where
+    ``machine.I2C`` sends no address or keeps the address's low bytes. ``timeout`` bounds a whole call
+    (``machine.I2C``: each message). No ``start()`` / ``stop()`` / ``readinto()`` / ``write()``: MicroPython has those bus
+    primitives on ``SoftI2C`` only.
     """
-    def __init__(self, port: int, /, *, freq: Optional[int] = None) -> None:
+    def __init__(self, port: int, /, *, freq: Optional[int] = None, timeout: int = 50000) -> None:
         """``freq`` sets this port's I2C clock, 10000..400000 Hz (``ValueError`` outside); ``None`` keeps
-        the rate the port runs at. The transaction deadline's per-byte allowance scales with the rate."""
+        the rate the port runs at. The transaction deadline's per-byte allowance scales with the rate.
+        ``timeout`` (us, 1..2000000, default 50000 as ``machine.I2C``) is how long one call on this object
+        may take - for a chip that stretches the clock while it measures (an Si7021 / HTU21D hold-master
+        read, an SHT3x clock-stretched single shot: 10-50 ms); never shorter than the wire time. Past it:
+        ``OSError(ETIMEDOUT)`` and the bus is reset. A call holds the board's sensor service (the IMU, the
+        compass, ``evn.Pose``, a ``DriveBase``'s ``use_gyro(True)`` correction) for its whole length - a
+        clock-stretched read up to ``timeout``, a 4096-byte transfer about 0.1 s at 400 kHz; the motors' own
+        control carries on. On a robot driving with ``use_gyro(True)`` keep transfers short: start a
+        measurement and read it on a later pass (a chip's no-hold mode), or pass a smaller ``timeout``."""
     def freq(self) -> int:
         """The clock this port runs at, in Hz (400000 unless slowed by ``I2C(port, freq=...)`` or by an
         extended peripheral on the port)."""
@@ -694,14 +753,31 @@ class I2C:
         abandoned there rather than carried on against the bare bus."""
     def probe(self, addr: int, /) -> bool:
         """True when a device ACKs ``addr`` on this port (a 1-byte read, 1 ms deadline)."""
-    def readfrom(self, addr: int, nbytes: int, /) -> bytes:
-        """``nbytes`` 1..256."""
-    def writeto(self, addr: int, buf: bytes, /) -> None:
-        """``buf`` 1..4096 bytes."""
-    def readfrom_mem(self, addr: int, memaddr: int, nbytes: int, /) -> bytes:
-        """``memaddr`` 0..255, ``nbytes`` 1..256 (a write of the register then a repeated-start read)."""
-    def writeto_mem(self, addr: int, memaddr: int, buf: bytes, /) -> None:
-        """``memaddr`` 0..255, ``buf`` at most 255 bytes."""
+    def readfrom(self, addr: int, nbytes: int, stop: bool = True, /) -> bytes:
+        """Read ``nbytes`` (1..4096) from ``addr``. ``stop=False`` raises ``ValueError`` (a read
+        always ends with a STOP)."""
+    def readfrom_into(self, addr: int, buf: Union[bytearray, memoryview], stop: bool = True, /) -> None:
+        """Read ``len(buf)`` bytes (1..4096) from ``addr`` into ``buf``. ``stop=False`` raises
+        ``ValueError`` (a read always ends with a STOP)."""
+    def writeto(self, addr: int, buf: Union[bytes, bytearray, memoryview], stop: bool = True, /) -> int:
+        """Write ``buf`` (1..4096 bytes) to ``addr``; returns the ACKs received, ``len(buf)``.
+        ``stop=False`` (positional: ``writeto(addr, buf, False)``) holds the write for this object's next
+        transfer, sent at its head without a STOP (the register-pointer write of a repeated-start read);
+        an error in it is raised by that next call."""
+    def writevto(self, addr: int, vector: Union[Tuple[Union[bytes, bytearray, memoryview], ...],
+                 List[Union[bytes, bytearray, memoryview]]],
+                 stop: bool = True, /) -> int:
+        """Write the buffers of ``vector`` as ONE write (the address once), 1..4096 bytes in all;
+        empty ones add nothing. Returns the ACKs received. ``stop=False`` as ``writeto()``."""
+    def readfrom_mem(self, addr: int, memaddr: int, nbytes: int, *, addrsize: int = 8) -> bytes:
+        """Read ``nbytes`` (1..4096) from ``addr`` starting at ``memaddr``: the address written, then a
+        repeated-start read. ``addrsize`` 8, 16, 24 or 32 bits (the address most significant byte
+        first); ``memaddr`` must fit in it."""
+    def readfrom_mem_into(self, addr: int, memaddr: int, buf: Union[bytearray, memoryview], *, addrsize: int = 8) -> None:
+        """As ``readfrom_mem()``, into ``buf`` (1..4096 bytes)."""
+    def writeto_mem(self, addr: int, memaddr: int, buf: Union[bytes, bytearray, memoryview], *, addrsize: int = 8) -> None:
+        """Write ``buf`` (0..4096 bytes, e.g. an EEPROM page) to ``addr`` starting at ``memaddr``: the
+        address and the data in one write. ``addrsize`` as ``readfrom_mem()``."""
     def stats(self) -> Tuple[Tuple[int, int, bool], Tuple[int, int, bool]]:
         """``((errors, recoveries, stuck), (...))`` for bus 0 (ports 1-8) and bus 1 (ports 9-16):
         failed transactions since boot, timeouts that reset the controller, and whether SDA/SCL were
@@ -1240,8 +1316,9 @@ class TouchArray:
     electrode at every start. Bench-validated 2026-09-18: a bare finger moves a pad by about 500
     counts against the default 12 / 6 thresholds (lower them for a pad under a cover); a hand 1 cm
     above moves it by at most 6; proximity needs ``electrodes(12, proximity=3)``; hot-plug recovers
-    by itself. The constructor takes about 55 ms (reset, 76 register writes, auto-configuration, two
-    status periods); a setter about 52 ms at the 4 ms status period (26 polls of three writes, then
+    by itself. The constructor takes about 55 ms alone (reset, 76 register writes, auto-configuration,
+    two status periods; each start-up step waits its turn among the other I2C devices open, ~0.3 s
+    with nine others in the host model); a setter about 52 ms at the 4 ms status period (26 polls of three writes, then
     the restart and its periods; 171 ms at the 64 ms period), and returns with the first sample
     under the new setting.
 
@@ -1335,14 +1412,20 @@ class GestureSensor:
     """APDS-9960 gesture / proximity / colour sensor (an EVN Standard Peripheral) on I2C port 1..16.
 
     Bench-validated 2026-09-17 (12/12 swipes with a hand, every setting, hot-plug). Every setter
-    returns with the first sample under the new setting.
+    returns with the first sample under the new setting: the first reading of every engine that is on,
+    or the gesture-mode report. The constructor returns the same way: ~20-40 ms alone, ~0.1 s with
+    eight other I2C devices open in the host model (each start-up step waits its turn).
 
     Raises: ``ValueError("port must be 1..16")``; ``OSError("no APDS-9960 on port %d (I2C 0x39)")``;
     ``OSError("no free GestureSensor slot for port %d (%d in use)")`` when all 4 slots are taken;
     ``OSError("gesture sensor on port %d gave no first sample")`` / ``"... gave no sample under the
     new setting"`` on a timeout; ``OSError("gesture sensor on port %d not responding")`` while
-    unplugged; ``OSError("gesture sensor on port %d is in gesture mode (an object within the gesture
-    threshold): colour and proximity are suspended until it moves away, or engines(gesture=False)")``
+    unplugged, and from the constructor or a setter once the sensor is found gone (~0.25 s after the
+    sensor's next reading finds it: at the call when it was already unplugged, else within one colour /
+    proximity cycle + 0.25 s of the pull - not at the end of the wait; a setter within ~0.25 s of a
+    replug may raise it too: call it again); ``OSError("gesture sensor on port %d is in gesture mode (an
+    object within the gesture threshold): colour and proximity are suspended until it moves away, or
+    engines(gesture=False)")``
     from ``proximity()``, the colour getters and ``age()`` when the chip entered gesture mode before
     any reading was taken (a sensor lying face down at power-up, or right after a setter);
     ``ValueError("gesture sensor is closed")`` after ``close()``;
@@ -1575,8 +1658,15 @@ class IMU:
     ``ready()`` waits. Keep the robot still until ``ready()``: with a stored calibration
     (``calibrate()``) that is about a second; without one the DMP learns its gyro bias 8..25 s into
     stillness (moved early, it may not for a long time - ``dmp(True, gyro_cal=False)`` then lets the
-    driver average the bias itself after 1 s still, ``ready()`` in about 2 s). Once ready the heading
-    drifts about 0.2 degrees per 5 s - with a stored calibration or the DMP's own. With
+    driver average the bias itself after 1 s still, ``ready()`` in about 2 s). Once ready, a robot at
+    rest keeps its heading: while it is still (and no motor drives) the firmware measures the small gyro
+    bias a calibration leaves (its drift with temperature) and takes it off ``heading()`` and
+    ``angular_velocity()``, so the heading no longer creeps in the seconds before the DMP's own
+    calibration lands. A bias is taken off only once it stands out of the gyro's noise, so while the
+    robot moves what is left is a bias still too small to tell - under about 2.2 degrees a minute right
+    after a short rest, 1.4 two seconds after the robot stops, 0.8 from about 2.5 s, 0.6 after four
+    (estimated from the gyro's noise) -
+    and how far the bias changes after the last rest. With
     ``dmp(True, gyro_cal=False)`` and no stored calibration the driver's bias corrects
     ``angular_velocity()`` but not the orientation, so ``heading()`` drifts at the sensor's raw gyro
     bias (about a degree per 5 s on the bench unit, more on others): ``calibrate()`` once removes it.
@@ -1606,7 +1696,11 @@ class IMU:
     def calibrate(self, wait: bool = True, *, pose: int = 0) -> Optional[dict]:
         """About 2 s with the robot still on a level surface: measures the gyro bias, the
         accelerometer offsets and which sensor axis points up, stores them in flash for this port with
-        the date and applies them (every later ``IMU(port)`` starts with them). ``axes()`` follows: top
+        the date and applies them at once (every later ``IMU(port)`` starts with them). On a running IMU
+        the gyro bias the DMP had learnt under the old offsets is dropped with them, which should keep
+        ``tilt()`` steady and bring ``ready()`` back within about a second of stillness (it used to swing
+        ``tilt()`` by up to ~18 degrees and hold ``ready()`` False ~11 s; the board check is still to
+        come). ``axes()`` follows: top
         from gravity, front kept where it still fits - check it. Returns ``calibration()``; raises
         ``RuntimeError("IMU calibration failed: ...")`` only when it moved. Off level it calibrates
         what it can - over 8 degrees the gyro and the up axis, over 30 the gyro alone - and says what
@@ -1640,7 +1734,11 @@ class IMU:
         """Heading in degrees, clockwise positive; keeps growing past +/-180 (as Pybricks). Until the
         orientation has settled (at once on a robot standing on its wheels, upright or upside-down module
         alike) it follows the gyro's turn about the vertical instead of the orientation, so a turn made
-        meanwhile is kept."""
+        meanwhile is kept. Whenever the robot is still and no motor drives, the gyro bias left after the
+        calibration is measured and taken off, so the heading of a robot at rest stays put (a steady turn
+        slower than 0.5 deg/s by hand would be taken for bias while it lasts). While the robot moves, what
+        is left is the change of that bias after the last rest and the measurement's uncertainty (see
+        ``IMU``)."""
     def reset_heading(self, angle: float = 0, /) -> None:
         """The current pose reads as ``angle``."""
     def up(self) -> int:
@@ -1678,7 +1776,8 @@ class IMU:
     def gravity(self) -> Tuple[float, float, float]:
         """Unit vector in the body frame (DMP mode only)."""
     def angular_velocity(self) -> Tuple[float, float, float]:
-        """deg/s in the body frame."""
+        """deg/s in the body frame. With the DMP's own gyro calibration (the default) the bias left
+        about the vertical (z) axis is measured whenever the robot is still and taken off."""
     def raw(self) -> Tuple[Tuple[int, int, int], Tuple[int, int, int]]:
         """``((ax, ay, az), (gx, gy, gz))`` counts."""
     def read(self) -> Union[Tuple[float, float, float], Tuple[Tuple[float, float, float], Tuple[float, float, float]]]:
@@ -1716,15 +1815,21 @@ class IMU:
     def sample_rate(self) -> int: ...
     @overload
     def sample_rate(self, hz: int, /) -> None:
-        """DMP mode 12..200 Hz, raw mode 4..1000 Hz. Raw mode reads the chip once a period, ~0.5 ms each:
-        at the default 1000 Hz about half of the processor time a program would otherwise get."""
+        """DMP mode 12..200 Hz, raw mode 4..1000 Hz. In DMP mode the change is live: the orientation,
+        ``heading()`` and ``ready()`` carry on. The DMP runs at 200 Hz divided by a whole number (200,
+        100, 66.7, 50, 40, ... 12.5): another rate runs at the next of these up (150 at 200, 12 at 12.5),
+        and ``sample_rate()`` returns the rate asked for. Raw mode reads the chip once a period: at the default
+        1000 Hz a busy loop beside the IMU alone kept about 12-14 % of its speed on the bench board (12.8 %
+        on 0.2.59). A lower rate gives the time back."""
     @overload
     def dmp(self) -> bool: ...
     @overload
     def dmp(self, enable: bool, *, rate: Optional[int] = None, tap: bool = True,
             orientation: bool = True, gyro_cal: bool = True) -> None:
         """Switch the DMP on or off. ``rate=None`` **keeps the rate in force** (12..200 Hz otherwise);
-        ``tap`` / ``orientation`` / ``gyro_cal`` select the DMP features. ``dmp()`` with no argument
+        ``tap`` / ``orientation`` / ``gyro_cal`` select the DMP features. A new ``rate`` with the features
+        in force is live, as ``sample_rate()``; the same settings again change nothing; other features
+        restart the DMP's configuration (``ready()`` is measured again). ``dmp()`` with no argument
         is the getter."""
     @overload
     def axes(self) -> Tuple[str, str]: ...
@@ -2241,48 +2346,93 @@ class Bluetooth:
 
 
 class UART:
-    """Raw serial port: 1 = Serial1 (uart0, GP0/GP1), 2 = Serial2 (uart1, GP8/GP9).
+    """Raw serial port, MicroPython's ``machine.UART``: 1 = Serial1 (uart0, GP0/GP1), 2 = Serial2
+    (uart1, GP8/GP9).
+
+    A stream like ``machine.UART``: ``read()`` / ``readinto()`` / ``readline()`` wait with the object's
+    ``timeout`` (ms, for the first byte) and ``timeout_char`` (ms, between bytes; at least one character
+    time + 1 ms) and return ``None`` when nothing came; ``for line in uart`` reads lines. Where EVN differs
+    from ``machine.UART`` (the API reference has the table): ``write()`` queues every byte and never times
+    out; ``init()`` waits for the queued bytes before it changes the port; ``deinit()`` (= ``close()``)
+    hands the port back and it keeps running; no ``tx`` / ``rx`` / ``cts`` / ``rts`` / ``flow`` (fixed
+    pins, TX and RX only) and no ``irq()``; ``txbuf`` / ``rxbuf`` only up to the fixed rings (1023 / 255
+    bytes; a smaller size is accepted for portability and the ring keeps its full size); ``readline(timeout=)`` for one call; ``overflow()``, ``flush_rx()``, ``repl()`` are EVN's.
 
     One object per header: ``UART(n)`` raises ``OSError("serial port %d is used by a Bluetooth
     object")`` while an ``evn.Bluetooth`` object holds the port, and ``OSError("serial port %d is
-    already open")`` while another ``UART`` object holds it (``close()`` hands it back).
-    Re-opening a port that is already open never resets it and never drops queued bytes: only the
-    divisor changes, and only once the transmitter is idle.
-
-    Receive is an interrupt-drained 256-byte ring; transmit a 1 KiB ring drained under interrupt.
+    already open")`` while another ``UART`` object holds it (``deinit()`` hands it back; ``machine.UART``
+    would re-initialise the same object instead, so keep the object and call ``init()``; one dropped
+    without ``deinit()`` holds the port until a soft reset). Opening or
+    re-configuring a port that is already open never resets it and never drops queued or received bytes:
+    what differs changes once the transmitter is idle.
 
     Raises: ``ValueError("uart must be 1 (Serial1) or 2 (Serial2)")``, ``ValueError("baudrate out of
-    range")`` outside 300..3000000; ``OSError(EIO)`` when the port cannot be opened within a second;
-    ``ValueError("UART is closed")`` from every call after ``close()``.
+    range")`` outside 300..3000000, ``ValueError`` for bits outside 5..8, parity other than None / 0 / 1,
+    stop other than 1 / 2, a negative timeout, an inversion mask other than ``INV_TX | INV_RX`` bits, a
+    ``txbuf`` above 1023 or an ``rxbuf`` above 255; ``TypeError`` for ``tx`` / ``rx`` / ``cts`` / ``rts`` /
+    ``flow``; ``OSError(ETIMEDOUT)`` when the queued bytes do not leave in time for a change;
+    ``ValueError("UART is closed")`` from every call after ``deinit()``.
     """
-    def __init__(self, id: int, baudrate: int = 115200, /) -> None: ...
-    def write(self, buf: bytes, /) -> int:
-        """Queues every byte (never lossy): returns ``len(buf)``; waits only while the transmit ring is full."""
+    INV_TX: int  # = 1  invert the TX line (it idles low)
+    INV_RX: int  # = 2  invert the RX line (it idles low; the pad is pulled down)
+
+    def __init__(self, id: int, /, baudrate: int = 115200, bits: int = 8, parity: Optional[int] = None, stop: int = 1, *,
+                 timeout: int = 0, timeout_char: int = 0, invert: int = 0, txbuf: int = 1023, rxbuf: int = 255) -> None: ...
+    def init(self, baudrate: int = ..., bits: int = ..., parity: Optional[int] = ..., stop: int = ..., *,
+             timeout: int = ..., timeout_char: int = ..., invert: int = ..., txbuf: int = ..., rxbuf: int = ...) -> None:
+        """Re-configure the port: every setting left out stays as it is (``init(9600)`` changes the baud
+        only). Waits until the bytes already queued have been sent (at most the ``flush()`` bound, else
+        ``OSError(ETIMEDOUT)``), then changes only what differs; nothing queued or received is dropped.
+        ``timeout_char`` is raised to one character time + 1 ms at the new baud. Not after ``deinit()``."""
+    def deinit(self) -> None:
+        """Release the port so a ``Bluetooth`` object (or another ``UART`` object) can take it; the port
+        itself keeps running and keeps its queued bytes, and the REPL is taken off it. Idempotent; every
+        other method then raises ``ValueError("UART is closed")``; build a new object to use it again."""
+    def close(self) -> None:
+        """The same as ``deinit()`` (EVN's name before 0.2.60)."""
+    def write(self, buf: Union[bytes, bytearray, memoryview, str], /) -> int:
+        """Queues every byte (never lossy) and returns ``len(buf)``; waits only while the 1 KiB transmit
+        ring is full, and never times out (``machine.UART`` may return a short count)."""
     def read(self, nbytes: Optional[int] = None, /) -> Optional[bytes]:
-        """Up to ``nbytes`` buffered bytes (``None`` = everything buffered), or ``None`` when nothing is
-        waiting. A negative count raises ``ValueError``."""
-    def readline(self, timeout: int = 5000) -> Optional[bytes]:
-        """The next line, without its trailing ``b"\\n"`` and without a ``b"\\r"`` in front of it, or
-        ``None`` on timeout. Only the line leaves the receive ring; bytes that arrived behind it stay
-        buffered for the next ``read()``. ``timeout=0`` returns a line only if one is already complete
-        and never waits; a negative timeout raises ``ValueError("timeout must be >= 0 ms")``. A line
-        longer than 255 bytes never completes: this times out and ``overflow()`` counts the drop."""
+        """Up to ``nbytes`` bytes (``None`` or ``-1``: no limit): the first waits at most ``timeout`` ms,
+        each next at most ``timeout_char``. When a gap of ``timeout_char`` ends a burst short of
+        ``nbytes`` (always, without a count), the read waits once more, up to ``timeout``, for further
+        bytes (as ``machine.UART``: the stream reads again), then returns what came; ``None`` when nothing
+        came. A count below -1 raises ``ValueError``."""
+    def readinto(self, buf: Union[bytearray, memoryview], nbytes: int = ..., /) -> Optional[int]:
+        """Read into ``buf`` (at most ``nbytes``, else ``len(buf)``) with the ``read()`` waits (a burst
+        that stops short is followed by one more wait of up to ``timeout``): the number of bytes stored, or
+        ``None`` when nothing came."""
+    def readline(self, size: int = -1, *, timeout: Optional[int] = None) -> Optional[bytes]:
+        """The next line WITH its ``b"\\n"``, read one byte at a time, each byte waiting at most
+        ``timeout`` ms (the object's, or ``timeout=`` for this call only - EVN's); the bytes that came
+        before a timeout when the line did not finish, ``None`` when nothing came; at most ``size`` bytes.
+        ``.strip()`` it for the text alone. Before 0.2.60 the first argument was the timeout: an old
+        ``readline(2000)`` now asks for at most 2000 bytes with the object's ``timeout``; write
+        ``readline(timeout=2000)``."""
+    def flush(self) -> None:
+        """Wait until everything queued has been sent (ring, FIFO and shift register); ``OSError(ETIMEDOUT)``
+        past (33 + 1024) x 26 bit times (0.24 s at 115200, 92 s at 300 baud)."""
+    def txdone(self) -> bool:
+        """``True`` when nothing is left to send; ``False`` while bytes are queued or on the wire."""
+    def sendbreak(self) -> None:
+        """Send a break: the queued bytes go out first, then TX is held low for two frames (2.1 ms at
+        9600 8N1)."""
     def any(self) -> int:
-        """Bytes buffered."""
+        """Bytes that can be read without waiting."""
     def overflow(self) -> int:
-        """Bytes the 256-byte receive ring had to drop since the last call. Read and clear."""
+        """Bytes the 256-byte receive ring had to drop since the last call (plus FIFO overrun events).
+        Read and clear; 0 = nothing lost. EVN's."""
     def flush_rx(self) -> None:
-        """Drop buffered input."""
+        """Drop everything received and not read yet. EVN's (``flush()`` waits for output)."""
     @overload
     def repl(self) -> bool: ...
     @overload
     def repl(self, enable: bool, /) -> None:
         """The MicroPython REPL on this serial port as well as USB (a USB-serial adapter on the header);
-        ``evn.Bluetooth.repl()`` is the same switch for the module. Survives a soft reboot."""
-    def close(self) -> None:
-        """Release the port so a ``Bluetooth`` object (or another ``UART`` object at a different baud)
-        can take it; the port itself keeps running and keeps its queued bytes, and the REPL is taken
-        off it. Idempotent; every other method then raises ``ValueError("UART is closed")``."""
+        ``evn.Bluetooth.repl()`` is the same switch for the module. Survives a soft reboot. EVN's."""
+    def __iter__(self) -> Iterator[bytes]: ...
+    def __next__(self) -> bytes: ...
 
 
 class Flash:
@@ -2612,9 +2762,9 @@ class VL53L1X:
     @overload
     def distance_threshold(self, window: None, /) -> None: ...
     @overload
-    def distance_threshold(self, window: Union[str, bytes], distance: int, /) -> None: ...
+    def distance_threshold(self, window: str, distance: int, /) -> None: ...
     @overload
-    def distance_threshold(self, window: Union[str, bytes], low: int, high: int, /) -> None:
+    def distance_threshold(self, window: str, low: int, high: int, /) -> None:
         """ST's window detection, done by the sensor: ``'below'`` / ``'above'`` one distance in mm, or
         ``'outside'`` / ``'inside'`` a ``low`` < ``high`` window; ``None`` (the default) reports every
         measurement again. Under a threshold the sensor reports the measurements that meet it; one that
@@ -2646,8 +2796,19 @@ class VL53L1X:
         re-plug, starts with it. Returns the offset in mm. Takes 50 budgets (about 2 s at 33 ms).
         ``ValueError`` when fewer than 50 of 100 measurements were valid (no target, or the wrong distance)
         or the offset would pass +-1023 mm; ``RuntimeError`` while a motor drives and another calibration
-        waits for the flash. While a motor drives the record waits in RAM, in force at once, and reaches
-        flash once the motors stop (``stored_calibration()["pending"]``). Ctrl-C puts the values before back."""
+        waits for the flash. While a motor drives the record waits in RAM, in force at once, and is written
+        to flash by the next ``stored_calibration()`` (or calibration change) once the motors have stopped
+        (``stored_calibration()["pending"]`` until then). Ctrl-C or ``close()`` puts the values before back:
+        ``close()`` at once, Ctrl-C by the sensor's next reading (within about one timing budget). A hard reset of
+        the board (the RESET button, the watchdog, a flash, ``evn.reset()``) while it calibrates a port with
+        no calibration stored, or right after a Ctrl-C stopped that, leaves the powered sensor on the
+        calibration's zeros: ``clear_calibration()`` puts its own values back - unless the port's record
+        never reached flash (a motor was driving when the calibration started; ``part_offset`` is ``None``
+        in ``stored_calibration()`` after the reset): then power the sensor off and on (unplug and replug
+        it) before calibrating or setting it again, or its zeros are kept as its own values. The same holds
+        for a port's first ``offset(mm)`` / ``crosstalk(cps)`` set by hand while a motor drove: a hard reset
+        before its record reached flash leaves the sensor on the value set, which the next calibration or
+        setting would keep as its own - unplug and replug it first."""
     def calibrate_crosstalk(self, target_mm: int, /) -> int:
         """ST's crosstalk calibration (``CalibrateXtalk``), for a cover window in front of the sensor: hold
         the target (grey 17 %) at ``target_mm``, the distance where the sensor starts to read short because
@@ -2674,19 +2835,21 @@ class VL53L1X:
         ``crosstalk(None)`` puts the sensor's own back."""
     def stored_calibration(self) -> dict:
         """This port's stored calibration (``evn.vl53l1x_calibration(port)``): ``{"port", "calibrated",
-        "stored" (in flash), "pending" (waiting for the motors to stop before it is written), "stamp",
-        "offset", "offset_target", "offset_sd", "crosstalk", "crosstalk_target", "crosstalk_sd",
-        "part_offset", "part_crosstalk"}`` - the ``*_target`` a calibration's distance (``None`` when the
+        "stored" (in flash), "pending" (this port's change waits for the flash: a motor is driving; this
+        call writes it once they have stopped), "stamp", "offset", "offset_target", "offset_sd",
+        "crosstalk", "crosstalk_target", "crosstalk_sd", "part_offset", "part_crosstalk"}`` - the
+        ``*_target`` a calibration's distance (``None`` when the
         value was set by hand), ``*_sd`` the spread (standard deviation, mm) of the 50 distances it came
         from: the calibration's confidence; ``part_*`` the sensor's own values, read before the port was first
         calibrated and put back by ``clear_calibration()``."""
     def clear_calibration(self) -> bool:
         """Put the sensor's own offset and crosstalk back and erase the port's stored calibration.
-        ``True`` when nothing of it is left in flash; ``False`` while a motor drives (it is written once
-        they stop). ``RuntimeError`` when another calibration waits for the flash (the sensor's own values
-        are back already: call it again once the motors stop), ``OSError`` when the write fails. Nothing
-        identifies the module: after swapping sensors on a calibrated port, clear the calibration and power
-        the new sensor off and on to get its own values."""
+        ``True`` when nothing of it is left in flash; ``False`` while a motor drives (the next
+        ``stored_calibration()`` writes it once they stop). ``RuntimeError`` when a motor drives and
+        another calibration waits for the flash: stop the motors and call it again - until it succeeds the
+        port's calibration may still be in force (on the sensor and in the record). ``OSError`` when the
+        write fails. Nothing identifies the module: after swapping sensors on a calibrated port, clear the
+        calibration and power the new sensor off and on to get its own values."""
     def age(self) -> int:
         """Milliseconds since the cached measurement was taken."""
     def close(self) -> None:
@@ -2945,11 +3108,14 @@ def calibration(port: int, /) -> dict:
     library figure is kept - or why the survey was abandoned), "drift" (the calibration's drift check: its first
     pulse is run once more at the end, and this is the repeat's speed per volt over the first's, minus 1 - +0.04
     = the mechanism ran 4 % faster at the end, a gear train warming up; the repeat runs at the first pulse's duty and
-    the ratio is of the speed per volt above the fitted friction; None when the repeat could not be taken, and after
-    a power-up - neither it nor its warning is stored),
+    the ratio is of the speed per volt above the fitted friction; None when the repeat could not be taken, and after a
+    power-up - neither it nor its warning is stored; taken also when the repeat lent its time constant to a first
+    pulse the other three disagreed with, whose speed then comes from the second half of its own record),
     "warning" (what is wrong with the record: made for another motor, refused; implausible for the model, applied
     anyway; the mechanism drifted more than 3 % during the calibration - calibrate again after a minute of
-    running; else None), "error" (why the last calibrate() on this port failed or was refused, else None)}``."""
+    running; else None), "error" (why the last calibrate() on this port failed or was refused - a result that was
+    not plausible, "the four pulses disagree on the motor's response time" or "running friction far below this motor
+    model's", was not stored - else None)}``."""
 
 def clock(seconds: Optional[int] = None, /) -> int:
     """The board's wall clock as seconds since 1970-01-01 UTC; 0 until a host sets it (no battery-backed
@@ -3235,7 +3401,10 @@ class DataLog:
         """Start recording (a new recording: the samples of an earlier one are gone). Returns the seconds the
         fastest-filling channel records before its first halving (``None`` if it was already recording).
         The RAM (``size``) is taken from the heap at the first start (``MemoryError`` if the heap cannot give
-        it). ``ValueError`` with no channel and no headers, or when ``size`` cannot give every channel room
+        it) as one contiguous block (``size`` plus about 3.4 KB), kept for this object's later starts until
+        ``close()``: a long program leaves the heap in pieces, so the block can be refused with more than
+        that free in total - make the ``DataLog`` and ``start()`` it early in the program, or give a smaller
+        ``size``. ``ValueError`` with no channel and no headers, or when ``size`` cannot give every channel room
         for 8 samples; ``RuntimeError`` while another DataLog records."""
     def stop(self) -> None:
         """Stop recording; the samples stay in RAM for ``save()``. With ``autosave`` a stopped log not yet

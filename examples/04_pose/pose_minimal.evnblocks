@@ -1,0 +1,186 @@
+{
+  "format": "evn-blocks",
+  "version": 2,
+  "title": "Pose: minimal",
+  "needs": "a robot: left wheel motor on port 4 (mounted mirrored), right on port 3, 62.4 mm wheels 170 mm apart; you push it along the floor while the program runs.",
+  "description": "Where is the robot? Push it around by hand for 20 s and watch its position and heading, worked out from the two wheel encoders. Nothing is driven: the pose only reads the encoders, and the robot coasts at the end. It starts at x 0, y 0 facing heading 0: forward from where the robot stands is +y, to its right is +x.",
+  "workspace": {
+    "blocks": {
+      "languageVersion": 0,
+      "blocks": [
+        {
+          "type": "evn_setup_start",
+          "x": 30,
+          "y": 30,
+          "next": {
+            "block": {
+              "type": "evn_motor_setup",
+              "fields": {
+                "PORT": "4",
+                "DIRECTION": "CCW",
+                "UNIT": "DEG_S"
+              },
+              "next": {
+                "block": {
+                  "type": "evn_drivebase_setup",
+                  "fields": {
+                    "LEFT": "4",
+                    "RIGHT": "3",
+                    "WHEEL": 62.4,
+                    "TRACK": 170
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "evn_program_start",
+          "x": 30,
+          "y": 170,
+          "next": {
+            "block": {
+              "type": "controls_repeat_ext",
+              "inputs": {
+                "TIMES": {
+                  "shadow": {
+                    "type": "math_number",
+                    "fields": {
+                      "NUM": 40
+                    }
+                  }
+                },
+                "DO": {
+                  "block": {
+                    "type": "text_print",
+                    "inputs": {
+                      "TEXT": {
+                        "block": {
+                          "type": "text_join",
+                          "inputs": {
+                            "ADD0": {
+                              "shadow": {
+                                "type": "text",
+                                "fields": {
+                                  "TEXT": "x "
+                                }
+                              }
+                            },
+                            "ADD1": {
+                              "block": {
+                                "type": "math_round",
+                                "fields": {
+                                  "OP": "ROUND"
+                                },
+                                "inputs": {
+                                  "NUM": {
+                                    "block": {
+                                      "type": "evn_pose_value",
+                                      "fields": {
+                                        "WHAT": "position()[0]"
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            },
+                            "ADD2": {
+                              "shadow": {
+                                "type": "text",
+                                "fields": {
+                                  "TEXT": " mm   y "
+                                }
+                              }
+                            },
+                            "ADD3": {
+                              "block": {
+                                "type": "math_round",
+                                "fields": {
+                                  "OP": "ROUND"
+                                },
+                                "inputs": {
+                                  "NUM": {
+                                    "block": {
+                                      "type": "evn_pose_value",
+                                      "fields": {
+                                        "WHAT": "position()[1]"
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            },
+                            "ADD4": {
+                              "shadow": {
+                                "type": "text",
+                                "fields": {
+                                  "TEXT": " mm   heading "
+                                }
+                              }
+                            },
+                            "ADD5": {
+                              "block": {
+                                "type": "math_round",
+                                "fields": {
+                                  "OP": "ROUND"
+                                },
+                                "inputs": {
+                                  "NUM": {
+                                    "block": {
+                                      "type": "evn_pose_value",
+                                      "fields": {
+                                        "WHAT": "heading()"
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            },
+                            "ADD6": {
+                              "shadow": {
+                                "type": "text",
+                                "fields": {
+                                  "TEXT": " degrees"
+                                }
+                              }
+                            }
+                          },
+                          "extraState": {
+                            "itemCount": 7
+                          }
+                        }
+                      }
+                    },
+                    "next": {
+                      "block": {
+                        "type": "evn_wait",
+                        "inputs": {
+                          "TIME": {
+                            "shadow": {
+                              "type": "math_number",
+                              "fields": {
+                                "NUM": 500
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "next": {
+                "block": {
+                  "type": "evn_drivebase_stop",
+                  "fields": {
+                    "ACTION": "stop"
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

@@ -5,7 +5,10 @@ port's clock (each port has its own; I2C(port, freq=100000) slows one for a devi
 scan() lists the addresses that answer, and each one that has an ID register is named by reading it
 (an address alone proves nothing: another chip can sit at it), then the EVN IMU module (an MPU-6500)
 is read register by register - its configuration, then acceleration, temperature and turn rate - and
-last stats() reports the bus health.
+last stats() reports the bus health. The transfer methods are MicroPython's machine.I2C ones (a
+driver written for MicroPython runs on an evn.I2C unchanged), so the WHO_AM_I register is also read
+the ways such drivers read it: into a buffer they keep, and with the register number written with
+stop=False (held, then sent just before the read).
 
 The only writes are harmless ones: a register number before a read, and waking the MPU-6500 when
 an IMU object's close() left it asleep (put back as it was at the end). The board refuses 0x70
@@ -72,11 +75,20 @@ else:
     bus.writeto(MPU, bytes([WHO_AM_I]))
     print("WHO_AM_I", hex(bus.readfrom(MPU, 1)[0]))
 
+    # ... and the ways MicroPython drivers read it (machine.I2C's methods), into a buffer they keep:
+    who = bytearray(1)
+    bus.readfrom_mem_into(MPU, WHO_AM_I, who)            # the register, then the read, in one call
+    print("WHO_AM_I", hex(who[0]))
+    bus.writeto(MPU, bytes([WHO_AM_I]), False)           # stop=False: held, sent just before the read
+    bus.readfrom_into(MPU, who)                           # ... in the same transfer, no STOP asked for between
+    print("WHO_AM_I", hex(who[0]))
+
     # awake from power-on (PWR_MGMT_1 = 0x01), but an IMU object's close() puts it to sleep
     power = bus.readfrom_mem(MPU, PWR_MGMT_1, 1)[0]
     if power & 0x40:
-        bus.writeto_mem(MPU, PWR_MGMT_1, bytes([0x01]))   # awake, clocked from the gyro
-        wait(100)                                         # the first samples take a moment
+        # writevto sends several buffers as one write: here the register number, then its value
+        bus.writevto(MPU, (bytes([PWR_MGMT_1]), bytes([0x01])))   # awake, clocked from the gyro
+        wait(100)                                                 # the first samples take a moment
 
     # the ranges in force say what one count is worth
     gyro_fs = (bus.readfrom_mem(MPU, GYRO_CONFIG, 1)[0] >> 3) & 3

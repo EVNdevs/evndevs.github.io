@@ -1,0 +1,95 @@
+{
+  "format": "evn-blocks",
+  "version": 2,
+  "title": "UART: minimal",
+  "needs": "a jumper wire from TX to RX on Serial 1 (or a device talking 115200 baud lines there)",
+  "description": "Sends a line out of Serial 1 and prints the line that comes back. With a wire from TX to RX on the Serial 1 header the board hears itself; with another device on the header, that device answers.",
+  "workspace": {
+    "blocks": {
+      "languageVersion": 0,
+      "blocks": [
+        {
+          "type": "evn_setup_start",
+          "x": 30,
+          "y": 30,
+          "next": {
+            "block": {
+              "type": "evn_uart_setup",
+              "fields": {
+                "PORT": "1",
+                "BAUD": "115200"
+              }
+            }
+          }
+        },
+        {
+          "type": "evn_program_start",
+          "x": 30,
+          "y": 115,
+          "next": {
+            "block": {
+              "type": "evn_uart_send",
+              "fields": {
+                "PORT": "1",
+                "NEWLINE": true
+              },
+              "inputs": {
+                "TEXT": {
+                  "shadow": {
+                    "type": "text",
+                    "fields": {
+                      "TEXT": "hello"
+                    }
+                  }
+                }
+              },
+              "next": {
+                "block": {
+                  "type": "text_print",
+                  "inputs": {
+                    "TEXT": {
+                      "block": {
+                        "type": "text_join",
+                        "inputs": {
+                          "ADD0": {
+                            "shadow": {
+                              "type": "text",
+                              "fields": {
+                                "TEXT": "heard: "
+                              }
+                            }
+                          },
+                          "ADD1": {
+                            "block": {
+                              "type": "evn_uart_line",
+                              "fields": {
+                                "PORT": "1"
+                              },
+                              "inputs": {
+                                "TIMEOUT": {
+                                  "shadow": {
+                                    "type": "math_number",
+                                    "fields": {
+                                      "NUM": 1000
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "extraState": {
+                          "itemCount": 2
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

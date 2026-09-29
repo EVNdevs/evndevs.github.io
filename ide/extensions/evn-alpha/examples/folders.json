@@ -118,7 +118,14 @@
         "Pose"
       ],
       "module": [],
-      "blocks": null,
+      "blocks": [
+        "evn_pose_setup",
+        "evn_pose_value",
+        "evn_pose_uncertainty",
+        "evn_pose_uses",
+        "evn_pose_reset",
+        "evn_drivebase_gyro"
+      ],
       "skip": {}
     },
     {
@@ -403,12 +410,19 @@
       "dir": "19_uart",
       "slug": "uart",
       "title": "UART (serial ports)",
-      "description": "Serial 1 and 2 as plain UARTs",
+      "description": "Serial 1 and 2 as plain UARTs (MicroPython's machine.UART)",
       "classes": [
         "UART"
       ],
       "module": [],
-      "blocks": null,
+      "blocks": [
+        "evn_uart_setup",
+        "evn_uart_send",
+        "evn_uart_line",
+        "evn_uart_read",
+        "evn_uart_any",
+        "evn_uart_clear"
+      ],
       "skip": {
         "repl": "moves the board's REPL onto the port"
       }
@@ -422,7 +436,14 @@
         "I2C"
       ],
       "module": [],
-      "blocks": null,
+      "blocks": [
+        "evn_i2c_setup",
+        "evn_i2c_scan",
+        "evn_i2c_probe",
+        "evn_i2c_read",
+        "evn_i2c_read_bytes",
+        "evn_i2c_write"
+      ],
       "skip": {}
     },
     {
@@ -432,7 +453,13 @@
       "description": "open(), os and the flash file system",
       "classes": [],
       "module": [],
-      "blocks": null,
+      "blocks": [
+        "evn_file_write",
+        "evn_file_read",
+        "evn_file_exists",
+        "evn_file_delete",
+        "evn_file_list"
+      ],
       "skip": {}
     },
     {

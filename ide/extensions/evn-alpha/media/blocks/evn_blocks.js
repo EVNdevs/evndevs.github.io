@@ -21,7 +21,7 @@
     const PALETTE = {
         evn_motor: '#9a8763',       // tan: the brand accent, deepened for white text
         evn_sense: '#3f9fb4',       // cyan
-        evn_output: '#8d5b8f',      // plum: displays, LEDs, servos, Bluetooth
+        evn_output: '#8d5b8f',      // plum: displays, LEDs, servos, Bluetooth, and the Serial and I2C category (UART, I2C)
         evn_time: '#c25e4f',        // terracotta
         evn_board: '#5f9e88',       // jade
         evn_advanced: '#5f6368',    // graphite
@@ -370,7 +370,7 @@
             message0: 'Python %1',
             args0: [{ type: 'field_input', name: 'CODE', text: 'motor_1.settings(max_voltage=7000)' }],
             previousStatement: null, nextStatement: null, style: 'evn_advanced_blocks',
-            tooltip: 'One line of MicroPython, inserted as written. motor_1 .. motor_4 are the motors, drive_base the robot and color_sensor_3, imu_1 ... the peripherals (each defined when mentioned); the evn module is imported, so Pose, UART, I2C, Flash, core1_status() and evn.version are all reachable.',
+            tooltip: 'One line of MicroPython, inserted as written. motor_1 .. motor_4 are the motors, drive_base the robot, pose the pose (when a Pose block is in the program) and color_sensor_3, imu_1, uart_1, i2c_5 ... the peripherals (each defined when mentioned); the evn module is imported, so Flash, core1_status() and evn.version are all reachable, and os, struct and json are imported when the line uses them.',
         },
         {
             type: 'evn_python_value',
@@ -1538,6 +1538,250 @@
         },
     ]);
 
+    /* ---- the pose, the serial ports, raw I2C and files (2026-09-28, the owner: "implement blocks for
+     * other categories if feasible"): the four folders of examples that were Python only. -------------- */
+
+    /* The address and register fields of the I2C blocks hold two hex digits after a printed "0x", as a
+     * datasheet writes them. A typed "0x" is dropped; anything that is not one hex byte in range is refused
+     * (the field keeps the value it had). The firmware refuses the board's own devices (evn_periph.c
+     * i2c_addr(), ValueError), so the fields do too: 0x70, the multiplexer that answers on every port, and
+     * 0x6A on port 16, the battery charger - there the address and the port refuse each other, whichever
+     * is set second. A saved file whose value a field refuses loads with the block's default in its place,
+     * and loadWorkspace() names it in its notes (loadRefusals), never silently. */
+    function hexByteValidator(min, max, refused) {
+        return function (text) {
+            const t = String(text).trim().replace(/^0x/i, '');
+            if (!/^[0-9a-f]{1,2}$/i.test(t)) { return null; }
+            const n = parseInt(t, 16);
+            if (n < min || n > max || refused.indexOf(n) >= 0) { return null; }
+            return n.toString(16).toUpperCase().padStart(2, '0');
+        };
+    }
+    const CHARGER_PORT = '16', CHARGER_ADDR = '6A';
+    /** what a file being loaded held that a field refused, for loadWorkspace()'s notes */
+    const loadRefusals = [];
+    /** A validator that also records a refusal while a file loads (loadingDepth, below). */
+    function noted(what, check) {
+        return function (text) {
+            const v = check.call(this, text);
+            if (v === null && loadingDepth > 0) { loadRefusals.push(what + ' ' + JSON.stringify(String(text))); }
+            return v;
+        };
+    }
+    const I2C_HEX = 'evn_i2c_hex_fields';
+    if (!Blockly.Extensions.isRegistered(I2C_HEX)) {
+        Blockly.Extensions.register(I2C_HEX, function () {
+            const addr = this.getField('ADDR');
+            const reg = this.getField('REG');
+            const port = this.getField('PORT');
+            const addrByte = hexByteValidator(0x01, 0x77, [0x70]);
+            if (addr) {
+                addr.setValidator(noted('I2C address', function (text) {
+                    const v = addrByte(text);
+                    return v === CHARGER_ADDR && port && port.getValue() === CHARGER_PORT ? null : v;
+                }));
+            }
+            if (reg) { reg.setValidator(noted('I2C register', hexByteValidator(0x00, 0xFF, []))); }
+            if (port && addr) {
+                port.setValidator(noted('I2C port', function (p) {
+                    return String(p) === CHARGER_PORT && addr.getValue() === CHARGER_ADDR ? null : p;
+                }));
+            }
+        });
+    }
+    const i2cAddr = () => ({ type: 'field_input', name: 'ADDR', text: '68' });
+    const i2cReg = () => ({ type: 'field_input', name: 'REG', text: '75' });
+    /* UART speeds: the common ones, 115200 (the port's own default) first. The firmware takes 300..3000000. */
+    const BAUDS = ['115200', '9600', '4800', '19200', '38400', '57600', '230400', '460800', '921600'].map((b) => [b, b]);
+
+    Blockly.common.defineBlocksWithJsonArray([
+        /* Pose (evn.Pose): where the robot is, from its wheels, the IMU of "robot follows its gyro" and the
+         * compass of "set up pose". One pose per program, `pose`, built from the "set up robot" geometry;
+         * a robot adopts it (DriveBase(..., pose=pose)), so it is the pose the robot follows. */
+        {
+            type: 'evn_pose_setup',
+            message0: 'set up pose: use the compass on port %1',
+            args0: [portField(I2C_PORTS)],
+            style: 'evn_motor_blocks',
+            tooltip: 'Adds an EVN compass to the pose, so its heading has an absolute reference (north) that never drifts. Calibrate the compass on the robot first (the Board view, or the compass blocks), mount it away from the motors, and see "pose is using the compass": near a motor\'s magnets or a steel table the pose leaves it out until the field looks like the Earth\'s again. The pose always uses the wheels of "set up robot", and the IMU of "robot follows its gyro" when the program has one.',
+        },
+        {
+            type: 'evn_pose_value',
+            message0: 'pose %1',
+            args0: [{
+                type: 'field_dropdown', name: 'WHAT', options: [
+                    ['x (mm)', 'position()[0]'], ['y (mm)', 'position()[1]'], ['heading (degrees)', 'heading()'],
+                    ['speed (mm/s)', 'velocity()[0]'], ['turn rate (deg/s)', 'velocity()[1]'],
+                ],
+            }],
+            output: 'Number', style: 'evn_sense_blocks',
+            tooltip: 'Where the robot is: x and y in mm, heading in degrees clockwise (0 to 360), speed in mm/s, turn rate in deg/s clockwise. Without a compass the robot starts at x 0, y 0, heading 0: forward is +y and its right is +x. With a compass the heading starts from north (x East, y North). It keeps counting while the robot drives, turns or is pushed by hand.',
+        },
+        {
+            type: 'evn_pose_uncertainty',
+            message0: 'pose uncertainty of %1',
+            args0: [{ type: 'field_dropdown', name: 'WHAT', options: [['x (mm)', '0'], ['y (mm)', '1'], ['heading (degrees)', '2']] }],
+            output: 'Number', style: 'evn_sense_blocks',
+            tooltip: 'How sure the pose is of itself: one standard deviation of x or y in mm, or of the heading in degrees. It grows as the robot drives on its wheels alone and shrinks when a compass pins the heading.',
+        },
+        {
+            type: 'evn_pose_uses',
+            message0: 'pose is using the %1',
+            args0: [{ type: 'field_dropdown', name: 'SOURCE', options: [['wheels', 'wheels'], ['IMU', 'imu'], ['compass', 'compass']] }],
+            output: 'Boolean', style: 'evn_sense_blocks',
+            tooltip: 'True while that source counts right now. The compass drops out while its field is not the Earth\'s (a motor\'s magnets, a steel table) and comes back by itself; the heading then has no absolute reference until it does.',
+        },
+        {
+            type: 'evn_pose_reset',
+            message0: 'set pose to x %1 y %2 heading %3',
+            args0: [
+                { type: 'input_value', name: 'X', check: 'Number' },
+                { type: 'input_value', name: 'Y', check: 'Number' },
+                { type: 'input_value', name: 'HEADING', check: 'Number' },
+            ],
+            inputsInline: true, previousStatement: null, nextStatement: null, style: 'evn_motor_blocks',
+            tooltip: 'Say where the robot is now (mm, mm, degrees clockwise); nothing moves. Put "pose heading" in the heading slot to move only the origin and keep the heading the pose has. What a heading of your own does while a compass counts: Pose reset() in the API reference.',
+        },
+
+        /* UART (evn.UART): a serial header as a plain serial port. One object per port, `uart_<port>`. */
+        {
+            type: 'evn_uart_setup',
+            message0: 'set up UART on serial port %1 at %2 baud',
+            args0: [portField(SERIAL_PORTS), { type: 'field_dropdown', name: 'BAUD', options: BAUDS }],
+            style: 'evn_output_blocks',
+            tooltip: 'Serial 1 or Serial 2 as a plain serial port, for anything that talks serial: a USB-serial adapter, another controller, a GPS. The speed has to be the other device\'s. Without this block a UART block uses 115200 baud. A port the Bluetooth blocks use cannot be a UART as well.',
+        },
+        {
+            type: 'evn_uart_send',
+            message0: 'UART %1 send %2 and a new line %3',
+            args0: [portField(SERIAL_PORTS), { type: 'input_value', name: 'TEXT' }, { type: 'field_checkbox', name: 'NEWLINE', checked: true }],
+            inputsInline: true, previousStatement: null, nextStatement: null, style: 'evn_output_blocks',
+            tooltip: 'Send text (a number is sent as its digits). Ticked, a newline follows, so the other side knows the line finished. Every byte is queued and sent in the background; none is dropped.',
+        },
+        {
+            type: 'evn_uart_line',
+            message0: 'UART %1 received line (wait up to %2 ms)',
+            args0: [portField(SERIAL_PORTS), { type: 'input_value', name: 'TIMEOUT', check: 'Number' }],
+            inputsInline: true, output: 'String', style: 'evn_output_blocks',
+            tooltip: 'Wait for a line of text from the other side and give it without its line ending (empty text when no whole line arrives in time: the part that did arrive is kept, and the next "received line" gives the whole line). What arrived behind the line stays for the next read. A line of more than 1024 bytes comes in pieces of 1024. Text that is not UTF-8 comes as one character per byte. At 460800 or 921600 baud keep what the other side sends in one go under about 250 bytes (the port holds 255): the block reads a byte at a time, and a longer burst - one long line, or short lines back to back - can arrive faster than that and lose bytes.',
+        },
+        {
+            type: 'evn_uart_read',
+            message0: 'UART %1 received text (everything waiting)',
+            args0: [portField(SERIAL_PORTS)],
+            output: 'String', style: 'evn_output_blocks',
+            tooltip: 'Everything that has arrived and not been read yet, as text (empty text when nothing is waiting), a line "received line" gave up on included. It does not wait. Text that is not UTF-8 comes as one character per byte.',
+        },
+        {
+            type: 'evn_uart_any',
+            message0: 'UART %1 bytes waiting',
+            args0: [portField(SERIAL_PORTS)],
+            output: 'Number', style: 'evn_output_blocks',
+            tooltip: 'How many bytes have arrived and wait to be read (0 when none). The port keeps up to 255. It is a number: in an "if", compare it (bytes waiting > 0). A part line that "received line" gave up on is not counted, though "received text" still gives it.',
+        },
+        {
+            type: 'evn_uart_clear',
+            message0: 'UART %1 throw away what has arrived',
+            args0: [portField(SERIAL_PORTS)],
+            previousStatement: null, nextStatement: null, style: 'evn_output_blocks',
+            tooltip: 'Forget every byte that has arrived and not been read yet (to start listening afresh).',
+        },
+
+        /* I2C (evn.I2C): a raw I2C device on I2C port 1..16. One object per port, `i2c_<port>`. */
+        {
+            type: 'evn_i2c_setup',
+            message0: 'set up I2C on port %1',
+            args0: [portField(I2C_PORTS)],
+            style: 'evn_output_blocks',
+            tooltip: 'Raw I2C on an I2C port, 1 to 16, for a chip the EVN blocks have no category for. Read its datasheet for its address and registers. The I2C blocks work without this block.',
+        },
+        {
+            type: 'evn_i2c_scan',
+            message0: 'I2C %1 addresses that answer',
+            args0: [portField(I2C_PORTS)],
+            output: 'Array', style: 'evn_output_blocks',
+            tooltip: 'The addresses (in hex, such as 0x68) of every device that answers on this port: print it. An address alone does not say which chip it is: read the chip\'s ID register to be sure.',
+        },
+        {
+            type: 'evn_i2c_probe',
+            message0: 'I2C %1 a device answers at 0x%2',
+            args0: [portField(I2C_PORTS), i2cAddr()],
+            output: 'Boolean', style: 'evn_output_blocks', extensions: [I2C_HEX],
+            tooltip: 'True when something answers at this address (hex, 01 to 77) on this port.',
+        },
+        {
+            type: 'evn_i2c_read',
+            message0: 'I2C %1 device 0x%2 register 0x%3 read %4',
+            args0: [portField(I2C_PORTS), i2cAddr(), i2cReg(), {
+                type: 'field_dropdown', name: 'FORMAT', options: [
+                    ['byte (0 to 255)', 'B'], ['signed byte (-128 to 127)', 'b'],
+                    ['16 bits, high byte first (0 to 65535)', '>H'], ['signed 16 bits, high byte first', '>h'],
+                    ['16 bits, low byte first (0 to 65535)', '<H'], ['signed 16 bits, low byte first', '<h'],
+                ],
+            }],
+            output: 'Number', style: 'evn_output_blocks', extensions: [I2C_HEX],
+            tooltip: 'Read a register of the device at this address (both in hex, as the datasheet gives them): one byte, or two bytes from this register on as one 16-bit number, the high or the low byte first as the datasheet says, signed when the value can be negative (an acceleration, a temperature).',
+        },
+        {
+            type: 'evn_i2c_read_bytes',
+            message0: 'I2C %1 device 0x%2 register 0x%3 read %4 bytes as a list',
+            args0: [portField(I2C_PORTS), i2cAddr(), i2cReg(), { type: 'input_value', name: 'COUNT', check: 'Number' }],
+            inputsInline: true, output: 'Array', style: 'evn_output_blocks', extensions: [I2C_HEX],
+            tooltip: 'Read this many bytes (1 to 4096) from this register on, as a list of numbers 0 to 255: print it, or take it apart with a Python block.',
+        },
+        {
+            type: 'evn_i2c_write',
+            message0: 'I2C %1 device 0x%2 register 0x%3 write %4 %5',
+            args0: [portField(I2C_PORTS), i2cAddr(), i2cReg(), {
+                type: 'field_dropdown', name: 'FORMAT', options: [
+                    ['byte', 'B'], ['16 bits, high byte first', '>H'], ['16 bits, low byte first', '<H'],
+                ],
+            }, { type: 'input_value', name: 'VALUE', check: 'Number' }],
+            inputsInline: true, previousStatement: null, nextStatement: null, style: 'evn_output_blocks', extensions: [I2C_HEX],
+            tooltip: 'Write a byte (0 to 255), or a 16-bit number (0 to 65535) as two bytes, to a register of the device; a value outside that stops the program with an error instead of writing something else. A wrong register can change how the chip works until it is switched off: check the datasheet. The board refuses its own addresses (0x70 everywhere, 0x6A on port 16).',
+        },
+
+        /* Files: the board's flash file system at "/", with open() and os as in MicroPython. */
+        {
+            type: 'evn_file_write',
+            message0: 'file %1 %2 the line %3',
+            args0: [
+                { type: 'input_value', name: 'NAME' },
+                { type: 'field_dropdown', name: 'MODE', options: [['add', 'a'], ['replace everything with', 'w']] },
+                { type: 'input_value', name: 'TEXT' },
+            ],
+            inputsInline: true, previousStatement: null, nextStatement: null, style: 'evn_board_blocks',
+            tooltip: 'add: put the line at the end of the file. replace everything with: the file holds only this line afterwards. Either makes the file when there is none. The file stays on the board after a power cycle. The board refuses to write its flash while a motor is driving (OSError 16): write after the move, or keep the values in variables until then.',
+        },
+        {
+            type: 'evn_file_read',
+            message0: 'text of file %1',
+            args0: [{ type: 'input_value', name: 'NAME' }],
+            inputsInline: true, output: 'String', style: 'evn_board_blocks',
+            tooltip: 'Everything in the file, as text (one line after the other); empty text when there is no such file. It is for small text files: the whole file is read into memory at once, so a big one (a data log in the folder "data") stops the program with MemoryError - read those a line at a time in a Python block. A file that is not UTF-8 text stops it with UnicodeError.',
+        },
+        {
+            type: 'evn_file_exists',
+            message0: 'file %1 exists',
+            args0: [{ type: 'input_value', name: 'NAME' }],
+            inputsInline: true, output: 'Boolean', style: 'evn_board_blocks',
+            tooltip: 'True when the board has a file (or a folder) of this name.',
+        },
+        {
+            type: 'evn_file_delete',
+            message0: 'delete file %1',
+            args0: [{ type: 'input_value', name: 'NAME' }],
+            inputsInline: true, previousStatement: null, nextStatement: null, style: 'evn_board_blocks',
+            tooltip: 'Remove the file from the board (nothing happens when there is none). Like a write, it is refused while a motor is driving (OSError 16).',
+        },
+        {
+            type: 'evn_file_list',
+            message0: 'files on the board',
+            output: 'Array', style: 'evn_board_blocks',
+            tooltip: 'The names of the files and folders on the board (the data logs are in the folder "data"): print it.',
+        },
+    ]);
+
     /* ---- a program in two sections, as in Pybricks (owner, 2026-09-24) ---------------------
      * "Mirror how Pybricks implements their block organisation": every workspace has one "set up"
      * hat and one "program" hat, neither deletable (pybricks.com/learn/making-programs/basic-blocks:
@@ -1623,6 +1867,26 @@
     for (const t of [SETUP_HAT, PROGRAM_HAT]) {
         const init = Blockly.Blocks[t].init;
         Blockly.Blocks[t].init = function () { init.call(this); this.setDeletable(false); };
+    }
+    /* One object per serial header: Bluetooth blocks and UART blocks on the same port make
+     * `bluetooth_N = Bluetooth(N)` and `uart_N = UART(N, ...)`, and the program stops at the start with
+     * OSError("serial port N is used by a ..."). Said in the editor, on every serial block of the clash
+     * (review 2026-09-28), rather than only in the set-up block's tooltip. */
+    const SERIAL_TYPES = Object.keys(Blockly.Blocks).filter((t) => /^evn_(bluetooth|uart)_/.test(t));
+    /** the warning for a serial block whose port also has blocks of the other kind, else null */
+    function serialClash(block) {
+        if (!block.workspace || block.isInFlyout) { return null; }
+        const port = block.getFieldValue('PORT');
+        const other = block.type.startsWith('evn_bluetooth_') ? 'evn_uart_' : 'evn_bluetooth_';
+        const clash = block.workspace.getAllBlocks(false).some((b) => b.type.startsWith(other) && b.getFieldValue('PORT') === port);
+        return clash ? 'Serial port ' + port + ' has Bluetooth blocks and UART blocks: a port is one or the ' +
+            'other, so the program would stop at the start. Put the Bluetooth module and the UART on different serial ports.' : null;
+    }
+    for (const t of SERIAL_TYPES) {
+        Blockly.Blocks[t].onchange = function () {
+            if (this.isInFlyout || !this.workspace || this.workspace.isDragging && this.workspace.isDragging()) { return; }
+            this.setWarningText(serialClash(this));
+        };
     }
     const isSetup = (b) => SETUP_TYPES.indexOf(b.type) >= 0;
     /** 'setup' | 'program' | null (a comment, which belongs to either) */
@@ -1815,10 +2079,16 @@
     function loadWorkspace(state, workspace, version) {
         let notes;
         loadingDepth++;
+        loadRefusals.length = 0;
         try {
             if (state && typeof state === 'object') { Blockly.serialization.workspaces.load(state, workspace); }
             notes = repairSections(workspace);
         } finally { loadingDepth--; }
+        if (loadRefusals.length) {
+            notes.push(`${loadRefusals.length} I2C field(s) held a value the block refuses (${loadRefusals.join(', ')}; 0x70 and 0x6A on port 16 `
+                + 'are the board\'s own devices): each kept the block\'s default, so check those blocks before running the program');
+            loadRefusals.length = 0;
+        }
         notes = notes.concat(upgradeWorkspace(workspace, !(Number(version) >= 2)));
         applySections(workspace);
         separateStacks(workspace);
@@ -1860,7 +2130,8 @@
     const CORE_NAMES = ['Motor', 'Port', 'Stop', 'Direction', 'SpeedUnit', 'wait', 'StopWatch', 'battery', 'button', 'led', 'stop_all'];
     /* Everything else the module offers. A name is imported when a block needs it or when a Python
      * block spells it out - which is why the list has to hold the classes that have no block of
-     * their own as well (Pose is the drive base, and a blocks user has no other way to reach it).
+     * their own as well (Flash, reset / bootloader, the calibration functions: a Python block is the
+     * only way a blocks user reaches them).
      * CORE_NAMES + DEVICE_NAMES must cover every public name of micropython/modules/evn_module.c:
      * scripts/test_blocks.js and tools/check.py compare the two (B-036: `autostart` was missing, so
      * a Python block spelling `autostart(True)` raised NameError on the board). */
@@ -1894,6 +2165,8 @@
         HuskyLens: ['huskylens', 'evn_huskylens_setup'],
         VL53L1X: ['vl53l1x', 'evn_vl53l1x_setup'],
         TCS3430: ['tcs3430', 'evn_tcs3430_setup'],
+        UART: ['uart', 'evn_uart_setup'],
+        I2C: ['i2c', 'evn_i2c_setup'],
     };
 
     /* The generated object names themselves, not just their prefixes: a user variable called
@@ -1905,7 +2178,9 @@
     for (const cls of Object.keys(DEVICES)) {
         for (let p = 1; p <= 16; p++) { OBJECT_NAMES.push(DEVICES[cls][0] + '_' + p); }
     }
-    generator.addReservedWords('evn,motor_1,motor_2,motor_3,motor_4,stopwatch,drive_base,pose,data_log,' +
+    // `file` is the name the "file ... the line" block writes through (`with open(...) as file:`); `os` and
+    // `struct` are the modules the file and I2C blocks import
+    generator.addReservedWords('evn,motor_1,motor_2,motor_3,motor_4,stopwatch,drive_base,pose,data_log,file,os,struct,json,' +
         Object.keys(DEVICES).map((cls) => DEVICES[cls][0]).join(',') + ',' +
         OBJECT_NAMES.join(',') + ',' + EVN_NAMES.join(','));
 
@@ -1935,27 +2210,12 @@
             const pb = b.match(/^dev_(.*)_(\d+)$/);
             return pa[1] === pb[1] ? Number(pa[2]) - Number(pb[2]) : (pa[1] < pb[1] ? -1 : 1);
         });
-        // the drive base is built from two motor objects: its line goes after the (regrouped) motors
-        if (this.definitions_.drive_base) {
-            const d = this.definitions_.drive_base;
-            delete this.definitions_.drive_base;
-            this.definitions_.drive_base = d;
-        }
-        // the pose names the IMU's port: its line goes after the (regrouped) devices
-        if (this.definitions_.pose) {
-            const p = this.definitions_.pose;
-            delete this.definitions_.pose;
-            this.definitions_.pose = p;
-        }
-        // the data log is made after the devices it will record
-        if (this.definitions_.data_log) {
-            const d = this.definitions_.data_log;
-            delete this.definitions_.data_log;
-            this.definitions_.data_log = d;
-        }
         // Pybricks' generated code opens with the device lines, under this comment, before anything else
         // the program defines (variables, functions); so does ours. The stopwatch is set up there too.
-        const SETUP_KEYS = ['motors', 'devices', 'drive_base', 'pose', 'data_log', 'stopwatch'].filter((k) => this.definitions_[k]);
+        // In this order: the pose names the IMU's and the compass's ports (their objects must exist, so it
+        // comes after the devices), the drive base is built from two motor objects and adopts the pose
+        // (pose=pose), and the data log is made after the devices it will record.
+        const SETUP_KEYS = ['motors', 'devices', 'pose', 'drive_base', 'data_log', 'stopwatch'].filter((k) => this.definitions_[k]);
         if (SETUP_KEYS.length) {
             const old = this.definitions_;
             const imports = Object.keys(old).filter((k) => /^(from\s+\S+\s+)?import\s+\S+/.test(old[k]));
@@ -2009,6 +2269,12 @@
             if (cls === 'Servo' && setup && setup.getFieldValue('PROFILE') !== 'geekservo_270') {
                 args.push(generator.quote_(setup.getFieldValue('PROFILE')));
             }
+            if (cls === 'UART') {
+                // UART(port, baudrate): the speed always written out (machine.UART's default is not 115200 on
+                // every port), positional as the binding takes it; the set-up's, or the port's own 115200
+                const baud = setup ? String(setup.getFieldValue('BAUD')) : '115200';
+                args.push(/^\d+$/.test(baud) ? baud : '115200');
+            }
             if (cls === 'IMU' && setup && setup.getFieldValue('CALIBRATE') === 'TRUE') {   // IMU(port, calibrate=True)
                 args.push('calibrate=True');
             }
@@ -2039,14 +2305,61 @@
             const g = driveGeometry(block);
             const l = motorRef(block, g.left), r = motorRef(block, g.right);
             use('DriveBase');
-            // A "robot follows its gyro" block anywhere in the program: the base builds its own Pose from
-            // its geometry and the motors' directions (firmware 0.2.38), so the set-up line carries the
-            // IMU's port. The IMU object has to exist first (DriveBase raises OSError otherwise): finish()
-            // puts the drive_base line after the devices.
-            const imuPort = gyroImuPort(block);
-            if (imuPort) { deviceRef(block, 'IMU', imuPort); }
+            // A pose block anywhere in the program: the program's `pose` (poseRef) is built from this same
+            // geometry and the motors' directions, and the base adopts it (pose=pose; the firmware checks
+            // that the ports, directions, gears, wheel and track agree), so the pose the blocks read is the
+            // one the robot follows. Otherwise a "robot follows its gyro" block makes the base build its own
+            // Pose (firmware 0.2.38): the set-up line carries the IMU's port. The IMU object has to exist
+            // first (DriveBase raises OSError otherwise): finish() puts the drive_base line after the devices.
+            let source = '';
+            if (usesPose(block.workspace)) {
+                source = ', pose=' + poseRef(block);
+            } else {
+                const imuPort = gyroImuPort(block);
+                if (imuPort) { deviceRef(block, 'IMU', imuPort); source = ', imu=' + imuPort; }
+            }
             generator.definitions_[name] = name + ' = DriveBase(' + l + ', ' + r + ', wheel_diameter=' + g.wheel + ', axle_track=' + g.track
-                + (imuPort ? ', imu=' + imuPort : '') + ')';
+                + source + ')';
+        }
+        return name;
+    }
+
+    /* ---- the pose (evn.Pose) ----------------------------------------------------------------------- */
+
+    const POSE_TYPES = ['evn_pose_setup', 'evn_pose_value', 'evn_pose_uncertainty', 'evn_pose_uses', 'evn_pose_reset'];
+    /** True when a pose block runs in this program (enabled, attached, not inside a switched-off block). */
+    function usesPose(workspace) {
+        return workspace.getAllBlocks(false).some((b) => POSE_TYPES.indexOf(b.type) >= 0 && b.isEnabled() && !b.getInheritedDisabled());
+    }
+    /** True when the "set up motor" block of this port makes counterclockwise its positive direction: the same
+     * block motorRef() builds the Motor from (the first enabled one of the port), so the Pose's reverse_* and
+     * the Motor's positive_direction always agree (the firmware refuses a DriveBase whose pose disagrees). */
+    function motorReversed(block, port) {
+        const setup = block.workspace.getBlocksByType('evn_motor_setup', false)
+            .find((b) => b.isEnabled() && b.getFieldValue('PORT') === port);
+        return !!setup && setup.getFieldValue('DIRECTION') === 'CCW';
+    }
+    /** The compass port of the first enabled "set up pose" block, or ''. */
+    function poseCompassPort(block) {
+        const setup = block.workspace.getBlocksByType('evn_pose_setup', false).find((b) => b.isEnabled());
+        return setup ? setup.getFieldValue('PORT') : '';
+    }
+    /** Name of the program's Pose, defining it (once): the robot's wheels from the "set up robot" geometry (or
+     * the default robot) with the mirrored motor's reverse_*, the IMU of "robot follows its gyro" and the
+     * compass of "set up pose". The IMU and Compass objects are made first (the Pose raises OSError without). */
+    function poseRef(block) {
+        const name = 'pose';
+        if (!generator.definitions_[name]) {
+            use('Pose');
+            const g = driveGeometry(block);
+            const args = [g.left, g.right, 'wheel_diameter=' + g.wheel, 'axle_track=' + g.track];
+            if (motorReversed(block, g.left)) { args.push('reverse_left=True'); }
+            if (motorReversed(block, g.right)) { args.push('reverse_right=True'); }
+            const imuPort = gyroImuPort(block);
+            if (imuPort) { deviceRef(block, 'IMU', imuPort); args.push('imu=' + imuPort); }
+            const compassPort = poseCompassPort(block);
+            if (compassPort) { deviceRef(block, 'Compass', compassPort); args.push('compass=' + compassPort); }
+            generator.definitions_[name] = name + ' = Pose(' + args.join(', ') + ')';
         }
         return name;
     }
@@ -2640,11 +2953,237 @@
     /* The binding does have readline() (evn_bluetooth.c registers MP_QSTR_readline), so the block
      * calls it: it waits up to 5 s, gives the line without its newline, and - unlike the 14-line
      * read(-1) helper this replaced - leaves whatever arrived behind it in the receive buffer,
-     * where a "read everything" Python block can still find it. None on timeout becomes ''. */
+     * where a "read everything" Python block can still find it. None on timeout becomes ''. A line that is
+     * not UTF-8 comes back one character per byte (bytesToText) instead of stopping the program. */
     generator.forBlock['evn_bluetooth_line'] = function (block) {
         const timeout = value(block, 'TIMEOUT', '5000');   // readline takes an int: a computed or decimal time is rounded
         const ms = /^\d+$/.test(timeout) ? timeout : 'int(' + timeout + ')';
-        return ['(' + deviceRef(block, 'Bluetooth') + '.readline(' + ms + ") or b'').decode()", Order.FUNCTION_CALL];
+        const line = deviceRef(block, 'Bluetooth') + '.readline(' + ms + ")";
+        return [bytesToText() + '(' + line + " or b'')", Order.FUNCTION_CALL];
+    };
+
+    /* ---- the pose, the serial ports, raw I2C and files ------------------------------------------ */
+
+    /** A Python string literal as the Python generator quotes a text block ('...' or "..."). */
+    const STRING_LITERAL = /^(['"])(?:(?!\1)[^\\]|\\[\s\S])*\1$/;
+    /** A text input as a str: a string literal as it is, anything else (a number, a sensor value) through str(). */
+    function textValue(block, input, fallback) {
+        const code = value(block, input, fallback);
+        return STRING_LITERAL.test(code) ? code : 'str(' + code + ')';
+    }
+    /** A text input followed by a newline: '...\n' for a literal, str(...) + '\n' for anything else. */
+    function lineValue(block, input, fallback) {
+        const code = value(block, input, fallback);
+        return STRING_LITERAL.test(code) ? code.slice(0, -1) + '\\n' + code.slice(-1) : 'str(' + code + ") + '\\n'";
+    }
+    /** The module a block needs, imported once at the top (`import os`). */
+    function importModule(name) {
+        generator.definitions_['import_' + name] = 'import ' + name;
+        return name;
+    }
+
+    generator.forBlock['evn_pose_setup'] = function (block) {
+        poseRef(block);             // the definition is all the setup does
+        return '';
+    };
+    generator.forBlock['evn_pose_value'] = function (block) {
+        return [poseRef(block) + '.' + block.getFieldValue('WHAT'), Order.MEMBER];
+    };
+    generator.forBlock['evn_pose_uncertainty'] = function (block) {
+        const i = String(Math.max(0, Math.min(2, Number(block.getFieldValue('WHAT')) || 0)));
+        return [poseRef(block) + '.covariance()[' + i + ']', Order.MEMBER];
+    };
+    generator.forBlock['evn_pose_uses'] = function (block) {
+        return [generator.quote_(block.getFieldValue('SOURCE')) + ' in ' + poseRef(block) + '.sources()', Order.RELATIONAL];
+    };
+    generator.forBlock['evn_pose_reset'] = function (block) {
+        const xyh = ['X', 'Y', 'HEADING'].map((n) => value(block, n, '0'));
+        return poseRef(block) + '.reset(' + (xyh.every((v) => v === '0') ? '' : xyh.join(', ')) + ')\n';
+    };
+
+    /** Bytes as text: UTF-8 when they are, else one character per byte (chr(0..255)). MicroPython checks
+     * UTF-8 (MICROPY_PY_BUILTINS_STR_UNICODE_CHECK), so a bare decode() of a peer at the wrong baud or of a
+     * binary frame raised UnicodeError and stopped the program; garbled text is what a user can debug. */
+    function bytesToText() {
+        return generator.provideFunction_('bytes_to_text', `
+def ${generator.FUNCTION_NAME_PLACEHOLDER_}(data):
+  try:
+    return data.decode()
+  except UnicodeError:
+    return ''.join(chr(byte) for byte in data)
+`);
+    }
+
+    /* UART: only the calls machine.UART has - UART(id, baudrate), write(), read(n), any() - so the blocks
+     * run the same on an evn.UART that follows machine.UART (the owner, 2026-09-28: "Follow machine uart"):
+     * machine.UART's readline() takes no timeout (the constructor's) and returns a part line when it times
+     * out, and it has no flush_rx(). The line, the text and the throw-away blocks share one helper,
+     * uart_receive(): it reads a line a byte at a time against a StopWatch, so what arrived behind the line
+     * stays in the port, and a line that has not finished when the wait ends is kept (in the helper's own
+     * `pending`, per port object) for the next call - empty text now, the whole line later, never a part.
+     * Every read has a count, read(any()) or read(1), never a bare read(): on machine.UART (and the 0.2.60
+     * evn.UART) a bare read() is the stream's readall, which keeps reading while a peer keeps sending. The
+     * wait is a bound even on a peer that never stops (a binary stream, the wrong baud): the bytes already
+     * waiting when the call starts are read to their line end, and past `line_wait` the call gives up
+     * after its next byte; a line of 1024 bytes without an end comes as that piece, so `pending` stays
+     * bounded (review 2026-09-29: the old loop looked at the clock only when the port was empty).
+     * The line grows in one bytearray (`+=` extends it in place, and MicroPython's gc_realloc frees what it
+     * outgrows), turned into bytes once when it is given or kept: `bytes += byte` made a new object of the
+     * whole line for every byte, about 0.5 MB of garbage for a 1024-byte line and collections on Core 0
+     * in the middle of a stream (fix pass 2026-09-29). MicroPython's bytearray has no decode(), so the
+     * text helper is handed bytes. */
+    function uartReceive() {
+        use('StopWatch');
+        const text = bytesToText();
+        return generator.provideFunction_('uart_receive', `
+def ${generator.FUNCTION_NAME_PLACEHOLDER_}(uart, line_wait=None, pending={}):
+  # pending: per port, the part of a line that had arrived when a wait ended
+  data = bytearray(pending.pop(id(uart), b''))
+  if line_wait is None:
+    waiting = uart.any()
+    if waiting:
+      data += uart.read(waiting) or b''
+    return ${text}(bytes(data))
+  watch = StopWatch()
+  ready = uart.any()  # what has already arrived is read to its line end, however short the wait
+  while True:
+    if uart.any():
+      byte = uart.read(1) or b''
+      if byte == b'\\n':
+        return ${text}(bytes(data)).rstrip('\\r')
+      data += byte  # grows in place: no new copy of the line for every byte
+      if len(data) >= 1024:
+        return ${text}(bytes(data))
+      ready -= 1
+      if ready > 0:
+        continue
+    else:
+      ready = 0
+    if watch.time() >= line_wait:
+      pending[id(uart)] = bytes(data)
+      return ''
+`);
+    }
+    generator.forBlock['evn_uart_setup'] = setupGenerator('UART');
+    generator.forBlock['evn_uart_send'] = function (block) {
+        const newline = block.getFieldValue('NEWLINE') !== 'FALSE';
+        const code = value(block, 'TEXT', "''");
+        const literal = STRING_LITERAL.test(code);
+        let data;
+        if (literal && /^[\x20-\x7e]*$/.test(code)) {
+            data = 'b' + (newline ? code.slice(0, -1) + '\\n' + code.slice(-1) : code);   // plain ASCII: a bytes literal
+        } else {
+            // 'grüß\n'.encode(), str(x).encode(), (str(x) + '\n').encode()
+            const text = newline ? lineValue(block, 'TEXT', "''") : textValue(block, 'TEXT', "''");
+            data = (newline && !literal ? '(' + text + ')' : text) + '.encode()';
+        }
+        return deviceRef(block, 'UART') + '.write(' + data + ')\n';
+    };
+    generator.forBlock['evn_uart_line'] = function (block) {
+        const uart = deviceRef(block, 'UART');
+        return [uartReceive() + '(' + uart + ', ' + value(block, 'TIMEOUT', '1000') + ')', Order.FUNCTION_CALL];
+    };
+    generator.forBlock['evn_uart_read'] = function (block) {
+        const uart = deviceRef(block, 'UART');
+        return [uartReceive() + '(' + uart + ')', Order.FUNCTION_CALL];
+    };
+    generator.forBlock['evn_uart_any'] = call('UART', 'any');
+    generator.forBlock['evn_uart_clear'] = function (block) {
+        const uart = deviceRef(block, 'UART');
+        return uartReceive() + '(' + uart + ')\n';     // everything read and dropped, a kept part line with it
+    };
+
+    /* I2C: readfrom_mem / writeto_mem (machine.I2C's own calls); two bytes and signed values through struct. */
+    /** The hex byte of an ADDR / REG field as a Python literal (0x68); a value the field would refuse falls back. */
+    function hexField(block, name, fallback) {
+        const t = String(block.getFieldValue(name) || '');
+        const n = /^[0-9a-f]{1,2}$/i.test(t) ? parseInt(t, 16) : fallback;
+        return '0x' + n.toString(16).toUpperCase().padStart(2, '0');
+    }
+    const I2C_READ_FORMATS = { 'B': 1, 'b': 1, '>H': 2, '>h': 2, '<H': 2, '<h': 2 };
+    generator.forBlock['evn_i2c_setup'] = setupGenerator('I2C');
+    generator.forBlock['evn_i2c_scan'] = function (block) {
+        return ['[hex(address) for address in ' + deviceRef(block, 'I2C') + '.scan()]', Order.ATOMIC];
+    };
+    generator.forBlock['evn_i2c_probe'] = function (block) {
+        return [deviceRef(block, 'I2C') + '.probe(' + hexField(block, 'ADDR', 0x68) + ')', Order.FUNCTION_CALL];
+    };
+    generator.forBlock['evn_i2c_read'] = function (block) {
+        const fmt = Object.prototype.hasOwnProperty.call(I2C_READ_FORMATS, block.getFieldValue('FORMAT')) ? block.getFieldValue('FORMAT') : 'B';
+        const read = deviceRef(block, 'I2C') + '.readfrom_mem(' + hexField(block, 'ADDR', 0x68) + ', ' + hexField(block, 'REG', 0x75)
+            + ', ' + I2C_READ_FORMATS[fmt] + ')';
+        if (fmt === 'B') { return [read + '[0]', Order.MEMBER]; }
+        return [importModule('struct') + '.unpack(' + generator.quote_(fmt) + ', ' + read + ')[0]', Order.MEMBER];
+    };
+    generator.forBlock['evn_i2c_read_bytes'] = function (block) {
+        return ['list(' + deviceRef(block, 'I2C') + '.readfrom_mem(' + hexField(block, 'ADDR', 0x68) + ', ' + hexField(block, 'REG', 0x75)
+            + ', ' + intValue(block, 'COUNT', '1') + '))', Order.FUNCTION_CALL];
+    };
+    generator.forBlock['evn_i2c_write'] = function (block) {
+        const fmt = ['>H', '<H'].indexOf(block.getFieldValue('FORMAT')) >= 0 ? block.getFieldValue('FORMAT') : 'B';
+        const v = intValue(block, 'VALUE', '0');
+        let data;
+        if (fmt === 'B') {
+            data = 'bytes([' + v + '])';        // ValueError outside 0..255
+        } else {
+            // struct.pack('>H', 70000) truncates without a word in MicroPython: refused like the byte form instead
+            importModule('struct');
+            data = generator.provideFunction_('two_bytes', `
+def ${generator.FUNCTION_NAME_PLACEHOLDER_}(value, order):
+  if not 0 <= value <= 65535:
+    raise ValueError('a 16-bit register value is 0 to 65535')
+  return struct.pack(order, value)
+`) + '(' + v + ', ' + generator.quote_(fmt) + ')';
+        }
+        return deviceRef(block, 'I2C') + '.writeto_mem(' + hexField(block, 'ADDR', 0x68) + ', ' + hexField(block, 'REG', 0x75) + ', ' + data + ')\n';
+    };
+
+    /* Files: open() and os as in MicroPython. A missing file reads as empty text and deletes as nothing;
+     * every other error - above all OSError 16, a flash write refused while a motor drives - is raised. */
+    generator.forBlock['evn_file_write'] = function (block) {
+        const mode = block.getFieldValue('MODE') === 'w' ? 'w' : 'a';
+        return 'with open(' + textValue(block, 'NAME', "'notes.txt'") + ', ' + generator.quote_(mode) + ') as file:\n'
+            + generator.INDENT + 'file.write(' + lineValue(block, 'TEXT', "''") + ')\n';
+    };
+    generator.forBlock['evn_file_read'] = function (block) {
+        const fn = generator.provideFunction_('read_file', `
+def ${generator.FUNCTION_NAME_PLACEHOLDER_}(name):
+  try:
+    with open(name) as file:
+      return file.read()
+  except OSError as error:
+    if error.errno != 2:  # 2 = ENOENT, no such file
+      raise
+    return ''
+`);
+        return [fn + '(' + textValue(block, 'NAME', "'notes.txt'") + ')', Order.FUNCTION_CALL];
+    };
+    generator.forBlock['evn_file_exists'] = function (block) {
+        importModule('os');
+        const fn = generator.provideFunction_('file_exists', `
+def ${generator.FUNCTION_NAME_PLACEHOLDER_}(name):
+  try:
+    os.stat(name)
+    return True
+  except OSError:
+    return False
+`);
+        return [fn + '(' + textValue(block, 'NAME', "'notes.txt'") + ')', Order.FUNCTION_CALL];
+    };
+    generator.forBlock['evn_file_delete'] = function (block) {
+        importModule('os');
+        const fn = generator.provideFunction_('delete_file', `
+def ${generator.FUNCTION_NAME_PLACEHOLDER_}(name):
+  try:
+    os.remove(name)
+  except OSError as error:
+    if error.errno != 2:  # 2 = ENOENT, there was no such file
+      raise
+`);
+        return fn + '(' + textValue(block, 'NAME', "'notes.txt'") + ')\n';
+    };
+    generator.forBlock['evn_file_list'] = function () {
+        return [importModule('os') + '.listdir()', Order.FUNCTION_CALL];
     };
 
     /* Blank out Python comments and the insides of string literals, keeping the length so nothing
@@ -2678,8 +3217,88 @@
         return out.join('');
     }
 
-    /** The highest port number a class has: the firmware raises ValueError outside it. */
-    function maxPort(cls) { return (cls === 'Servo' || cls === 'RGBLED') ? 4 : 16; }
+    /** The highest port number a class has: the firmware raises ValueError outside it (serial ports 1..2). */
+    function maxPort(cls) {
+        if (cls === 'Servo' || cls === 'RGBLED') { return 4; }
+        return (cls === 'UART' || cls === 'Bluetooth') ? 2 : 16;
+    }
+    /* Standard modules a Python block may use without importing them itself: the file blocks' os, the I2C
+     * blocks' struct, and json for settings files. */
+    const PYTHON_BLOCK_MODULES = ['os', 'struct', 'json'];
+    /* The classes whose constructor claims its port: a second object on the port raises OSError ("serial port
+     * 1 is already open" / "... is used by a Bluetooth object"). A program of 0.2.58 or older did its UART
+     * work in Python blocks, constructing `uart_1 = UART(1, 9600)` itself; defining uart_1 at the top as
+     * well, from a mere mention, would make that program fail at start-up. */
+    const CLAIMS_PORT = ['UART', 'Bluetooth'];
+    /** The object names an enabled Python block of the workspace assigns itself (`uart_1 = UART(1, 9600)`). */
+    function pythonAssigned(workspace) {
+        const names = new Set();
+        for (const b of workspace.getAllBlocks(false)) {
+            if ((b.type !== 'evn_python' && b.type !== 'evn_python_value') || !b.isEnabled() || b.getInheritedDisabled()) { continue; }
+            for (const m of codeOnly(String(b.getFieldValue('CODE') || '')).matchAll(/(?:^|;)\s*([A-Za-z_]\w*)\s*=(?!=)/gm)) { names.add(m[1]); }
+        }
+        return names;
+    }
+    /* A Python block that constructs what the top of the program already constructs: the constructor raises
+     * at that line, on the board, before the tester sees why (review 2026-09-29). pythonAssigned() keeps a mere
+     * mention from adding a second `uart_1`, but a UART or Bluetooth block on the port - or a pose block, or
+     * "robot follows its gyro" (the DriveBase then builds its own Pose) - still does, so the Python block is
+     * warned in the editor: serial ports claim their port ("serial port 1 is already open" / "... is used by a
+     * Bluetooth object", evn_periph.c uart_make_new, evn_bluetooth.c), and a robot has one Pose ("a Pose object
+     * already exists", evn_pose.c). The warning names the fix; nothing in the generated code changes. */
+    const SERIAL_BLOCK = /^evn_(uart|bluetooth)_/;
+    function runs(b) { return b.isEnabled() && !b.getInheritedDisabled(); }
+    /** The serial ports ('1', '2') the top of the program opens, from blocks and from Python-block mentions. */
+    function topSerialPorts(workspace) {
+        const ports = new Set();
+        let assigned = null;
+        for (const b of workspace.getAllBlocks(false)) {
+            if (!runs(b)) { continue; }
+            if (SERIAL_BLOCK.test(b.type) && b.getField('PORT')) { ports.add(String(b.getFieldValue('PORT'))); continue; }
+            if (b.type !== 'evn_python' && b.type !== 'evn_python_value') { continue; }
+            for (const m of codeOnly(String(b.getFieldValue('CODE') || '')).matchAll(/\b(?:uart|bluetooth)_([12])\b/g)) {
+                assigned = assigned || pythonAssigned(workspace);
+                if (!assigned.has(m[0])) { ports.add(m[1]); }
+            }
+        }
+        return ports;
+    }
+    /** The editor's warning for a Python block constructing a serial port or a Pose the top already makes, or null. */
+    function pythonClash(block) {
+        if (!block.workspace || block.isInFlyout || !runs(block)) { return null; }
+        const code = codeOnly(String(block.getFieldValue('CODE') || ''));
+        // `UART(1, ...)` / `evn.UART(1)`, not `machine.UART(1)` or `myUART(1)` (no lookbehind: older Safari
+        // refuses the whole script at parse time)
+        const opens = [...code.matchAll(/(?:^|[^\w.])(?:evn\.)?(?:UART|Bluetooth)\s*\(\s*([12])\s*[,)]/g)];
+        if (opens.length) {
+            const top = topSerialPorts(block.workspace);
+            const hit = opens.find((m) => top.has(m[1]));
+            if (hit) {
+                return 'This line opens serial port ' + hit[1] + ', which the blocks already open at the start of the program, so the program '
+                    + 'would stop here with OSError. Give the port a "set up UART" (or Bluetooth) block for its speed and use uart_' + hit[1]
+                    + ' / bluetooth_' + hit[1] + ' without constructing it, or keep this port in Python blocks only.';
+            }
+        }
+        // a Pose of its own, or a DriveBase given an IMU / compass (which builds one), beside the program's: judged by
+        // the generator's own rules (usesPose, gyroImuPort - an enabled "robot follows its gyro" anywhere, even inside a
+        // switched-off block, gives the drive base its IMU), so the warning and the code cannot disagree (rereview 1
+        // of the blocks lane)
+        if (/(?:^|[^\w.])(?:evn\.)?Pose\s*\(/.test(code) || /(?:^|[^\w.])(?:evn\.)?DriveBase\s*\([^)]*\b(?:imu|compass)\s*=/.test(code)) {
+            if (usesPose(block.workspace) || gyroImuPort(block) !== '') {
+                return 'This line makes a Pose, but the program already has one (a pose block, or "robot follows its gyro"): a robot has one '
+                    + 'Pose (a DriveBase given imu= or compass= makes one too), so the program would stop here with OSError. Read the '
+                    + 'program\'s own: pose (with pose blocks) or drive_base.pose.';
+            }
+        }
+        return null;
+    }
+    for (const t of ['evn_python', 'evn_python_value']) {
+        Blockly.Blocks[t].onchange = function () {
+            if (this.isInFlyout || !this.workspace || (this.workspace.isDragging && this.workspace.isDragging())) { return; }
+            this.setWarningText(pythonClash(this));
+        };
+    }
+    api.pythonClash = pythonClash;   // for scripts/test_blocks.js
 
     // Hand-written code always gets the core names plus a bare `import evn` (so `evn.version` and
     // anything the list below misses still resolve), plus any evn name it spells out, and every
@@ -2692,13 +3311,20 @@
         // promise that everything in the module is reachable from a Python block.
         generator.definitions_['import_evn_module'] = 'import evn';
         DEVICE_NAMES.forEach((n) => { if (new RegExp('\\b' + n + '\\b').test(bare)) { use(n); } });
+        PYTHON_BLOCK_MODULES.forEach((m) => { if (new RegExp('(^|[^\\w.])' + m + '\\s*\\.').test(bare)) { importModule(m); } });
         for (const m of bare.matchAll(/\bmotor_([1-4])\b/g)) { motorRef(block, m[1]); }
         if (/\bdrive_base\b/.test(bare)) { driveRef(block); }
         if (/\bdata_log\b/.test(bare)) { datalogRef(block); }
+        let assigned = null;       // computed once, and only when a port-claiming name is mentioned
         for (const cls of Object.keys(DEVICES)) {
             for (const m of bare.matchAll(new RegExp('\\b' + DEVICES[cls][0] + '_(\\d+)\\b', 'g'))) {
                 const port = Number(m[1]);
-                if (port >= 1 && port <= maxPort(cls)) { deviceRef(block, cls, m[1]); }
+                if (port < 1 || port > maxPort(cls)) { continue; }
+                if (CLAIMS_PORT.indexOf(cls) >= 0) {
+                    assigned = assigned || pythonAssigned(block.workspace);
+                    if (assigned.has(m[0])) { continue; }   // the program constructs it itself
+                }
+                deviceRef(block, cls, m[1]);
             }
         }
         return code;
@@ -2764,6 +3390,18 @@
                 ],
             },
             {
+                // evn.Pose: where the robot is (the robot's wheels, the gyro block's IMU, the set-up's compass)
+                kind: 'category', name: 'Pose', categorystyle: 'evn_motor_category',
+                contents: [
+                    { kind: 'block', type: 'evn_pose_value' },
+                    { kind: 'block', type: 'evn_pose_uncertainty' },
+                    { kind: 'block', type: 'evn_pose_uses' },
+                    { kind: 'block', type: 'evn_pose_reset', inputs: { X: shadowNum(0), Y: shadowNum(0), HEADING: shadowNum(0) } },
+                    { kind: 'block', type: 'evn_pose_setup' },
+                    { kind: 'block', type: 'evn_drivebase_gyro' },
+                ],
+            },
+            {
                 kind: 'category', name: 'Sensing', categorystyle: 'evn_sense_category',
                 contents: [
                     { kind: 'block', type: 'evn_motor_measure' },
@@ -2808,6 +3446,17 @@
                     { kind: 'block', type: 'evn_datalog_run', fields: { ACTION: 'stop' } },
                     { kind: 'block', type: 'evn_datalog_row', inputs: { A: shadowNum(0) } },
                     { kind: 'block', type: 'evn_datalog_save' },
+                ],
+            },
+            {
+                // the board's flash file system: open() and os
+                kind: 'category', name: 'Files', categorystyle: 'evn_board_category',
+                contents: [
+                    { kind: 'block', type: 'evn_file_write', inputs: { NAME: shadowText('notes.txt'), TEXT: shadowText('hello') } },
+                    { kind: 'block', type: 'evn_file_read', inputs: { NAME: shadowText('notes.txt') } },
+                    { kind: 'block', type: 'evn_file_exists', inputs: { NAME: shadowText('notes.txt') } },
+                    { kind: 'block', type: 'evn_file_delete', inputs: { NAME: shadowText('notes.txt') } },
+                    { kind: 'block', type: 'evn_file_list' },
                 ],
             },
             {
@@ -2917,6 +3566,28 @@
                         { kind: 'block', type: 'evn_bluetooth_send', fields: { PORT: '2' }, inputs: { TEXT: shadowText('hello') } },
                         { kind: 'block', type: 'evn_bluetooth_any', fields: { PORT: '2' } },
                         { kind: 'block', type: 'evn_bluetooth_line', fields: { PORT: '2' }, inputs: { TIMEOUT: shadowNum(5000) } },
+                    ]),
+                ],
+            },
+            {
+                // the raw ports: a serial header as a UART, an I2C port for a chip with no category of its own
+                kind: 'category', name: 'Serial and I2C', categorystyle: 'evn_output_category',
+                contents: [
+                    group('UART', 'evn_output_category', [
+                        { kind: 'block', type: 'evn_uart_setup' },
+                        { kind: 'block', type: 'evn_uart_send', inputs: { TEXT: shadowText('hello') } },
+                        { kind: 'block', type: 'evn_uart_line', inputs: { TIMEOUT: shadowNum(1000) } },
+                        { kind: 'block', type: 'evn_uart_read' },
+                        { kind: 'block', type: 'evn_uart_any' },
+                        { kind: 'block', type: 'evn_uart_clear' },
+                    ]),
+                    group('I2C', 'evn_output_category', [
+                        { kind: 'block', type: 'evn_i2c_setup' },
+                        { kind: 'block', type: 'evn_i2c_scan' },
+                        { kind: 'block', type: 'evn_i2c_probe' },
+                        { kind: 'block', type: 'evn_i2c_read' },
+                        { kind: 'block', type: 'evn_i2c_read_bytes', fields: { REG: '3B' }, inputs: { COUNT: shadowNum(6) } },
+                        { kind: 'block', type: 'evn_i2c_write', fields: { REG: '6B' }, inputs: { VALUE: shadowNum(1) } },
                     ]),
                 ],
             },
@@ -3069,7 +3740,8 @@
 
     // CORE_NAMES / DEVICE_NAMES are exported for scripts/test_blocks.js, which compares them with the module's table.
     Object.assign(api, { TOOLBOX, PALETTE, BLOCK_STYLES, CATEGORY_STYLES, workspaceToPython, CORE_NAMES, DEVICE_NAMES, SETUP_TYPES,
-        CONNECTION_CHECKER, SETUP_HAT, PROGRAM_HAT, COMMENT, applySections, repairSections, upgradeWorkspace, loadWorkspace, setBoardConnected });
+        CONNECTION_CHECKER, SETUP_HAT, PROGRAM_HAT, COMMENT, applySections, repairSections, upgradeWorkspace, loadWorkspace, setBoardConnected,
+        SERIAL_TYPES, serialClash });
     if (typeof self !== 'undefined') { self.evnBlocks = api; }
     return api;
 }));

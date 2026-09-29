@@ -1,7 +1,7 @@
 EVN_ALPHA_MicroPython.uf2
-source: main (0.2.58) + the 2026-09-28 lanes: the owner rulings (Motor / Servo take-over, stop() waits for the coast, a waiting calibrate() returns the finished run), the Pololu cogging phase as a per-direction circular mean, the IMU right side up at start-up and riding through Core 0 stalls (FIFO backlog, FIFO-only reset, packet time base), the IMU / compass-first I2C dispatcher, I2C at a true 400 kHz with a stuck bus failing fast and show() serving the IMU, TCS3430 / HiTechnic / VL53L1X at the standard's depth (VL53L1X offset / crosstalk calibration, the soft reset), the calibration-clear refusal; the extension's data-logger heavy-set fix
-built: 2026-09-28 (MicroPython v1.26.1, pico-sdk 2.3.0; SOURCE_DATE_EPOCH=1790596800 = noon UTC 2026-09-28)
+source: main (0.2.59) + the 2026-09-29 lanes: evn.UART as machine.UART and evn.I2C as machine.I2C, blocks for Pose / UART / I2C / Files, the console agent uploaded in pieces (the data viewer's heavy held set), the CHR-GM16 library plant, one profile clock for both DriveBase wheels, the VL53L1X / TCS3430 / HiTechnic review findings, the APDS-9960 opening with the whole rig, the calibrate() plausibility gate, the Pololu detent tail brake, the IMU's residual bias at rest / calibrate() on a running IMU / live DMP rate, bench and tooling fixes
+built: 2026-09-29 (MicroPython v1.26.1, pico-sdk 2.3.0; SOURCE_DATE_EPOCH=1790683200 = noon UTC 2026-09-29)
 flash: single-line 03h boot2, PICO_FLASH_SPI_CLKDIV=4
-md5: 340e519b37af31f9aca150be1b64977b
+md5: 90bed5374454a7d4823c66862a1f826b
 reproduce: cmake -G Ninja -DEVN_MICROPYTHON=ON + ninja with SOURCE_DATE_EPOCH = noon UTC of the built: date (py/makeversionhdr.py embeds MICROPY_BUILD_DATE); release_public.py does this and refuses on an md5 mismatch
-version: 0.2.59
+version: 0.2.60

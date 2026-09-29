@@ -1,0 +1,816 @@
+{
+  "format": "evn-blocks",
+  "version": 2,
+  "title": "Pose: every block",
+  "needs": "a robot: left wheel motor on port 4 (mounted mirrored), right on port 3, 62.4 mm wheels 170 mm apart, an EVN IMU on I2C port 3 fixed flat to the chassis, an EVN compass on I2C port 14 calibrated on the robot and mounted away from the motors, and 40 cm of clear floor ahead. Keep the robot still while the program starts (the IMU settles in 8 to 25 s).",
+  "description": "Every pose block once: the compass added to the pose, the robot following its gyro, which sources count right now, re-framing the pose (a new origin, the heading kept), the speed and turn rate while the robot drives, the position and heading after each leg, and the pose's own uncertainty. The robot drives 30 cm out, turns 45 degrees right and back, and drives back, so it ends where it started.",
+  "workspace": {
+    "blocks": {
+      "languageVersion": 0,
+      "blocks": [
+        {
+          "type": "evn_setup_start",
+          "x": 30,
+          "y": 30,
+          "next": {
+            "block": {
+              "type": "evn_motor_setup",
+              "fields": {
+                "PORT": "4",
+                "DIRECTION": "CCW",
+                "UNIT": "DEG_S"
+              },
+              "next": {
+                "block": {
+                  "type": "evn_drivebase_setup",
+                  "fields": {
+                    "LEFT": "4",
+                    "RIGHT": "3",
+                    "WHEEL": 62.4,
+                    "TRACK": 170
+                  },
+                  "next": {
+                    "block": {
+                      "type": "evn_imu_setup",
+                      "fields": {
+                        "PORT": "3",
+                        "CALIBRATE": false
+                      },
+                      "next": {
+                        "block": {
+                          "type": "evn_compass_setup",
+                          "fields": {
+                            "PORT": "14"
+                          },
+                          "next": {
+                            "block": {
+                              "type": "evn_pose_setup",
+                              "fields": {
+                                "PORT": "14"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "evn_program_start",
+          "x": 30,
+          "y": 250,
+          "next": {
+            "block": {
+              "type": "evn_comment",
+              "fields": {
+                "TEXT": "the IMU of this block joins the pose; it waits (up to 35 s) for the IMU to settle"
+              },
+              "next": {
+                "block": {
+                  "type": "evn_drivebase_gyro",
+                  "fields": {
+                    "PORT": "3",
+                    "ON": "True"
+                  },
+                  "next": {
+                    "block": {
+                      "type": "text_print",
+                      "inputs": {
+                        "TEXT": {
+                          "block": {
+                            "type": "text_join",
+                            "inputs": {
+                              "ADD0": {
+                                "shadow": {
+                                  "type": "text",
+                                  "fields": {
+                                    "TEXT": "the pose uses the wheels: "
+                                  }
+                                }
+                              },
+                              "ADD1": {
+                                "block": {
+                                  "type": "evn_pose_uses",
+                                  "fields": {
+                                    "SOURCE": "wheels"
+                                  }
+                                }
+                              },
+                              "ADD2": {
+                                "shadow": {
+                                  "type": "text",
+                                  "fields": {
+                                    "TEXT": ", the IMU: "
+                                  }
+                                }
+                              },
+                              "ADD3": {
+                                "block": {
+                                  "type": "evn_pose_uses",
+                                  "fields": {
+                                    "SOURCE": "imu"
+                                  }
+                                }
+                              },
+                              "ADD4": {
+                                "shadow": {
+                                  "type": "text",
+                                  "fields": {
+                                    "TEXT": ", the compass: "
+                                  }
+                                }
+                              },
+                              "ADD5": {
+                                "block": {
+                                  "type": "evn_pose_uses",
+                                  "fields": {
+                                    "SOURCE": "compass"
+                                  }
+                                }
+                              }
+                            },
+                            "extraState": {
+                              "itemCount": 6
+                            }
+                          }
+                        }
+                      },
+                      "next": {
+                        "block": {
+                          "type": "evn_comment",
+                          "fields": {
+                            "TEXT": "start at 0, 0; with the compass, keep the heading the pose has (from north)"
+                          },
+                          "next": {
+                            "block": {
+                              "type": "controls_if",
+                              "extraState": {
+                                "hasElse": true
+                              },
+                              "inputs": {
+                                "IF0": {
+                                  "block": {
+                                    "type": "evn_pose_uses",
+                                    "fields": {
+                                      "SOURCE": "compass"
+                                    }
+                                  }
+                                },
+                                "DO0": {
+                                  "block": {
+                                    "type": "evn_pose_reset",
+                                    "inputs": {
+                                      "X": {
+                                        "shadow": {
+                                          "type": "math_number",
+                                          "fields": {
+                                            "NUM": 0
+                                          }
+                                        }
+                                      },
+                                      "Y": {
+                                        "shadow": {
+                                          "type": "math_number",
+                                          "fields": {
+                                            "NUM": 0
+                                          }
+                                        }
+                                      },
+                                      "HEADING": {
+                                        "block": {
+                                          "type": "evn_pose_value",
+                                          "fields": {
+                                            "WHAT": "heading()"
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                },
+                                "ELSE": {
+                                  "block": {
+                                    "type": "evn_pose_reset",
+                                    "inputs": {
+                                      "X": {
+                                        "shadow": {
+                                          "type": "math_number",
+                                          "fields": {
+                                            "NUM": 0
+                                          }
+                                        }
+                                      },
+                                      "Y": {
+                                        "shadow": {
+                                          "type": "math_number",
+                                          "fields": {
+                                            "NUM": 0
+                                          }
+                                        }
+                                      },
+                                      "HEADING": {
+                                        "shadow": {
+                                          "type": "math_number",
+                                          "fields": {
+                                            "NUM": 0
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              },
+                              "next": {
+                                "block": {
+                                  "type": "text_print",
+                                  "inputs": {
+                                    "TEXT": {
+                                      "block": {
+                                        "type": "text_join",
+                                        "inputs": {
+                                          "ADD0": {
+                                            "shadow": {
+                                              "type": "text",
+                                              "fields": {
+                                                "TEXT": "start: x "
+                                              }
+                                            }
+                                          },
+                                          "ADD1": {
+                                            "block": {
+                                              "type": "math_round",
+                                              "fields": {
+                                                "OP": "ROUND"
+                                              },
+                                              "inputs": {
+                                                "NUM": {
+                                                  "block": {
+                                                    "type": "evn_pose_value",
+                                                    "fields": {
+                                                      "WHAT": "position()[0]"
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          },
+                                          "ADD2": {
+                                            "shadow": {
+                                              "type": "text",
+                                              "fields": {
+                                                "TEXT": " mm   y "
+                                              }
+                                            }
+                                          },
+                                          "ADD3": {
+                                            "block": {
+                                              "type": "math_round",
+                                              "fields": {
+                                                "OP": "ROUND"
+                                              },
+                                              "inputs": {
+                                                "NUM": {
+                                                  "block": {
+                                                    "type": "evn_pose_value",
+                                                    "fields": {
+                                                      "WHAT": "position()[1]"
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          },
+                                          "ADD4": {
+                                            "shadow": {
+                                              "type": "text",
+                                              "fields": {
+                                                "TEXT": " mm   heading "
+                                              }
+                                            }
+                                          },
+                                          "ADD5": {
+                                            "block": {
+                                              "type": "math_round",
+                                              "fields": {
+                                                "OP": "ROUND"
+                                              },
+                                              "inputs": {
+                                                "NUM": {
+                                                  "block": {
+                                                    "type": "evn_pose_value",
+                                                    "fields": {
+                                                      "WHAT": "heading()"
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          },
+                                          "ADD6": {
+                                            "shadow": {
+                                              "type": "text",
+                                              "fields": {
+                                                "TEXT": " degrees"
+                                              }
+                                            }
+                                          }
+                                        },
+                                        "extraState": {
+                                          "itemCount": 7
+                                        }
+                                      }
+                                    }
+                                  },
+                                  "next": {
+                                    "block": {
+                                      "type": "evn_drivebase_straight",
+                                      "fields": {
+                                        "THEN": "HOLD",
+                                        "WAIT": false
+                                      },
+                                      "inputs": {
+                                        "DISTANCE": {
+                                          "shadow": {
+                                            "type": "math_number",
+                                            "fields": {
+                                              "NUM": 300
+                                            }
+                                          }
+                                        }
+                                      },
+                                      "next": {
+                                        "block": {
+                                          "type": "controls_whileUntil",
+                                          "fields": {
+                                            "MODE": "UNTIL"
+                                          },
+                                          "inputs": {
+                                            "BOOL": {
+                                              "block": {
+                                                "type": "evn_drivebase_is",
+                                                "fields": {
+                                                  "WHAT": "done"
+                                                }
+                                              }
+                                            },
+                                            "DO": {
+                                              "block": {
+                                                "type": "text_print",
+                                                "inputs": {
+                                                  "TEXT": {
+                                                    "block": {
+                                                      "type": "text_join",
+                                                      "inputs": {
+                                                        "ADD0": {
+                                                          "shadow": {
+                                                            "type": "text",
+                                                            "fields": {
+                                                              "TEXT": "speed "
+                                                            }
+                                                          }
+                                                        },
+                                                        "ADD1": {
+                                                          "block": {
+                                                            "type": "math_round",
+                                                            "fields": {
+                                                              "OP": "ROUND"
+                                                            },
+                                                            "inputs": {
+                                                              "NUM": {
+                                                                "block": {
+                                                                  "type": "evn_pose_value",
+                                                                  "fields": {
+                                                                    "WHAT": "velocity()[0]"
+                                                                  }
+                                                                }
+                                                              }
+                                                            }
+                                                          }
+                                                        },
+                                                        "ADD2": {
+                                                          "shadow": {
+                                                            "type": "text",
+                                                            "fields": {
+                                                              "TEXT": " mm/s   turn rate "
+                                                            }
+                                                          }
+                                                        },
+                                                        "ADD3": {
+                                                          "block": {
+                                                            "type": "math_round",
+                                                            "fields": {
+                                                              "OP": "ROUND"
+                                                            },
+                                                            "inputs": {
+                                                              "NUM": {
+                                                                "block": {
+                                                                  "type": "evn_pose_value",
+                                                                  "fields": {
+                                                                    "WHAT": "velocity()[1]"
+                                                                  }
+                                                                }
+                                                              }
+                                                            }
+                                                          }
+                                                        },
+                                                        "ADD4": {
+                                                          "shadow": {
+                                                            "type": "text",
+                                                            "fields": {
+                                                              "TEXT": " deg/s"
+                                                            }
+                                                          }
+                                                        }
+                                                      },
+                                                      "extraState": {
+                                                        "itemCount": 5
+                                                      }
+                                                    }
+                                                  }
+                                                },
+                                                "next": {
+                                                  "block": {
+                                                    "type": "evn_wait",
+                                                    "inputs": {
+                                                      "TIME": {
+                                                        "shadow": {
+                                                          "type": "math_number",
+                                                          "fields": {
+                                                            "NUM": 250
+                                                          }
+                                                        }
+                                                      }
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          },
+                                          "next": {
+                                            "block": {
+                                              "type": "text_print",
+                                              "inputs": {
+                                                "TEXT": {
+                                                  "block": {
+                                                    "type": "text_join",
+                                                    "inputs": {
+                                                      "ADD0": {
+                                                        "shadow": {
+                                                          "type": "text",
+                                                          "fields": {
+                                                            "TEXT": "after 30 cm: x "
+                                                          }
+                                                        }
+                                                      },
+                                                      "ADD1": {
+                                                        "block": {
+                                                          "type": "math_round",
+                                                          "fields": {
+                                                            "OP": "ROUND"
+                                                          },
+                                                          "inputs": {
+                                                            "NUM": {
+                                                              "block": {
+                                                                "type": "evn_pose_value",
+                                                                "fields": {
+                                                                  "WHAT": "position()[0]"
+                                                                }
+                                                              }
+                                                            }
+                                                          }
+                                                        }
+                                                      },
+                                                      "ADD2": {
+                                                        "shadow": {
+                                                          "type": "text",
+                                                          "fields": {
+                                                            "TEXT": " mm   y "
+                                                          }
+                                                        }
+                                                      },
+                                                      "ADD3": {
+                                                        "block": {
+                                                          "type": "math_round",
+                                                          "fields": {
+                                                            "OP": "ROUND"
+                                                          },
+                                                          "inputs": {
+                                                            "NUM": {
+                                                              "block": {
+                                                                "type": "evn_pose_value",
+                                                                "fields": {
+                                                                  "WHAT": "position()[1]"
+                                                                }
+                                                              }
+                                                            }
+                                                          }
+                                                        }
+                                                      },
+                                                      "ADD4": {
+                                                        "shadow": {
+                                                          "type": "text",
+                                                          "fields": {
+                                                            "TEXT": " mm   heading "
+                                                          }
+                                                        }
+                                                      },
+                                                      "ADD5": {
+                                                        "block": {
+                                                          "type": "math_round",
+                                                          "fields": {
+                                                            "OP": "ROUND"
+                                                          },
+                                                          "inputs": {
+                                                            "NUM": {
+                                                              "block": {
+                                                                "type": "evn_pose_value",
+                                                                "fields": {
+                                                                  "WHAT": "heading()"
+                                                                }
+                                                              }
+                                                            }
+                                                          }
+                                                        }
+                                                      },
+                                                      "ADD6": {
+                                                        "shadow": {
+                                                          "type": "text",
+                                                          "fields": {
+                                                            "TEXT": " degrees"
+                                                          }
+                                                        }
+                                                      }
+                                                    },
+                                                    "extraState": {
+                                                      "itemCount": 7
+                                                    }
+                                                  }
+                                                }
+                                              },
+                                              "next": {
+                                                "block": {
+                                                  "type": "evn_drivebase_turn",
+                                                  "fields": {
+                                                    "THEN": "HOLD",
+                                                    "WAIT": true
+                                                  },
+                                                  "inputs": {
+                                                    "ANGLE": {
+                                                      "shadow": {
+                                                        "type": "math_number",
+                                                        "fields": {
+                                                          "NUM": 45
+                                                        }
+                                                      }
+                                                    }
+                                                  },
+                                                  "next": {
+                                                    "block": {
+                                                      "type": "evn_drivebase_turn",
+                                                      "fields": {
+                                                        "THEN": "HOLD",
+                                                        "WAIT": true
+                                                      },
+                                                      "inputs": {
+                                                        "ANGLE": {
+                                                          "shadow": {
+                                                            "type": "math_number",
+                                                            "fields": {
+                                                              "NUM": -45
+                                                            }
+                                                          }
+                                                        }
+                                                      },
+                                                      "next": {
+                                                        "block": {
+                                                          "type": "evn_drivebase_straight",
+                                                          "fields": {
+                                                            "THEN": "HOLD",
+                                                            "WAIT": true
+                                                          },
+                                                          "inputs": {
+                                                            "DISTANCE": {
+                                                              "shadow": {
+                                                                "type": "math_number",
+                                                                "fields": {
+                                                                  "NUM": -300
+                                                                }
+                                                              }
+                                                            }
+                                                          },
+                                                          "next": {
+                                                            "block": {
+                                                              "type": "text_print",
+                                                              "inputs": {
+                                                                "TEXT": {
+                                                                  "block": {
+                                                                    "type": "text_join",
+                                                                    "inputs": {
+                                                                      "ADD0": {
+                                                                        "shadow": {
+                                                                          "type": "text",
+                                                                          "fields": {
+                                                                            "TEXT": "back: x "
+                                                                          }
+                                                                        }
+                                                                      },
+                                                                      "ADD1": {
+                                                                        "block": {
+                                                                          "type": "math_round",
+                                                                          "fields": {
+                                                                            "OP": "ROUND"
+                                                                          },
+                                                                          "inputs": {
+                                                                            "NUM": {
+                                                                              "block": {
+                                                                                "type": "evn_pose_value",
+                                                                                "fields": {
+                                                                                  "WHAT": "position()[0]"
+                                                                                }
+                                                                              }
+                                                                            }
+                                                                          }
+                                                                        }
+                                                                      },
+                                                                      "ADD2": {
+                                                                        "shadow": {
+                                                                          "type": "text",
+                                                                          "fields": {
+                                                                            "TEXT": " mm   y "
+                                                                          }
+                                                                        }
+                                                                      },
+                                                                      "ADD3": {
+                                                                        "block": {
+                                                                          "type": "math_round",
+                                                                          "fields": {
+                                                                            "OP": "ROUND"
+                                                                          },
+                                                                          "inputs": {
+                                                                            "NUM": {
+                                                                              "block": {
+                                                                                "type": "evn_pose_value",
+                                                                                "fields": {
+                                                                                  "WHAT": "position()[1]"
+                                                                                }
+                                                                              }
+                                                                            }
+                                                                          }
+                                                                        }
+                                                                      },
+                                                                      "ADD4": {
+                                                                        "shadow": {
+                                                                          "type": "text",
+                                                                          "fields": {
+                                                                            "TEXT": " mm   heading "
+                                                                          }
+                                                                        }
+                                                                      },
+                                                                      "ADD5": {
+                                                                        "block": {
+                                                                          "type": "math_round",
+                                                                          "fields": {
+                                                                            "OP": "ROUND"
+                                                                          },
+                                                                          "inputs": {
+                                                                            "NUM": {
+                                                                              "block": {
+                                                                                "type": "evn_pose_value",
+                                                                                "fields": {
+                                                                                  "WHAT": "heading()"
+                                                                                }
+                                                                              }
+                                                                            }
+                                                                          }
+                                                                        }
+                                                                      },
+                                                                      "ADD6": {
+                                                                        "shadow": {
+                                                                          "type": "text",
+                                                                          "fields": {
+                                                                            "TEXT": " degrees"
+                                                                          }
+                                                                        }
+                                                                      }
+                                                                    },
+                                                                    "extraState": {
+                                                                      "itemCount": 7
+                                                                    }
+                                                                  }
+                                                                }
+                                                              },
+                                                              "next": {
+                                                                "block": {
+                                                                  "type": "text_print",
+                                                                  "inputs": {
+                                                                    "TEXT": {
+                                                                      "block": {
+                                                                        "type": "text_join",
+                                                                        "inputs": {
+                                                                          "ADD0": {
+                                                                            "shadow": {
+                                                                              "type": "text",
+                                                                              "fields": {
+                                                                                "TEXT": "uncertainty: x "
+                                                                              }
+                                                                            }
+                                                                          },
+                                                                          "ADD1": {
+                                                                            "block": {
+                                                                              "type": "evn_pose_uncertainty",
+                                                                              "fields": {
+                                                                                "WHAT": "0"
+                                                                              }
+                                                                            }
+                                                                          },
+                                                                          "ADD2": {
+                                                                            "shadow": {
+                                                                              "type": "text",
+                                                                              "fields": {
+                                                                                "TEXT": " mm, y "
+                                                                              }
+                                                                            }
+                                                                          },
+                                                                          "ADD3": {
+                                                                            "block": {
+                                                                              "type": "evn_pose_uncertainty",
+                                                                              "fields": {
+                                                                                "WHAT": "1"
+                                                                              }
+                                                                            }
+                                                                          },
+                                                                          "ADD4": {
+                                                                            "shadow": {
+                                                                              "type": "text",
+                                                                              "fields": {
+                                                                                "TEXT": " mm, heading "
+                                                                              }
+                                                                            }
+                                                                          },
+                                                                          "ADD5": {
+                                                                            "block": {
+                                                                              "type": "evn_pose_uncertainty",
+                                                                              "fields": {
+                                                                                "WHAT": "2"
+                                                                              }
+                                                                            }
+                                                                          },
+                                                                          "ADD6": {
+                                                                            "shadow": {
+                                                                              "type": "text",
+                                                                              "fields": {
+                                                                                "TEXT": " degrees"
+                                                                              }
+                                                                            }
+                                                                          }
+                                                                        },
+                                                                        "extraState": {
+                                                                          "itemCount": 7
+                                                                        }
+                                                                      }
+                                                                    }
+                                                                  },
+                                                                  "next": {
+                                                                    "block": {
+                                                                      "type": "evn_drivebase_stop",
+                                                                      "fields": {
+                                                                        "ACTION": "stop"
+                                                                      }
+                                                                    }
+                                                                  }
+                                                                }
+                                                              }
+                                                            }
+                                                          }
+                                                        }
+                                                      }
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}
