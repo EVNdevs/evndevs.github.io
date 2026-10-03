@@ -1,7 +1,7 @@
 EVN_ALPHA_MicroPython.uf2
-source: main (0.2.59) + the 2026-09-29 lanes: evn.UART as machine.UART and evn.I2C as machine.I2C, blocks for Pose / UART / I2C / Files, the console agent uploaded in pieces (the data viewer's heavy held set), the CHR-GM16 library plant, one profile clock for both DriveBase wheels, the VL53L1X / TCS3430 / HiTechnic review findings, the APDS-9960 opening with the whole rig, the calibrate() plausibility gate, the Pololu detent tail brake, the IMU's residual bias at rest / calibrate() on a running IMU / live DMP rate, bench and tooling fixes
-built: 2026-09-29 (MicroPython v1.26.1, pico-sdk 2.3.0; SOURCE_DATE_EPOCH=1790683200 = noon UTC 2026-09-29)
+source: main (0.2.60) + the 2026-10-01 / 10-02 lanes: the learned load carried across hold() and its doubt band, the Pose's compass frame (taken at the join, reset() keeps it, a disagreeing compass held, frame readings taken standing still), the Motor getters from one snapshot (an integer angle()), the Core 0 service path and the drive base's poll path in on-chip RAM (the SCRATCH_Y bank), the release layout draw EVN_RELEASE_PAD_PY 8168 / _MODULES 6864 (the drive base first), the rule-13 release gate and its tools, the 0.2.60 lanes' residual nits
+built: 2026-10-03 (MicroPython v1.26.1, pico-sdk 2.3.0; SOURCE_DATE_EPOCH=1791028800 = noon UTC 2026-10-03)
 flash: single-line 03h boot2, PICO_FLASH_SPI_CLKDIV=4
-md5: 90bed5374454a7d4823c66862a1f826b
+md5: be7005731a653bccdb9a2f8edac9b0d7
 reproduce: cmake -G Ninja -DEVN_MICROPYTHON=ON + ninja with SOURCE_DATE_EPOCH = noon UTC of the built: date (py/makeversionhdr.py embeds MICROPY_BUILD_DATE); release_public.py does this and refuses on an md5 mismatch
-version: 0.2.60
+version: 0.2.61

@@ -261,7 +261,12 @@ class Motor:
     def brake(self) -> None:
         """Passive brake. Returns once the motor has taken it (at most 2 ms), as ``stop()``."""
     def hold(self) -> None:
-        """Actively hold the current angle."""
+        """Actively hold the current angle. A load the motor was already holding once settled (an arm's weight)
+        stays compensated, so the shaft does not sag; an arm close to the motor's breakaway is held with a push
+        just beyond it, which draws current. The motor cannot feel a load taken off while it holds (a weight
+        lifted, an arm lowered onto a rest): it keeps the push, the next command starts with it, and a push beyond
+        the breakaway turns the freed shaft until the motor catches up. Use ``stop()`` when the motor need not
+        hold; a ``DriveBase``'s wheels start each command afresh."""
 
     # running
     def run(self, speed: float, /) -> None:
@@ -3244,8 +3249,30 @@ class Pose:
     one collection and still block the next constructor - use a function, ``with``, or ``close()``.
     One object per robot (``OSError`` for a second one until ``close()``). Frames: x East / y North in mm
     (without a compass, x is +90 degrees from the heading at ``reset()``), heading clockwise from north in
-    degrees, speed mm/s, yaw rate deg/s clockwise. A source whose driver is lost leaves the set by itself and
-    rejoins when running; ``bounded()`` is False while the live set cannot bound the position (IMU alone).
+    degrees, speed mm/s, yaw rate deg/s clockwise. With a compass the heading is the compass's from the moment it
+    joins (its ``north()`` reference plus ``declination``; not in a turn faster than 30 deg/s; the position so far is
+    turned with it, and the frame is then refined onto the mean of up to 16 readings taken while the heading is still
+    the join's and the robot stands still - about 0.6 s once it has stood still for 0.3 s; if it turns first, the
+    join's own reading when it stood still then, else the readings it took cruising straight, a drive motor's field
+    in them; a robot that never stands still takes those after 5 s, ``sources()`` without the compass until then;
+    nothing moves: a ``DriveBase`` with ``use_gyro(True)`` re-anchors on the join and turns its ideal robot with the
+    refinement, even in a turn) until ``reset()`` chooses another frame, which the compass then keeps. Readings taken
+    while the speed changes (the chassis pitches, and a compass has no tilt correction) wait. With the IMU and the
+    wheels, a compass that disagrees beyond about 5 degrees is held - unless the gyro's record broke (a long pause
+    whose readings were lost) or the gyro can have made the error: within its scale error (5 % of the turning since
+    the compass last agreed within its noise; a disagreement already there at rest before a turn is not the turn's),
+    steady for 0.8 s at rest where the compass last agreed (for a frame: where it stood for its readings - its next
+    stop's for a robot that drove off at once, a disturbance there then in the frame: let it stand still for a second
+    first), or at a second place 20 cm on (a turn in place with a gyro that reads a few % high is corrected at the
+    next stop; after driving with the compass's reading refused, the turn's error found at the first stop is held
+    there, the robot off its command by it, until the next stop 20 cm on). So one that appears with no turning behind
+    it - a steel table leg the robot drives up to, a drive motor's field while driving, something magnetic brought
+    near the robot standing still, even slowly - is held; one within about 5 degrees, or the part of a slow one
+    before it passes 5, pulls the heading through the ordinary corrections (8 degrees built up over 10 s at rest:
+    about 6.6), and so does a drive motor's field under 5 degrees while cruising. Keep the compass away from steel
+    and from the drive motors. Without the IMU or without the wheels a disagreement is taken after about 0.8 s. A
+    source whose driver is lost leaves the set by itself and rejoins when running; ``bounded()`` is False while the
+    live set cannot bound the position (IMU alone).
     When the board is busy for a moment (a long ``print``, a big calculation) the wheels carry the travel over
     it, and with an ``IMU`` in its default DMP mode the heading over it is the gyro's once the readings the IMU
     kept (up to 140 ms) are read - not the wheel difference, which a turning robot's scrubbing tyres would put
@@ -3291,7 +3318,9 @@ class Pose:
         """The sources contributing right now: a subset of ('wheels', 'imu', 'compass'). 'compass' is absent
         while the compass's field is being rejected (``Compass.heading_confidence()`` 0: a motor's magnets, a
         steel table) - the heading then has NO absolute reference and drifts with the gyro/wheels until the
-        field is the Earth's again; ``_stats()[8]`` counts the dropped samples."""
+        field is the Earth's again; ``_stats()[8]`` counts the dropped samples. It is also absent before the
+        compass's first reading, while its frame is being measured after it joins or after a ``reset()`` (see
+        ``reset()``), and once a disagreement has been held for about 0.8 s (see the class)."""
     def configured(self) -> Tuple[str, ...]:
         """The sources the object was built with."""
     def __enter__(self) -> "Pose": ...
@@ -3309,7 +3338,21 @@ class Pose:
         """Set the pose (mm, mm, degrees clockwise from north); biases and wheel parameters are kept. A reset is a
         re-framing, never a command: a ``DriveBase`` with ``use_gyro(True)`` re-anchors its ideal robot on the new
         pose and nothing moves - to close an offset an outside reference revealed, follow the reset with an
-        explicit ``straight()``/``turn()``."""
+        explicit ``straight()``/``turn()``. With a compass the new frame is kept: the compass is re-referenced to it
+        from up to 16 readings taken while the heading is still the reset's and the robot stands still (for 0.3 s
+        its wheels not commanded to move and within about one encoder step of where they were: a motor holding its
+        position and hunting a step back and forth is still) - at once from those taken before the reset (a turn
+        may follow at once, and a straight driven since does not spoil them), else from the next ones (about 0.6 s
+        after the robot stops). A robot that never stands still that long takes the readings it took cruising
+        straight after 5 s, ``sources()`` without the compass until then. Only when the
+        robot turns before any such reading are the ones it took cruising straight at a steady speed used instead,
+        and a drive motor's field, if it reaches the compass, is then in the frame: let the robot stand still for a
+        second before or after ``reset()`` (a robot that turns before any reading at all waits for its heading to
+        come back, 5 s at most, then takes them where it is, the gyro's error on that turn in the frame). The
+        compass then corrects the heading's drift in the frame, so ``reset(heading=0)`` gives a
+        heading that starts at 0 and stays within the compass's local accuracy of it. Reset where the compass reads
+        the Earth's field (away from steel): a disturbance there is taken into the frame. A new compass frame under
+        a running Pose (``Compass.north()``, a calibration) leaves a frame ``reset()`` chose alone."""
     def close(self) -> None:
         """Stop the pose service and release it, so a new ``Pose`` can be made. Idempotent; every other call then raises ``ValueError("Pose is closed")``."""
     def _stats(self) -> Tuple[int, int, int, int, int, int, int, int, int]:

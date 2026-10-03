@@ -52,8 +52,10 @@ while not imu.ready() and watch.time() < 35000:
 print("live now", pose.sources(), "- position bounded:", pose.bounded())
 
 # --- re-framing -----------------------------------------------------------------------------------
-# reset(x, y, heading) says where the robot is; nothing moves. With a live compass the heading is
-# the compass's to give, so keep it and only move the origin.
+# reset(x, y, heading) says where the robot is; nothing moves. With a live compass the heading
+# starts as the compass's (clockwise from its north): keep it, as here, and only move the origin -
+# or give your own (reset(0, 0, 0): "north" is where the robot faces now) and the compass then
+# holds the heading to that frame instead of drifting.
 if "compass" in pose.sources():
     pose.reset(0, 0, pose.heading())
 else:
