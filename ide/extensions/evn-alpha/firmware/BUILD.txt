@@ -1,7 +1,7 @@
 EVN_ALPHA_MicroPython.uf2
-source: main (0.2.60) + the 2026-10-01 / 10-02 lanes: the learned load carried across hold() and its doubt band, the Pose's compass frame (taken at the join, reset() keeps it, a disagreeing compass held, frame readings taken standing still), the Motor getters from one snapshot (an integer angle()), the Core 0 service path and the drive base's poll path in on-chip RAM (the SCRATCH_Y bank), the release layout draw EVN_RELEASE_PAD_PY 8168 / _MODULES 6864 (the drive base first), the rule-13 release gate and its tools, the 0.2.60 lanes' residual nits
+source: main (0.2.61) + the CM22-2230 12V 1:49 in the motor library (worktree-cm22-1002, measured through an external 1:1 gear train; its bare-motor re-profile owed, ledger MC-57), the Python heap at 139 KB for the owner's 1 KB static-RAM floor, the release layout EVN_RELEASE_PAD_PY 8172 / _MODULES 6864 (0.2.61's K2 draw restored: every function from py/ on at 0.2.61's address)
 built: 2026-10-03 (MicroPython v1.26.1, pico-sdk 2.3.0; SOURCE_DATE_EPOCH=1791028800 = noon UTC 2026-10-03)
 flash: single-line 03h boot2, PICO_FLASH_SPI_CLKDIV=4
-md5: be7005731a653bccdb9a2f8edac9b0d7
+md5: 8d62dc606269e960c6575c0044cb91a9
 reproduce: cmake -G Ninja -DEVN_MICROPYTHON=ON + ninja with SOURCE_DATE_EPOCH = noon UTC of the built: date (py/makeversionhdr.py embeds MICROPY_BUILD_DATE); release_public.py does this and refuses on an md5 mismatch
-version: 0.2.61
+version: 0.2.62
