@@ -2,8 +2,8 @@
   "format": "evn-blocks",
   "version": 2,
   "title": "Robot: every block",
-  "needs": "a robot: left wheel motor on port 4 (mounted mirrored), right on port 3, 62.4 mm wheels 170 mm apart, an EVN IMU on I2C port 3 fixed flat to the chassis, and 40 cm of clear floor ahead and 20 cm to each side. Keep the robot still while the program starts (the IMU settles in 8 to 25 s).",
-  "description": "Every robot block once: set-up, straight, turn, both kinds of arc, driving at a speed, stopping, the speed and acceleration settings, the measurements, and the gyro. The moves go out and come back, so the robot ends near where it started.",
+  "needs": "a robot: left wheel motor on port 4 (mounted mirrored), right on port 3, 62.4 mm wheels 170 mm apart, an EVN IMU on I2C port 3 fixed flat to the chassis, and 40 cm of clear floor ahead and 20 cm to each side (the robot also pivots about 45 degrees on its right wheel and back). Keep the robot still while the program starts (the IMU settles in 8 to 25 s).",
+  "description": "Every robot block once: set-up (speeds in % of full speed, LEGO move steering), straight, turn, both kinds of arc, driving at a speed, steering in percent (a pivot and back), stopping, the speed and acceleration settings, the measurements, and the gyro. The moves go out and come back, so the robot ends near where it started.",
   "workspace": {
     "blocks": {
       "languageVersion": 0,
@@ -27,7 +27,8 @@
                     "LEFT": "4",
                     "RIGHT": "3",
                     "WHEEL": 62.4,
-                    "TRACK": 170
+                    "TRACK": 170,
+                    "UNIT": "PERCENT"
                   },
                   "next": {
                     "block": {
@@ -280,7 +281,7 @@
                                                                                       "shadow": {
                                                                                         "type": "math_number",
                                                                                         "fields": {
-                                                                                          "NUM": 200
+                                                                                          "NUM": 25
                                                                                         }
                                                                                       }
                                                                                     },
@@ -288,7 +289,7 @@
                                                                                       "shadow": {
                                                                                         "type": "math_number",
                                                                                         "fields": {
-                                                                                          "NUM": 90
+                                                                                          "NUM": 15
                                                                                         }
                                                                                       }
                                                                                     }
@@ -410,7 +411,7 @@
                                                                                                             "block": {
                                                                                                               "type": "evn_comment",
                                                                                                               "fields": {
-                                                                                                                "TEXT": "drive at a speed until told otherwise (the block for a line follower), then brake"
+                                                                                                                "TEXT": "drive at a speed until told otherwise (the block for a line follower; this robot is set up in % of full speed, so the turn is LEGO steering), then brake"
                                                                                                               },
                                                                                                               "next": {
                                                                                                                 "block": {
@@ -420,7 +421,7 @@
                                                                                                                       "shadow": {
                                                                                                                         "type": "math_number",
                                                                                                                         "fields": {
-                                                                                                                          "NUM": -150
+                                                                                                                          "NUM": -20
                                                                                                                         }
                                                                                                                       }
                                                                                                                     },
@@ -448,133 +449,209 @@
                                                                                                                       },
                                                                                                                       "next": {
                                                                                                                         "block": {
-                                                                                                                          "type": "evn_drivebase_stop",
-                                                                                                                          "fields": {
-                                                                                                                            "ACTION": "brake"
+                                                                                                                          "type": "evn_drivebase_steer",
+                                                                                                                          "inputs": {
+                                                                                                                            "STEERING": {
+                                                                                                                              "shadow": {
+                                                                                                                                "type": "math_number",
+                                                                                                                                "fields": {
+                                                                                                                                  "NUM": 50
+                                                                                                                                }
+                                                                                                                              }
+                                                                                                                            },
+                                                                                                                            "SPEED": {
+                                                                                                                              "shadow": {
+                                                                                                                                "type": "math_number",
+                                                                                                                                "fields": {
+                                                                                                                                  "NUM": 40
+                                                                                                                                }
+                                                                                                                              }
+                                                                                                                            }
                                                                                                                           },
                                                                                                                           "next": {
                                                                                                                             "block": {
-                                                                                                                              "type": "evn_drivebase_drive",
+                                                                                                                              "type": "evn_wait",
                                                                                                                               "inputs": {
-                                                                                                                                "SPEED": {
+                                                                                                                                "TIME": {
                                                                                                                                   "shadow": {
                                                                                                                                     "type": "math_number",
                                                                                                                                     "fields": {
-                                                                                                                                      "NUM": 0
-                                                                                                                                    }
-                                                                                                                                  }
-                                                                                                                                },
-                                                                                                                                "TURN": {
-                                                                                                                                  "shadow": {
-                                                                                                                                    "type": "math_number",
-                                                                                                                                    "fields": {
-                                                                                                                                      "NUM": 90
+                                                                                                                                      "NUM": 400
                                                                                                                                     }
                                                                                                                                   }
                                                                                                                                 }
                                                                                                                               },
                                                                                                                               "next": {
                                                                                                                                 "block": {
-                                                                                                                                  "type": "evn_wait",
+                                                                                                                                  "type": "evn_drivebase_steer",
                                                                                                                                   "inputs": {
-                                                                                                                                    "TIME": {
+                                                                                                                                    "STEERING": {
                                                                                                                                       "shadow": {
                                                                                                                                         "type": "math_number",
                                                                                                                                         "fields": {
-                                                                                                                                          "NUM": 1000
+                                                                                                                                          "NUM": 50
+                                                                                                                                        }
+                                                                                                                                      }
+                                                                                                                                    },
+                                                                                                                                    "SPEED": {
+                                                                                                                                      "shadow": {
+                                                                                                                                        "type": "math_number",
+                                                                                                                                        "fields": {
+                                                                                                                                          "NUM": -40
                                                                                                                                         }
                                                                                                                                       }
                                                                                                                                     }
                                                                                                                                   },
                                                                                                                                   "next": {
                                                                                                                                     "block": {
-                                                                                                                                      "type": "evn_drivebase_drive",
+                                                                                                                                      "type": "evn_wait",
                                                                                                                                       "inputs": {
-                                                                                                                                        "SPEED": {
+                                                                                                                                        "TIME": {
                                                                                                                                           "shadow": {
                                                                                                                                             "type": "math_number",
                                                                                                                                             "fields": {
-                                                                                                                                              "NUM": 0
-                                                                                                                                            }
-                                                                                                                                          }
-                                                                                                                                        },
-                                                                                                                                        "TURN": {
-                                                                                                                                          "shadow": {
-                                                                                                                                            "type": "math_number",
-                                                                                                                                            "fields": {
-                                                                                                                                              "NUM": -90
+                                                                                                                                              "NUM": 400
                                                                                                                                             }
                                                                                                                                           }
                                                                                                                                         }
                                                                                                                                       },
                                                                                                                                       "next": {
                                                                                                                                         "block": {
-                                                                                                                                          "type": "evn_wait",
-                                                                                                                                          "inputs": {
-                                                                                                                                            "TIME": {
-                                                                                                                                              "shadow": {
-                                                                                                                                                "type": "math_number",
-                                                                                                                                                "fields": {
-                                                                                                                                                  "NUM": 1000
-                                                                                                                                                }
-                                                                                                                                              }
-                                                                                                                                            }
+                                                                                                                                          "type": "evn_drivebase_stop",
+                                                                                                                                          "fields": {
+                                                                                                                                            "ACTION": "brake"
                                                                                                                                           },
                                                                                                                                           "next": {
                                                                                                                                             "block": {
-                                                                                                                                              "type": "evn_drivebase_stop",
-                                                                                                                                              "fields": {
-                                                                                                                                                "ACTION": "stop"
+                                                                                                                                              "type": "evn_drivebase_drive",
+                                                                                                                                              "inputs": {
+                                                                                                                                                "SPEED": {
+                                                                                                                                                  "shadow": {
+                                                                                                                                                    "type": "math_number",
+                                                                                                                                                    "fields": {
+                                                                                                                                                      "NUM": 15
+                                                                                                                                                    }
+                                                                                                                                                  }
+                                                                                                                                                },
+                                                                                                                                                "TURN": {
+                                                                                                                                                  "shadow": {
+                                                                                                                                                    "type": "math_number",
+                                                                                                                                                    "fields": {
+                                                                                                                                                      "NUM": 100
+                                                                                                                                                    }
+                                                                                                                                                  }
+                                                                                                                                                }
                                                                                                                                               },
                                                                                                                                               "next": {
                                                                                                                                                 "block": {
-                                                                                                                                                  "type": "text_print",
+                                                                                                                                                  "type": "evn_wait",
                                                                                                                                                   "inputs": {
-                                                                                                                                                    "TEXT": {
-                                                                                                                                                      "block": {
-                                                                                                                                                        "type": "text_join",
-                                                                                                                                                        "inputs": {
-                                                                                                                                                          "ADD0": {
-                                                                                                                                                            "shadow": {
-                                                                                                                                                              "type": "text",
-                                                                                                                                                              "fields": {
-                                                                                                                                                                "TEXT": "driven (mm): "
-                                                                                                                                                              }
-                                                                                                                                                            }
-                                                                                                                                                          },
-                                                                                                                                                          "ADD1": {
-                                                                                                                                                            "block": {
-                                                                                                                                                              "type": "evn_drivebase_measure",
-                                                                                                                                                              "fields": {
-                                                                                                                                                                "WHAT": "distance"
-                                                                                                                                                              }
-                                                                                                                                                            }
-                                                                                                                                                          }
+                                                                                                                                                    "TIME": {
+                                                                                                                                                      "shadow": {
+                                                                                                                                                        "type": "math_number",
+                                                                                                                                                        "fields": {
+                                                                                                                                                          "NUM": 1000
                                                                                                                                                         }
                                                                                                                                                       }
                                                                                                                                                     }
                                                                                                                                                   },
                                                                                                                                                   "next": {
                                                                                                                                                     "block": {
-                                                                                                                                                      "type": "text_print",
+                                                                                                                                                      "type": "evn_drivebase_drive",
                                                                                                                                                       "inputs": {
-                                                                                                                                                        "TEXT": {
-                                                                                                                                                          "block": {
-                                                                                                                                                            "type": "text_join",
-                                                                                                                                                            "inputs": {
-                                                                                                                                                              "ADD0": {
-                                                                                                                                                                "shadow": {
-                                                                                                                                                                  "type": "text",
-                                                                                                                                                                  "fields": {
-                                                                                                                                                                    "TEXT": "turned (degrees): "
-                                                                                                                                                                  }
+                                                                                                                                                        "SPEED": {
+                                                                                                                                                          "shadow": {
+                                                                                                                                                            "type": "math_number",
+                                                                                                                                                            "fields": {
+                                                                                                                                                              "NUM": 15
+                                                                                                                                                            }
+                                                                                                                                                          }
+                                                                                                                                                        },
+                                                                                                                                                        "TURN": {
+                                                                                                                                                          "shadow": {
+                                                                                                                                                            "type": "math_number",
+                                                                                                                                                            "fields": {
+                                                                                                                                                              "NUM": -100
+                                                                                                                                                            }
+                                                                                                                                                          }
+                                                                                                                                                        }
+                                                                                                                                                      },
+                                                                                                                                                      "next": {
+                                                                                                                                                        "block": {
+                                                                                                                                                          "type": "evn_wait",
+                                                                                                                                                          "inputs": {
+                                                                                                                                                            "TIME": {
+                                                                                                                                                              "shadow": {
+                                                                                                                                                                "type": "math_number",
+                                                                                                                                                                "fields": {
+                                                                                                                                                                  "NUM": 1000
                                                                                                                                                                 }
+                                                                                                                                                              }
+                                                                                                                                                            }
+                                                                                                                                                          },
+                                                                                                                                                          "next": {
+                                                                                                                                                            "block": {
+                                                                                                                                                              "type": "evn_drivebase_stop",
+                                                                                                                                                              "fields": {
+                                                                                                                                                                "ACTION": "stop"
                                                                                                                                                               },
-                                                                                                                                                              "ADD1": {
+                                                                                                                                                              "next": {
                                                                                                                                                                 "block": {
-                                                                                                                                                                  "type": "evn_drivebase_measure",
-                                                                                                                                                                  "fields": {
-                                                                                                                                                                    "WHAT": "angle"
+                                                                                                                                                                  "type": "text_print",
+                                                                                                                                                                  "inputs": {
+                                                                                                                                                                    "TEXT": {
+                                                                                                                                                                      "block": {
+                                                                                                                                                                        "type": "text_join",
+                                                                                                                                                                        "inputs": {
+                                                                                                                                                                          "ADD0": {
+                                                                                                                                                                            "shadow": {
+                                                                                                                                                                              "type": "text",
+                                                                                                                                                                              "fields": {
+                                                                                                                                                                                "TEXT": "driven (mm): "
+                                                                                                                                                                              }
+                                                                                                                                                                            }
+                                                                                                                                                                          },
+                                                                                                                                                                          "ADD1": {
+                                                                                                                                                                            "block": {
+                                                                                                                                                                              "type": "evn_drivebase_measure",
+                                                                                                                                                                              "fields": {
+                                                                                                                                                                                "WHAT": "distance"
+                                                                                                                                                                              }
+                                                                                                                                                                            }
+                                                                                                                                                                          }
+                                                                                                                                                                        }
+                                                                                                                                                                      }
+                                                                                                                                                                    }
+                                                                                                                                                                  },
+                                                                                                                                                                  "next": {
+                                                                                                                                                                    "block": {
+                                                                                                                                                                      "type": "text_print",
+                                                                                                                                                                      "inputs": {
+                                                                                                                                                                        "TEXT": {
+                                                                                                                                                                          "block": {
+                                                                                                                                                                            "type": "text_join",
+                                                                                                                                                                            "inputs": {
+                                                                                                                                                                              "ADD0": {
+                                                                                                                                                                                "shadow": {
+                                                                                                                                                                                  "type": "text",
+                                                                                                                                                                                  "fields": {
+                                                                                                                                                                                    "TEXT": "turned (degrees): "
+                                                                                                                                                                                  }
+                                                                                                                                                                                }
+                                                                                                                                                                              },
+                                                                                                                                                                              "ADD1": {
+                                                                                                                                                                                "block": {
+                                                                                                                                                                                  "type": "evn_drivebase_measure",
+                                                                                                                                                                                  "fields": {
+                                                                                                                                                                                    "WHAT": "angle"
+                                                                                                                                                                                  }
+                                                                                                                                                                                }
+                                                                                                                                                                              }
+                                                                                                                                                                            }
+                                                                                                                                                                          }
+                                                                                                                                                                        }
+                                                                                                                                                                      }
+                                                                                                                                                                    }
                                                                                                                                                                   }
                                                                                                                                                                 }
                                                                                                                                                               }

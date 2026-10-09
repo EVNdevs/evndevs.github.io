@@ -1,0 +1,550 @@
+{
+  "format": "evn-blocks",
+  "version": 2,
+  "title": "Controllers: complete",
+  "needs": "a robot: left wheel motor on port 4 (mounted mirrored), right on port 3, 62.4 mm wheels 170 mm apart; an EVN colour sensor on I2C port 2 facing the floor a few mm up, over the edge of a dark line on a light floor; an EVN IMU on I2C port 1",
+  "description": "Two controllers in two variables: the line follower (pid) for 5 s, its PID terms printed; then, once the IMU's gyro has settled, an ADRC (hold) brings the robot back to the heading it started at and holds it for 5 s (push it by hand: the disturbance it prints is your push), and the robot stops.",
+  "workspace": {
+    "blocks": {
+      "languageVersion": 0,
+      "blocks": [
+        {
+          "type": "evn_setup_start",
+          "id": "n7!r6CwYK1VG8x0_tWf`",
+          "x": 20,
+          "y": -40,
+          "deletable": false,
+          "next": {
+            "block": {
+              "type": "evn_motor_setup",
+              "id": "$7DE`WmW?kWYf:!]i`AK",
+              "fields": {
+                "PORT": "4",
+                "DIRECTION": "CCW",
+                "UNIT": "DEG_S"
+              },
+              "next": {
+                "block": {
+                  "type": "evn_drivebase_setup",
+                  "id": "5P3ceB1EiJNx6j#%^{50",
+                  "fields": {
+                    "LEFT": "4",
+                    "RIGHT": "3",
+                    "WHEEL": 62.4,
+                    "TRACK": 170
+                  },
+                  "next": {
+                    "block": {
+                      "type": "evn_colorsensor_setup",
+                      "id": "1kf*{k0waqfA9Vcd=x-7",
+                      "fields": {
+                        "PORT": "2"
+                      },
+                      "next": {
+                        "block": {
+                          "type": "evn_imu_setup",
+                          "id": "s.6WEdI!acS!`+fvPhjc",
+                          "fields": {
+                            "PORT": "1",
+                            "CALIBRATE": false
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "evn_program_start",
+          "id": "3C.V`uVwoMcM_e$Cx}#M",
+          "x": 20,
+          "y": 200,
+          "deletable": false,
+          "next": {
+            "block": {
+              "type": "variables_set",
+              "id": "set_5",
+              "fields": {
+                "VAR": {
+                  "id": "ctl_pid"
+                }
+              },
+              "inputs": {
+                "VALUE": {
+                  "block": {
+                    "type": "evn_pid_create",
+                    "id": "make_6",
+                    "fields": {
+                      "KP": 1.5,
+                      "KI": 0.2,
+                      "KD": 0.08,
+                      "LIMIT": 120
+                    }
+                  }
+                }
+              },
+              "next": {
+                "block": {
+                  "type": "variables_set",
+                  "id": "set_7",
+                  "fields": {
+                    "VAR": {
+                      "id": "ctl_hold"
+                    }
+                  },
+                  "inputs": {
+                    "VALUE": {
+                      "block": {
+                        "type": "evn_adrc_create",
+                        "id": "make_8",
+                        "fields": {
+                          "ORDER": "1",
+                          "B0": 1,
+                          "WC": 6,
+                          "LIMIT": 180
+                        }
+                      }
+                    }
+                  },
+                  "next": {
+                    "block": {
+                      "type": "controls_repeat_ext",
+                      "id": "$biqME=AuXi2hKCW/8PX",
+                      "inputs": {
+                        "TIMES": {
+                          "shadow": {
+                            "type": "math_number",
+                            "id": "K#AT#x5)rLSIhVl,[,0t",
+                            "fields": {
+                              "NUM": 500
+                            }
+                          }
+                        },
+                        "DO": {
+                          "block": {
+                            "type": "evn_drivebase_drive",
+                            "id": "GmDvnkb2lz#DVm|Kc6vF",
+                            "inputs": {
+                              "SPEED": {
+                                "shadow": {
+                                  "type": "math_number",
+                                  "id": ".Q^*5]P3ym4y^u1@|=!T",
+                                  "fields": {
+                                    "NUM": 120
+                                  }
+                                }
+                              },
+                              "TURN": {
+                                "block": {
+                                  "type": "evn_ctrl_update",
+                                  "id": "%xHV9xx0HHh|u(R3s8SP",
+                                  "fields": {
+                                    "VAR": {
+                                      "id": "ctl_pid"
+                                    }
+                                  },
+                                  "inputs": {
+                                    "TARGET": {
+                                      "shadow": {
+                                        "type": "math_number",
+                                        "id": "C!:1Ok^8-qgJ=1YM98R;",
+                                        "fields": {
+                                          "NUM": 34
+                                        }
+                                      }
+                                    },
+                                    "MEASURED": {
+                                      "block": {
+                                        "type": "evn_colorsensor_channel",
+                                        "id": "UnbyFcqpV#|`RbLTb.mA",
+                                        "fields": {
+                                          "PORT": "2",
+                                          "WHAT": "hsv().v"
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            },
+                            "next": {
+                              "block": {
+                                "type": "evn_wait",
+                                "id": ";h9+-yHM4_9XkdC7N9Gd",
+                                "inputs": {
+                                  "TIME": {
+                                    "shadow": {
+                                      "type": "math_number",
+                                      "id": "egyeK^c)pHvFTca@~x~t",
+                                      "fields": {
+                                        "NUM": 10
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      },
+                      "next": {
+                        "block": {
+                          "type": "text_print",
+                          "id": "%$O{z5]^/`ld:Px7ufEE",
+                          "inputs": {
+                            "TEXT": {
+                              "block": {
+                                "type": "evn_pid_term",
+                                "id": "ui1i^_c#Dn[AQd6LAlsi",
+                                "fields": {
+                                  "VAR": {
+                                    "id": "ctl_pid"
+                                  },
+                                  "WHAT": "p"
+                                }
+                              }
+                            }
+                          },
+                          "next": {
+                            "block": {
+                              "type": "text_print",
+                              "id": "T/DteRb0O]EX3F;bCd6g",
+                              "inputs": {
+                                "TEXT": {
+                                  "block": {
+                                    "type": "evn_pid_term",
+                                    "id": ",z*y1yocE(-3=]TwEs:F",
+                                    "fields": {
+                                      "VAR": {
+                                        "id": "ctl_pid"
+                                      },
+                                      "WHAT": "i"
+                                    }
+                                  }
+                                }
+                              },
+                              "next": {
+                                "block": {
+                                  "type": "text_print",
+                                  "id": "7W_zB*CAcUhff~uNz]iu",
+                                  "inputs": {
+                                    "TEXT": {
+                                      "block": {
+                                        "type": "evn_pid_term",
+                                        "id": "UOEV?W#j7s+a5h0wJbO1",
+                                        "fields": {
+                                          "VAR": {
+                                            "id": "ctl_pid"
+                                          },
+                                          "WHAT": "d"
+                                        }
+                                      }
+                                    }
+                                  },
+                                  "next": {
+                                    "block": {
+                                      "type": "text_print",
+                                      "id": "]ty~8Tb77c5![c?@;Q`h",
+                                      "inputs": {
+                                        "TEXT": {
+                                          "block": {
+                                            "type": "evn_pid_term",
+                                            "id": "d,}0G|rnAKF`HYCHyaa9",
+                                            "fields": {
+                                              "VAR": {
+                                                "id": "ctl_pid"
+                                              },
+                                              "WHAT": "output"
+                                            }
+                                          }
+                                        }
+                                      },
+                                      "next": {
+                                        "block": {
+                                          "type": "text_print",
+                                          "id": "H,j83lGznmy=mbT02FXN",
+                                          "inputs": {
+                                            "TEXT": {
+                                              "block": {
+                                                "type": "evn_pid_term",
+                                                "id": "(Qx};fK{e9P.b)RxP_W^",
+                                                "fields": {
+                                                  "VAR": {
+                                                    "id": "ctl_pid"
+                                                  },
+                                                  "WHAT": "error"
+                                                }
+                                              }
+                                            }
+                                          },
+                                          "next": {
+                                            "block": {
+                                              "type": "evn_drivebase_stop",
+                                              "id": "xW@_vEhV{5a9p7$(Yy,m",
+                                              "fields": {
+                                                "ACTION": "stop"
+                                              },
+                                              "next": {
+                                                "block": {
+                                                  "type": "evn_wait_until",
+                                                  "id": "wait_9",
+                                                  "inputs": {
+                                                    "COND": {
+                                                      "shadow": {
+                                                        "type": "logic_boolean",
+                                                        "id": "sh_10",
+                                                        "fields": {
+                                                          "BOOL": "TRUE"
+                                                        }
+                                                      },
+                                                      "block": {
+                                                        "type": "evn_imu_stationary",
+                                                        "id": "rdy_11",
+                                                        "fields": {
+                                                          "PORT": "1",
+                                                          "WHAT": "ready()"
+                                                        }
+                                                      }
+                                                    }
+                                                  },
+                                                  "next": {
+                                                    "block": {
+                                                      "type": "evn_ctrl_reset",
+                                                      "id": "F@he!(JZ;d2?$L;1-KoK",
+                                                      "fields": {
+                                                        "VAR": {
+                                                          "id": "ctl_hold"
+                                                        }
+                                                      },
+                                                      "next": {
+                                                        "block": {
+                                                          "type": "controls_repeat_ext",
+                                                          "id": "fBB{{0;.bwU*.:H:IQfM",
+                                                          "inputs": {
+                                                            "TIMES": {
+                                                              "shadow": {
+                                                                "type": "math_number",
+                                                                "id": "E=#mrl~.@f^Vva5v]1v8",
+                                                                "fields": {
+                                                                  "NUM": 500
+                                                                }
+                                                              }
+                                                            },
+                                                            "DO": {
+                                                              "block": {
+                                                                "type": "evn_drivebase_drive",
+                                                                "id": "3M^ajU)yqXS54T|D@Vu;",
+                                                                "inputs": {
+                                                                  "SPEED": {
+                                                                    "shadow": {
+                                                                      "type": "math_number",
+                                                                      "id": "oVh,@g+gJE/evzA)!ZO9",
+                                                                      "fields": {
+                                                                        "NUM": 0
+                                                                      }
+                                                                    }
+                                                                  },
+                                                                  "TURN": {
+                                                                    "block": {
+                                                                      "type": "evn_ctrl_update",
+                                                                      "id": "x;BIa(,Vk$pNap5sP3gU",
+                                                                      "fields": {
+                                                                        "VAR": {
+                                                                          "id": "ctl_hold"
+                                                                        }
+                                                                      },
+                                                                      "inputs": {
+                                                                        "TARGET": {
+                                                                          "shadow": {
+                                                                            "type": "math_number",
+                                                                            "id": "8z7O7tK,%)d~X8e|mz_D",
+                                                                            "fields": {
+                                                                              "NUM": 0
+                                                                            }
+                                                                          }
+                                                                        },
+                                                                        "MEASURED": {
+                                                                          "block": {
+                                                                            "type": "evn_imu_angle",
+                                                                            "id": "6Oi{o9*k^C=62}XbD|Bp",
+                                                                            "fields": {
+                                                                              "PORT": "1",
+                                                                              "WHAT": "heading()"
+                                                                            }
+                                                                          }
+                                                                        }
+                                                                      }
+                                                                    }
+                                                                  }
+                                                                },
+                                                                "next": {
+                                                                  "block": {
+                                                                    "type": "evn_wait",
+                                                                    "id": "utb%+`bMk.,VqLJk)zl@",
+                                                                    "inputs": {
+                                                                      "TIME": {
+                                                                        "shadow": {
+                                                                          "type": "math_number",
+                                                                          "id": "],I}0dpV4DIP=Zs|P#N(",
+                                                                          "fields": {
+                                                                            "NUM": 10
+                                                                          }
+                                                                        }
+                                                                      }
+                                                                    }
+                                                                  }
+                                                                }
+                                                              }
+                                                            }
+                                                          },
+                                                          "next": {
+                                                            "block": {
+                                                              "type": "text_print",
+                                                              "id": "qR06%,FzcX_(P@gj*=-S",
+                                                              "inputs": {
+                                                                "TEXT": {
+                                                                  "block": {
+                                                                    "type": "evn_adrc_value",
+                                                                    "id": ";~hWDR5k5)[UlFL]U2{1",
+                                                                    "fields": {
+                                                                      "VAR": {
+                                                                        "id": "ctl_hold"
+                                                                      },
+                                                                      "WHAT": "disturbance"
+                                                                    }
+                                                                  }
+                                                                }
+                                                              },
+                                                              "next": {
+                                                                "block": {
+                                                                  "type": "text_print",
+                                                                  "id": "ss#u^eK0Vk`Z7|vaC_Qb",
+                                                                  "inputs": {
+                                                                    "TEXT": {
+                                                                      "block": {
+                                                                        "type": "evn_adrc_value",
+                                                                        "id": "_dEc.(PS,.-+E?Q8^w%N",
+                                                                        "fields": {
+                                                                          "VAR": {
+                                                                            "id": "ctl_hold"
+                                                                          },
+                                                                          "WHAT": "estimate"
+                                                                        }
+                                                                      }
+                                                                    }
+                                                                  },
+                                                                  "next": {
+                                                                    "block": {
+                                                                      "type": "text_print",
+                                                                      "id": "A*glqxqU6}+EML0T4D4w",
+                                                                      "inputs": {
+                                                                        "TEXT": {
+                                                                          "block": {
+                                                                            "type": "evn_adrc_value",
+                                                                            "id": "J^N)y,{gIB.osbI:l^|4",
+                                                                            "fields": {
+                                                                              "VAR": {
+                                                                                "id": "ctl_hold"
+                                                                              },
+                                                                              "WHAT": "rate"
+                                                                            }
+                                                                          }
+                                                                        }
+                                                                      },
+                                                                      "next": {
+                                                                        "block": {
+                                                                          "type": "text_print",
+                                                                          "id": "A_rA+gf[)@A(w(-zSEQ-",
+                                                                          "inputs": {
+                                                                            "TEXT": {
+                                                                              "block": {
+                                                                                "type": "evn_adrc_value",
+                                                                                "id": "RJG0.7qfT,Q+#Su46^tp",
+                                                                                "fields": {
+                                                                                  "VAR": {
+                                                                                    "id": "ctl_hold"
+                                                                                  },
+                                                                                  "WHAT": "output"
+                                                                                }
+                                                                              }
+                                                                            }
+                                                                          },
+                                                                          "next": {
+                                                                            "block": {
+                                                                              "type": "text_print",
+                                                                              "id": "T[8T~MP/?id=LSytP,WU",
+                                                                              "inputs": {
+                                                                                "TEXT": {
+                                                                                  "block": {
+                                                                                    "type": "evn_adrc_value",
+                                                                                    "id": "pmy%od?D2~1@J05on^V,",
+                                                                                    "fields": {
+                                                                                      "VAR": {
+                                                                                        "id": "ctl_hold"
+                                                                                      },
+                                                                                      "WHAT": "error"
+                                                                                    }
+                                                                                  }
+                                                                                }
+                                                                              },
+                                                                              "next": {
+                                                                                "block": {
+                                                                                  "type": "evn_drivebase_stop",
+                                                                                  "id": "+:hJlE1}?4a~WNiNw3wB",
+                                                                                  "fields": {
+                                                                                    "ACTION": "stop"
+                                                                                  }
+                                                                                }
+                                                                              }
+                                                                            }
+                                                                          }
+                                                                        }
+                                                                      }
+                                                                    }
+                                                                  }
+                                                                }
+                                                              }
+                                                            }
+                                                          }
+                                                        }
+                                                      }
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "variables": [
+      {
+        "name": "pid",
+        "id": "ctl_pid"
+      },
+      {
+        "name": "hold",
+        "id": "ctl_hold"
+      }
+    ]
+  }
+}

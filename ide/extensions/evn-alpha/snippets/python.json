@@ -381,6 +381,33 @@
         ],
         "description": "DriveBase with imu= builds and owns its evn.Pose (encoders + IMU) and closes the loop over it: scrub, drag and gyro drift corrected as the robot drives"
     },
+    "EVN PID controller": {
+        "prefix": "evn-pid",
+        "description": "PID: a control loop of your own (here a line follower: the turn rate from a colour sensor)",
+        "body": [
+            "${1:pid} = PID(${2:1.5}, ${3:0.2}, ${4:0.08}, limits=${5:120})   # kp, ki /s, kd s; output clamped",
+            "try:",
+            "    while True:",
+            "        ${6:turn} = ${1:pid}.update(${7:target}, ${8:measured})   # dt measured between calls",
+            "        ${9:db.drive(120, turn)}",
+            "        wait(${10:10})",
+            "finally:",
+            "    stop_all()"
+        ]
+    },
+    "EVN ADRC controller": {
+        "prefix": "evn-adrc",
+        "description": "ADRC: a control loop that estimates and cancels the disturbance (here a heading hold on the IMU)",
+        "body": [
+            "${1:hold} = ADRC(b0=${2:1}, wc=${3:6}, limits=${4:180})   # order=1 | 2; wo = 4 wc rad/s",
+            "try:",
+            "    while True:",
+            "        ${5:db.drive(0, ${1:hold}.update(${6:0}, ${7:imu.heading()}))}   # ${1:hold}.disturbance: the push",
+            "        wait(${8:10})",
+            "finally:",
+            "    stop_all()"
+        ]
+    },
     "EVN data log": {
         "prefix": "evn-datalog",
         "body": [

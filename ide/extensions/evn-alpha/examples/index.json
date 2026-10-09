@@ -95,6 +95,7 @@
         "evn_drivebase_turn",
         "evn_drivebase_arc",
         "evn_drivebase_drive",
+        "evn_drivebase_steer",
         "evn_drivebase_stop",
         "evn_drivebase_speeds",
         "evn_drivebase_accel",
@@ -479,6 +480,28 @@
       "skip": {}
     },
     {
+      "dir": "23_controllers",
+      "slug": "controllers",
+      "title": "Controllers (PID and ADRC)",
+      "description": "your own control loops: a line follower, a heading hold",
+      "classes": [
+        "PID",
+        "ADRC"
+      ],
+      "module": [
+        "stop_all"
+      ],
+      "blocks": [
+        "evn_pid_create",
+        "evn_adrc_create",
+        "evn_ctrl_update",
+        "evn_ctrl_reset",
+        "evn_pid_term",
+        "evn_adrc_value"
+      ],
+      "skip": {}
+    },
+    {
       "dir": "extended_peripherals",
       "group": true,
       "title": "Extended Peripherals",
@@ -696,6 +719,10 @@
     "22_data_log/datalog_complete.py",
     "22_data_log/datalog_minimal.evnblocks",
     "22_data_log/datalog_minimal.py",
+    "23_controllers/controllers_complete.evnblocks",
+    "23_controllers/controllers_complete.py",
+    "23_controllers/controllers_minimal.evnblocks",
+    "23_controllers/controllers_minimal.py",
     "extended_peripherals/01_hitechnic_color/hitechnic_color_complete.evnblocks",
     "extended_peripherals/01_hitechnic_color/hitechnic_color_complete.py",
     "extended_peripherals/01_hitechnic_color/hitechnic_color_minimal.evnblocks",

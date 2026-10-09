@@ -64,13 +64,15 @@ Motors are `motor_1` .. `motor_4`, one object per port, created once at the top 
 
 | Block | Python |
 | :--- | :--- |
-| set up robot: left motor *4* right motor *3* wheel diameter *62.4* mm wheels *170* mm apart | `drive_base = DriveBase(motor_4, motor_3, wheel_diameter=62.4, axle_track=170)` (after the two motors' lines; a mirrored motor gets its direction from its own **set up motor** block) |
+| set up robot: left motor *4* right motor *3* wheel diameter *62.4* mm wheels *170* mm apart speeds in *mm/s* | `drive_base = DriveBase(motor_4, motor_3, wheel_diameter=62.4, axle_track=170)` (after the two motors' lines; a mirrored motor gets its direction from its own **set up motor** block) |
+| ... speeds in *% of full speed* | `drive_base = DriveBase(motor_4, motor_3, wheel_diameter=62.4, axle_track=170, speed_unit=SpeedUnit.PERCENT)`: every robot speed a % of the robot's full speed, the slower motor's (as **set up motor**'s *% of full speed*; the owner, 2026-10-09: "Like motors: set-up dropdown"). **drive at** and **start moving** then steer like LEGO's move steering, **set robot speed** is in % (100 % turn rate = a spin with both wheels at full speed); the accelerations stay mm/s² and deg/s² |
 | drive straight *300* mm then *hold* wait ☑ | `drive_base.straight(300)` |
 | turn robot *90* degrees then *hold* wait ☑ | `drive_base.turn(90)` (positive = right, clockwise seen from above) |
 | drive an arc of radius *150* mm through *90* *degrees* then *hold* wait ☑ | `drive_base.arc(150, angle=90)`; with *mm*: `drive_base.arc(150, distance=200)`, the length along the arc (a negative radius curves left, a negative amount drives backwards) |
-| drive at *200* mm/s turning *0* deg/s | `drive_base.drive(200, 0)` |
+| drive at speed *200* turning *0* | `drive_base.drive(200, 0)`: mm/s and deg/s (positive = right); on a robot set up in *% of full speed*, the speed in % and the turn as the steering in % (0 straight, 50 pivots on one wheel, 100 spins on the spot) |
+| start moving: steering *0* % at speed *50* % | `drive_base.drive(50, 0)` on a robot set up in *% of full speed*: LEGO's move steering until the next robot block - steering 0 straight, 50 pivots on one wheel, 100 spins on the spot (positive = right); speed is % of the slower motor's full speed (negative = backwards); the same steering gives the same path at any speed. On a robot in *mm/s* (or without a **set up robot** block) the block shows a warning and writes `drive_base.drive(50, steering=0)`, which stops the program with `TypeError` rather than read the steering as deg/s |
 | stop the robot *coast* / *brake* | `drive_base.stop()` / `drive_base.brake()` |
-| set robot speed *300* mm/s turn rate *150* deg/s | `drive_base.settings(straight_speed=300, turn_rate=150)` |
+| set robot speed *300* turn rate *150* | `drive_base.settings(straight_speed=300, turn_rate=150)`: mm/s and deg/s, or % of full speed on a robot set up in % |
 | set robot acceleration *750* mm/s² turn acceleration *750* deg/s² | `drive_base.settings(straight_acceleration=750, turn_acceleration=750)` |
 | reset robot distance and angle | `drive_base.reset()` |
 | robot *follows* its gyro: IMU on port *3* | `imu_3 = IMU(3)` at the top and `imu=3` on the **set up robot** line after it (`drive_base = DriveBase(motor_4, motor_3, wheel_diameter=62.4, axle_track=170, imu=3)`: the base builds its own `Pose` from its ports, geometry and motor directions), then `drive_base.use_gyro(True)` where the block sits; no separate `Pose` line. With a [Pose block](#pose-where-the-robot-is) in the program the IMU goes on the pose's line instead (`pose = Pose(..., imu=3)`) and the robot adopts that pose (`pose=pose`) |
@@ -100,6 +102,23 @@ drive_base = DriveBase(motor_4, motor_3, wheel_diameter=62.4, axle_track=170, po
 ```
 
 (after `imu_3 = IMU(3)` and `compass_14 = Compass(14)`): the pose takes the ports, the wheel and the track of **set up robot**, `reverse_left=True` for a motor set up counterclockwise, the IMU of **robot follows its gyro** (a *stops following* block alone adds none) and the compass of **set up pose**, and the board checks that the robot's and the pose's ports, directions, wheel and track agree. Without a pose block nothing changes: the robot builds its own pose from `imu=`. A program without **set up robot** gets the default robot's pose, `Pose(1, 2, wheel_diameter=56, axle_track=112)`, and no robot line. `examples/04_pose/` has a minimal program (a robot pushed by hand) and a complete one (30 cm out and back with the gyro and a compass).
+
+### Controllers
+
+Controllers of your own (`evn.PID` / `evn.ADRC`, [API reference](API_ROBOT.md#pid-and-adrc--controllers-for-your-own-loops)): give one a target and a measurement each time round a loop, and it gives an output you send where you like - a motor's power, the robot's turn rate. A controller lives in an ordinary variable: **set** *pid* **to** (**PID** kp ki kd ...) once, before the loop (the Controllers category has it ready-made), then the blocks below take that variable. Make as many as the program needs, one variable each (the owner, 2026-10-09: "Keep it flexible, not fixed" - there are no numbered slots). The **PID ...** / **ADRC ...** block fits a variable, not a number input: put it inside the loop and the program would build a new controller every pass. A block whose variable no block sets, or sets only to a number or a text, or that reads a PID's terms from a variable holding an ADRC (or the other way round), shows a warning; on the board it would stop with `AttributeError`. A list of controllers walked by a **for each item** loop, or a function that takes the controller as an input, works as well: the editor leaves those variables to the program.
+
+Units are the API's (the owner, 2026-10-09): ki per second, kd in seconds, the bandwidth in rad/s; a gain may be negative (the output then falls as the measurement rises). The output limit is the range of whatever the output drives (a motor's power: 100; the robot's turn rate: a few hundred deg/s); 0 means none. A loop with a controller must run at least every 200 ms: one that waits longer stops with "updates further apart than dt_max: raise dt_max" (a Python block can build the controller with `dt_max=`).
+
+| Block | Python |
+| :--- | :--- |
+| set *pid* to (PID kp *1* ki *0* kd *0* output limit ± *100*) | `pid = PID(kp=1, ki=0, kd=0, limits=100)` (limit 0: no `limits=`) |
+| set *hold* to (ADRC order *1* b0 *1* bandwidth *5* rad/s output limit ± *100*) | `hold = ADRC(b0=1, wc=5, order=1, limits=100)` |
+| controller *pid* output for target *50* measured *…* | `pid.update(50, ...)`: the board measures the time since the last step (a PID or an ADRC) |
+| reset controller *pid* | `pid.reset()`: a PID forgets the added-up error and the last measurement, an ADRC its estimates (the disturbance too) |
+| PID *pid* *P term* / *I term* / *D term* / *output* / *error* | `pid.p` / `pid.i` / `pid.d` / `pid.output` / `pid.error` |
+| ADRC *hold* *estimate* / *rate* / *disturbance* / *output* / *error* | `hold.estimate` / `hold.rate` / `hold.disturbance` / `hold.output` / `hold.error` |
+
+A line follower is **set** *pid* **to** (**PID** kp *1.5* ki *0.2* kd *0.08* output limit ± *120*), then, in a loop, **drive at** *120* mm/s turning (**controller** *pid* **output for target** *34* **measured** (**colour sensor 2 brightness**)) and **wait** *10* ms; `examples/23_controllers/` has it (minimal, blocks and Python) and the line follower followed by a heading hold on the IMU with an ADRC in a second variable, every term printed (complete).
 
 ### Sensing (values)
 
@@ -355,7 +374,7 @@ The two **Python** blocks are the escape hatch. `motor_1` .. `motor_4`, `drive_b
 Each device has the few calls a program usually needs; everything else in the API reference is a **Python** block away, with the object already created:
 
 - **Motors**: `gears`, `reset_angle=False` and `model=` in the constructor, `speed_unit()` / `full_speed(x)` after it, `control.pid()` / `evn()` / `target_tolerances()` / `stall_tolerances()`, `settings(max_voltage=…)`, `model`, `close()`; the module's `evn.configure_motor()` / `motor_config()` / `clear_calibration()` (the Board view's gear and right-click menu do these).
-- **Robot**: `curve()` (the older Pybricks sign convention of `arc()`), `state()`, `reset(distance, angle)`, `follower()`, `pose_error()`, `then=Stop.COAST_SMART` chains, `close()`.
+- **Robot**: `curve()` (the older Pybricks sign convention of `arc()`), `state()`, `reset(distance, angle)`, `follower()`, `pose_error()`, `speed_unit()` to switch the unit mid-program (**set up robot** sets it once), `then=Stop.COAST_SMART` chains, `close()`.
 - **Every peripheral**: `close()`, `age()`, `read()` (the "wait for a new reading" form of each getter), `raw()`, and the tuning calls — colour sensor `gain()`, `integration_time()`, `ranges()` / `normalized()` (a calibrated white and black), `color_match()`, `thresholds()`, `lux()`, `color_temperature()`; distance sensor `timing_budget()`, `signal_rate_limit()`; gesture sensor `engines()`, `gain()`, `led()`, `gesture_config()`; weather sensor `oversampling()`, `filter()`, `standby()`, `forced()`; compass `field()`, `field_strength()`, `heading_confidence()`, `axes()`, `calibration()` (installing a calibration by hand), `calibrate_directions()` (the Board view draws it), `stored_calibration()`, `clear_calibration()`; touch pads `touched()`, `events()`, `data()`, `thresholds()`, `electrodes()`, `autoconfig()`; IMU `euler()`, `quaternion()`, `acceleration()`, `linear_acceleration()`, `gravity()`, `angular_velocity()`, `temperature()`, `tap()`, `screen_orientation()`, `calibration()`, `cancel_calibration()`, `clear_calibration()`, `calibrate_gyro()`, `settings()`, `ranges()`, `filter()`, `sample_rate()`, `axes()`, `dmp()`; ADC `raw()`, `inputs()`, `range()`, `data_rate()`, `continuous()`.
 - **Displays**: the OLED's drawing calls (`pixel`, `line`, `rect`, `draw_circle`, `draw_text`, `splash`, `contrast`, `flip`, `invert`, `scroll`), the matrix's `bitmap()` / `animate()` / `orientation()` / `blink()` / `hline()` / `vline()` / `rect()`, the 7-segment's `digit()`, `char()`, `point()`, `segments()`.
 - **RGB LEDs**: `range()`, `on()` with a list, `blink()`, `animate()`, `hsv()`, `get()`, `invert()`, `count()`.

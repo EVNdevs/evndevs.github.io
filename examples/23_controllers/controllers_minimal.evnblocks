@@ -1,0 +1,183 @@
+{
+  "format": "evn-blocks",
+  "version": 2,
+  "title": "Controllers: minimal",
+  "needs": "a robot: left wheel motor on port 4 (mounted mirrored), right on port 3, 62.4 mm wheels 170 mm apart; an EVN colour sensor on I2C port 2 facing the floor a few mm up, over the edge of a dark line on a light floor",
+  "description": "A line follower: a PID controller, made once and kept in the variable pid, turns the robot from the brightness of the floor under the colour sensor, so the robot follows the edge of the line for 10 s, then stops. Tune kp first (the wobble), then kd (the damping), then ki (the steady pull to one side). A second controller is a second variable: as many as the program needs.",
+  "workspace": {
+    "blocks": {
+      "languageVersion": 0,
+      "blocks": [
+        {
+          "type": "evn_setup_start",
+          "id": "$0jKNQehs+y?%c0;(d@Z",
+          "x": 20,
+          "y": -40,
+          "deletable": false,
+          "next": {
+            "block": {
+              "type": "evn_motor_setup",
+              "id": "Ju{5B!LeIDjWjr-Z,S0o",
+              "fields": {
+                "PORT": "4",
+                "DIRECTION": "CCW",
+                "UNIT": "DEG_S"
+              },
+              "next": {
+                "block": {
+                  "type": "evn_drivebase_setup",
+                  "id": ")e*,G%fCqd`AJVTZCZj]",
+                  "fields": {
+                    "LEFT": "4",
+                    "RIGHT": "3",
+                    "WHEEL": 62.4,
+                    "TRACK": 170
+                  },
+                  "next": {
+                    "block": {
+                      "type": "evn_colorsensor_setup",
+                      "id": "S)mcPX1Or//{f=^.ZxsT",
+                      "fields": {
+                        "PORT": "2"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "evn_program_start",
+          "id": "L-9khU6Wd6BM{ZUX~A{7",
+          "x": 20,
+          "y": 200,
+          "deletable": false,
+          "next": {
+            "block": {
+              "type": "variables_set",
+              "id": "set_1",
+              "fields": {
+                "VAR": {
+                  "id": "ctl_pid"
+                }
+              },
+              "inputs": {
+                "VALUE": {
+                  "block": {
+                    "type": "evn_pid_create",
+                    "id": "make_2",
+                    "fields": {
+                      "KP": 1.5,
+                      "KI": 0.2,
+                      "KD": 0.08,
+                      "LIMIT": 120
+                    }
+                  }
+                }
+              },
+              "next": {
+                "block": {
+                  "type": "controls_repeat_ext",
+                  "id": "4q=A-m8fLa`f!{QlTOmr",
+                  "inputs": {
+                    "TIMES": {
+                      "shadow": {
+                        "type": "math_number",
+                        "id": "B~Ycfw,4Io6yiQd$YG%X",
+                        "fields": {
+                          "NUM": 1000
+                        }
+                      }
+                    },
+                    "DO": {
+                      "block": {
+                        "type": "evn_drivebase_drive",
+                        "id": "7uIDzYjVnUj`^x@|zw%H",
+                        "inputs": {
+                          "SPEED": {
+                            "shadow": {
+                              "type": "math_number",
+                              "id": "SxveSedeO@V%J(AUAS?d",
+                              "fields": {
+                                "NUM": 120
+                              }
+                            }
+                          },
+                          "TURN": {
+                            "block": {
+                              "type": "evn_ctrl_update",
+                              "id": "R0ZlMli]epuTN!.e]CW)",
+                              "fields": {
+                                "VAR": {
+                                  "id": "ctl_pid"
+                                }
+                              },
+                              "inputs": {
+                                "TARGET": {
+                                  "shadow": {
+                                    "type": "math_number",
+                                    "id": "s]ZXLO+`vJfkkl{@^$,$",
+                                    "fields": {
+                                      "NUM": 34
+                                    }
+                                  }
+                                },
+                                "MEASURED": {
+                                  "block": {
+                                    "type": "evn_colorsensor_channel",
+                                    "id": "34uWk^v`jXU~?:E??OT)",
+                                    "fields": {
+                                      "PORT": "2",
+                                      "WHAT": "hsv().v"
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "next": {
+                          "block": {
+                            "type": "evn_wait",
+                            "id": "ppr90Bc)_sd38XU)Yesg",
+                            "inputs": {
+                              "TIME": {
+                                "shadow": {
+                                  "type": "math_number",
+                                  "id": "n4;~g4mzy+z_JS3wee5,",
+                                  "fields": {
+                                    "NUM": 10
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "next": {
+                    "block": {
+                      "type": "evn_drivebase_stop",
+                      "id": "YE|H0`[HMV0Ya{Qb{yA)",
+                      "fields": {
+                        "ACTION": "stop"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "variables": [
+      {
+        "name": "pid",
+        "id": "ctl_pid"
+      }
+    ]
+  }
+}

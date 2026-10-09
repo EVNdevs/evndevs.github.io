@@ -1,16 +1,18 @@
 """Robot: the whole DriveBase API
 
 Every DriveBase method once: the four fixed moves (straight, turn, curve, arc), driving at a speed,
-stopping, the measurements, the speed and acceleration settings, and the gyro loop over the
-evn.Pose the base builds for itself (imu=3; robot.pose). The moves go out and come back, so the robot ends near where it started. Distances are
-mm, angles degrees (positive = clockwise, seen from above), speeds mm/s and deg/s.
+speeds in percent (LEGO's move steering: a pivot on one wheel and back), stopping, the
+measurements, the speed and acceleration settings, and the gyro loop over the evn.Pose the base builds
+for itself (imu=3; robot.pose). The moves go out and come back, so the robot ends near where it started.
+Distances are mm, angles degrees (positive = clockwise, seen from above), speeds mm/s and deg/s (or % of
+the robot's full speed after robot.speed_unit(SpeedUnit.PERCENT)).
 
 Needs: a robot: left wheel motor on port 4 (mounted mirrored), right on port 3, 62.4 mm wheels
 170 mm apart, an EVN IMU on I2C port 3 fixed flat to the chassis, and 40 cm of clear floor ahead
-and 20 cm to each side. Keep the robot still while the program starts: the IMU calibrates its
+and 20 cm to each side (the robot also pivots about 45 degrees on its right wheel and back). Keep the robot still while the program starts: the IMU calibrates its
 gyro 8 to 25 s into stillness.
 """
-from evn import Motor, Direction, DriveBase, IMU, Stop, StopWatch, wait, stop_all
+from evn import Motor, Direction, DriveBase, IMU, SpeedUnit, Stop, StopWatch, wait, stop_all
 
 # --- the robot ------------------------------------------------------------------------------------
 left = Motor(4, Direction.COUNTERCLOCKWISE)      # the mirrored motor: forward is counterclockwise
@@ -71,6 +73,16 @@ robot.drive(0, 90)                               # turn on the spot at 90 deg/s
 wait(1000)
 robot.drive(0, -90)
 wait(1000)
+# Speeds in percent, as a Motor's: drive(speed %, steering %) is then LEGO's move steering, every
+# speed a % of the robot's full speed (the slower motor's full_speed()). Steering 50 pivots on the
+# inner wheel, and the same steering backwards retraces the path.
+robot.speed_unit(SpeedUnit.PERCENT)              # or DriveBase(..., speed_unit=SpeedUnit.PERCENT)
+print("speed unit:", robot.speed_unit(), "- state() speeds now in %:", robot.state()[1])
+robot.drive(40, 50)                              # 40 % of full speed, pivoting right on the right wheel
+wait(400)
+robot.drive(-40, 50)                             # the same pivot backwards: back where it started
+wait(400)
+robot.speed_unit(SpeedUnit.DEG_S)                # back to mm/s and deg/s for the rest
 robot.stop()                                     # coast both wheels
 robot.reset(0, 0)                                # reset(distance, angle): count from these values
 

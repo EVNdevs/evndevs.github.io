@@ -1,7 +1,7 @@
 EVN_ALPHA_MicroPython.uf2
-source: main (0.2.62 + main's Unreleased: the CM22-2230 bare figures, OQ 30, C0-26, two-core step 0 / 1a / 1b) + OQ 24 / 21 / 25 + two-core step 1c / 1d / 1e / 1f (the Pose estimator's step on Core 1) + the one-board release gate + EVN_RELEASE_PAD_HAL; the Python heap at 128 KB (owner-accepted, the four Core 1 files at -Os); the release layout EVN_RELEASE_PAD_PY 8172 / _MODULES 6864 / _HAL 0 (K0, the layout pick on COM17 against 0.2.62)
-built: 2026-10-09 (MicroPython v1.26.1, pico-sdk 2.3.0; SOURCE_DATE_EPOCH=1791547200 = noon UTC 2026-10-09)
+source: main (0.2.63 + the AGENTS process + the release follow-ups: xip_model on two-core images, the split IMU bench) + evn.PID / evn.ADRC + tools/board_runner.py + the DriveBase percent drive (SpeedUnit.PERCENT; hold() held back); the Python heap at 128 KB; the release layout EVN_RELEASE_PAD_PY 6124 / _MODULES 7096 / _HAL 8 (K4, the layout pick on COM17 against 0.2.63)
+built: 2026-10-10 (MicroPython v1.26.1, pico-sdk 2.3.0; SOURCE_DATE_EPOCH=1791633600 = noon UTC 2026-10-10)
 flash: single-line 03h boot2, PICO_FLASH_SPI_CLKDIV=4
-md5: 641f0685ed2a45749eb2ba6194703679
+md5: 48f18159d37127923682cd9baa4d69f2
 reproduce: cmake -G Ninja -DEVN_MICROPYTHON=ON + ninja with SOURCE_DATE_EPOCH = noon UTC of the built: date (py/makeversionhdr.py embeds MICROPY_BUILD_DATE); release_public.py does this and refuses on an md5 mismatch
-version: 0.2.63
+version: 0.2.64

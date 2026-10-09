@@ -1417,21 +1417,99 @@
         },
     ]);
 
+    /* Controllers (evn.PID / evn.ADRC): a program's own control loop, computed on the board; the output is a number
+     * the program sends where it likes (a motor's power, the robot's turn rate). The owner's ruling (2026-10-09):
+     * "These controllers are best effort, we don't know how many users will spawn. Keep it flexible, not fixed.
+     * Will probably be used for stuff like line following" - so no numbered slots: the "PID ..." / "ADRC ..." block
+     * makes a controller (its output is typed 'PID' / 'ADRC', so it fits no number input), the program keeps it in an
+     * ordinary variable ("set pid to PID ..."), as many as it likes, and the output / reset / read blocks take that
+     * variable. The Python is the API's own: `pid = PID(kp=..., ...)`, `pid.update(target, measured)`. Units as the
+     * API's (the owner, 2026-10-09): gains per second, bandwidth in rad/s, gains of either sign. A variable that
+     * holds the other kind, or no controller at all, is said on the block (ctrlMismatch, below); on the board it is
+     * an AttributeError naming the class. */
+    const ctrlVar = (name) => ({ type: 'field_variable', name: 'VAR', variable: name });
+    Blockly.common.defineBlocksWithJsonArray([
+        {
+            type: 'evn_pid_create',
+            message0: 'PID kp %1 ki %2 kd %3 output limit ± %4',
+            args0: [
+                { type: 'field_number', name: 'KP', value: 1 },
+                { type: 'field_number', name: 'KI', value: 0 },
+                { type: 'field_number', name: 'KD', value: 0 },
+                { type: 'field_number', name: 'LIMIT', value: 100, min: 0 },
+            ],
+            output: 'PID', style: 'evn_motor_blocks',
+            tooltip: 'A new PID controller. Put it in a variable once, before the loop ("set pid to PID ..."), and use the variable in the loop; make as many as you like, one variable each. output = kp x error + ki x (the error added up over time, per second) + kd x (how fast the measurement changes, per second); a gain may be negative (the output then falls as the measurement rises). The output is clamped to ± the limit (0 = no limit): set it to what the output drives accepts (a motor\'s power: 100). Kp alone leaves an error; ki removes it; kd damps the swing. Its "output" block must run at least every 200 ms (a loop with a longer wait stops with an error saying so).',
+        },
+        {
+            type: 'evn_adrc_create',
+            message0: 'ADRC order %1 b0 %2 bandwidth %3 rad/s output limit ± %4',
+            args0: [
+                { type: 'field_dropdown', name: 'ORDER', options: [['1 (speed, heading)', '1'], ['2 (position)', '2']] },
+                { type: 'field_number', name: 'B0', value: 1 },
+                { type: 'field_number', name: 'WC', value: 5, min: 0.1 },
+                { type: 'field_number', name: 'LIMIT', value: 100, min: 0 },
+            ],
+            output: 'ADRC', style: 'evn_motor_blocks',
+            tooltip: 'A new ADRC controller: it estimates everything pushing on what you control (friction, a load, a hand) and cancels it. Put it in a variable once, before the loop ("set adrc to ADRC ..."). Order 1 for a speed or a heading, 2 for a position. b0 (not 0; negative when the output moves the measurement backwards): how strongly the output moves the measurement (a heading through the robot\'s turn rate: 1). Bandwidth: how fast it acts, in rad/s (it settles in about 4 / bandwidth seconds; at a 10 ms loop keep it under 30). The output is clamped to ± the limit (0 = none): set it to what the output drives accepts. Its "output" block must run at least every 200 ms.',
+        },
+        {
+            type: 'evn_ctrl_update',
+            message0: 'controller %1 output for target %2 measured %3',
+            args0: [
+                ctrlVar('pid'),
+                { type: 'input_value', name: 'TARGET', check: 'Number' },
+                { type: 'input_value', name: 'MEASURED', check: 'Number' },
+            ],
+            inputsInline: true, output: 'Number', style: 'evn_motor_blocks',
+            tooltip: 'One step of the controller in the variable (a PID or an ADRC): give it where you want to be and where you are, and it gives the output (send it to a motor\'s power or the robot\'s turn rate). Use it once each time round a loop; the board measures the time between steps.',
+        },
+        {
+            type: 'evn_ctrl_reset',
+            message0: 'reset controller %1',
+            args0: [ctrlVar('pid')],
+            previousStatement: null, nextStatement: null, style: 'evn_motor_blocks',
+            tooltip: 'Forget what the controller in the variable has gathered, e.g. before a new task (a PID: the added-up error and the last measurement; an ADRC: its estimates, the disturbance too); the settings stay and the next step starts from the measurement.',
+        },
+        {
+            type: 'evn_pid_term',
+            message0: 'PID %1 %2',
+            args0: [
+                ctrlVar('pid'),
+                { type: 'field_dropdown', name: 'WHAT', options: [['P term', 'p'], ['I term', 'i'], ['D term', 'd'], ['output', 'output'], ['error', 'error']] },
+            ],
+            output: 'Number', style: 'evn_sense_blocks',
+            tooltip: 'What the PID in the variable did at its last step: the three parts of its output (they add up to the output, before the limit), the output itself, and the error (target - measured). Show them on the display to see the controller work.',
+        },
+        {
+            type: 'evn_adrc_value',
+            message0: 'ADRC %1 %2',
+            args0: [
+                ctrlVar('adrc'),
+                { type: 'field_dropdown', name: 'WHAT', options: [['estimate', 'estimate'], ['rate', 'rate'], ['disturbance', 'disturbance'], ['output', 'output'], ['error', 'error']] },
+            ],
+            output: 'Number', style: 'evn_sense_blocks',
+            tooltip: 'What the ADRC in the variable knows: its estimate of the measurement, of its rate (order 2; 0 for order 1), and of the disturbance - the push it is cancelling, in measurement units per second (order 1) - its last output and the error (target - measured).',
+        },
+    ]);
+
     /* then= for a drive base: Stop.NONE is refused by DriveBase (use "drive at"). */
     const DB_THEN = [['hold', 'HOLD'], ['coast', 'COAST'], ['brake', 'BRAKE'], ['coast (smart)', 'COAST_SMART']];
 
     Blockly.common.defineBlocksWithJsonArray([
         {
             type: 'evn_drivebase_setup',
-            message0: 'set up robot: left motor %1 right motor %2 wheel diameter %3 mm wheels %4 mm apart',
+            message0: 'set up robot: left motor %1 right motor %2 wheel diameter %3 mm wheels %4 mm apart speeds in %5',
             args0: [
                 { type: 'field_dropdown', name: 'LEFT', options: PORTS },
                 { type: 'field_dropdown', name: 'RIGHT', options: PORTS },
                 { type: 'field_number', name: 'WHEEL', value: 56, min: 1, max: 999, precision: 0.1 },
                 { type: 'field_number', name: 'TRACK', value: 112, min: 1, max: 1999, precision: 0.1 },
+                // the robot's speed unit, as "set up motor" has (the owner, 2026-10-09: "Like motors: set-up dropdown")
+                { type: 'field_dropdown', name: 'UNIT', options: [['mm/s', 'DEG_S'], ['% of full speed', 'PERCENT']] },
             ],
             style: 'evn_motor_blocks',
-            tooltip: 'The two wheel motors and the geometry of the robot (one per program). A motor mounted mirrored needs a "set up motor" block with counterclockwise as its positive direction. The distance between the wheels is measured between their contact patches: check it with one "turn robot 360 degrees" against a mark on the floor.',
+            tooltip: 'The two wheel motors and the geometry of the robot (one per program). A motor mounted mirrored needs a "set up motor" block with counterclockwise as its positive direction. The distance between the wheels is measured between their contact patches: check it with one "turn robot 360 degrees" against a mark on the floor. Speeds in mm/s (deg/s for turning), or in % of the robot\'s full speed (the slower motor\'s): then "drive at" and "start moving" steer like LEGO\'s move steering (0 straight, 50 pivots on one wheel, 100 spins) and "set robot speed" is in % too. Without this block: motors 1 and 2, 56 mm wheels 112 mm apart, mm/s.',
         },
         {
             type: 'evn_drivebase_gyro',
@@ -1482,13 +1560,23 @@
         },
         {
             type: 'evn_drivebase_drive',
-            message0: 'drive at %1 mm/s turning %2 deg/s',
+            message0: 'drive at speed %1 turning %2',
             args0: [
                 { type: 'input_value', name: 'SPEED', check: 'Number' },
                 { type: 'input_value', name: 'TURN', check: 'Number' },
             ],
             inputsInline: true, previousStatement: null, nextStatement: null, style: 'evn_motor_blocks',
-            tooltip: 'Drive at a speed and a turn rate (positive = right) until the next robot block: the block for a line follower loop.',
+            tooltip: 'Drive at a speed and a turn (positive = right) until the next robot block: the block for a line follower loop. With speeds in mm/s on "set up robot" (the default) the speed is mm/s and the turn deg/s; with % of full speed the speed is % and the turn is the steering in %, LEGO\'s move steering (0 straight, 50 pivots on one wheel, 100 spins on the spot).',
+        },
+        {
+            type: 'evn_drivebase_steer',
+            message0: 'start moving: steering %1 %% at speed %2 %%',
+            args0: [
+                { type: 'input_value', name: 'STEERING', check: 'Number' },
+                { type: 'input_value', name: 'SPEED', check: 'Number' },
+            ],
+            inputsInline: true, previousStatement: null, nextStatement: null, style: 'evn_motor_blocks',
+            tooltip: 'Drive like LEGO\'s move steering until the next robot block: steering 0 goes straight, 50 pivots on one wheel, 100 spins on the spot (positive = right, negative = left); speed is % of the slower motor\'s full speed (negative = backwards). The same steering gives the same path at any speed; near 100 % the speed is held at what both motors can drive under control at this battery (about 87 % on two EV3 Mediums at 7.4 V), on the same path. Needs speeds in "% of full speed" on "set up robot".',
         },
         {
             type: 'evn_drivebase_stop',
@@ -1499,13 +1587,13 @@
         },
         {
             type: 'evn_drivebase_speeds',
-            message0: 'set robot speed %1 mm/s turn rate %2 deg/s',
+            message0: 'set robot speed %1 turn rate %2',
             args0: [
                 { type: 'input_value', name: 'SPEED', check: 'Number' },
                 { type: 'input_value', name: 'TURN', check: 'Number' },
             ],
             inputsInline: true, previousStatement: null, nextStatement: null, style: 'evn_motor_blocks',
-            tooltip: 'The speed "drive straight" and "drive an arc" use, and the rate "turn robot" uses. Without this block the robot uses the most its motors can do.',
+            tooltip: 'The speed "drive straight" and "drive an arc" use, and the rate "turn robot" uses: mm/s and deg/s, or % of the robot\'s full speed with % on "set up robot" (100 % turn rate = a spin with both wheels at full speed). Without this block the robot uses the most its motors can do.',
         },
         {
             type: 'evn_drivebase_accel',
@@ -1889,6 +1977,59 @@
             this.setWarningText(serialClash(this));
         };
     }
+    /* A controller variable is an ordinary Blockly variable (the owner, 2026-10-09: no fixed slots), so Blockly cannot
+     * type it: a block reading a PID's terms from a variable that holds an ADRC, or using a variable no block ever
+     * sets, would stop the program with AttributeError on the board ('ADRC' / 'NoneType' object has no attribute
+     * ...). Said on the block instead, from the program's own "set" blocks - only when it is certain: a variable also
+     * set to something else (a list item, a function's result) or bound by another block (a for-each loop over a list
+     * of controllers, a function's parameter, "change by") is the program's business; one set only to a plain value
+     * (a number, a text, true / false, or nothing plugged in - Blockly's `pid = 0`) is not a controller, and a "set"
+     * that is not generated (disabled, or inside a disabled block) sets nothing. */
+    const CTRL_TYPES = ['evn_ctrl_update', 'evn_ctrl_reset', 'evn_pid_term', 'evn_adrc_value'];
+    const CTRL_KIND = { evn_pid_create: 'PID', evn_adrc_create: 'ADRC' };
+    const PLAIN_KIND = { math_number: 'a number', text: 'a text', logic_boolean: 'true / false', logic_null: 'nothing' };
+    /** the warning for a controller block whose variable holds no controller, only a plain value or only the other
+     *  kind; else null */
+    function ctrlMismatch(block) {
+        if (!block.workspace || block.isInFlyout) { return null; }
+        const id = block.getFieldValue('VAR');
+        const name = block.getField('VAR').getText();
+        const kinds = new Set();
+        const plain = new Set();
+        for (const b of block.workspace.getAllBlocks(false)) {
+            if (!b.isEnabled() || b.getInheritedDisabled() || b.type === 'variables_get' || CTRL_TYPES.includes(b.type)) { continue; }
+            if (b.type === 'variables_set') {
+                if (b.getFieldValue('VAR') !== id) { continue; }
+                const v = b.getInputTargetBlock('VALUE');
+                if (!v || !v.isEnabled()) { plain.add('nothing'); }   // Blockly generates `pid = 0`
+                else if (PLAIN_KIND[v.type]) { plain.add(PLAIN_KIND[v.type]); } else { kinds.add(CTRL_KIND[v.type] || 'other'); }
+            } else if ((b.getVarModels ? b.getVarModels() : []).some((m) => m && m.getId && m.getId() === id)) {
+                kinds.add('other');   // a for-each / count loop's variable, a function's parameter, "change by"
+            }
+        }
+        if (!kinds.size && plain.size) {
+            return '"' + name + '" holds ' + [...plain].join(' or ') + ', not a controller: put "set ' + name
+                + ' to PID ..." (or ADRC ...) before the loop, or the program stops here with AttributeError.';
+        }
+        if (!kinds.size) {
+            return 'No block sets "' + name + '": put "set ' + name + ' to PID ..." (or ADRC ...) before the loop, '
+                + 'or the program stops here with AttributeError.';
+        }
+        const want = block.type === 'evn_pid_term' ? 'PID' : block.type === 'evn_adrc_value' ? 'ADRC' : null;
+        if (want && !kinds.has(want) && !kinds.has('other')) {
+            const has = want === 'PID' ? 'ADRC' : 'PID';
+            return '"' + name + '" holds ' + (has === 'ADRC' ? 'an ADRC' : 'a PID') + ' controller: read it with the ' + has
+                + ' block, or the program stops here with AttributeError.';
+        }
+        return null;
+    }
+    for (const t of CTRL_TYPES) {
+        Blockly.Blocks[t].onchange = function () {
+            if (this.isInFlyout || !this.workspace || (this.workspace.isDragging && this.workspace.isDragging())) { return; }
+            this.setWarningText(ctrlMismatch(this));
+        };
+    }
+    Object.assign(api, { ctrlMismatch, CTRL_TYPES });   // for scripts/test_blocks.js
     const isSetup = (b) => SETUP_TYPES.indexOf(b.type) >= 0;
     /** 'setup' | 'program' | null (a comment, which belongs to either) */
     const kindOf = (b) => (b.type === SETUP_HAT || isSetup(b)) ? 'setup' : b.type === COMMENT ? null : 'program';
@@ -2139,7 +2280,7 @@
     const DEVICE_NAMES = ['Color', 'Icon', 'Side', 'ColorSensor', 'DistanceSensor', 'GestureSensor', 'EnvSensor',
         'Compass', 'TouchArray', 'IMU', 'ADC', 'Display', 'MatrixLED', 'SevenSegmentLED', 'RGBLED', 'Servo', 'Bluetooth',
         'HiTechnicColorSensor', 'HiTechnicCompass', 'HuskyLens', 'VL53L1X', 'TCS3430',
-        'DriveBase', 'Pose', 'DataLog', 'UART', 'I2C', 'Flash', 'reset', 'reset_cause', 'bootloader', 'autostart', 'core1_status', 'version',
+        'DriveBase', 'Pose', 'PID', 'ADRC', 'DataLog', 'UART', 'I2C', 'Flash', 'reset', 'reset_cause', 'bootloader', 'autostart', 'core1_status', 'version',
         'configure_motor', 'motor_config', 'calibration', 'clear_calibration', 'imu_calibration', 'compass_calibration', 'color_calibration',
         'vl53l1x_calibration', 'clock'];
     const EVN_NAMES = CORE_NAMES.concat(DEVICE_NAMES);
@@ -2319,11 +2460,29 @@
                 const imuPort = gyroImuPort(block);
                 if (imuPort) { deviceRef(block, 'IMU', imuPort); source = ', imu=' + imuPort; }
             }
+            // the set-up block's speed unit, as "set up motor" has (the owner, 2026-10-09: "Like motors: set-up dropdown";
+            // DriveBase(..., speed_unit=SpeedUnit.PERCENT)); mm/s - and a program without the block - keep the line it always had
+            let unit = '';
+            if (g.percent) { use('SpeedUnit'); unit = ', speed_unit=SpeedUnit.PERCENT'; }
             generator.definitions_[name] = name + ' = DriveBase(' + l + ', ' + r + ', wheel_diameter=' + g.wheel + ', axle_track=' + g.track
-                + source + ')';
+                + source + unit + ')';
         }
         return name;
     }
+
+    /** The warning for a "start moving: steering / speed" block on a robot whose speeds are mm/s (it needs % of full
+     * speed on "set up robot"), else null. The generator writes such a block's steering as a keyword, so a program run
+     * anyway stops at it with TypeError rather than reading the steering as deg/s. */
+    function steeringClash(block) {
+        if (!block.workspace || block.isInFlyout) { return null; }
+        return driveGeometry(block).percent ? null : 'The robot\'s speeds are in mm/s: steering in % needs "speeds in % of full speed" '
+            + 'on the "set up robot" block (add one if the program has none), or use "drive at" with mm/s and deg/s.';
+    }
+    Blockly.Blocks['evn_drivebase_steer'].onchange = function () {
+        if (this.isInFlyout || !this.workspace || (this.workspace.isDragging && this.workspace.isDragging())) { return; }
+        this.setWarningText(steeringClash(this));
+    };
+    api.steeringClash = steeringClash;   // for scripts/test_blocks.js
 
     /* ---- the pose (evn.Pose) ----------------------------------------------------------------------- */
 
@@ -2381,6 +2540,7 @@
             right: setup ? setup.getFieldValue('RIGHT') : '2',
             wheel: setup ? Number(setup.getFieldValue('WHEEL')) : 56,
             track: setup ? Number(setup.getFieldValue('TRACK')) : 112,
+            percent: !!setup && setup.getFieldValue('UNIT') === 'PERCENT',   // speeds in % of full speed (else mm/s)
         };
     }
 
@@ -2463,6 +2623,13 @@
     };
     generator.forBlock['evn_drivebase_drive'] = function (block) {
         return driveRef(block) + '.drive(' + value(block, 'SPEED', '0') + ', ' + value(block, 'TURN', '0') + ')\n';
+    };
+    generator.forBlock['evn_drivebase_steer'] = function (block) {
+        // drive(speed, steering) on a robot whose "set up robot" says % of full speed (speed_unit=SpeedUnit.PERCENT); on a
+        // robot in mm/s the steering goes by keyword, which the firmware refuses (TypeError) rather than drive it as deg/s
+        const db = driveRef(block);
+        const speed = value(block, 'SPEED', '50'), steering = value(block, 'STEERING', '0');
+        return db + '.drive(' + speed + ', ' + (driveGeometry(block).percent ? '' : 'steering=') + steering + ')\n';
     };
     generator.forBlock['evn_drivebase_stop'] = function (block) {
         return driveRef(block) + '.' + block.getFieldValue('ACTION') + '()\n';
@@ -3003,6 +3170,41 @@
         return poseRef(block) + '.reset(' + (xyh.every((v) => v === '0') ? '' : xyh.join(', ')) + ')\n';
     };
 
+    /* ---- controllers (evn.PID / evn.ADRC) ------------------------------------------------------ */
+
+    /** A number field's value as Python (an integer without its ".0"). */
+    function numText(block, field) {
+        const v = Number(block.getFieldValue(field));
+        return String(Number.isFinite(v) ? v : 0);
+    }
+    /** The constructor call of a "PID ..." / "ADRC ..." block, exactly the API's (the owner's ruling, 2026-10-09: no
+     * numbered slots - the program puts it in a variable of its own); a limit of 0 is no `limits=`. */
+    function ctrlCreate(block, cls, args) {
+        use(cls);
+        if (Number(block.getFieldValue('LIMIT')) > 0) { args.push('limits=' + numText(block, 'LIMIT')); }
+        return [cls + '(' + args.join(', ') + ')', Order.FUNCTION_CALL];
+    }
+    generator.forBlock['evn_pid_create'] = function (block) {
+        return ctrlCreate(block, 'PID', ['kp=' + numText(block, 'KP'), 'ki=' + numText(block, 'KI'), 'kd=' + numText(block, 'KD')]);
+    };
+    generator.forBlock['evn_adrc_create'] = function (block) {
+        return ctrlCreate(block, 'ADRC', ['b0=' + numText(block, 'B0'), 'wc=' + numText(block, 'WC'), 'order=' + block.getFieldValue('ORDER')]);
+    };
+    /** The Python name of the controller variable a block takes (Blockly's own variable naming). */
+    const ctrlName = (block) => generator.getVariableName(block.getFieldValue('VAR'));
+    generator.forBlock['evn_ctrl_update'] = function (block) {
+        return [ctrlName(block) + '.update(' + value(block, 'TARGET', '0') + ', ' + value(block, 'MEASURED', '0') + ')', Order.FUNCTION_CALL];
+    };
+    generator.forBlock['evn_ctrl_reset'] = function (block) {
+        return ctrlName(block) + '.reset()\n';
+    };
+    generator.forBlock['evn_pid_term'] = function (block) {
+        return [ctrlName(block) + '.' + block.getFieldValue('WHAT'), Order.MEMBER];
+    };
+    generator.forBlock['evn_adrc_value'] = function (block) {
+        return [ctrlName(block) + '.' + block.getFieldValue('WHAT'), Order.MEMBER];
+    };
+
     /** Bytes as text: UTF-8 when they are, else one character per byte (chr(0..255)). MicroPython checks
      * UTF-8 (MICROPY_PY_BUILTINS_STR_UNICODE_CHECK), so a bare decode() of a peer at the wrong baud or of a
      * binary frame raised UnicodeError and stopped the program; garbled text is what a user can debug. */
@@ -3386,6 +3588,7 @@ def ${generator.FUNCTION_NAME_PLACEHOLDER_}(name):
                     { kind: 'block', type: 'evn_drivebase_turn', inputs: { ANGLE: shadowNum(90) } },
                     { kind: 'block', type: 'evn_drivebase_arc', inputs: { RADIUS: shadowNum(150), ANGLE: shadowNum(90) } },
                     { kind: 'block', type: 'evn_drivebase_drive', inputs: { SPEED: shadowNum(200), TURN: shadowNum(0) } },
+                    { kind: 'block', type: 'evn_drivebase_steer', inputs: { STEERING: shadowNum(0), SPEED: shadowNum(50) } },
                     { kind: 'block', type: 'evn_drivebase_stop' },
                     { kind: 'block', type: 'evn_drivebase_speeds', inputs: { SPEED: shadowNum(300), TURN: shadowNum(150) } },
                     { kind: 'block', type: 'evn_drivebase_accel', inputs: { ACCEL: shadowNum(750), TURN: shadowNum(750) } },
@@ -3404,6 +3607,23 @@ def ${generator.FUNCTION_NAME_PLACEHOLDER_}(name):
                     { kind: 'block', type: 'evn_pose_reset', inputs: { X: shadowNum(0), Y: shadowNum(0), HEADING: shadowNum(0) } },
                     { kind: 'block', type: 'evn_pose_setup' },
                     { kind: 'block', type: 'evn_drivebase_gyro' },
+                ],
+            },
+            {
+                // evn.PID / evn.ADRC: the program's own control loops (the output goes where the program sends it). Any
+                // number of them, each in an ordinary variable (the owner, 2026-10-09): the "set" blocks come ready-made
+                kind: 'category', name: 'Controllers', categorystyle: 'evn_motor_category',
+                contents: [
+                    { kind: 'label', text: 'Make a controller once, before the loop, in a variable of its own (as many as you like)' },
+                    { kind: 'block', type: 'variables_set', fields: { VAR: { name: 'pid' } }, inputs: { VALUE: { block: { type: 'evn_pid_create' } } } },
+                    { kind: 'block', type: 'variables_set', fields: { VAR: { name: 'adrc' } }, inputs: { VALUE: { block: { type: 'evn_adrc_create' } } } },
+                    { kind: 'label', text: 'Then, each time round the loop' },
+                    { kind: 'block', type: 'evn_ctrl_update', fields: { VAR: { name: 'pid' } }, inputs: { TARGET: shadowNum(50), MEASURED: shadowNum(0) } },
+                    { kind: 'block', type: 'evn_ctrl_reset', fields: { VAR: { name: 'pid' } } },
+                    { kind: 'block', type: 'evn_pid_term', fields: { VAR: { name: 'pid' } } },
+                    { kind: 'block', type: 'evn_adrc_value', fields: { VAR: { name: 'adrc' } } },
+                    { kind: 'block', type: 'evn_pid_create' },
+                    { kind: 'block', type: 'evn_adrc_create' },
                 ],
             },
             {

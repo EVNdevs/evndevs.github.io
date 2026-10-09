@@ -2,7 +2,7 @@
 
 Part 1 of the [EVN ALPHA MicroPython API reference](API.md), which has the units, the port numbers and the differences from Pybricks. Previous: [API reference](API.md) · Next: [Standard peripherals: sensors](API_SENSORS.md).
 
-The board itself (`battery`, `button`, `led`, `clock`), the motors on ports 1–4 (`Motor`), two of them as a robot (`DriveBase`), where that robot is (`Pose`) and the calibration records the board keeps.
+The board itself (`battery`, `button`, `led`, `clock`), the motors on ports 1–4 (`Motor`), two of them as a robot (`DriveBase`), where that robot is (`Pose`), controllers for your own loops (`PID`, `ADRC`) and the calibration records the board keeps.
 
 ## Board: `battery`, `button`, `led` and `clock`
 
@@ -230,6 +230,7 @@ DriveBase(left_motor, right_motor, wheel_diameter, axle_track, *, imu=None, comp
 | `imu`, `compass` | the I2C ports 1–16 of existing `IMU` / `Compass` objects (keyword-only; `OSError` if no object is on that port). Either one makes the base build and own a `Pose` |
 | `declination` | degrees added to the compass heading, east positive; needs `compass=` (`ValueError` without it) |
 | `pose` | a `Pose` the program built, adopted by the base after a geometry check (keyword-only; not together with `imu=` / `compass=` / `declination=`) |
+| `speed_unit` | `SpeedUnit.DEG_S` (default: mm/s and deg/s) or `SpeedUnit.PERCENT`, as a `Motor`'s (keyword-only): every speed of the robot in % of its full speed - see *Speeds in percent* below |
 
 A new `DriveBase` on a motor that still belongs to one takes the pair over (the old base is closed, and with it its own `Pose` — unless you pass that Pose on as `pose=old.pose`, which hands it over with its ownership). So re-running the `DriveBase(...)` line with the same `Motor` objects works, and so does re-running a whole cell: its `Motor(port)` lines take the ports over, which closes the old base (and the `Pose` it built); a call on the old base then raises `RuntimeError("drive base closed: Motor(n) was replaced by a newer Motor(n); create a new DriveBase")`.
 
@@ -246,6 +247,7 @@ A new `DriveBase` on a motor that still belongs to one takes the pair over (the 
 | `arc(radius, distance=None, angle=None, then=Stop.HOLD, wait=True)` | drive along a circle of \|`radius`\| mm on the right (positive radius) or left (negative) for `distance` mm of path **or** `angle` degrees of heading (one of the two); negative = backwards |
 | `curve(radius, angle, then=Stop.HOLD, wait=True)` | the same circle with the older Pybricks signs: the angle's sign picks the side (positive = right), the radius's sign the direction (negative = backwards), so `curve(-r, a)` retraces `curve(r, a)` |
 | `drive(speed, turn_rate)` | mm/s along the path and deg/s of heading until the next command (positional, or `speed=` / `turn_rate=` as in Pybricks); both wheels ramp together from the speeds they are at (the path during the ramp is the steady-state arc), also when you call it again before the ramp ends, and the same call repeated in a loop drives exactly the path of one call (with `use_gyro(True)` each call restarts the pose correction, so such a loop is not corrected yet); if a wheel would exceed the weaker motor's speed limit both are scaled so the radius is kept, and if its ramp would exceed that motor's acceleration limit both ramps are slowed together |
+| `drive(speed, steering)` with `speed_unit=SpeedUnit.PERCENT` | drive like LEGO's move steering until the next command, both in % (-100..100, clamped). `speed` is the faster wheel's % of the robot's full speed (the slower motor's `full_speed()`, negative = backwards); `steering` sets the slower wheel to `speed × (1 − 2 × |steering| / 100)`: 0 straight, 50 pivots on the inner wheel, 100 spins in place, positive = right - the same steering gives the same path at any speed. It drives through `drive()`: the same ramps, the same scaling when a wheel cannot go that fast, the same `use_gyro` behaviour. By keyword the name says the unit: `turn_rate=` here, or `steering=` on a robot in mm/s, raises `TypeError` |
 | `stop()`, `brake()` | coast / brake both wheels; return once the wheels have taken it (at most 2 ms), so a file write straight after is not refused |
 
 ### Measuring
@@ -253,7 +255,7 @@ A new `DriveBase` on a motor that still belongs to one takes the pair over (the 
 | Method | Returns |
 | :--- | :--- |
 | `distance()`, `angle()` | mm driven and degrees turned since `reset()`, from the two encoders (ints) |
-| `state()` | `(distance, drive_speed, angle, turn_rate)` as floats |
+| `state()` | `(distance, drive_speed, angle, turn_rate)` as floats (the two speeds in % with `SpeedUnit.PERCENT`) |
 | `reset(distance=0, angle=0)` | start the readings again from these values. A program run again from the user button does it by itself to a base an imported module kept (Python does not run the module again): the run starts at `distance()` / `angle()` 0 with no maneuver in force, the base's `settings()`, `follower()`, `use_gyro()` and `pose` kept, its `Pose` re-framed as `Pose.reset()` says (the owner, 2026-10-02, as Pybricks starts a program afresh; a kept `Motor` reads `angle()` 0 again if it was built with `reset_angle=True`, the default) |
 | `done()` | `True` when both wheels have finished — `Motor.done()`'s meaning: profile complete and inside `control.target_tolerances()` — or are passive, or either wheel is stalled. With `use_gyro(True)` the wheels are judged against target + trim, and `done()` also waits for the pose to settle (or the trim to reach its bound, or 2 s after the profiles). A wheel coasted by the runaway guard during a `wait=False` maneuver: `done()` coasts the other wheel too and returns `True`; the base's next command raises the wheel's `RuntimeError` |
 | `stalled()` | `True` while either wheel is stalled; like `Motor`, a `wait=True` maneuver on a stalled robot returns on the stall timeout (the shorter of the two wheels' `settings()` timeouts) |
@@ -277,7 +279,8 @@ A new `DriveBase` on a motor that still belongs to one takes the pair over (the 
 
 | Method | Does |
 | :--- | :--- |
-| `settings(straight_speed, straight_acceleration, turn_rate, turn_acceleration)`, `settings()` | mm/s, mm/s², deg/s, deg/s²; an acceleration may be `(accel, decel)`. **Defaults: the weaker motor's `control.limits()`, the straight acceleration at 75 % of it** — about 770 mm/s, 1230 mm/s², 520 deg/s, 1100 deg/s² on two EV3 Mediums with 62.4 mm wheels 170 mm apart. Lower them for a heavier robot or a slick floor (the straight acceleration is where tyre slip starts); a value above the motor's limit is clamped to it |
+| `settings(straight_speed, straight_acceleration, turn_rate, turn_acceleration)`, `settings()` | mm/s, mm/s², deg/s, deg/s²; an acceleration may be `(accel, decel)`. **Defaults: the weaker motor's `control.limits()`, the straight acceleration at 75 % of it** — about 770 mm/s, 1230 mm/s², 520 deg/s, 1100 deg/s² on two EV3 Mediums with 62.4 mm wheels 170 mm apart. Lower them for a heavier robot or a slick floor (the straight acceleration is where tyre slip starts); a value above the motor's limit is clamped to it (with `SpeedUnit.PERCENT` the two speeds in %, the accelerations unchanged) |
+| `speed_unit()`, `speed_unit(unit)` | read / switch the robot's speed unit, as `Motor.speed_unit()`; switching converts nothing |
 | `close()` | coast both wheels and release them (the `Motor` objects stay open); returns once the coasts have landed |
 
 **Example**
@@ -289,6 +292,22 @@ robot = DriveBase(left, right, wheel_diameter=62.4, axle_track=170)
 robot.straight(300); robot.turn(45); robot.arc(-150, angle=90)
 robot.drive(200, 30)                     # until the next command
 robot.stop()
+```
+
+**Speeds in percent.** `DriveBase(left, right, 62.4, 170, speed_unit=SpeedUnit.PERCENT)` - the same keyword as a
+`Motor`'s - makes every speed of the robot a % of its full speed, the slower motor's `full_speed()` at the present
+battery voltage (so two motors that differ still drive straight): `drive(speed, steering)` is LEGO's move steering,
+and `settings()`' straight speed (100 % = that full speed along the path) and turn rate (100 % = a spin with both
+wheels at full speed), `state()`'s two speeds and `follower()`'s three are % too; accelerations stay mm/s² and deg/s².
+A speed set with `settings()` keeps its mm/s as the battery runs down and reads back as a % of the present full speed.
+The top of the range is held at what both motors can drive under control at the present battery, the two wheels
+scaled together (the same path, slower): on two calibrated EV3 Mediums at 7.4 V, `drive(100, …)` drives at about 87 %
+of full speed at every steering (measured on the bench), so `drive(90, …)` to `drive(100, …)` drive alike.
+
+```python
+from evn import Motor, Direction, DriveBase, SpeedUnit
+robot = DriveBase(Motor(4, Direction.COUNTERCLOCKWISE), Motor(3), 62.4, 170, speed_unit=SpeedUnit.PERCENT)
+robot.drive(50, 25)                      # 50 % speed, steering 25 % right (the right wheel at 25 %)
 ```
 
 **How it drives.** A maneuver is two profiled moves on one time base: the wheel with the longer travel gets the maneuver's speed and acceleration, the other the same numbers scaled by the ratio of the travels, both started on the same 1 kHz tick — so a straight is straight and an arc is an arc, and each wheel then tracks its own reference with the calibrated controller. The two moves keep **one clock**: when a wheel is held back (blocked, or loaded more than it can drive) and its move has to wait, the other wheel's waits with it, so the robot pauses on its path and carries on when the wheel is free instead of turning about the held wheel (the same for `drive()`, also when your program calls it over and over in a loop); a wheel the runaway guard coasts stops the other where it is. The shared wait is the default `"adrc"` control law's: wheels on `control.law("pid")` drive as they did before it (with one wheel on each law, the `"adrc"` wheel's wait holds the `"pid"` wheel, never the reverse). By default the wheels follow their encoders only: `imu=` (or `pose=`) gives the base a `Pose`, `robot.pose` gives you its position and heading, and `use_gyro(True)` puts that pose (and its gyro) into the loop. A direct `Motor` command on one wheel while a maneuver runs coasts the other wheel (Pybricks). A maneuver started while the robot is still moving lets each wheel blend from its own speed for one ramp; the endpoints stay exact.
@@ -360,6 +379,92 @@ with Pose(1, 2, 56, 112, imu=3) as pose:
 - **A busy moment** (a long `print`, a big calculation, an I2C scan) does not lose the robot's motion: the wheels carry the travel over it (the estimator runs on the motor core and keeps stepping on the wheels every 5 ms meanwhile), and with an `IMU` in its default DMP mode the heading over it is the gyro's once the readings the IMU kept (up to 140 ms of them) are read — not the wheel difference, which a turning robot's scrubbing tyres would put into the heading (about 1° per 0.1 s pause in a fast turn). After a longer pause, or with the IMU in raw mode (`IMU.dmp(False)`, which keeps no readings), the heading over it comes from the wheels.
 - **The pose's sources are read ahead of every other I2C device**, so a busy bus does not make them late: the IMU in DMP mode (its default), the compass, and an IMU in raw mode (`IMU.dmp(False)`) while a `Pose` reads it. A raw-mode IMU no `Pose` reads takes its turn with the other devices like any of them, and goes back to that when the `Pose` is closed. A raw IMU read first at its default 1000 Hz costs the program much of the board's time with many devices open (as on 0.2.59-0.2.62): `IMU.sample_rate()` lowers it, and the DMP (200 Hz, with the readings kept through a busy moment) is the mode the pose is built for.
 - Bench diagnostics (`_stats()`, `_bias()`, `_step()`): see [Diagnostics](API_SYSTEM.md#diagnostics).
+
+## PID and ADRC — controllers for your own loops
+
+`evn.PID` and `evn.ADRC` are controllers your program builds for a loop of its own: a line follower, a heading hold, a speed you keep with `dc()`. They compute in C on the board (several times faster than the same loop written in Python), never move anything themselves — `update()` returns a number you send where you like (a motor's `dc()` or `run()`, the robot's `drive()`, a servo) — and let you read every term. Any number of them; no port, no `close()`. More in `examples/23_controllers/`; in blocks, the **Controllers** category ([blocks reference](BLOCKS.md#controllers)). Pybricks has no such class: this is EVN's own.
+
+Units (the owner's ruling, 2026-10-09): time in **ms** (`dt`, `filter`, `dt_max`, like `wait()`); `ki` is output per unit of error per **second**, `kd` output per (unit of error per second); `wc` / `wo` in **rad/s** (a loop settles in about 4 / `wc` seconds).
+
+**Constructors**
+
+```python
+PID(kp, ki=0, kd=0, *, filter=20, limits=None, integral_limit=None, dt_max=200)
+ADRC(b0, wc, *, order=1, wo=None, limits=None, dt_max=200)
+```
+
+| Parameter | Default | Meaning |
+| :--- | :--- | :--- |
+| `kp`, `ki`, `kd` | —, 0, 0 | the PID's gains, any sign (the owner, 2026-10-09; a negative set makes a reverse-acting loop: the output falls as the measurement rises) |
+| `filter` | 20 | ms: the first-order filter on the derivative (0 = none). It smooths a sensor's flicker before `kd` multiplies it |
+| `b0` | — | the ADRC's plant gain: how many measurement units per s (order 1) or per s² (order 2) one unit of output gives. A heading driven through `drive(speed, turn_rate)`: `b0=1`. Not 0; either sign |
+| `wc` | — | the ADRC's bandwidth, rad/s, > 0 |
+| `order` | 1 | 1: `y' = b0 u + f` (a speed, a heading through a turn rate, a temperature); 2: `y'' = b0 u + f` (a position) |
+| `wo` | `4 * wc` | the observer's bandwidth, rad/s; it follows `wc` until you set it |
+| `limits` | `None` | the output's range: `None` / `False` (none), a number `x` (`-x..x`) or `(low, high)`. **Set it to what the actuator accepts** (`dc()`: 100; `drive()`: its turn rate): the PID stops adding up its integral there, and the ADRC's observer assumes the plant saw the clamped output |
+| `integral_limit` | `None` | the largest the PID's I term may grow, in output units (> 0) |
+| `dt_max` | 200 | ms: a measured pause longer than this is a restart (below) |
+
+**Methods and attributes**
+
+| Call | Does / returns |
+| :--- | :--- |
+| `update(setpoint, measurement, dt=None)` | one step of the loop: the output, after the limits. The board measures the time since the previous update; `dt=` (ms) gives your own interval instead |
+| `reset()` | forget the state (PID: the integral, the derivative filter, the last sample; ADRC: the estimates); the settings stay. The next `update()` only seeds |
+| `settings()` | PID: `(kp, ki, kd, filter, limits, integral_limit, dt_max)`; ADRC: `(b0, wc, wo, order, limits, dt_max)`. `limits` as `(low, high)` or `None` |
+| `settings(...)` | the constructor's keywords (not `order`): changes only what you give (`None` keeps a value, `limits=False` / `integral_limit=False` remove them), in the order listed, stopping at the first invalid one; the state is kept |
+| PID `p`, `i`, `d` | the three terms of the last update, in output units (`p + i + d` is the output before the limits) |
+| ADRC `estimate`, `rate`, `disturbance` | the observer's estimate of the measurement, of its rate (order 2; 0.0 for order 1), and of everything else pushing on the plant (`f`: friction, a load, your hand), in measurement units per s^order |
+| `output`, `error`, `saturated`, `restarted` | the last output, `setpoint - measurement`, whether the output sat on a limit, whether the last update was a restart |
+
+All attributes are read-only.
+
+**Example: a line follower (PID)**
+
+```python
+from evn import Motor, Direction, DriveBase, ColorSensor, PID, wait, stop_all
+
+sensor = ColorSensor(2)                         # facing the floor, a few mm up
+base = DriveBase(Motor(4, Direction.COUNTERCLOCKWISE), Motor(3), wheel_diameter=62.4, axle_track=170)
+edge = 34                                       # half way between the line's and the floor's hsv().v
+pid = PID(kp=1.5, ki=0.2, kd=0.08, limits=120)  # the output is a turn rate, deg/s
+try:
+    while True:
+        base.drive(120, pid.update(edge, sensor.hsv().v))   # negate kp, ki and kd for the other edge
+        wait(10)
+finally:
+    stop_all()
+```
+
+Print `pid.p, pid.i, pid.d` every 200 ms and watch the I term grow on a long curve; set `kd=0` and see the wobble; set `limits=40` and watch the robot lose a sharp corner while `pid.saturated` is True.
+
+**Example: a heading hold (ADRC)**
+
+```python
+from evn import Motor, Direction, DriveBase, IMU, ADRC, wait, stop_all
+
+imu = IMU(1)
+base = DriveBase(Motor(4, Direction.COUNTERCLOCKWISE), Motor(3), wheel_diameter=62.4, axle_track=170)
+while not imu.ready():
+    wait(10)
+hold = ADRC(b0=1, wc=6, limits=180)             # heading' = 1 * turn_rate + f; wo = 24 rad/s
+try:
+    while True:
+        base.drive(0, hold.update(0, imu.heading()))   # push the robot: hold.disturbance is the push, deg/s
+        wait(10)
+finally:
+    stop_all()
+```
+
+`wc=20` is stiff, `wc=2` is lazy; `wo` below `2 * wc` lets a push through for longer.
+
+**Notes**
+
+- **The first update after construction or `reset()` only seeds** (P acts; no derivative, no integral step; the ADRC's estimate starts at the measurement), whether `dt` is given or measured: no kick at the start.
+- **A pause.** A measured gap longer than `dt_max` is a restart: the PID keeps its integral and starts its derivative afresh, the ADRC re-seeds its estimate (the disturbance kept); `restarted` is True. **Two restarts in a row** mean the loop itself is slower than `dt_max`: `ValueError("updates further apart than dt_max: raise dt_max")` - a loop with `wait(500)` sets `dt_max=1000` (`settings(dt_max=)` after the error works from the next call). Set `dt_max` well above your loop's longest pass (twice its period): a loop that sometimes takes a little more than `dt_max` and sometimes a little less restarts every other pass without an error, and its integral and derivative then do half their work. A given `dt` larger than `dt_max` raises `ValueError("dt exceeds dt_max")`.
+- **Choosing the ADRC's numbers.** With a loop period of `T` seconds keep `wo * T <= 1` and `wc * T <= 0.3` (at 10 ms: `wc` up to 30, `wo` up to 100). An actuator that ramps (`run()`, `drive()`) is part of your loop: keep `wc` under about a third of its ramp's speed (`DriveBase.settings(turn_acceleration=)` raises the base's); `dc()` does not ramp.
+- **Errors** (`ValueError`, and the object is unchanged but for the slow-loop error above, which restarts it): a gain, `b0`, `wc`, `wo`, `filter`, `dt_max`, `integral_limit` or a limit that is NaN or infinite ("... must be a number"); `b0` 0; `wc`, `wo`, `dt_max`, `integral_limit` or a `limits` number not positive; `filter` negative; `limits` with `low >= high`; `order` not 1 or 2; a `setpoint` or `measurement` that is NaN or infinite; a `dt` that is not a positive number of ms. A store to an attribute raises `AttributeError`.
+- The controllers allocate nothing after construction except the number `update()` returns, and touch nothing on the motor core: the board's own motor control is unaffected by how many you run.
 
 ## Calibration records (evn.calibration)
 

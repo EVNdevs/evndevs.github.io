@@ -44,9 +44,10 @@ class Stop:
 
 
 class SpeedUnit:
-    """Unit of every speed value a Motor takes or reports (``Motor(..., speed_unit=)`` / ``motor.speed_unit()``)."""
-    DEG_S: int  # = 0  degrees per second (default)
-    PERCENT: int  # = 1  percent of ``full_speed()``, the no-load speed at the present battery voltage
+    """Unit of every speed value a Motor or a DriveBase takes or reports (``Motor(..., speed_unit=)`` /
+    ``motor.speed_unit()``, ``DriveBase(..., speed_unit=)`` / ``robot.speed_unit()``)."""
+    DEG_S: int  # = 0  degrees per second (default; a DriveBase: mm/s and deg/s)
+    PERCENT: int  # = 1  percent of ``full_speed()``, the no-load speed at the present battery voltage (a DriveBase: of its slower wheel's)
 
 
 _Then = int
@@ -395,7 +396,7 @@ class DriveBase:
     (docs/MICROPYTHON_API.md; phase 8, 2026-09-19).
 
     ``DriveBase(left_motor, right_motor, wheel_diameter, axle_track, *, imu=None, compass=None, declination=None,
-    pose=None)``: the wheel diameter and the axle track in mm. A motor's forward direction is its ``positive_direction`` (a mirrored left motor:
+    pose=None, speed_unit=SpeedUnit.DEG_S)``: the wheel diameter and the axle track in mm. A motor's forward direction is its ``positive_direction`` (a mirrored left motor:
     ``Motor(4, Direction.COUNTERCLOCKWISE)``); its ``gears=`` make the values wheel degrees. Units: mm, mm/s,
     mm/s^2 for distances, degrees, deg/s, deg/s^2 for the heading; a positive angle is a clockwise turn seen
     from above (the ``Pose`` / compass convention). The axle track that matters is the effective one between
@@ -444,13 +445,32 @@ class DriveBase:
     cable and the gyro's drift are taken out as they happen instead of adding up over minutes. ``done()`` then
     also waits for the pose to settle inside ``follower()`` tolerances. What it cannot fix is what the pose
     cannot see: a translation the encoders do not turn for (a robot pushed sideways while turning in place)
-    goes uncorrected until an outside reference (a wall, a line) resets the pose."""
+    goes uncorrected until an outside reference (a wall, a line) resets the pose.
+
+    **Speeds in percent** (``speed_unit=SpeedUnit.PERCENT``, as a ``Motor``'s; the owner, 2026-10-09: "Same as how we
+    do motors? With speedunit.percent"). ``drive(speed, steering)`` then takes both in %, LEGO's move steering: the
+    faster wheel at ``speed`` % of the robot's full speed, the slower at ``speed * (1 - 2 * |steering| / 100)`` (0
+    straight, 50 pivots on the inner wheel, 100 spins in place, at any speed). 100 % is the SLOWER wheel's
+    ``Motor.full_speed()`` at the present battery voltage, so both wheels can reach it and a mismatched pair drives
+    straight at steering 0. Every other speed of the base is a % too: ``settings()``' straight speed (100 % =
+    that full speed along the path, ``full * pi * wheel_diameter / 360`` mm/s) and turn rate (100 % = a spin with
+    both wheels at full speed, ``full * wheel_diameter / axle_track`` deg/s), ``state()``'s two speeds and
+    ``follower()``'s ``correction_speed`` / ``correction_rate`` (the same two) and ``trim_slew`` (% of a wheel's).
+    So ``drive(100, 0)`` asks for 100 % straight speed, and at steady state ``drive(s, t)`` reads ``state()`` speeds
+    ``(s * (1 - |t| / 100), s * t / 100)`` - below the top of the range, which ``drive()``'s authority cap holds at
+    what both motors can drive under control at the present battery, the two wheels scaled together (the same
+    path, slower): on two calibrated EV3 Mediums at 7.4 V ``drive(100, t)`` drives at about 87 % of full speed for
+    every t (measured, COM17 2026-10-09/10), so ``drive(90, t)`` to ``drive(100, t)`` drive alike. Accelerations stay mm/s^2 / deg/s^2, distances and angles mm / deg.
+    A speed set through ``settings()`` / ``follower()`` is kept in mm/s and deg/s from the call (a straight keeps
+    its pace as the battery runs down) and read back in % of the present full speed, as a ``Motor``'s
+    ``control.limits()``; a ``drive()`` keeps the wheel speeds of its call. The unit belongs to the object, as a
+    ``Motor``'s: set on construction or by ``speed_unit()``; switching converts nothing."""
     pose: Optional["Pose"]
     """The base's ``Pose`` (read-only): the one it built from ``imu=`` / ``compass=``, was given as ``pose=`` or
     adopted at ``use_gyro(True)``, or ``None`` when the base has no pose (wheel-space maneuvers only)."""
     def __init__(self, left_motor: Motor, right_motor: Motor, wheel_diameter: float, axle_track: float, *,
                  imu: Optional[int] = None, compass: Optional[int] = None, declination: Optional[float] = None,
-                 pose: Optional["Pose"] = None) -> None: ...
+                 pose: Optional["Pose"] = None, speed_unit: int = SpeedUnit.DEG_S) -> None: ...
     def straight(self, distance: float, then: int = Stop.HOLD, wait: bool = True) -> None:
         """Drive straight ``distance`` mm (negative = backwards), then hold / coast / brake. ``then=Stop.NONE``
         raises ``ValueError`` (use ``drive()``); ``Stop.COAST_SMART`` counts the next relative move from this
@@ -467,14 +487,31 @@ class DriveBase:
         """Drive along a circle of ``|radius|`` mm to the right (positive radius) or left (negative) for
         ``distance`` mm of path or ``angle`` degrees of heading (exactly one of the two); a negative value drives
         backwards. Pybricks ``arc()``."""
+    @overload
     def drive(self, speed: float, turn_rate: float) -> None:
-        """Drive at ``speed`` mm/s along the path and ``turn_rate`` deg/s (clockwise positive) until the next
+        """``speed`` mm/s and ``turn_rate`` deg/s - with ``speed_unit=SpeedUnit.PERCENT`` the second argument is the
+        steering in %, LEGO's move steering (the class docstring's *Speeds in percent*).
+
+        Drive at ``speed`` mm/s along the path and ``turn_rate`` deg/s (clockwise positive) until the next
         command; both wheels ramp from the speeds they are at to their new speeds together, also when called
         again before the last ramp has ended, and the same call repeated in a loop keeps the ramp it started
         (the path of one call; with ``use_gyro(True)`` each call restarts the pose correction, so such a loop is
         not corrected yet). If one wheel would exceed the weaker wheel's speed limit both are scaled so the
         radius is kept; if its ramp would exceed that wheel's acceleration limit both ramps are slowed
-        together."""
+        together.
+
+        In ``SpeedUnit.PERCENT``: ``drive(speed, steering)``, both in % (-100..100, clamped). ``speed`` (negative
+        backwards) is the outer wheel's share of the robot's full speed - the slower wheel's ``Motor.full_speed()``
+        at the present battery voltage, so both can reach it; ``steering`` (positive steers right: the right wheel
+        is the inner one) sets the inner wheel to ``speed * (1 - 2 * |steering| / 100)``: 0 drives straight, 50
+        pivots on the inner wheel, 100 spins in place, at any speed - the path's radius,
+        ``axle_track / 2 * (100 - |steering|) / |steering|``, depends on the steering alone. Both wheels ramp and
+        scale as above. The keyword names the unit: ``turn_rate=`` in PERCENT or ``steering=`` in DEG_S raises
+        ``TypeError``; ``ValueError`` for a value that is not a finite number."""
+    @overload
+    def drive(self, speed: float, *, steering: float) -> None:
+        """LEGO's move steering in ``SpeedUnit.PERCENT``: ``speed`` % of the robot's full speed, ``steering`` %
+        (0 straight, 50 pivots, 100 spins; positive = right). ``TypeError`` in ``SpeedUnit.DEG_S``."""
     def stop(self) -> None:
         """Coast both wheels; returns once they have taken it (at most 2 ms: a file write next is not refused)."""
     def brake(self) -> None:
@@ -484,7 +521,9 @@ class DriveBase:
     def angle(self) -> int:
         """Degrees turned since ``reset()``, clockwise positive (from the encoders)."""
     def state(self) -> Tuple[float, float, float, float]:
-        """(distance mm, drive speed mm/s, angle deg, turn rate deg/s)."""
+        """(distance mm, drive speed mm/s, angle deg, turn rate deg/s); in ``SpeedUnit.PERCENT`` the two speeds are
+        % of the robot's full speed (the class docstring): ``drive(s, t)`` reads ``(s * (1 - |t| / 100), s * t / 100)``
+        - the motion, not the (speed, steering) pair."""
     def reset(self, distance: float = 0, angle: float = 0, /) -> None:
         """Start ``distance()`` and ``angle()`` again from these values. A program run again from the user
         button does this by itself to a base an imported module kept (Python does not run the module again):
@@ -539,7 +578,10 @@ class DriveBase:
         correction per wheel, 180), ``trim_slew`` (the most a wheel's reference moves toward its trim, wheel deg/s,
         600), ``position_tolerance`` (mm, 1) and ``heading_tolerance`` (deg, 0.3) that ``done()`` waits for, held
         for ``settle_time`` (ms, 100). Every value > 0, ``zeta`` in (0, 1). Gains only: a change mid-maneuver keeps
-        the correction in force; the robot's geometry comes from the base that has ``use_gyro`` on."""
+        the correction in force; the robot's geometry comes from the base that has ``use_gyro`` on. In
+        ``SpeedUnit.PERCENT`` ``correction_speed``, ``correction_rate`` and ``trim_slew`` are % of the robot's full
+        speed (the class docstring), kept in mm/s / deg/s from the call and read back as whole % (a 1 % step:
+        ``follower(*follower())`` round-trips to within 0.5 %)."""
     def pose_error(self) -> Tuple[float, float, float, bool, float, float]:
         """``(forward mm, left mm, heading deg, settled, trim_left deg, trim_right deg)``: where the ideal robot
         is, seen from the estimate, and the wheel trims asked of the engine (it slews toward them).
@@ -554,7 +596,18 @@ class DriveBase:
         the straight acceleration at 75 % of it (about 770 mm/s, 1230 mm/s^2, 520 deg/s, 1100 deg/s^2 on two
         Mediums with 62.4 mm wheels 170 mm apart: at the full 1630 mm/s^2 the tyres slip about 1.5 mm per 30 cm
         out-and-back, invisible to the encoders); lower them for a heavier robot or a slick floor. A value above what the
-        weaker wheel can do is clamped to it and the getter reports the clamped value."""
+        weaker wheel can do is clamped to it and the getter reports the clamped value. In ``SpeedUnit.PERCENT`` the
+        two speeds are % of the robot's full speed (straight: of ``full * pi * wheel_diameter / 360`` mm/s; turn: of
+        ``full * wheel_diameter / axle_track`` deg/s), kept in mm/s / deg/s from the call and read back as whole % of
+        the present full speed (the defaults read about 100 %); the accelerations stay mm/s^2 / deg/s^2."""
+    @overload
+    def speed_unit(self) -> int: ...
+    @overload
+    def speed_unit(self, unit: int, /) -> None:
+        """``SpeedUnit.DEG_S`` (mm/s and deg/s) or ``SpeedUnit.PERCENT`` (% of the robot's full speed, the class
+        docstring) for every speed argument and result of this base (``drive()``, ``settings()``, ``state()``,
+        ``follower()``), as ``Motor.speed_unit()``. Switching converts nothing: the speeds ``settings()`` and
+        ``follower()`` hold stay what they were. Any other value raises ``ValueError``."""
     def close(self) -> None:
         """Coast both wheels and release them (the ``Motor`` objects stay open; a new DriveBase can use them).
         Closes a ``Pose`` the base built (``imu=`` / ``compass=``), and one an old base built and handed over
@@ -564,6 +617,137 @@ class DriveBase:
     def __exit__(self, *args: object) -> None: ...
     def _wheels(self) -> Tuple[float, float, float, float]:
         """Bench diagnostic: (left deg, right deg, left deg/s, right deg/s) since ``reset()``, wheel degrees."""
+
+class PID:
+    """A PID controller for a loop the program runs itself (EVN's own; Pybricks has no such class): the maths in
+    C on Core 0 (``motion/user_ctrl.c``), several times faster than the same loop written in Python, the terms
+    readable for teaching. Nothing in it touches the motors: ``update()`` returns a number the program sends
+    where it likes - ``Motor.dc()``, ``Motor.run()``, ``DriveBase.drive()``, a servo.
+
+    ``PID(kp, ki=0, kd=0, *, filter=20, limits=None, integral_limit=None, dt_max=200)``. Units (the owner's ruling,
+    2026-10-09): time in ms (``dt``, ``filter``, ``dt_max``: the unit of ``wait()``); ``ki`` is output per unit of
+    error per second and ``kd`` output per (unit of error per second) - the class converts, there is no 0.001 to
+    type. Gains of either sign (the owner, 2026-10-09; a negative set is a reverse-acting loop: the output falls
+    as the measurement rises). Parallel form; the
+    derivative is taken on the measurement (a setpoint step never kicks the output) through a first-order filter
+    of ``filter`` ms (0 = unfiltered); the integral stops adding while the output sits on a limit in the
+    direction it would push (clamping anti-windup, the rule the board's own motor PID uses) and is bounded by
+    ``integral_limit`` (output units) when one is given. ``limits``: ``None`` / ``False`` (none), a number ``x``
+    (``(-x, x)``) or ``(low, high)``; set them to what the actuator accepts (``dc()``: 100).
+
+    ``update(setpoint, measurement)`` measures the time since the previous update on the board's microsecond
+    clock; ``update(..., dt=ms)`` takes the program's own interval instead. The first update after construction
+    or ``reset()`` only seeds (P acts, no derivative, no integral step), whether ``dt`` is given or measured. A
+    measured pause longer than ``dt_max`` is a restart (the integral kept, the derivative re-seeded,
+    ``restarted`` True); two in a row mean the loop itself is slower than ``dt_max`` and raise
+    ``ValueError("updates further apart than dt_max: raise dt_max")`` - a loop at ``wait(500)`` sets
+    ``dt_max=1000`` (``settings(dt_max=)`` after the error works from the next call; set ``dt_max`` well above the
+    longest pass: a loop that straddles it skips integral steps without raising). Errors (``ValueError``): a gain,
+    ``filter``, ``dt_max`` or a limit NaN / inf ("... must be a number"); ``filter`` < 0, ``dt_max``,
+    ``integral_limit`` or a ``limits`` number <= 0 ("... must be positive"); ``limits`` with ``low >= high``; ``setpoint`` /
+    ``measurement`` NaN or inf; a given ``dt`` <= 0 / NaN ("dt must be a positive number of ms") or > ``dt_max``
+    ("dt exceeds dt_max"). The state is unchanged by a call that raises, but the slow-loop error (it re-seeds as a
+    restart does and starts the next interval).
+
+    Example (a line follower: the turn rate from a colour sensor)::
+
+        pid = PID(kp=1.5, ki=0.2, kd=0.08, limits=120)
+        while True:
+            base.drive(120, pid.update(34, sensor.hsv().v))
+            wait(10)
+    """
+    p: float
+    """The P term of the last update (output units). Read-only."""
+    i: float
+    """The integral term as it stands (output units). Read-only."""
+    d: float
+    """The filtered derivative term of the last update (output units). Read-only."""
+    output: float
+    """The last output, after the limits. Read-only."""
+    error: float
+    """``setpoint - measurement`` of the last update. Read-only."""
+    saturated: bool
+    """The last output sat on a limit. Read-only."""
+    restarted: bool
+    """The last update was a restart after a measured pause longer than ``dt_max``. Read-only."""
+    def __init__(self, kp: float, ki: float = 0, kd: float = 0, *, filter: float = 20,
+                 limits: Union[None, bool, float, Tuple[float, float]] = None,
+                 integral_limit: Union[None, bool, float] = None, dt_max: float = 200) -> None: ...
+    def update(self, setpoint: float, measurement: float, dt: Optional[float] = None) -> float:
+        """One step of the loop: the output (after the limits). ``dt`` in ms, else measured since the previous
+        update. Allocates only the returned float."""
+    def reset(self) -> None:
+        """Clear the integral, the derivative filter and the previous sample (the settings stay); the next
+        ``update()`` is a first one."""
+    @overload
+    def settings(self) -> Tuple[float, float, float, float, Optional[Tuple[float, float]], Optional[float], float]: ...
+    @overload
+    def settings(self, kp: Optional[float] = None, ki: Optional[float] = None, kd: Optional[float] = None, *,
+                 filter: Optional[float] = None, limits: Union[None, bool, float, Tuple[float, float]] = None,
+                 integral_limit: Union[None, bool, float] = None, dt_max: Optional[float] = None) -> None:
+        """``settings()`` -> ``(kp, ki, kd, filter, limits, integral_limit, dt_max)`` (``limits`` as ``(low, high)``
+        or ``None``). With arguments: changes only what is given (``None`` keeps a value; ``limits=False`` /
+        ``integral_limit=False`` remove them), applied in that order and stopping at the first invalid one; the
+        state is kept (a gain changed mid-run acts from the next update)."""
+
+
+class ADRC:
+    """An active disturbance rejection controller (linear ADRC) for a loop the program runs itself: an
+    extended-state observer estimates the measurement, its rate (order 2) and everything else acting on the
+    plant (the "disturbance": friction, a load, a push, a model error), and the control law cancels it. The
+    maths in C on Core 0 (``motion/user_ctrl.c``; the observer's gains are the board's own motor law's). Nothing
+    in it touches the motors.
+
+    ``ADRC(b0, wc, *, order=1, wo=None, limits=None, dt_max=200)``. The plant it assumes: order 1,
+    ``y' = b0 u + f`` (a speed, a heading through a turn rate, a temperature); order 2, ``y'' = b0 u + f`` (a
+    position through a force or a duty). ``b0``: the plant's gain, measurement units per s^order per unit of output
+    (a heading through ``DriveBase.drive(speed, turn_rate)``: ``b0=1``), either sign, not 0. ``wc``: the loop's
+    bandwidth in rad/s (the owner's ruling, 2026-10-09; it settles in about 4 / ``wc`` s); ``wo``: the observer's, default ``4 * wc`` (following
+    ``wc`` until set). Rule of thumb at a loop period ``T`` s: ``wo * T <= 1`` and ``wc * T <= 0.3`` (at 10 ms:
+    ``wc`` up to 30, ``wo`` up to 100). The observer is fed the output after the limits, so it never winds up
+    against them - while the limits are what the actuator really accepts (``dc()``: 100; ``drive()``: its turn
+    rate): set them. An actuator that ramps (``run()``, ``drive()``) is inside the loop: keep ``wc`` under about a
+    third of its ramp's bandwidth (``dc()`` does not ramp). ``update()``, ``dt``, ``dt_max``, ``restarted``,
+    ``reset()`` and the errors as ``PID`` (``b0`` 0: "b0 must not be 0"; ``order`` not 1 or 2: "order must be 1
+    or 2"); a restart re-seeds the estimate at the measurement and the rate at 0, the disturbance kept.
+
+    Example (hold a heading with the IMU; push the robot and read the push)::
+
+        hold = ADRC(b0=1, wc=6, limits=180)
+        while True:
+            base.drive(0, hold.update(0, imu.heading()))
+            wait(10)
+    """
+    estimate: float
+    """The observer's estimate of the measurement. Read-only."""
+    rate: float
+    """Order 2: the estimated rate of the measurement (per s); order 1: 0.0. Read-only."""
+    disturbance: float
+    """The estimated disturbance f, in measurement units per s^order. Read-only."""
+    output: float
+    """The last output, after the limits (what the observer is fed). Read-only."""
+    error: float
+    """``setpoint - measurement`` of the last update. Read-only."""
+    saturated: bool
+    """The last output sat on a limit. Read-only."""
+    restarted: bool
+    """The last update was a restart after a measured pause longer than ``dt_max``. Read-only."""
+    def __init__(self, b0: float, wc: float, *, order: int = 1, wo: Optional[float] = None,
+                 limits: Union[None, bool, float, Tuple[float, float]] = None, dt_max: float = 200) -> None: ...
+    def update(self, setpoint: float, measurement: float, dt: Optional[float] = None) -> float:
+        """One step: predict over the time since the last update, correct with the measurement, apply the law.
+        Returns the output (after the limits). ``dt`` in ms, else measured."""
+    def reset(self) -> None:
+        """Clear the estimates (the disturbance too); the next ``update()`` seeds at the measurement."""
+    @overload
+    def settings(self) -> Tuple[float, float, float, int, Optional[Tuple[float, float]], float]: ...
+    @overload
+    def settings(self, b0: Optional[float] = None, wc: Optional[float] = None, wo: Optional[float] = None, *,
+                 limits: Union[None, bool, float, Tuple[float, float]] = None, dt_max: Optional[float] = None) -> None:
+        """``settings()`` -> ``(b0, wc, wo, order, limits, dt_max)``. With arguments: changes only what is given
+        (``limits=False`` removes them), in that order, stopping at the first invalid one; the state is kept (a
+        new ``b0`` changes what the disturbance estimate means from then on)."""
+
 
 class battery:
     """Battery readings (a module-like object: ``evn.battery.voltage()``)."""

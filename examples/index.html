@@ -37,7 +37,7 @@
   <li><a href="03_robot/robot_minimal.py">robot_minimal.py</a>  <span>Robot: minimal - Needs: a robot: left wheel motor on port 4 (mounted mirrored), right on port 3, 62.4 mm wheels 170 mm apart, and 40 cm of clear floor ahead</span></li>
   <li><a href="03_robot/robot_minimal.evnblocks">robot_minimal.evnblocks</a>  <span>Robot: minimal - Needs: a robot: left wheel motor on port 4 (mounted mirrored), right on port 3, 62.4 mm wheels 170 mm apart, and 40 cm of clear floor ahead</span></li>
   <li><a href="03_robot/robot_complete.py">robot_complete.py</a>  <span>Robot: the whole DriveBase API - Needs: a robot: left wheel motor on port 4 (mounted mirrored), right on port 3, 62.4 mm wheels</span></li>
-  <li><a href="03_robot/robot_complete.evnblocks">robot_complete.evnblocks</a>  <span>Robot: every block - Needs: a robot: left wheel motor on port 4 (mounted mirrored), right on port 3, 62.4 mm wheels 170 mm apart, an EVN IMU on I2C port 3 fixed flat to the chassis, and 40 cm of clear floor ahead and 20 cm to each side. Keep the robot still while the program starts (the IMU settles in 8 to 25 s).</span></li>
+  <li><a href="03_robot/robot_complete.evnblocks">robot_complete.evnblocks</a>  <span>Robot: every block - Needs: a robot: left wheel motor on port 4 (mounted mirrored), right on port 3, 62.4 mm wheels 170 mm apart, an EVN IMU on I2C port 3 fixed flat to the chassis, and 40 cm of clear floor ahead and 20 cm to each side (the robot also pivots about 45 degrees on its right wheel and back). Keep the robot still while the program starts (the IMU settles in 8 to 25 s).</span></li>
 </ul>
 <h2>Pose (where the robot is) <small>position and heading from the wheels, an IMU and a compass</small></h2>
 <ul>
@@ -171,6 +171,13 @@
   <li><a href="22_data_log/datalog_minimal.evnblocks">datalog_minimal.evnblocks</a>  <span>Data log: minimal - Needs: a motor on port 1, free to turn; an EVN IMU module on I2C port 1, kept still</span></li>
   <li><a href="22_data_log/datalog_complete.py">datalog_complete.py</a>  <span>Data log: complete - Needs: a motor on port 1, free to turn; an EVN IMU module on I2C port 1, kept still; a battery</span></li>
   <li><a href="22_data_log/datalog_complete.evnblocks">datalog_complete.evnblocks</a>  <span>Data log: complete - Needs: a motor on port 1, free to turn; an EVN IMU module on I2C port 1, kept still; a battery pack</span></li>
+</ul>
+<h2>Controllers (PID and ADRC) <small>your own control loops: a line follower, a heading hold</small></h2>
+<ul>
+  <li><a href="23_controllers/controllers_minimal.py">controllers_minimal.py</a>  <span>Controllers: minimal - Needs: a robot: left wheel motor on port 4 (mounted mirrored), right on port 3, 62.4 mm wheels 170 mm apart; an EVN colour sensor on I2C port 2 facing the floor a few mm up, over the edge of a dark line on a light floor</span></li>
+  <li><a href="23_controllers/controllers_minimal.evnblocks">controllers_minimal.evnblocks</a>  <span>Controllers: minimal - Needs: a robot: left wheel motor on port 4 (mounted mirrored), right on port 3, 62.4 mm wheels 170 mm apart; an EVN colour sensor on I2C port 2 facing the floor a few mm up, over the edge of a dark line on a light floor</span></li>
+  <li><a href="23_controllers/controllers_complete.py">controllers_complete.py</a>  <span>Controllers: complete - Needs: a robot: left wheel motor on port 4 (mounted mirrored), right on port 3, 62.4 mm wheels 170 mm apart;</span></li>
+  <li><a href="23_controllers/controllers_complete.evnblocks">controllers_complete.evnblocks</a>  <span>Controllers: complete - Needs: a robot: left wheel motor on port 4 (mounted mirrored), right on port 3, 62.4 mm wheels 170 mm apart; an EVN colour sensor on I2C port 2 facing the floor a few mm up, over the edge of a dark line on a light floor; an EVN IMU on I2C port 1</span></li>
 </ul>
 <h2>Extended Peripherals <small>HiTechnic NXT colour sensor and compass, HuskyLens, VL53L1X, TCS3430</small></h2>
 <h3>HiTechnic colour sensor <small>HiTechnic NXT Color Sensor V1 / V2 (NXT cable adapter, 100 kHz)</small></h3>
