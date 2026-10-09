@@ -98,7 +98,7 @@ If the shaft cannot turn, or the measurement does not fit, `calibrate()` raises 
 
 The IMU calibration measures the gyro's bias (the small turn rate it reads while standing still), the accelerometer's error, and which of the sensor's axes points up. It is written into the chip's own offset registers, so the heading, the tilt, the raw readings and `evn.Pose` all use it. Afterwards:
 
-- **the gyro is right from the first sample**: `ready()` comes as soon as the robot is still, instead of 8–25 s later, and `DriveBase.use_gyro(True)` does not have to wait;
+- **the gyro is right from the first sample**: `ready()` comes as soon as the robot is still, instead of 8–25 s later, and `DriveBase.use_gyro(True)` does not have to wait. The bias drifts a little with temperature, so until the IMU's own gyro calibration lands (8–25 s still) the heading can still creep a fraction of a degree: `imu.heading_confidence()` reads 0.5 until then and 1 after, for a program that waits for it;
 - **the robot reads level** (`tilt()` about 0) standing the way it was calibrated;
 - the IMU's `top` axis is set from gravity. Gravity cannot tell forward, so the `front` axis is kept where it can be — check it (the IMU row's pencil button → **axes**, or `imu.axes()`).
 

@@ -74,6 +74,13 @@ clock = StopWatch()
 while not imu.ready() and clock.time() < 35000:
     wait(100)
 print("ready:", imu.ready(), "after %.1f s" % (clock.time() / 1000))
+# ready() is the quick start. heading_confidence() says more: 0 not ready, 0.5 ready but the IMU has not yet
+# measured its gyro itself (the heading may still creep a little), 1 once it has (8 to 25 s still). Wait for 1,
+# with a time limit, when the heading must be at its steadiest.
+print("Keep it still a little longer: the IMU measures its gyro itself ...")
+while imu.heading_confidence() < 1 and clock.time() < 35000:
+    wait(100)
+print("heading confidence", imu.heading_confidence(), "after %.1f s" % (clock.time() / 1000))
 
 # --- step 3: heading and orientation ---------------------------------------------------------------
 imu.reset_heading()                              # the way the robot points now is 0

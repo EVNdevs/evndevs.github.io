@@ -207,7 +207,8 @@ class Motor:
                  reset_angle: bool = True, profile: Optional[float] = None, speed_unit: int = SpeedUnit.DEG_S,
                  *, model: Optional[str] = None) -> None:
         """``gears``: ``[12, 36]`` or ``[[12, 36], [20, 16, 40]]``; values are then in output degrees.
-        ``reset_angle=True`` zeroes ``angle()`` at construction. ``profile``: position tolerance (deg)
+        ``reset_angle=True`` zeroes ``angle()`` at construction, and again at each program run from the user
+        button for a Motor an imported module keeps (``False`` keeps the count). ``profile``: position tolerance (deg)
         for ``done()``, must be positive; by default two encoder edges and at least 1 deg, or half the detent
         pitch plus a quarter edge on a motor whose rotor cogs (1 deg on a LEGO motor, 3.3 deg on the Pololu 25D, which rests in the
         detent nearest its target). ``speed_unit=SpeedUnit.PERCENT`` makes every speed a
@@ -485,7 +486,11 @@ class DriveBase:
     def state(self) -> Tuple[float, float, float, float]:
         """(distance mm, drive speed mm/s, angle deg, turn rate deg/s)."""
     def reset(self, distance: float = 0, angle: float = 0, /) -> None:
-        """Start ``distance()`` and ``angle()`` again from these values."""
+        """Start ``distance()`` and ``angle()`` again from these values. A program run again from the user
+        button does this by itself to a base an imported module kept (Python does not run the module again):
+        the new run starts at ``distance()`` and ``angle()`` 0 with no maneuver in force, its ``settings()``,
+        ``follower()``, ``use_gyro()`` and ``pose`` kept, and its ``Pose`` re-framed as ``Pose.reset()``
+        describes. A kept ``Motor`` reads ``angle()`` 0 again if it was built with ``reset_angle=True``."""
     def done(self) -> bool:
         """True when both wheels have completed their maneuver - ``Motor.done()``'s meaning: profile complete AND
         inside ``control.target_tolerances()`` - or are passive; like ``Motor``, the only other way a ``wait=True``
@@ -1671,7 +1676,8 @@ class IMU:
     rest keeps its heading: while it is still (and no motor drives) the firmware measures the small gyro
     bias a calibration leaves (its drift with temperature) and takes it off ``heading()`` and
     ``angular_velocity()``, so the heading no longer creeps in the seconds before the DMP's own
-    calibration lands. A bias is taken off only once it stands out of the gyro's noise, so while the
+    calibration lands - most of it: ``heading_confidence()`` reads 0.5 until that landing and 1 after, for a
+    program that waits it out. A bias is taken off only once it stands out of the gyro's noise, so while the
     robot moves what is left is a bias still too small to tell - under about 2.2 degrees a minute right
     after a short rest, 1.4 two seconds after the robot stops, 0.8 from about 2.5 s, 0.6 after four
     (estimated from the gyro's noise) -
@@ -1686,8 +1692,34 @@ class IMU:
     ``OSError(EIO)`` when both slots are taken, ``OSError(ETIMEDOUT)`` for no first sample;
     ``OSError("IMU on port %d not responding")`` from **every** getter while the module is unplugged
     (``heading()``, ``stationary()`` and ``ready()`` included); ``ValueError("IMU is closed")`` after
-    ``close()``; ``ValueError("orientation needs the DMP: imu.dmp(True)")`` from the quaternion-based
-    getters in raw mode.
+    ``close()``, and on an older object once the port's IMU is closed (the newer object's ``close()``, or an
+    ``IMU(port, calibrate=True)`` whose calibration failed); ``ValueError("IMU(n) was replaced by a newer
+    IMU(n)")`` from every call on an object a newer ``IMU(port)`` took over; ``ValueError("orientation needs the DMP: imu.dmp(True)")`` from the
+    quaternion-based getters in raw mode.
+
+    A second ``IMU(port)`` while an older object holds the port **takes the running IMU over**: no reset
+    and no DMP load (it returns in a few milliseconds), so ``heading()`` with its ``reset_heading()`` zero,
+    the learnt gyro bias and ``ready()``, the settings, the rate and the axes all go on as they were, and an
+    ``evn.Pose`` (or a ``DriveBase(..., imu=port)``) using the port keeps its IMU without a gap. The older
+    object is replaced: every call on it raises ``ValueError("IMU(n) was replaced by a newer IMU(n)")``,
+    ``print()`` shows ``replaced``, its ``close()`` does nothing (it can never stop the newer object's
+    IMU), and a ``calibrate(wait=False)`` it had running stops with nothing stored. So a re-run cell or a
+    helper that builds ``IMU(port)`` again keeps the heading.
+    A program run again from the user button keeps its IMU: nothing closes the IMU between two button
+    runs, so the new run keeps the running DMP, its learnt gyro bias and ``ready()`` (no restart, no wait)
+    and every setting the last run gave it (the rate, ``axes()``, ``dmp()``, ``filter()``, ``ranges()``,
+    ``settings()``) - an IMU an imported module set up stays set up, as Python does not run the module
+    again - and starts at ``heading()`` 0, as Pybricks resets the heading at a program's start. A
+    ``calibrate(wait=False)`` or ``calibrate_gyro()`` the last run left running stops, with nothing stored.
+    The run's first ``IMU(port)`` starts at heading 0 too, as on a first run, unless the run has already
+    called ``reset_heading()``; a later ``IMU(port)`` in the run keeps the heading. So keep one IMU object
+    per port: a module's IMU whose heading the run has not set with ``reset_heading()`` goes to heading 0 at
+    the run's first ``IMU(port)``. A setting one run changes is still in force in the next, so set what the
+    program needs at its start (a kept ``DriveBase`` and ``Pose`` start the run fresh too: see them). A
+    soft reset closes every IMU (a Run from the editor starts with one), so its next ``IMU(port)`` starts
+    the chip with the defaults.
+    ``IMU(port, calibrate=True)`` still restarts the chip (a Pose drops the IMU while it restarts and takes
+    it back, as after an unplug).
 
     Known limits: the gyro filter values 250 Hz and 3600 Hz are refused - they select the chip's
     8 kHz internal rate, where the sample-rate divider is ignored and the DMP's time base breaks.
@@ -1701,7 +1733,11 @@ class IMU:
     def __init__(self, port: int, /, *, calibrate: bool = False) -> None:
         """Start the IMU on I2C port 1..16. The port's stored calibration (``calibrate()``) is applied
         by default: its gyro and accelerometer offsets and its axes. ``calibrate=True`` runs a new one
-        first (~2 s, the robot still on a level surface); a failed one raises ``RuntimeError``."""
+        first (~2 s, the robot still on a level surface); a failed one raises ``RuntimeError``. On a port
+        an older ``IMU`` object holds, it takes that running IMU over instead of starting it again (its
+        heading, bias and settings kept; the older object is replaced). A program run again from the
+        button keeps the running IMU too, with the settings the last run gave it (its bias and ``ready()``
+        kept), but starts at heading 0; ``calibrate=True`` restarts it."""
     def calibrate(self, wait: bool = True, *, pose: int = 0) -> Optional[dict]:
         """About 2 s with the robot still on a level surface: measures the gyro bias, the
         accelerometer offsets and which sensor axis points up, stores them in flash for this port with
@@ -1749,21 +1785,52 @@ class IMU:
         is left is the change of that bias after the last rest and the measurement's uncertainty (see
         ``IMU``)."""
     def reset_heading(self, angle: float = 0, /) -> None:
-        """The current pose reads as ``angle``."""
+        """The current pose reads as ``angle``. In a program run again from the button, a later
+        ``IMU(port)`` of the same run then keeps the heading, the run's first one included (see ``IMU``)."""
     def up(self) -> int:
         """The ``Side`` that faces up (``Side.TOP`` when level)."""
     def stationary(self) -> bool:
         """True while angular velocity and acceleration vary less than the ``settings()`` thresholds
-        over 250 ms."""
+        over the last 250 ms of readings (as many readings as 250 ms holds at the IMU's rate). A
+        raw-mode IMU no ``Pose`` reads is read in turn with the other devices, so with many open those
+        readings span longer (about 1.2 s with nine devices at 1 kHz) and ``stationary()`` turns True
+        up to about 2.5 s after a motion stops (about 0.6 s otherwise)."""
     def ready(self) -> bool:
         """True once the gyro bias has settled and the orientation has converged: stationary, the
         calibrated gyro under the threshold on every axis, and (DMP) the orientation agreeing with the
         accelerometer within 5 degrees (with ``dmp(True, gyro_cal=False)``, whose DMP never learns the
         bias, also once it has settled where the bias holds it). With a stored calibration that is about
-        a second of stillness (a few more on a module mounted on its side); without one the DMP
-        calibrates 8..25 s into stillness and the orientation settles a second or two after; raw mode,
-        or ``dmp(True, gyro_cal=False)``, averages 1 s by itself after 1 s still. A ``reset_heading()``
-        once it is True holds."""
+        a second of stillness (a few more on a module mounted on its side); without one up to 8..25 s
+        (the DMP calibrates that far into stillness and the orientation settles a second or two after), or
+        at once when the raw gyro bias is under the threshold, while the heading drifts at that bias until
+        the DMP has learnt it (``heading_confidence()`` 0.5); raw mode,
+        or ``dmp(True, gyro_cal=False)``, averages a second of readings by itself after 1 s still (for 2 s
+        at most when no ``Pose`` reads the IMU: a raw-mode one is then read in turn with the other
+        devices, so with many open it collects fewer; one a ``Pose`` reads always takes the whole
+        second's). A ``reset_heading()`` once it is True holds. ``heading_confidence()`` says whether the heading can still creep after it."""
+    def heading_confidence(self) -> float:
+        """How far ``heading()`` can be trusted not to creep, read from the IMU's state: ``0`` not ``ready()``;
+        ``0.5`` ``ready()``, but the DMP has not calibrated its gyro yet (the heading may creep); ``1`` calibrated.
+
+        - ``0`` - not ``ready()`` yet: the heading may still move by degrees;
+        - ``0.5`` - ``ready()``, but the gyro bias the heading builds on has not been measured on this module
+          since it started: the DMP's own gyro calibration, which lands 8..25 s into stillness (about 14 s on the
+          bench), has not come yet. With a stored calibration (``calibrate()``) the heading can still creep by its
+          temperature drift until then - a fraction of a degree (0.06..0.26 degrees over 25 s on the bench;
+          up to ~1.5 before 0.2.60). Without one, a module whose gyro bias happens to be small reads ``ready()``
+          at once and its heading drifts at that bias - degrees in those seconds - until the DMP has learnt it.
+          ``dmp(True, gyro_cal=False)`` stays here for good (its DMP never learns a bias);
+        - ``1`` - ``ready()`` and the bias measured: the DMP's own calibration has landed (raw mode: as soon as
+          ``ready()``, its heading builds on the driver's own average).
+
+        ``ready()`` stays the ~1 s start (owner, 2026-10-02); a program that needs the steadiest heading waits
+        for 1 with the robot still and a time limit (the DMP needs stillness to calibrate, and a robot handled
+        meanwhile may not calibrate for a long time), then calls ``reset_heading()``. It drops back to 0 with
+        ``ready()`` (a setter that restarts the DMP, a re-plug) and to 0, then 0.5, after ``calibrate()`` on a
+        running IMU (the DMP learns again). How the landing is seen: the IMU's DMP keeps its learnt gyro bias at
+        one memory location, which the firmware reads (about 0.5 ms of the I2C bus) in place of every other
+        once-a-second temperature reading while the robot is at rest and the landing not yet seen - never while it
+        moves or a motor drives, never once seen."""
     @overload
     def settings(self) -> Tuple[float, float, float]: ...
     @overload
@@ -1806,7 +1873,10 @@ class IMU:
     def calibrate_gyro(self, samples: int = 500, /) -> Optional[Tuple[int, int, int]]:
         """Average ``samples`` (1..65535) still readings and subtract the bias; returns the bias in
         counts, or ``None`` while the DMP's own gyro calibration owns the bias (``dmp(True)`` with its
-        default ``gyro_cal=True``); with ``dmp(True, gyro_cal=False)`` it measures and returns it."""
+        default ``gyro_cal=True``); with ``dmp(True, gyro_cal=False)`` it measures and returns it. One
+        reading per new sample read, so with many devices open a raw IMU collects them more slowly than its
+        rate; it waits while readings keep coming and raises ``OSError`` only when none has come for three
+        periods plus the other devices' turns plus 0.1 s."""
     @overload
     def ranges(self) -> Tuple[int, int]: ...
     @overload
@@ -1827,9 +1897,10 @@ class IMU:
         """DMP mode 12..200 Hz, raw mode 4..1000 Hz. In DMP mode the change is live: the orientation,
         ``heading()`` and ``ready()`` carry on. The DMP runs at 200 Hz divided by a whole number (200,
         100, 66.7, 50, 40, ... 12.5): another rate runs at the next of these up (150 at 200, 12 at 12.5),
-        and ``sample_rate()`` returns the rate asked for. Raw mode reads the chip once a period: at the default
-        1000 Hz a busy loop beside the IMU alone kept about 12-14 % of its speed on the bench board (12.8 %
-        on 0.2.59). A lower rate gives the time back."""
+        and ``sample_rate()`` returns the rate asked for. Raw mode asks the chip once a period, in turn with the
+        other open devices (the DMP's readings go ahead of them, raw ones only while a ``Pose`` reads the
+        IMU): at the default 1000 Hz a busy loop beside the IMU alone kept about 12-14 % of its speed on the
+        bench board (12.8 % on 0.2.59). A lower rate gives the time back."""
     @overload
     def dmp(self) -> bool: ...
     @overload
@@ -1850,7 +1921,8 @@ class IMU:
         """Milliseconds since the sensor measured the cached reading (in DMP mode, when the chip produced
         the packet - after a busy moment the queued packets are read a little late and ``age()`` says so)."""
     def close(self) -> None:
-        """Put the MPU-6500 to sleep and release the port. Idempotent; every other call then raises ``ValueError("IMU is closed")``."""
+        """Put the MPU-6500 to sleep and release the port. Idempotent; every other call then raises ``ValueError("IMU is closed")``.
+        On an object a newer ``IMU(port)`` replaced it does nothing: the IMU is the newer object's."""
     def _fifo(self) -> Tuple[int, int, int, int, int, int, int, bool]:
         """Bench hook, not for programs: ``(fifo_resets, dmp_restarts, pkt_index, pkt_epoch, pkt_time_us,
         timestamp_us, dmp_up, attitude_ok)`` - the driver's FIFO resets (``dmp_restarts`` of them escalated to a DMP
@@ -1862,7 +1934,12 @@ class IMU:
     def _factory_offsets(self) -> None:
         """Bench hook, not for programs: this object runs as an uncalibrated module from now on (the chip's
         factory trim, no gyro offset) until ``close()``; the port's stored calibration in flash is left alone
-        and the next ``IMU()`` applies it again."""
+        and the next ``IMU()`` after ``close()`` applies it again (a take-over keeps the driver as it runs)."""
+    def _skew_offsets(self, x: float, y: float, z: float, /) -> None:
+        """Bench hook, not for programs: this object runs on the gyro offsets in force plus ``(x, y, z)`` deg/s in
+        the sensor's own axes until ``close()`` (the DMP learns its gyro bias again, so ``heading_confidence()``
+        drops and comes back); the port's stored calibration in flash is left alone and the next ``IMU()`` after
+        ``close()`` applies it again (a take-over keeps the driver as it runs). ``ValueError`` without a stored calibration."""
 
 
 class MatrixLED:
@@ -2710,10 +2787,11 @@ class VL53L1X:
     def status(self) -> str:
         """ST's range status of the latest measurement: ``'valid'``, ``'sigma fail'``, ``'signal fail'``,
         ``'min range fail'``, ``'out of bounds'``, ``'hardware fail'``, ``'valid, no wrap check'``,
-        ``'wrap around'``, ``'crosstalk fail'``, ``'synchronisation'``, ``'merged pulse'``, ``'too close'``
-        or ``'unknown'``; under a ``distance_threshold()`` also ``'not detected'`` (no measurement met it).
-        Only ``'valid'`` gives a ``distance()``. A ``roi()`` the chip cannot select reads ``'min range
-        fail'`` (ST's status 13, UM2555 section 4.2): ``raw()[1]`` is 13 then."""
+        ``'wrap around'``, ``'crosstalk fail'``, ``'synchronisation'``, ``'merged pulse'``, ``'too close'``,
+        ``'roi fail'`` or ``'unknown'``; under a ``distance_threshold()`` also ``'not detected'`` (no
+        measurement met it). Only ``'valid'`` gives a ``distance()``. ``'roi fail'``: a ``roi()`` the chip
+        cannot select (ST's status 13, UM2555 section 4.2; ``raw()[1]`` is 13) - shrink it or move its
+        centre one SPAD inwards; firmware 0.2.62 and earlier read it ``'min range fail'``, as status 3."""
     def raw(self) -> Tuple[int, int, int, int]:
         """``(distance mm, status number, signal kcps, ambient kcps)`` of the latest measurement, whatever
         the status (status 0 = valid; 254 = not detected under a ``distance_threshold()``, the other three 0)."""
@@ -3030,9 +3108,10 @@ class TCS3430:
 
 def core1_status() -> Optional[Tuple[int, int, int, int, int, int]]:
     """``(ticks, period_min_us, period_max_us, exec_max_us, missed, late)`` of the 1 kHz motion engine,
-    or ``None`` when it is not running. ``missed`` = deadlines the alarm ISR itself skipped (a flash
-    lockout gap); ``late`` = loop-body overruns, ticks whose body ran past its 1 ms so that two deadlines
-    were pending when it came back - the count ``exec_max_us`` alone cannot give. Both must stay 0."""
+    or ``None`` when it is not running. ``missed`` = deadlines lost to a gap (a flash write parks the motion
+    core: the deadlines it skipped, and one a delayed tick then ran into); ``late`` = loop-body overruns, the
+    deadlines a tick that ran past its 1 ms dropped - the count ``exec_max_us`` alone cannot give. Both must
+    stay 0 while the motors run."""
 
 def stop_all() -> None:
     """Coast every motor (and stop every servo sweep); returns once the motors have taken it (at most 2 ms),
@@ -3054,11 +3133,11 @@ def configure_motor(port: int, model: Optional[str], *, counts_per_rev: Optional
     control class, limits 900 deg/s and 10000 deg/s^2; another ratio of the family (1:10 to 1:360) is a
     custom motor with 7 x 4 x the ratio counts) or ``"CM22-2230 12V 1:49"`` (``"cm22_49"``: a 22 mm 12 V
     planetary gearmotor, 1:49, with a 16 ppr hall encoder on the motor shaft, 3136 counts per revolution,
-    185 rpm = 1110 deg/s no-load at 12 V - about 740 deg/s on the pack -, the port capped at 12 V (above the
+    185 rpm = 1110 deg/s no-load at 12 V - about 760 deg/s on the pack -, the port capped at 12 V (above the
     pack: it never binds), EV3 Large control class, limits 700 deg/s and 5000 deg/s^2; do not hold it
     stalled: on a full pack its stall reaches the gearbox's 8.5 kg.cm maximum and about 5x its rated
-    current; its figures were measured through a 1:1 gear train and are re-measured on a bare motor
-    later; another ratio of the family
+    current; its figures were measured on two bare motors and its 1:49 checked by turning the shaft
+    against a mark; another ratio of the family
     (1:3.5 to 1:510) is a custom motor with 16 x 4 x the ratio counts) for a library motor; ``"custom"`` for any other DC motor with a quadrature encoder, described by
     ``counts_per_rev`` (encoder edges per OUTPUT revolution = one channel's pulses x 4 x the gear ratio;
     a LEGO motor is 720), ``rated_voltage`` (mV, the port's voltage cap; 0 = none) and ``no_load_speed``
@@ -3259,7 +3338,9 @@ class Pose:
     is the idiom - ``__exit__`` is ``close()``. A ``Pose`` dropped inside a function, or closed, is released at
     once; a bare temporary in the same statement scope (``Pose(...).heading()`` then ``Pose(...)``) can survive
     one collection and still block the next constructor - use a function, ``with``, or ``close()``.
-    One object per robot (``OSError`` for a second one until ``close()``). Frames: x East / y North in mm
+    One object per robot: a second ``Pose(...)`` on the same sources (wheel ports in order, IMU port, compass
+    port) takes the running one over (the older one then raises ``ValueError``: replaced), one on other
+    sources raises ``OSError`` until ``close()``. Frames: x East / y North in mm
     (without a compass, x is +90 degrees from the heading at ``reset()``), heading clockwise from north in
     degrees, speed mm/s, yaw rate deg/s clockwise. With a compass the heading is the compass's from the moment it
     joins (its ``north()`` reference plus ``declination``; not in a turn faster than 30 deg/s; the position so far is
@@ -3286,9 +3367,15 @@ class Pose:
     source whose driver is lost leaves the set by itself and rejoins when running; ``bounded()`` is False while the
     live set cannot bound the position (IMU alone).
     When the board is busy for a moment (a long ``print``, a big calculation) the wheels carry the travel over
-    it, and with an ``IMU`` in its default DMP mode the heading over it is the gyro's once the readings the IMU
+    it (the estimator runs on the motor core and keeps stepping on the wheels every 5 ms meanwhile), and with an ``IMU`` in its default DMP mode the heading over it is the gyro's once the readings the IMU
     kept (up to 140 ms) are read - not the wheel difference, which a turning robot's scrubbing tyres would put
     into the heading. In raw mode (``IMU.dmp(False)``) the IMU keeps no readings: the wheels' heading stands.
+    The pose's sources are read ahead of the other I2C devices: the IMU in DMP mode, the compass, and a
+    raw-mode IMU while a ``Pose`` reads it (a raw IMU no ``Pose`` reads takes its turn with the others, and
+    goes back to that when the ``Pose`` closes).
+    The estimator runs on the board's second core, the motor core: if that core has stopped on a fault (every motor
+    coasted), the readings raise ``RuntimeError`` and ``Pose(...)``, ``reset()`` and ``settings(...)`` raise
+    ``OSError`` (EIO: the motor core did not answer) - ``evn.reset()`` starts it again.
     Every method raises ``ValueError("Pose is closed")`` after ``close()``."""
     def __init__(self, left: Optional[int] = None, right: Optional[int] = None, wheel_diameter: Optional[float] = None,
                  axle_track: Optional[float] = None, *, gear_ratio: float = 1.0, imu: Optional[int] = None,
@@ -3323,7 +3410,7 @@ class Pose:
         raises ``OSError`` and turns it off. The pose, the heading and the gyro bias are kept; only
         the wheel parameters and their covariance restart. NOT stored: a power cycle brings back the constructor's
         numbers, so a program that needs the calibrated track sets it at start-up. The setter raises ``ValueError``
-        without motor ports."""
+        without motor ports or for a value out of range, ``OSError`` (EIO) when the motor core did not answer."""
     def bounded(self) -> bool:
         """False while the live sources cannot bound the position (IMU alone, IMU + compass, none)."""
     def sources(self) -> Tuple[str, ...]:
@@ -3342,9 +3429,9 @@ class Pose:
         """A ``Pose`` dropped without ``close()`` (a function-local, a re-run cell) stops its service at the next
         garbage collection - and the next ``Pose(...)`` runs one collection before it decides, so a Pose dropped
         inside a function is released at once with no ``gc.collect()`` of your own. A bare temporary in the same
-        statement scope (``Pose(...).heading()`` followed by ``Pose(...)``) can survive that one collection and
-        still raise "already exists": use a function, ``with``, or ``close()`` (which stops the service
-        immediately). A ``DriveBase`` holds the Pose it built, was given (``pose=``) or adopted
+        statement scope (``Pose(...).heading()`` followed by ``Pose(...)``) can survive that one collection: a
+        ``Pose(...)`` on the same sources then takes it over, one on other sources raises "already exists":
+        use a function, ``with``, or ``close()`` (which stops the service immediately). A ``DriveBase`` holds the Pose it built, was given (``pose=``) or adopted
         (``use_gyro(True)``), so that Pose is never collected while the base uses it."""
     def reset(self, x: float = 0, y: float = 0, heading: float = 0) -> None:
         """Set the pose (mm, mm, degrees clockwise from north); biases and wheel parameters are kept. A reset is a
@@ -3364,19 +3451,31 @@ class Pose:
         compass then corrects the heading's drift in the frame, so ``reset(heading=0)`` gives a
         heading that starts at 0 and stays within the compass's local accuracy of it. Reset where the compass reads
         the Earth's field (away from steel): a disturbance there is taken into the frame. A new compass frame under
-        a running Pose (``Compass.north()``, a calibration) leaves a frame ``reset()`` chose alone."""
+        a running Pose (``Compass.north()``, a calibration) leaves a frame ``reset()`` chose alone.
+        A program run again from the user button does ``reset()`` by itself to a Pose an imported module kept
+        (its own, or its ``DriveBase``'s): x, y and the heading 0, with a compass among its sources too (the compass
+        then keeps the new frame); its sources, settings and what it has learnt are kept. Raises ``OSError`` (EIO)
+        when the motor core did not answer."""
     def close(self) -> None:
         """Stop the pose service and release it, so a new ``Pose`` can be made. Idempotent; every other call then raises ``ValueError("Pose is closed")``."""
     def _stats(self) -> Tuple[int, int, int, int, int, int, int, int, int]:
         """Bench diagnostic: (steps, rejected wheel updates, rejected lateral updates, rejected magnetometer updates,
-        the yaw-rate row's reject run, wheel-gate escapes taken, steps with a stale IMU, steps that integrated a
-        time gap - a Core 0 stall longer than 100 ms, whose exact encoder travel is integrated as one arc, compass
+        the yaw-rate row's reject run, wheel-gate escapes taken, steps the wheels took while the IMU was silent or
+        behind - its newest sample older than three of its periods (15 ms in DMP mode), as through a busy moment of
+        the program, which the motor core steps on the wheels every 5 ms -, steps that integrated a time gap - over
+        100 ms between two of the motor core's steps, whose exact encoder travel is integrated as one arc -, compass
         samples dropped before the filter because their field was not the Earth's)."""
     def _bias(self) -> Tuple[float, float]:
         """Bench diagnostic: (the filter's gyro bias deg/s, its sigma deg/s) - in the filter's frame,
         counter-clockwise positive, unlike ``heading()``."""
+    def _slices(self) -> Tuple[int, int, int, int, int, int, int, int, int, int]:
+        """Bench diagnostic: the estimator's work on the motor core since the Pose started - (ticks, publishes,
+        predictions, rows, compass steps, commands, torn snapshots, snapshot retries, re-framings, refused commands);
+        a rate is the difference of two reads over a window."""
     def _step(self, dt: float, gyro_z: float, accel_x: float, accel_y: float, wl: float, wr: float, mag: float, /) -> Tuple[float, ...]:
-        """Bench hook: one filter step on SI values (nan = absent source); returns the SI state."""
+        """Bench hook: one filter step on SI values (nan = absent source); returns the SI state. A test Pose only
+        (built with ``_test=True``): ``ValueError`` on any other. A test Pose's ``sources()`` reads empty: no
+        driver feeds it, only the values passed here."""
 
 
 class DataLog:

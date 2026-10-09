@@ -1032,9 +1032,10 @@
         {
             type: 'evn_imu_stationary',
             message0: 'IMU %1 %2',
-            args0: [portField(I2C_PORTS), { type: 'field_dropdown', name: 'WHAT', options: [['is still', 'stationary()'], ['is ready (gyro settled)', 'ready()']] }],
+            args0: [portField(I2C_PORTS), { type: 'field_dropdown', name: 'WHAT', options: [['is still', 'stationary()'], ['is ready (gyro settled)', 'ready()'],
+                ['has calibrated its gyro (steadiest heading)', 'heading_confidence()']] }],
             output: 'Boolean', style: 'evn_sense_blocks',
-            tooltip: 'is still: the robot is not moving or turning right now. is ready: the gyro has settled and the IMU\'s tilt agrees with gravity (a calibrated IMU about a second after the robot is still; otherwise 10 to 27 s still), which "robot follows its gyro" waits for.',
+            tooltip: 'is still: the robot is not moving or turning right now. is ready: the gyro has settled and the IMU\'s tilt agrees with gravity (a calibrated IMU about a second after the robot is still; otherwise 10 to 27 s still), which "robot follows its gyro" waits for. has calibrated its gyro: ready, and the IMU has also measured its gyro itself (8 to 25 s of keeping the robot still), so the heading no longer creeps. Wait for it, with a time limit, before setting the heading when you need it steadiest.',
         },
         {
             type: 'evn_imu_reset_heading',
@@ -2853,8 +2854,9 @@
     generator.forBlock['evn_imu_setup'] = setupGenerator('IMU');
     generator.forBlock['evn_imu_angle'] = pick('IMU', 'WHAT');
     generator.forBlock['evn_imu_stationary'] = function (block) {
-        const what = block.getFieldValue('WHAT') === 'ready()' ? 'ready()' : 'stationary()';
-        return [deviceRef(block, 'IMU') + '.' + what, Order.FUNCTION_CALL];
+        const what = block.getFieldValue('WHAT');
+        if (what === 'heading_confidence()') { return [deviceRef(block, 'IMU') + '.heading_confidence() == 1', Order.RELATIONAL]; }
+        return [deviceRef(block, 'IMU') + '.' + (what === 'ready()' ? 'ready()' : 'stationary()'), Order.FUNCTION_CALL];
     };
     generator.forBlock['evn_imu_reset_heading'] = function (block) {
         const angle = generator.valueToCode(block, 'ANGLE', Order.NONE);
@@ -3245,7 +3247,8 @@ def ${generator.FUNCTION_NAME_PLACEHOLDER_}(name):
      * "robot follows its gyro" (the DriveBase then builds its own Pose) - still does, so the Python block is
      * warned in the editor: serial ports claim their port ("serial port 1 is already open" / "... is used by a
      * Bluetooth object", evn_periph.c uart_make_new, evn_bluetooth.c), and a robot has one Pose ("a Pose object
-     * already exists", evn_pose.c). The warning names the fix; nothing in the generated code changes. */
+     * already exists", evn_pose.c; one on the same sources takes the running one over and the older then raises
+     * ValueError, OQ 25). The warning names the fix; nothing in the generated code changes. */
     const SERIAL_BLOCK = /^evn_(uart|bluetooth)_/;
     function runs(b) { return b.isEnabled() && !b.getInheritedDisabled(); }
     /** The serial ports ('1', '2') the top of the program opens, from blocks and from Python-block mentions. */
@@ -3286,7 +3289,9 @@ def ${generator.FUNCTION_NAME_PLACEHOLDER_}(name):
         if (/(?:^|[^\w.])(?:evn\.)?Pose\s*\(/.test(code) || /(?:^|[^\w.])(?:evn\.)?DriveBase\s*\([^)]*\b(?:imu|compass)\s*=/.test(code)) {
             if (usesPose(block.workspace) || gyroImuPort(block) !== '') {
                 return 'This line makes a Pose, but the program already has one (a pose block, or "robot follows its gyro"): a robot has one '
-                    + 'Pose (a DriveBase given imu= or compass= makes one too), so the program would stop here with OSError. Read the '
+                    + 'Pose (a DriveBase given imu= or compass= makes one too), so the program would stop with an error: here with '
+                    + 'OSError, or, when this Pose has the same sources and takes the program\'s over, where the program next reads its '
+                    + 'own (ValueError: replaced). Read the '
                     + 'program\'s own: pose (with pose blocks) or drive_base.pose.';
             }
         }

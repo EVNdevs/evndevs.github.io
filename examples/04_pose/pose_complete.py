@@ -105,8 +105,9 @@ print("geometry: wheel %.1f mm, track %.1f mm" % (wheel, track))
 pose.settings(wheel_diameter=wheel, axle_track=track)   # the same numbers, but it still re-seeds the wheel estimates (it forgets what it learned)
 
 # --- one Pose per robot ---------------------------------------------------------------------------
-# A second Pose raises OSError while this one is open; close() hands the estimator back (the base
-# keeps driving on its wheels alone).
+# A second Pose on other sources raises OSError while this one is open (one on the same sources takes
+# it over, and this one then raises 'replaced'); close() hands the estimator back (the base keeps
+# driving on its wheels alone).
 pose.close()
 
 # A Pose from the IMU alone: a heading, but a position it cannot bound (from the accelerometer

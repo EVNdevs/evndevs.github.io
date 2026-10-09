@@ -179,7 +179,7 @@ Plug the sensor into an I2C port. It measures the distance to what is in front o
 | Call | Notes |
 | :--- | :--- |
 | `tof.distance()` | the distance in mm, or `None` when the measurement is not valid (`status()` says why) or, under a distance threshold, did not meet it |
-| `tof.status()` | ST's range status of the latest measurement: `'valid'`, `'sigma fail'`, `'signal fail'`, `'min range fail'`, `'out of bounds'`, `'hardware fail'`, `'valid, no wrap check'`, `'wrap around'`, `'crosstalk fail'`, `'synchronisation'`, `'merged pulse'`, `'too close'` or `'unknown'`; under a distance threshold also `'not detected'`. Only `'valid'` gives a `distance()`. A `roi()` the sensor cannot use reads `'min range fail'` (ST's status 13, UM2555 section 4.2): `raw()[1]` is 13 then |
+| `tof.status()` | ST's range status of the latest measurement: `'valid'`, `'sigma fail'`, `'signal fail'`, `'min range fail'`, `'out of bounds'`, `'hardware fail'`, `'valid, no wrap check'`, `'wrap around'`, `'crosstalk fail'`, `'synchronisation'`, `'merged pulse'`, `'too close'`, `'roi fail'` or `'unknown'`; under a distance threshold also `'not detected'`. Only `'valid'` gives a `distance()`. `'roi fail'`: a `roi()` the sensor cannot use (ST's status 13, UM2555 section 4.2; `raw()[1]` is 13) - firmware 0.2.62 and earlier read it `'min range fail'`, as status 3 |
 | `tof.raw()` | `(distance mm, status number, signal kcps, ambient kcps)`, whatever the status (status 0 = valid; 254 = not detected, the other three 0) |
 | `tof.distance_mode([mode])` | `'short'` (up to ~1.3 m, copes better with sunlight) or `'long'` (up to ~4 m in the dark, the default); without an argument returns the mode. Any other name raises `ValueError`; switching to `'long'` with a 15 ms budget raises `ValueError` (15 ms is short mode only) |
 | `tof.timing_budget([ms])` | the time per measurement in ms: 15 (short mode only), 20, 33 (the default), 50, 100, 200 or 500 (else `ValueError`; 15 in long mode raises `ValueError`: call `distance_mode('short')` first; so does a budget longer than a non-zero `inter_measurement()`); without an argument returns it. Longer = more precise and longer range, fewer readings |
@@ -259,7 +259,7 @@ The sensor comes with its own factory offset and crosstalk; a port that was neve
 120 112 104  96  88  80  72  64 |  56  48  40  32  24  16   8   0
 ```
 
-So `roi(8, 16, 167)` is the left half and `roi(8, 16, 231)` the right half of the table (UM2555's own two-zone example). A region the chip cannot select (near the edge) reads `status()` `'min range fail'` (ST's status 13, UM2555 section 4.2): shrink it or move the centre one SPAD inwards.
+So `roi(8, 16, 167)` is the left half and `roi(8, 16, 231)` the right half of the table (UM2555's own two-zone example). A region the chip cannot select (near the edge) reads `status()` `'roi fail'` (ST's status 13, UM2555 section 4.2; `'min range fail'` on firmware 0.2.62 and earlier): shrink it or move the centre one SPAD inwards.
 
 **Notes**
 
