@@ -6,7 +6,7 @@ The board itself (`battery`, `button`, `led`, `clock`), the motors on ports 1–
 
 ## Board: `battery`, `button`, `led` and `clock`
 
-The board itself, as parts of the `evn` module (`import evn`, or `from evn import battery, button, led`). Nothing to construct.
+These are parts of the `evn` module (`import evn`, or `from evn import battery, button, led`). You do not construct them.
 
 ### Battery, button and LED
 
@@ -16,7 +16,7 @@ The board itself, as parts of the `evn` module (`import evn`, or `from evn impor
 | `evn.battery.cells()` | `(cell1, cell2)` mV (the pack is always two cells); `None` when no pack is connected |
 | `evn.battery.age()` | ms since the battery reading was taken; `None` when no pack is connected |
 | `evn.battery.present()` | `True` while a pack is connected and reporting |
-| `evn.battery.low(threshold=6600)` | `True` when the pack is low: its mean over about the last second of readings is below `threshold` mV (a float is rounded to the nearest mV), or its weaker cell is below half of it. Once `True` it stays `True` until the pack is back 150 mV above the threshold **and** the weaker cell at half of that, so a motor's sag or the readings' noise does not make it flicker. The cell usually decides first (the pack reads a little more than its two cells together), so `low()` can be `True` while `voltage()` still reads slightly above the threshold, and a pack whose cells have drifted apart stays low with a healthy-looking total. Each threshold keeps its own state (up to four), so a program can warn at one level and stop at another. `False` with no pack; a negative threshold raises `ValueError`. **Why 6600:** on a full run-down (four motors at ±800 deg/s) the pack fell about 200 mV an hour to 6.6 V, then dropped off a cliff, and its own protection switched the board off at about 6.14 V with no warning; the default would have tripped about 35 minutes before that cut (on the weaker cell; the pack total crossed 6.6 V 30 minutes before, 6.4 V only 10) |
+| `evn.battery.low(threshold=6600)` | `True` when the pack is low: its mean over about the last second of readings is below `threshold` mV (a float is rounded to the nearest mV), or its weaker cell is below half of it. Once `True` it stays `True` until the pack is back 150 mV above the threshold **and** the weaker cell at half of that, so a motor's sag or the readings' noise does not make it flicker. The cell usually decides first (the pack reads a little more than its two cells together), so `low()` can be `True` while `voltage()` still reads slightly above the threshold, and a pack whose cells have drifted apart stays low with a healthy-looking total. Each threshold keeps its own state (up to four), so a program can warn at one level and stop at another. `False` with no pack; a negative or NaN threshold raises `ValueError`. **Why 6600:** on a full run-down (four motors at ±800 deg/s) the pack fell about 200 mV an hour to 6.6 V, then dropped off a cliff, and its own protection switched the board off at about 6.14 V with no warning; the default would have tripped about 35 minutes before that cut (on the weaker cell; the pack total crossed 6.6 V 30 minutes before, 6.4 V only 10) |
 | `evn.button.pressed()` | `True` while the user button is pressed (it is also the emergency stop, see [Safety](API.md#safety-behaviour)) |
 | `evn.led.on()`, `.off()`, `.toggle()`, `.set(bool)` | the board LED. Until a program touches it, it is the board's heartbeat; once a program has touched it, the heartbeat stays off until the next reboot (Ctrl-D does not bring it back) |
 | `evn.stop_all()` | coast every motor |
@@ -64,7 +64,7 @@ Motor(port, positive_direction=Direction.CLOCKWISE, gears=None, reset_angle=True
 | `speed_unit` | `SpeedUnit.DEG_S` | or `SpeedUnit.PERCENT`: the unit of every speed this motor takes or reports (see [Speed in percent](#speed-in-percent)) |
 | `model` | `None` | keyword-only: `"EV3 Large"`, `"EV3 Medium"`, `"NXT"`, `"JGA25-370 6V 77RPM"`, `"Pololu 25D 9.7:1 HP 12V"`, `"CHR-GM16-030PA 9V 1:63"` or `"CM22-2230 12V 1:49"` (`"large"`, `"medium"`, `"nxt"`, `"jga25"`, `"pololu25d_9_7"`, `"chr16_63"`, `"cm22_49"` also work; an unknown name is `ValueError`). `None` runs the motor the port is set up for (below) |
 
-**Which motor a port runs.** With `model=None` the port runs, in this order: the motor it was **configured** for (`evn.configure_motor()` or the gear button in the extension's Board view, stored on the board: a library model or a custom motor), else the model its stored calibration was made for, else the firmware's fallback — EV3 Large on ports 1–2, EV3 Medium on 3–4. Naming another model with `model=` switches the port to that model's compiled defaults until the next reboot (`evn.motor_config(port)["session"]` is then `True`) and prints a `WARNING` that the stored calibration, made for the other model, is not applied until `calibrate()` runs again. `print(m)` shows the model: `Motor(1, EV3 Large)`, `Motor(3, custom)`.
+**Which motor a port runs.** With `model=None` the port runs, in this order: the motor it was **configured** for (`evn.configure_motor()` or the gear button in the extension's Board view, stored on the board: a library model or a custom motor), else the model its stored calibration was made for, else the firmware's fallback — EV3 Large on ports 1–2, EV3 Medium on 3–4. Naming another model with `model=` switches the port to that model's compiled defaults until the next reboot (`evn.motor_config(port)["session"]` is then `True`). It also prints a `WARNING` that the stored calibration, made for the other model, is not applied until `calibrate()` runs again. `print(m)` shows the model: `Motor(1, EV3 Large)`, `Motor(3, custom)`.
 
 Constants: `Port.A..D` = 1..4, `Direction.CLOCKWISE=0 / COUNTERCLOCKWISE=1`, `Stop.COAST=0 / BRAKE=1 / HOLD=2 / NONE=3 / COAST_SMART=4`, `SpeedUnit.DEG_S=0 / PERCENT=1`.
 
@@ -75,7 +75,7 @@ Constants: `Port.A..D` = 1..4, `Direction.CLOCKWISE=0 / COUNTERCLOCKWISE=1`, `St
 | `angle()` | deg, 64-bit, never wraps |
 | `reset_angle()`, `reset_angle(angle)` | makes the current position read `angle`; with no argument (or `None`) it becomes the **0 reference** every later move counts from. `angle` is positional only: `reset_angle(90)`, not `reset_angle(angle=90)` (`TypeError`) |
 | `speed()` | deg/s, the controller's own estimate |
-| `load(output=False)` | mNm at the motor, the torque the calibrated motor does not account for; positive opposes the motor in the positive direction; `output=True` at the output of the gears |
+| `load(*, output=False)` | mNm at the motor, the torque the calibrated motor does not account for; positive opposes the motor in the positive direction; `output=True` (keyword-only) at the output of the gears |
 | `stalled()` | `True` while the motor pushes as hard as it is allowed to (the voltage cap, or the `duty_limit` of `run_until_stalled`) and the shaft does not turn, for `control.stall_tolerances()` (the Pybricks meaning) |
 | `done()` | `True` when the motor is passive, or a profiled move has finished with the shaft within `control.target_tolerances()`; `False` while the motor runs at a constant speed. On a motor whose rotor cogs (the Pololu 25D) also when the shaft rests in the detent the controller aims at - the one nearest the target: within 2.5 encoder edges (1.9°) of it, up to about 5.2° from the target - unless `target_tolerances()` set a tighter position than the default |
 
@@ -84,7 +84,7 @@ Constants: `Port.A..D` = 1..4, `Direction.CLOCKWISE=0 / COUNTERCLOCKWISE=1`, `St
 | Method | Does |
 | :--- | :--- |
 | `run(speed)` | run at a constant speed until the next command, ramped at the acceleration limit (and the deceleration limit when slowing) |
-| `dc(duty)` | open loop, −100..100 % |
+| `dc(duty)` | open loop, −100..100 % (a value outside this range is clamped to it) |
 | `run_time(speed, time, then=Stop.HOLD, wait=True)` | a timed move: it takes `time` ms, then does `then` (Pybricks). `time` is 0..2147483647 ms (24.8 days), else `ValueError` |
 | `run_angle(speed, rotation_angle, then=Stop.HOLD, wait=True)` | a relative move by `rotation_angle` degrees; a negative `speed` reverses |
 | `run_target(speed, target_angle, then=Stop.HOLD, wait=True)` | an absolute move to `target_angle`; the sign of `speed` is ignored |
@@ -139,7 +139,7 @@ The speed limit still applies, but a calibrated motor's default limit is its mea
 - **Several motors at once:** `calibrate(wait=False)` starts a port and returns at once; the motion engine measures the started ports one after another while the program waits, so the program writes one loop instead of four. Then `[m.calibrate() for m in motors]` collects the results: a port still running is joined, a port that has already finished hands over its result at once (a command that moves, holds or stops the motor in between - such as `m.run()`, or its DriveBase, `close()`, a take-over, `evn.stop_all()` - drops it, and that `calibrate()` measures again; reads and settings such as `m.angle()` or `m.reset_angle()` do not). Or wait with `evn.calibration(port)["busy"]`: `for m in motors: m.calibrate(wait=False)`, then `while any(evn.calibration(p)["busy"] for p in (1, 2, 3, 4)): wait(50)`.
 - **Errors:** `RuntimeError("calibration failed: …")` when the shaft does not break away, the fit fails, or the result is not plausible (the reason is also in `evn.calibration(port)["error"]`). A result that is not plausible is **not applied and not stored** - the port keeps the calibration it had - and is refused as soon as the pulses are done, before the slow ramps. It says which test it failed: *the four pulses disagree on the motor's response time* (the slowest pulse took over three times as long as the fastest to reach its speed: something rubbed or caught while the shaft turned, or a mechanism on it has a lot of play and a heavy load), or *running friction far below this motor model's* (on a port set to a CHR-GM16 or an EV3 Medium - with the gear, `evn.configure_motor`, or `Motor(port, model=)` naming it - whose running friction the calibration always measures: under 0.3 of the model's figure (and never under 0.15 V) while everything else looked like that motor, so something rubbed or caught, the port is set to the wrong motor, or a load on the shaft grows with its speed - a fan or a propeller, which is refused although the rest of the result would be about right: calibrate without that load). A first pulse that alone disagrees (gear play it took up, a touch only it met early in its record) is not refused: it takes the time constant of the calibration's repeat of it, and its speed from the second half of its own record, after the play - the drift check still runs, and the running-friction test is not applied to that calibration (so behind play a load that grows with the speed is stored, its b0 about right); a touch it met late, in that second half, stays in the result and reads as a drift. Free the shaft, check the port's motor, and calibrate again; `RuntimeError("port cannot calibrate (no motor model)")`. Ctrl-C, the user button or a soft reboot abort it: the motor coasts and `calibrate()` raises `KeyboardInterrupt`.
 - **Warnings:** a result outside the range the port's motor model is known for (`stored b0 is not plausible for this motor model`, or its tau / no-load twins: usually a motor of another kind on the port, such as an EV3 Large on a port set to EV3 Medium) is stored and drives the port, and `calibrate()` prints the warning at once, as `Motor(n)` does at every boot (the Board view shows it beside its "calibrated" message). A result the drift check does not trust (the mechanism ran more than 3 % faster or slower at the end of the calibration than at its start, a gear train warming up) still drives the port, and `calibrate()` prints `WARNING: Motor(n): … calibrate again after a minute of running` once (it is also `evn.calibration(port)["warning"]`); when both apply, one note names both; after `calibrate(wait=False)` the next `Motor(n)` prints it.
-- **When:** once per motor and port, and again after swapping the motor. Choosing a different motor for the port (`evn.configure_motor()` or the Board view's gear) clears the port's calibration. The step-by-step guide, including the Board view's pulse button, is [Calibrating your robot](CALIBRATION.md#motors); the stored record is `evn.calibration(port)` ([Calibration records](#calibration-records-evncalibration)).
+- **When:** calibrate once per motor and port, and again after you swap the motor. Choosing a different motor for the port (`evn.configure_motor()` or the Board view's gear) clears the port's calibration. The step-by-step guide, including the Board view's pulse button, is [Calibrating your robot](CALIBRATION.md#motors); the stored record is `evn.calibration(port)` ([Calibration records](#calibration-records-evncalibration)).
 
 ### Settings and control
 
@@ -151,8 +151,8 @@ The speed limit still applies, but a calibrated motor's default limit is its mea
 | `control.target_tolerances(speed, position)`, `control.target_tolerances()` | the `done()` criterion; defaults 50 deg/s, 1° (3.3° on the Pololu 25D, which rests in the detent nearest its target; at the default, or a looser position, `done()` also takes the shaft resting in that detent). Both read back as the floats that were set |
 | `control.stall_tolerances(speed, time)`, `control.stall_tolerances()` | stall detection below `speed` for `time` ms (0..10000); defaults 50 deg/s, 50 ms. The speed reads back as a float, the time as int ms |
 | `control.law()`, `control.law(law)` | the control law: `"adrc"` (the default, active disturbance rejection, self-calibrated) or `"pid"` (the tuned cascade that `control.pid()` and `control.evn()` set); anything else is `ValueError("law must be 'adrc' or 'pid'")`. Positional. While the motor is driving, the new law is applied by its next command; the getter reports the law that command will use |
-| `control.pid(kp, ki, kd, integral_deadzone, integral_limit)`, `control.pid()` | **`"pid"` law only** (the default `"adrc"` law ignores these). Pybricks units; `kd` is the cascade's velocity gain. `integral_deadzone` (deg, 0..5, default 0.75) is the endpoint deadzone and reads back as a float; `integral_limit` (% duty, 0..100, default 20) is the largest contribution the integrator may make. Pybricks' `integral_rate` is not accepted (`TypeError`); a negative gain is `ValueError`. Per motor object; the compiled per-model values are untouched |
-| `control.evn(endpoint_kd, start_duty, hold_duty, friction_ff)`, `control.evn()` | **`"pid"` law only**: EVN ALPHA's own parameters of that law; the getter returns the compiled per-model values. `endpoint_kd`: velocity gain inside the endpoint window. `start_duty` / `hold_duty` (% duty, 0..100): the breakaway push and the least duty held near the target. `friction_ff` (%, 0..200): Coulomb friction feed-forward |
+| `control.pid(kp, ki, kd, integral_deadzone, integral_limit)`, `control.pid()` | **`"pid"` law only** (the default `"adrc"` law ignores these). Pybricks units; `kd` is the cascade's velocity gain. `integral_deadzone` (deg, 0..5, default 0.75) is the endpoint deadzone and reads back as a float; `integral_limit` (% duty, 0..100, default 20) is the largest contribution the integrator can make. Pybricks' `integral_rate` is not accepted (`TypeError`); a negative gain is `ValueError`. Per motor object; the compiled per-model values are untouched |
+| `control.evn(endpoint_kd, start_duty, hold_duty, friction_ff)`, `control.evn()` | **`"pid"` law only**: EVN ALPHA's own parameters of that law; the getter returns the values in force (the compiled per-model values until you set others). `endpoint_kd`: velocity gain inside the endpoint window. `start_duty` / `hold_duty` (% duty, 0..100): the breakaway push and the least duty held near the target. `friction_ff` (%, 0..200): Coulomb friction feed-forward |
 | `control.scale` | motor degrees per output degree (from `gears`; read-only) |
 | `control.done()`, `control.stalled()`, `control.load()` | the same as the motor methods |
 | `control.state()`, `model.state()`, `model.settings()` | controller and observer internals for tuning: see [Diagnostics](API_SYSTEM.md#diagnostics) |
@@ -178,7 +178,7 @@ The rated no-load speeds behind `full_speed()` are EV3 Large 1050, EV3 Medium 15
 
 ### Motor configuration (`configure_motor`)
 
-Say once what is plugged into a port, and every `Motor(port)` — in any program, from any computer, after every reboot — runs that motor. The Board view's gear button does the same.
+Tell the board once which motor is on a port. Then every `Motor(port)` — in any program, from any computer, after every reboot — runs that motor. The Board view's gear button does the same.
 
 | Call | Does |
 | :--- | :--- |
@@ -219,14 +219,14 @@ print(m.angle(), m.speed(), m.load())
 **Constructor**
 
 ```python
-DriveBase(left_motor, right_motor, wheel_diameter, axle_track, *, imu=None, compass=None, declination=None, pose=None)
+DriveBase(left_motor, right_motor, wheel_diameter, axle_track, *, imu=None, compass=None, declination=None, pose=None, speed_unit=SpeedUnit.DEG_S)
 ```
 
 | Parameter | Meaning |
 | :--- | :--- |
 | `left_motor`, `right_motor` | two open `Motor` objects. Each motor's `positive_direction` is its forward direction (a mirrored left motor: `Motor(4, Direction.COUNTERCLOCKWISE)`), and its `gears=` make the values wheel degrees |
-| `wheel_diameter` | mm |
-| `axle_track` | mm, the **effective** track between the tyres' contact patches: measure it with one `turn(360)` against a floor mark, then rebuild the base with the measured value (its `Pose` is built from it) |
+| `wheel_diameter` | mm, 1..1000 (`ValueError` otherwise) |
+| `axle_track` | mm, 1..2000 (`ValueError` otherwise), the **effective** track between the tyres' contact patches. Measure it with one `turn(360)` against a floor mark. Then rebuild the base with the measured value (the base builds its `Pose` from it) |
 | `imu`, `compass` | the I2C ports 1–16 of existing `IMU` / `Compass` objects (keyword-only; `OSError` if no object is on that port). Either one makes the base build and own a `Pose` |
 | `declination` | degrees added to the compass heading, east positive; needs `compass=` (`ValueError` without it) |
 | `pose` | a `Pose` the program built, adopted by the base after a geometry check (keyword-only; not together with `imu=` / `compass=` / `declination=`) |
@@ -256,7 +256,7 @@ A new `DriveBase` on a motor that still belongs to one takes the pair over (the 
 | :--- | :--- |
 | `distance()`, `angle()` | mm driven and degrees turned since `reset()`, from the two encoders (ints) |
 | `state()` | `(distance, drive_speed, angle, turn_rate)` as floats (the two speeds in % with `SpeedUnit.PERCENT`) |
-| `reset(distance=0, angle=0)` | start the readings again from these values. A program run again from the user button does it by itself to a base an imported module kept (Python does not run the module again): the run starts at `distance()` / `angle()` 0 with no maneuver in force, the base's `settings()`, `follower()`, `use_gyro()` and `pose` kept, its `Pose` re-framed as `Pose.reset()` says (the owner, 2026-10-02, as Pybricks starts a program afresh; a kept `Motor` reads `angle()` 0 again if it was built with `reset_angle=True`, the default) |
+| `reset(distance=0, angle=0)` | start the readings again from these values. The arguments are positional only: `reset(100, 0)`, not `reset(distance=100)` (`TypeError`). A program run again from the user button does it by itself to a base an imported module kept (Python does not run the module again): the run starts at `distance()` / `angle()` 0 with no maneuver in force, the base's `settings()`, `follower()`, `use_gyro()` and `pose` kept, its `Pose` re-framed as `Pose.reset()` says (the owner, 2026-10-02, as Pybricks starts a program afresh; a kept `Motor` reads `angle()` 0 again if it was built with `reset_angle=True`, the default) |
 | `done()` | `True` when both wheels have finished — `Motor.done()`'s meaning: profile complete and inside `control.target_tolerances()` — or are passive, or either wheel is stalled. With `use_gyro(True)` the wheels are judged against target + trim, and `done()` also waits for the pose to settle (or the trim to reach its bound, or 2 s after the profiles). A wheel coasted by the runaway guard during a `wait=False` maneuver: `done()` coasts the other wheel too and returns `True`; the base's next command raises the wheel's `RuntimeError` |
 | `stalled()` | `True` while either wheel is stalled; like `Motor`, a `wait=True` maneuver on a stalled robot returns on the stall timeout (the shorter of the two wheels' `settings()` timeouts) |
 
@@ -281,7 +281,7 @@ A new `DriveBase` on a motor that still belongs to one takes the pair over (the 
 | :--- | :--- |
 | `settings(straight_speed, straight_acceleration, turn_rate, turn_acceleration)`, `settings()` | mm/s, mm/s², deg/s, deg/s²; an acceleration may be `(accel, decel)`. **Defaults: the weaker motor's `control.limits()`, the straight acceleration at 75 % of it** — about 770 mm/s, 1230 mm/s², 520 deg/s, 1100 deg/s² on two EV3 Mediums with 62.4 mm wheels 170 mm apart. Lower them for a heavier robot or a slick floor (the straight acceleration is where tyre slip starts); a value above the motor's limit is clamped to it (with `SpeedUnit.PERCENT` the two speeds in %, the accelerations unchanged) |
 | `speed_unit()`, `speed_unit(unit)` | read / switch the robot's speed unit, as `Motor.speed_unit()`; switching converts nothing |
-| `close()` | coast both wheels and release them (the `Motor` objects stay open); returns once the coasts have landed |
+| `close()` | coast both wheels and release them (the `Motor` objects stay open); returns once the coasts have landed. `with DriveBase(...) as robot:` closes on exit |
 
 **Example**
 
@@ -329,8 +329,8 @@ Pose(left=None, right=None, wheel_diameter=None, axle_track=None, *, gear_ratio=
 | `gear_ratio` | 1.0 | motor turns per wheel turn |
 | `imu`, `compass` | `None` | the I2C ports of existing `IMU` / `Compass` objects (`OSError` if no object is on that port; the compass counts once a calibration is installed). Set the module's `axes(top=, front=)` from its silkscreen **before** building the `Pose` — the filter takes the body frame those objects publish |
 | `reverse_left`, `reverse_right` | `False` | that motor's positive direction is backwards (a mirrored mount) |
-| `declination` | 0.0 | degrees added to the compass heading |
-| `imu_offset` | `None` | `(x_mm, y_mm)`: where the IMU sits, forward and left of the axle mid-point (`(-50, 60)` is 50 mm behind, 60 mm left); a tape-measure value is enough. Needs `imu=` and **no motor ports** (`ValueError` with wheels: the accelerometer is not used then) |
+| `declination` | 0.0 | degrees added to the compass heading, -180..180 (`ValueError` otherwise) |
+| `imu_offset` | `None` | `(x_mm, y_mm)`: where the IMU sits, forward and left of the axle mid-point (`(-50, 60)` is 50 mm behind, 60 mm left), each within ±1000 mm; a tape-measure value is enough. Needs `imu=` and **no motor ports** (`ValueError` with wheels: the accelerometer is not used then) |
 
 Frames: `x` East / `y` North in mm (without a compass, `x` is +90° from the heading at `reset()`), heading clockwise from north in degrees, speed mm/s, yaw rate deg/s clockwise. **With a compass** the heading is the compass's from the moment it joins (its `north()` reference plus `declination`; the position so far is turned with it) until `reset()` chooses another frame; after a `reset()` the compass keeps the heading's drift bounded in the new frame, to its local accuracy.
 
@@ -354,7 +354,7 @@ Frames: `x` East / `y` North in mm (without a compass, `x` is +90° from the hea
 | :--- | :--- |
 | `reset(x=0, y=0, heading=0)` | set the pose (mm, mm, degrees clockwise from north); biases and wheel parameters are kept. A re-framing, never a command: a `DriveBase` with `use_gyro(True)` re-anchors its ideal on the new pose and nothing moves — close an offset an outside reference revealed with an explicit `straight()`/`turn()`. With a compass the new frame is kept: the compass is re-referenced to it from up to 16 readings taken while the heading is still the reset's and the robot stands still (for 0.3 s its wheels not commanded to move and within about one encoder step of where they were — a motor holding its position and hunting a step back and forth counts as still) — at once from those taken before the reset (a turn may follow at once, and a straight driven since does not spoil them), else from the next ones (about 0.6 s after the robot stops). A robot that never stands still that long takes the readings it took cruising straight at a steady speed after 5 s, and `sources()` leaves `'compass'` out until then. Only when the robot turns before any such reading are the ones it took cruising straight at a steady speed used instead, and a drive motor's field, if it reaches the compass, is then in the frame: let the robot stand still for a second before or after `reset()` (a robot that turns before any reading at all waits for its heading to come back, 5 s at most, then takes them where it is, the gyro's error on that turn in the frame). The compass then corrects the heading's drift in the frame, so `reset(heading=0)` at the start of a program gives a heading that starts at 0 and stays within the compass's local accuracy of it. Reset where the compass reads the Earth's field (away from steel): a disturbance there is taken into the frame. A new compass frame under a running `Pose` (`Compass.north()`, a calibration installed or finished) leaves a frame `reset()` chose alone. To move only the origin and keep the compass's north, `reset(x, y, pose.heading())`. A program run again from the user button does `reset()` by itself to a `Pose` an imported module kept (its own, or a `DriveBase`'s): x, y and the heading 0, with a compass among the sources too (the compass then keeps the new frame, as above) - its sources, settings and what it has learnt kept |
 | `settings()`, `settings(wheel_diameter=, axle_track=)` | read or apply a calibrated geometry in mm (1..1000 / 1..2000), keyword-only. Measure the effective track with one commanded 360° turn against a floor mark: `t_eff = t * turned_by_the_encoders / 360`. This is the recipe for a `Pose` **without** a base: with a `DriveBase`, rebuild the base with `axle_track=t_eff` (it builds its Pose from it) — `settings()` on the base's Pose is refused at the next `use_gyro(True)` (see [Following the gyro](#following-the-gyro-use_gyro)). The pose, the heading and the gyro bias are kept; the wheel estimates (`parameters()` and their uncertainty) restart at every call, even with the values already in force. **Not stored** — a power cycle brings back the constructor's numbers, so a program sets it at start-up. The setter raises `ValueError` without motor ports or for a value out of range, and `OSError` (EIO) when the motor core does not answer (below) |
-| `close()` | stop the estimator so another `Pose` can start; `with Pose(...) as pose:` closes on exit and is the idiom |
+| `close()` | stop the estimator so another `Pose` can start. `with Pose(...) as pose:` closes on exit; use this form |
 
 **Example**
 
@@ -380,29 +380,24 @@ with Pose(1, 2, 56, 112, imu=3) as pose:
 - **The pose's sources are read ahead of every other I2C device**, so a busy bus does not make them late: the IMU in DMP mode (its default), the compass, and an IMU in raw mode (`IMU.dmp(False)`) while a `Pose` reads it. A raw-mode IMU no `Pose` reads takes its turn with the other devices like any of them, and goes back to that when the `Pose` is closed. A raw IMU read first at its default 1000 Hz costs the program much of the board's time with many devices open (as on 0.2.59-0.2.62): `IMU.sample_rate()` lowers it, and the DMP (200 Hz, with the readings kept through a busy moment) is the mode the pose is built for.
 - Bench diagnostics (`_stats()`, `_bias()`, `_step()`): see [Diagnostics](API_SYSTEM.md#diagnostics).
 
-## PID and ADRC — controllers for your own loops
+## PID — a controller for your own loops
 
-`evn.PID` and `evn.ADRC` are controllers your program builds for a loop of its own: a line follower, a heading hold, a speed you keep with `dc()`. They compute in C on the board (several times faster than the same loop written in Python), never move anything themselves — `update()` returns a number you send where you like (a motor's `dc()` or `run()`, the robot's `drive()`, a servo) — and let you read every term. Any number of them; no port, no `close()`. More in `examples/23_controllers/`; in blocks, the **Controllers** category ([blocks reference](BLOCKS.md#controllers)). Pybricks has no such class: this is EVN's own.
+`evn.PID` is a controller your program builds for a loop of its own: a line follower, a speed you keep with `dc()`. It computes in C on the board (several times faster than the same loop written in Python). It never moves anything itself: `update()` returns a number, and you send it where you like (a motor's `dc()` or `run()`, the robot's `drive()`, a servo). You can read every term. A program can build any number of them; a PID has no port and no `close()`. More in `examples/23_controllers/`; in blocks, the **Controllers** category ([blocks reference](BLOCKS.md#controllers)). Pybricks has no such class: this is EVN's own. The other controller, [ADRC](#adrc--disturbance-rejection-for-your-own-loops), takes a plant gain and a bandwidth instead of three gains and estimates what else pushes on the loop.
 
-Units (the owner's ruling, 2026-10-09): time in **ms** (`dt`, `filter`, `dt_max`, like `wait()`); `ki` is output per unit of error per **second**, `kd` output per (unit of error per second); `wc` / `wo` in **rad/s** (a loop settles in about 4 / `wc` seconds).
+Units (the owner's ruling, 2026-10-09): time in **ms** (`dt`, `filter`, `dt_max`, like `wait()`); `ki` is output per unit of error per **second**, `kd` output per (unit of error per second).
 
-**Constructors**
+**Constructor**
 
 ```python
 PID(kp, ki=0, kd=0, *, filter=20, limits=None, integral_limit=None, dt_max=200)
-ADRC(b0, wc, *, order=1, wo=None, limits=None, dt_max=200)
 ```
 
 | Parameter | Default | Meaning |
 | :--- | :--- | :--- |
-| `kp`, `ki`, `kd` | —, 0, 0 | the PID's gains, any sign (the owner, 2026-10-09; a negative set makes a reverse-acting loop: the output falls as the measurement rises) |
+| `kp`, `ki`, `kd` | —, 0, 0 | the gains, any sign (the owner, 2026-10-09; a negative set makes a reverse-acting loop: the output falls as the measurement rises) |
 | `filter` | 20 | ms: the first-order filter on the derivative (0 = none). It smooths a sensor's flicker before `kd` multiplies it |
-| `b0` | — | the ADRC's plant gain: how many measurement units per s (order 1) or per s² (order 2) one unit of output gives. A heading driven through `drive(speed, turn_rate)`: `b0=1`. Not 0; either sign |
-| `wc` | — | the ADRC's bandwidth, rad/s, > 0 |
-| `order` | 1 | 1: `y' = b0 u + f` (a speed, a heading through a turn rate, a temperature); 2: `y'' = b0 u + f` (a position) |
-| `wo` | `4 * wc` | the observer's bandwidth, rad/s; it follows `wc` until you set it |
-| `limits` | `None` | the output's range: `None` / `False` (none), a number `x` (`-x..x`) or `(low, high)`. **Set it to what the actuator accepts** (`dc()`: 100; `drive()`: its turn rate): the PID stops adding up its integral there, and the ADRC's observer assumes the plant saw the clamped output |
-| `integral_limit` | `None` | the largest the PID's I term may grow, in output units (> 0) |
+| `limits` | `None` | the output's range: `None` / `False` (none), a number `x` (`-x..x`) or `(low, high)`. **Set it to what the actuator accepts** (`dc()`: 100; `drive()`: its turn rate): the PID stops adding up its integral there |
+| `integral_limit` | `None` | the largest the I term may grow, in output units (> 0) |
 | `dt_max` | 200 | ms: a measured pause longer than this is a restart (below) |
 
 **Methods and attributes**
@@ -410,16 +405,15 @@ ADRC(b0, wc, *, order=1, wo=None, limits=None, dt_max=200)
 | Call | Does / returns |
 | :--- | :--- |
 | `update(setpoint, measurement, dt=None)` | one step of the loop: the output, after the limits. The board measures the time since the previous update; `dt=` (ms) gives your own interval instead |
-| `reset()` | forget the state (PID: the integral, the derivative filter, the last sample; ADRC: the estimates); the settings stay. The next `update()` only seeds |
-| `settings()` | PID: `(kp, ki, kd, filter, limits, integral_limit, dt_max)`; ADRC: `(b0, wc, wo, order, limits, dt_max)`. `limits` as `(low, high)` or `None` |
-| `settings(...)` | the constructor's keywords (not `order`): changes only what you give (`None` keeps a value, `limits=False` / `integral_limit=False` remove them), in the order listed, stopping at the first invalid one; the state is kept |
-| PID `p`, `i`, `d` | the three terms of the last update, in output units (`p + i + d` is the output before the limits) |
-| ADRC `estimate`, `rate`, `disturbance` | the observer's estimate of the measurement, of its rate (order 2; 0.0 for order 1), and of everything else pushing on the plant (`f`: friction, a load, your hand), in measurement units per s^order |
+| `reset()` | forget the state (the integral, the derivative filter, the last sample); the settings stay. The next `update()` only seeds |
+| `settings()` | `(kp, ki, kd, filter, limits, integral_limit, dt_max)`, `limits` as `(low, high)` or `None` |
+| `settings(...)` | the constructor's keywords: changes only what you give (`None` keeps a value, `limits=False` / `integral_limit=False` remove them). `kp`, `ki` and `kd` are checked together and set only if all are valid; then the others in the order listed, stopping at the first invalid one; the state is kept |
+| `p`, `i`, `d` | the three terms of the last update, in output units (`p + i + d` is the output before the limits) |
 | `output`, `error`, `saturated`, `restarted` | the last output, `setpoint - measurement`, whether the output sat on a limit, whether the last update was a restart |
 
 All attributes are read-only.
 
-**Example: a line follower (PID)**
+**Example: a line follower**
 
 ```python
 from evn import Motor, Direction, DriveBase, ColorSensor, PID, wait, stop_all
@@ -438,7 +432,48 @@ finally:
 
 Print `pid.p, pid.i, pid.d` every 200 ms and watch the I term grow on a long curve; set `kd=0` and see the wobble; set `limits=40` and watch the robot lose a sharp corner while `pid.saturated` is True.
 
-**Example: a heading hold (ADRC)**
+**Notes**
+
+- **The first update after construction or `reset()` only seeds** (P acts; no derivative, no integral step), whether `dt` is given or measured: no kick at the start.
+- **A pause.** A measured gap longer than `dt_max` is a restart: the PID keeps its integral and starts its derivative afresh; `restarted` is True. **Two restarts in a row** mean the loop itself is slower than `dt_max`: `ValueError("updates further apart than dt_max: raise dt_max")` - a loop with `wait(500)` sets `dt_max=1000` (`settings(dt_max=)` after the error works from the next call). Set `dt_max` well above your loop's longest pass (twice its period): a loop that sometimes takes a little more than `dt_max` and sometimes a little less restarts every other pass without an error, and its integral and derivative then do half their work. A given `dt` larger than `dt_max` raises `ValueError("dt exceeds dt_max")`.
+- **Errors** (`ValueError`; the object is unchanged, except after the slow-loop error above, which restarts it, and after `settings(...)`, which keeps what it set before the invalid value): `kp`, `ki`, `kd`, `filter`, `dt_max`, `integral_limit` or a limit that is NaN or infinite ("... must be a number"); `dt_max`, `integral_limit` or a `limits` number not positive; `filter` negative; `limits` with `low >= high`; a `setpoint` or `measurement` that is NaN or infinite; a `dt` that is not a positive number of ms. A store to an attribute raises `AttributeError`.
+- A PID allocates nothing after construction except the values it hands back (`update()`'s output, an attribute, `settings()`) and the exception an error raises, and touches nothing on the motor core: the board's own motor control is unaffected by how many you run.
+
+## ADRC — disturbance rejection for your own loops
+
+`evn.ADRC` is a controller your program builds for a loop of its own: a heading hold, a speed you keep with `dc()`, a position. You give it how strongly the output moves what you measure (`b0`) and how fast the loop should settle (`wc`); it estimates everything else pushing on the loop — friction, a load, your hand — and cancels it, and lets you read that estimate (`disturbance`). It computes in C on the board (several times faster than the same loop written in Python). It never moves anything itself: `update()` returns a number, and you send it where you like (a motor's `dc()` or `run()`, the robot's `drive()`, a servo). A program can build any number of them; an ADRC has no port and no `close()`. More in `examples/23_controllers/`; in blocks, the **Controllers** category ([blocks reference](BLOCKS.md#controllers)). Pybricks has no such class: this is EVN's own. The other controller is [PID](#pid--a-controller-for-your-own-loops).
+
+Units (the owner's ruling, 2026-10-09): time in **ms** (`dt`, `dt_max`, like `wait()`); `wc` / `wo` in **rad/s** (a loop settles in about 4 / `wc` seconds at order 1, 6 / `wc` at order 2).
+
+**Constructor**
+
+```python
+ADRC(b0, wc, *, order=1, wo=None, limits=None, dt_max=200)
+```
+
+| Parameter | Default | Meaning |
+| :--- | :--- | :--- |
+| `b0` | — | the plant gain: how many measurement units per s (order 1) or per s² (order 2) one unit of output gives. A heading driven through `drive(speed, turn_rate)`: `b0=1`. Not 0; either sign |
+| `wc` | — | the bandwidth, rad/s, > 0 |
+| `order` | 1 | 1: `y' = b0 u + f` (a speed, a heading through a turn rate, a temperature); 2: `y'' = b0 u + f` (a position) |
+| `wo` | `4 * wc` | the observer's bandwidth, rad/s; it follows `wc` until you set it |
+| `limits` | `None` | the output's range: `None` / `False` (none), a number `x` (`-x..x`) or `(low, high)`. **Set it to what the actuator accepts** (`dc()`: 100; `drive()`: its turn rate): the observer assumes the plant saw the clamped output |
+| `dt_max` | 200 | ms: a measured pause longer than this is a restart (below) |
+
+**Methods and attributes**
+
+| Call | Does / returns |
+| :--- | :--- |
+| `update(setpoint, measurement, dt=None)` | one step of the loop: the output, after the limits. The board measures the time since the previous update; `dt=` (ms) gives your own interval instead |
+| `reset()` | forget the estimates (the disturbance too); the settings stay. The next `update()` only seeds |
+| `settings()` | `(b0, wc, wo, order, limits, dt_max)`, `limits` as `(low, high)` or `None` |
+| `settings(...)` | the constructor's keywords but `order`: changes only what you give (`None` keeps a value, `limits=False` removes them). `b0`, `wc` and `wo` are checked together and set only if all are valid; then `limits` and `dt_max`, stopping at the first invalid one; the state is kept |
+| `estimate`, `rate`, `disturbance` | the observer's estimate of the measurement, of its rate (order 2; 0.0 for order 1), and of everything else pushing on the plant (`f`: friction, a load, your hand), in measurement units per s^order |
+| `output`, `error`, `saturated`, `restarted` | the last output, `setpoint - measurement`, whether the output sat on a limit, whether the last update was a restart |
+
+All attributes are read-only.
+
+**Example: a heading hold**
 
 ```python
 from evn import Motor, Direction, DriveBase, IMU, ADRC, wait, stop_all
@@ -460,15 +495,15 @@ finally:
 
 **Notes**
 
-- **The first update after construction or `reset()` only seeds** (P acts; no derivative, no integral step; the ADRC's estimate starts at the measurement), whether `dt` is given or measured: no kick at the start.
-- **A pause.** A measured gap longer than `dt_max` is a restart: the PID keeps its integral and starts its derivative afresh, the ADRC re-seeds its estimate (the disturbance kept); `restarted` is True. **Two restarts in a row** mean the loop itself is slower than `dt_max`: `ValueError("updates further apart than dt_max: raise dt_max")` - a loop with `wait(500)` sets `dt_max=1000` (`settings(dt_max=)` after the error works from the next call). Set `dt_max` well above your loop's longest pass (twice its period): a loop that sometimes takes a little more than `dt_max` and sometimes a little less restarts every other pass without an error, and its integral and derivative then do half their work. A given `dt` larger than `dt_max` raises `ValueError("dt exceeds dt_max")`.
-- **Choosing the ADRC's numbers.** With a loop period of `T` seconds keep `wo * T <= 1` and `wc * T <= 0.3` (at 10 ms: `wc` up to 30, `wo` up to 100). An actuator that ramps (`run()`, `drive()`) is part of your loop: keep `wc` under about a third of its ramp's speed (`DriveBase.settings(turn_acceleration=)` raises the base's); `dc()` does not ramp.
-- **Errors** (`ValueError`, and the object is unchanged but for the slow-loop error above, which restarts it): a gain, `b0`, `wc`, `wo`, `filter`, `dt_max`, `integral_limit` or a limit that is NaN or infinite ("... must be a number"); `b0` 0; `wc`, `wo`, `dt_max`, `integral_limit` or a `limits` number not positive; `filter` negative; `limits` with `low >= high`; `order` not 1 or 2; a `setpoint` or `measurement` that is NaN or infinite; a `dt` that is not a positive number of ms. A store to an attribute raises `AttributeError`.
-- The controllers allocate nothing after construction except the number `update()` returns, and touch nothing on the motor core: the board's own motor control is unaffected by how many you run.
+- **The first update after construction or `reset()` only seeds** (the estimate starts at the measurement), whether `dt` is given or measured: no kick at the start.
+- **A pause.** A measured gap longer than `dt_max` is a restart: the ADRC re-seeds its estimate (the disturbance kept); `restarted` is True. **Two restarts in a row** mean the loop itself is slower than `dt_max`: `ValueError("updates further apart than dt_max: raise dt_max")` - a loop with `wait(500)` sets `dt_max=1000` (`settings(dt_max=)` after the error works from the next call). Set `dt_max` well above your loop's longest pass (twice its period): a loop that sometimes takes a little more than `dt_max` and sometimes a little less restarts every other pass without an error, and its observer then corrects its estimates on only half the passes (at order 2 its rate also restarts at 0 on the others). A given `dt` larger than `dt_max` raises `ValueError("dt exceeds dt_max")`.
+- **Choosing the numbers.** With a loop period of `T` seconds keep `wo * T <= 1` and `wc * T <= 0.3` (at 10 ms: `wc` up to 30, `wo` up to 100). An actuator that ramps (`run()`, `drive()`) is part of your loop: keep `wc` under about a third of its ramp's speed (`DriveBase.settings(turn_acceleration=)` raises the base's); `dc()` does not ramp.
+- **Errors** (`ValueError`; the object is unchanged, except after the slow-loop error above, which restarts it, and after `settings(...)`, which keeps what it set before the invalid value): `b0`, `wc`, `wo`, `dt_max` or a limit that is NaN or infinite ("... must be a number"); `b0` 0; `wc`, `wo`, `dt_max` or a `limits` number not positive; `limits` with `low >= high`; `order` not 1 or 2; a `setpoint` or `measurement` that is NaN or infinite; a `dt` that is not a positive number of ms. A store to an attribute raises `AttributeError`.
+- An ADRC allocates nothing after construction except the values it hands back (`update()`'s output, an attribute, `settings()`) and the exception an error raises, and touches nothing on the motor core: the board's own motor control is unaffected by how many you run.
 
 ## Calibration records (evn.calibration)
 
-Three things on a robot are calibrated once and remembered by the board, per port, with the date: each **motor** (`Motor.calibrate()`), the **IMU** (`IMU.calibrate()`), the **compass** (`Compass.calibrate()` … `calibrate_stop()`) and the **colour sensors** (`ColorSensor` / `GestureSensor` `calibrate_black()` / `calibrate_white()`). [Calibrating your robot](CALIBRATION.md) is the step-by-step guide (from the extension's Board view, from Python and from blocks). These module functions read and clear the stored records without opening the device:
+Four things on a robot are calibrated once and remembered by the board, per port, with the date: each **motor** (`Motor.calibrate()`), the **IMU** (`IMU.calibrate()`), the **compass** (`Compass.calibrate()` … `calibrate_stop()`) and the **colour sensors** (`ColorSensor` / `GestureSensor` `calibrate_black()` / `calibrate_white()`). [Calibrating your robot](CALIBRATION.md) is the step-by-step guide (from the extension's Board view, from Python and from blocks). These module functions read and clear the stored records without opening the device:
 
 | Call | Returns / does |
 | :--- | :--- |

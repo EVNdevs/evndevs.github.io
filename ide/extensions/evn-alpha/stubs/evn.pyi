@@ -3461,6 +3461,12 @@ def _nudges(port: int, /) -> int:
     """Bench hook, not for programs. Nothing moves: the hold nudges Core 1 has fired on port 1..4 since
     boot."""
 
+def _hunt_breaks(port: int, /) -> int:
+    """Bench hook, not for programs. Nothing moves: the times the hunt breaker (MC-63) re-settled a hold
+    that swung to and fro on port 1..4 since boot, 0..255 - it wraps, so take (after - before) % 256
+    around a trial. It does not change while the port runs an EV3 Large (or a custom motor of its
+    control class): the breaker is off there."""
+
 def _imu_cal_record(port: int, record: Optional[bytes] = ..., /) -> Union[bytes, int, None]:
     """Bench hook, not for programs (``imu_calibration(port)`` is the public view). Nothing moves. With
     ``port`` (I2C 1..16) alone: the port's stored IMU calibration as bytes (the record's version, then the

@@ -6,7 +6,7 @@ Devices the firmware drives natively that EVN does not stock: the HiTechnic NXT 
 
 ## EVN Extended Peripherals
 
-*Extended peripherals* are devices the firmware drives natively, like the standard ones, that EVN does not stock and has no LEGO-compatible mounts for — kit people may already own. The firmware treats them like standard peripherals; a few features of each are still being added (see each section's notes).
+*Extended peripherals* are devices that the firmware drives natively, like the standard ones. EVN does not stock them and has no LEGO-compatible mounts for them: they are kit that people may already own. The firmware treats them like standard peripherals. A few features of each are still being added (see the notes of each section).
 
 | Class | Device | Port | Examples |
 | :--- | :--- | :--- | :--- |
@@ -16,7 +16,7 @@ Devices the firmware drives natively that EVN does not stock: the HiTechnic NXT 
 | [`VL53L1X`](#vl53l1x--time-of-flight-distance-sensor-up-to-4-m) | ST VL53L1X time-of-flight distance sensor | I2C 1–16 | `examples/extended_peripherals/04_vl53l1x/` |
 | [`TCS3430`](#tcs3430--xyz-colour-and-ambient-light-sensor) | ams-OSRAM TCS3430 XYZ colour / ambient light sensor | I2C 1–16 | `examples/extended_peripherals/05_tcs3430/` |
 
-**The HiTechnic sensors run their port at 100 kHz.** At the standard 400 kHz they failed about one read in 800 on the bench; at 100 kHz none. The rate is per port (`evn.I2C(port).freq()` shows it): every other port stays at 400 kHz, and `close()` or the end of the program puts the port back. A standard peripheral on the same port as a HiTechnic sensor runs at 100 kHz too. Their address is 0x01 (the NXT's 8-bit 0x02), which `evn.I2C` and its `scan()` reach.
+**The HiTechnic sensors run their port at 100 kHz.** At the standard 400 kHz they failed about one read in 800 on the bench; at 100 kHz none failed. The rate is per port (`evn.I2C(port).freq()` shows it): every other port stays at 400 kHz. `close()` or the end of the program puts the port back to 400 kHz. A standard peripheral on the same port as a HiTechnic sensor runs at 100 kHz too. Their address is 0x01 (the NXT's 8-bit 0x02), which `evn.I2C` and its `scan()` reach.
 
 The HuskyLens, the VL53L1X and the TCS3430 run at the standard 400 kHz.
 
@@ -30,7 +30,7 @@ Plug the sensor into an I2C port through an NXT cable adapter (SDA, SCL, power a
 
 | Call | Notes |
 | :--- | :--- |
-| `hc = HiTechnicColorSensor(port)` | `port` 1..16; `OSError("no HiTechnic sensor on port N (I2C 0x01)")` when no "HiTechnc" ID string answers, `OSError("port N has a HiTechnic Compass, not a HiTechnicColorSensor")` for another HiTechnic sensor, `OSError("no free HiTechnic slot (4 at once)")`. Returns with the first reading |
+| `hc = HiTechnicColorSensor(port)` | `port` 1..16; `OSError("no HiTechnic sensor on port N (I2C 0x01)")` when no "HiTechnc" ID string answers, `OSError("port N has a HiTechnic Compass, not a HiTechnicColorSensor")` for another HiTechnic sensor, `OSError("HiTechnicColorSensor on port N: no free HiTechnic slot (4 at once)")`. Returns with the first reading |
 
 **Methods**
 
@@ -42,7 +42,7 @@ Plug the sensor into an I2C port through an NXT cable adapter (SDA, SCL, power a
 | `hc.calibrate_white()` | takes the current reading of a white target as the reference white, stored for the port like the black. From then on each of red, green and blue is (reading − black) / (white − black), clamped 0..100 %, before `hsv()`, `color()` and `color_match()`. `ValueError("the white target is too dark or not brighter than the black reference: hold a white sheet in front")` when a channel is under 20 counts or not at least 10 % above the black |
 | `hc.black_reference()` | the black reference as `(R, G, B)` in counts (floats), or `None` when none is taken; `hc.black_reference(None)` clears it and the stored one (any other argument raises `ValueError`: use `calibrate_black()`) |
 | `hc.white_reference()` | the reference white as `(R, G, B)` in counts, or `None`; `hc.white_reference(None)` clears it and the stored one (any other argument raises `ValueError`: use `calibrate_white()`) |
-| `hc.stored_calibration()` | the port's stored colour calibration, the dict of `evn.color_calibration(port)`: `calibrated`, `chip` (`'HiTechnic Color V2'` / `'HiTechnic Color V1'`, or another colour sensor's chip), `stored`, `pending`, `stamp`, `black` / `white` as `(R, G, B)` counts, `error` |
+| `hc.stored_calibration()` | the port's stored colour calibration, the dict of `evn.color_calibration(port)`: `port`, `calibrated`, `chip` (`'HiTechnic Color V2'` / `'HiTechnic Color V1'`, or another colour sensor's chip), `stored`, `pending`, `stamp`, `black` / `white` as `(R, G, B)` counts, `error` |
 | `hc.clear_calibration()` | forget the stored calibration, then the references in force: `True`, or `False` while a driving motor keeps the flash write back (it follows once every motor is stopped). A record another colour sensor made on the port is left alone. `RuntimeError` when another calibration waits for the flash (a motor is driving): nothing changes; `OSError` when the flash write fails: cleared all the same (stored and in force), and the next `stored_calibration()` retries the write |
 | `hc.color()` | the `detectable_colors()` entry nearest the reading's hue, saturation and value (the same matcher as `ColorSensor`; calibrated once the black and the white are taken), or `None` when that set is empty |
 | `hc.color_match()` | `(color, confidence)`: the confidence is 1.0 on the chosen colour and 0.0 halfway between two; `(None, 0.0)` with no detectable colours |
@@ -83,7 +83,7 @@ while True:
 
 `evn.DataLog` records the sensor: `color`, `color_number`, `rgb`, `hsv`, `reflection`, `color_index` and `normalized_rgb` (LED on), `ambient` and `ambient_raw` (LED off), `raw`. A reading is recorded only while the sensor is in its mode — the program's own calls choose the mode (a `color()` in the loop keeps the LED on), the logger never switches it.
 
-On a V2, a call that needs another mode than the last one switches the sensor and waits for its first reading under the new mode: about **125 ms**. Group the calls by mode: `color()`, `color_match()`, `color_number()`, `color_index()`, `rgb()`, `normalized_rgb()`, `hsv()`, `reflection()`, `calibrate_black()` and `calibrate_white()` share one mode, `ambient()` and `ambient_raw()` another, while `rgb()` and `ambient()` called in turn in a loop run at about 4 Hz. A garbled read (on a V2 a colour number above 17 or an index above 63, on a V1 all four bytes 0xFF — all 0xFF from a loose NXT cable, say) is never returned: it counts as a bus error, and three in a row are treated as an unplug. While the sensor is unplugged every reading raises `OSError("HiTechnicColorSensor on port N not responding")`; a replugged sensor is found again by itself. After `close()` every call except `close()` raises `ValueError`. The V1 is supported from its register map alone; only a V2 has been on the bench.
+On a V2, a call that needs a different mode from the last one switches the sensor. It then waits for the first reading in the new mode: about **125 ms**. Group the calls by mode: `color()`, `color_match()`, `color_number()`, `color_index()`, `rgb()`, `normalized_rgb()`, `hsv()`, `reflection()`, `calibrate_black()` and `calibrate_white()` share one mode, `ambient()` and `ambient_raw()` another, while `rgb()` and `ambient()` called in turn in a loop run at about 4 Hz. A garbled read (on a V2 a colour number above 17 or an index above 63, on a V1 all four bytes 0xFF — all 0xFF from a loose NXT cable, say) is never returned: it counts as a bus error, and three in a row are treated as an unplug. While the sensor is unplugged every reading raises `OSError("HiTechnicColorSensor on port N not responding")`; a replugged sensor is found again by itself. After `close()` every call except `close()` raises `ValueError`. The V1 is supported from its register map alone; only a V2 has been on the bench.
 
 ## HiTechnicCompass — HiTechnic NXT Compass Sensor
 
@@ -93,7 +93,7 @@ Plug the sensor into an I2C port through an NXT cable adapter, level and away fr
 
 | Call | Notes |
 | :--- | :--- |
-| `hc = HiTechnicCompass(port)` | `port` 1..16; `OSError("no HiTechnic sensor on port N (I2C 0x01)")`, `OSError("port N has a HiTechnic Color V2, not a HiTechnicCompass")` for another HiTechnic sensor, `OSError("no free HiTechnic slot (4 at once)")`. Returns with the first reading |
+| `hc = HiTechnicCompass(port)` | `port` 1..16; `OSError("no HiTechnic sensor on port N (I2C 0x01)")`, `OSError("port N has a HiTechnic Color V2, not a HiTechnicCompass")` for another HiTechnic sensor, `OSError("HiTechnicCompass on port N: no free HiTechnic slot (4 at once)")`. Returns with the first reading |
 
 **Methods**
 
@@ -101,7 +101,7 @@ Plug the sensor into an I2C port through an NXT cable adapter, level and away fr
 | :--- | :--- |
 | `hc.heading()` | 0..359 degrees clockwise (float, whole degrees), relative to `north()` |
 | `hc.north(heading=0)` | from now the direction the sensor points at reads `heading`; kept while the object is open |
-| `hc.calibrate()` | start the sensor's own hard-iron calibration: then turn the robot slowly and level through a little more than one full turn, taking at least 20 s |
+| `hc.calibrate()` | start the sensor's own hard-iron calibration. Then turn the robot slowly and level through a little more than one full turn, in at least 20 s. Until `calibrate_stop()`, `heading()`, `north()` and `age()` raise `ValueError("HiTechnicCompass is calibrating: call calibrate_stop() first")` |
 | `hc.calibrate_stop()` | end it: `True` when the sensor accepted the calibration, `False` when it rejected it; `ValueError("not calibrating: call calibrate() first")` outside one. The sensor keeps the result itself; nothing is stored on the board |
 | `hc.calibrating()` | `True` between `calibrate()` and `calibrate_stop()` |
 | `hc.firmware()` | the sensor's firmware text, e.g. `'V1.23'` |
@@ -125,13 +125,13 @@ A heading only: there is no field vector and no `heading_confidence()` (the sens
 
 ## HuskyLens — DFRobot HuskyLens AI camera
 
-Plug the camera into an I2C port (its 4-pin cable: SDA, SCL, power, ground) and set its **Protocol Type to I2C** in the camera's General Settings. The camera runs its own recognition (faces, objects, lines, colours, tags); the firmware asks it for a result every 10 ms and keeps the latest frame whole.
+Plug the camera into an I2C port (its 4-pin cable: SDA, SCL, power, ground) and set its **Protocol Type to I2C** in the camera's General Settings. The camera runs its own recognition (faces, objects, lines, colours, tags). The firmware asks it for a result every 10 ms and keeps the latest frame whole.
 
 **Constructor**
 
 | Call | Notes |
 | :--- | :--- |
-| `cam = HuskyLens(port)` | `port` 1..16; `OSError("no HuskyLens on port N (I2C 0x32)")` when nothing answers the camera's KNOCK handshake, `OSError("a HuskyLens is already open on another port (1 at once)")`. Nothing is written to the camera: its algorithm and what it learned stay as they are |
+| `cam = HuskyLens(port)` | `port` 1..16; `OSError("no HuskyLens on port N (I2C 0x32)")` when nothing answers the camera's KNOCK handshake, `OSError("HuskyLens on port N: another port already has one open (1 at once)")`. Nothing is written to the camera: its algorithm and what it learned stay as they are |
 
 **Methods**
 
@@ -187,7 +187,7 @@ Plug the sensor into an I2C port. It measures the distance to what is in front o
 | `tof.roi([width, height[, center]])` | the region of interest: the part of the 16 x 16 array of light detectors (SPADs) that measures, `width` and `height` 4..16 (the default 16 x 16 sees the whole ~27° cone; a smaller region narrows it and gets less signal). `center` is the SPAD at the middle, numbered as in ST's UM2555 table (below); left out, ST's rule: 199 (the array's middle) above 10 SPADs, else the sensor's own optical centre. Without arguments returns `(width, height, center)`. `ValueError` for a size outside 4..16, a centre outside 0..255, or a region that would leave the array |
 | `tof.signal_threshold([kcps])` | the weakest return signal accepted, in kcps (`raw()`'s unit): 0..65535, kept in ST's steps of 8 (read back rounded down), default 1024. A weaker measurement reads `'signal fail'`; lower it for dark or far targets |
 | `tof.sigma_threshold([mm])` | the largest estimated spread (sigma) accepted: 0..16383 mm, default 90 (ST's configuration). A noisier measurement reads `'sigma fail'` |
-| `tof.distance_threshold([window[, ...]])` | ST's window detection, done by the sensor: `distance_threshold('below', mm)`, `('above', mm)`, `('inside', low, high)` or `('outside', low, high)`; `distance_threshold(None)` reports every measurement again (the default). Without arguments returns `None`, `('below', mm)`, `('above', mm)` or `(window, low, high)`. `TypeError` for the wrong number of distances, `ValueError` for another name, below 0 or above 65535 mm, or low ≥ high |
+| `tof.distance_threshold([window[, ...]])` | ST's window detection, done by the sensor: `distance_threshold('below', mm)`, `('above', mm)`, `('inside', low, high)` or `('outside', low, high)`; `distance_threshold(None)` reports every measurement again (the default). Without arguments returns `None`, `('below', mm)`, `('above', mm)` or `(window, low, high)`. `TypeError` for the wrong number of distances. `ValueError` for another name, or a distance out of range: `'below'` 1..65535 mm, `'above'` 0..65534 mm, `'inside'` / `'outside'` low < high, both 0..65535 mm |
 | `tof.detected()` | under a distance threshold, `True` when the latest measurement met it and is valid: the sensor decides whether a measurement meets the threshold, and only a valid one counts, the same measurements `distance()` gives a number for (a measurement the sensor flags, a missing target's, cannot trip `'below'`). With nothing in range nothing is detected, under `'above'` and `'outside'` too (ST's manual, UM2510 3.6.4: no object found, no report; not yet benched in open air): to wait for a clear path, use no threshold and `tof.status() != 'valid' or tof.distance() > mm`. `ValueError` without a threshold |
 | `tof.calibrate_offset(target_mm)` | ST's offset calibration: a flat target (ST: grey, 17 % reflectance) square to the sensor at exactly `target_mm` (1..4000; ST recommends 100), nothing else in view. The sensor's own offsets are set to 0, 50 valid measurements are taken (under the settings in force, with the distance threshold lifted and back to back while it measures; a flagged one is left out, at most 100), and `target_mm` minus their mean (mm, rounded) is applied and **stored for the port**. Returns the offset in mm. About 50 timing budgets (2 s at 33 ms). `ValueError` when fewer than 50 of 100 measurements were valid (no target, or not at that distance) or the offset would pass ±1023 mm |
 | `tof.calibrate_crosstalk(target_mm)` | ST's crosstalk calibration, for a sensor behind a cover window: the target at the distance where the window starts to make the sensor read short. 50 valid measurements with the crosstalk compensation off; crosstalk = 512 × signal × (1 − distance / target) / SPADs (ST's formula; 0 when the target reads at or beyond `target_mm`), applied and stored for the port. Returns it in cps. Without a window it measures about 0: calibrate the offset first |
@@ -283,7 +283,7 @@ Plug the sensor into an I2C port. Its X, Y and Z channels follow the CIE 1931 co
 | `tcs.calibrate_white()` | takes the current reading as the reference white: hold a white target where the colours will be read, under the module's own LED. Each channel is then divided by the white's and scaled to D65, so the white target reads `s` 0, `v` 100. Stored like the black. `ValueError` when the reading is saturated (lower `gain()`) or a channel is not at least 10 % above the black (`"the white target is too dark or not brighter than the black reference: hold a white sheet in front"`) |
 | `tcs.black_reference()` | the black reference as `(X, Y, Z)` per 1x-gain cycle, or `None` when none is taken; `tcs.black_reference(None)` clears it and the stored one (any other argument raises `ValueError`: use `calibrate_black()`) |
 | `tcs.white_reference()` | the reference white as `(X, Y, Z)` per 1x-gain cycle, net of the black, or `None`; `tcs.white_reference(None)` clears it and the stored one (any other argument raises `ValueError`: use `calibrate_white()`) |
-| `tcs.stored_calibration()` | the port's stored colour calibration, the dict of `evn.color_calibration(port)`: `"chip"` is `'TCS3430'` for a record this sensor made (`'TCS34725'` / `'APDS9960'` for a `ColorSensor` / `GestureSensor` record, which a `TCS3430` does not use), `"black"` / `"white"` its `(X, Y, Z)` - exactly `black_reference()` / `white_reference()` -, `"stored"`, `"pending"`, `"stamp"`, `"error"` as the `ColorSensor`'s |
+| `tcs.stored_calibration()` | the port's stored colour calibration, the dict of `evn.color_calibration(port)`: `"chip"` is `'TCS3430'` for a record this sensor made (`'TCS34725'` / `'APDS9960'` for a `ColorSensor` / `GestureSensor` record, which a `TCS3430` does not use), `"black"` / `"white"` its `(X, Y, Z)` - exactly `black_reference()` / `white_reference()` -, `"port"`, `"calibrated"`, `"stored"`, `"pending"`, `"stamp"`, `"error"` as the `ColorSensor`'s |
 | `tcs.clear_calibration()` | forgets the stored calibration, then the one in force; `True` when nothing of this sensor's is left in flash (another chip's record on the port is left alone), `False` while a motor drives and the old record is still in flash (the next `stored_calibration()` writes the clear once the motors stop); `RuntimeError` (another calibration waits for the flash) changes nothing; `OSError` (the flash write failed) clears both all the same and the next `stored_calibration()` retries the write |
 | `tcs.color()` | the `detectable_colors()` entry the reading's `hsv()` matches (the same matcher as `ColorSensor`), or `None` when that set is empty |
 | `tcs.color_match()` | `(color, confidence)`: the confidence is 1.0 on the chosen colour and 0.0 halfway between two; `(None, 0.0)` with no detectable colours |
@@ -337,7 +337,7 @@ The board stores the calibration for the port (the colour calibration page, one 
 Calibration details (both colour sensors):
 
 - `calibrate_white()` is refused when the target is too dark (TCS3430: Y under 5 % of the full scale at the current setting; HiTechnic: any channel under 20 of 255) or not at least 10 % above the black on every channel — a "white" taken with nothing in front would otherwise make every later reading white.
-- `calibrate_black()` is refused when it would clear an existing white (the black is as bright as the white): `ValueError("this black is as bright as the white reference: the white was cleared, calibrate_white() again")`. On the HiTechnic a black with a channel near full scale (230+) is refused too.
+- A black as bright as the existing white is taken and stored, and the white is cleared: `calibrate_black()` then raises `ValueError("this black is as bright as the white reference: the white was cleared, calibrate_white() again")`. On the HiTechnic, a black with a channel near full scale (230+) is refused, and nothing changes.
 - HiTechnic: the references belong to the open object: they survive an unplug and replug on the same port (a different unit plugged in inherits them), a second object on the same port shares them, and `close()` forgets them; they are also stored for the port, so the next `HiTechnicColorSensor(port)` starts with them again (`clear_calibration()` forgets both). TCS3430: the references are the port's stored record, installed by `TCS3430(port)`; a second object on the same port shares them.
 - TCS3430: the references are normalised to gain and integration time with the datasheet's typical gain ratios, so after `gain()` changes a white stays close to, but not exactly on, s 0 — take the white again at the setting you will read at.
 - HiTechnic: `reflection()` and `rgb()` stay the sensor's raw values; only `hsv()`, `color()` and `color_match()` use the references.

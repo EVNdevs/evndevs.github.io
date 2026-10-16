@@ -73,7 +73,7 @@ oled.data(1, 123)
 
 **Notes**
 
-Drawing changes a picture held in the firmware and returns at once (50 `write()` calls take about 28 ms); the changed parts are streamed to the panel in the background, a whole new picture in about 60 ms, or at once with `show()`. Drawing and `contrast()`, `flip()`, `invert()`, `on()` / `off()` keep working while the display is unplugged, and a replugged display gets its picture and settings back by itself; `show()`, `scroll()`, `scroll_stop()`, `fade()`, `zoom()`, `all_on()` and `command()` need the panel and raise `OSError("display on port N not responding")` while it is unplugged.
+Drawing changes a picture held in the firmware and returns at once (50 `write()` calls take about 28 ms). The changed parts are streamed to the panel in the background: a whole new picture in about 60 ms, or at once with `show()`. Drawing and `contrast()`, `flip()`, `invert()`, `on()` / `off()` keep working while the display is unplugged. A replugged display gets its picture and settings back by itself. `show()`, `scroll()`, `scroll_stop()`, `fade()`, `zoom()`, `all_on()` and `command()` need the panel: they raise `OSError("display on port N not responding")` while it is unplugged.
 
 The constructor raises `OSError` when nothing answers on the port or two displays are already open. The getters read the firmware's copy and do not raise while the display is unplugged. After `close()` every call except `close()` raises `ValueError("Display is closed")`.
 
@@ -259,7 +259,13 @@ Nothing is read back from the strip, so there is no unplug detection: writes to 
 
 ## Servo — hobby servo (Geekservo 270° / continuous-rotation)
 
-Plug a servo into servo port 1..4 and name its profile; `Servo(port)` is the kit's Geekservo 270° servo, `Servo(port, "geekservo_360")` the grey Geekservo 2KG that turns to an angle over a full 360°, and any other servo is the `generic` profile with its own `range`, `min_us` and `max_us` (the Board view's *Custom servo...* builds that line for you). The port sends 50 Hz pulses, and a new position is on the wire within one 20 ms frame.
+Plug a servo into servo port 1..4 and name its profile:
+
+- `Servo(port)` is the kit's Geekservo 270° servo.
+- `Servo(port, "geekservo_360")` is the grey Geekservo 2KG, which turns to an angle over a full 360°.
+- Any other servo is the `generic` profile with its own `range`, `min_us` and `max_us` (the Board view's *Custom servo...* builds that line for you).
+
+The port sends 50 Hz pulses, and a new position is on the wire within one 20 ms frame.
 
 | Profile | Travel | Pulse | Start | Sweep limit | Drive with |
 | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -317,7 +323,7 @@ A servo has no feedback line, so nothing detects an unplugged servo. After `clos
 
 Plug the EVN Bluetooth module into Serial 1 or Serial 2. Once a peer is connected the module is a transparent serial link: bytes written on one end come out of the other.
 
-The module has two modes. **Hold its button while switching the board on** and it boots in command mode: the constructor then programs the baud, name and role, reboots the module (about 1 s) and switches to data mode. Switched on without the button it is already in data mode, and the constructor only opens the port at `baud` after a 300 ms `AT` probe that goes unanswered. `configured()` says which happened. The settings persist in the module, so it only needs programming once.
+The module has two modes. **Hold its button while you switch the board on** and it boots in command mode. The constructor then programs the baud, name and role, reboots the module (about 1 s) and switches to data mode. Switched on without the button, the module is already in data mode. The constructor then sends an `AT` probe, gets no answer within 300 ms, and only opens the port at `baud`. `configured()` says which happened. The settings persist in the module, so it only needs programming once.
 
 **Constructor**
 
@@ -334,7 +340,7 @@ The module has two modes. **Hold its button while switching the board on** and i
 | `bt.readline(timeout=5000)` | the next line without its `b"\n"` (and a `b"\r"` in front of it), or `None` on timeout or if the module leaves data mode. Only the line leaves the buffer; `timeout=0` never waits; `ValueError` for a negative timeout. A line longer than 255 bytes never completes and `overflow()` counts the drop |
 | `bt.read_all()` | everything buffered, at once (`b""` when nothing) |
 | `bt.any()`, `bt.waiting()` | bytes buffered (`waiting` is the Pybricks `UARTDevice` name) |
-| `bt.overflow()` | bytes the 256-byte receive buffer had to drop since the last call because the program read too slowly; read-and-clear, 0 means nothing was lost |
+| `bt.overflow()` | bytes the receive buffer (255 bytes) had to drop since the last call because the program read too slowly; read-and-clear, 0 means nothing was lost |
 | `bt.clear()` | drop everything buffered |
 | `bt.wait_until(pattern, timeout=None)` | wait for the byte sequence `pattern` (1..32 bytes), discarding everything up to and including it; `True` when it arrived, `False` after `timeout` ms. `OSError(EIO)` if the module leaves data mode |
 | `bt.set_baudrate(baud)` | the board side's speed, 1200..1382400, for a module already set to another baud (the module's own baud only changes through the constructor). Queued bytes leave at the old speed first. Data mode only, `ValueError` otherwise |
@@ -370,7 +376,7 @@ bt.repl(True)
 
 **Two modules, no PC.** Program one module as the host bound to the other's address, once: switch on with the host module's button held and run `Bluetooth(1, mode="host", addr="98D3:41:F71802")` (the address the other module's `address()` gave). From then on the host connects to that module by itself at every power-up.
 
-**The REPL over the air.** `bt.repl(True)` lets the PC's Bluetooth COM port carry the prompt, Run and Stop, so the USB cable can come out ([Getting started](GETTING_STARTED.md), §5a; the *Board* view does the whole set-up). In `boot.py`:
+**The REPL over the air.** `bt.repl(True)` lets the PC's Bluetooth COM port carry the prompt, Run and Stop, so the USB cable can come out ([Getting started](GETTING_STARTED.md), §5a; the *Board* view does the whole set-up). Put it in `boot.py`, as in the example above.
 
 A module that already carries the REPL — even one whose object was dropped, as in `evn.Bluetooth(2).repl(True)` — is adopted as it stands by a plain `Bluetooth(n)`: at the port's own baud, nothing sent to the module, `configured()` `False`. Any configuration argument (a `baud` equal to the port's own is accepted) then raises `ValueError("the module carries the REPL; call repl(False) before changing its configuration")`; a program that needs the module for its own traffic calls `bt.repl(False)` first.
 
