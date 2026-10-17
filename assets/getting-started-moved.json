@@ -1,0 +1,15 @@
+{
+ "2-put-the-firmware-on-the-board": "getting-started/4-put-the-firmware-on-the-board",
+ "3-your-first-program": "getting-started/5-your-first-program",
+ "if-evn-is-not-found": "troubleshooting/if-evn-is-not-found",
+ "3a-blocks-instead-of-python": "programs/blocks-instead-of-python",
+ "3b-the-live-console-the-command-line-and-the-console-view": "board-view/the-live-console",
+ "3c-recording-data-the-data-logger": "data-logger/recording-data",
+ "4-ports-and-units": "programs/ports-and-units",
+ "sensors-displays-and-servos": "programs/sensors-displays-and-servos",
+ "5-a-program-that-starts-from-the-user-button": "main-py/a-program-that-starts-from-the-user-button",
+ "5a-working-without-the-usb-cable-repl-over-bluetooth": "bluetooth/working-without-the-usb-cable",
+ "6-other-commands-command-palette-type-evn": "commands/the-commands",
+ "6a-updates": "commands/updates",
+ "7-reporting-problems": "troubleshooting/reporting-problems"
+}

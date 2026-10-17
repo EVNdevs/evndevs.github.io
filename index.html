@@ -9,8 +9,8 @@
   The documentation site: static files, no build step. It is published at the root of the public repo
   (github.com/EVNdevs/evndevs.github.io, the organisation's GitHub Pages root, which the custom domain
   evn.coresg.tech points at) and served by GitHub Pages; it fetches the Markdown documents next to it
-  (docs/API.md and its parts docs/API_*.md, docs/BLOCKS.md, docs/CALIBRATION.md, docs/GETTING_STARTED.md,
-  docs/CHANGELOG.md) and renders them in the browser.
+  (docs/API.md and its parts docs/API_*.md, docs/BLOCKS.md, docs/CALIBRATION.md, docs/GETTING_STARTED.md
+  and its guides docs/PROGRAMS.md ... docs/TROUBLESHOOTING.md, docs/CHANGELOG.md) and renders them in the browser.
 
   The URL contract with the VS Code extension (docs/PUBLISHING.md in the extension source):
       /#/api/<slug>          docs/API.md (the API reference's index) scrolled to the heading whose slug is
@@ -20,10 +20,19 @@
                              api-extended, api-system)
       /#/blocks/<slug>       docs/BLOCKS.md, same rule
       /#/calibration/<slug>  docs/CALIBRATION.md, same rule
-      /#/getting-started     docs/GETTING_STARTED.md from the top
-      /#/changelog           docs/CHANGELOG.md from the top
+      /#/getting-started/<slug>  docs/GETTING_STARTED.md, same rule; a slug of the one-page Getting started
+                             is forwarded to its guide (assets/getting-started-moved.json)
+      /#/<guide>/<slug>      the guides, same rule (programs, board-view, data-logger, main-py, bluetooth,
+                             commands, board, troubleshooting)
+      /#/changelog           docs/WHATS_NEW.md from the top (What's new)
+      /#/changelog-full      docs/CHANGELOG.md from the top (the full changelog)
       /#/downloads           the home page scrolled to its Downloads section
       /                      the home page (hero, the three documents, downloads from latest.json)
+  A page of its own per route: scripts/publish_public.py also writes <route>/index.html (getting-started/,
+  calibration/, api/, api-<part>/, blocks/, repl/, known-limitations/, changelog/, changelog-full/, downloads/), this file with <base href="../">, its own title,
+  description, canonical and og: tags, <meta name="evn-route"> and the document's outline; site.js renders that
+  route there. With sitemap.xml, robots.txt and 404.html (a path /<route>/<slug> forwards to /#/<route>/<slug>).
+  The #/ routes above are unchanged.
   An empty or unknown route renders the home page and an unknown slug renders its document from the
   top: never a 404. The slug rule is GitHub's: lowercase, whitespace runs to "-", every other character
   but letters, digits, "-" and "_" dropped. Heading ids are assigned here after rendering with exactly
@@ -81,12 +90,16 @@
       </span>
     </a>
     <nav class="site-nav" id="nav" aria-label="Documentation">
+      <!-- No entry is the home page (the brand is), so nothing is lit there; "Downloads" is lit only on
+           #/downloads. What's new is in the footer and beside each download. -->
       <a href="#/getting-started" data-doc="getting-started">Getting started</a>
       <a href="#/calibration/" data-doc="calibration">Calibration</a>
       <a href="#/api/" data-doc="api">API</a>
       <a href="#/blocks/" data-doc="blocks">Blocks</a>
-      <a href="#/changelog" data-doc="changelog">Changelog</a>
-      <a href="#/downloads" data-doc="home">Downloads</a>
+      <a href="examples/">Examples</a>
+      <a href="ide/" target="_blank" rel="noopener">Browser IDE</a>
+      <a href="#/downloads" data-doc="downloads">Downloads</a>
+      <a href="#/getting-started/7-reporting-problems">Help</a>
       <a href="https://github.com/EVNdevs/evndevs.github.io" target="_blank" rel="noopener">GitHub</a>
     </nav>
     <div class="header-tools">
@@ -131,17 +144,19 @@
       </span>
     </div>
     <div class="f-col">
-      <h4>Documentation</h4>
+      <h2>Documentation</h2>
       <ul>
         <li><a href="#/getting-started">Getting started</a></li>
         <li><a href="#/calibration/">Calibrating your robot</a></li>
         <li><a href="#/api/">API reference</a></li>
         <li><a href="#/blocks/">Blocks reference</a></li>
-        <li><a href="#/changelog">Changelog</a></li>
+        <li><a href="#/repl">Using the REPL</a></li>
+        <li><a href="#/known-limitations">Known limitations</a></li>
+        <li><a href="#/changelog">What's new</a></li>
       </ul>
     </div>
     <div class="f-col">
-      <h4>Downloads</h4>
+      <h2>Downloads</h2>
       <ul>
         <li><a href="#/downloads">VS Code extension</a></li>
         <li><a href="#/downloads">Firmware (UF2)</a></li>
@@ -149,7 +164,7 @@
       </ul>
     </div>
     <div class="f-col">
-      <h4>EVN</h4>
+      <h2>EVN</h2>
       <ul>
         <li><a href="https://coresg.tech/evn" target="_blank" rel="noopener">The EVN ALPHA controller</a></li>
         <li><a href="https://github.com/EVNdevs" target="_blank" rel="noopener">GitHub organisation</a></li>

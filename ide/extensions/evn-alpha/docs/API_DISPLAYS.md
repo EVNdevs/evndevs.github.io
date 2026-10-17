@@ -313,6 +313,8 @@ wheel.duty(50)                   # about 185 deg/s unloaded; wheel.stop() to sto
 
 **Notes**
 
+How accurate they are, measured with an encoder on the horn: the Geekservo 270° travels 277..281° over its 0..270 command, in a straight line, and follows `move(270, 200)` at 200..206 deg/s. The continuous-rotation servo does not creep at duty 0, turns at about 185 / 315 / 450 deg/s at duty 50 / 75 / 100, starts in about 100 ms and stops in about 150 ms; under a heavy load it is limited by its torque below duty 50.
+
 The emergency stop (Ctrl-C, the board button) ends every sweep and sends a continuous servo its stop pulse; a fixed-range servo keeps holding its position, the way a motor keeps its brake. A servo port pulses nothing until the first `Servo` object on it is built, and a new object drives its port even after `disable()` on an earlier one. A second `Servo(n)` while an older object holds the port **takes it over**: the pulse is the new object's from its first frame (its profile's start), every call on the older object raises `ValueError("Servo(n) was replaced by a newer Servo(n)")` and its `close()` does nothing.
 
 The port has one owner at a time: `RGBLED(n)` raises `OSError("servo port n is used by a Servo object")` while this object is open, and while a strip holds the port the constructor and every writing call here raise `OSError("servo port n is used by an RGBLED strip")`. A strip's `close()` frees the port about 1–3 ms later (its black frame drains first); `Servo(port)` straight after `leds.close()` waits up to 10 ms for that, and raises only if the strip is still open or has not handed the port back within those 10 ms.
@@ -376,7 +378,7 @@ bt.repl(True)
 
 **Two modules, no PC.** Program one module as the host bound to the other's address, once: switch on with the host module's button held and run `Bluetooth(1, mode="host", addr="98D3:41:F71802")` (the address the other module's `address()` gave). From then on the host connects to that module by itself at every power-up.
 
-**The REPL over the air.** `bt.repl(True)` lets the PC's Bluetooth COM port carry the prompt, Run and Stop, so the USB cable can come out ([Getting started](GETTING_STARTED.md), §5a; the *Board* view does the whole set-up). Put it in `boot.py`, as in the example above.
+**The REPL over the air.** `bt.repl(True)` lets the PC's Bluetooth COM port carry the prompt, Run and Stop, so the USB cable can come out ([Working without the USB cable](BLUETOOTH.md); the *Board* view does the whole set-up). Put it in `boot.py`, as in the example above.
 
 A module that already carries the REPL — even one whose object was dropped, as in `evn.Bluetooth(2).repl(True)` — is adopted as it stands by a plain `Bluetooth(n)`: at the port's own baud, nothing sent to the module, `configured()` `False`. Any configuration argument (a `baud` equal to the port's own is accepted) then raises `ValueError("the module carries the REPL; call repl(False) before changing its configuration")`; a program that needs the module for its own traffic calls `bt.repl(False)` first.
 

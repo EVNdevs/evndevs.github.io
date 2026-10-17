@@ -82,7 +82,7 @@
  "recording": "api-system/recording",
  "saving": "api-system/saving",
  "timing-wait-and-stopwatch": "api-system/timing-wait-and-stopwatch",
- "appendix-diagnostics-and-validation": "api-system/appendix-diagnostics-and-validation",
+ "appendix-diagnostics-and-validation": "api-system/appendix-diagnostics",
  "diagnostics": "api-system/diagnostics",
- "validation-record": "api-system/validation-record"
+ "validation-record": "api-system/appendix-diagnostics"
 }

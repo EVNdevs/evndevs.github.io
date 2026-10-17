@@ -91,9 +91,13 @@
            defaults included, beat a plain one), and without the parameter nothing changes. */
         var query = new URLSearchParams(window.location.search);
         var hash = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+        /* SITE-28: open on nothing rather than VS Code's own welcome page (the extension opens the EVN
+           walkthrough on the first run, src/walkthrough.ts). */
+        var evnDev = {};
         if (query.get('evn-dev') === 'sim' || hash.get('evn-dev') === 'sim') {
-            config.configurationDefaults = { '[evn-dev]': { 'evn.developer.simulatedBoard': true } };
+            evnDev['evn.developer.simulatedBoard'] = true;
         }
+        config.configurationDefaults = { 'workbench.startupEditor': 'none', '[evn-dev]': evnDev };
         void origin;
         document.getElementById('vscode-workbench-web-configuration')
             .setAttribute('data-settings', JSON.stringify(config));

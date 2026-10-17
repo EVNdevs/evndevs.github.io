@@ -2692,6 +2692,13 @@
         use('wait');
         return 'while True:\n' + generator.INDENT + 'wait(1000)\n';
     };
+    /* "break" / "continue" (controls_flow_statements) are enabled only inside a block of Blockly's loopTypes (blocks/loops.js
+     * CONTROL_FLOW_IN_LOOP_CHECK_MIXIN); a disabled block is not generated, so a "break" in "forever" came out as `pass`
+     * and the loop never ended (VSC-29). The webview has the library as Blockly.libraryBlocks (blocks_compressed.js); under
+     * Node it is the 'blockly/blocks' module the caller's require('blockly') registered. */
+    const loopsLib = (Blockly.libraryBlocks && Blockly.libraryBlocks.loops)
+        || (typeof require === 'function' ? require('blockly/blocks').loops : null);
+    if (loopsLib && loopsLib.loopTypes) { loopsLib.loopTypes.add('evn_forever'); }
     generator.forBlock['evn_forever'] = function (block) {
         const body = generator.statementToCode(block, 'DO') || generator.PASS;
         return 'while True:\n' + body;
@@ -3622,7 +3629,9 @@ def ${generator.FUNCTION_NAME_PLACEHOLDER_}(name):
                     { kind: 'block', type: 'evn_drivebase_speeds', inputs: { SPEED: shadowNum(300), TURN: shadowNum(150) } },
                     { kind: 'block', type: 'evn_drivebase_accel', inputs: { ACCEL: shadowNum(750), TURN: shadowNum(750) } },
                     { kind: 'block', type: 'evn_drivebase_reset' },
-                    { kind: 'block', type: 'evn_drivebase_setup' },
+                    // the robot the generator assumes without this block (driveGeometry): left 1, right 2 - a block from the
+                    // toolbox starts there too (it started at right motor 1, the first option; SITE-25)
+                    { kind: 'block', type: 'evn_drivebase_setup', fields: { LEFT: '1', RIGHT: '2' } },
                     { kind: 'block', type: 'evn_drivebase_gyro' },
                 ],
             },

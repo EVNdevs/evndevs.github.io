@@ -2,7 +2,7 @@
   "name": "evn-alpha-micropython",
   "displayName": "EVN ALPHA MicroPython",
   "description": "Early-access tooling for the EVN ALPHA robotics controller: flash the MicroPython firmware, run programs, open the REPL, autocomplete for the evn motor API, and a Blockly block editor that generates MicroPython.",
-  "version": "0.2.67",
+  "version": "0.2.68",
   "publisher": "evn-alpha",
   "license": "MIT",
   "preview": true,
@@ -366,7 +366,7 @@
       {
         "category": "EVN",
         "command": "evn.console.showOutput",
-        "title": "Show the console output",
+        "title": "Show the board output",
         "icon": "$(output)"
       },
       {
@@ -392,6 +392,18 @@
         "command": "evn.motor.stop",
         "title": "Stop this motor",
         "icon": "$(debug-stop)"
+      },
+      {
+        "category": "EVN",
+        "command": "evn.motor.jogForward",
+        "title": "Jog this motor 90° forward",
+        "icon": "$(arrow-right)"
+      },
+      {
+        "category": "EVN",
+        "command": "evn.motor.jogBack",
+        "title": "Jog this motor 90° back",
+        "icon": "$(arrow-left)"
       },
       {
         "category": "EVN",
@@ -422,6 +434,12 @@
         "command": "evn.device.unwatch",
         "title": "Stop reading this device",
         "icon": "$(eye-closed)"
+      },
+      {
+        "category": "EVN",
+        "command": "evn.device.copyCode",
+        "title": "Copy the code for this device",
+        "icon": "$(copy)"
       },
       {
         "category": "EVN",
@@ -461,6 +479,23 @@
       },
       {
         "category": "EVN",
+        "command": "evn.motor.calibrateAll",
+        "title": "Calibrate all motors (one after the other)...",
+        "icon": "$(pulse)"
+      },
+      {
+        "category": "EVN",
+        "command": "evn.calibration.status",
+        "title": "What is calibrated (calibration page)",
+        "icon": "$(checklist)"
+      },
+      {
+        "category": "EVN",
+        "command": "evn.calibration.needed",
+        "title": "Calibrate what needs it..."
+      },
+      {
+        "category": "EVN",
         "command": "evn.motor.clearCalibration",
         "title": "Clear this motor port's calibration...",
         "icon": "$(clear-all)"
@@ -468,8 +503,14 @@
       {
         "category": "EVN",
         "command": "evn.imu.calibrate",
-        "title": "Calibrate this IMU (still and level, ~2 s)...",
+        "title": "Calibrate this IMU (one click)...",
         "icon": "$(pulse)"
+      },
+      {
+        "category": "EVN",
+        "command": "evn.imu.calibrateAdvanced",
+        "title": "Calibrate this IMU (advanced: two poses, find the front)...",
+        "icon": "$(settings-gear)"
       },
       {
         "category": "EVN",
@@ -480,8 +521,14 @@
       {
         "category": "EVN",
         "command": "evn.compass.calibrate",
-        "title": "Calibrate this compass (full or planar)...",
+        "title": "Calibrate this compass (planar: spin it on the floor, ~20 s)...",
         "icon": "$(pulse)"
+      },
+      {
+        "category": "EVN",
+        "command": "evn.compass.calibrateAdvanced",
+        "title": "Calibrate this compass (advanced: full or planar)...",
+        "icon": "$(settings-gear)"
       },
       {
         "category": "EVN",
@@ -687,6 +734,14 @@
           "when": "false"
         },
         {
+          "command": "evn.motor.jogForward",
+          "when": "false"
+        },
+        {
+          "command": "evn.motor.jogBack",
+          "when": "false"
+        },
+        {
           "command": "evn.servo.drive",
           "when": "false"
         },
@@ -704,6 +759,10 @@
         },
         {
           "command": "evn.device.unwatch",
+          "when": "false"
+        },
+        {
+          "command": "evn.device.copyCode",
           "when": "false"
         },
         {
@@ -729,6 +788,22 @@
         {
           "command": "evn.imu.calibrate",
           "when": "false"
+        },
+        {
+          "command": "evn.imu.calibrateAdvanced",
+          "when": "false"
+        },
+        {
+          "command": "evn.compass.calibrateAdvanced",
+          "when": "false"
+        },
+        {
+          "command": "evn.motor.calibrateAll",
+          "when": "evn.console.state == live"
+        },
+        {
+          "command": "evn.calibration.needed",
+          "when": "evn.console.state == live"
         },
         {
           "command": "evn.imu.clearCalibration",
@@ -826,6 +901,11 @@
           "command": "evn.color.panel",
           "when": "view == evn.board && evn.console.state == live",
           "group": "navigation@5"
+        },
+        {
+          "command": "evn.calibration.status",
+          "when": "view == evn.board && evn.console.state == live",
+          "group": "navigation@6"
         },
         {
           "command": "evn.console.connect",
@@ -971,22 +1051,22 @@
         },
         {
           "command": "evn.runExample",
-          "when": "view == evn.examples && viewItem =~ /^evnExample(File|Blocks)$/",
+          "when": "view == evn.examples && viewItem =~ /^evnExample(File|Blocks|Topic)$/",
           "group": "inline@1"
         },
         {
           "command": "evn.saveExampleAsProject",
-          "when": "view == evn.examples && viewItem =~ /^evnExample(File|Blocks)$/",
+          "when": "view == evn.examples && viewItem =~ /^evnExample(File|Blocks|Topic)$/",
           "group": "inline@2"
         },
         {
           "command": "evn.runExample",
-          "when": "view == evn.examples && viewItem =~ /^evnExample(File|Blocks)$/",
+          "when": "view == evn.examples && viewItem =~ /^evnExample(File|Blocks|Topic)$/",
           "group": "1_run@1"
         },
         {
           "command": "evn.saveExampleAsProject",
-          "when": "view == evn.examples && viewItem =~ /^evnExample(File|Blocks)$/",
+          "when": "view == evn.examples && viewItem =~ /^evnExample(File|Blocks|Topic)$/",
           "group": "1_run@2"
         },
         {
@@ -1085,33 +1165,38 @@
           "group": "inline@9"
         },
         {
-          "command": "evn.motor.run",
+          "command": "evn.motor.jogForward",
           "when": "view == evn.board && viewItem == evnBoardMotorPortSet && evn.console.state == live",
           "group": "inline@1"
         },
         {
-          "command": "evn.motor.runTarget",
-          "when": "view == evn.board && viewItem == evnBoardMotorPortSet && evn.console.state == live",
-          "group": "inline@2"
+          "command": "evn.motor.stop",
+          "when": "view == evn.board && viewItem == evnBoardMotorPortSetDriving && evn.console.state == live",
+          "group": "inline@1"
         },
         {
-          "command": "evn.motor.stop",
-          "when": "view == evn.board && viewItem == evnBoardMotorPortSet && evn.console.state == live",
-          "group": "inline@3"
+          "command": "evn.motor.jogForward",
+          "when": "view == evn.board && viewItem =~ /^evnBoardMotorPortSet(Driving)?$/ && evn.console.state == live",
+          "group": "0_jog@1"
+        },
+        {
+          "command": "evn.motor.jogBack",
+          "when": "view == evn.board && viewItem =~ /^evnBoardMotorPortSet(Driving)?$/ && evn.console.state == live",
+          "group": "0_jog@2"
         },
         {
           "command": "evn.motor.run",
-          "when": "view == evn.board && viewItem == evnBoardMotorPortSet && evn.console.state == live",
+          "when": "view == evn.board && viewItem =~ /^evnBoardMotorPortSet/ && evn.console.state == live",
           "group": "1_drive@1"
         },
         {
           "command": "evn.motor.runTarget",
-          "when": "view == evn.board && viewItem == evnBoardMotorPortSet && evn.console.state == live",
+          "when": "view == evn.board && viewItem =~ /^evnBoardMotorPortSet/ && evn.console.state == live",
           "group": "1_drive@2"
         },
         {
           "command": "evn.motor.stop",
-          "when": "view == evn.board && viewItem == evnBoardMotorPortSet && evn.console.state == live",
+          "when": "view == evn.board && viewItem =~ /^evnBoardMotorPortSet/ && evn.console.state == live",
           "group": "1_drive@3"
         },
         {
@@ -1150,6 +1235,11 @@
           "group": "inline@2"
         },
         {
+          "command": "evn.device.copyCode",
+          "when": "view == evn.board && viewItem =~ /^evnBoardDevice(Known|Watched)/",
+          "group": "0_code@1"
+        },
+        {
           "command": "evn.imu.calibrate",
           "when": "view == evn.board && viewItem =~ /^evnBoardDevice(Known|Watched)Imu$/ && evn.console.state == live",
           "group": "inline@3"
@@ -1165,9 +1255,29 @@
           "group": "2_calibrate@1"
         },
         {
+          "command": "evn.compass.calibrateAdvanced",
+          "when": "view == evn.board && viewItem =~ /^evnBoardDevice(Known|Watched)Compass$/ && evn.console.state == live",
+          "group": "2_calibrate@1a"
+        },
+        {
           "command": "evn.compass.clearCalibration",
           "when": "view == evn.board && viewItem =~ /^evnBoardDevice(Known|Watched)Compass$/ && evn.console.state == live",
           "group": "2_calibrate@2"
+        },
+        {
+          "command": "evn.motor.calibrateAll",
+          "when": "view == evn.board && viewItem == evnBoardMotors && evn.console.state == live",
+          "group": "inline@1"
+        },
+        {
+          "command": "evn.motor.calibrateAll",
+          "when": "view == evn.board && viewItem == evnBoardMotors && evn.console.state == live",
+          "group": "2_calibrate@1"
+        },
+        {
+          "command": "evn.calibration.status",
+          "when": "view == evn.board && (viewItem == evnBoardMotors || viewItem == evnBoardDevices) && evn.console.state == live",
+          "group": "2_calibrate@9"
         },
         {
           "command": "evn.color.calibrate",
@@ -1193,6 +1303,11 @@
           "command": "evn.imu.calibrate",
           "when": "view == evn.board && viewItem =~ /^evnBoardDevice(Known|Watched)Imu$/ && evn.console.state == live",
           "group": "2_calibrate@1"
+        },
+        {
+          "command": "evn.imu.calibrateAdvanced",
+          "when": "view == evn.board && viewItem =~ /^evnBoardDevice(Known|Watched)Imu$/ && evn.console.state == live",
+          "group": "2_calibrate@1a"
         },
         {
           "command": "evn.imu.clearCalibration",
@@ -1240,28 +1355,23 @@
           "group": "1_bluetooth@3"
         },
         {
-          "command": "evn.motor.runTime",
-          "when": "view == evn.board && viewItem == evnBoardMotorPortSet && evn.console.state == live",
-          "group": "inline@4"
-        },
-        {
           "command": "evn.motor.calibrate",
-          "when": "view == evn.board && viewItem == evnBoardMotorPortSet && evn.console.state == live",
+          "when": "view == evn.board && viewItem =~ /^evnBoardMotorPortSet/ && evn.console.state == live",
           "group": "inline@5"
         },
         {
           "command": "evn.motor.runTime",
-          "when": "view == evn.board && viewItem == evnBoardMotorPortSet && evn.console.state == live",
+          "when": "view == evn.board && viewItem =~ /^evnBoardMotorPortSet/ && evn.console.state == live",
           "group": "1_drive@4"
         },
         {
           "command": "evn.motor.calibrate",
-          "when": "view == evn.board && viewItem == evnBoardMotorPortSet && evn.console.state == live",
+          "when": "view == evn.board && viewItem =~ /^evnBoardMotorPortSet/ && evn.console.state == live",
           "group": "2_calibrate@1"
         },
         {
           "command": "evn.motor.clearCalibration",
-          "when": "view == evn.board && viewItem == evnBoardMotorPortSet && evn.console.state == live",
+          "when": "view == evn.board && viewItem =~ /^evnBoardMotorPortSet/ && evn.console.state == live",
           "group": "2_calibrate@2"
         },
         {
@@ -1286,7 +1396,7 @@
         },
         {
           "command": "evn.dataLogger.add",
-          "when": "view == evn.board && viewItem =~ /^evnBoard(MotorPort(Set)?|Battery|DeviceKnown(Imu|Compass|Color)?|DeviceWatched(Imu|Compass|Color)?)$/",
+          "when": "view == evn.board && viewItem =~ /^evnBoard(MotorPort(Set(Driving|Calibrating)?)?|Battery|DeviceKnown(Imu|Compass|Color)?|DeviceWatched(Imu|Compass|Color)?)$/",
           "group": "4_log@1"
         }
       ],
@@ -1372,6 +1482,21 @@
           "type": "string",
           "default": "",
           "description": "Python interpreter used to run mpremote. Leave empty to use the Python extension's selected interpreter, then `py -3` / `python3` / `python` from PATH."
+        },
+        "evn.uploadMain.then": {
+          "type": "string",
+          "enum": [
+            "ask",
+            "run",
+            "upload"
+          ],
+          "enumDescriptions": [
+            "Ask every time: Upload and run now, or Upload only.",
+            "Upload and run now: copy to main.py, reset the board, start the program.",
+            "Upload only: copy to main.py; the user button starts it."
+          ],
+          "default": "ask",
+          "description": "What Upload as main.py does after the copy. The message after an upload offers to remember your answer."
         },
         "evn.replAfterRun": {
           "type": "boolean",
@@ -1459,7 +1584,7 @@
           "default": 7,
           "minimum": 0,
           "maximum": 9,
-          "description": "Show a battery warning in the status bar when the pack drops below this voltage while the live console is connected. The EVN ALPHA pack is two cells, so 7.0 V is 3.5 V a cell. 0 turns the warning off."
+          "description": "Below this pack voltage the Board view's battery row turns yellow and, while the live console is connected, a battery warning shows in the status bar. The EVN ALPHA pack is two cells, so 7.0 V is 3.5 V a cell. 0 turns the warning off; the row still turns red below 6.6 V, where the board is about to switch off."
         }
       }
     },
@@ -1493,7 +1618,7 @@
           "icon": "media/evn-n-cambria.svg",
           "contextualTitle": "EVN ALPHA",
           "visibility": "visible",
-          "initialSize": 1
+          "initialSize": 2
         },
         {
           "id": "evn.projects",
@@ -1562,6 +1687,7 @@
         "id": "evn.gettingStarted",
         "title": "Get started with the EVN ALPHA",
         "description": "Install the one tool the extension needs, flash the firmware, run an example, then write your own program.",
+        "when": "!isWeb",
         "steps": [
           {
             "id": "evn.step.mpremote",
@@ -1629,6 +1755,77 @@
           },
           {
             "id": "evn.step.docs",
+            "title": "Learn more",
+            "description": "The online documentation covers every motor call, the board, the sensors and the blocks.\n[Open the documentation](command:evn.openDocumentation)",
+            "media": {
+              "markdown": "media/walkthrough/docs.md"
+            },
+            "completionEvents": [
+              "onCommand:evn.openDocumentation",
+              "onCommand:evn.openApiReference"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "evn.gettingStartedWeb",
+        "title": "Get started with the EVN ALPHA in your browser",
+        "description": "Nothing to install: connect the board over Web Serial, run an example, write a program and upload it as main.py.",
+        "when": "isWeb",
+        "steps": [
+          {
+            "id": "evn.web.step.connect",
+            "title": "Connect the board",
+            "description": "The browser reaches the board over Web Serial (Chrome, Edge or Opera). Plug it in and let this page use its port - the browser asks you which device, and remembers it.\n[Connect the board](command:evn.selectPort)",
+            "media": {
+              "markdown": "media/walkthrough/port-web.md"
+            },
+            "completionEvents": [
+              "onContext:evn.boardConnected",
+              "onCommand:evn.selectPort"
+            ]
+          },
+          {
+            "id": "evn.web.step.run",
+            "title": "Run an example",
+            "description": "Pick an example in the Examples section of the EVN ALPHA sidebar and press its Run button. Keep the wheels off the ground. Press Stop (or the board's user button) before closing the tab: closing it does not stop the motors.\n[Show the examples](command:evn.examples.focus)",
+            "media": {
+              "markdown": "media/walkthrough/web-run.md"
+            },
+            "completionEvents": [
+              "onCommand:evn.runExample",
+              "onCommand:evn.runFile",
+              "onCommand:evn.runProject"
+            ]
+          },
+          {
+            "id": "evn.web.step.program",
+            "title": "Write your own program",
+            "description": "Create a Python or blocks program. It is kept in this browser, under My projects, and runs with the Run button next to its name.\n[New Python program](command:evn.newPythonProject)\n[New blocks program](command:evn.newBlocksProject)",
+            "media": {
+              "markdown": "media/walkthrough/web-program.md"
+            },
+            "completionEvents": [
+              "onCommand:evn.newPythonProject",
+              "onCommand:evn.newBlocksProject",
+              "onCommand:evn.newBlocksFile"
+            ]
+          },
+          {
+            "id": "evn.web.step.upload",
+            "title": "Upload it as main.py",
+            "description": "Upload as main.py, next to each program under My projects, puts the program on the board: after power-on a press of the user button starts it, with no computer attached.\n[Show my projects](command:evn.projects.focus)",
+            "media": {
+              "markdown": "media/walkthrough/web-program.md"
+            },
+            "completionEvents": [
+              "onCommand:evn.uploadMain",
+              "onCommand:evn.uploadProjectMain",
+              "onCommand:evn.uploadBlocksMain"
+            ]
+          },
+          {
+            "id": "evn.web.step.docs",
             "title": "Learn more",
             "description": "The online documentation covers every motor call, the board, the sensors and the blocks.\n[Open the documentation](command:evn.openDocumentation)",
             "media": {

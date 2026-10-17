@@ -1,7 +1,8 @@
 EVN_ALPHA_MicroPython.uf2
-source: main (0.2.66) + linkfix (the release build's link line under cmd.exe's limit) + the bindings lane (DriveBase.reset(distance=, angle=), HiTechnicCompass.age() during calibrate(), range / closed-object checks) + C0-32 (the RGBLED strip buffer on the GC heap) + MC-61 (DriveBase.hold()) + C0-03 (the SSD1306 Display frame on the GC heap); the Python heap at 128 KB; the release layout EVN_RELEASE_PAD_PY 6124 / _MODULES 3312 / _HAL 1768 (board-picked on COM17 + COM22)
-built: 2026-10-17 (MicroPython v1.26.1, pico-sdk 2.3.0; SOURCE_DATE_EPOCH=1792238400 = noon UTC 2026-10-17)
+source: 0.2.67's firmware code (comment-only source changes) built from be233dac, with the version string 0.2.68 (the firmware fixes of 2026-10-18 held back: the merged image failed the Core 0 screen on COM22); the extension, browser IDE and site changes of 0.2.68; the Python heap at 128 KB; the release layout EVN_RELEASE_PAD_PY 6124 / _MODULES 3312 / _HAL 1768 (0.2.67's; the symbol map is identical to 0.2.67's)
+built: 2026-10-18 (MicroPython v1.26.1, pico-sdk 2.3.0; SOURCE_DATE_EPOCH=1792324800 = noon UTC 2026-10-18)
 flash: single-line 03h boot2, PICO_FLASH_SPI_CLKDIV=4
-md5: c55431e6fb6fdc04419e89f80772203d
+toolchain: arm-none-eabi-gcc 15.2.1 (Arm GNU Toolchain 15.2.Rel1), pico-sdk 2.3.0, MicroPython v1.26.1
+md5: 2f5440cdec3cd790cae9699bfc442729
 reproduce: cmake -G Ninja -DEVN_MICROPYTHON=ON + ninja with SOURCE_DATE_EPOCH = noon UTC of the built: date (py/makeversionhdr.py embeds MICROPY_BUILD_DATE); release_public.py does this and refuses on an md5 mismatch
-version: 0.2.67
+version: 0.2.68

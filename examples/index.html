@@ -1,218 +1,458 @@
 <!doctype html>
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>EVN ALPHA example programs</title>
+<title>Example programs - EVN ALPHA MicroPython</title>
+<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/site.css">
 <style>
- /* media/theme/evn-palette.json, dark (scripts/test_theme.js checks these) */
- :root { color-scheme: dark; }
- body { margin: 0 auto; padding: 2rem 1rem; max-width: 46rem; background: #111518; color: #d7dade;
-        font: 16px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif; }
- h1 { font-size: 1.5rem; } h2 { font-size: 1.1rem; margin-top: 2rem; } h3 { font-size: 1rem; margin-top: 1.5rem; }
- h2 small, h3 small { font-weight: 400; color: #a3a8ad; }
- a { color: #c9b99c; } ul { list-style: none; padding: 0; }
- li { padding: .35rem 0; border-bottom: 1px solid #2a3138; }
- li span { display: block; color: #a3a8ad; font-size: .9rem; }
-</style></head><body>
-<h1>EVN ALPHA example programs</h1>
-<p>The same examples the VS Code extension lists under <em>Examples</em>: for every object of the API a
-   minimal and a complete program, in Python and, where there are blocks for it, in blocks
-   (open a <code>.evnblocks</code> file in the extension's block editor).
-   <a href="../">Back to evn.coresg.tech</a></p>
+ /* every colour is one of site.css's variables, so the page follows the site's light and dark schemes */
+ .ex-page { padding-top: 40px; padding-bottom: 64px; max-width: 880px; }
+ .ex-page h1 { font-size: 34px; margin: 0 0 12px; }
+ .ex-page .lede { color: var(--muted); font-size: 16.5px; max-width: 70ch; }
+ .ex-page h2 { font-size: 22px; margin: 40px 0 6px; }
+ .ex-page h3 { font-size: 18px; margin: 28px 0 6px; }
+ .ex-page h2 small, .ex-page h3 small { display: block; font-weight: 400; font-size: 14.5px; color: var(--muted); }
+ .ex-list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+ .ex-row { display: flex; gap: 16px; align-items: flex-start; justify-content: space-between; padding: 14px 0;
+           border-bottom: 1px solid var(--line); }
+ .ex-row .t strong { display: block; color: var(--heading); font-weight: 600; }
+ .ex-row .t span { display: block; color: var(--muted); font-size: 14.5px; }
+ .ex-row .ex-file { font-family: ui-monospace, Consolas, monospace; font-size: 13px; }
+ .ex-row .go { display: flex; gap: 8px; flex: 0 0 auto; }
+ @media (max-width: 600px) { .ex-row { flex-direction: column; } }
+</style>
+<script>
+  (function () {
+    try {
+      var t = localStorage.getItem('evn-theme');
+      if (t === 'light' || t === 'dark') { document.documentElement.setAttribute('data-theme', t); }
+    } catch (e) { /* storage blocked: the media query decides */ }
+  })();
+</script>
+</head><body>
+<a class="skip" href="#main">Skip to the content</a>
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="../#/" aria-label="EVN ALPHA MicroPython, home">
+      <span class="mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M17.48 5.66Q17.48 4.56 17.41 4.15Q17.35 3.73 17.22 3.49Q17.08 3.25 16.82 3.08Q16.56 2.91 15.84 2.72V2H21.13V2.72Q20.47 2.89 20.2 3.04Q19.93 3.19 19.76 3.42Q19.59 3.66 19.5 4.12Q19.41 4.59 19.41 5.66V22H14.74L8.47 11.23Q7.18 9.02 6.51 7.6H6.37Q6.52 10.75 6.52 14.25V18.34Q6.52 19.52 6.63 20.03Q6.74 20.53 7.07 20.8Q7.4 21.06 8.23 21.28V22H2.87V21.28Q3.78 21.05 4.09 20.76Q4.4 20.48 4.49 19.95Q4.59 19.42 4.59 18.34V5.66Q4.59 4.65 4.51 4.19Q4.44 3.73 4.27 3.47Q4.1 3.22 3.82 3.06Q3.55 2.91 2.87 2.72V2H9.66L14.77 10.85Q15.21 11.61 16 13.09Q16.79 14.57 17.41 15.89H17.64Q17.48 12.39 17.48 8.24ZM17.79 20.71V19.23L8.54 3.29H6.21V4.14L15.82 20.71Z"/></svg>
+      </span>
+      <span class="words">
+        <span class="word-1">EVN ALPHA</span>
+        <span class="word-2">MicroPython</span>
+      </span>
+    </a>
+    <nav class="site-nav" id="nav" aria-label="Documentation">
+      <!-- No entry is the home page (the brand is), so nothing is lit there; "Downloads" is lit only on
+           #/downloads. What's new is in the footer and beside each download. -->
+      <a href="../#/getting-started" data-doc="getting-started">Getting started</a>
+      <a href="../#/calibration/" data-doc="calibration">Calibration</a>
+      <a href="../#/api/" data-doc="api">API</a>
+      <a href="../#/blocks/" data-doc="blocks">Blocks</a>
+      <a href="./" aria-current="page">Examples</a>
+      <a href="ide/" target="_blank" rel="noopener">Browser IDE</a>
+      <a href="../#/downloads" data-doc="downloads">Downloads</a>
+      <a href="../#/getting-started/7-reporting-problems">Help</a>
+      <a href="https://github.com/EVNdevs/evndevs.github.io" target="_blank" rel="noopener">GitHub</a>
+    </nav>
+    <div class="header-tools">
+      <button class="icon-btn" id="theme-btn" type="button" aria-label="Switch between the light and the dark colour scheme">
+        <svg class="theme-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+        <svg class="theme-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M4.2 4.2l1.6 1.6M18.2 18.2l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.2 19.8l1.6-1.6M18.2 5.8l1.6-1.6"/></svg>
+      </button>
+      <button class="icon-btn" id="menu-btn" type="button" aria-label="Menu" aria-expanded="false" aria-controls="nav">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 6.5h17M3.5 12h17M3.5 17.5h17"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+<main id="main" tabindex="-1">
+<div class="wrap ex-page">
+<h1>Example programs</h1>
+<p class="lede">The same examples the VS Code extension lists under <em>Examples</em>: for every part of the robot a
+   minimal and a complete program, in Python and, where there are blocks for it, in blocks. Download one and open it
+   in the extension (a <code>.evnblocks</code> file opens in the blocks editor). <strong>Needs</strong> says what to
+   plug in, and how to set the robot up, before you run it.</p>
 <h2>Board, button, LED and timing <small>battery, button, LED, wait, StopWatch</small></h2>
-<ul>
-  <li><a href="01_board/board_minimal.py">board_minimal.py</a>  <span>Board: minimal - Needs: nothing but the board; you press the user button when it asks</span></li>
-  <li><a href="01_board/board_minimal.evnblocks">board_minimal.evnblocks</a>  <span>Board: minimal - Needs: nothing but the board; you press the user button when it asks</span></li>
-  <li><a href="01_board/board_complete.py">board_complete.py</a>  <span>Board: the whole API - Needs: nothing but the board (a battery pack for the battery readings); you press the user button</span></li>
-  <li><a href="01_board/board_complete.evnblocks">board_complete.evnblocks</a>  <span>Board: every block - Needs: nothing but the board; you press the user button when it asks</span></li>
+<ul class="ex-list">
+  <li class="ex-row">
+    <div class="t"><strong>Board: minimal</strong><span class="ex-file">board_minimal.py &middot; board_minimal.evnblocks</span><span class="ex-needs">Needs: nothing but the board; you press the user button when it asks</span></div>
+    <div class="go"><a class="btn btn-ghost" href="01_board/board_minimal.py" download>Python</a> <a class="btn btn-ghost" href="01_board/board_minimal.evnblocks" download>Blocks</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>Board: the whole API</strong><span class="ex-file">board_complete.py &middot; board_complete.evnblocks</span><span class="ex-needs">Needs: nothing but the board (a battery pack for the battery readings); you press the user button when it asks.</span></div>
+    <div class="go"><a class="btn btn-ghost" href="01_board/board_complete.py" download>Python</a> <a class="btn btn-ghost" href="01_board/board_complete.evnblocks" download>Blocks</a></div>
+  </li>
 </ul>
 <h2>Motor <small>EV3 / NXT motors on ports 1-4</small></h2>
-<ul>
-  <li><a href="02_motor/motor_minimal.py">motor_minimal.py</a>  <span>Motor: minimal - Needs: a motor on port 1, wheel off the ground</span></li>
-  <li><a href="02_motor/motor_minimal.evnblocks">motor_minimal.evnblocks</a>  <span>Motor: minimal - Needs: a motor on port 1, wheel off the ground</span></li>
-  <li><a href="02_motor/motor_complete.py">motor_complete.py</a>  <span>Motor: the whole API - Needs: motors on ports 1 and 2, wheels off the ground (the calibration turns a shaft up to a turn</span></li>
-  <li><a href="02_motor/motor_complete.evnblocks">motor_complete.evnblocks</a>  <span>Motor: every block - Needs: motors on ports 1 and 2, wheels off the ground; when the program asks, hold the wheel on port 1 until it stops</span></li>
+<ul class="ex-list">
+  <li class="ex-row">
+    <div class="t"><strong>Motor: minimal</strong><span class="ex-file">motor_minimal.py &middot; motor_minimal.evnblocks</span><span class="ex-needs">Needs: a motor on port 1, wheel off the ground</span></div>
+    <div class="go"><a class="btn btn-ghost" href="02_motor/motor_minimal.py" download>Python</a> <a class="btn btn-ghost" href="02_motor/motor_minimal.evnblocks" download>Blocks</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>Motor: the whole API</strong><span class="ex-file">motor_complete.py &middot; motor_complete.evnblocks</span><span class="ex-needs">Needs: motors on ports 1 and 2, wheels off the ground (the calibration turns each shaft for about twelve seconds, up to about a turn and a half each way); when the program asks, you hold the wheel on port 1 until it stops (stall detection).</span></div>
+    <div class="go"><a class="btn btn-ghost" href="02_motor/motor_complete.py" download>Python</a> <a class="btn btn-ghost" href="02_motor/motor_complete.evnblocks" download>Blocks</a></div>
+  </li>
 </ul>
 <h2>Robot (DriveBase) <small>two wheel motors driven together</small></h2>
-<ul>
-  <li><a href="03_robot/robot_minimal.py">robot_minimal.py</a>  <span>Robot: minimal - Needs: a robot: left wheel motor on port 4 (mounted mirrored), right on port 3, 62.4 mm wheels 170 mm apart, and 40 cm of clear floor ahead</span></li>
-  <li><a href="03_robot/robot_minimal.evnblocks">robot_minimal.evnblocks</a>  <span>Robot: minimal - Needs: a robot: left wheel motor on port 4 (mounted mirrored), right on port 3, 62.4 mm wheels 170 mm apart, and 40 cm of clear floor ahead</span></li>
-  <li><a href="03_robot/robot_complete.py">robot_complete.py</a>  <span>Robot: the whole DriveBase API - Needs: a robot: left wheel motor on port 4 (mounted mirrored), right on port 3, 62.4 mm wheels</span></li>
-  <li><a href="03_robot/robot_complete.evnblocks">robot_complete.evnblocks</a>  <span>Robot: every block - Needs: a robot: left wheel motor on port 4 (mounted mirrored), right on port 3, 62.4 mm wheels 170 mm apart, an EVN IMU on I2C port 3 fixed flat to the chassis, and 40 cm of clear floor ahead and 20 cm to each side (the robot also pivots about 45 degrees on its right wheel and back). Keep the robot still while the program starts (the IMU settles in 8 to 25 s).</span></li>
+<ul class="ex-list">
+  <li class="ex-row">
+    <div class="t"><strong>Robot: minimal</strong><span class="ex-file">robot_minimal.py &middot; robot_minimal.evnblocks</span><span class="ex-needs">Needs: a robot: left wheel motor on port 4 (mounted mirrored), right on port 3, 62.4 mm wheels 170 mm apart, and 40 cm of clear floor ahead</span></div>
+    <div class="go"><a class="btn btn-ghost" href="03_robot/robot_minimal.py" download>Python</a> <a class="btn btn-ghost" href="03_robot/robot_minimal.evnblocks" download>Blocks</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>Robot: the whole DriveBase API</strong><span class="ex-file">robot_complete.py &middot; robot_complete.evnblocks</span><span class="ex-needs">Needs: a robot: left wheel motor on port 4 (mounted mirrored), right on port 3, 62.4 mm wheels 170 mm apart, an EVN IMU on I2C port 3 fixed flat to the chassis, and 40 cm of clear floor ahead and 20 cm to each side (the robot also pivots about 45 degrees on its right wheel and back). Keep the robot still while the program starts: the IMU calibrates its gyro 8 to 25 s into stillness.</span></div>
+    <div class="go"><a class="btn btn-ghost" href="03_robot/robot_complete.py" download>Python</a> <a class="btn btn-ghost" href="03_robot/robot_complete.evnblocks" download>Blocks</a></div>
+  </li>
 </ul>
 <h2>Pose (where the robot is) <small>position and heading from the wheels, an IMU and a compass</small></h2>
-<ul>
-  <li><a href="04_pose/pose_minimal.py">pose_minimal.py</a>  <span>Pose: minimal - Needs: a robot: left wheel motor on port 4 (mounted mirrored), right on port 3, 62.4 mm wheels 170 mm apart; you push it along the floor while the program runs.</span></li>
-  <li><a href="04_pose/pose_minimal.evnblocks">pose_minimal.evnblocks</a>  <span>Pose: minimal - Needs: a robot: left wheel motor on port 4 (mounted mirrored), right on port 3, 62.4 mm wheels 170 mm apart; you push it along the floor while the program runs.</span></li>
-  <li><a href="04_pose/pose_complete.py">pose_complete.py</a>  <span>Pose: the whole API - Needs: a robot: left wheel motor on port 4 (mounted mirrored), right on port 3, 62.4 mm wheels</span></li>
-  <li><a href="04_pose/pose_complete.evnblocks">pose_complete.evnblocks</a>  <span>Pose: every block - Needs: a robot: left wheel motor on port 4 (mounted mirrored), right on port 3, 62.4 mm wheels 170 mm apart, an EVN IMU on I2C port 3 fixed flat to the chassis, an EVN compass on I2C port 14 calibrated on the robot and mounted away from the motors, and 40 cm of clear floor ahead. Keep the robot still while the program starts (the IMU settles in 8 to 25 s).</span></li>
+<ul class="ex-list">
+  <li class="ex-row">
+    <div class="t"><strong>Pose: minimal</strong><span class="ex-file">pose_minimal.py &middot; pose_minimal.evnblocks</span><span class="ex-needs">Needs: a robot: left wheel motor on port 4 (mounted mirrored), right on port 3, 62.4 mm wheels 170 mm apart; you push it along the floor while the program runs.</span></div>
+    <div class="go"><a class="btn btn-ghost" href="04_pose/pose_minimal.py" download>Python</a> <a class="btn btn-ghost" href="04_pose/pose_minimal.evnblocks" download>Blocks</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>Pose: the whole API</strong><span class="ex-file">pose_complete.py &middot; pose_complete.evnblocks</span><span class="ex-needs">Needs: a robot: left wheel motor on port 4 (mounted mirrored), right on port 3, 62.4 mm wheels 170 mm apart, an EVN IMU on I2C port 3 fixed flat to the chassis, and 40 cm of clear floor ahead and to the right. A compass on I2C port 14, calibrated on the robot (Compass.calibrate()), is used when it is there. Keep the robot still while the program starts: the IMU calibrates its gyro 8 to 25 s into stillness.</span></div>
+    <div class="go"><a class="btn btn-ghost" href="04_pose/pose_complete.py" download>Python</a> <a class="btn btn-ghost" href="04_pose/pose_complete.evnblocks" download>Blocks</a></div>
+  </li>
 </ul>
 <h2>Colour sensor <small>TCS34725 on an I2C port</small></h2>
-<ul>
-  <li><a href="05_colour_sensor/colour_sensor_minimal.py">colour_sensor_minimal.py</a>  <span>Colour sensor: minimal - Needs: the colour sensor on I2C port 1, and something coloured to hold under it</span></li>
-  <li><a href="05_colour_sensor/colour_sensor_minimal.evnblocks">colour_sensor_minimal.evnblocks</a>  <span>Colour sensor: minimal - Needs: the colour sensor on I2C port 1, and something coloured to hold under it</span></li>
-  <li><a href="05_colour_sensor/colour_sensor_complete.py">colour_sensor_complete.py</a>  <span>Colour sensor: the whole API - Needs: the colour sensor on I2C port 1, a white sheet, and something coloured.</span></li>
-  <li><a href="05_colour_sensor/colour_sensor_complete.evnblocks">colour_sensor_complete.evnblocks</a>  <span>Colour sensor: every block - Needs: the colour sensor on I2C port 1, a white sheet, and something blue to hold under it</span></li>
+<ul class="ex-list">
+  <li class="ex-row">
+    <div class="t"><strong>Colour sensor: minimal</strong><span class="ex-file">colour_sensor_minimal.py &middot; colour_sensor_minimal.evnblocks</span><span class="ex-needs">Needs: the colour sensor on I2C port 1, and something coloured to hold under it</span></div>
+    <div class="go"><a class="btn btn-ghost" href="05_colour_sensor/colour_sensor_minimal.py" download>Python</a> <a class="btn btn-ghost" href="05_colour_sensor/colour_sensor_minimal.evnblocks" download>Blocks</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>Colour sensor: the whole API</strong><span class="ex-file">colour_sensor_complete.py &middot; colour_sensor_complete.evnblocks</span><span class="ex-needs">Needs: the colour sensor on I2C port 1, a white sheet, and something coloured.</span></div>
+    <div class="go"><a class="btn btn-ghost" href="05_colour_sensor/colour_sensor_complete.py" download>Python</a> <a class="btn btn-ghost" href="05_colour_sensor/colour_sensor_complete.evnblocks" download>Blocks</a></div>
+  </li>
 </ul>
 <h2>Distance sensor <small>VL53L0X time of flight on an I2C port</small></h2>
-<ul>
-  <li><a href="06_distance_sensor/distance_sensor_minimal.py">distance_sensor_minimal.py</a>  <span>Distance sensor: minimal - Needs: the distance sensor on I2C port 1</span></li>
-  <li><a href="06_distance_sensor/distance_sensor_minimal.evnblocks">distance_sensor_minimal.evnblocks</a>  <span>Distance sensor: minimal - Needs: the distance sensor on I2C port 1</span></li>
-  <li><a href="06_distance_sensor/distance_sensor_complete.py">distance_sensor_complete.py</a>  <span>Distance sensor: the whole API - Needs: the distance sensor on I2C port 1, and a hand or a box to move in front of it.</span></li>
-  <li><a href="06_distance_sensor/distance_sensor_complete.evnblocks">distance_sensor_complete.evnblocks</a>  <span>Distance sensor: every block - Needs: the distance sensor on I2C port 1, and a hand or a box to move in front of it</span></li>
+<ul class="ex-list">
+  <li class="ex-row">
+    <div class="t"><strong>Distance sensor: minimal</strong><span class="ex-file">distance_sensor_minimal.py &middot; distance_sensor_minimal.evnblocks</span><span class="ex-needs">Needs: the distance sensor on I2C port 1</span></div>
+    <div class="go"><a class="btn btn-ghost" href="06_distance_sensor/distance_sensor_minimal.py" download>Python</a> <a class="btn btn-ghost" href="06_distance_sensor/distance_sensor_minimal.evnblocks" download>Blocks</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>Distance sensor: the whole API</strong><span class="ex-file">distance_sensor_complete.py &middot; distance_sensor_complete.evnblocks</span><span class="ex-needs">Needs: the distance sensor on I2C port 1, and a hand or a box to move in front of it.</span></div>
+    <div class="go"><a class="btn btn-ghost" href="06_distance_sensor/distance_sensor_complete.py" download>Python</a> <a class="btn btn-ghost" href="06_distance_sensor/distance_sensor_complete.evnblocks" download>Blocks</a></div>
+  </li>
 </ul>
 <h2>Gesture sensor <small>APDS-9960 on an I2C port</small></h2>
-<ul>
-  <li><a href="07_gesture_sensor/gesture_sensor_minimal.py">gesture_sensor_minimal.py</a>  <span>Gesture sensor: minimal - Needs: the gesture sensor on I2C port 1, and a hand to swipe a few cm above it</span></li>
-  <li><a href="07_gesture_sensor/gesture_sensor_minimal.evnblocks">gesture_sensor_minimal.evnblocks</a>  <span>Gesture sensor: minimal - Needs: the gesture sensor on I2C port 1, and a hand to swipe a few cm above it</span></li>
-  <li><a href="07_gesture_sensor/gesture_sensor_complete.py">gesture_sensor_complete.py</a>  <span>Gesture sensor: the whole API - Needs: the gesture sensor on I2C port 1 (nothing over it at the start), a hand, a white sheet, and</span></li>
-  <li><a href="07_gesture_sensor/gesture_sensor_complete.evnblocks">gesture_sensor_complete.evnblocks</a>  <span>Gesture sensor: every block - Needs: the gesture sensor on I2C port 1 (nothing over it at the start), a hand or a black card, a white sheet, and something coloured</span></li>
+<ul class="ex-list">
+  <li class="ex-row">
+    <div class="t"><strong>Gesture sensor: minimal</strong><span class="ex-file">gesture_sensor_minimal.py &middot; gesture_sensor_minimal.evnblocks</span><span class="ex-needs">Needs: the gesture sensor on I2C port 1, and a hand to swipe a few cm above it</span></div>
+    <div class="go"><a class="btn btn-ghost" href="07_gesture_sensor/gesture_sensor_minimal.py" download>Python</a> <a class="btn btn-ghost" href="07_gesture_sensor/gesture_sensor_minimal.evnblocks" download>Blocks</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>Gesture sensor: the whole API</strong><span class="ex-file">gesture_sensor_complete.py &middot; gesture_sensor_complete.evnblocks</span><span class="ex-needs">Needs: the gesture sensor on I2C port 1 (nothing over it at the start), a hand, a white sheet, and something coloured.</span></div>
+    <div class="go"><a class="btn btn-ghost" href="07_gesture_sensor/gesture_sensor_complete.py" download>Python</a> <a class="btn btn-ghost" href="07_gesture_sensor/gesture_sensor_complete.evnblocks" download>Blocks</a></div>
+  </li>
 </ul>
 <h2>Weather sensor <small>BME280: temperature, humidity, pressure</small></h2>
-<ul>
-  <li><a href="08_weather_sensor/weather_sensor_minimal.py">weather_sensor_minimal.py</a>  <span>Weather sensor: minimal - Needs: the weather sensor (BME280) on I2C port 1</span></li>
-  <li><a href="08_weather_sensor/weather_sensor_minimal.evnblocks">weather_sensor_minimal.evnblocks</a>  <span>Weather sensor: minimal - Needs: the weather sensor (BME280) on I2C port 1</span></li>
-  <li><a href="08_weather_sensor/weather_sensor_complete.py">weather_sensor_complete.py</a>  <span>Weather sensor: the whole API - Needs: the weather sensor (BME280) on I2C port 1, with its small vent hole left uncovered.</span></li>
-  <li><a href="08_weather_sensor/weather_sensor_complete.evnblocks">weather_sensor_complete.evnblocks</a>  <span>Weather sensor: every block - Needs: the weather sensor (BME280) on I2C port 1</span></li>
+<ul class="ex-list">
+  <li class="ex-row">
+    <div class="t"><strong>Weather sensor: minimal</strong><span class="ex-file">weather_sensor_minimal.py &middot; weather_sensor_minimal.evnblocks</span><span class="ex-needs">Needs: the weather sensor (BME280) on I2C port 1</span></div>
+    <div class="go"><a class="btn btn-ghost" href="08_weather_sensor/weather_sensor_minimal.py" download>Python</a> <a class="btn btn-ghost" href="08_weather_sensor/weather_sensor_minimal.evnblocks" download>Blocks</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>Weather sensor: the whole API</strong><span class="ex-file">weather_sensor_complete.py &middot; weather_sensor_complete.evnblocks</span><span class="ex-needs">Needs: the weather sensor (BME280) on I2C port 1, with its small vent hole left uncovered.</span></div>
+    <div class="go"><a class="btn btn-ghost" href="08_weather_sensor/weather_sensor_complete.py" download>Python</a> <a class="btn btn-ghost" href="08_weather_sensor/weather_sensor_complete.evnblocks" download>Blocks</a></div>
+  </li>
 </ul>
 <h2>Compass <small>magnetometer on an I2C port, with its calibration</small></h2>
-<ul>
-  <li><a href="09_compass/compass_minimal.py">compass_minimal.py</a>  <span>Compass: minimal - Needs: an EVN compass module on I2C port 2, away from the motors</span></li>
-  <li><a href="09_compass/compass_minimal.evnblocks">compass_minimal.evnblocks</a>  <span>Compass: minimal - Needs: an EVN compass module on I2C port 2, away from the motors</span></li>
-  <li><a href="09_compass/compass_complete.py">compass_complete.py</a>  <span>Compass: the whole API - Needs: an EVN compass module (HMC5883L or QMC5883L) on I2C port 2, fixed flat to the robot away</span></li>
-  <li><a href="09_compass/compass_complete.evnblocks">compass_complete.evnblocks</a>  <span>Compass: every block - Needs: an EVN compass module on I2C port 2, away from the motors; a robot you can turn by hand on the floor</span></li>
+<ul class="ex-list">
+  <li class="ex-row">
+    <div class="t"><strong>Compass: minimal</strong><span class="ex-file">compass_minimal.py &middot; compass_minimal.evnblocks</span><span class="ex-needs">Needs: an EVN compass module on I2C port 2, away from the motors</span></div>
+    <div class="go"><a class="btn btn-ghost" href="09_compass/compass_minimal.py" download>Python</a> <a class="btn btn-ghost" href="09_compass/compass_minimal.evnblocks" download>Blocks</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>Compass: the whole API</strong><span class="ex-file">compass_complete.py &middot; compass_complete.evnblocks</span><span class="ex-needs">Needs: an EVN compass module (HMC5883L or QMC5883L) on I2C port 2, fixed flat to the robot away from the motors; room to turn the robot on the floor and to pick it up and tumble it.</span></div>
+    <div class="go"><a class="btn btn-ghost" href="09_compass/compass_complete.py" download>Python</a> <a class="btn btn-ghost" href="09_compass/compass_complete.evnblocks" download>Blocks</a></div>
+  </li>
 </ul>
 <h2>Touch pads <small>MPR121, 12 pads</small></h2>
-<ul>
-  <li><a href="10_touch_pads/touch_pads_minimal.py">touch_pads_minimal.py</a>  <span>Touch pads: minimal - Needs: the touch pads (MPR121) on I2C port 1</span></li>
-  <li><a href="10_touch_pads/touch_pads_minimal.evnblocks">touch_pads_minimal.evnblocks</a>  <span>Touch pads: minimal - Needs: the touch pads (MPR121) on I2C port 1</span></li>
-  <li><a href="10_touch_pads/touch_pads_complete.py">touch_pads_complete.py</a>  <span>Touch pads: the whole API - Needs: the touch pads (MPR121) on I2C port 1, and bare fingers.</span></li>
-  <li><a href="10_touch_pads/touch_pads_complete.evnblocks">touch_pads_complete.evnblocks</a>  <span>Touch pads: every block - Needs: the touch pads (MPR121) on I2C port 1</span></li>
+<ul class="ex-list">
+  <li class="ex-row">
+    <div class="t"><strong>Touch pads: minimal</strong><span class="ex-file">touch_pads_minimal.py &middot; touch_pads_minimal.evnblocks</span><span class="ex-needs">Needs: the touch pads (MPR121) on I2C port 1</span></div>
+    <div class="go"><a class="btn btn-ghost" href="10_touch_pads/touch_pads_minimal.py" download>Python</a> <a class="btn btn-ghost" href="10_touch_pads/touch_pads_minimal.evnblocks" download>Blocks</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>Touch pads: the whole API</strong><span class="ex-file">touch_pads_complete.py &middot; touch_pads_complete.evnblocks</span><span class="ex-needs">Needs: the touch pads (MPR121) on I2C port 1, and bare fingers.</span></div>
+    <div class="go"><a class="btn btn-ghost" href="10_touch_pads/touch_pads_complete.py" download>Python</a> <a class="btn btn-ghost" href="10_touch_pads/touch_pads_complete.evnblocks" download>Blocks</a></div>
+  </li>
 </ul>
 <h2>IMU <small>gyro and accelerometer, with its calibration</small></h2>
-<ul>
-  <li><a href="11_imu/imu_minimal.py">imu_minimal.py</a>  <span>IMU: minimal - Needs: an EVN IMU module on I2C port 1, fixed flat to the robot; keep it still for the first seconds</span></li>
-  <li><a href="11_imu/imu_minimal.evnblocks">imu_minimal.evnblocks</a>  <span>IMU: minimal - Needs: an EVN IMU module on I2C port 1, fixed flat to the robot; keep it still for the first seconds</span></li>
-  <li><a href="11_imu/imu_complete.py">imu_complete.py</a>  <span>IMU: the whole API - Needs: an EVN IMU module (MPU-6500) on I2C port 1, fixed flat to the robot with the x axis of</span></li>
-  <li><a href="11_imu/imu_complete.evnblocks">imu_complete.evnblocks</a>  <span>IMU: every block - Needs: an EVN IMU module on I2C port 1, fixed flat to the robot; a table; you move the robot when the program asks</span></li>
+<ul class="ex-list">
+  <li class="ex-row">
+    <div class="t"><strong>IMU: minimal</strong><span class="ex-file">imu_minimal.py &middot; imu_minimal.evnblocks</span><span class="ex-needs">Needs: an EVN IMU module on I2C port 1, fixed flat to the robot; keep it still for the first seconds</span></div>
+    <div class="go"><a class="btn btn-ghost" href="11_imu/imu_minimal.py" download>Python</a> <a class="btn btn-ghost" href="11_imu/imu_minimal.evnblocks" download>Blocks</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>IMU: the whole API</strong><span class="ex-file">imu_complete.py &middot; imu_complete.evnblocks</span><span class="ex-needs">Needs: an EVN IMU module (MPU-6500) on I2C port 1, fixed flat to the robot with the x axis of its silkscreen pointing forward (else set axes()); a table and a book; you tilt, tap and turn the robot when the program asks.</span></div>
+    <div class="go"><a class="btn btn-ghost" href="11_imu/imu_complete.py" download>Python</a> <a class="btn btn-ghost" href="11_imu/imu_complete.evnblocks" download>Blocks</a></div>
+  </li>
 </ul>
 <h2>ADC <small>ADS1115: four analogue inputs</small></h2>
-<ul>
-  <li><a href="12_adc/adc_minimal.py">adc_minimal.py</a>  <span>ADC: minimal - Needs: the ADC module on I2C port 1, and a voltage of 0 to 3.3 V on A0 (for example a potentiometer between the board's 3.3 V and GND pins, its middle pin on A0); never more than 3.3 V on a pin</span></li>
-  <li><a href="12_adc/adc_minimal.evnblocks">adc_minimal.evnblocks</a>  <span>ADC: minimal - Needs: the ADC module on I2C port 1, and a voltage of 0 to 3.3 V on A0 (for example a potentiometer between the board's 3.3 V and GND pins, its middle pin on A0); never more than 3.3 V on a pin</span></li>
-  <li><a href="12_adc/adc_complete.py">adc_complete.py</a>  <span>ADC: the whole API - Needs: the ADC module on I2C port 1, and a voltage of 0 to 3.3 V on A0 (for example a potentiometer</span></li>
-  <li><a href="12_adc/adc_complete.evnblocks">adc_complete.evnblocks</a>  <span>ADC: every block - Needs: the ADC module on I2C port 1, and voltages of 0 to 3.3 V on A0..A3 (for example a potentiometer between the board's 3.3 V and GND pins, its middle pin on A0); never more than 3.3 V on a pin</span></li>
+<ul class="ex-list">
+  <li class="ex-row">
+    <div class="t"><strong>ADC: minimal</strong><span class="ex-file">adc_minimal.py &middot; adc_minimal.evnblocks</span><span class="ex-needs">Needs: the ADC module on I2C port 1, and a voltage of 0 to 3.3 V on A0 (for example a potentiometer between the board's 3.3 V and GND pins, its middle pin on A0); never more than 3.3 V on a pin</span></div>
+    <div class="go"><a class="btn btn-ghost" href="12_adc/adc_minimal.py" download>Python</a> <a class="btn btn-ghost" href="12_adc/adc_minimal.evnblocks" download>Blocks</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>ADC: the whole API</strong><span class="ex-file">adc_complete.py &middot; adc_complete.evnblocks</span><span class="ex-needs">Needs: the ADC module on I2C port 1, and a voltage of 0 to 3.3 V on A0 (for example a potentiometer between the board's 3.3 V and GND pins, its middle pin on A0; A1..A3 may stay open). Never more than 3.3 V on a pin, whatever the range.</span></div>
+    <div class="go"><a class="btn btn-ghost" href="12_adc/adc_complete.py" download>Python</a> <a class="btn btn-ghost" href="12_adc/adc_complete.evnblocks" download>Blocks</a></div>
+  </li>
 </ul>
 <h2>Display <small>128x64 OLED</small></h2>
-<ul>
-  <li><a href="13_display/display_minimal.py">display_minimal.py</a>  <span>Display: minimal - Needs: the OLED display on I2C port 1</span></li>
-  <li><a href="13_display/display_minimal.evnblocks">display_minimal.evnblocks</a>  <span>Display: minimal - Needs: the OLED display on I2C port 1</span></li>
-  <li><a href="13_display/display_complete.py">display_complete.py</a>  <span>Display: the whole API - Needs: the OLED display on I2C port 1.</span></li>
-  <li><a href="13_display/display_complete.evnblocks">display_complete.evnblocks</a>  <span>Display: every block - Needs: the OLED display on I2C port 1</span></li>
+<ul class="ex-list">
+  <li class="ex-row">
+    <div class="t"><strong>Display: minimal</strong><span class="ex-file">display_minimal.py &middot; display_minimal.evnblocks</span><span class="ex-needs">Needs: the OLED display on I2C port 1</span></div>
+    <div class="go"><a class="btn btn-ghost" href="13_display/display_minimal.py" download>Python</a> <a class="btn btn-ghost" href="13_display/display_minimal.evnblocks" download>Blocks</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>Display: the whole API</strong><span class="ex-file">display_complete.py &middot; display_complete.evnblocks</span><span class="ex-needs">Needs: the OLED display on I2C port 1.</span></div>
+    <div class="go"><a class="btn btn-ghost" href="13_display/display_complete.py" download>Python</a> <a class="btn btn-ghost" href="13_display/display_complete.evnblocks" download>Blocks</a></div>
+  </li>
 </ul>
 <h2>LED matrix <small>8x8 matrix (HT16K33)</small></h2>
-<ul>
-  <li><a href="14_led_matrix/led_matrix_minimal.py">led_matrix_minimal.py</a>  <span>LED matrix: minimal - Needs: the 8x8 LED matrix on I2C port 1</span></li>
-  <li><a href="14_led_matrix/led_matrix_minimal.evnblocks">led_matrix_minimal.evnblocks</a>  <span>LED matrix: minimal - Needs: the 8x8 LED matrix on I2C port 1</span></li>
-  <li><a href="14_led_matrix/led_matrix_complete.py">led_matrix_complete.py</a>  <span>LED matrix: the whole API - Needs: the 8x8 LED matrix on I2C port 1.</span></li>
-  <li><a href="14_led_matrix/led_matrix_complete.evnblocks">led_matrix_complete.evnblocks</a>  <span>LED matrix: every block - Needs: the 8x8 LED matrix on I2C port 1</span></li>
+<ul class="ex-list">
+  <li class="ex-row">
+    <div class="t"><strong>LED matrix: minimal</strong><span class="ex-file">led_matrix_minimal.py &middot; led_matrix_minimal.evnblocks</span><span class="ex-needs">Needs: the 8x8 LED matrix on I2C port 1</span></div>
+    <div class="go"><a class="btn btn-ghost" href="14_led_matrix/led_matrix_minimal.py" download>Python</a> <a class="btn btn-ghost" href="14_led_matrix/led_matrix_minimal.evnblocks" download>Blocks</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>LED matrix: the whole API</strong><span class="ex-file">led_matrix_complete.py &middot; led_matrix_complete.evnblocks</span><span class="ex-needs">Needs: the 8x8 LED matrix on I2C port 1.</span></div>
+    <div class="go"><a class="btn btn-ghost" href="14_led_matrix/led_matrix_complete.py" download>Python</a> <a class="btn btn-ghost" href="14_led_matrix/led_matrix_complete.evnblocks" download>Blocks</a></div>
+  </li>
 </ul>
 <h2>7-segment display <small>four digits (HT16K33)</small></h2>
-<ul>
-  <li><a href="15_seven_segment/seven_segment_minimal.py">seven_segment_minimal.py</a>  <span>7-segment display: minimal - Needs: the 7-segment display on I2C port 1</span></li>
-  <li><a href="15_seven_segment/seven_segment_minimal.evnblocks">seven_segment_minimal.evnblocks</a>  <span>7-segment display: minimal - Needs: the 7-segment display on I2C port 1</span></li>
-  <li><a href="15_seven_segment/seven_segment_complete.py">seven_segment_complete.py</a>  <span>7-segment display: the whole API - Needs: the 7-segment display on I2C port 1.</span></li>
-  <li><a href="15_seven_segment/seven_segment_complete.evnblocks">seven_segment_complete.evnblocks</a>  <span>7-segment display: every block - Needs: the 7-segment display on I2C port 1</span></li>
+<ul class="ex-list">
+  <li class="ex-row">
+    <div class="t"><strong>7-segment display: minimal</strong><span class="ex-file">seven_segment_minimal.py &middot; seven_segment_minimal.evnblocks</span><span class="ex-needs">Needs: the 7-segment display on I2C port 1</span></div>
+    <div class="go"><a class="btn btn-ghost" href="15_seven_segment/seven_segment_minimal.py" download>Python</a> <a class="btn btn-ghost" href="15_seven_segment/seven_segment_minimal.evnblocks" download>Blocks</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>7-segment display: the whole API</strong><span class="ex-file">seven_segment_complete.py &middot; seven_segment_complete.evnblocks</span><span class="ex-needs">Needs: the 7-segment display on I2C port 1.</span></div>
+    <div class="go"><a class="btn btn-ghost" href="15_seven_segment/seven_segment_complete.py" download>Python</a> <a class="btn btn-ghost" href="15_seven_segment/seven_segment_complete.evnblocks" download>Blocks</a></div>
+  </li>
 </ul>
 <h2>RGB LEDs <small>WS2812B strip on a servo port</small></h2>
-<ul>
-  <li><a href="16_rgb_leds/rgb_leds_minimal.py">rgb_leds_minimal.py</a>  <span>RGB LEDs: minimal - Needs: the RGB LED module (8 LEDs) on servo port 1</span></li>
-  <li><a href="16_rgb_leds/rgb_leds_minimal.evnblocks">rgb_leds_minimal.evnblocks</a>  <span>RGB LEDs: minimal - Needs: the RGB LED module (8 LEDs) on servo port 1</span></li>
-  <li><a href="16_rgb_leds/rgb_leds_complete.py">rgb_leds_complete.py</a>  <span>RGB LEDs: the whole API - Needs: the RGB LED module (8 LEDs) on servo port 1.</span></li>
-  <li><a href="16_rgb_leds/rgb_leds_complete.evnblocks">rgb_leds_complete.evnblocks</a>  <span>RGB LEDs: every block - Needs: the RGB LED module (8 LEDs) on servo port 1</span></li>
+<ul class="ex-list">
+  <li class="ex-row">
+    <div class="t"><strong>RGB LEDs: minimal</strong><span class="ex-file">rgb_leds_minimal.py &middot; rgb_leds_minimal.evnblocks</span><span class="ex-needs">Needs: the RGB LED module (8 LEDs) on servo port 1</span></div>
+    <div class="go"><a class="btn btn-ghost" href="16_rgb_leds/rgb_leds_minimal.py" download>Python</a> <a class="btn btn-ghost" href="16_rgb_leds/rgb_leds_minimal.evnblocks" download>Blocks</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>RGB LEDs: the whole API</strong><span class="ex-file">rgb_leds_complete.py &middot; rgb_leds_complete.evnblocks</span><span class="ex-needs">Needs: the RGB LED module (8 LEDs) on servo port 1.</span></div>
+    <div class="go"><a class="btn btn-ghost" href="16_rgb_leds/rgb_leds_complete.py" download>Python</a> <a class="btn btn-ghost" href="16_rgb_leds/rgb_leds_complete.evnblocks" download>Blocks</a></div>
+  </li>
 </ul>
 <h2>Servo <small>hobby servos on ports 1-4</small></h2>
-<ul>
-  <li><a href="17_servo/servo_minimal.py">servo_minimal.py</a>  <span>Servo: minimal - Needs: a Geekservo 270-degree servo on servo port 1, horn free to turn</span></li>
-  <li><a href="17_servo/servo_minimal.evnblocks">servo_minimal.evnblocks</a>  <span>Servo: minimal - Needs: a Geekservo 270-degree servo on servo port 1, horn free to turn</span></li>
-  <li><a href="17_servo/servo_complete.py">servo_complete.py</a>  <span>Servo: the whole API - Needs: a Geekservo 270-degree servo on servo port 1 and a Geekservo continuous-rotation servo on</span></li>
-  <li><a href="17_servo/servo_complete.evnblocks">servo_complete.evnblocks</a>  <span>Servo: every block - Needs: a Geekservo 270-degree servo on servo port 1 and a Geekservo continuous-rotation servo on servo port 2, both free to turn</span></li>
+<ul class="ex-list">
+  <li class="ex-row">
+    <div class="t"><strong>Servo: minimal</strong><span class="ex-file">servo_minimal.py &middot; servo_minimal.evnblocks</span><span class="ex-needs">Needs: a Geekservo 270-degree servo on servo port 1, horn free to turn</span></div>
+    <div class="go"><a class="btn btn-ghost" href="17_servo/servo_minimal.py" download>Python</a> <a class="btn btn-ghost" href="17_servo/servo_minimal.evnblocks" download>Blocks</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>Servo: the whole API</strong><span class="ex-file">servo_complete.py &middot; servo_complete.evnblocks</span><span class="ex-needs">Needs: a Geekservo 270-degree servo on servo port 1 and a Geekservo continuous-rotation servo on servo port 2, both with nothing in the way of the horn.</span></div>
+    <div class="go"><a class="btn btn-ghost" href="17_servo/servo_complete.py" download>Python</a> <a class="btn btn-ghost" href="17_servo/servo_complete.evnblocks" download>Blocks</a></div>
+  </li>
 </ul>
 <h2>Bluetooth <small>HC-05 module on a serial port</small></h2>
-<ul>
-  <li><a href="18_bluetooth/bluetooth_minimal.py">bluetooth_minimal.py</a>  <span>Bluetooth: minimal - Needs: the Bluetooth module on serial port 2, and a phone (Android) or PC paired with it (PIN 1234) running a Bluetooth serial terminal app that ends each line it sends with a newline</span></li>
-  <li><a href="18_bluetooth/bluetooth_minimal.evnblocks">bluetooth_minimal.evnblocks</a>  <span>Bluetooth: minimal - Needs: the Bluetooth module on serial port 2, and a phone (Android) or PC paired with it (PIN 1234) running a Bluetooth serial terminal app that ends each line it sends with a newline</span></li>
-  <li><a href="18_bluetooth/bluetooth_complete.py">bluetooth_complete.py</a>  <span>Bluetooth: the whole API - Needs: the Bluetooth module on serial port 2, and a phone (Android) or PC paired with it (PIN 1234)</span></li>
-  <li><a href="18_bluetooth/bluetooth_complete.evnblocks">bluetooth_complete.evnblocks</a>  <span>Bluetooth: every block - Needs: the Bluetooth module on serial port 2, and a phone (Android) or PC paired with it (PIN 1234) running a Bluetooth serial terminal app that ends each line it sends with a newline</span></li>
+<ul class="ex-list">
+  <li class="ex-row">
+    <div class="t"><strong>Bluetooth: minimal</strong><span class="ex-file">bluetooth_minimal.py &middot; bluetooth_minimal.evnblocks</span><span class="ex-needs">Needs: the Bluetooth module on serial port 2, and a phone (Android) or PC paired with it (PIN 1234) running a Bluetooth serial terminal app that ends each line it sends with a newline</span></div>
+    <div class="go"><a class="btn btn-ghost" href="18_bluetooth/bluetooth_minimal.py" download>Python</a> <a class="btn btn-ghost" href="18_bluetooth/bluetooth_minimal.evnblocks" download>Blocks</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>Bluetooth: the whole API</strong><span class="ex-file">bluetooth_complete.py &middot; bluetooth_complete.evnblocks</span><span class="ex-needs">Needs: the Bluetooth module on serial port 2, and a phone (Android) or PC paired with it (PIN 1234) running a Bluetooth serial terminal app that ends each line it sends with a newline.</span></div>
+    <div class="go"><a class="btn btn-ghost" href="18_bluetooth/bluetooth_complete.py" download>Python</a> <a class="btn btn-ghost" href="18_bluetooth/bluetooth_complete.evnblocks" download>Blocks</a></div>
+  </li>
 </ul>
 <h2>UART (serial ports) <small>Serial 1 and 2 as plain UARTs (MicroPython's machine.UART)</small></h2>
-<ul>
-  <li><a href="19_uart/uart_minimal.py">uart_minimal.py</a>  <span>UART: minimal - Needs: a jumper wire from TX to RX on Serial 1 (or a device talking 115200 baud lines there)</span></li>
-  <li><a href="19_uart/uart_minimal.evnblocks">uart_minimal.evnblocks</a>  <span>UART: minimal - Needs: a jumper wire from TX to RX on Serial 1 (or a device talking 115200 baud lines there)</span></li>
-  <li><a href="19_uart/uart_complete.py">uart_complete.py</a>  <span>UART: the whole API - Needs: a jumper wire from TX to RX on Serial 1 (the board hears what it sends). Without the wire</span></li>
-  <li><a href="19_uart/uart_complete.evnblocks">uart_complete.evnblocks</a>  <span>UART: every block - Needs: a jumper wire from TX to RX on Serial 1 (the board hears what it sends). Without the wire the program still runs and says nothing came back.</span></li>
+<ul class="ex-list">
+  <li class="ex-row">
+    <div class="t"><strong>UART: minimal</strong><span class="ex-file">uart_minimal.py &middot; uart_minimal.evnblocks</span><span class="ex-needs">Needs: a jumper wire from TX to RX on Serial 1 (or a device talking 115200 baud lines there)</span></div>
+    <div class="go"><a class="btn btn-ghost" href="19_uart/uart_minimal.py" download>Python</a> <a class="btn btn-ghost" href="19_uart/uart_minimal.evnblocks" download>Blocks</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>UART: the whole API</strong><span class="ex-file">uart_complete.py &middot; uart_complete.evnblocks</span><span class="ex-needs">Needs: a jumper wire from TX to RX on Serial 1 (the board hears what it sends). Without the wire the program still runs and says nothing came back.</span></div>
+    <div class="go"><a class="btn btn-ghost" href="19_uart/uart_complete.py" download>Python</a> <a class="btn btn-ghost" href="19_uart/uart_complete.evnblocks" download>Blocks</a></div>
+  </li>
 </ul>
 <h2>I2C (any device) <small>raw I2C on ports 1-16, for devices without a class</small></h2>
-<ul>
-  <li><a href="20_i2c/i2c_minimal.py">i2c_minimal.py</a>  <span>I2C: minimal - Needs: an EVN IMU module (MPU-6500) on I2C port 1</span></li>
-  <li><a href="20_i2c/i2c_minimal.evnblocks">i2c_minimal.evnblocks</a>  <span>I2C: minimal - Needs: an EVN IMU module (MPU-6500) on I2C port 1</span></li>
-  <li><a href="20_i2c/i2c_complete.py">i2c_complete.py</a>  <span>I2C: the whole API - Needs: an EVN IMU module (MPU-6500) on I2C port 1. Other EVN modules on that port are named when</span></li>
-  <li><a href="20_i2c/i2c_complete.evnblocks">i2c_complete.evnblocks</a>  <span>I2C: every block - Needs: an EVN IMU module (MPU-6500) on I2C port 1</span></li>
+<ul class="ex-list">
+  <li class="ex-row">
+    <div class="t"><strong>I2C: minimal</strong><span class="ex-file">i2c_minimal.py &middot; i2c_minimal.evnblocks</span><span class="ex-needs">Needs: an EVN IMU module (MPU-6500) on I2C port 1</span></div>
+    <div class="go"><a class="btn btn-ghost" href="20_i2c/i2c_minimal.py" download>Python</a> <a class="btn btn-ghost" href="20_i2c/i2c_minimal.evnblocks" download>Blocks</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>I2C: the whole API</strong><span class="ex-file">i2c_complete.py &middot; i2c_complete.evnblocks</span><span class="ex-needs">Needs: an EVN IMU module (MPU-6500) on I2C port 1. Other EVN modules on that port are named when they have an ID register; the rest (display 0x3C, LED matrix 0x71, seven-segment 0x74, touch pads 0x5A, ADC 0x48) are listed by address only, not identified.</span></div>
+    <div class="go"><a class="btn btn-ghost" href="20_i2c/i2c_complete.py" download>Python</a> <a class="btn btn-ghost" href="20_i2c/i2c_complete.evnblocks" download>Blocks</a></div>
+  </li>
 </ul>
 <h2>Files on the board <small>open(), os and the flash file system</small></h2>
-<ul>
-  <li><a href="21_files/files_minimal.py">files_minimal.py</a>  <span>Files: minimal - Needs: nothing but the board</span></li>
-  <li><a href="21_files/files_minimal.evnblocks">files_minimal.evnblocks</a>  <span>Files: minimal - Needs: nothing but the board</span></li>
-  <li><a href="21_files/files_complete.py">files_complete.py</a>  <span>Files: the whole tour - Needs: the board, and a motor on port 1 with its wheel off the ground (for the last part: a log</span></li>
-  <li><a href="21_files/files_complete.evnblocks">files_complete.evnblocks</a>  <span>Files: every block - Needs: nothing but the board</span></li>
+<ul class="ex-list">
+  <li class="ex-row">
+    <div class="t"><strong>Files: minimal</strong><span class="ex-file">files_minimal.py &middot; files_minimal.evnblocks</span><span class="ex-needs">Needs: nothing but the board</span></div>
+    <div class="go"><a class="btn btn-ghost" href="21_files/files_minimal.py" download>Python</a> <a class="btn btn-ghost" href="21_files/files_minimal.evnblocks" download>Blocks</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>Files: the whole tour</strong><span class="ex-file">files_complete.py &middot; files_complete.evnblocks</span><span class="ex-needs">Needs: the board, and a motor on port 1 with its wheel off the ground (for the last part: a log recorded while the motor runs, written once it has stopped).</span></div>
+    <div class="go"><a class="btn btn-ghost" href="21_files/files_complete.py" download>Python</a> <a class="btn btn-ghost" href="21_files/files_complete.evnblocks" download>Blocks</a></div>
+  </li>
 </ul>
 <h2>Data log (recorded on the board) <small>motors, sensors, the battery and your own rows, saved to a CSV file</small></h2>
-<ul>
-  <li><a href="22_data_log/datalog_minimal.py">datalog_minimal.py</a>  <span>Data log: minimal - Needs: a motor on port 1, free to turn; an EVN IMU module on I2C port 1, kept still</span></li>
-  <li><a href="22_data_log/datalog_minimal.evnblocks">datalog_minimal.evnblocks</a>  <span>Data log: minimal - Needs: a motor on port 1, free to turn; an EVN IMU module on I2C port 1, kept still</span></li>
-  <li><a href="22_data_log/datalog_complete.py">datalog_complete.py</a>  <span>Data log: complete - Needs: a motor on port 1, free to turn; an EVN IMU module on I2C port 1, kept still; a battery</span></li>
-  <li><a href="22_data_log/datalog_complete.evnblocks">datalog_complete.evnblocks</a>  <span>Data log: complete - Needs: a motor on port 1, free to turn; an EVN IMU module on I2C port 1, kept still; a battery pack</span></li>
+<ul class="ex-list">
+  <li class="ex-row">
+    <div class="t"><strong>Data log: minimal</strong><span class="ex-file">datalog_minimal.py &middot; datalog_minimal.evnblocks</span><span class="ex-needs">Needs: a motor on port 1, free to turn; an EVN IMU module on I2C port 1, kept still</span></div>
+    <div class="go"><a class="btn btn-ghost" href="22_data_log/datalog_minimal.py" download>Python</a> <a class="btn btn-ghost" href="22_data_log/datalog_minimal.evnblocks" download>Blocks</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>Data log: complete</strong><span class="ex-file">datalog_complete.py &middot; datalog_complete.evnblocks</span><span class="ex-needs">Needs: a motor on port 1, free to turn; an EVN IMU module on I2C port 1, kept still; a battery pack.</span></div>
+    <div class="go"><a class="btn btn-ghost" href="22_data_log/datalog_complete.py" download>Python</a> <a class="btn btn-ghost" href="22_data_log/datalog_complete.evnblocks" download>Blocks</a></div>
+  </li>
 </ul>
 <h2>Controllers (PID and ADRC) <small>your own control loops: a line follower, a heading hold</small></h2>
-<ul>
-  <li><a href="23_controllers/controllers_minimal.py">controllers_minimal.py</a>  <span>Controllers: minimal - Needs: a robot: left wheel motor on port 4 (mounted mirrored), right on port 3, 62.4 mm wheels 170 mm apart; an EVN colour sensor on I2C port 2 facing the floor a few mm up, over the edge of a dark line on a light floor</span></li>
-  <li><a href="23_controllers/controllers_minimal.evnblocks">controllers_minimal.evnblocks</a>  <span>Controllers: minimal - Needs: a robot: left wheel motor on port 4 (mounted mirrored), right on port 3, 62.4 mm wheels 170 mm apart; an EVN colour sensor on I2C port 2 facing the floor a few mm up, over the edge of a dark line on a light floor</span></li>
-  <li><a href="23_controllers/controllers_complete.py">controllers_complete.py</a>  <span>Controllers: complete - Needs: a robot: left wheel motor on port 4 (mounted mirrored), right on port 3, 62.4 mm wheels 170 mm apart;</span></li>
-  <li><a href="23_controllers/controllers_complete.evnblocks">controllers_complete.evnblocks</a>  <span>Controllers: complete - Needs: a robot: left wheel motor on port 4 (mounted mirrored), right on port 3, 62.4 mm wheels 170 mm apart; an EVN colour sensor on I2C port 2 facing the floor a few mm up, over the edge of a dark line on a light floor; an EVN IMU on I2C port 1</span></li>
+<ul class="ex-list">
+  <li class="ex-row">
+    <div class="t"><strong>Controllers: minimal</strong><span class="ex-file">controllers_minimal.py &middot; controllers_minimal.evnblocks</span><span class="ex-needs">Needs: a robot: left wheel motor on port 4 (mounted mirrored), right on port 3, 62.4 mm wheels 170 mm apart; an EVN colour sensor on I2C port 2 facing the floor a few mm up, over the edge of a dark line on a light floor</span></div>
+    <div class="go"><a class="btn btn-ghost" href="23_controllers/controllers_minimal.py" download>Python</a> <a class="btn btn-ghost" href="23_controllers/controllers_minimal.evnblocks" download>Blocks</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>Controllers: complete</strong><span class="ex-file">controllers_complete.py &middot; controllers_complete.evnblocks</span><span class="ex-needs">Needs: a robot: left wheel motor on port 4 (mounted mirrored), right on port 3, 62.4 mm wheels 170 mm apart; an EVN colour sensor on I2C port 2 facing the floor a few mm up, over the edge of a dark line on a light floor; an EVN IMU on I2C port 1</span></div>
+    <div class="go"><a class="btn btn-ghost" href="23_controllers/controllers_complete.py" download>Python</a> <a class="btn btn-ghost" href="23_controllers/controllers_complete.evnblocks" download>Blocks</a></div>
+  </li>
 </ul>
 <h2>Extended Peripherals <small>HiTechnic NXT colour sensor and compass, HuskyLens, VL53L1X, TCS3430</small></h2>
 <h3>HiTechnic colour sensor <small>HiTechnic NXT Color Sensor V1 / V2 (NXT cable adapter, 100 kHz)</small></h3>
-<ul>
-  <li><a href="extended_peripherals/01_hitechnic_color/hitechnic_color_minimal.py">hitechnic_color_minimal.py</a>  <span>HiTechnic colour sensor: minimal - Needs: a HiTechnic NXT Color Sensor (V1 or V2) on I2C port 8, through an NXT cable adapter</span></li>
-  <li><a href="extended_peripherals/01_hitechnic_color/hitechnic_color_minimal.evnblocks">hitechnic_color_minimal.evnblocks</a>  <span>HiTechnic colour sensor: minimal - Needs: a HiTechnic NXT Color Sensor (V1 or V2) on I2C port 8, through an NXT cable adapter</span></li>
-  <li><a href="extended_peripherals/01_hitechnic_color/hitechnic_color_complete.py">hitechnic_color_complete.py</a>  <span>HiTechnic colour sensor: the whole API - Needs: a HiTechnic NXT Color Sensor (V1 or V2) on I2C port 8, through an NXT cable adapter, a white</span></li>
-  <li><a href="extended_peripherals/01_hitechnic_color/hitechnic_color_complete.evnblocks">hitechnic_color_complete.evnblocks</a>  <span>HiTechnic colour sensor: every block - Needs: a HiTechnic NXT Color Sensor V2 on I2C port 8, through an NXT cable adapter (a V1 has no normalised red or colour index: drop those two blocks for a V1)</span></li>
+<ul class="ex-list">
+  <li class="ex-row">
+    <div class="t"><strong>HiTechnic colour sensor: minimal</strong><span class="ex-file">hitechnic_color_minimal.py &middot; hitechnic_color_minimal.evnblocks</span><span class="ex-needs">Needs: a HiTechnic NXT Color Sensor (V1 or V2) on I2C port 8, through an NXT cable adapter</span></div>
+    <div class="go"><a class="btn btn-ghost" href="extended_peripherals/01_hitechnic_color/hitechnic_color_minimal.py" download>Python</a> <a class="btn btn-ghost" href="extended_peripherals/01_hitechnic_color/hitechnic_color_minimal.evnblocks" download>Blocks</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>HiTechnic colour sensor: the whole API</strong><span class="ex-file">hitechnic_color_complete.py &middot; hitechnic_color_complete.evnblocks</span><span class="ex-needs">Needs: a HiTechnic NXT Color Sensor (V1 or V2) on I2C port 8, through an NXT cable adapter, a white sheet of paper</span></div>
+    <div class="go"><a class="btn btn-ghost" href="extended_peripherals/01_hitechnic_color/hitechnic_color_complete.py" download>Python</a> <a class="btn btn-ghost" href="extended_peripherals/01_hitechnic_color/hitechnic_color_complete.evnblocks" download>Blocks</a></div>
+  </li>
 </ul>
 <h3>HiTechnic compass <small>HiTechnic NXT Compass Sensor (NXT cable adapter, 100 kHz)</small></h3>
-<ul>
-  <li><a href="extended_peripherals/02_hitechnic_compass/hitechnic_compass_minimal.py">hitechnic_compass_minimal.py</a>  <span>HiTechnic compass: minimal - Needs: a HiTechnic NXT Compass Sensor on I2C port 5, through an NXT cable adapter; room to turn the robot on the floor</span></li>
-  <li><a href="extended_peripherals/02_hitechnic_compass/hitechnic_compass_minimal.evnblocks">hitechnic_compass_minimal.evnblocks</a>  <span>HiTechnic compass: minimal - Needs: a HiTechnic NXT Compass Sensor on I2C port 5, through an NXT cable adapter; room to turn the robot on the floor</span></li>
-  <li><a href="extended_peripherals/02_hitechnic_compass/hitechnic_compass_complete.py">hitechnic_compass_complete.py</a>  <span>HiTechnic compass: the whole API - Needs: a HiTechnic NXT Compass Sensor on I2C port 5, through an NXT cable adapter; room to turn the robot on the floor</span></li>
-  <li><a href="extended_peripherals/02_hitechnic_compass/hitechnic_compass_complete.evnblocks">hitechnic_compass_complete.evnblocks</a>  <span>HiTechnic compass: every block - Needs: a HiTechnic NXT Compass Sensor on I2C port 5, through an NXT cable adapter; room to turn the robot on the floor</span></li>
+<ul class="ex-list">
+  <li class="ex-row">
+    <div class="t"><strong>HiTechnic compass: minimal</strong><span class="ex-file">hitechnic_compass_minimal.py &middot; hitechnic_compass_minimal.evnblocks</span><span class="ex-needs">Needs: a HiTechnic NXT Compass Sensor on I2C port 5, through an NXT cable adapter; room to turn the robot on the floor</span></div>
+    <div class="go"><a class="btn btn-ghost" href="extended_peripherals/02_hitechnic_compass/hitechnic_compass_minimal.py" download>Python</a> <a class="btn btn-ghost" href="extended_peripherals/02_hitechnic_compass/hitechnic_compass_minimal.evnblocks" download>Blocks</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>HiTechnic compass: the whole API</strong><span class="ex-file">hitechnic_compass_complete.py &middot; hitechnic_compass_complete.evnblocks</span><span class="ex-needs">Needs: a HiTechnic NXT Compass Sensor on I2C port 5, through an NXT cable adapter; room to turn the robot on the floor</span></div>
+    <div class="go"><a class="btn btn-ghost" href="extended_peripherals/02_hitechnic_compass/hitechnic_compass_complete.py" download>Python</a> <a class="btn btn-ghost" href="extended_peripherals/02_hitechnic_compass/hitechnic_compass_complete.evnblocks" download>Blocks</a></div>
+  </li>
 </ul>
 <h3>HuskyLens <small>DFRobot HuskyLens AI camera (I2C mode)</small></h3>
-<ul>
-  <li><a href="extended_peripherals/03_huskylens/huskylens_minimal.py">huskylens_minimal.py</a>  <span>HuskyLens: minimal - Needs: a DFRobot HuskyLens set to Protocol Type I2C on I2C port 11</span></li>
-  <li><a href="extended_peripherals/03_huskylens/huskylens_minimal.evnblocks">huskylens_minimal.evnblocks</a>  <span>HuskyLens: minimal - Needs: a DFRobot HuskyLens set to Protocol Type I2C on I2C port 11</span></li>
-  <li><a href="extended_peripherals/03_huskylens/huskylens_complete.py">huskylens_complete.py</a>  <span>HuskyLens: the whole API - Needs: a DFRobot HuskyLens set to Protocol Type I2C on I2C port 11</span></li>
-  <li><a href="extended_peripherals/03_huskylens/huskylens_complete.evnblocks">huskylens_complete.evnblocks</a>  <span>HuskyLens: every block but forget - Needs: a DFRobot HuskyLens set to Protocol Type I2C on I2C port 11</span></li>
+<ul class="ex-list">
+  <li class="ex-row">
+    <div class="t"><strong>HuskyLens: minimal</strong><span class="ex-file">huskylens_minimal.py &middot; huskylens_minimal.evnblocks</span><span class="ex-needs">Needs: a DFRobot HuskyLens set to Protocol Type I2C on I2C port 11</span></div>
+    <div class="go"><a class="btn btn-ghost" href="extended_peripherals/03_huskylens/huskylens_minimal.py" download>Python</a> <a class="btn btn-ghost" href="extended_peripherals/03_huskylens/huskylens_minimal.evnblocks" download>Blocks</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>HuskyLens: the whole API</strong><span class="ex-file">huskylens_complete.py &middot; huskylens_complete.evnblocks</span><span class="ex-needs">Needs: a DFRobot HuskyLens set to Protocol Type I2C on I2C port 11</span></div>
+    <div class="go"><a class="btn btn-ghost" href="extended_peripherals/03_huskylens/huskylens_complete.py" download>Python</a> <a class="btn btn-ghost" href="extended_peripherals/03_huskylens/huskylens_complete.evnblocks" download>Blocks</a></div>
+  </li>
 </ul>
 <h3>VL53L1X distance sensor <small>ST VL53L1X time-of-flight distance sensor, up to 4 m</small></h3>
-<ul>
-  <li><a href="extended_peripherals/04_vl53l1x/vl53l1x_minimal.py">vl53l1x_minimal.py</a>  <span>VL53L1X distance sensor: minimal - Needs: an ST VL53L1X distance sensor on I2C port 1</span></li>
-  <li><a href="extended_peripherals/04_vl53l1x/vl53l1x_minimal.evnblocks">vl53l1x_minimal.evnblocks</a>  <span>VL53L1X distance sensor: minimal - Needs: an ST VL53L1X distance sensor on I2C port 1</span></li>
-  <li><a href="extended_peripherals/04_vl53l1x/vl53l1x_complete.py">vl53l1x_complete.py</a>  <span>VL53L1X distance sensor: the whole API - Needs: an ST VL53L1X distance sensor on I2C port 1, a flat grey or white card and a ruler</span></li>
-  <li><a href="extended_peripherals/04_vl53l1x/vl53l1x_complete.evnblocks">vl53l1x_complete.evnblocks</a>  <span>VL53L1X distance sensor: every block - Needs: an ST VL53L1X distance sensor on I2C port 1</span></li>
+<ul class="ex-list">
+  <li class="ex-row">
+    <div class="t"><strong>VL53L1X distance sensor: minimal</strong><span class="ex-file">vl53l1x_minimal.py &middot; vl53l1x_minimal.evnblocks</span><span class="ex-needs">Needs: an ST VL53L1X distance sensor on I2C port 1</span></div>
+    <div class="go"><a class="btn btn-ghost" href="extended_peripherals/04_vl53l1x/vl53l1x_minimal.py" download>Python</a> <a class="btn btn-ghost" href="extended_peripherals/04_vl53l1x/vl53l1x_minimal.evnblocks" download>Blocks</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>VL53L1X distance sensor: the whole API</strong><span class="ex-file">vl53l1x_complete.py &middot; vl53l1x_complete.evnblocks</span><span class="ex-needs">Needs: an ST VL53L1X distance sensor on I2C port 1, a flat grey or white card and a ruler</span></div>
+    <div class="go"><a class="btn btn-ghost" href="extended_peripherals/04_vl53l1x/vl53l1x_complete.py" download>Python</a> <a class="btn btn-ghost" href="extended_peripherals/04_vl53l1x/vl53l1x_complete.evnblocks" download>Blocks</a></div>
+  </li>
 </ul>
 <h3>TCS3430 colour sensor <small>ams-OSRAM TCS3430 XYZ colour and light sensor</small></h3>
-<ul>
-  <li><a href="extended_peripherals/05_tcs3430/tcs3430_minimal.py">tcs3430_minimal.py</a>  <span>TCS3430 colour sensor: minimal - Needs: an ams-OSRAM TCS3430 colour sensor on I2C port 16</span></li>
-  <li><a href="extended_peripherals/05_tcs3430/tcs3430_minimal.evnblocks">tcs3430_minimal.evnblocks</a>  <span>TCS3430 colour sensor: minimal - Needs: an ams-OSRAM TCS3430 colour sensor on I2C port 16</span></li>
-  <li><a href="extended_peripherals/05_tcs3430/tcs3430_complete.py">tcs3430_complete.py</a>  <span>TCS3430 colour sensor: the whole API - Needs: an ams-OSRAM TCS3430 colour sensor on I2C port 16, a white sheet of paper</span></li>
-  <li><a href="extended_peripherals/05_tcs3430/tcs3430_complete.evnblocks">tcs3430_complete.evnblocks</a>  <span>TCS3430 colour sensor: every block - Needs: an ams-OSRAM TCS3430 colour sensor on I2C port 16</span></li>
+<ul class="ex-list">
+  <li class="ex-row">
+    <div class="t"><strong>TCS3430 colour sensor: minimal</strong><span class="ex-file">tcs3430_minimal.py &middot; tcs3430_minimal.evnblocks</span><span class="ex-needs">Needs: an ams-OSRAM TCS3430 colour sensor on I2C port 16</span></div>
+    <div class="go"><a class="btn btn-ghost" href="extended_peripherals/05_tcs3430/tcs3430_minimal.py" download>Python</a> <a class="btn btn-ghost" href="extended_peripherals/05_tcs3430/tcs3430_minimal.evnblocks" download>Blocks</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>TCS3430 colour sensor: the whole API</strong><span class="ex-file">tcs3430_complete.py &middot; tcs3430_complete.evnblocks</span><span class="ex-needs">Needs: an ams-OSRAM TCS3430 colour sensor on I2C port 16, a white sheet of paper</span></div>
+    <div class="go"><a class="btn btn-ghost" href="extended_peripherals/05_tcs3430/tcs3430_complete.py" download>Python</a> <a class="btn btn-ghost" href="extended_peripherals/05_tcs3430/tcs3430_complete.evnblocks" download>Blocks</a></div>
+  </li>
 </ul>
+</div>
+</main>
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="f-brand">
+      <span class="f-logo"><img src="../assets/core-logo.webp" alt="" width="48" height="48"></span>
+      <span>
+        <strong>EVN ALPHA</strong>
+        <span>A Centre of Robotics Excellence project.<br>Singapore.</span>
+        <span class="f-credit">EVN was created by
+          <a href="https://www.linkedin.com/in/kc-robotics/" target="_blank" rel="noopener">Kenneth Chow</a> and
+          <a href="https://www.linkedin.com/in/heng-teng-yi/" target="_blank" rel="noopener">Heng Teng Yi</a> &middot;
+          <a href="https://www.kickstarter.com/projects/thenaturalevolution/evn-the-natural-evolution-of-the-lego-mindstorms-system" target="_blank" rel="noopener">The story on Kickstarter</a>
+        </span>
+      </span>
+    </div>
+    <div class="f-col">
+      <h2>Documentation</h2>
+      <ul>
+        <li><a href="../#/getting-started">Getting started</a></li>
+        <li><a href="../#/calibration/">Calibrating your robot</a></li>
+        <li><a href="../#/api/">API reference</a></li>
+        <li><a href="../#/blocks/">Blocks reference</a></li>
+        <li><a href="../#/repl">Using the REPL</a></li>
+        <li><a href="../#/known-limitations">Known limitations</a></li>
+        <li><a href="../#/changelog">What's new</a></li>
+      </ul>
+    </div>
+    <div class="f-col">
+      <h2>Downloads</h2>
+      <ul>
+        <li><a href="../#/downloads">VS Code extension</a></li>
+        <li><a href="../#/downloads">Firmware (UF2)</a></li>
+        <li><a href="./" aria-current="page">Example programs</a></li>
+      </ul>
+    </div>
+    <div class="f-col">
+      <h2>EVN</h2>
+      <ul>
+        <li><a href="https://coresg.tech/evn" target="_blank" rel="noopener">The EVN ALPHA controller</a></li>
+        <li><a href="https://github.com/EVNdevs" target="_blank" rel="noopener">GitHub organisation</a></li>
+        <li><a href="https://github.com/EVNdevs/EVN-arduino" target="_blank" rel="noopener">Arduino library</a></li>
+        <li><a href="https://edu.coresg.tech/" target="_blank" rel="noopener">Centre of Robotics Excellence</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="f-legal">
+    MIT licensed. LEGO&reg;, Technic&trade; and MINDSTORMS&reg; are trademarks of the LEGO Group, which does
+    not sponsor, authorise or endorse this project.
+  </div>
+</footer>
+<script>
+  (function () {
+    var root = document.documentElement;
+    var dark = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+    var theme = document.getElementById('theme-btn'), menu = document.getElementById('menu-btn'), nav = document.getElementById('nav');
+    if (theme) {
+      theme.addEventListener('click', function () {
+        var set = root.getAttribute('data-theme');
+        var now = set === 'light' || set === 'dark' ? set : (dark && dark.matches ? 'dark' : 'light');
+        var next = now === 'dark' ? 'light' : 'dark';
+        root.setAttribute('data-theme', next);
+        try { localStorage.setItem('evn-theme', next); } catch (e) { /* this page only */ }
+      });
+    }
+    if (menu && nav) {
+      menu.addEventListener('click', function () {
+        var open = nav.classList.toggle('open');
+        menu.setAttribute('aria-expanded', open ? 'true' : 'false');
+      });
+    }
+  })();
+</script>
 </body></html>

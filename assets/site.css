@@ -1,8 +1,10 @@
 /* ------------------------------------------------------------------------------------------------
    EVN ALPHA MicroPython - documentation site.
    The type and the colours follow the Centre of Robotics Excellence site (edu.coresg.tech):
-   Jost, self-hosted; the warm taupe #a8977b for decoration, a deeper #7f715c wherever the colour
-   carries text (AA on white); near-black headings, a near-black footer.
+   Jost, self-hosted; the warm taupe #a8977b for decoration, a deeper #7f715c (the palette's accentInk,
+   media/theme/evn-palette.json) wherever the colour carries text on white (4.75:1), and the palette's
+   accentDeep #6a5e4c for text on the grey --surface #f4f4f5, where accentInk is 4.32:1 (SITE-26: 5.75:1);
+   near-black headings, a near-black footer.
    ------------------------------------------------------------------------------------------------ */
 
 /* ---- Jost, self-hosted variable font (no Google Fonts request) --------------------------------- */
@@ -38,10 +40,16 @@
   --text: #3f4245;
   --muted: #6d7072;
   --accent: #a8977b;          /* decoration: rules, underlines, the mark */
-  --accent-ink: #7f715c;      /* anything that carries text on the page background (AA on white) */
+  --accent-ink: #7f715c;      /* the palette's accentInk: text on white (4.75:1); on --surface (4.32:1) text uses --accent-deep */
   --accent-deep: #6a5e4c;
   --on-accent: #ffffff;
   --code-bg: #f4f4f5;
+  /* code colours (SITE-26). highlight.js's `github` theme was drawn for white; on --code-bg its keyword
+     (#d73a49 4.16:1), comment (#6a737d 4.38:1), built-in (#e36209 3.18:1) and name (#22863a 4.21:1) colours
+     are below WCAG AA's 4.5:1. These are GitHub's Primer light syntax colours, each >= 4.5:1 on #f4f4f5
+     (scripts/test_site.js computes every ratio from this file). */
+  --hl-text: #24292f; --hl-keyword: #cf222e; --hl-title: #6639ba; --hl-number: #0550ae; --hl-string: #0a3069;
+  --hl-builtin: #953800; --hl-comment: #59636e; --hl-name: #116329; --hl-section: #0550ae; --hl-bullet: #735c0f;
   --shadow: 0 1px 2px rgba(17, 21, 24, .04), 0 8px 24px rgba(17, 21, 24, .06);
   --shadow-lift: 0 2px 4px rgba(17, 21, 24, .06), 0 16px 40px rgba(17, 21, 24, .10);
   --radius: 4px;
@@ -56,6 +64,9 @@
     --line-strong: #3a424a; --heading: #f4f5f6; --text: #d7dade; --muted: #a3a8ad;
     --accent: #c9b99c; --accent-ink: #c9b99c; --accent-deep: #ddd0b8; --on-accent: #111518;
     --code-bg: #1a1f24;
+    /* github-dark's colours (each >= 5.4:1 on #1a1f24); its section blue #1f6feb (3.58:1) lifted to #58a6ff */
+    --hl-text: #c9d1d9; --hl-keyword: #ff7b72; --hl-title: #d2a8ff; --hl-number: #79c0ff; --hl-string: #a5d6ff;
+    --hl-builtin: #ffa657; --hl-comment: #8b949e; --hl-name: #7ee787; --hl-section: #58a6ff; --hl-bullet: #f2cc60;
     --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 8px 24px rgba(0, 0, 0, .35);
     --shadow-lift: 0 2px 4px rgba(0, 0, 0, .5), 0 16px 40px rgba(0, 0, 0, .45);
     color-scheme: dark;
@@ -66,6 +77,8 @@
   --line-strong: #3a424a; --heading: #f4f5f6; --text: #d7dade; --muted: #a3a8ad;
   --accent: #c9b99c; --accent-ink: #c9b99c; --accent-deep: #ddd0b8; --on-accent: #111518;
   --code-bg: #1a1f24;
+  --hl-text: #c9d1d9; --hl-keyword: #ff7b72; --hl-title: #d2a8ff; --hl-number: #79c0ff; --hl-string: #a5d6ff;
+  --hl-builtin: #ffa657; --hl-comment: #8b949e; --hl-name: #7ee787; --hl-section: #58a6ff; --hl-bullet: #f2cc60;
   --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 8px 24px rgba(0, 0, 0, .35);
   --shadow-lift: 0 2px 4px rgba(0, 0, 0, .5), 0 16px 40px rgba(0, 0, 0, .45);
   color-scheme: dark;
@@ -171,7 +184,7 @@ main:focus { outline: none; }
 :root[data-theme="light"] .theme-sun { display: none; }
 :root[data-theme="light"] .theme-moon { display: block; }
 
-@media (max-width: 980px) {
+@media (max-width: 1120px) {   /* eight nav entries need the room; the rest of the page still folds at 980 px */
   #menu-btn { display: grid; }
   /* the nav leaves the flex row here (absolute or hidden), so the tools take over the right edge */
   .header-tools { margin-left: auto; }
@@ -222,6 +235,14 @@ main:focus { outline: none; }
   border: 1px solid var(--line); box-shadow: var(--shadow-lift); background: var(--surface);
 }
 .hero-photo figcaption { margin: 12px 2px 0; font-size: 13.5px; color: var(--muted); }
+/* the three proof points under the one-sentence pitch, and screenshots in the cards */
+.hero ul.proof { margin: 18px 0 0; padding-left: 1.2em; color: var(--text); font-size: 16.5px; max-width: 56ch; }
+.hero ul.proof li { margin: 6px 0; }
+.card .card-shot {
+  width: calc(100% + 48px); margin: -24px -24px 18px; height: auto; aspect-ratio: 16 / 10; object-fit: cover;
+  object-position: top; display: block; border-bottom: 1px solid var(--line);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0; background: var(--surface);
+}
 figure { margin: 0; }
 
 /* ---- Home: sections ----------------------------------------------------------------------------- */
@@ -277,8 +298,23 @@ a.card:hover .more { text-decoration: underline; text-underline-offset: 3px; }
   overflow: hidden; display: flex; flex-direction: column;
 }
 .shot img { width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: cover; display: block; background: var(--surface); }
-.shot figcaption { padding: 10px 12px 12px; font-size: 13.5px; color: var(--muted); line-height: 1.45; }
-.shot figcaption strong { display: block; color: var(--heading); font-size: 14.5px; font-weight: 600; }
+.shot figcaption, .shot .cap { padding: 10px 12px 12px; font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+.shot figcaption strong, .shot .cap strong { display: block; color: var(--heading); font-size: 14.5px; font-weight: 600; }
+/* every tile and row opens its section of the API reference */
+a.shot { color: inherit; transition: border-color .18s ease; }
+a.shot:hover { text-decoration: none; border-color: var(--accent); }
+.periph-h { font-size: 17px; margin: 30px 0 12px; }
+.periph-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px;
+               grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+.periph-list a {
+  display: flex; flex-direction: column; gap: 2px; height: 100%; padding: 10px 14px; color: inherit;
+  border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface-2);
+}
+.periph-list a:hover { text-decoration: none; border-color: var(--accent); }
+.periph-list strong { color: var(--heading); font-size: 15px; font-weight: 600; }
+.periph-list span { color: var(--muted); font-size: 14px; line-height: 1.45; }
+.periph-list code { align-self: flex-start; margin-top: 4px; font-size: 12.5px; color: var(--accent-ink); }
+.board-photo { max-width: 760px; }
 
 /* ---- Home: the story ------------------------------------------------------------------------------- */
 .story-grid { display: grid; gap: 34px; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); align-items: start; }
@@ -342,7 +378,8 @@ a.card:hover .more { text-decoration: underline; text-underline-offset: 3px; }
 .toc li a {
   display: block; padding: 5px 12px; margin-right: 18px; color: var(--muted);
   border-left: 2px solid transparent; border-radius: 0 var(--radius) var(--radius) 0;
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  /* an entry wraps instead of ending in an ellipsis (SITE-29): every heading is read in full */
+  white-space: normal; overflow-wrap: anywhere; line-height: 1.4;
 }
 .toc li.h3 a { padding-left: 26px; font-size: 13.5px; }
 .toc li a:hover { color: var(--heading); background: var(--surface); text-decoration: none; }
@@ -350,10 +387,46 @@ a.card:hover .more { text-decoration: underline; text-underline-offset: 3px; }
 .toc .empty { color: var(--muted); font-size: 14px; padding: 6px 12px; }
 .toc-toggle { display: none; }
 
+/* ---- Site search (SITE-16; site.js setUpSearch) ------------------------------------------------- */
+.search-btn { width: auto; padding: 0 10px; gap: 8px; display: inline-flex; align-items: center; font: inherit; font-size: 14px; }
+.search-key {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; line-height: 1;
+  border: 1px solid var(--line-strong); border-radius: 3px; padding: 2px 5px; color: var(--muted);
+}
+@media (max-width: 720px) {
+  .search-btn { width: 38px; padding: 0; justify-content: center; }
+  .search-label, .search-key { display: none; }
+}
+.search-panel {
+  position: absolute; left: 0; right: 0; top: 100%; z-index: 31; background: var(--page);
+  border-bottom: 1px solid var(--line); box-shadow: var(--shadow-lift);
+  max-height: calc(100vh - var(--header-h)); overflow: auto; padding: 14px 0 18px;
+}
+.search-panel[hidden] { display: none; }
+.site-header .search-panel .wrap { display: block; min-height: 0; }   /* not the header row's flex */
+.search-input {
+  width: 100%; padding: 10px 14px; min-height: 44px; font: inherit; font-size: 16px; color: var(--text);
+  background: var(--page); border: 1px solid var(--line-strong); border-radius: var(--radius);
+}
+.search-input::placeholder { color: var(--muted); }
+.search-status { margin: 8px 0 4px; font-size: 13.5px; color: var(--muted); }
+.search-status:empty { display: none; }
+.search-results { list-style: none; margin: 0; padding: 0; max-width: 860px; }
+.search-hit { display: block; padding: 10px 12px; border-radius: var(--radius); color: var(--text); }
+.search-hit:hover, .search-hit:focus-visible { background: var(--surface); text-decoration: none; }
+.search-hit .hit-title { display: block; font-weight: 600; color: var(--heading); }
+.search-hit .hit-page { display: block; font-size: 12.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.search-hit .hit-text { display: block; font-size: 14.5px; color: var(--muted); margin-top: 2px; }
+/* a marked word is heading-coloured: on the mark's tint over the page or the hover grey it is >= 4.5:1 in both
+   schemes (the muted snippet colour was 3.35-4.17:1 there; scripts/test_site.js computes the four pairs) */
+.search-hit mark { background: rgba(168, 151, 123, .35); color: var(--heading); border-radius: 2px; }
+
 .doc { min-width: 0; padding: 28px 0 72px; }
 .doc-head { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between;
             padding-bottom: 14px; margin-bottom: 8px; }
 .crumb { font-size: 12.5px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+/* a link in text is underlined, never told apart by its colour alone (SITE-26: the crumb's was 1.05:1) */
+.crumb a, .notice a { text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--accent); }
 .edit-link { font-size: 14px; color: var(--muted); display: inline-flex; align-items: center; gap: 6px; }
 .edit-link:hover { color: var(--accent-ink); }
 .edit-link svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.7;
@@ -365,6 +438,11 @@ a.card:hover .more { text-decoration: underline; text-underline-offset: 3px; }
 .doc-body h4 { font-size: 17px; margin: 26px 0 8px; font-weight: 600; }
 .doc-body h2:target, .doc-body h3:target, .doc-body h4:target { color: var(--accent-ink); }
 .doc-body p, .doc-body li { font-size: 16.5px; }
+/* line length (SITE-29): the 796 px column held ~98 characters a line. 60ch of Jost 16.5 px is ~594 px, about
+   75 characters (measured in Edge on Getting started: median 75, 68ch gave 85; WCAG 1.4.8 asks for at most 80).
+   Tables and code keep the column's full width. */
+.doc-body > p, .doc-body > ul, .doc-body > ol, .doc-body > blockquote, .doc-body > .callout,
+.doc-body > dl { max-width: 60ch; }
 .doc-body ul, .doc-body ol { padding-left: 24px; }
 .doc-body li { margin: 6px 0; }
 .doc-body li::marker { color: var(--accent); }
@@ -374,21 +452,45 @@ a.card:hover .more { text-decoration: underline; text-underline-offset: 3px; }
   font-size: .87em; background: var(--code-bg); border: 1px solid var(--line);
   padding: .08em .38em; border-radius: 3px; color: var(--heading);
 }
+/* A code block is a card: a bar holding the Copy button, then the code, so the button never covers a line
+   (SITE-23: on a phone the always-visible button hid the end of every signature). The <pre> is the one box
+   that scrolls (highlight.js's own `pre code.hljs { overflow-x: auto }` is undone here), and site.js gives
+   it the keyboard focus when it does (markScrollers, SITE-26). */
+.doc-body .code-block {
+  background: var(--code-bg); border: 1px solid var(--line); border-radius: var(--radius-lg); margin: 20px 0;
+}
+.doc-body .code-bar { display: flex; justify-content: flex-end; padding: 6px 8px 0; }
 .doc-body pre {
   background: var(--code-bg); border: 1px solid var(--line); border-radius: var(--radius-lg);
   padding: 18px 20px; overflow: auto; line-height: 1.55; position: relative; margin: 20px 0;
 }
-.doc-body pre code { background: none; border: 0; padding: 0; font-size: 14px; }
+.doc-body .code-block pre { border: 0; margin: 0; padding: 2px 20px 16px; border-radius: 0 0 var(--radius-lg) var(--radius-lg); }
+.doc-body pre code, .doc-body pre code.hljs { background: none; border: 0; padding: 0; font-size: 14px;
+                                              overflow: visible; display: inline; color: var(--hl-text); }
+/* a one-line block (a signature) wraps, at any width, rather than scroll its end out of sight */
+.doc-body pre.sig, .doc-body pre.sig code { white-space: pre-wrap; overflow-wrap: anywhere; }
 .copy-btn {
-  position: absolute; top: 8px; right: 8px; opacity: 0; transition: opacity .15s ease;
   font: inherit; font-size: 12px; font-weight: 500; letter-spacing: .04em;
-  padding: 3px 10px; min-height: 28px; border-radius: var(--radius);
+  padding: 2px 10px; min-height: 26px; border-radius: var(--radius);
   background: var(--page); color: var(--muted); border: 1px solid var(--line-strong); cursor: pointer;
 }
-pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
-/* a touch device has no hover: the button was invisible and still tappable */
-@media (hover: none) { .copy-btn { opacity: 1; } }
 .copy-btn:hover { color: var(--heading); border-color: var(--accent); }
+/* the code's colours (the --hl-* tokens above), over either highlight.js theme */
+.doc-body pre .hljs-doctag, .doc-body pre .hljs-keyword, .doc-body pre .hljs-meta .hljs-keyword,
+.doc-body pre .hljs-template-tag, .doc-body pre .hljs-template-variable, .doc-body pre .hljs-type,
+.doc-body pre .hljs-variable.language_ { color: var(--hl-keyword); }
+.doc-body pre .hljs-title, .doc-body pre .hljs-title.class_, .doc-body pre .hljs-title.function_ { color: var(--hl-title); }
+.doc-body pre .hljs-attr, .doc-body pre .hljs-attribute, .doc-body pre .hljs-literal, .doc-body pre .hljs-meta,
+.doc-body pre .hljs-number, .doc-body pre .hljs-operator, .doc-body pre .hljs-selector-attr,
+.doc-body pre .hljs-selector-class, .doc-body pre .hljs-selector-id, .doc-body pre .hljs-variable { color: var(--hl-number); }
+.doc-body pre .hljs-meta .hljs-string, .doc-body pre .hljs-regexp, .doc-body pre .hljs-string { color: var(--hl-string); }
+.doc-body pre .hljs-built_in, .doc-body pre .hljs-symbol { color: var(--hl-builtin); }
+.doc-body pre .hljs-code, .doc-body pre .hljs-comment, .doc-body pre .hljs-formula { color: var(--hl-comment); }
+.doc-body pre .hljs-name, .doc-body pre .hljs-quote, .doc-body pre .hljs-selector-pseudo,
+.doc-body pre .hljs-selector-tag { color: var(--hl-name); }
+.doc-body pre .hljs-subst, .doc-body pre .hljs-emphasis, .doc-body pre .hljs-strong { color: var(--hl-text); }
+.doc-body pre .hljs-section { color: var(--hl-section); }
+.doc-body pre .hljs-bullet { color: var(--hl-bullet); }
 .copy-btn.done { color: var(--accent-deep); border-color: var(--accent); opacity: 1; }
 .doc-body table {
   border-collapse: collapse; display: block; overflow-x: auto; max-width: 100%;
@@ -401,8 +503,56 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
   margin: 20px 0; padding: 4px 20px; color: var(--muted); border-left: 3px solid var(--accent);
   background: var(--surface); border-radius: 0 var(--radius) var(--radius) 0;
 }
+/* callouts (SITE-29): `> **Note:**`, `> **Tip:**`, `> **Warning:**` in the Markdown (site.js renderCallouts) */
+.doc-body .callout {
+  margin: 22px 0; padding: 12px 18px 2px; border: 1px solid var(--line); border-left: 4px solid var(--accent);
+  border-radius: 0 var(--radius) var(--radius) 0; background: var(--surface); color: var(--text);
+}
+.doc-body .callout > p, .doc-body .callout li { font-size: 16px; }
+.doc-body .callout .callout-title {
+  margin: 0 0 4px; font-size: 13px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--heading);
+}
+.doc-body .callout .callout-title + p { margin-top: 0; }
+.doc-body .callout .callout-title::before {
+  display: inline-grid; place-items: center; width: 18px; height: 18px; margin-right: 8px; border-radius: 50%;
+  font-size: 12px; letter-spacing: 0; color: #fff; vertical-align: -3px;
+}
+.doc-body .callout-note { border-left-color: #2f6db0; }
+.doc-body .callout-note .callout-title::before { content: "i"; background: #2f6db0; font-family: Georgia, serif; font-style: italic; }
+.doc-body .callout-tip { border-left-color: #2a7a3b; }
+.doc-body .callout-tip .callout-title::before { content: "\2713"; background: #2a7a3b; }
+.doc-body .callout-warning { border-left-color: #b8430a; background: color-mix(in srgb, #b8430a 8%, var(--surface)); }
+.doc-body .callout-warning .callout-title::before { content: "!"; background: #b8430a; }
 .doc-body img { border-radius: var(--radius); border: 1px solid var(--line); }
 .doc-body a { text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--accent); }
+/* text on the grey --surface uses the palette's accentDeep: accentInk (--accent-ink) is 4.32:1 there, below AA;
+   accentDeep #6a5e4c is 5.75:1 (SITE-26; scripts/test_site.js computes the pair) */
+.doc-body tbody tr:nth-child(even) td a, .doc-body th a, .doc-body .callout a, .doc-body blockquote a,
+.notice a, .credit .kicker, .credit a, .dl-card a:not(.btn), .doc-body .code-block a { color: var(--accent-deep); }
+@media (max-width: 700px) { .doc-body table.stack td:first-child a { color: var(--accent-deep); } }
+
+/* tables on a phone (SITE-23): a 3-column API table was 597 px wide in a 358 px column, its meaning off-screen
+   over an empty row up to 2,754 px tall. Under 700 px each row is a card and each value carries its column's
+   name (data-label, site.js prepareTables); the header row stays for screen readers only. */
+@media (max-width: 700px) {
+  .doc-body table.stack { display: block; overflow: visible; }
+  .doc-body table.stack thead {
+    position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%);
+  }
+  .doc-body table.stack tbody, .doc-body table.stack tr, .doc-body table.stack td { display: block; width: auto; }
+  .doc-body table.stack tr {
+    border: 1px solid var(--line); border-radius: var(--radius-lg); margin: 0 0 12px; background: var(--surface-2);
+    overflow: hidden;
+  }
+  .doc-body table.stack td, .doc-body table.stack tbody tr:nth-child(even) td { border: 0; background: none; padding: 8px 14px; }
+  .doc-body table.stack td + td { border-top: 1px solid var(--line); }
+  .doc-body table.stack td:first-child, .doc-body table.stack tbody tr:nth-child(even) td:first-child { background: var(--surface); }
+  .doc-body table.stack td[data-label]::before {
+    content: attr(data-label); display: block; font-size: 11.5px; font-weight: 600; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--muted); margin-bottom: 2px;
+  }
+}
 
 .pager { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 64px; padding-top: 28px; border-top: 1px solid var(--line); }
 .pager a {
@@ -470,7 +620,7 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
 .f-credit { margin-top: 12px !important; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, .12);
             font-size: 14px !important; color: rgba(255, 255, 255, .62); }
 .f-credit a { color: #ddd0b8; }
-.f-col h4 { color: #fff; font-size: 11.5px; font-weight: 600; letter-spacing: .14em;
+.f-col h2 { color: #fff; font-size: 11.5px; font-weight: 600; letter-spacing: .14em;
             text-transform: uppercase; margin: 0 0 12px; }
 .f-col ul { list-style: none; margin: 0; padding: 0; font-size: 15px; }
 .f-col li { margin: 7px 0; }
@@ -490,7 +640,7 @@ pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
   a.card:hover { transform: none; }
 }
 @media print {
-  .site-header, .toc, .site-footer, .pager, .copy-btn, .edit-link, .hero .actions, .header-tools { display: none !important; }
+  .site-header, .toc, .site-footer, .pager, .copy-btn, .code-bar, .edit-link, .hero .actions, .header-tools { display: none !important; }
   body { font-size: 11pt; color: #000; background: #fff; }
   .layout { display: block; padding: 0; }
   .doc { padding: 0; }

@@ -109,6 +109,8 @@
                                   // is never saved, run, uploaded or exported
     let lastText = '';            // document text last received or sent (feedback filter)
     let python = '';
+    let seq = 0;                  // the extension's number of the last load: every message with Python carries it
+                                  // (src/blocksEditor.ts, "who holds the blocks text"), so it never runs an older program
     let pendingText = null;       // a document that arrived before the workspace existed
 
     function inject() {
@@ -142,7 +144,7 @@
             const code = generate();
             if (text !== lastText) {
                 lastText = text;
-                vscode.postMessage({ type: 'edit', text: text, python: code });
+                vscode.postMessage({ type: 'edit', text: text, python: code, seq: seq });
             }
         });
         applyCodePane();
@@ -200,6 +202,9 @@
         return JSON.stringify(doc, null, 2) + '\n';
     }
 
+    /* line endings never count: VS Code keeps a CRLF document CRLF, and serialize() writes LF */
+    function lf(t) { return String(t).replace(/\r\n/g, '\n'); }
+
     function load(text) {
         if (!workspace) { pendingText = text; return; }
         loading = true;
@@ -233,7 +238,7 @@
             evnBlocks.setBoardConnected(workspace, boardConnected);
             broken = false;
             workspace.setIsReadOnly(false);
-            lastText = text || '';
+            lastText = lf(text || '');      // compared with serialize()'s LF: a CRLF file is not an edit by itself
             setStatus(warning, !!warning);
         } catch (e) {
             // what loaded is only part of the file: never save it over the file (broken stops the edit messages)
@@ -243,9 +248,13 @@
         } finally {
             Blockly.Events.enable();
             loading = false;
-            vscode.postMessage({ type: 'state', broken: broken });
         }
-        generate();
+        report();
+    }
+
+    /* after every load: the program of what is shown now, so Run / Upload / Export from the title bar have it at once */
+    function report() {
+        vscode.postMessage({ type: 'state', broken: broken, seq: seq, python: generate() });
     }
 
     /* ---- toolbar ------------------------------------------------------------------------- */
@@ -263,7 +272,7 @@
             setStatus('This file did not open completely, so it is not run, uploaded or exported. Update the EVN ALPHA extension, or fix the file as text.', true);
             return;
         }
-        vscode.postMessage({ type: type, python: generate() });
+        vscode.postMessage({ type: type, python: generate(), seq: seq });
     }
     function button(id, type) {
         document.getElementById(id).addEventListener('click', function () { send(type); });
@@ -355,10 +364,8 @@
     });
 
     window.addEventListener('resize', function () { applyCodePane(); });
-    window.addEventListener('keydown', function (ev) {
-        if (ev.key === 'F5' && ev.ctrlKey && !ev.shiftKey) { ev.preventDefault(); send('run'); }
-        if (ev.key === 'F5' && ev.ctrlKey && ev.shiftKey) { ev.preventDefault(); vscode.postMessage({ type: 'stop' }); }
-    });
+    /* Ctrl+F5 / Ctrl+Shift+F5 (Cmd on a Mac) are VS Code's keybindings evn.runBlocks / evn.stopMotors (package.json): the
+     * webview forwards its key presses to them, so a handler of the page's own ran the program a second time (VSC-32). */
 
     /* ---- extension messages -------------------------------------------------------------- */
 
@@ -366,10 +373,11 @@
         const msg = ev.data || {};
         switch (msg.type) {
             case 'load':
-                if (msg.text !== lastText) { load(msg.text); }
+                seq = msg.seq;
+                if (lf(msg.text || '') !== lastText) { load(msg.text); } else { report(); }
                 break;
             case 'getCode':
-                vscode.postMessage({ type: 'code', id: msg.id, python: generate(), broken: broken });
+                vscode.postMessage({ type: 'code', id: msg.id, python: generate(), broken: broken, seq: seq });
                 break;
             case 'status':
                 setStatus(msg.message || '', !!msg.error, !!msg.ok);

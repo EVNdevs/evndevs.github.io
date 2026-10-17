@@ -31,6 +31,6 @@ Look at the status bar at the bottom of the VS Code window.
 
 The status bar can take up to ten seconds to catch up after an install.
 
-Nothing happening? *View, Output*, pick **EVN ALPHA** in the dropdown: the log there says which Python
+Nothing happening? *View, Output*, pick **EVN ALPHA log** in the dropdown: the log there says which Python
 was tried. The **evn.pythonPath** setting points the extension at a particular Python if you have
 several.

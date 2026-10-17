@@ -6,8 +6,8 @@ tolerances of the controller, and the diagnostics. The speed unit, full speed an
 changes it puts back; a calibration it makes stays stored on the board, and the control law ends on
 the default ADRC. Numbers are deg/s and degrees unless the line says otherwise.
 
-Needs: motors on ports 1 and 2, wheels off the ground (the calibration turns a shaft up to a turn
-each way); when the program asks, you hold the wheel on port 1 until it stops (stall detection).
+Needs: motors on ports 1 and 2, wheels off the ground (the calibration turns each shaft for about
+twelve seconds, up to about a turn and a half each way); when the program asks, you hold the wheel on port 1 until it stops (stall detection).
 
 """
 import evn

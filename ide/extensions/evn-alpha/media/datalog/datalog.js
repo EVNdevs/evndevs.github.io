@@ -1,5 +1,5 @@
 /* The data logger's page: the sources to record (live mode), the chart and the statistics (both modes).
- * The extension (src/dataLogger.ts) sends: init, sources, state, series, data, reset, note, point, empty.
+ * The extension (src/dataLogger.ts) sends: init, sources, state, series, data, reset, note, point, captured, empty.
  * It is sent: ready, toggle, rate, name, start, stop, capture, openFile, revealData.
  *
  * The chart is lanes on one time axis: one lane per unit (a unitless reading gets a lane of its own
@@ -22,6 +22,7 @@
     rec: 'idle', name: 'log', file: '', started: 0, samples: 0, errors: [], recMode: '', holdS: 0, fill: 0, held: 0, plan: null,
     series: new Map(), order: [], tMin: Infinity, tMax: -Infinity, total: 0,
     follow: true, win: 10, x0: 0, x1: 10, notes: [], points: [], empty: '',
+    capturing: false,                 // a Capture point is in flight: the button waits for its `captured` (VSC-23)
   };
 
   /* ---- little DOM helpers ---- */
@@ -75,7 +76,11 @@
     ui.srcList = h('div', { style: 'display:flex;flex-direction:column;gap:6px' });
     ui.note = h('input', { type: 'text', placeholder: 'note, e.g. 10 cm', title: 'Written in the note column of the point' });
     ui.capBtn = h('button', { class: 'btn', text: 'Capture point', title: 'One reading of every ticked reading now, added to Data/<name> points <date>.csv',
-      onclick: () => vscode.postMessage({ type: 'capture', note: ui.note.value }) });
+      onclick: () => {
+        if (st.capturing) return;     // one point at a time: a double-click or a held Enter is one capture
+        st.capturing = true; ui.capBtn.disabled = true;
+        vscode.postMessage({ type: 'capture', note: ui.note.value });
+      } });
     ui.note.addEventListener('keydown', (e) => { if (e.key === 'Enter') ui.capBtn.click(); });
     ui.points = h('div', { class: 'points' });
     ui.aside.append(ui.srcNote, ui.srcList,
@@ -125,7 +130,7 @@
     ui.recBtn.append(h('span', { class: 'dot' }), rec ? 'Stop' : ({ starting: 'Starting...', stopping: 'Stopping...', waiting: 'Discard...', fetching: 'Fetching...' })[st.rec] || 'Record');
     ui.recBtn.disabled = (!st.live && !rec && st.rec !== 'waiting') || busy;
     ui.recBtn.title = st.rec === 'waiting' ? 'Give up the samples held on the board' : '';
-    ui.capBtn.disabled = !st.live || busy || st.rec === 'waiting';
+    ui.capBtn.disabled = !st.live || busy || st.rec === 'waiting' || st.capturing;
     const s = Math.floor((Date.now() - st.started) / 1000);
     const clock = Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
     if (rec && st.recMode === 'hold') {
@@ -223,9 +228,10 @@
     }
     st.total += ts.length;
   }
-  /** keep the page's memory bounded: drop the older half of every series (the file has them) */
+  /** keep the page's memory bounded: drop the older half of every series (the file has them). A live
+   *  recording only: a file shown in the viewer is the record, all of it (VSC-24). */
   function trim() {
-    if (st.total <= MAX_POINTS) return;
+    if (st.mode === 'file' || st.total <= MAX_POINTS) return;
     let total = 0, tMin = Infinity;
     for (const s of st.order) {
       const k = Math.floor(s.n / 2);
@@ -681,6 +687,7 @@
       case 'reset': reset(); draw(); break;
       case 'note': st.notes.push({ t: m.t, note: m.note }); draw(); break;
       case 'point': st.points.push(m); renderPoints(); break;
+      case 'captured': st.capturing = false; renderHeader(); break;
       case 'empty': st.empty = m.why || ''; draw(); break;
     }
   });
