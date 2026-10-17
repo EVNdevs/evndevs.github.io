@@ -1,7 +1,7 @@
 EVN_ALPHA_MicroPython.uf2
-source: main (0.2.65) + the colour calibration panel and auto exposure + C0-38 (MicroPython's shared method-call path in main SRAM) + C0-40 (one calibrate pulse record shared by the four axes) + PI-61b (the MPU-6500 per-packet path and the I2C layer in main SRAM) + UF-14 (the USB stdout drop counter; the 500 ms timeout kept) + S-1 (MICROPY_STACK_CHECK_MARGIN 512 -> 1792 B); the Python heap at 128 KB; the release layout EVN_RELEASE_PAD_PY 6124 / _MODULES 4536 / _HAL 8 (board-picked on COM17 + COM22)
+source: main (0.2.66) + linkfix (the release build's link line under cmd.exe's limit) + the bindings lane (DriveBase.reset(distance=, angle=), HiTechnicCompass.age() during calibrate(), range / closed-object checks) + C0-32 (the RGBLED strip buffer on the GC heap) + MC-61 (DriveBase.hold()) + C0-03 (the SSD1306 Display frame on the GC heap); the Python heap at 128 KB; the release layout EVN_RELEASE_PAD_PY 6124 / _MODULES 3312 / _HAL 1768 (board-picked on COM17 + COM22)
 built: 2026-10-17 (MicroPython v1.26.1, pico-sdk 2.3.0; SOURCE_DATE_EPOCH=1792238400 = noon UTC 2026-10-17)
 flash: single-line 03h boot2, PICO_FLASH_SPI_CLKDIV=4
-md5: ffee52297bf6e91cc3aebb5b98c55241
+md5: c55431e6fb6fdc04419e89f80772203d
 reproduce: cmake -G Ninja -DEVN_MICROPYTHON=ON + ninja with SOURCE_DATE_EPOCH = noon UTC of the built: date (py/makeversionhdr.py embeds MICROPY_BUILD_DATE); release_public.py does this and refuses on an md5 mismatch
-version: 0.2.66
+version: 0.2.67

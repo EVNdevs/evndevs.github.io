@@ -1,7 +1,7 @@
 """Robot: the whole DriveBase API
 
 Every DriveBase method once: the four fixed moves (straight, turn, curve, arc), driving at a speed,
-speeds in percent (LEGO's move steering: a pivot on one wheel and back), stopping, the
+speeds in percent (LEGO's move steering: a pivot on one wheel and back), stopping and holding, the
 measurements, the speed and acceleration settings, and the gyro loop over the evn.Pose the base builds
 for itself (imu=3; robot.pose). The moves go out and come back, so the robot ends near where it started.
 Distances are mm, angles degrees (positive = clockwise, seen from above), speeds mm/s and deg/s (or % of
@@ -73,6 +73,8 @@ robot.drive(0, 90)                               # turn on the spot at 90 deg/s
 wait(1000)
 robot.drive(0, -90)
 wait(1000)
+robot.hold()                                     # stop and keep the place: both wheels held where they are
+wait(500)
 # Speeds in percent, as a Motor's: drive(speed %, steering %) is then LEGO's move steering, every
 # speed a % of the robot's full speed (the slower motor's full_speed()). Steering 50 pivots on the
 # inner wheel, and the same steering backwards retraces the path.

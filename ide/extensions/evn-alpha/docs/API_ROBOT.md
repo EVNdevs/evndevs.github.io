@@ -249,6 +249,7 @@ A new `DriveBase` on a motor that still belongs to one takes the pair over (the 
 | `drive(speed, turn_rate)` | mm/s along the path and deg/s of heading until the next command (positional, or `speed=` / `turn_rate=` as in Pybricks); both wheels ramp together from the speeds they are at (the path during the ramp is the steady-state arc), also when you call it again before the ramp ends, and the same call repeated in a loop drives exactly the path of one call (with `use_gyro(True)` each call restarts the pose correction, so such a loop is not corrected yet); if a wheel would exceed the weaker motor's speed limit both are scaled so the radius is kept, and if its ramp would exceed that motor's acceleration limit both ramps are slowed together |
 | `drive(speed, steering)` with `speed_unit=SpeedUnit.PERCENT` | drive like LEGO's move steering until the next command, both in % (-100..100, clamped). `speed` is the faster wheel's % of the robot's full speed (the slower motor's `full_speed()`, negative = backwards); `steering` sets the slower wheel to `speed × (1 − 2 × |steering| / 100)`: 0 straight, 50 pivots on the inner wheel, 100 spins in place, positive = right - the same steering gives the same path at any speed. It drives through `drive()`: the same ramps, the same scaling when a wheel cannot go that fast, the same `use_gyro` behaviour. By keyword the name says the unit: `turn_rate=` here, or `steering=` on a robot in mm/s, raises `TypeError` |
 | `stop()`, `brake()` | coast / brake both wheels; return once the wheels have taken it (at most 2 ms), so a file write straight after is not refused |
+| `hold()` | stop the robot and actively hold it in place (Pybricks): both wheels are held where they are, until the next command. A moving robot brakes as hard as its motors can (it can skid; use `straight()` / `turn()` or `drive(0, 0)` for a gentle stop) and the wheels are pulled back to where they were at the call. A robot already holding after a `then=Stop.HOLD` move is left exactly where it holds. With `use_gyro(True)` its place and heading are held. Returns once the wheels have taken it, as `stop()` |
 
 ### Measuring
 
@@ -256,7 +257,7 @@ A new `DriveBase` on a motor that still belongs to one takes the pair over (the 
 | :--- | :--- |
 | `distance()`, `angle()` | mm driven and degrees turned since `reset()`, from the two encoders (ints) |
 | `state()` | `(distance, drive_speed, angle, turn_rate)` as floats (the two speeds in % with `SpeedUnit.PERCENT`) |
-| `reset(distance=0, angle=0)` | start the readings again from these values. The arguments are positional only: `reset(100, 0)`, not `reset(distance=100)` (`TypeError`). A program run again from the user button does it by itself to a base an imported module kept (Python does not run the module again): the run starts at `distance()` / `angle()` 0 with no maneuver in force, the base's `settings()`, `follower()`, `use_gyro()` and `pose` kept, its `Pose` re-framed as `Pose.reset()` says (the owner, 2026-10-02, as Pybricks starts a program afresh; a kept `Motor` reads `angle()` 0 again if it was built with `reset_angle=True`, the default) |
+| `reset(distance=0, angle=0)` | start the readings again from these values. The arguments go by position or by keyword: `reset(100, 0)`, `reset(distance=100)`, `reset(angle=90)`. A program run again from the user button does it by itself to a base an imported module kept (Python does not run the module again): the run starts at `distance()` / `angle()` 0 with no maneuver in force, the base's `settings()`, `follower()`, `use_gyro()` and `pose` kept, its `Pose` re-framed as `Pose.reset()` says (the owner, 2026-10-02, as Pybricks starts a program afresh; a kept `Motor` reads `angle()` 0 again if it was built with `reset_angle=True`, the default) |
 | `done()` | `True` when both wheels have finished — `Motor.done()`'s meaning: profile complete and inside `control.target_tolerances()` — or are passive, or either wheel is stalled. With `use_gyro(True)` the wheels are judged against target + trim, and `done()` also waits for the pose to settle (or the trim to reach its bound, or 2 s after the profiles). A wheel coasted by the runaway guard during a `wait=False` maneuver: `done()` coasts the other wheel too and returns `True`; the base's next command raises the wheel's `RuntimeError` |
 | `stalled()` | `True` while either wheel is stalled; like `Motor`, a `wait=True` maneuver on a stalled robot returns on the stall timeout (the shorter of the two wheels' `settings()` timeouts) |
 
@@ -291,7 +292,7 @@ left, right = Motor(4, Direction.COUNTERCLOCKWISE), Motor(3)
 robot = DriveBase(left, right, wheel_diameter=62.4, axle_track=170)
 robot.straight(300); robot.turn(45); robot.arc(-150, angle=90)
 robot.drive(200, 30)                     # until the next command
-robot.stop()
+robot.hold()                             # stop and keep the place (stop() coasts, brake() brakes)
 ```
 
 **Speeds in percent.** `DriveBase(left, right, 62.4, 170, speed_unit=SpeedUnit.PERCENT)` - the same keyword as a

@@ -2,7 +2,7 @@
   "name": "evn-alpha-micropython",
   "displayName": "EVN ALPHA MicroPython",
   "description": "Early-access tooling for the EVN ALPHA robotics controller: flash the MicroPython firmware, run programs, open the REPL, autocomplete for the evn motor API, and a Blockly block editor that generates MicroPython.",
-  "version": "0.2.66",
+  "version": "0.2.67",
   "publisher": "evn-alpha",
   "license": "MIT",
   "preview": true,
@@ -1366,7 +1366,7 @@
         "evn.port": {
           "type": "string",
           "default": "",
-          "description": "Which board to use. The USB serial number of an EVN ALPHA (for example E46320165B5F2A36) — the board is then found again whatever COM number Windows gives it — or a port name such as COM7 or /dev/ttyACM0, which is what a Bluetooth port needs. \"EVN: Choose the board port\" stores the serial number for an EVN ALPHA. Leave empty to auto-detect the EVN ALPHA (USB 2e8a:000a)."
+          "description": "Which board to use. The USB serial number of an EVN ALPHA (for example E46320165B5F2A36) — the board is then found again whatever COM number Windows gives it — or a port name such as COM7 or /dev/ttyACM0, which is what a Bluetooth port needs. \"EVN: Select board port\" stores the serial number for an EVN ALPHA. Leave empty to auto-detect the EVN ALPHA (USB 2e8a:000a)."
         },
         "evn.pythonPath": {
           "type": "string",

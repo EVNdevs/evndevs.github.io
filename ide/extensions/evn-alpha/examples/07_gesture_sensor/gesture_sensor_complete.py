@@ -106,7 +106,7 @@ print("gains", g.gain(), "raw", g.raw(), "(about four times the counts)")
 g.gain(colour=old_gain[0], proximity=old_gain[1], gesture=old_gain[2])
 
 old_time = g.integration_time()         # 2.78 ms at start
-print("integration_time set to", g.integration_time(27.8), "ms")   # 2.78..712 ms in 2.78 ms steps
+print("integration_time set to", g.integration_time(27.8), "ms")   # 2.78..711.7 ms in 2.78 ms steps
 print("raw", g.raw(), "(about ten times the counts)")
 g.integration_time(old_time)
 

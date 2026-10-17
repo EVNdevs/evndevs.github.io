@@ -102,7 +102,7 @@ Plug the sensor into an I2C port through an NXT cable adapter, level and away fr
 | :--- | :--- |
 | `hc.heading()` | 0..359 degrees clockwise (float, whole degrees), relative to `north()` |
 | `hc.north(heading=0)` | from now the direction the sensor points at reads `heading`; kept while the object is open |
-| `hc.calibrate()` | start the sensor's own hard-iron calibration. Then turn the robot slowly and level through a little more than one full turn, in at least 20 s. Until `calibrate_stop()`, `heading()`, `north()` and `age()` raise `ValueError("HiTechnicCompass is calibrating: call calibrate_stop() first")` |
+| `hc.calibrate()` | start the sensor's own hard-iron calibration. Then turn the robot slowly and level through a little more than one full turn, in at least 20 s. Until `calibrate_stop()`, `heading()` and `north()` raise `ValueError("HiTechnicCompass is calibrating: call calibrate_stop() first")`. `age()` still answers: the sensor gives no heading while it calibrates, so the age of the last reading grows (the owner, 2026-10-17: "Like every sensor's age()") |
 | `hc.calibrate_stop()` | end it: `True` when the sensor accepted the calibration, `False` when it rejected it; `ValueError("not calibrating: call calibrate() first")` outside one. The sensor keeps the result itself; nothing is stored on the board |
 | `hc.calibrating()` | `True` between `calibrate()` and `calibrate_stop()` |
 | `hc.firmware()` | the sensor's firmware text, e.g. `'V1.23'` |

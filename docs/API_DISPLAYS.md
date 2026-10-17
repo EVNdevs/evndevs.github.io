@@ -12,7 +12,7 @@ Plug the EVN OLED into an I2C port; only SDA and SCL are used. Text sits on a gr
 
 | Call | Notes |
 | :--- | :--- |
-| `oled = Display(port, addr=0x3C, *, flip=False)` | `port` 1..16; `addr` 0x3C (the EVN OLED) or 0x3D, else `ValueError`; `flip=True` mounts the picture rotated 180°. `OSError` if nothing answers at the address, `OSError` when two displays are already open, `OSError(ETIMEDOUT)` if the panel does not come up. Returns with the panel blank and on, contrast 207 (≈ 55 ms; up to ≈ 740 ms on a panel that has just been plugged in) |
+| `oled = Display(port, addr=0x3C, *, flip=False)` | `port` 1..16; `addr` 0x3C (the EVN OLED) or 0x3D, else `ValueError`; `flip=True` mounts the picture rotated 180°. `OSError` if nothing answers at the address, `OSError` when two displays are already open, `OSError(ETIMEDOUT)` if the panel does not come up; `MemoryError` (`"Display(n): no memory for the display's 1024-byte frame"`) when the heap cannot supply the picture's memory, taken from the heap here and given back at `close()` or the soft reboot. Returns with the panel blank and on, contrast 207 (≈ 55 ms; up to ≈ 740 ms on a panel that has just been plugged in) |
 
 ### Text
 
@@ -205,7 +205,7 @@ Plug the EVN RGB LED module (or any WS2812B strip) into a servo port; the strip 
 
 | Call | Notes |
 | :--- | :--- |
-| `leds = RGBLED(port, count=8, *, invert=False)` | `port` is the servo port, 1..4; `count` 1..64 LEDs (8 = the EVN module), brightness starts at 255 and every LED off. `invert` is keyword-only: `True` makes LED 0 the far end of the strip. `ValueError` for a port or count out of range; `OSError` while a `Servo` object holds the port (`"servo port n is used by a Servo object"`), while another `RGBLED` already has it (`"... already has an RGBLED strip"`) or when the channel cannot be taken (`"... is not available for an LED strip"`) |
+| `leds = RGBLED(port, count=8, *, invert=False)` | `port` is the servo port, 1..4; `count` 1..64 LEDs (8 = the EVN module), brightness starts at 255 and every LED off. `invert` is keyword-only: `True` makes LED 0 the far end of the strip. `ValueError` for a port or count out of range; `OSError` while a `Servo` object holds the port (`"servo port n is used by a Servo object"`), while another `RGBLED` already has it (`"... already has an RGBLED strip"`) or when the channel cannot be taken (`"... is not available for an LED strip"`); `MemoryError` (`"RGBLED(n): no memory for the strip's 640-byte buffer"`) when the heap cannot supply the strip's memory, taken from the heap here and given back at `close()` or the soft reboot |
 
 ### Colours
 

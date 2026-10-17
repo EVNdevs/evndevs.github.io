@@ -516,6 +516,13 @@ class DriveBase:
         """Coast both wheels; returns once they have taken it (at most 2 ms: a file write next is not refused)."""
     def brake(self) -> None:
         """Passive brake on both wheels; returns once they have taken it, as ``stop()``."""
+    def hold(self) -> None:
+        """Stop the robot and actively hold it in place (Pybricks): both wheels are held where they are at the call,
+        on the same tick, until the next command - a moving robot brakes as hard as its motors can (it can skid),
+        then each wheel is pulled back to where it was. A robot already holding after a ``then=Stop.HOLD`` move is
+        left exactly where it holds, so the next move still counts from its aim. With ``use_gyro(True)`` the robot's
+        place and heading are held. Returns once the wheels have taken it (at most 2 ms), as ``stop()``; a direct
+        ``Motor`` command on one wheel ends the hold and coasts the other."""
     def distance(self) -> int:
         """mm driven since ``reset()`` (the mean of the two wheels, from the encoders)."""
     def angle(self) -> int:
@@ -524,8 +531,9 @@ class DriveBase:
         """(distance mm, drive speed mm/s, angle deg, turn rate deg/s); in ``SpeedUnit.PERCENT`` the two speeds are
         % of the robot's full speed (the class docstring): ``drive(s, t)`` reads ``(s * (1 - |t| / 100), s * t / 100)``
         - the motion, not the (speed, steering) pair."""
-    def reset(self, distance: float = 0, angle: float = 0, /) -> None:
-        """Start ``distance()`` and ``angle()`` again from these values. A program run again from the user
+    def reset(self, distance: float = 0, angle: float = 0) -> None:
+        """Start ``distance()`` and ``angle()`` again from these values, by position or by keyword (``reset(100)``,
+        ``reset(angle=90)``). A program run again from the user
         button does this by itself to a base an imported module kept (Python does not run the module again):
         the new run starts at ``distance()`` and ``angle()`` 0 with no maneuver in force, its ``settings()``,
         ``follower()``, ``use_gyro()`` and ``pose`` kept, and its ``Pose`` re-framed as ``Pose.reset()``
@@ -1519,7 +1527,8 @@ class Compass:
     def bias(self, mode: int, /) -> None:
         """HMC5883L self-test strap: 0 normal, 1 positive, 2 negative. The strap adds about 1.16 Ga and
         saturates every range under 4.0 G, so a non-zero bias needs ``range(4.0)`` or higher first (else
-        ``ValueError``, whose message names 4.7) - or use ``self_test()``, which sets the datasheet's gain itself."""
+        ``ValueError``, whose message names ``range(4.0)``) - or use ``self_test()``, which sets the datasheet's gain
+        itself."""
     def self_test(self, *, negative: bool = False, raw: bool = False) -> Tuple[object, object, object]:
         """HMC5883L only (``ValueError`` on a QMC): the datasheet's self test, run at the gain the
         datasheet prescribes with the settings put back afterwards. Returns ``(ok_x, ok_y, ok_z)``
@@ -1804,7 +1813,7 @@ class GestureSensor:
     def integration_time(self) -> float: ...
     @overload
     def integration_time(self, ms: float, /) -> float:
-        """Colour ADC integration 2.78..712 ms in 2.78 ms steps; returns the value actually set."""
+        """Colour ADC integration 2.78..711.7 ms in 2.78 ms steps; returns the value actually set."""
     @overload
     def led(self) -> Tuple[float, float, int]: ...
     @overload
@@ -2402,7 +2411,10 @@ class Display:
 
     Raises: ``ValueError("port must be 1..16")``; ``ValueError("addr must be 0x3C or 0x3D")``;
     ``OSError("no SSD1306 on port %d (I2C 0x%02x)")``;
-    ``OSError("port %d: no free display slot (at most 2)")``; ``OSError(ETIMEDOUT)`` when the panel
+    ``OSError("port %d: no free display slot (at most 2)")``;
+    ``MemoryError("Display(%d): no memory for the display's 1024-byte frame")`` when the heap cannot
+    supply the picture's memory (it is taken from the heap at the constructor and given back at
+    ``close()`` or the soft reboot); ``OSError(ETIMEDOUT)`` when the panel
     does not come up; ``OSError("display on port %d not responding")`` while unplugged;
     ``ValueError("Display is closed")`` from every call after ``close()``.
     """
@@ -2523,6 +2535,9 @@ class RGBLED:
 
     Raises: ``ValueError("servo port must be 1..4")``, ``ValueError("count must be 1..64")``;
     ``OSError("servo port %d is not available for an LED strip")``;
+    ``MemoryError("RGBLED(%d): no memory for the strip's 640-byte buffer")`` when the heap cannot
+    supply the strip's memory (it is taken from the heap at the constructor and given back at
+    ``close()`` or the soft reboot);
     ``ValueError("RGBLED is closed")`` after ``close()``; ``ValueError`` for an LED index out of
     range, a colour component outside 0..255, a pattern step below 2 ms or a pattern longer than 16
     entries; ``OSError(ETIMEDOUT)`` when ``show()`` waits more than 20 ms for the previous frame.
@@ -2962,7 +2977,9 @@ class HiTechnicCompass:
         """From now the direction the sensor points at reads ``heading`` (kept while the object is open)."""
     def calibrate(self) -> None:
         """Start the sensor's hard-iron calibration: turn the robot level through a little more than one
-        full turn, taking at least 20 s, then call ``calibrate_stop()``."""
+        full turn, taking at least 20 s, then call ``calibrate_stop()``. Until then ``heading()`` and ``north()``
+        raise ``ValueError("HiTechnicCompass is calibrating: call calibrate_stop() first")``; ``age()`` still
+        answers."""
     def calibrate_stop(self) -> bool:
         """End the calibration: ``True`` when the sensor accepted it, ``False`` when it rejected it.
         ``ValueError("not calibrating: call calibrate() first")`` outside a calibration."""
@@ -2971,7 +2988,8 @@ class HiTechnicCompass:
     def firmware(self) -> str:
         """The sensor's firmware text, e.g. ``'V1.23'``."""
     def age(self) -> int:
-        """Milliseconds since the cached reading was taken."""
+        """Milliseconds since the cached reading was taken. During ``calibrate()`` the sensor gives no heading, so
+        this is the age of the last reading before it, growing (owner, 2026-10-17: like every sensor's ``age()``)."""
     def close(self) -> None:
         """Set the port back to 400 kHz and release it (a compass closed mid-calibration is put back in
         measure mode)."""

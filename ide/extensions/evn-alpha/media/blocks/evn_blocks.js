@@ -1604,9 +1604,9 @@
         {
             type: 'evn_drivebase_stop',
             message0: 'stop the robot %1',
-            args0: [{ type: 'field_dropdown', name: 'ACTION', options: [['coast', 'stop'], ['brake', 'brake']] }],
+            args0: [{ type: 'field_dropdown', name: 'ACTION', options: [['coast', 'stop'], ['brake', 'brake'], ['hold', 'hold']] }],
             previousStatement: null, nextStatement: null, style: 'evn_motor_blocks',
-            tooltip: 'Coast (let the wheels roll) or brake both wheels.',
+            tooltip: 'Coast (let the wheels roll), brake both wheels, or hold: stop and keep the robot in place, both wheels held where they are until the next robot block (a moving robot stops as hard as its motors can). Each returns once the wheels have taken it (at most 2 ms).',
         },
         {
             type: 'evn_drivebase_speeds',
