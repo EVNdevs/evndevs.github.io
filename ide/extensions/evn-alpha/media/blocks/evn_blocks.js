@@ -62,6 +62,26 @@
         return { type: 'field_dropdown', name: 'PORT', options: options };
     }
 
+    /* The colour calibrate blocks' "auto exposure" tick (calibrate_white(auto='shutter'), the gesture sensor's
+     * auto='gain' - its white is lit by the room: meter the white first,
+     * store the gain with it). It only means something for the white, so the tick and its label show only
+     * while WHAT is white (never a field that does nothing); a block saved before it reads unticked. */
+    function autoExposureFields() {
+        return [{ type: 'field_label', name: 'AUTO_LABEL', text: 'auto exposure' }, { type: 'field_checkbox', name: 'AUTO', checked: false }];
+    }
+    const AUTO_WHITE = 'evn_calibrate_auto_white_only';
+    if (!Blockly.Extensions.isRegistered(AUTO_WHITE)) {
+        Blockly.Extensions.register(AUTO_WHITE, function () {
+            const what = this.getField('WHAT');
+            const show = (v) => {
+                for (const n of ['AUTO_LABEL', 'AUTO']) { const f = this.getField(n); if (f) { f.setVisible(v === 'white'); } }
+                if (this.rendered) { this.render(); }
+            };
+            what.setValidator((v) => { show(v); return v; });
+            show(what.getValue());
+        });
+    }
+
     /* The six colours ColorSensor.color() chooses from by default (detectable_colors()). */
     const SENSOR_COLORS = [['red', 'RED'], ['yellow', 'YELLOW'], ['green', 'GREEN'], ['blue', 'BLUE'],
         ['white', 'WHITE'], ['nothing', 'NONE']];
@@ -397,13 +417,14 @@
         },
         {
             type: 'evn_colorsensor_calibrate',
-            message0: 'calibrate colour sensor %1 %2',
+            message0: 'calibrate colour sensor %1 %2 %3 %4',
             args0: [
                 portField(I2C_PORTS),
                 { type: 'field_dropdown', name: 'WHAT', options: [['black (nothing in front)', 'black'], ['white (a white sheet)', 'white']] },
+                ...autoExposureFields(),
             ],
-            previousStatement: null, nextStatement: null, style: 'evn_sense_blocks',
-            tooltip: 'Take the reading now as the black (nothing in front of the sensor) or the white (a white sheet where the colours will be read). Do black, then white, once: the board keeps the calibration for this port, so later programs start with it.',
+            previousStatement: null, nextStatement: null, style: 'evn_sense_blocks', extensions: [AUTO_WHITE],
+            tooltip: 'Take the reading now as the black (nothing in front of the sensor) or the white (a white sheet where the colours will be read). The board keeps the calibration for this port, so later programs start with it. Ticked, auto exposure meters the white first (shutter priority) so it never clips, and stores the gain it picked with the white: do the white first, then the black at that setting.',
         },
         {
             type: 'evn_colorsensor_sees',
@@ -509,13 +530,14 @@
         },
         {
             type: 'evn_gesture_calibrate',
-            message0: 'calibrate gesture sensor %1 colour %2',
+            message0: 'calibrate gesture sensor %1 colour %2 %3 %4',
             args0: [
                 portField(I2C_PORTS),
                 { type: 'field_dropdown', name: 'WHAT', options: [['black (sensor covered)', 'black'], ['white (a white sheet)', 'white']] },
+                ...autoExposureFields(),
             ],
-            previousStatement: null, nextStatement: null, style: 'evn_sense_blocks',
-            tooltip: 'Turn the gesture engine off first (a Python block: gesture_sensor_1.engines(gesture=False)): gesture mode freezes the colour and the calibration refuses a stale reading. The LED of the gesture sensor is infrared, so its colour sees the room light: black = the sensor covered completely (a hand or a black card on it), white = a white sheet a few cm in front in the room light, not shading the module. Do black, then white, once: the board keeps the calibration for this port (one colour calibration per port).',
+            previousStatement: null, nextStatement: null, style: 'evn_sense_blocks', extensions: [AUTO_WHITE],
+            tooltip: 'Turn the gesture engine off first (a Python block: gesture_sensor_1.engines(gesture=False)): gesture mode freezes the colour and the calibration refuses a stale reading. The LED of the gesture sensor is infrared, so its colour sees the room light: black = the sensor covered completely (a hand or a black card on it), white = a white sheet a few cm in front in the room light, not shading the module. The board keeps the calibration for this port (one colour calibration per port). Ticked, auto exposure meters the white first in gain priority (the room-lit white is often dim: the gain stays and the integration time is lengthened when the white is under a quarter of the scale) and stores that setting with the white: white first, then the black.',
         },
         {
             type: 'evn_env_setup',
@@ -918,13 +940,14 @@
         },
         {
             type: 'evn_tcs3430_calibrate',
-            message0: 'calibrate TCS3430 %1 %2',
+            message0: 'calibrate TCS3430 %1 %2 %3 %4',
             args0: [
                 portField(I2C_PORTS),
                 { type: 'field_dropdown', name: 'WHAT', options: [['black (nothing in front)', 'black'], ['white (a white sheet)', 'white']] },
+                ...autoExposureFields(),
             ],
-            previousStatement: null, nextStatement: null, style: 'evn_sense_blocks',
-            tooltip: 'Take the reading now as the black (nothing in front of the sensor) or the white (a white sheet where the colours will be read), black first. The board stores it for the port, so later programs start calibrated: once is enough (the Board view\'s Calibrate does the same). Without it the warm LED makes white read yellow.',
+            previousStatement: null, nextStatement: null, style: 'evn_sense_blocks', extensions: [AUTO_WHITE],
+            tooltip: 'Take the reading now as the black (nothing in front of the sensor) or the white (a white sheet where the colours will be read). The board stores it for the port, so later programs start calibrated: once is enough (the Board view\'s colour calibration panel does the same). Without it the warm LED makes white read yellow. Ticked, auto exposure meters the white first (shutter priority) so it never clips, and stores the gain it picked with the white: white first, then the black.',
         },
         {
             type: 'evn_tcs3430_wait',
@@ -2844,7 +2867,9 @@
     generator.forBlock['evn_colorsensor_ambient'] = call('ColorSensor', 'ambient');
     generator.forBlock['evn_colorsensor_calibrate'] = function (block) {
         const what = block.getFieldValue('WHAT') === 'white' ? 'white' : 'black';
-        return deviceRef(block, 'ColorSensor') + '.calibrate_' + what + '()\n';
+        // the tick meters the white first and stores the gain with it (shutter priority); the black has no such argument
+        const auto = what === 'white' && block.getFieldValue('AUTO') === 'TRUE' ? 'auto=' + generator.quote_('shutter') : '';
+        return deviceRef(block, 'ColorSensor') + '.calibrate_' + what + '(' + auto + ')\n';
     };
     generator.forBlock['evn_colorsensor_detect'] = function (block) {
         use('Color');
@@ -2869,7 +2894,9 @@
     generator.forBlock['evn_gesture_color'] = call('GestureSensor', 'color');
     generator.forBlock['evn_gesture_calibrate'] = function (block) {
         const what = block.getFieldValue('WHAT') === 'white' ? 'white' : 'black';
-        return deviceRef(block, 'GestureSensor') + '.calibrate_' + what + '()\n';
+        // the tick meters the white first in gain priority (lit by the room, not by the module) and stores the setting with it
+        const auto = what === 'white' && block.getFieldValue('AUTO') === 'TRUE' ? 'auto=' + generator.quote_('gain') : '';
+        return deviceRef(block, 'GestureSensor') + '.calibrate_' + what + '(' + auto + ')\n';
     };
     generator.forBlock['evn_gesture_wait'] = function (block) {
         return [deviceRef(block, 'GestureSensor') + '.read_gesture(' + intValue(block, 'TIMEOUT', '5000') + ')', Order.FUNCTION_CALL];
@@ -2990,7 +3017,9 @@
     generator.forBlock['evn_tcs3430_value'] = pick('TCS3430', 'WHAT');
     generator.forBlock['evn_tcs3430_calibrate'] = function (block) {
         const what = block.getFieldValue('WHAT') === 'white' ? 'white' : 'black';
-        return deviceRef(block, 'TCS3430') + '.calibrate_' + what + '()\n';
+        // the tick meters the white first and stores the gain with it (shutter priority); the black has no such argument
+        const auto = what === 'white' && block.getFieldValue('AUTO') === 'TRUE' ? 'auto=' + generator.quote_('shutter') : '';
+        return deviceRef(block, 'TCS3430') + '.calibrate_' + what + '(' + auto + ')\n';
     };
     generator.forBlock['evn_tcs3430_gain'] = function (block) {
         const g = ['1', '4', '16', '64', '128'].includes(block.getFieldValue('GAIN')) ? block.getFieldValue('GAIN') : '64';

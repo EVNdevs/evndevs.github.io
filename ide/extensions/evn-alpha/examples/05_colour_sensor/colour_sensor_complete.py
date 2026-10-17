@@ -50,18 +50,22 @@ cs.detectable_colors(old_colours)       # back to the six
 # (white). normalized(), hsv(), color() and color_match() then read between them, and the white
 # reads s 0, v 100 (hsv(normalized=False) is the raw full-scale reading). The calibration is STORED for the port: every later program's
 # ColorSensor(1) starts with it (evn.color_calibration(1) shows it without a sensor object).
+# Close to a white sheet the default 16x fills the whole scale (the white clips), so the white comes
+# FIRST, with auto exposure: it is metered, the gain picked (shutter priority: the integration time
+# stays) and stored with the white - every later ColorSensor(1) starts at that gain. Then the black,
+# at the white's setting.
 print("stored now:", cs.stored_calibration())
-print("nothing in front of the sensor"); wait(3000)
+print("hold the sensor over WHITE"); wait(3000)
 try:
+    print("metered:", cs.calibrate_white(auto="shutter"))   # {'gain': 4, 'integration_time': 2.4, 'level': 52.1, 'noise': 0.6, 'steps': 1, 'rate': 208.3}
+    print("nothing in front of the sensor"); wait(3000)
     cs.calibrate_black()
-    print("hold the sensor over WHITE"); wait(3000)
-    cs.calibrate_white()
     print("black", cs.black_reference(), "white", cs.white_reference())   # per 2.4 ms cycle at 1x gain
     print("ranges", cs.ranges())        # the same calibration in counts: (low, high) per channel
     print("normalized", cs.normalized(), "hsv", cs.hsv(), "colour", cs.color_match())
     print("raw hsv (full scale, not calibrated)", cs.hsv(normalized=False))
 except ValueError as e:
-    print("calibration refused:", e)   # a white too dark, saturated, or not above the black
+    print("calibration refused:", e)   # a white too dark, a white no gain fits, or not above the black
 # ranges() is the same calibration written as counts; a channel given as None loses its range.
 # A ranges() change lives in this program only: it is never written to the board.
 old_ranges = cs.ranges()
@@ -73,9 +77,25 @@ print("white now:", cs.white_reference())   # white_reference(None) would forget
 #                                       # left out so the calibration you just made survives this example
 print("port 1 now:", color_calibration(1))  # the stored calibration of a port, no sensor object needed
 
+# --- exposure: what the sensor is set to, and what auto would pick ------------------------------------
+# exposure() never waits: the setting in force, the levels in % of full scale (C, R, G, B), whether the
+# reading clips, the stored default; with a mode, what auto_exposure() would pick for what is in front.
+e = cs.exposure("shutter", 70)
+print("gain", e["gain"], "integration", e["integration_time"], "ms, levels", e["levels"], "clipped", e["saturated"])
+print("stored default", e["default"], "- auto would pick", e["auto"])
+print("hold the sensor over WHITE again"); wait(3000)
+try:
+    # target=70 lowers the white's ceiling from Shutter priority's 85 % default: more headroom for glossy paper
+    print("auto_exposure:", cs.auto_exposure("shutter", target=70))   # applied for this program only
+    cs.store_exposure()                 # the setting in force becomes the port's default (store_exposure(None) forgets it)
+    print("hold a BLACK card at the same height, still"); wait(3000)
+    print("measured gain steps:", cs.calibrate_gains())   # one per gain, the first 1.0; stored for the port
+except ValueError as e:
+    print("refused:", e)                # too bright at the lowest gain, too dark at the highest ...
+
 # --- gain and integration time ---------------------------------------------------------------------
 # More gain or a longer integration = more counts from the same light (for dim scenes); in bright
-# light the defaults saturate, so lower the gain there.
+# light the defaults saturate, so lower the gain there. A gain() set here lasts for this program only.
 old_gain = cs.gain()                    # 16 at start
 print("gain", old_gain, "raw", cs.raw())
 cs.gain(4)                              # 1, 4, 16 or 60

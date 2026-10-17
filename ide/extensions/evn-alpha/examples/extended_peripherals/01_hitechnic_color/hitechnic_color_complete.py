@@ -46,6 +46,8 @@ sensor.calibrate_white()
 print("black", sensor.black_reference(), "white", sensor.white_reference())   # (R, G, B) counts
 print("stored for port %d:" % PORT, sensor.stored_calibration())   # the same as evn.color_calibration(8)
 print("white sheet:", sensor.color_match(), sensor.hsv())   # (Color.WHITE, ~1.0)
+# the sensor sets its own exposure: exposure() has its levels (R, G, B in % of 255) and no gain to set
+print("levels", sensor.exposure()["levels"], "clipped", sensor.exposure()["saturated"])
 
 press_button("Hold the colour sensor a few millimetres over a coloured surface.")
 clock = StopWatch()

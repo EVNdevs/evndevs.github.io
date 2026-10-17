@@ -64,12 +64,15 @@ print("hsv", g.hsv())                   # a Color: .h 0..359, .s 0..100, .v 0..1
 # above): gesture mode freezes the colour and the calibration refuses the stale reading. color() and
 # hsv() read through it (the white then reads s 0, v 100; hsv(normalized=False) stays raw), and it is STORED for the
 # port: the next program's GestureSensor(1) starts with it (one colour calibration per port).
+# The white first, with auto exposure in gain priority: lit by the room, a white sheet is low on the
+# scale at one cycle, so the gain stays and the integration time is lengthened to bring it up; the
+# setting is stored with the white. Then the black at that setting.
 print("stored now:", g.stored_calibration())
-print("cover the sensor completely (a hand or a black card on it)"); wait(3000)
+print("hold a white sheet a few cm above the sensor, in the room light"); wait(3000)
 try:
+    print("metered:", g.calibrate_white(auto="gain"))
+    print("cover the sensor completely (a hand or a black card on it)"); wait(3000)
     g.calibrate_black()
-    print("hold a white sheet a few cm above the sensor, in the room light"); wait(3000)
-    g.calibrate_white()
     print("black", g.black_reference(), "white", g.white_reference())   # per 2.78 ms cycle at 1x gain
     print("calibrated hsv", g.hsv(), "raw hsv", g.hsv(normalized=False))
 except ValueError as e:
@@ -83,6 +86,18 @@ g.detectable_colors((Color.RED, Color.BLUE, Color.NONE))
 print("choosing from red, blue, nothing:", g.color())
 g.detectable_colors(old_colours)
 print("reading is", g.age(), "ms old")
+
+# --- exposure of the colour engine --------------------------------------------------------------------
+e = g.exposure("gain", 70)              # never waits: the colour gain, integration, levels (C, R, G, B) and the pick
+print("colour gain", e["gain"], "integration", e["integration_time"], "ms, levels", e["levels"], "auto", e["auto"])
+print("hold the white sheet again"); wait(3000)
+try:
+    print("auto_exposure:", g.auto_exposure("gain"))   # applied for this program only
+    g.store_exposure(None)              # forget the stored default (store_exposure() would store the setting in force)
+    print("cup a hand over the sensor (not pressed on it), still"); wait(3000)
+    print("measured gain steps:", g.calibrate_gains())
+except ValueError as e:
+    print("refused:", e)
 
 # --- gains and integration time ----------------------------------------------------------------------
 old_gain = g.gain()                     # (colour, proximity, gesture): (4, 4, 4) at start

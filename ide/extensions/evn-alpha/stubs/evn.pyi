@@ -1161,13 +1161,68 @@ class ColorSensor:
         channel is within 10 % of full scale; ``ValueError("this black is as bright as the white
         reference: the white was cleared, calibrate_white() again")`` when it leaves the white no room
         (the black is taken, the white cleared)."""
-    def calibrate_white(self) -> None:
+    def calibrate_white(self, auto: Union[None, bool, str] = None, *, target: Optional[float] = None, min_rate: float = 100,
+                        flicker: int = 0) -> Optional[dict]:
         """Take the current reading of a white target as the white on all four channels, so the white
         reads ``s`` 0, ``v`` 100 (white-adapted) and sets the highs of ``ranges()``. Stored for the port
         like ``calibrate_black()``. ``ValueError("the white reading is saturated: lower gain() first")``;
         ``ValueError("the white target is too dark or not brighter than the black reference: hold a white
         sheet in front")`` when the clear channel is under 5 % of full scale or a channel is not 10 %
-        above its black."""
+        above its black.
+
+        ``auto`` (opt-in) meters the white first, so it never clips: a mode of ``auto_exposure()``
+        (``"shutter"``, ``"gain"``, ``"program"``; ``True`` = ``"shutter"``; ``"manual"`` keeps the setting in
+        force), then the white is the mean of the meter's 16 readings and the white **and** the setting are
+        stored together as the port's default (every later ``ColorSensor(port)`` starts at that gain and
+        integration time); returns ``auto_exposure()``'s dict, with ``"warning"`` when the white is under 5 %
+        of full scale at the chip's default setting (taken, but a white sheet may be missing). Take the black after it, at that setting (a
+        dark frame). ``target``, ``min_rate`` and ``flicker`` as ``auto_exposure()``; without ``auto`` they
+        raise ``TypeError("target, min_rate and flicker need auto=")``. Without ``auto``: ``None``."""
+    def exposure(self, mode: Optional[str] = None, target: Optional[float] = None, min_rate: float = 100, flicker: int = 0) -> dict:
+        """The setting in force and the latest reading against it, without a wait or I2C of its own (cheap
+        enough to call in a loop): ``{"gain"`` (1, 4, 16 or 60), ``"gains"`` (the chip's gains),
+        ``"integration_time"`` (ms), ``"rate"`` (samples/s), ``"full_scale"`` (counts at this integration),
+        ``"levels"`` (C, R, G, B in % of full scale), ``"saturated"``, ``"default"`` (the stored exposure the
+        sensor starts at: ``{"gain", "integration_time", "mode"}``, or ``None`` for the chip default),
+        ``"gain_steps"`` (the measured multipliers, or ``None``), ``"black_levels"`` / ``"white_levels"`` (the
+        stored black and white in force as % of full scale at this setting, in the order of ``"levels"``, so
+        they compare with it directly; ``None`` when that end is absent)``}``. With a ``mode`` it adds
+        ``"auto"``: what ``auto_exposure(mode, target, min_rate, flicker)`` would pick from this reading
+        (``{"gain", "integration_time", "level", "rate"}``, ``level`` ``None`` when the reading clips and the
+        pick is the next step down; ``rate`` the readings a second it would give - Program can miss its
+        ``min_rate``; or ``{"error": "..."}``), before anything is applied."""
+    def auto_exposure(self, mode: str = "shutter", target: Optional[float] = None, min_rate: float = 100, flicker: int = 0,
+                      samples: int = 16) -> dict:
+        """Meter the target in front (meant to be the white sheet) and apply the setting for this program
+        (not stored). ``mode``: ``"shutter"`` (shutter priority, the default: the integration time in force
+        is held, the highest gain at which the brightest channel sits at or under ``target`` % of full scale
+        is picked), ``"gain"`` (the gain in force is held: a white at 25 % of full scale or more keeps the
+        integration in force - below 64 cycles a longer one adds counts, not level - and only a dimmer one gets
+        an integration past 64 cycles, up to the target), ``"program"``
+        (the longest integration ``min_rate`` samples/s allows, then the gain), ``"manual"`` (nothing
+        changes; ``target``, ``min_rate`` and ``flicker`` do nothing there). ``target`` 40..90, the white's highest allowed share of full scale (``None``: 85 in Shutter priority
+        and Program, 70 in Gain priority), ``min_rate`` 1..400, ``flicker`` 0 / 50 / 60
+        Hz (whole mains half-periods, Gain priority and Program), ``samples`` 1..64. Returns ``{"gain",
+        "integration_time", "level"`` (% of full scale), ``"noise"`` (the samples' spread, % of the level),
+        ``"steps"`` (setting changes made), ``"rate"`` (readings a second at the setting)``}``. A refusal leaves
+        the setting it found. ``ValueError`` when no setting fits:
+        ``"too bright at the lowest gain: raise the sensor or angle it"``, ``"too dark at the highest gain:
+        a longer integration (Program or Gain priority)"``, ``"too bright at this gain: lower the gain
+        (below 64 cycles the integration time does not change the level)"``, ``"too dark at the longest
+        integration: raise the gain"``."""
+    @overload
+    def store_exposure(self) -> None: ...
+    @overload
+    def store_exposure(self, forget: None, /) -> None:
+        """Store the gain and integration time in force as the port's default (mode ``"manual"``): every
+        later ``ColorSensor(port)`` starts there. ``store_exposure(None)`` forgets it (the chip default
+        again). A program's own ``gain()`` / ``integration_time()`` are RAM only until this."""
+    def calibrate_gains(self, samples: int = 8) -> Tuple[float, ...]:
+        """Measure the module's own gain multipliers, one per entry of ``exposure()["gains"]`` (the first
+        1.0), and store them for the port, so a later gain change keeps a calibrated white white: a DARK
+        target in front (a black card at the sensor's height), held still. ``ValueError`` "too bright for
+        the gain steps: a darker target ..." / "too dark for the gain steps: a lighter target (a grey card)
+        ..." / "a gain step is more than 8 % off its nominal value: hold the target still and try again"."""
     @overload
     def black_reference(self) -> Optional[Tuple[float, float, float, float]]: ...
     @overload
@@ -1190,10 +1245,12 @@ class ColorSensor:
         UTC; 0 = the clock was not set), "black", "white" (``(C, R, G, B)`` per cycle at 1x gain, the
         TCS3430's ``(X, Y, Z)``, a HiTechnic record's ``(R, G, B)`` counts, or None), "error" (why the last
         change was not stored, or None; a failed flash write's note goes once the retry at a later read
-        writes it)}``."""
+        writes it), "exposure" (the stored ``{"gain", "integration_time", "mode"}`` every constructor starts
+        at, or None), "gain_steps" (the measured multipliers, or None)}``; "calibrated" means a black or a
+        white (a record may hold an exposure alone)."""
     def clear_calibration(self) -> bool:
-        """Forget the port's stored calibration, then the one in force (every range); ``False`` while a
-        running motor keeps the clear back and this sensor's old record is still in flash (the next
+        """Forget the port's stored calibration (the stored exposure and gain steps too), then the one in
+        force (every range); ``False`` while a running motor keeps the clear back and this sensor's old record is still in flash (the next
         ``stored_calibration()`` writes it once the motors stop); ``True`` when nothing of this
         sensor's is left in flash - also for a port with nothing stored, whatever another port waits for.
         ``RuntimeError`` when another calibration waits for the flash (a motor is driving): nothing changes.
@@ -1211,13 +1268,15 @@ class ColorSensor:
     def gain(self) -> int: ...
     @overload
     def gain(self, x: int, /) -> None:
-        """Analogue gain 1, 4, 16 (default) or 60; anything else raises ``ValueError``."""
+        """Analogue gain 1, 4, 16 (default) or 60; anything else raises ``ValueError``. For this program
+        only: ``ColorSensor(port)`` starts at the port's stored exposure (``store_exposure()``,
+        ``calibrate_white(auto=...)``), else at 16."""
     @overload
     def integration_time(self) -> float: ...
     @overload
     def integration_time(self, ms: float, /) -> float:
         """Integration time 2.4..614.4 ms in 2.4 ms steps (default 2.4); longer = more counts, slower.
-        Returns the value actually set."""
+        Returns the value actually set. For this program only, as ``gain()``."""
     @overload
     def wait_time(self) -> float: ...
     @overload
@@ -1675,11 +1734,30 @@ class GestureSensor:
         ``ColorSensor``'s record there and the reverse; a record of the other chip is not installed but
         ``stored_calibration()['chip']`` shows it. Not yet
         benched (no APDS-9960 on the rig)."""
-    def calibrate_white(self) -> None:
+    def calibrate_white(self, auto: Union[None, bool, str] = None, *, target: Optional[float] = None, min_rate: float = 100,
+                        flicker: int = 0) -> Optional[dict]:
         """Take the current colour reading of a white sheet a few cm in front, in the room light and not
         shading the module, as the white, as ``ColorSensor.calibrate_white()``: the white then reads
         ``s`` 0, ``v`` 100; stored for the port. ``engines(gesture=False)`` first; a stale reading is
-        refused as for ``calibrate_black()``."""
+        refused as for ``calibrate_black()``. ``auto`` meters first and stores the setting with the white,
+        as ``ColorSensor.calibrate_white(auto=...)`` (in a dim room ``"gain"``: a longer integration)."""
+    def exposure(self, mode: Optional[str] = None, target: Optional[float] = None, min_rate: float = 100, flicker: int = 0) -> dict:
+        """The colour setting in force and the latest reading against it, as ``ColorSensor.exposure()``
+        (``"gain"`` the colour gain 1, 4, 16 or 64; ``"levels"`` C, R, G, B)."""
+    def auto_exposure(self, mode: str = "shutter", target: Optional[float] = None, min_rate: float = 100, flicker: int = 0,
+                      samples: int = 16) -> dict:
+        """Meter the white in front and apply the colour gain / integration for this program, as
+        ``ColorSensor.auto_exposure()``. Lit by the room, the white is often dim at one cycle: Gain
+        priority (``"gain"``) lengthens the integration past 178 ms to bring it up."""
+    @overload
+    def store_exposure(self) -> None: ...
+    @overload
+    def store_exposure(self, forget: None, /) -> None:
+        """Store the colour gain and integration time in force as the port's default, as
+        ``ColorSensor.store_exposure()``; ``store_exposure(None)`` forgets it."""
+    def calibrate_gains(self, samples: int = 8) -> Tuple[float, ...]:
+        """Measure the colour gain multipliers on a dark target (a hand cupped over the sensor, not pressed
+        on it) and store them for the port, as ``ColorSensor.calibrate_gains()``."""
     @overload
     def black_reference(self) -> Optional[Tuple[float, float, float, float]]: ...
     @overload
@@ -1697,8 +1775,9 @@ class GestureSensor:
         record it is ('APDS9960', 'TCS34725', 'HiTechnic Color V2' / 'V1' or None), "black" / "white" are
         ``(C, R, G, B)`` per cycle at 1x gain - a HiTechnic record's ``(R, G, B)`` counts - or None."""
     def clear_calibration(self) -> bool:
-        """Forget the port's stored calibration, then the one in force; ``False`` while a running motor
-        keeps the clear back and this sensor's old record is still in flash, ``True`` when nothing of it
+        """Forget the port's stored calibration (the stored exposure and gain steps too), then the one in
+        force; ``False`` while a running motor keeps the clear back and this sensor's old record is still in
+        flash, ``True`` when nothing of it
         is left in flash (also for a port with nothing stored, whatever another port waits for).
         ``RuntimeError`` (another calibration waits for the flash) changes nothing; ``OSError`` (the flash
         write failed) clears both all the same, and the next ``stored_calibration()`` retries the write."""
@@ -2777,6 +2856,11 @@ class HiTechnicColorSensor:
         like ``calibrate_black()``. ``ValueError("the white target is too dark or not brighter than the
         black reference: hold a white sheet in front")`` when a channel is under 20 counts or not at
         least 10 % above the black."""
+    def exposure(self) -> dict:
+        """The latest reading against its full scale, in the shape of ``ColorSensor.exposure()``: the
+        sensor fixes its own exposure, so ``"gain"``, ``"gains"``, ``"integration_time"``, ``"rate"``,
+        ``"default"`` and ``"gain_steps"`` are ``None``; ``"full_scale"`` 255, ``"levels"`` R, G, B in %,
+        ``"saturated"``."""
     @overload
     def black_reference(self) -> Optional[Tuple[float, float, float]]: ...
     @overload
@@ -3167,13 +3251,32 @@ class TCS3430:
         ``ValueError("this black is as bright as the white reference: the white was cleared,
         calibrate_white() again")`` when it leaves the white no room (the black is taken, the white
         cleared)."""
-    def calibrate_white(self) -> None:
+    def calibrate_white(self, auto: Union[None, bool, str] = None, *, target: Optional[float] = None, min_rate: float = 100,
+                        flicker: int = 0) -> Optional[dict]:
         """Take the current reading of a white target, under the module's own LED, as the reference
         white: each channel is divided by the white's and scaled to D65, so the white target reads
         ``s`` 0, ``v`` 100. Uncalibrated, the warm LED makes a white sheet read ``Color.YELLOW``. Stored
         for the port like ``calibrate_black()``, valid across ``gain()`` / ``integration_time()`` changes.
         ``ValueError`` when the reading is saturated (lower ``gain()``) or a channel is not at least 10 %
-        above the black (not brighter than the black reference)."""
+        above the black (not brighter than the black reference). ``auto`` meters first and stores the
+        setting with the white, as ``ColorSensor.calibrate_white(auto=...)``."""
+    def exposure(self, mode: Optional[str] = None, target: Optional[float] = None, min_rate: float = 100, flicker: int = 0) -> dict:
+        """The setting in force and the latest reading against it, as ``ColorSensor.exposure()``
+        (``"gain"`` 1, 4, 16, 64 or 128; ``"levels"``, ``"black_levels"``, ``"white_levels"`` X, Y, Z - the white
+        as the chip reads it, net plus black). IR1 counts in ``"saturated"`` and in the meter's peak."""
+    def auto_exposure(self, mode: str = "shutter", target: Optional[float] = None, min_rate: float = 100, flicker: int = 0,
+                      samples: int = 16) -> dict:
+        """Meter the target in front and apply the setting for this program, as
+        ``ColorSensor.auto_exposure()``."""
+    @overload
+    def store_exposure(self) -> None: ...
+    @overload
+    def store_exposure(self, forget: None, /) -> None:
+        """Store the gain and integration time in force as the port's default, as
+        ``ColorSensor.store_exposure()``; ``store_exposure(None)`` forgets it."""
+    def calibrate_gains(self, samples: int = 8) -> Tuple[float, ...]:
+        """Measure the module's gain multipliers on a dark target (a black card at the sensor's height) and
+        store them for the port, as ``ColorSensor.calibrate_gains()``."""
     @overload
     def black_reference(self) -> Optional[Tuple[float, float, float]]: ...
     @overload
@@ -3193,7 +3296,8 @@ class TCS3430:
         ``'TCS3430'`` for a record this sensor made, and ``"black"`` / ``"white"`` are then its ``(X, Y, Z)``
         - exactly ``black_reference()`` / ``white_reference()``."""
     def clear_calibration(self) -> bool:
-        """Forget the port's stored calibration, then the one in force (both references); ``False`` while
+        """Forget the port's stored calibration (the stored exposure and gain steps too), then the one in
+        force (both references); ``False`` while
         a running motor keeps the clear back and this sensor's old record is still in flash (the next
         ``stored_calibration()`` writes it once the motors stop); ``True`` when nothing of this sensor's is
         left in flash. A ``ColorSensor`` / ``GestureSensor`` record on the port is left alone.
@@ -3357,9 +3461,11 @@ def color_calibration(port: int, /) -> dict:
     """The stored colour calibration of I2C port 1..16 (``ColorSensor`` / ``GestureSensor`` / ``TCS3430`` /
     ``HiTechnicColorSensor`` ``calibrate_black()`` / ``calibrate_white()``), without opening a sensor:
     ``{"port", "calibrated", "chip" ('TCS34725' / 'APDS9960' / 'TCS3430' / 'HiTechnic Color V2' /
-    'HiTechnic Color V1' / None), "stored", "pending", "stamp", "black", "white", "error"}``, the same dict
-    as ``stored_calibration()``; ``black`` / ``white`` are ``(C, R, G, B)`` per cycle at 1x gain, the
-    TCS3430's ``(X, Y, Z)``, a HiTechnic's ``(R, G, B)`` counts. One colour calibration per port:
+    'HiTechnic Color V1' / None), "stored", "pending", "stamp", "black", "white", "error", "exposure",
+    "gain_steps"}``, the same dict as ``stored_calibration()``; ``black`` / ``white`` are ``(C, R, G, B)`` per
+    cycle at 1x gain, the TCS3430's ``(X, Y, Z)``, a HiTechnic's ``(R, G, B)`` counts; ``exposure`` the stored
+    ``{"gain", "integration_time", "mode"}`` the sensor starts at (or None), ``gain_steps`` its measured gain
+    multipliers (or None); ``calibrated`` means a black or a white. One colour calibration per port:
     calibrating another colour sensor on a port replaces the record there; ``"chip"`` says whose it is."""
 
 def imu_calibration(port: int, /) -> dict:

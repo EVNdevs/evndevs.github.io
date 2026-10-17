@@ -2,7 +2,7 @@
   "name": "evn-alpha-micropython",
   "displayName": "EVN ALPHA MicroPython",
   "description": "Early-access tooling for the EVN ALPHA robotics controller: flash the MicroPython firmware, run programs, open the REPL, autocomplete for the evn motor API, and a Blockly block editor that generates MicroPython.",
-  "version": "0.2.65",
+  "version": "0.2.66",
   "publisher": "evn-alpha",
   "license": "MIT",
   "preview": true,
@@ -492,8 +492,14 @@
       {
         "category": "EVN",
         "command": "evn.color.calibrate",
-        "title": "Calibrate this colour sensor (black, then white)...",
+        "title": "Calibrate this colour sensor (live panel)...",
         "icon": "$(pulse)"
+      },
+      {
+        "category": "EVN",
+        "command": "evn.color.panel",
+        "title": "Calibrate colour sensors...",
+        "icon": "$(symbol-color)"
       },
       {
         "category": "EVN",
@@ -745,6 +751,10 @@
           "when": "false"
         },
         {
+          "command": "evn.color.panel",
+          "when": "evn.console.state == live"
+        },
+        {
           "command": "evn.bluetooth.preferWireless",
           "when": "evn.bluetooth.linked && !evn.wirelessPreferred"
         },
@@ -811,6 +821,11 @@
           "command": "evn.stopMotors",
           "when": "view == evn.board",
           "group": "navigation@4"
+        },
+        {
+          "command": "evn.color.panel",
+          "when": "view == evn.board && evn.console.state == live",
+          "group": "navigation@5"
         },
         {
           "command": "evn.console.connect",

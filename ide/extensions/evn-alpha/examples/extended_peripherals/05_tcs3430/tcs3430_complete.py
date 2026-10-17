@@ -31,10 +31,12 @@ print(xyz, "gain %dx, integration %.2f ms" % (xyz.gain(), xyz.integration_time()
 
 # calibrate first, at the distance the colours will be read (stored for the port: TCS3430(PORT) starts with it)
 print("stored before:", xyz.stored_calibration())   # {'calibrated': ..., 'chip': 'TCS3430' or None, ...}
+# the white first: at 64x a white sheet 1 cm away clips, so it is metered (shutter priority) and the gain it
+# picks is stored with the white - every later TCS3430(PORT) starts at it; then the black at that setting
+press_button("Hold a white sheet about 1 cm in front of the colour sensor.")
+print("metered:", xyz.calibrate_white(auto="shutter"))   # the white now reads s 0, v 100
 press_button("Nothing in front of the colour sensor (point it at open space).")
 xyz.calibrate_black()                            # subtracted from every reading
-press_button("Hold a white sheet about 1 cm in front of the colour sensor.")
-xyz.calibrate_white()                            # the white now reads s 0, v 100
 print("black", xyz.black_reference(), "white", xyz.white_reference())   # (X, Y, Z) per 1x-gain cycle
 print("stored:", xyz.stored_calibration())       # 'chip': 'TCS3430', the same black and white
 print("white sheet:", xyz.color_match(), xyz.hsv())   # (Color.WHITE, ~1.0)
@@ -62,6 +64,13 @@ while clock.time() < 5000:
     print("%s  (confidence %.2f)" % ("first" if colour == first else "second", confidence))
     wait(250)
 
+e = xyz.exposure("program", 70, 25)             # never waits: the setting, the levels (X, Y, Z in %) and the pick
+print("gain %dx, %.2f ms, levels %s, auto would pick %s" % (e["gain"], e["integration_time"], e["levels"], e["auto"]))
+press_button("Hold the white sheet about 1 cm in front again.")
+print("auto_exposure:", xyz.auto_exposure("program", 70, 25))   # 25 readings a second at least; this program only
+xyz.store_exposure()                             # the setting in force is the port's default now
+press_button("Hold a black card about 1 cm in front, still.")
+print("measured gain steps:", xyz.calibrate_gains())   # five, the first 1.0 (typical 1 : 4 : 16 : 66 : 137)
 xyz.gain(16)                                     # less gain for a bright target close up
 print("integration time set: %.2f ms" % xyz.integration_time(100))   # far-field / ambient light
 print("16x, 100 ms: xyz %s, xy %s" % (xyz.xyz(), xyz.xy()))   # xy() is uncalibrated chromaticity
