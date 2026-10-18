@@ -1,8 +1,8 @@
 EVN_ALPHA_MicroPython.uf2
-source: 0.2.67's firmware code (comment-only source changes) built from be233dac, with the version string 0.2.68 (the firmware fixes of 2026-10-18 held back: the merged image failed the Core 0 screen on COM22); the extension, browser IDE and site changes of 0.2.68; the Python heap at 128 KB; the release layout EVN_RELEASE_PAD_PY 6124 / _MODULES 3312 / _HAL 1768 (0.2.67's; the symbol map is identical to 0.2.67's)
+source: 0.2.68's firmware (0.2.67's code) + the Core 1 / SRAM-only levers of 2026-10-18 - PERF-01 / 02 / 03 (#106-#108: fabsf, exact zero compares, the PID speed blend skipped on ADRC axes) and PERF-12 / 14 (#117, #119: the Pose EKF's exact compares, one ROM call for sine + cosine) - built from 37134e5c with the version string 0.2.69; every flash symbol at 0.2.68's address and size (nm -n -S, 5012 of 5012), so the release layout EVN_RELEASE_PAD_PY 6124 / _MODULES 3312 / _HAL 1768 is 0.2.68's; the extension, tooling changes of 0.2.69; the Python heap at 128 KB; static headroom 7044 B (floor 5196 B)
 built: 2026-10-18 (MicroPython v1.26.1, pico-sdk 2.3.0; SOURCE_DATE_EPOCH=1792324800 = noon UTC 2026-10-18)
 flash: single-line 03h boot2, PICO_FLASH_SPI_CLKDIV=4
 toolchain: arm-none-eabi-gcc 15.2.1 (Arm GNU Toolchain 15.2.Rel1), pico-sdk 2.3.0, MicroPython v1.26.1
-md5: 2f5440cdec3cd790cae9699bfc442729
+md5: c5509d18652edfadcbde3585c1a26b56
 reproduce: cmake -G Ninja -DEVN_MICROPYTHON=ON + ninja with SOURCE_DATE_EPOCH = noon UTC of the built: date (py/makeversionhdr.py embeds MICROPY_BUILD_DATE); release_public.py does this and refuses on an md5 mismatch
-version: 0.2.68
+version: 0.2.69

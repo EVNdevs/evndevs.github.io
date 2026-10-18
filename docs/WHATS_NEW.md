@@ -4,6 +4,15 @@ The main changes of each release, in a few lines. The [full changelog](../CHANGE
 the tools and the measurements behind each release. What is not tested yet is on
 [Known limitations and help us test](KNOWN_LIMITATIONS.md).
 
+## 0.2.69 (2026-10-18)
+
+- **Firmware:** the motor-control tick does the same work with fewer instructions (issues #106-#108). Motors behave
+  as on 0.2.68, and the `Pose` filter step is lighter too (#117, #119). The drive-base and motor fixes (#2-#17)
+  are still held back for a later release.
+- **Faster: Run and Upload as main.py** (#123, #125). Run opens the board once and keeps it for the program and the
+  REPL; Upload as main.py sends checked chunks and keeps the old `main.py` if anything goes wrong. These have been
+  checked on the host and on a board.
+
 ## 0.2.68 (2026-10-18)
 
 - **Firmware:** the same as 0.2.67, with the new version number. The fixes for the drive-base and motor issues found
