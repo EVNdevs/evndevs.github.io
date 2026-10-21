@@ -56,8 +56,8 @@ The firmware is the program inside the board that runs your Python. The extensio
 1. Press **Flash the firmware** in the walkthrough. The same command is in the *Board* view's `...` menu, and in the palette as **EVN: Flash MicroPython firmware**. Confirm.
 2. A board that already runs the EVN firmware restarts into its loader by itself.
    **A new board** has to be put there by hand. With the board on and USB connected: **hold the BOOTSEL button, press and release RESET, then let go of BOOTSEL.** A drive named `RPI-RP2` appears, and the status bar reads **EVN: BOOTSEL mode — click to flash**.
-   For a board that is off or powered from USB only: unplug USB, hold BOOTSEL, plug USB back in, then let go.
-   ![The other way into BOOTSEL mode, for a board that is off or on USB only, in four steps: unplug the USB-C cable, press and hold BOOTSEL, plug the cable back in still holding, release BOOTSEL; the RPI-RP2 drive appears and the status bar offers the flash](images/bootsel-gesture.webp)
+   The other way, also with the board switched on: unplug USB, hold BOOTSEL, plug USB back in, then let go. A board that is switched off does not run on USB power alone (USB only charges the cells), so switch it on first.
+   ![The other way into BOOTSEL mode, with the board switched on, in four steps: unplug the USB-C cable, press and hold BOOTSEL, plug the cable back in still holding, release BOOTSEL; the RPI-RP2 drive appears and the status bar offers the flash](images/bootsel-gesture.webp)
 3. Wait for **firmware flashed**. The board restarts on its own.
 4. The status bar shows the board's port, for example **EVN: COM7**.
 

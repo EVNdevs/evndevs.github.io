@@ -65,12 +65,9 @@ tried with the real part yet. If you have it, run the test and send what you saw
 
 ## Reporting problems
 
-<!-- Owner item SITE-09: the report channel (site repository issues, an e-mail address or a form) is not chosen
-     yet. Add where to send a report here, and to the footer, when it is. Do not invent one. -->
+Report a problem as an issue on the site's GitHub repository: **[Report a problem](https://github.com/EVNdevs/evndevs.github.io/issues/new?template=report-a-problem.yml)**. It opens a form with a field for each of these (you need a free GitHub account; the issue is public):
 
-Please send:
-
-1. The output of **EVN: Collect board diagnostics** (it opens as a document).
+1. The output of **EVN: Collect board diagnostics** (it opens as a document; its **Report a problem** button copies them to the clipboard and opens the form).
 2. The program you ran, and what the motors (or the sensor) did against what you expected.
-3. If VS Code showed an error, the *EVN ALPHA* output panel (*View, Output*, then *EVN ALPHA*).
+3. If VS Code showed an error, the *EVN ALPHA log* output panel (*View, Output*, then *EVN ALPHA log*).
 4. For a *Help us test* item: the part you used (its name and where you bought it) and what you saw.

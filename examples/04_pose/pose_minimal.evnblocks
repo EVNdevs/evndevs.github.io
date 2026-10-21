@@ -1,6 +1,6 @@
 {
   "format": "evn-blocks",
-  "version": 2,
+  "version": 3,
   "title": "Pose: minimal",
   "needs": "a robot: left wheel motor on port 4 (mounted mirrored), right on port 3, 62.4 mm wheels 170 mm apart; you push it along the floor while the program runs.",
   "description": "Where is the robot? Push it around by hand for 20 s and watch its position and heading, worked out from the two wheel encoders. Nothing is driven: the pose only reads the encoders, and the robot coasts at the end. It starts at x 0, y 0 facing heading 0: forward from where the robot stands is +y, to its right is +x.",

@@ -1,6 +1,6 @@
 {
   "format": "evn-blocks",
-  "version": 2,
+  "version": 3,
   "title": "Motor: minimal",
   "needs": "a motor on port 1, wheel off the ground",
   "description": "One motor turns a full turn, comes back to where it started, and says where it is.",

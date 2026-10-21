@@ -1,6 +1,6 @@
 {
   "format": "evn-blocks",
-  "version": 2,
+  "version": 3,
   "title": "Bluetooth: every block",
   "needs": "the Bluetooth module on serial port 2, and a phone (Android) or PC paired with it (PIN 1234) running a Bluetooth serial terminal app that ends each line it sends with a newline",
   "description": "Every Bluetooth block once: the board sends its battery voltage to the phone, then for 30 seconds answers each line the phone sends, until the phone sends \"stop\". Switch the board on without holding the module's button (held, the set-up reprograms the module's name, speed and role), and do not have the board's REPL on this module: while it runs over the module it takes what the phone sends. The Board view's broadcast button puts it there by writing bt.repl(True) into boot.py; take that line out of boot.py and reset the board.",

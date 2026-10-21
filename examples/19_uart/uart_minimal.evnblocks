@@ -1,6 +1,6 @@
 {
   "format": "evn-blocks",
-  "version": 2,
+  "version": 3,
   "title": "UART: minimal",
   "needs": "a jumper wire from TX to RX on Serial 1 (or a device talking 115200 baud lines there)",
   "description": "Sends a line out of Serial 1 and prints the line that comes back. With a wire from TX to RX on the Serial 1 header the board hears itself; with another device on the header, that device answers.",

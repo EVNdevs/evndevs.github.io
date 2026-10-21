@@ -1,6 +1,6 @@
 {
   "format": "evn-blocks",
-  "version": 2,
+  "version": 3,
   "title": "Display: minimal",
   "needs": "the OLED display on I2C port 1",
   "description": "Writes a title on the OLED display, then counts from 1 to 10 in the middle of the screen.",

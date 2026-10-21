@@ -1,6 +1,6 @@
 {
   "format": "evn-blocks",
-  "version": 2,
+  "version": 3,
   "title": "HiTechnic compass: minimal",
   "needs": "a HiTechnic NXT Compass Sensor on I2C port 5, through an NXT cable adapter; room to turn the robot on the floor",
   "description": "Prints the HiTechnic compass heading five times a second for ten seconds.",

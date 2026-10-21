@@ -1,6 +1,6 @@
 {
   "format": "evn-blocks",
-  "version": 2,
+  "version": 3,
   "title": "Board: every block",
   "needs": "nothing but the board; you press the user button when it asks",
   "description": "Every board and timing block once: the battery, the user button, the LED, waiting and the stopwatch. After the tour the LED follows the button until 20 s have gone by, then the program waits forever: press Stop to end it.",

@@ -21,7 +21,8 @@
         "clock",
         "core1_status",
         "reset_cause",
-        "autostart"
+        "autostart",
+        "set_stop_button"
       ],
       "blocks": [
         "evn_wait",
@@ -191,9 +192,9 @@
       }
     },
     {
-      "dir": "08_weather_sensor",
-      "slug": "weather_sensor",
-      "title": "Weather sensor",
+      "dir": "08_environment_sensor",
+      "slug": "environment_sensor",
+      "title": "Environment sensor",
       "description": "BME280: temperature, humidity, pressure",
       "classes": [
         "EnvSensor"

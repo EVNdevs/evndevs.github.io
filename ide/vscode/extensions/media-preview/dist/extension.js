@@ -39,7 +39,7 @@
 
 	<link rel="stylesheet" href="${A(this.extensionResource("media","imagePreview.css"))}" type="text/css" media="screen" nonce="${m}">
 
-	<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data: ${w}; connect-src ${w}; script-src 'nonce-${m}'; style-src ${w} 'nonce-${m}';">
+	<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data: ${w}; connect-src ${w}; script-src 'nonce-${m}'; worker-src blob:; style-src ${w} 'nonce-${m}';">
 	<meta id="image-preview-settings" data-settings="${A(JSON.stringify(p))}">
 </head>
 <body class="container image scale-to-fit loading" data-vscode-context='{ "preventDefaultContextMenuItems": true }'>

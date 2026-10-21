@@ -1,6 +1,6 @@
 {
   "format": "evn-blocks",
-  "version": 2,
+  "version": 3,
   "title": "UART: every block",
   "needs": "a jumper wire from TX to RX on Serial 1 (the board hears what it sends). Without the wire the program still runs and says nothing came back.",
   "description": "Every UART block once, on Serial 1 wired back to itself: sending lines and plain text, reading a line (and waiting for one that never comes), counting and reading everything that is waiting, and throwing it away. Everything it sends comes straight back, so each step shows its result.",

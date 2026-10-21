@@ -1,6 +1,6 @@
 {
   "format": "evn-blocks",
-  "version": 2,
+  "version": 3,
   "title": "7-segment display: minimal",
   "needs": "the 7-segment display on I2C port 1",
   "description": "The 7-segment display counts down from 10 to 0, then says DONE.",

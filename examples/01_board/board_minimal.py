@@ -7,16 +7,18 @@ blocks file under Examples to see it as blocks).
 
 Needs: nothing but the board; you press the user button when it asks
 """
-from evn import wait, battery, button, led
+from evn import wait, battery, button, led, set_stop_button
 
 
 # The main program starts here.
 print('battery (mV): ' + str(battery.voltage()))
 print('press the user button')
+set_stop_button(None)  # the press is an input while this waits
 while not button.pressed():
     wait(10)
 while button.pressed():
     wait(10)
+set_stop_button(button)  # the button is the stop again
 led.on()
 wait(1000)
 led.off()

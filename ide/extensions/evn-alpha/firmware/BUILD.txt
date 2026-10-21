@@ -1,8 +1,8 @@
 EVN_ALPHA_MicroPython.uf2
-source: 0.2.68's firmware (0.2.67's code) + the Core 1 / SRAM-only levers of 2026-10-18 - PERF-01 / 02 / 03 (#106-#108: fabsf, exact zero compares, the PID speed blend skipped on ADRC axes) and PERF-12 / 14 (#117, #119: the Pose EKF's exact compares, one ROM call for sine + cosine) - built from 37134e5c with the version string 0.2.69; every flash symbol at 0.2.68's address and size (nm -n -S, 5012 of 5012), so the release layout EVN_RELEASE_PAD_PY 6124 / _MODULES 3312 / _HAL 1768 is 0.2.68's; the extension, tooling changes of 0.2.69; the Python heap at 128 KB; static headroom 7044 B (floor 5196 B)
-built: 2026-10-18 (MicroPython v1.26.1, pico-sdk 2.3.0; SOURCE_DATE_EPOCH=1792324800 = noon UTC 2026-10-18)
+source: 0.2.69 + the drive-base and motor fixes #2-#17 (re-landed, SF-1) + tick2 + vbat (MC-73) + C0-50 + audit package C + the BQ25887 driver fixes (batt, battperf) + the SSD1306 second signature + ux06 + the user-button stop (#133), on the board-searched pad5 layout; cand3 b9d8a570's image fb4191ab byte for byte (rule 4 on it: EV3 Large OQ 34, Pololu 25D / CHR-GM16 / NXT s1021) with main 81663521 (host, bench and record lanes; EVN_BENCH_POSE_AGE off: 0 bytes) and the version string 0.2.70 (no bench suffix: built in a fresh release dir, build_rel70; cand3's images carried -cand3, so rodata and 35 float-routine veneers sit at other addresses than on fb4191ab); static headroom 5884 B (floor 5204 B); the Python heap at 128 KB
+built: 2026-10-21 (MicroPython v1.26.1, pico-sdk 2.3.0; SOURCE_DATE_EPOCH=1792584000 = noon UTC 2026-10-21)
 flash: single-line 03h boot2, PICO_FLASH_SPI_CLKDIV=4
 toolchain: arm-none-eabi-gcc 15.2.1 (Arm GNU Toolchain 15.2.Rel1), pico-sdk 2.3.0, MicroPython v1.26.1
-md5: c5509d18652edfadcbde3585c1a26b56
+md5: ff0f26db74eea933200bd1a8ef7ae897
 reproduce: cmake -G Ninja -DEVN_MICROPYTHON=ON + ninja with SOURCE_DATE_EPOCH = noon UTC of the built: date (py/makeversionhdr.py embeds MICROPY_BUILD_DATE); release_public.py does this and refuses on an md5 mismatch
-version: 0.2.69
+version: 0.2.70

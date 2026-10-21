@@ -33,7 +33,7 @@ If the board cannot be reached when you leave, the terminal says so in red. **En
 ## Stopping a program
 
 - **Ctrl+C** in the terminal, **Ctrl+Shift+F5** (*EVN: Stop all motors*) or the red **Stop** button in the status bar. Each stops the program and coasts every motor.
-- The board's **user button** coasts every motor, with no computer at all.
+- The board's **user button** coasts every motor and ends the program (`SystemExit`), with no computer at all; no motor moves again until the next program starts. A program that reads the button calls `evn.set_stop_button(None)` first, and then the button stops nothing until it ends: stop it with Ctrl+C or **Stop motors**.
 - Closing the program's terminal stops the program on the board that terminal was using, even with a second VS Code window on another board.
 - Connecting a tool to the board also coasts the motors.
 

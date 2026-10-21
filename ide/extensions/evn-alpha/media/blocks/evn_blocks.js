@@ -297,13 +297,13 @@
             type: 'evn_button_pressed',
             message0: 'button pressed?',
             output: 'Boolean', style: 'evn_board_blocks',
-            tooltip: 'True while the user button is held. A press also coasts every motor (the emergency stop), so use it to start things, not in the middle of a move.',
+            tooltip: 'True while the user button is held. A program that uses this block reads the button as an input for its whole run: its press no longer stops the program or coasts the motors (stop it with Ctrl+C or Stop motors).',
         },
         {
             type: 'evn_wait_for_button',
             message0: 'wait for a button press',
             previousStatement: null, nextStatement: null, style: 'evn_board_blocks',
-            tooltip: 'Pause until the user button is pressed and released (a good way to start a program from the board; the press also coasts every motor).',
+            tooltip: 'Pause until the user button is pressed and released (a good way to start a program from the board). While it waits the press is an input, not the stop; after the release the button stops the program again (unless the program also uses \"button pressed?\", which keeps it an input for the whole run).',
         },
         {
             type: 'evn_battery_voltage',
@@ -541,14 +541,14 @@
         },
         {
             type: 'evn_env_setup',
-            message0: 'set up weather sensor on port %1',
+            message0: 'set up environment sensor on port %1',
             args0: [portField(I2C_PORTS)],
             style: 'evn_sense_blocks',
             tooltip: 'The EVN environment sensor (BME280: temperature, humidity, air pressure) on an I2C port, 1 to 16.',
         },
         {
             type: 'evn_env_value',
-            message0: 'weather sensor %1 %2',
+            message0: 'environment sensor %1 %2',
             args0: [
                 portField(I2C_PORTS),
                 {
@@ -1375,7 +1375,7 @@
      * and save() writes the file once the motors coast. One log per program, `data_log`, built from the
      * "set up data log" block (or `DataLog(name='log')` without one). */
     const DATALOG_SOURCES = [['IMU', 'IMU'], ['compass', 'Compass'], ['colour sensor', 'ColorSensor'],
-        ['distance sensor', 'DistanceSensor'], ['gesture sensor', 'GestureSensor'], ['weather sensor', 'EnvSensor'],
+        ['distance sensor', 'DistanceSensor'], ['gesture sensor', 'GestureSensor'], ['environment sensor', 'EnvSensor'],
         ['touch pads', 'TouchArray'], ['ADC', 'ADC'], ['battery', 'battery'], ['button', 'button'],
         // the EVN Extended Peripherals evn.DataLog records (hal_datalog.c q_ht_color / q_ht_compass): deviceRef()
         // names them as their own set-up blocks do (ht_color_N, ht_compass_N)
@@ -1412,7 +1412,7 @@
                 { type: 'input_value', name: 'RATE', check: 'Number' },
             ],
             inputsInline: true, previousStatement: null, nextStatement: null, style: 'evn_board_blocks',
-            tooltip: 'Add a sensor reading to the data log, before "start data log": the reading is the sensor\'s method name (IMU: heading, tilt, acceleration, angular_velocity; compass: heading; colour sensor: hsv, rgb, color, lux; distance sensor: distance; weather sensor: temperature, pressure, humidity; HiTechnic colour sensor: rgb, color, color_number, hsv, reflection and, on a V2, color_index, normalized_rgb - each recorded while the program keeps the sensor\'s light on - and ambient, ambient_raw (V2, while the program keeps it off: the log never switches the light); HiTechnic compass: heading; battery: voltage, cells; button: pressed; the full list is in the API reference). The port is the I2C port (ignored for the battery and the button). A rate above the sensor\'s own gives the sensor\'s (an IMU makes 200 readings a second, a compass 75, the battery 25).',
+            tooltip: 'Add a sensor reading to the data log, before "start data log": the reading is the sensor\'s method name (IMU: heading, tilt, acceleration, angular_velocity; compass: heading; colour sensor: hsv, rgb, color, lux; distance sensor: distance; environment sensor: temperature, pressure, humidity; HiTechnic colour sensor: rgb, color, color_number, hsv, reflection and, on a V2, color_index, normalized_rgb - each recorded while the program keeps the sensor\'s light on - and ambient, ambient_raw (V2, while the program keeps it off: the log never switches the light); HiTechnic compass: heading; battery: voltage, cells; button: pressed; the full list is in the API reference). The port is the I2C port (ignored for the battery and the button). A rate above the sensor\'s own gives the sensor\'s (an IMU makes 200 readings a second, a compass 75, the battery 25).',
         },
         {
             type: 'evn_datalog_run',
@@ -1526,13 +1526,13 @@
             args0: [
                 { type: 'field_dropdown', name: 'LEFT', options: PORTS },
                 { type: 'field_dropdown', name: 'RIGHT', options: PORTS },
-                { type: 'field_number', name: 'WHEEL', value: 56, min: 1, max: 999, precision: 0.1 },
-                { type: 'field_number', name: 'TRACK', value: 112, min: 1, max: 1999, precision: 0.1 },
+                { type: 'field_number', name: 'WHEEL', value: 62.4, min: 1, max: 999, precision: 0.1 },
+                { type: 'field_number', name: 'TRACK', value: 170, min: 1, max: 1999, precision: 0.1 },
                 // the robot's speed unit, as "set up motor" has (the owner, 2026-10-09: "Like motors: set-up dropdown")
                 { type: 'field_dropdown', name: 'UNIT', options: [['mm/s', 'DEG_S'], ['% of full speed', 'PERCENT']] },
             ],
             style: 'evn_motor_blocks',
-            tooltip: 'The two wheel motors and the geometry of the robot (one per program). A motor mounted mirrored needs a "set up motor" block with counterclockwise as its positive direction. The distance between the wheels is measured between their contact patches: check it with one "turn robot 360 degrees" against a mark on the floor. Speeds in mm/s (deg/s for turning), or in % of the robot\'s full speed (the slower motor\'s): then "drive at" and "start moving" steer like LEGO\'s move steering (0 straight, 50 pivots on one wheel, 100 spins) and "set robot speed" is in % too. Without this block: motors 1 and 2, 56 mm wheels 112 mm apart, mm/s.',
+            tooltip: 'The two wheel motors and the geometry of the robot (one per program). A motor mounted mirrored needs a "set up motor" block with counterclockwise as its positive direction. The distance between the wheels is measured between their contact patches: check it with one "turn robot 360 degrees" against a mark on the floor. Speeds in mm/s (deg/s for turning), or in % of the robot\'s full speed (the slower motor\'s): then "drive at" and "start moving" steer like LEGO\'s move steering (0 straight, 50 pivots on one wheel, 100 spins) and "set robot speed" is in % too. Without this block: the standard robot, left motor 4 mounted mirrored (counterclockwise, unless a "set up motor 4" block says otherwise), right motor 3, 62.4 mm wheels 170 mm apart, mm/s.',
         },
         {
             type: 'evn_drivebase_gyro',
@@ -2256,8 +2256,41 @@
         }
         notes = notes.concat(upgradeWorkspace(workspace, !(Number(version) >= 2)));
         applySections(workspace);
+        if (!(Number(version) >= STANDARD_ROBOT_VERSION)) { notes = notes.concat(keepSavedRobot(workspace)); }
         separateStacks(workspace);
         return notes;
+    }
+
+    /** The first file version whose program without a "set up robot" block drives the standard robot (DEFAULT_ROBOT).
+     * Before it (version 1 and 2, up to 0.2.69) that program drove LEGACY_ROBOT. */
+    const STANDARD_ROBOT_VERSION = 3;
+    /** The robot a program without "set up robot" drove before STANDARD_ROBOT_VERSION: left motor 1, right 2, 56 mm
+     * wheels 112 mm apart, mm/s, no motor mirrored unless a "set up motor" block said so. */
+    const LEGACY_ROBOT = { left: '1', right: '2', wheel: 56, track: 112, unit: 'DEG_S' };
+
+    /** A saved program keeps its meaning (site review B1, s1019): a file older than STANDARD_ROBOT_VERSION that drives
+     * or reads the default robot gets a "set up robot" block with the robot it drove then (LEGACY_ROBOT), at the end of
+     * the "set up" stack, and a note says so - it would otherwise move to the standard robot's ports 4 / 3 and its
+     * geometry. Invariant: such a file generates the Python it generated when it was saved. Returns the notes. */
+    function keepSavedRobot(workspace) {
+        if (!usesDefaultRobot(workspace)) { return []; }
+        const hat = workspace.getBlocksByType(SETUP_HAT, false)[0];
+        if (!hat) { return []; }
+        const block = workspace.newBlock('evn_drivebase_setup');
+        block.setFieldValue(LEGACY_ROBOT.left, 'LEFT');
+        block.setFieldValue(LEGACY_ROBOT.right, 'RIGHT');
+        block.setFieldValue(LEGACY_ROBOT.wheel, 'WHEEL');
+        block.setFieldValue(LEGACY_ROBOT.track, 'TRACK');
+        block.setFieldValue(LEGACY_ROBOT.unit, 'UNIT');
+        if (block.initSvg) { block.initSvg(); block.render(); }
+        let tail = hat;
+        while (tail.getNextBlock()) { tail = tail.getNextBlock(); }
+        if (tail.nextConnection) { tail.nextConnection.connect(block.previousConnection); }
+        else { hat.nextConnection.connect(block.previousConnection); }   // the stack ends in a block nothing can follow
+        applySections(workspace);
+        return ['a "set up robot" block was added under "set up" with the robot this program drove when it was saved '
+            + '(left motor 1, right motor 2, 56 mm wheels 112 mm apart): a program without one now drives the standard robot '
+            + '(left motor 4 mirrored, right motor 3, 62.4 mm wheels 170 mm apart)'];
     }
 
     /* A file keeps the x/y it was saved with, but a stack's height depends on the renderer and the
@@ -2305,7 +2338,7 @@
         'HiTechnicColorSensor', 'HiTechnicCompass', 'HuskyLens', 'VL53L1X', 'TCS3430',
         'DriveBase', 'Pose', 'PID', 'ADRC', 'DataLog', 'UART', 'I2C', 'Flash', 'reset', 'reset_cause', 'bootloader', 'autostart', 'core1_status', 'version',
         'configure_motor', 'motor_config', 'calibration', 'clear_calibration', 'imu_calibration', 'compass_calibration', 'color_calibration',
-        'vl53l1x_calibration', 'clock'];
+        'vl53l1x_calibration', 'clock', 'set_stop_button'];
     const EVN_NAMES = CORE_NAMES.concat(DEVICE_NAMES);
 
     /* class -> [variable prefix, "set up" block type]. One object per port, named after the port
@@ -2381,13 +2414,26 @@
         // comes after the devices), the drive base is built from two motor objects and adopts the pose
         // (pose=pose), and the data log is made after the devices it will record.
         const SETUP_KEYS = ['motors', 'devices', 'pose', 'drive_base', 'data_log', 'stopwatch'].filter((k) => this.definitions_[k]);
-        if (SETUP_KEYS.length) {
+        // the button read as an input (buttonAsInput): the program's first statement after the set-up; with it the stop
+        // is off for the whole run, and a button wait's own off / on lines go (evn_wait_for_button)
+        const START_KEYS = ['stop_button'].filter((k) => this.definitions_[k]);
+        // Invariant: with "button pressed?" anywhere in the program, no wait's on line is generated - in the main
+        // program (code) and in every definition, a Function's body (procedures_defnoreturn / defreturn) included,
+        // which Blockly's generator files under definitions_['%name'], not in code (verify-btn-r3 B1).
+        if (START_KEYS.length) {
+            const strip = (text) => text.split('\n').filter((ln) => { const t = ln.trim(); return t !== WAIT_STOP_OFF && t !== WAIT_STOP_ON; }).join('\n');
+            code = strip(code);
+            for (const k of Object.keys(this.definitions_)) {
+                if (typeof this.definitions_[k] === 'string') { this.definitions_[k] = strip(this.definitions_[k]); }
+            }
+        }
+        if (SETUP_KEYS.length || START_KEYS.length) {
             const old = this.definitions_;
             const imports = Object.keys(old).filter((k) => /^(from\s+\S+\s+)?import\s+\S+/.test(old[k]));
-            const rest = Object.keys(old).filter((k) => imports.indexOf(k) < 0 && SETUP_KEYS.indexOf(k) < 0);
+            const rest = Object.keys(old).filter((k) => imports.indexOf(k) < 0 && SETUP_KEYS.indexOf(k) < 0 && START_KEYS.indexOf(k) < 0);
             this.definitions_ = Object.create(null);
-            for (const k of imports.concat(SETUP_KEYS, rest)) { this.definitions_[k] = old[k]; }
-            this.definitions_[SETUP_KEYS[0]] = '# Set up all devices.\n' + this.definitions_[SETUP_KEYS[0]];
+            for (const k of imports.concat(SETUP_KEYS, START_KEYS, rest)) { this.definitions_[k] = old[k]; }
+            if (SETUP_KEYS.length) { this.definitions_[SETUP_KEYS[0]] = '# Set up all devices.\n' + this.definitions_[SETUP_KEYS[0]]; }
         }
         return baseFinish.call(this, code);
     };
@@ -2410,6 +2456,9 @@
             if (setup) {
                 if (setup.getFieldValue('DIRECTION') === 'CCW') { use('Direction'); args.push('positive_direction=Direction.COUNTERCLOCKWISE'); }
                 if (setup.getFieldValue('UNIT') === 'PERCENT') { use('SpeedUnit'); args.push('speed_unit=SpeedUnit.PERCENT'); }
+            } else if (defaultMirrored(block, port)) {
+                // the standard robot's left motor, mounted mirrored (SITE-25): forward is counterclockwise
+                use('Direction'); args.push('positive_direction=Direction.COUNTERCLOCKWISE');
             }
             use('Motor');
             generator.definitions_[name] = name + ' = Motor(' + args.join(', ') + ')';
@@ -2463,7 +2512,7 @@
     }
 
     /** Name of the robot's DriveBase object, defining it (once) from the "set up robot" block; without
-     * one the robot is left motor 1, right motor 2, 56 mm wheels 112 mm apart (the Pybricks example). */
+     * one the robot is the standard robot (DEFAULT_ROBOT: left motor 4 mirrored, right 3, 62.4 mm wheels 170 mm apart). */
     function driveRef(block) {
         const name = 'drive_base';
         if (!generator.definitions_[name]) {
@@ -2520,7 +2569,7 @@
     function motorReversed(block, port) {
         const setup = block.workspace.getBlocksByType('evn_motor_setup', false)
             .find((b) => b.isEnabled() && b.getFieldValue('PORT') === port);
-        return !!setup && setup.getFieldValue('DIRECTION') === 'CCW';
+        return setup ? setup.getFieldValue('DIRECTION') === 'CCW' : defaultMirrored(block, port);
     }
     /** The compass port of the first enabled "set up pose" block, or ''. */
     function poseCompassPort(block) {
@@ -2555,14 +2604,35 @@
         return gyro ? gyro.getFieldValue('PORT') : '';
     }
 
-    /** The robot's ports and geometry from the "set up robot" block (or the Pybricks example's defaults). */
+    /** The standard robot (the owner, 2026-10-18, SITE-25: "one standard robot (left port 4 mirrored, right 3, 62.4 mm
+     * wheels, 170 mm track) in every sample and as the blocks' default"): the robot of a program with no "set up robot"
+     * block, and where a "set up robot" block from the toolbox starts (with its "set up motor 4 counterclockwise"). */
+    const DEFAULT_ROBOT = { left: '4', right: '3', wheel: 62.4, track: 170 };
+
+    /** True when the program drives or reads the default robot: a robot or pose block (or a Python block naming
+     * drive_base) runs, and no enabled "set up robot" block chooses another one. */
+    function usesDefaultRobot(workspace) {
+        if (workspace.getBlocksByType('evn_drivebase_setup', false).some((b) => b.isEnabled())) { return false; }
+        return workspace.getAllBlocks(false).some((b) => b.isEnabled() && !b.getInheritedDisabled()
+            && (b.type.indexOf('evn_drivebase_') === 0 || POSE_TYPES.indexOf(b.type) >= 0
+                || ((b.type === 'evn_python' || b.type === 'evn_python_value')
+                    && /\bdrive_base\b/.test(codeOnly(String(b.getFieldValue('CODE') || ''))))));
+    }
+    /** True for the default robot's left motor when the program uses that robot and has no "set up motor" block for
+     * the port: the standard robot's left motor is mounted mirrored, so its forward is counterclockwise. A "set up
+     * motor" block of the port always wins (motorRef / motorReversed read it first). */
+    function defaultMirrored(block, port) {
+        return port === DEFAULT_ROBOT.left && !!block.workspace && usesDefaultRobot(block.workspace);
+    }
+
+    /** The robot's ports and geometry from the "set up robot" block (or the standard robot's, DEFAULT_ROBOT). */
     function driveGeometry(block) {
         const setup = block.workspace.getBlocksByType('evn_drivebase_setup', false).find((b) => b.isEnabled());
         return {
-            left: setup ? setup.getFieldValue('LEFT') : '1',
-            right: setup ? setup.getFieldValue('RIGHT') : '2',
-            wheel: setup ? Number(setup.getFieldValue('WHEEL')) : 56,
-            track: setup ? Number(setup.getFieldValue('TRACK')) : 112,
+            left: setup ? setup.getFieldValue('LEFT') : DEFAULT_ROBOT.left,
+            right: setup ? setup.getFieldValue('RIGHT') : DEFAULT_ROBOT.right,
+            wheel: setup ? Number(setup.getFieldValue('WHEEL')) : DEFAULT_ROBOT.wheel,
+            track: setup ? Number(setup.getFieldValue('TRACK')) : DEFAULT_ROBOT.track,
             percent: !!setup && setup.getFieldValue('UNIT') === 'PERCENT',   // speeds in % of full speed (else mm/s)
         };
     }
@@ -2782,14 +2852,30 @@
         use('led');
         return 'led.' + block.getFieldValue('ACTION') + '()\n';
     };
+    /* A program that reads the user button turns the button's stop off (the owner's rulings 2026-10-19, "Pybricks-style
+     * knob": evn.set_stop_button(None), Pybricks' hub.system.set_stop_button(None); and "Off only while waiting"):
+     * without it the press the program waits for would end it.
+     *   - "button pressed?" (read at any moment): off for the whole run - one line at the program's start (finish()
+     *     puts it after the set-up), however many such blocks the program has.
+     *   - "wait for a button press": off only for its own wait, on again after the release (WAIT_STOP_OFF / _ON), so
+     *     the button still stops the rest of the program. In a program that also has "button pressed?" the stop is
+     *     already off for the run, and finish() drops these two lines (turning it on would end the next read). */
+    const WAIT_STOP_OFF = 'set_stop_button(None)  # the press is an input while this waits';
+    const WAIT_STOP_ON = 'set_stop_button(button)  # the button is the stop again';
+    function buttonAsInput() {
+        use('button'); use('set_stop_button');
+        generator.definitions_['stop_button'] = 'set_stop_button(None)  # the program reads the user button: a press is an input, not the stop';
+    }
     generator.forBlock['evn_button_pressed'] = function () {
-        use('button');
+        buttonAsInput();
         return ['button.pressed()', Order.FUNCTION_CALL];
     };
     generator.forBlock['evn_wait_for_button'] = function () {
-        use('button'); use('wait');
-        return 'while not button.pressed():\n' + generator.INDENT + 'wait(10)\n' +
-            'while button.pressed():\n' + generator.INDENT + 'wait(10)\n';
+        use('button'); use('set_stop_button'); use('wait');
+        return WAIT_STOP_OFF + '\n' +
+            'while not button.pressed():\n' + generator.INDENT + 'wait(10)\n' +
+            'while button.pressed():\n' + generator.INDENT + 'wait(10)\n' +
+            WAIT_STOP_ON + '\n';
     };
     generator.forBlock['evn_battery_voltage'] = function () {
         use('battery');
@@ -3629,9 +3715,13 @@ def ${generator.FUNCTION_NAME_PLACEHOLDER_}(name):
                     { kind: 'block', type: 'evn_drivebase_speeds', inputs: { SPEED: shadowNum(300), TURN: shadowNum(150) } },
                     { kind: 'block', type: 'evn_drivebase_accel', inputs: { ACCEL: shadowNum(750), TURN: shadowNum(750) } },
                     { kind: 'block', type: 'evn_drivebase_reset' },
-                    // the robot the generator assumes without this block (driveGeometry): left 1, right 2 - a block from the
-                    // toolbox starts there too (it started at right motor 1, the first option; SITE-25)
-                    { kind: 'block', type: 'evn_drivebase_setup', fields: { LEFT: '1', RIGHT: '2' } },
+                    // the robot the generator assumes without this block (driveGeometry, DEFAULT_ROBOT): the standard
+                    // robot, left 4 mirrored, right 3 - a block from the toolbox starts there too, with the mirrored
+                    // motor's "set up motor 4 counterclockwise" under it (SITE-25)
+                    {
+                        kind: 'block', type: 'evn_drivebase_setup', fields: { LEFT: '4', RIGHT: '3' },
+                        next: { block: { type: 'evn_motor_setup', fields: { PORT: '4', DIRECTION: 'CCW' } } },
+                    },
                     { kind: 'block', type: 'evn_drivebase_gyro' },
                 ],
             },
@@ -3747,7 +3837,7 @@ def ${generator.FUNCTION_NAME_PLACEHOLDER_}(name):
                         { kind: 'block', type: 'evn_gesture_color' },
                         { kind: 'block', type: 'evn_gesture_calibrate' },
                     ]),
-                    group('Weather sensor', 'evn_sense_category', [
+                    group('Environment sensor', 'evn_sense_category', [
                         { kind: 'block', type: 'evn_env_setup' },
                         { kind: 'block', type: 'evn_env_value' },
                     ]),
@@ -4003,7 +4093,7 @@ def ${generator.FUNCTION_NAME_PLACEHOLDER_}(name):
 
     // CORE_NAMES / DEVICE_NAMES are exported for scripts/test_blocks.js, which compares them with the module's table.
     Object.assign(api, { TOOLBOX, PALETTE, BLOCK_STYLES, CATEGORY_STYLES, workspaceToPython, CORE_NAMES, DEVICE_NAMES, SETUP_TYPES,
-        CONNECTION_CHECKER, SETUP_HAT, PROGRAM_HAT, COMMENT, applySections, repairSections, upgradeWorkspace, loadWorkspace, setBoardConnected,
+        CONNECTION_CHECKER, SETUP_HAT, PROGRAM_HAT, COMMENT, applySections, repairSections, upgradeWorkspace, loadWorkspace, STANDARD_ROBOT_VERSION, setBoardConnected,
         SERIAL_TYPES, serialClash });
     if (typeof self !== 'undefined') { self.evnBlocks = api; }
     return api;

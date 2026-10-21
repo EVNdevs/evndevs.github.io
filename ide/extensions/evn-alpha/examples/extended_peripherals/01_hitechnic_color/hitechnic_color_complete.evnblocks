@@ -1,6 +1,6 @@
 {
   "format": "evn-blocks",
-  "version": 2,
+  "version": 3,
   "title": "HiTechnic colour sensor: every block",
   "needs": "a HiTechnic NXT Color Sensor V2 on I2C port 8, through an NXT cable adapter (a V1 has no normalised red or colour index: drop those two blocks for a V1)",
   "description": "Every block of the HiTechnic colour sensor: the black and the white taken first (nothing in front, then a white sheet; the board keeps them for the port), then for twenty seconds its colour, colour number, reflection, red channel, normalised red (V2), colour index (V2) and hue, and a message whenever it sees red.",

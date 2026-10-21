@@ -18,7 +18,8 @@
         "clock",
         "core1_status",
         "reset_cause",
-        "autostart"
+        "autostart",
+        "set_stop_button"
       ],
       "blocks": [
         "evn_wait",
@@ -188,9 +189,9 @@
       }
     },
     {
-      "dir": "08_weather_sensor",
-      "slug": "weather_sensor",
-      "title": "Weather sensor",
+      "dir": "08_environment_sensor",
+      "slug": "environment_sensor",
+      "title": "Environment sensor",
       "description": "BME280: temperature, humidity, pressure",
       "classes": [
         "EnvSensor"
@@ -659,10 +660,10 @@
     "07_gesture_sensor/gesture_sensor_complete.py",
     "07_gesture_sensor/gesture_sensor_minimal.evnblocks",
     "07_gesture_sensor/gesture_sensor_minimal.py",
-    "08_weather_sensor/weather_sensor_complete.evnblocks",
-    "08_weather_sensor/weather_sensor_complete.py",
-    "08_weather_sensor/weather_sensor_minimal.evnblocks",
-    "08_weather_sensor/weather_sensor_minimal.py",
+    "08_environment_sensor/environment_sensor_complete.evnblocks",
+    "08_environment_sensor/environment_sensor_complete.py",
+    "08_environment_sensor/environment_sensor_minimal.evnblocks",
+    "08_environment_sensor/environment_sensor_minimal.py",
     "09_compass/compass_complete.evnblocks",
     "09_compass/compass_complete.py",
     "09_compass/compass_minimal.evnblocks",

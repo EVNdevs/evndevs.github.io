@@ -1,6 +1,6 @@
 {
   "format": "evn-blocks",
-  "version": 2,
+  "version": 3,
   "title": "Robot: every block",
   "needs": "a robot: left wheel motor on port 4 (mounted mirrored), right on port 3, 62.4 mm wheels 170 mm apart, an EVN IMU on I2C port 3 fixed flat to the chassis, and 40 cm of clear floor ahead and 20 cm to each side (the robot also pivots about 45 degrees on its right wheel and back). Keep the robot still while the program starts (the IMU settles in 8 to 25 s).",
   "description": "Every robot block once: set-up (speeds in % of full speed, LEGO move steering), straight, turn, both kinds of arc, driving at a speed, steering in percent (a pivot and back), stopping and holding, the speed and acceleration settings, the measurements, and the gyro. The moves go out and come back, so the robot ends near where it started.",

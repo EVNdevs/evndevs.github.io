@@ -1,6 +1,6 @@
 {
   "format": "evn-blocks",
-  "version": 2,
+  "version": 3,
   "title": "HuskyLens: every block but forget",
   "needs": "a DFRobot HuskyLens set to Protocol Type I2C on I2C port 11",
   "description": "Every block of the HuskyLens but one: the camera switched to object tracking, then for twenty seconds how many objects it sees and the centre of its first block (-1 when it sees none). Frame an object on the camera's screen and press the user button to learn it as ID 1; then how many IDs it has learned. Last, line tracking: for ten seconds where the first arrow starts and ends across the screen (-1 when it sees none). Not used here: forget everything learned, which erases what the camera has learned in the current algorithm.",

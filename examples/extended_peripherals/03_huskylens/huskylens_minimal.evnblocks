@@ -1,6 +1,6 @@
 {
   "format": "evn-blocks",
-  "version": 2,
+  "version": 3,
   "title": "HuskyLens: minimal",
   "needs": "a DFRobot HuskyLens set to Protocol Type I2C on I2C port 11",
   "description": "Prints how many objects the HuskyLens sees, five times a second for ten seconds.",

@@ -1,6 +1,6 @@
 {
   "format": "evn-blocks",
-  "version": 2,
+  "version": 3,
   "title": "Touch pads: every block",
   "needs": "the touch pads (MPR121) on I2C port 1",
   "description": "Every touch pad block once: waiting for any pad, then naming each pad that is touched (0 to 11) for 10 s.",

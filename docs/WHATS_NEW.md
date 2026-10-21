@@ -4,6 +4,29 @@ The main changes of each release, in a few lines. The [full changelog](../CHANGE
 the tools and the measurements behind each release. What is not tested yet is on
 [Known limitations and help us test](KNOWN_LIMITATIONS.md).
 
+## 0.2.70 (2026-10-21)
+
+- **New: the user button stops a program.** A press coasts every motor at once and ends the running program with
+  `SystemExit`, as on Pybricks hubs. A program that uses the button as an input calls `evn.set_stop_button(None)`
+  first, or the press ends it; the button blocks do this for you.
+- **Fixed: the drive-base and motor bugs #2-#17.** Among them, `use_gyro(True)` corrects a `drive()` loop again,
+  `done()` no longer turns True during a gyro `drive()`, `run_until_stalled()` returns in reverse on the PID law, a
+  new `Motor` starts from the defaults after a soft reset, and maneuvers use the full acceleration you set. Your
+  program also gets more time than on 0.2.69: a drive program's polling loop takes about 40 % less time a pass.
+- **Changed: `main.py` and the user button with VS Code connected.** While `main.py` waits for the button the LED
+  double-blinks, VS Code no longer ends the wait, and a press runs `main.py` with its prints in the Console view.
+  **Pause** keeps listening to the board, and **Disconnect** frees the port. New blocks programs drive one standard
+  robot (motors 4 and 3); programs saved earlier keep the robot they drove.
+  The colour calibration panel keeps up with many sensors: only the cards on screen are read, and only changes
+  are sent.
+  The editor's **Run** button now runs a Python file on the board (it ran it on your computer first; in a workspace where
+  you picked the computer's Run before, pick **Run on the board** once from its menu).
+- **Docs:** the BOOTSEL steps are corrected: the USB replug way works only with the board switched on (or hold
+  BOOTSEL and press RESET).
+- **Known issue:** one calculation that runs 3 s without a wait (such as `3**100000`) reboots the board, and
+  `evn.reset_cause()` then says `"watchdog"`. The CHR-GM16-030PA motor settles about 1.3 ms later than on 0.2.69,
+  and the `DriveBase` default speeds ask more than wheels under a robot's load can give.
+
 ## 0.2.69 (2026-10-18)
 
 - **Firmware:** the motor-control tick does the same work with fewer instructions (issues #106-#108). Motors behave

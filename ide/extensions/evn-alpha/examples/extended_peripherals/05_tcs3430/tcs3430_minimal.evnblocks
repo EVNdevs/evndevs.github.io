@@ -1,6 +1,6 @@
 {
   "format": "evn-blocks",
-  "version": 2,
+  "version": 3,
   "title": "TCS3430 colour sensor: minimal",
   "needs": "an ams-OSRAM TCS3430 colour sensor on I2C port 16",
   "description": "Takes the black (nothing in front) and the white (a white sheet), then prints the colour the TCS3430 sees five times a second for ten seconds.",

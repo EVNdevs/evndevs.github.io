@@ -8,6 +8,7 @@ Needs: a HiTechnic NXT Compass Sensor on I2C port 5, through an NXT cable adapte
 """
 import evn
 from evn import HiTechnicCompass, StopWatch, wait
+evn.set_stop_button(None)   # the program reads the user button (press_button): a press is an input, not the stop
 
 PORT = 5
 

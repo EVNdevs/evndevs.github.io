@@ -11,6 +11,7 @@ Needs: an ams-OSRAM TCS3430 colour sensor on I2C port 16, a white sheet of paper
 """
 import evn
 from evn import StopWatch, TCS3430, wait
+evn.set_stop_button(None)   # the program reads the user button (press_button): a press is an input, not the stop
 
 PORT = 16
 

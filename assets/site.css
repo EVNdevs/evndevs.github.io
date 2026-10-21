@@ -215,6 +215,7 @@ main:focus { outline: none; }
   color: var(--accent-ink); border: 1px solid var(--accent); border-radius: 999px; padding: 4px 14px;
   background: var(--page);
 }
+.eyebrow .report-link { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
 .hero-mark { display: flex; align-items: center; gap: 18px; margin: 22px 0 0; }
 .hero-mark .glyph {
   width: 74px; height: 74px; flex: 0 0 74px; border-radius: 15px; background: var(--accent);

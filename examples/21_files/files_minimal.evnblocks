@@ -1,6 +1,6 @@
 {
   "format": "evn-blocks",
-  "version": 2,
+  "version": 3,
   "title": "Files: minimal",
   "needs": "nothing but the board",
   "description": "Writes a short file to the board's flash, reads it back, and lists the files on the board. The file stays there after a power cycle (delete it from the extension's Board view, or with the \"delete file\" block).",

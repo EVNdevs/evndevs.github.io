@@ -1,6 +1,6 @@
 {
   "format": "evn-blocks",
-  "version": 2,
+  "version": 3,
   "title": "Board: minimal",
   "needs": "nothing but the board; you press the user button when it asks",
   "description": "Says the battery voltage, waits for the user button, then lights the LED for a second.",

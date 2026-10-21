@@ -1,6 +1,6 @@
 {
   "format": "evn-blocks",
-  "version": 2,
+  "version": 3,
   "title": "Data log: complete",
   "needs": "a motor on port 1, free to turn; an EVN IMU module on I2C port 1, kept still; a battery pack",
   "description": "Every data log block: the motor's angle at every new reading and its speed 100 times a second, the IMU's heading 50 times a second and the battery 1 time a second, plus one row of your own values (the motor angle and the heading) after each of four half turns. The motor stops before the log is saved.",

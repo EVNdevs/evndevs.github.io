@@ -1,6 +1,6 @@
 {
   "format": "evn-blocks",
-  "version": 2,
+  "version": 3,
   "title": "RGB LEDs: every block",
   "needs": "the RGB LED module (8 LEDs) on servo port 1",
   "description": "Every RGB LED block once: all LEDs one colour, one LED at a time, a colour mixed from red, green and blue, and the brightness. The LEDs are off at the end.",

@@ -2,7 +2,7 @@
   "name": "evn-alpha-micropython",
   "displayName": "EVN ALPHA MicroPython",
   "description": "Early-access tooling for the EVN ALPHA robotics controller: flash the MicroPython firmware, run programs, open the REPL, autocomplete for the evn motor API, and a Blockly block editor that generates MicroPython.",
-  "version": "0.2.69",
+  "version": "0.2.70",
   "publisher": "evn-alpha",
   "license": "MIT",
   "preview": true,
@@ -348,8 +348,20 @@
       {
         "category": "EVN",
         "command": "evn.console.pause",
-        "title": "Pause the live console (free the port)",
+        "title": "Pause the live console (keep listening)",
+        "icon": "$(debug-pause)"
+      },
+      {
+        "category": "EVN",
+        "command": "evn.console.disconnect",
+        "title": "Disconnect the live console (free the port)",
         "icon": "$(debug-disconnect)"
+      },
+      {
+        "category": "EVN",
+        "command": "evn.console.connectInstead",
+        "title": "Connect instead (the board does not start main.py)",
+        "icon": "$(plug)"
       },
       {
         "category": "EVN",
@@ -599,12 +611,12 @@
         {
           "command": "evn.runFile",
           "when": "resourceLangId == python",
-          "group": "navigation@1"
+          "group": "navigation@-3"
         },
         {
           "command": "evn.uploadMain",
           "when": "resourceLangId == python",
-          "group": "navigation@2"
+          "group": "navigation@-2"
         },
         {
           "command": "evn.openRepl",
@@ -909,13 +921,18 @@
         },
         {
           "command": "evn.console.connect",
-          "when": "view == evn.board && evn.console.state != live && evn.console.state != busy && evn.console.state != connecting",
+          "when": "view == evn.board && evn.console.state != live && evn.console.state != busy && evn.console.state != waiting && evn.console.state != connecting",
           "group": "0_console@1"
         },
         {
           "command": "evn.console.pause",
-          "when": "view == evn.board && (evn.console.state == live || evn.console.state == busy || evn.console.state == connecting)",
+          "when": "view == evn.board && (evn.console.state == live || evn.console.state == busy || evn.console.state == waiting || evn.console.state == connecting)",
           "group": "0_console@2"
+        },
+        {
+          "command": "evn.console.disconnect",
+          "when": "view == evn.board && evn.console.state != off && evn.console.state != gone",
+          "group": "0_console@3"
         },
         {
           "command": "evn.console.showOutput",
@@ -964,13 +981,18 @@
         },
         {
           "command": "evn.console.pause",
-          "when": "view == evn.console && (evn.console.state == live || evn.console.state == busy || evn.console.state == connecting)",
+          "when": "view == evn.console && (evn.console.state == live || evn.console.state == busy || evn.console.state == waiting || evn.console.state == connecting)",
           "group": "0_console@1"
         },
         {
           "command": "evn.console.connect",
-          "when": "view == evn.console && evn.console.state != live && evn.console.state != busy && evn.console.state != connecting",
+          "when": "view == evn.console && evn.console.state != live && evn.console.state != busy && evn.console.state != waiting && evn.console.state != connecting",
           "group": "0_console@2"
+        },
+        {
+          "command": "evn.console.disconnect",
+          "when": "view == evn.console && evn.console.state != off && evn.console.state != gone",
+          "group": "0_console@3"
         },
         {
           "command": "evn.openRepl",
@@ -1140,13 +1162,23 @@
           "group": "inline"
         },
         {
+          "command": "evn.console.connectInstead",
+          "when": "view == evn.board && viewItem == evnBoardConsoleWaiting",
+          "group": "inline"
+        },
+        {
+          "command": "evn.console.disconnect",
+          "when": "view == evn.board && viewItem == evnBoardConsolePausedListening",
+          "group": "inline"
+        },
+        {
           "command": "evn.console.connect",
           "when": "view == evn.board && viewItem =~ /^evnBoardConsole(Paused|Off|Error|Gone)/",
           "group": "inline"
         },
         {
           "command": "evn.console.pause",
-          "when": "view == evn.board && viewItem =~ /^evnBoardConsole(Live|Connecting)/",
+          "when": "view == evn.board && viewItem =~ /^evnBoardConsole(Live|Connecting|Waiting)/",
           "group": "inline"
         },
         {

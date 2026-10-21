@@ -1,0 +1,58 @@
+# A tester's problem report (site review SITE-09, issue #83; the owner, 2026-10-18: "reports go to GitHub issues on
+# EVNdevs/evndevs.github.io with an issue template"). Written in the firmware repository
+# (vscode-evn-alpha/site/.github/ISSUE_TEMPLATE/) and copied into the site repository's .github/ISSUE_TEMPLATE/ by
+# scripts/publish_public.py: edit it there, not in the site repository. The site's "Report a problem" links, the
+# Troubleshooting page and the extension's "EVN: Collect board diagnostics" open
+# https://github.com/EVNdevs/evndevs.github.io/issues/new?template=report-a-problem.yml (the extension copies the
+# diagnostics to the clipboard first). scripts/test_site.js checks the ids the links use.
+name: Report a problem
+description: Something on the EVN ALPHA board, the VS Code extension, the browser IDE or this site did not work.
+title: "Problem: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for testing EVN ALPHA. A report with these parts can usually be reproduced on our bench.
+        Please do not paste passwords or personal data: this issue is public.
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Board diagnostics
+      description: |
+        In VS Code run **EVN: Collect board diagnostics** (Ctrl+Shift+P) with the board plugged in. It opens a
+        document; paste all of it here (its **Report a problem** button puts it on the clipboard and opens this form).
+      render: markdown
+    validations:
+      required: false
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened, and what you expected
+      description: What the motors (or the sensor, the display, the extension) did, against what you expected.
+    validations:
+      required: true
+  - type: textarea
+    id: program
+    attributes:
+      label: The program you ran
+      description: The whole program, or the shortest part of it that still shows the problem.
+      render: python
+    validations:
+      required: false
+  - type: textarea
+    id: log
+    attributes:
+      label: Error or log
+      description: |
+        If VS Code showed an error: the *EVN ALPHA log* output panel (*View, Output*, then *EVN ALPHA log*).
+      render: text
+    validations:
+      required: false
+  - type: input
+    id: part
+    attributes:
+      label: Motor or part
+      description: For a "Help us test" item, or any motor or sensor not from EVN - its name and where you bought it.
+    validations:
+      required: false

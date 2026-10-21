@@ -1,6 +1,6 @@
 {
   "format": "evn-blocks",
-  "version": 2,
+  "version": 3,
   "title": "HiTechnic colour sensor: minimal",
   "needs": "a HiTechnic NXT Color Sensor (V1 or V2) on I2C port 8, through an NXT cable adapter",
   "description": "Prints the HiTechnic colour sensor's own colour number five times a second for ten seconds.",

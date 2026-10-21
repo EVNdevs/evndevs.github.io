@@ -15,7 +15,7 @@ The status bar can take up to ten seconds to catch up after a change. *View → 
 
 Only one program can hold the board's port at a time. One board at a time works per VS Code window; the *EVN ALPHA* terminal holds the port, and every other command closes that terminal first.
 
-If another tool holds the port (a serial monitor, a second VS Code window), close it. **Pause the live console (free the port)** lets go of the port when you want another tool to use it.
+If another tool holds the port (a serial monitor, a second VS Code window), close it. **Disconnect the live console (free the port)** lets go of the port when you want another tool to use it (a paused console still reads the port).
 
 ## Linux: the board is found but cannot be opened
 
@@ -42,9 +42,9 @@ The extension looks for the `RPI-RP2` drive where the desktop mounts USB drives 
 
 ## Flashing
 
-**No `RPI-RP2` drive appears.** With the board on and USB connected, hold BOOTSEL, press and release RESET, then let go of BOOTSEL. For a board that is off or on USB only: unplug USB, hold BOOTSEL, plug USB back in, then let go. If the drive still does not appear, try another cable: a charge-only cable carries no data.
+**No `RPI-RP2` drive appears.** With the board on and USB connected, hold BOOTSEL, press and release RESET, then let go of BOOTSEL. Or, also with the board switched on: unplug USB, hold BOOTSEL, plug USB back in, then let go. A board that is switched off does not run on USB power alone (USB only charges the cells), so switch it on first. If the drive still does not appear, try another cable: a charge-only cable carries no data.
 
-![The other way into BOOTSEL mode, for a board that is off or on USB only, in four steps: unplug the USB-C cable, press and hold BOOTSEL, plug the cable back in still holding, release BOOTSEL; the RPI-RP2 drive appears and the status bar offers the flash](images/bootsel-gesture.webp)
+![The other way into BOOTSEL mode, with the board switched on, in four steps: unplug the USB-C cable, press and hold BOOTSEL, plug the cable back in still holding, release BOOTSEL; the RPI-RP2 drive appears and the status bar offers the flash](images/bootsel-gesture.webp)
 
 **The board is in BOOTSEL mode by mistake** (BOOTSEL held during a reset or while plugging in). A board that already has its firmware does not need a flash. Press **Restart the board without flashing** on the *Board* view's port row (also *EVN: Restart the board without flashing*): it starts the firmware already on the board and writes nothing. The board's RESET button does the same.
 
@@ -96,11 +96,14 @@ Run **EVN: Check Python setup** with the file open. It says what applies and off
 - A peripheral that is unplugged raises `OSError` from its next reading. It recovers by itself when plugged back into the **same** port; a different port is not followed.
 - `Compass.calibrate_stop()` refuses a calibration until the sensor has been through enough directions, and keeps collecting: turn it more and stop again, or `calibrate_cancel()`.
 - In the browser IDE, closing the tab does not stop a running motor. Press **Stop** first.
+- **A single calculation longer than 3 s reboots the board.** The 3 s hardware watchdog is fed between Python steps and in every wait (`time.sleep()`, a `wait=True` move, a file write), so those may take as long as they need. One calculation that runs for 3 s without reaching any of them is not fed: `3**100000`, one huge integer calculation, rebooted the board. The console loses the board, the motors coast, and after the reboot `evn.reset_cause()` returns `"watchdog"`; `main.py` is skipped, after soft reboots (Ctrl-D) too, until the board next restarts. For scale, `3**32000` took about 0.4 s.
 
 ## Reporting problems
 
-Please send:
+Report a problem as an issue on the site's GitHub repository: **[Report a problem](https://github.com/EVNdevs/evndevs.github.io/issues/new?template=report-a-problem.yml)**. It opens a form with a field for each of these (you need a free GitHub account; the issue is public, so leave out passwords and personal data):
 
-1. The output of **EVN: Collect board diagnostics** (it opens as a document).
+1. The output of **EVN: Collect board diagnostics** (it opens as a document). The command then offers **Report a problem**: it copies the diagnostics to the clipboard and opens the form, so you paste them into its first field.
 2. The program you ran, and what the motors did compared with what you expected.
 3. If VS Code showed an error, the *EVN ALPHA log* output panel (*View → Output*, then *EVN ALPHA log*).
+
+Something wrong or unclear on a page of this site? Use **Suggest a change** at the top of the page: it opens an issue there with the page and the section you are reading filled in.

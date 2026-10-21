@@ -13,7 +13,7 @@ Signatures follow the firmware bindings (`micropython/modules/evn_*.c`). A param
 before ``/`` is positional-only: the binding takes no keywords for it. A parameter written
 after ``*`` is keyword-only.
 """
-from typing import Iterator, List, Optional, Sequence, Tuple, Type, Union, overload
+from typing import Iterator, List, Optional, Sequence, Set, Tuple, Type, Union, overload
 
 version: str
 """Firmware API version string, e.g. "0.1.0"."""
@@ -40,7 +40,8 @@ class Stop:
     HOLD: int  # = 2   keep regulating at the target (default for profiled moves)
     NONE: int  # = 3   no deceleration: reach the target at speed and keep running
     COAST_SMART: int  # = 4  coast, and start the next relative move from the remembered target - only while the
-                      #       shaft still stands within twice the position tolerance of it (Pybricks), else from where it is
+                      #       shaft still stands within twice the position tolerance of it (Pybricks), else from where it is;
+                      #       a DriveBase with use_gyro(True) starts from where it is (its pose loop keeps the path)
 
 
 class SpeedUnit:
@@ -136,8 +137,8 @@ class Control:
     def stall_tolerances(self) -> Tuple[float, int]: ...
     @overload
     def stall_tolerances(self, speed: Optional[float] = None, time: Optional[int] = None) -> None:
-        """Stall detection: below ``speed`` deg/s for ``time`` ms, 0..10000 (defaults 50, 50). The speed reads
-        back as the float it was set to, the time as int ms."""
+        """Stall detection: below ``speed`` deg/s for ``time`` ms, 0..10000 (defaults 50, 50; a soft reset
+        restores them, a new ``Motor(port)`` within a boot keeps the port's values). The speed reads back as the float it was set to, the time as int ms."""
 
     def done(self) -> bool:
         """Same as ``Motor.done()``: the last profiled move is complete and the shaft is within ``target_tolerances()``."""
@@ -230,6 +231,12 @@ class Motor:
         switches the port to that model's defaults until the next reboot and prints a WARNING that its stored calibration
         (made for the other model) is not applied until ``calibrate()`` runs again. ``ValueError`` for
         an unknown name; ``RuntimeError`` if the port is moving.
+
+        A soft reset (Ctrl-D) returns every port's ``control.stall_tolerances()``, ``model.settings()``,
+        ``control.pid()`` and ``control.evn()`` to the defaults; the port's ``calibrate()`` record, the motor model and
+        ``control.law()`` are kept. Within a boot (later button runs included) a new ``Motor(port)`` keeps what the
+        port was set to (a module that set up the motor keeps its setup); the limits, tolerances and ``settings()``
+        start from its arguments.
         """
 
     # measuring
@@ -282,8 +289,9 @@ class Motor:
         """Run at ``speed`` for ``time`` ms, then ``then``: the maneuver takes ``time`` (Pybricks). The distance is
         what a trapezoid of ``speed`` covers in ``time`` at the speed and acceleration the controller will actually
         allow at the present pack voltage, so a limit shortens the distance, never the duration; ``speed`` 0 is a
-        timed hold of the measured angle (``done()`` stays False until ``time`` has passed). ``time`` is 0 to
-        2147483647 ms (24.8 days); a negative or longer ``time`` raises ``ValueError``. The exact bound holds for an
+        timed hold of the measured angle (``done()`` stays False until ``time`` has passed). With
+        ``then=Stop.NONE`` the motor is at ``speed`` when ``time`` is up and keeps running (``speed`` 0: it keeps
+        holding). ``time`` is 0 to 2147483647 ms (24.8 days); a negative or longer ``time`` raises ``ValueError``. The exact bound holds for an
         int; a float ``time`` is exact only below about 2147483520 (this port's floats are 32-bit, so 2147483647.0
         rounds to 2147483648 and is refused - the message says so)."""
     def run_angle(self, speed: float, rotation_angle: float, then: _Then = Stop.HOLD, wait: bool = True) -> None:
@@ -296,13 +304,15 @@ class Motor:
         """Turn to the absolute ``target_angle`` at ``speed`` (the sign of ``speed`` is ignored)."""
     def run_until_stalled(self, speed: float, then: _Then = Stop.COAST, duty_limit: Optional[float] = None) -> int:
         """Run until the motor stalls (``stalled()`` after the first 150 ms); returns the angle reached.
+        ``then=Stop.NONE`` raises ``ValueError`` (the motor cannot keep running after the stall, as in Pybricks).
 
         **``duty_limit`` IS the stall force** (% of ``settings()`` max_voltage): the motor pushes up to that
         cap against the obstruction before the stall is reported, and without one it pushes with the whole
         pack (an EV3 Large gripper closes hard: pass ``duty_limit=30`` or so for a gentle grip). An unloaded
         shaft creeps instead of stalling, so this does not return without a real obstruction (Ctrl-C aborts);
         a ``duty_limit`` below the motor's breakaway returns at once, where it stands. ``then`` outside
-        ``Stop`` raises ``ValueError``.
+        ``Stop``, or ``Stop.NONE`` (the motor cannot keep running after the stall, as in Pybricks), raises
+        ``ValueError``.
         """
     def track_target(self, target_angle: float, /) -> None:
         """Unprofiled position servo: jump the reference straight to ``target_angle``."""
@@ -474,7 +484,8 @@ class DriveBase:
     def straight(self, distance: float, then: int = Stop.HOLD, wait: bool = True) -> None:
         """Drive straight ``distance`` mm (negative = backwards), then hold / coast / brake. ``then=Stop.NONE``
         raises ``ValueError`` (use ``drive()``); ``Stop.COAST_SMART`` counts the next relative move from this
-        move's aim. ``wait=False`` returns at once; poll ``done()``."""
+        move's aim (with ``use_gyro(True)`` from where the wheels are, as after ``Stop.COAST``: the pose loop keeps
+        the path). ``wait=False`` returns at once; poll ``done()``."""
     def turn(self, angle: float, then: int = Stop.HOLD, wait: bool = True) -> None:
         """Turn in place by ``angle`` degrees, clockwise positive."""
     def curve(self, radius: float, angle: float, then: int = Stop.HOLD, wait: bool = True) -> None:
@@ -495,8 +506,9 @@ class DriveBase:
         Drive at ``speed`` mm/s along the path and ``turn_rate`` deg/s (clockwise positive) until the next
         command; both wheels ramp from the speeds they are at to their new speeds together, also when called
         again before the last ramp has ended, and the same call repeated in a loop keeps the ramp it started
-        (the path of one call; with ``use_gyro(True)`` each call restarts the pose correction, so such a loop is
-        not corrected yet). If one wheel would exceed the weaker wheel's speed limit both are scaled so the
+        (the path of one call; with ``use_gyro(True)`` too: a call onto the robot's own ``drive()`` keeps the pose
+        correction in force, so a loop - a line follower's, a gyro-straight drive - is corrected as one call is). If
+        one wheel would exceed the weaker wheel's speed limit both are scaled so the
         radius is kept; if its ramp would exceed that wheel's acceleration limit both ramps are slowed
         together.
 
@@ -544,7 +556,8 @@ class DriveBase:
         maneuver returns is the stall timeout (``Motor.settings(stall_timeout=)``). With ``use_gyro(True)`` the
         wheels are judged against their target plus the trim and ``done()`` also waits for the pose error to
         settle inside ``follower()`` tolerances - or the trim at its bound, or 2 s after the profiles ended (a pose
-        that never settles must not hang the program); that 2 s escape exists only under ``use_gyro``. A wheel
+        that never settles must not hang the program); that 2 s escape exists only under ``use_gyro``, and never
+        for ``drive()``, which is not done until the next command, with ``use_gyro`` as without. A wheel
         coasted by the runaway guard during a ``wait=False`` maneuver: ``done()`` coasts the other wheel too and
         returns True, and the base's next command raises the wheel's ``RuntimeError``."""
     def stalled(self) -> bool:
@@ -567,7 +580,10 @@ class DriveBase:
         loop armed before that would correct toward a drifting heading (Pybricks calibrates the hub IMU before any
         program runs, so its users never see this); ``OSError`` if it never comes (the robot was moving), when the
         pose has no estimate yet, and from the next maneuver if the base's ``Pose`` was closed or replaced meanwhile
-        (``use_gyro`` is then off; the loop never trims on a stranger's estimate). ``use_gyro(False)`` drops the trims (the wheels move back to their untrimmed references,
+        (``use_gyro`` is then off; the loop never trims on a stranger's estimate). Called again while it is on, on
+        the same ``Pose``, it re-checks the geometry and changes nothing else: the correction in force is kept (a
+        robot holding after a maneuver does not move). The loop belongs to this robot: another ``DriveBase``'s
+        ``stop()`` / ``brake()`` leaves it alone. ``use_gyro(False)`` drops the trims (the wheels move back to their untrimmed references,
         up to the trim limit at the trim slew) and returns to wheel-only maneuvers. With it on, each maneuver
         counts from the aim the wheel holds INCLUDING its trim, so a correction is kept, not undone; a maneuver
         ended with ``Stop.COAST`` / ``BRAKE`` keeps the reference path too (the next one corrects any roll)."""
@@ -764,7 +780,7 @@ class battery:
         """Pack voltage in mV (0 when no pack is present)."""
     @staticmethod
     def cells() -> Optional[Tuple[int, int]]:
-        """Cell voltages in mV, or ``None`` when no pack is present."""
+        """Cell voltages in mV ``(top, bottom)``, or ``None`` when no pack is present; a cell reading 0 has no reading."""
     @staticmethod
     def age() -> Optional[int]:
         """Age of the reading in ms, or ``None`` when no pack is present."""
@@ -791,7 +807,8 @@ class button:
     """The board's user button (a module-like object: ``evn.button.pressed()``)."""
     @staticmethod
     def pressed() -> bool:
-        """User button state (the button is also the emergency stop: coast all)."""
+        """User button state (the button is also the emergency stop: a press coasts every motor and ends a running program,
+        unless the program called ``evn.set_stop_button(None)`` - then it is an input only)."""
 
 
 class led:
@@ -3423,6 +3440,16 @@ def stop_all() -> None:
     """Coast every motor (and stop every servo sweep); returns once the motors have taken it (at most 2 ms),
     so a file write next is not refused."""
 
+def set_stop_button(button: Union[Type[button], Tuple[Type[button], ...], List[Type[button]], Set[Type[button]], None],
+                    /) -> None:
+    """Pybricks' ``hub.system.set_stop_button`` for the board's one user button. ``None`` turns the stop off
+    for this program: a press no longer coasts the motors or ends the program, and the button is an input
+    (``evn.button.pressed()``) - a program that waits for a press calls ``evn.set_stop_button(None)`` first.
+    ``evn.button`` turns it on again (a press already held then counts once the button has been released);
+    a tuple, list or set of buttons, as in Pybricks, is on (an empty one is off; anything else is a ``TypeError``). Every program starts with the stop on, and it is
+    on again when the program ends (at the REPL a call lasts for its line, or the block pasted with it).
+    Ctrl-C, ``evn.stop_all()`` and holding the button 2 s (a reboot) still stop the motors."""
+
 def configure_motor(port: int, model: Optional[str], *, counts_per_rev: Optional[float] = None,
                     rated_voltage: int = 0, no_load_speed: Optional[float] = None) -> None:
     """Say what is on motor port 1..4 and store it on the board, so a plain ``Motor(port)`` runs that motor
@@ -3607,7 +3634,7 @@ def reset(*, start: bool = False) -> None:
 
 def autostart(on: Optional[bool] = None, /) -> bool:
     """Whether ``main.py`` starts at boot without the user-button press (default ``False``: the board
-    waits, LED blinking fast, and runs ``main.py`` again at the next press once it has ended). Not
+    waits, LED double-blinking, and runs ``main.py`` again at the next press once it has ended). Not
     stored: put ``evn.autostart(True)`` in ``boot.py`` for a board that must run unattended."""
 
 def _chip_reset() -> dict:
@@ -3639,7 +3666,7 @@ class Pose:
     """The robot's planar pose from any subset of the two drive encoders, an ``IMU`` and a ``Compass``
     (docs/POSE_ESTIMATION_DESIGN.md; encoders-only trajectories benched on the board 2026-09-18).
 
-    ``Pose(1, 2, 56, 112, imu=3, compass=14)``: left/right motor ports 1..4 with the wheel diameter and axle
+    ``Pose(4, 3, 62.4, 170, reverse_left=True, imu=3, compass=14)``: left/right motor ports 1..4 with the wheel diameter and axle
     track in mm (both or neither), ``imu=`` / ``compass=`` the I2C ports of existing ``IMU`` / ``Compass``
     objects (``OSError`` if no object is on that port; the compass counts once a calibration is installed).
     ``reverse_left`` / ``reverse_right``: that motor's positive direction is backwards (a mirrored mount).

@@ -1,6 +1,6 @@
 {
   "format": "evn-blocks",
-  "version": 2,
+  "version": 3,
   "title": "Controllers: complete",
   "needs": "a robot: left wheel motor on port 4 (mounted mirrored), right on port 3, 62.4 mm wheels 170 mm apart; an EVN colour sensor on I2C port 2 facing the floor a few mm up, over the edge of a dark line on a light floor; an EVN IMU on I2C port 1",
   "description": "Two controllers in two variables: the line follower (pid) for 5 s, its PID terms printed; then, once the IMU's gyro has settled, an ADRC (hold) brings the robot back to the heading it started at and holds it for 5 s (push it by hand: the disturbance it prints is your push), and the robot stops.",

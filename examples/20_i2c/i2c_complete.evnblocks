@@ -1,6 +1,6 @@
 {
   "format": "evn-blocks",
-  "version": 2,
+  "version": 3,
   "title": "I2C: every block",
   "needs": "an EVN IMU module (MPU-6500) on I2C port 1",
   "description": "Every I2C block once, on the EVN IMU module (an MPU-6500): the addresses that answer, whether one answers at 0x68, its WHO_AM_I register (0x75, which reads 0x70 = 112), its acceleration and temperature as signed 16-bit numbers, 14 raw bytes of acceleration, temperature and turn rate as a list, and a write that wakes the chip (PWR_MGMT_1, 0x6B), put back as it was at the end. Nothing is written unless WHO_AM_I says it is an MPU-6500.",

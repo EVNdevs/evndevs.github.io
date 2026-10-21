@@ -1,0 +1,35 @@
+# A reader's change to a documentation page (site review SITE-14, issue #88; the owner, 2026-10-18: "reports go to
+# GitHub issues on EVNdevs/evndevs.github.io with an issue template; \"Suggest a change\" opens one there").
+# Written in the firmware repository (vscode-evn-alpha/site/.github/ISSUE_TEMPLATE/) and copied into the site
+# repository's .github/ISSUE_TEMPLATE/ by scripts/publish_public.py: edit it there, not in the site repository.
+# Every documentation page's "Suggest a change" link (site/assets/site.js, suggestUrl) opens
+# https://github.com/EVNdevs/evndevs.github.io/issues/new?template=suggest-a-change.yml with the title and the
+# `page` field filled in. The site's documents are generated: an edit to docs/ in the site repository is
+# overwritten by the next publish, so a change is asked for here. scripts/test_site.js checks the ids the link uses.
+name: Suggest a change
+description: Something on a documentation page is wrong, unclear or missing.
+title: "Docs: "
+labels: ["documentation"]
+body:
+  - type: input
+    id: page
+    attributes:
+      label: Page
+      description: The address of the page (and its section), as the "Suggest a change" link filled it in.
+      placeholder: https://evn.coresg.tech/#/getting-started
+    validations:
+      required: true
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: What should change
+      description: The sentence or the example as it is, and what it should say instead (or what is missing).
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why
+      description: What you tried, or what the page made you expect. Optional.
+    validations:
+      required: false

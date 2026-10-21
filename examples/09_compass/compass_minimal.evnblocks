@@ -1,6 +1,6 @@
 {
   "format": "evn-blocks",
-  "version": 2,
+  "version": 3,
   "title": "Compass: minimal",
   "needs": "an EVN compass module on I2C port 2, away from the motors",
   "description": "Prints the compass heading five times a second for ten seconds: turn the robot and watch it change. The calibration stored on the board for the port is used by itself.",

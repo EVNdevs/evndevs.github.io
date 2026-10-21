@@ -10,6 +10,7 @@ Needs: an ST VL53L1X distance sensor on I2C port 1, a flat grey or white card an
 """
 import evn
 from evn import StopWatch, VL53L1X, wait
+evn.set_stop_button(None)   # the program reads the user button (press_button): a press is an input, not the stop
 
 PORT = 1
 

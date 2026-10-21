@@ -54,8 +54,7 @@
     'changelog':       { file: 'docs/WHATS_NEW.md',       title: 'What’s new',     nav: 'Changelog',
                          blurb: 'The main changes of each release, in a few lines, and the full changelog.' },
     /* the full engineering log, linked from What's new (CHANGELOG.md: the release tools read it) */
-    'changelog-full':  { file: 'docs/CHANGELOG.md',       title: 'Full changelog', part: 'changelog',
-                         src: 'CHANGELOG.md' }
+    'changelog-full':  { file: 'docs/CHANGELOG.md',       title: 'Full changelog', part: 'changelog' }
   };
   var ORDER = ['getting-started', 'programs', 'board-view', 'data-logger', 'main-py', 'bluetooth', 'commands', 'board',
                'troubleshooting', 'repl', 'calibration', 'api', 'api-robot', 'api-sensors', 'api-displays', 'api-extended',
@@ -67,27 +66,55 @@
   var BY_FILE = {};
   Object.keys(DOCS).forEach(function (k) { BY_FILE[DOCS[k].file.replace(/^docs\//, '').replace(/\.md$/, '')] = k; });
   var REPO = 'https://github.com/EVNdevs/evndevs.github.io';
-  /* "Edit on GitHub" opens the page's SOURCE (SITE-14): the site repository's docs/ is a copy that
-     scripts/publish_public.py overwrites at every publish. publish_public.py takes docs/<NAME>.md from the
-     extension's docs/ folder, else from the extension's root (CHANGELOG.md): `src` names that path where it is
-     not `file`. scripts/test_site.js checks every route's source exists and is the file the publisher copies. */
-  var SOURCE = 'https://github.com/kenchow96/EVN_ALPHA_Performance/edit/main/vscode-evn-alpha/';
-  function sourceUrl(info) { return SOURCE + (info.src || info.file); }
-  /* The switch for that link: OFF. The source repository is private, so the link is a 404 for the public, and the
-     site repository's copy (the old link) is overwritten by the next publish: neither may ship. Turn it on (true)
-     only once the owner has decided where an edit goes (docs/PUBLISHING.md, "Edit on GitHub"). With it off no
-     link renders at all. */
-  var EDIT_LINKS = false;
-  function editLink(info) {
-    if (!EDIT_LINKS) { return null; }
-    var edit = el('a', 'edit-link');
-    edit.href = sourceUrl(info);
-    edit.target = '_blank';
-    edit.rel = 'noopener';
-    edit.appendChild(frag('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/>' +
+  /* Reports and suggestions go to the site repository's issues, each through its issue form (the owner, 2026-10-18,
+     SITE-09 / SITE-14: "reports go to GitHub issues on `EVNdevs/evndevs.github.io` with an issue template;
+     "Suggest a change" opens one there"). The forms are site/.github/ISSUE_TEMPLATE/<name>.yml here, copied into
+     the site repository by scripts/publish_public.py; a query parameter named as a form field's id fills that field.
+     The documents themselves are generated (an edit to the site repository's docs/ is overwritten by the next
+     publish), so a page offers "Suggest a change", never an edit. scripts/test_site.js checks the template names and
+     field ids against the forms. */
+  var ISSUES_NEW = REPO + '/issues/new';
+  var REPORT_URL = ISSUES_NEW + '?template=report-a-problem.yml';
+  var SUGGEST_TEMPLATE = 'suggest-a-change.yml';
+  var reading = null;      // the heading the scroll-spy marks current ({ id, h }), for "Suggest a change"
+  /* The address of a page (and a heading of it) on this site: the site's root (route pages carry <base href="../">,
+     so the base is the root on every page) + #/<route>[/<heading id>]. */
+  function pageUrl(doc, slug) {
+    var root = new URL('.', document.baseURI).href;
+    return root + '#/' + doc + (slug ? '/' + slug : (SECTIONED[doc] ? '/' : ''));
+  }
+  /* "Suggest a change" for a page: a new issue on the suggest-a-change form, its title "Docs: <page> - <section>"
+     and its `page` field the address of the section being read. */
+  function suggestUrl(doc, slug, heading) {
+    var title = 'Docs: ' + DOCS[doc].title + (heading ? ' - ' + heading : '');
+    return ISSUES_NEW + '?template=' + SUGGEST_TEMPLATE + '&title=' + encodeURIComponent(title) +
+      '&page=' + encodeURIComponent(pageUrl(doc, slug));
+  }
+  function suggestLink(doc) {
+    var a = el('a', 'edit-link');
+    a.href = suggestUrl(doc);
+    a.target = '_blank';
+    a.rel = 'noopener';
+    /* the section is the one being read when the link is used (the scroll-spy's), not the one at render */
+    function refresh() {
+      var s = reading && document.getElementById(reading.id) === reading.h ? reading : null;
+      a.href = suggestUrl(doc, s ? s.id : '', s ? s.h.textContent.trim() : '');
+    }
+    a.addEventListener('mousedown', refresh);
+    a.addEventListener('focus', refresh);
+    a.addEventListener('click', refresh);
+    a.appendChild(frag('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/>' +
       '<path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>'));
-    edit.appendChild(document.createTextNode('Edit on GitHub'));
-    return edit;
+    a.appendChild(document.createTextNode('Suggest a change'));
+    return a;
+  }
+  /* "Report a problem": a new issue on the report-a-problem form (the footer, the home page, Troubleshooting) */
+  function reportLink(cls, text) {
+    var a = el('a', cls, text || 'Report a problem');
+    a.href = REPORT_URL;
+    a.target = '_blank';
+    a.rel = 'noopener';
+    return a;
   }
   var SITE = 'EVN ALPHA MicroPython';
 
@@ -478,6 +505,7 @@
       if (window.innerHeight + window.scrollY >= document.body.scrollHeight - 4) {
         best = toc.items[toc.items.length - 1];
       }
+      reading = best;
       highlight(toc, best.id);
     }
     function onScroll() { if (!ticking) { ticking = true; requestAnimationFrame(update); } }
@@ -489,7 +517,7 @@
     };
     update();
   }
-  function stopSpy() { if (spy) { spy(); spy = null; } }
+  function stopSpy() { reading = null; if (spy) { spy(); spy = null; } }
 
   function highlight(toc, id) {
     for (var i = 0; i < toc.items.length; i++) {
@@ -565,8 +593,7 @@
         crumb.appendChild(up);
       }
       head.appendChild(crumb);
-      var edit = editLink(info);                        // null while EDIT_LINKS is off
-      if (edit) { head.appendChild(edit); }
+      head.appendChild(suggestLink(route.doc));          // a new issue on the suggest-a-change form (SITE-14)
       article.appendChild(head);
 
       var body = el('div', 'doc-body');
@@ -730,7 +757,9 @@
     var grid = el('div', 'hero-grid');
 
     var left = el('div');
-    left.appendChild(el('p', 'eyebrow', 'Early access · user testing'));
+    var eyebrow = el('p', 'eyebrow', 'Early access · user testing · ');   // the space before the link (site review N1)
+    eyebrow.appendChild(reportLink('report-link'));        // where a tester reports (SITE-09)
+    left.appendChild(eyebrow);
     var markRow = el('div', 'hero-mark');
     var glyph = el('span', 'glyph');
     glyph.setAttribute('aria-hidden', 'true');
@@ -835,7 +864,7 @@
         'It carries the firmware below and flashes it for you.',
         [['Download the VSIX', ext.vsix, true], ['Release notes', '#/changelog', false]]));
       g.appendChild(dlCard('MicroPython firmware', fw.version,
-        'Only needed without the extension: hold BOOTSEL while you plug the board in and copy the UF2 ' +
+        'Only needed without the extension: with the board switched on, hold BOOTSEL, press and release RESET, let go of BOOTSEL, and copy the UF2 ' +
         'onto the drive that appears.',
         [['Download the UF2', fw.uf2, true], ['Build record', fw.notes, false]]));
       dlBox.appendChild(g);
@@ -1292,7 +1321,8 @@
   }
 
   /* for scripts/test_site.js (jsdom): the functions it checks, nothing the page needs */
-  window.EVNSite = { DOCS: DOCS, ORDER: ORDER, slugify: slugify, sourceUrl: sourceUrl, editLink: editLink, renderMarkdown: renderMarkdown,
+  window.EVNSite = { DOCS: DOCS, ORDER: ORDER, slugify: slugify, suggestUrl: suggestUrl, suggestLink: suggestLink, pageUrl: pageUrl,
+                     REPORT_URL: REPORT_URL, renderMarkdown: renderMarkdown,
                      assignIds: assignIds, renderCallouts: renderCallouts, prepareTables: prepareTables,
                      addCopyButtons: addCopyButtons, markScrollers: markScrollers, indexDoc: indexDoc,
                      buildIndex: buildIndex, search: search, snippet: snippet, routeOf: routeOf };

@@ -1,6 +1,6 @@
 {
   "format": "evn-blocks",
-  "version": 2,
+  "version": 3,
   "title": "Distance sensor: every block",
   "needs": "the distance sensor on I2C port 1, and a hand or a box to move in front of it",
   "description": "Every distance sensor block once: the distance in mm under each of the four settings (normal, long range, fast, accurate), then back to normal. Move your hand or a box in front of the sensor to see the numbers change; None means nothing is in range.",

@@ -1,6 +1,6 @@
 {
   "format": "evn-blocks",
-  "version": 2,
+  "version": 3,
   "title": "IMU: minimal",
   "needs": "an EVN IMU module on I2C port 1, fixed flat to the robot; keep it still for the first seconds",
   "description": "The robot's heading from the gyro, five times a second for ten seconds: 0 where it points at the start, going up as it turns clockwise.",

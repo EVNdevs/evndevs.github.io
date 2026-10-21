@@ -1,6 +1,6 @@
 {
   "format": "evn-blocks",
-  "version": 2,
+  "version": 3,
   "title": "Gesture sensor: every block",
   "needs": "the gesture sensor on I2C port 1 (nothing over it at the start), a hand or a black card, a white sheet, and something coloured",
   "description": "Every gesture sensor block once: how close your hand is, the colour the sensor sees, waiting for a swipe, and checking for one without waiting. The directions are the way the hand moved with the module's label upright, after a black / white colour calibration the board keeps for the port.",

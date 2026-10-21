@@ -17,6 +17,7 @@ from the motors; room to turn the robot on the floor and to pick it up and tumbl
 """
 import evn
 from evn import Compass, StopWatch, wait
+evn.set_stop_button(None)   # the program reads the user button (press_button): a press is an input, not the stop
 
 PORT = 2
 

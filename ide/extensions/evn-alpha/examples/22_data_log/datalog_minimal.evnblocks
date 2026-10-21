@@ -1,6 +1,6 @@
 {
   "format": "evn-blocks",
-  "version": 2,
+  "version": 3,
   "title": "Data log: minimal",
   "needs": "a motor on port 1, free to turn; an EVN IMU module on I2C port 1, kept still",
   "description": "Record a motor's angle and the IMU's heading on the board for 5 s while the motor turns, then save them to a CSV file on the board (/data/run1_<date>_<time>.csv once the console has set the board's clock).",

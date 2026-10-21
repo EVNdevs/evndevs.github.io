@@ -28,7 +28,7 @@ Every constructor raises `OSError` when nothing answers on the port or the drive
 | [`DistanceSensor`](#distancesensor--time-of-flight-distance-sensor-vl53l0x) | VL53L0X time-of-flight distance | I2C 1–16 | `examples/06_distance_sensor/` |
 | [`GestureSensor`](#gesturesensor--gesture-proximity-and-colour-sensor-apds-9960) | APDS-9960 gesture, proximity, colour | I2C 1–16 | `examples/07_gesture_sensor/` |
 | [`TouchArray`](#toucharray--capacitive-touch-array-mpr121) | MPR121 12-key capacitive touch | I2C 1–16 | `examples/10_touch_pads/` |
-| [`EnvSensor`](#envsensor--temperature-pressure-and-humidity-bme280) | BME280 temperature, pressure, humidity | I2C 1–16 | `examples/08_weather_sensor/` |
+| [`EnvSensor`](#envsensor--temperature-pressure-and-humidity-bme280) | BME280 temperature, pressure, humidity | I2C 1–16 | `examples/08_environment_sensor/` |
 | [`ADC`](#adc--analogue-to-digital-converter-ads1115) | ADS1115 16-bit ADC | I2C 1–16 | `examples/12_adc/` |
 | [`Display`](API_DISPLAYS.md#display--12864-oled-ssd1306--ssd1315) | EVN 128×64 OLED (SSD1306 / SSD1315) | I2C 1–16 | `examples/13_display/` |
 | [`MatrixLED`](API_DISPLAYS.md#matrixled--88-led-matrix-ht16k33) | EVN 8×8 LED matrix (HT16K33) | I2C 1–16 | `examples/14_led_matrix/` |

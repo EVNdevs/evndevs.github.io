@@ -1,6 +1,6 @@
 {
   "format": "evn-blocks",
-  "version": 2,
+  "version": 3,
   "title": "Compass: every block",
   "needs": "an EVN compass module on I2C port 2, away from the motors; a robot you can turn by hand on the floor",
   "description": "Every compass block once: the heading with the stored calibration, a new calibration made by turning the robot on the floor, and a heading that counts from the way the robot points. A finished calibration REPLACES the one stored on the board for port 2. It is finished only once the robot has been turned through every direction; after a minute without that it is cancelled and the stored one stays. Even then the board can refuse the fit (steel or a magnet near the robot bends the field): the program then stops with \"calibration refused\", nothing is stored, and you run it again somewhere else. The program waits for the user button at each step; to leave, press Stop in the editor (or Ctrl-C).",

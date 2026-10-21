@@ -46,8 +46,10 @@ else:
     print("the board's clock is not set")
 
 # --- the user button and the LED ------------------------------------------------------------------
-# The button is also the emergency stop (a press coasts every motor; held 2 s it reboots the
-# board), so use it to start things, not in the middle of a move.
+# The button is also the emergency stop: a press coasts every motor and ends the program (held 2 s
+# it reboots the board). A program that reads it as an input turns the stop off first, as with
+# Pybricks' hub.system.set_stop_button(None); every program starts with the stop on.
+evn.set_stop_button(None)                        # from here a press is an input, not the stop
 print("press the user button within 10 s")
 watch = StopWatch()                              # counts milliseconds from here
 while not evn.button.pressed() and watch.time() < 10000:
@@ -66,6 +68,7 @@ evn.led.off()
 for _ in range(20):                              # set() takes any true/false value: here the LED
     evn.led.set(evn.button.pressed())            # shows the button for 2 s
     wait(100)
+evn.set_stop_button(evn.button)                  # the button is the stop again (a press ends the program)
 
 # --- the stopwatch --------------------------------------------------------------------------------
 watch.reset()                                    # back to 0, still running

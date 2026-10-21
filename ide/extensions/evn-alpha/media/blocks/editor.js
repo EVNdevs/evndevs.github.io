@@ -20,7 +20,9 @@
     const cfg = window.evnBlocksConfig || {};
 
     const FILE_FORMAT = 'evn-blocks';
-    const FILE_VERSION = 2;   // 2: the "set up" / "program" sections (a version-1 file is upgraded on load)
+    const FILE_VERSION = 3;   // 2: the "set up" / "program" sections (a version-1 file is upgraded on load); 3: a program
+                              // without "set up robot" drives the standard robot (an older one gets its old robot's block on load,
+                              // evn_blocks.js keepSavedRobot); = evnBlocks.STANDARD_ROBOT_VERSION (test_blocks.js checks it)
 
     /* ---- colour schemes -------------------------------------------------------------------
      * The page colours live in editor.css (html[data-theme]); Blockly's own chrome takes the

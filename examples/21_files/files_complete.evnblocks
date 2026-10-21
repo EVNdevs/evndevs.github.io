@@ -1,6 +1,6 @@
 {
   "format": "evn-blocks",
-  "version": 2,
+  "version": 3,
   "title": "Files: every block",
   "needs": "nothing but the board",
   "description": "Every file block once: a fresh start (delete), writing a line, adding more in a loop the way a log grows, reading the file back, asking whether it exists, listing the files, and deleting it again, so the board is left as it was. The board does not write its flash while a motor drives: keep the values in variables during a move and write them after it.",

@@ -1,4 +1,4 @@
-"""Weather sensor: the whole API
+"""Environment sensor: the whole API
 
 Every EnvSensor method once: temperature, humidity and air pressure, the raw readings behind them,
 and the settings that trade speed against noise (oversampling, filter, standby, forced mode). The
@@ -6,7 +6,7 @@ sensor measures by itself about 25 times a second; the getters return the latest
 once and read() waits for the next one. Anything the example changes it puts back. Units: degrees
 Celsius, % relative humidity, pascals (about 101300 Pa at sea level; 100 Pa = 1 hPa = 1 mbar).
 
-Needs: the weather sensor (BME280) on I2C port 1, with its small vent hole left uncovered.
+Needs: the environment sensor (BME280) on I2C port 1, with its small vent hole left uncovered.
 """
 from evn import EnvSensor, StopWatch, wait
 

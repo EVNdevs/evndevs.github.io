@@ -1,6 +1,6 @@
 {
   "format": "evn-blocks",
-  "version": 2,
+  "version": 3,
   "title": "Servo: every block",
   "needs": "a Geekservo 270-degree servo on servo port 1 and a Geekservo continuous-rotation servo on servo port 2, both free to turn",
   "description": "Every servo block once. Port 1 is the 270-degree servo, driven by angle: a jump, sweeps that wait and one that does not, a raw pulse, and a sweep stopped part way. Port 2 is the continuous-rotation servo, driven by speed (duty): forwards, backwards, stop.",

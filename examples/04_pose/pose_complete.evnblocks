@@ -1,6 +1,6 @@
 {
   "format": "evn-blocks",
-  "version": 2,
+  "version": 3,
   "title": "Pose: every block",
   "needs": "a robot: left wheel motor on port 4 (mounted mirrored), right on port 3, 62.4 mm wheels 170 mm apart, an EVN IMU on I2C port 3 fixed flat to the chassis, an EVN compass on I2C port 14 calibrated on the robot and mounted away from the motors, and 40 cm of clear floor ahead. Keep the robot still while the program starts (the IMU settles in 8 to 25 s).",
   "description": "Every pose block once: the compass added to the pose, the robot following its gyro, which sources count right now, re-framing the pose (a new origin, the heading kept), the speed and turn rate while the robot drives, the position and heading after each leg, and the pose's own uncertainty. The robot drives 30 cm out, turns 45 degrees right and back, and drives back, so it ends where it started.",

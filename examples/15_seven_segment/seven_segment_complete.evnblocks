@@ -1,6 +1,6 @@
 {
   "format": "evn-blocks",
-  "version": 2,
+  "version": 3,
   "title": "7-segment display: every block",
   "needs": "the 7-segment display on I2C port 1",
   "description": "Every 7-segment block once: numbers with and without a point, text, the colon of a clock, the brightness, and a blank display at the end.",

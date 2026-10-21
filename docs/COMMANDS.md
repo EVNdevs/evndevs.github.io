@@ -21,7 +21,8 @@ Every command of the extension is in the command palette (**Ctrl+Shift+P**); typ
 | Send a command to the board | one line of Python through the live console; the *Command line* row ([The Board view](BOARD_VIEW.md#the-command-line)) |
 | Show the board output | the *EVN Board output* panel: what the command line answered, and what a program the board started by itself prints |
 | Clear the console view | empty the *Console* view's transcript (Ctrl+L in the view does the same) |
-| Connect the live console / Pause the live console (free the port) | take the port for the live console, or let go of it for another tool |
+| Connect the live console / Pause the live console (keep listening) / Disconnect the live console (free the port) | take the port for the live console; stop sending to the board but keep showing what it prints; or let go of the port for another tool |
+| Connect instead (the board does not start main.py) | on the *Board is waiting for the user button* row: end the start wait without starting `main.py` and connect |
 | Open data logger / Open a data log / Stop the data logger recording | record what the board measures, open a recording, end a recording ([Recording data](DATA_LOGGER.md)) |
 | Open in data viewer | a `.csv` in the data viewer (right-click it in the Explorer, or **Reopen Editor With...**) |
 | Pair the Bluetooth module in Windows | open the Windows Bluetooth settings to add the module (`HC-05` or `EVN Bluetooth`, PIN `1234`) ([Working without the USB cable](BLUETOOTH.md)) |

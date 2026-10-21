@@ -1,6 +1,6 @@
 {
   "format": "evn-blocks",
-  "version": 2,
+  "version": 3,
   "title": "Colour sensor: every block",
   "needs": "the colour sensor on I2C port 1, a white sheet, and something blue to hold under it",
   "description": "Every colour sensor block once: the colour it sees, its light level, the numbers behind the colour (hue, saturation, brightness, red, green, blue), and a shorter list of colours to choose from, after a black / white calibration the board keeps for the port.",

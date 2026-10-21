@@ -11,12 +11,12 @@ Choose *Upload and run now* to restart the board and start the program at once, 
 ## Starting it
 
 1. Switch the board on, or press RESET.
-2. Wait until the user LED blinks four times a second: the board is waiting for the button. A press made before the blinking starts is not counted.
+2. Wait until the user LED double-blinks (two short flashes, once a second): the board is waiting for the button. A press made before the double blink starts is not counted.
 3. **Press the user button.** The program starts.
 
 When the program ends, the next press runs it again.
 
-**With VS Code connected**, the extension's live console talks to the board within a second of every start. That ends the wait and gives the console the prompt. So with VS Code connected, use *Upload and run now*, or pause the live console first (**EVN: Pause the live console (free the port)**; a paused console reads nothing, so the program's prints are not shown until you connect again). The button starts `main.py` when nothing is talking to the board. When the console finds `main.py` already running, it never interrupts it: the **Console** view comes up with the program's output, and the status bar shows `main.py running on the board` with the red **Stop**, as *Upload and run now* does. A program that prints right away is never typed into: the console listens first and only speaks to a board that is silent.
+**With VS Code connected**, the button works too: the live console sees the board waiting (the console row reads *Board is waiting for the user button (main.py)*) and sends it nothing, so a press starts the program with the console listening, and every line it prints shows in the **Console** view. *Connect instead* on that row ends the wait without starting `main.py` and connects the console. A paused console (**EVN: Pause the live console (keep listening)**) still reads the port and sends nothing, so a program you start with the button shows its output too; **EVN: Disconnect the live console (free the port)** lets go of the port altogether, for another tool. (A board on firmware 0.2.69 or older does not show its wait to a console that connects late: there the console's first word ends the wait, so use *Upload and run now*.) When the console finds `main.py` already running, it never interrupts it: the **Console** view comes up with the program's output, and the status bar shows `main.py running on the board` with the red **Stop**, as *Upload and run now* does. A program that prints right away is never typed into: the console listens first and only speaks to a board that is silent.
 
 **At a terminal** (*Open REPL*, a serial monitor), press **Enter** first for the prompt. Only Enter or a REPL control key (Ctrl-A to Ctrl-E) ends the wait; any other key is ignored, so text typed during the wait is dropped, never run.
 

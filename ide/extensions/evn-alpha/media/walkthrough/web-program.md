@@ -22,5 +22,5 @@ wheels off the ground while you try things out.
 ## Upload as main.py
 
 **Upload as main.py** copies the program to the board as `main.py`. After every power-on the board
-waits, LED blinking fast, and **a press of the user button starts the program**, so a robot needs no
+waits, LED double-blinking, and **a press of the user button starts the program**, so a robot needs no
 computer. *Upload and run now* starts it straight away this once.

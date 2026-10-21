@@ -1,11 +1,11 @@
-"""Weather sensor: minimal
+"""Environment sensor: minimal
 
 Says the temperature in degrees Celsius once a second, for ever (stop it with the stop button).
 
-The Python of weather_sensor_minimal.evnblocks: the blocks and this file are the same program
-(open the blocks file under Examples to see it as blocks).
+The Python of environment_sensor_minimal.evnblocks: the blocks and this file are the same
+program (open the blocks file under Examples to see it as blocks).
 
-Needs: the weather sensor (BME280) on I2C port 1
+Needs: the environment sensor (BME280) on I2C port 1
 """
 from evn import wait, EnvSensor
 

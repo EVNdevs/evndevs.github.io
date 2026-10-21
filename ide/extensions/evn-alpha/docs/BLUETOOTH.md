@@ -2,7 +2,7 @@
 
 With an EVN Bluetooth module on Serial 1 or 2, the board's prompt comes to your computer over the air. Run, the REPL, Upload as main.py and the *Board* view then work as they do over USB.
 
-**This guide has been tested on Windows.** The steps name Windows' Bluetooth settings and its *COM* ports.
+**This guide has been tested on Windows.** The steps name Windows' Bluetooth settings and its *COM* ports. On a Mac or a Linux computer, see [On macOS and Linux](#on-macos-and-linux): those steps follow Apple's and BlueZ's own documentation and have not been tried with an EVN Bluetooth module yet.
 
 ## Setting it up from the Board view
 
@@ -59,6 +59,54 @@ If the port still will not open, the terminal says so in red: the program was **
    To make it permanent, put those lines in a `boot.py` on the board. From the USB REPL: `open('boot.py','w').write("import evn\nbt = evn.Bluetooth(2)\nbt.repl(True)\n")`, or `mpremote cp boot.py :` from a terminal.
    The name `bt` is how a program reaches the module later (`bt.repl(False)`, `bt.write(...)`).
 3. **Choose the Bluetooth port in VS Code**: click the port in the status bar and pick it (it has a broadcast icon). If the board has been on USB before, the extension keeps that port as its wireless link, and USB is used again as soon as the cable is in.
+
+## On macOS and Linux
+
+> **Note:** These steps are written from Apple's and BlueZ's documentation (linked at each step). They have not been tried with an EVN Bluetooth module on a Mac or a Linux computer yet. If a step does not work for you, please [report it](https://github.com/EVNdevs/evndevs.github.io/issues/new?template=report-a-problem.yml), with your system's version.
+
+Two buttons of the *Board* view are for Windows only: **Pair the Bluetooth module in Windows** opens Windows' settings, and **Use the Bluetooth COM port for the board** lists the ports Windows names as Bluetooth ports. Do the pairing and the choice of port as below. Step 2 of [Setting it up by hand](#setting-it-up-by-hand), the REPL onto the module, is the same on every computer, and so is **Put the REPL on this Bluetooth module** in the *Board* view (it works over USB).
+
+The extension recognises a Bluetooth port by the name Windows gives it. On macOS and Linux it treats the module's port as a cable port, so what this page says about Bluetooth only (*Run waits for the link*, the slower telemetry, the automatic move between USB and Bluetooth) does not apply there.
+
+### macOS
+
+1. **Pair the module.** With the board on, choose Apple menu > **System Settings**, then click **Bluetooth** in the sidebar. Hold the pointer over `HC-05` or `EVN Bluetooth` in the list, then click **Connect**. If you are asked for a code, type `1234` and press Enter. (Apple: [Connect a Bluetooth device with your Mac](https://support.apple.com/guide/mac-help/connect-a-wireless-accessory-blth1004/mac).)
+2. **Find its serial port.** macOS gives a serial port two device files, `/dev/cu.<name>` and `/dev/tty.<name>`; a program that opens the port uses the `cu.` one. (Apple: [Working With a Serial Device](https://developer.apple.com/library/archive/documentation/DeviceDrivers/Conceptual/WorkingWSerial/WWSerial_SerialDevs/SerialDevices.html).) In Terminal, `ls /dev/cu.*` lists them; the module's carries its name, such as `/dev/cu.HC-05` (the exact name is not checked yet).
+3. **Choose it in VS Code**: click the port in the status bar and pick the module's `/dev/cu.` port.
+
+### Linux
+
+These steps use BlueZ, the Bluetooth stack of most Linux distributions. Your desktop's own Bluetooth settings can do step 1 as well.
+
+1. **Pair the module** with `bluetoothctl` (BlueZ: [bluetoothctl](https://github.com/bluez/bluez/blob/master/doc/bluetoothctl.rst)). With the board on:
+
+   ```text
+   $ bluetoothctl
+   [bluetooth]# power on
+   [bluetooth]# agent on
+   [bluetooth]# default-agent
+   [bluetooth]# scan on
+   ```
+
+   Wait for a line with `HC-05` or `EVN Bluetooth` and the module's address, such as `98:D3:41:F7:18:02`, then:
+
+   ```text
+   [bluetooth]# scan off
+   [bluetooth]# pair 98:D3:41:F7:18:02
+   [bluetooth]# trust 98:D3:41:F7:18:02
+   [bluetooth]# quit
+   ```
+
+   When `pair` asks for a PIN code, type `1234`.
+2. **Give it a serial port** with `rfcomm` (BlueZ: [rfcomm](https://github.com/bluez/bluez/blob/master/doc/rfcomm.rst)):
+
+   ```text
+   sudo rfcomm bind 0 98:D3:41:F7:18:02 1
+   ```
+
+   This makes `/dev/rfcomm0` for the module on RFCOMM channel 1. It does not connect yet: the link opens when a program opens `/dev/rfcomm0`. The port lasts until `sudo rfcomm release 0` or a restart, so bind it again after a restart. BlueZ counts `rfcomm` among its deprecated tools, so some distributions put it in a separate package or leave it out.
+3. **Check that you may open it.** If opening `/dev/rfcomm0` fails with *Permission denied*, `ls -l /dev/rfcomm0` shows the group that owns it; add yourself to that group (`sudo usermod -aG <group> $USER`), then log out and in again.
+4. **Choose it in VS Code**: click the port in the status bar and pick `/dev/rfcomm0`.
 
 ## Your program and the module
 

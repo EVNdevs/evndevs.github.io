@@ -8,6 +8,7 @@ Needs: a DFRobot HuskyLens set to Protocol Type I2C on I2C port 11
 """
 import evn
 from evn import HuskyLens, StopWatch, wait
+evn.set_stop_button(None)   # the program reads the user button (press_button): a press is an input, not the stop
 
 PORT = 11
 

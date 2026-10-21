@@ -1,6 +1,6 @@
 {
   "format": "evn-blocks",
-  "version": 2,
+  "version": 3,
   "title": "LED matrix: every block",
   "needs": "the 8x8 LED matrix on I2C port 1",
   "description": "Every LED matrix block once: icons, numbers, scrolling text, one letter, single pixels and the brightness, ending with a blank matrix at full brightness.",

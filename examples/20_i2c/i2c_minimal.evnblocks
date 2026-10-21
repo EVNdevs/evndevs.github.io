@@ -1,6 +1,6 @@
 {
   "format": "evn-blocks",
-  "version": 2,
+  "version": 3,
   "title": "I2C: minimal",
   "needs": "an EVN IMU module (MPU-6500) on I2C port 1",
   "description": "Finds the EVN IMU module on I2C port 1 the safe way. A device answering at an address proves nothing (another chip can sit there), so the program also reads the chip's WHO_AM_I register (0x75), which an MPU-6500 answers with 0x70 (112). Only reads: the one byte written is the register number that the read sends first.",

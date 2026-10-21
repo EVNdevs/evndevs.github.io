@@ -1,6 +1,6 @@
 {
   "format": "evn-blocks",
-  "version": 2,
+  "version": 3,
   "title": "Motor: every block",
   "needs": "motors on ports 1 and 2, wheels off the ground; when the program asks, hold the wheel on port 1 until it stops",
   "description": "Every motor block once: set-up, the four moves, stall detection, measuring, the advanced controls and the calibration. Port 2 is mounted mirrored (counterclockwise is forward) and counts in % of full speed.",

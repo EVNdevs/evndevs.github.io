@@ -18,6 +18,7 @@ robot when the program asks.
 """
 import evn
 from evn import IMU, Side, StopWatch, wait
+evn.set_stop_button(None)   # the program reads the user button (press_button): a press is an input, not the stop
 
 PORT = 1
 

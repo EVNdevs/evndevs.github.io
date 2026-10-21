@@ -1,6 +1,6 @@
 {
   "format": "evn-blocks",
-  "version": 2,
+  "version": 3,
   "title": "Display: every block",
   "needs": "the OLED display on I2C port 1",
   "description": "Every display block once: clear, print lines one under the other, and show text at a place. (Ticking \"mirror the console\" on the set-up block would also copy every print() of the board to the display, until the board is reset.)",

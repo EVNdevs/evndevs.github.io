@@ -12,8 +12,8 @@ The four buttons sit in a row along the bottom edge, beside the USB-C socket.
 
 | Button | What it does |
 | :--- | :--- |
-| **User button** (marked `button (24)`) | A press coasts every motor: the stop that needs no computer. While the board waits, a press starts `main.py` ([A program that starts from the user button](MAIN_PY.md)). Held for 2 s, it restarts the board. |
-| **BOOTSEL** | Held while you press and release RESET (or, on a board that is off, while you plug USB in), it puts the board in its loader (the `RPI-RP2` drive), for a [firmware flash](GETTING_STARTED.md#4-put-the-firmware-on-the-board). |
+| **User button** (marked `button (24)`) | A press coasts every motor and ends the running program (`SystemExit`, as Pybricks' stop button): the stop that needs no computer. No motor moves again until the next program, or the next line at the REPL, starts. A program that uses the button as an input calls `evn.set_stop_button(None)` first (as Pybricks): then a press stops nothing until that program ends. With the live console connected (the *Board* view) a press coasts every motor too: the console stays connected, its row says *stopped by the user button*, and the motors stay coasted until the next program run or the next connect. While the board waits, a press starts `main.py` ([A program that starts from the user button](MAIN_PY.md)). Held for 2 s, it restarts the board. |
+| **BOOTSEL** | Held while you press and release RESET (or, on a board that is switched on, while you unplug USB and plug it back in), it puts the board in its loader (the `RPI-RP2` drive), for a [firmware flash](GETTING_STARTED.md#4-put-the-firmware-on-the-board). |
 | **RESET** | Restarts the board. Your programs, files and calibrations stay. |
 | **ON/OFF** | Switches the board on and off. |
 
@@ -21,15 +21,15 @@ The four buttons sit in a row along the bottom edge, beside the USB-C socket.
 
 | Light | Pattern | Meaning |
 | :--- | :--- | :--- |
-| Red (`ON/OFF`) | on | The board is switched on. |
-| Green (`CABLE`) | on | A USB cable is connected. |
-| Yellow (`CHARGE`) | on | The cells are charging. It goes out when they are full. |
-| User LED (`LED (25)`) | once a second | No computer has the board's port open (also while `main.py` runs on its own). |
+| Red, LED3 (`ON/OFF`) | on | The board is switched on (power on). |
+| Green, LED6 (`CABLE`) | on | A USB cable is connected. |
+| Yellow, LED1 (`CHARGE`) | on | The cells are charging. It goes out when they are full. |
+| User LED, blue (`LED (25)`) | once a second | No computer has the board's port open (also while `main.py` runs on its own). |
 | User LED | five times a second | A computer has the board's port open (the extension's live console, the REPL, a running program). |
-| User LED | four times a second | `main.py` is waiting for a press of the user button. |
+| User LED | a double blink once a second | `main.py` is waiting for a press of the user button. |
 | User LED | your program's | A program used `evn.led`. The LED then stays under program control until the board restarts. |
 
-Four and five blinks a second look alike. Both happen only without the extension: once VS Code connects, the start wait ends within a second, and the [Board view](BOARD_VIEW.md)'s console row says whether the board is running its own program.
+The double blink of the start wait does not look like the steady blinking of an open port. With VS Code connected, the [Board view](BOARD_VIEW.md)'s console row says the same thing in words: *Board is waiting for the user button (main.py)*, or whether the board is running its own program.
 
 ## Motor ports
 

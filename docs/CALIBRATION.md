@@ -257,12 +257,12 @@ print(c.calibrate_stop())       # (residual, coverage, samples); stored for port
 A drive base spinning itself, planar:
 
 ```python
-from evn import Compass, Motor, wait, stop_all
+from evn import Compass, Motor, Direction, wait, stop_all
 c = Compass(3)
-right, left = Motor(2), Motor(3)      # the left motor mounted mirrored: the same sign on both pivots the base
+left, right = Motor(4, Direction.COUNTERCLOCKWISE), Motor(3)   # the standard robot: the left motor mounted mirrored
 c.calibrate(planar=True)
 for speed in (60, -60):               # one way, then back
-    right.run(speed); left.run(speed)
+    left.run(speed); right.run(-speed)   # opposite wheel speeds: the base spins on the spot
     wait(20000)
     stop_all()
     wait(800)

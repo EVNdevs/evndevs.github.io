@@ -1,6 +1,6 @@
 {
   "format": "evn-blocks",
-  "version": 2,
+  "version": 3,
   "title": "LED matrix: minimal",
   "needs": "the 8x8 LED matrix on I2C port 1",
   "description": "The LED matrix counts down from 5 to 0, then shows a heart.",

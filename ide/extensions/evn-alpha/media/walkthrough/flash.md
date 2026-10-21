@@ -15,8 +15,10 @@ Press **Flash the firmware** on the left and confirm.
 
 - **If the board already runs the EVN MicroPython firmware**, the extension asks it to reboot into
   bootloader mode by itself. Nothing for you to do but watch.
-- **Otherwise** (a brand-new board, or one whose firmware is not answering): unplug the USB cable,
-  **hold the BOOTSEL button down**, plug the cable back in, then let go. The board appears on your
+- **Otherwise** (a brand-new board, or one whose firmware is not answering): with the board
+  **switched on** (USB alone does not run it) and USB connected, **hold the BOOTSEL button down**,
+  press and release RESET, then let go. Or, also switched on: unplug the USB cable, hold BOOTSEL,
+  plug the cable back in, then let go. The board appears on your
   computer as a USB drive called **RPI-RP2**, the extension copies the firmware onto it, and the board
   reboots by itself.
 

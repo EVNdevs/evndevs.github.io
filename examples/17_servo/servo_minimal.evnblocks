@@ -1,6 +1,6 @@
 {
   "format": "evn-blocks",
-  "version": 2,
+  "version": 3,
   "title": "Servo: minimal",
   "needs": "a Geekservo 270-degree servo on servo port 1, horn free to turn",
   "description": "The kit's 270-degree servo sweeps to 45 degrees, over to 225, and jumps back to the middle (135).",

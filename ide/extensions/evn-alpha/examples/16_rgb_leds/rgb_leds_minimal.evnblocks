@@ -1,6 +1,6 @@
 {
   "format": "evn-blocks",
-  "version": 2,
+  "version": 3,
   "title": "RGB LEDs: minimal",
   "needs": "the RGB LED module (8 LEDs) on servo port 1",
   "description": "The RGB LEDs turn red, green and blue, one second each, then go off.",

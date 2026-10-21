@@ -1,6 +1,6 @@
 {
   "format": "evn-blocks",
-  "version": 2,
+  "version": 3,
   "title": "IMU: every block",
   "needs": "an EVN IMU module on I2C port 1, fixed flat to the robot; a table; you move the robot when the program asks",
   "description": "Every IMU block once: wait for the gyro to settle, calibrate on a level surface (one pose), calibrate again on any flat surface with half a turn (120 to 240 degrees) in between (two poses), then read heading, pitch and roll and which side faces up. Each finished calibration REPLACES the one stored on the board for port 1; the last one made is the one kept. If the robot moves during a pose, the program stops with \"IMU calibration failed\" and the stored calibration is unchanged: run it again. Without the half turn within 110 s the first pose is cancelled and nothing is stored. The program waits for the user button at each step; to leave, press Stop in the editor (or Ctrl-C).",

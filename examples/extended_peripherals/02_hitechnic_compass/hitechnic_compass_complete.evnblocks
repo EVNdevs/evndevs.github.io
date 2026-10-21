@@ -1,6 +1,6 @@
 {
   "format": "evn-blocks",
-  "version": 2,
+  "version": 3,
   "title": "HiTechnic compass: every block",
   "needs": "a HiTechnic NXT Compass Sensor on I2C port 5, through an NXT cable adapter; room to turn the robot on the floor",
   "description": "Every block of the HiTechnic compass: the direction the robot points at the start becomes heading 0, then the heading twice a second for twenty seconds while you turn the robot. Then the sensor's own calibration, started by the user button: press it when you are ready, turn the robot slowly and level through a little more than one full turn during the 25 seconds it runs, and the program says whether the sensor accepted it.",

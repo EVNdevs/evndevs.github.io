@@ -20,7 +20,7 @@ Settings: `evn.blocks.renderer` (look of the blocks: `zelos` rounded/Scratch-lik
 
 ## Safety
 
-The same rules as for Python programs apply: **Ctrl+C** in the terminal and **Stop motors** stop a running program and coast every motor; the board's **user button** coasts every motor (the program keeps running; holding it 2 s reboots the board); connecting a tool to the board also coasts the motors. A **forever** loop only ends one of those ways. **Keep the wheels off the ground for the first run of any program.**
+The same rules as for Python programs apply: **Ctrl+C** in the terminal and **Stop motors** stop a running program and coast every motor; the board's **user button** coasts every motor and ends the running program, and no motor moves again until the next program starts - except while a *wait for a button press* block waits (the press it waits for is an input; the button is the stop again after the release), and in a program with a *button pressed?* block, which reads the button as an input for the whole run (in every program, holding it 2 s reboots the board); connecting a tool to the board also coasts the motors. A **forever** loop only ends one of those ways. **Keep the wheels off the ground for the first run of any program.**
 
 ## Your first programs
 
@@ -104,7 +104,7 @@ Every *set up* block of every category, in one place, with the **comment** block
 
 ### Robot (a drive base: two wheel motors driven together)
 
-![The Robot category: drive straight, turn robot, drive an arc, drive at speed, start moving with steering, stop the robot, robot speed and acceleration, reset, set up robot, robot follows its gyro](images/blocks/blocks-robot.png)
+![The Robot category: drive straight, turn robot, drive an arc, drive at speed, start moving with steering, stop the robot, robot speed and acceleration, reset, set up robot on the standard robot (left motor 4, right 3, 62.4 mm wheels 170 mm apart) with "set up motor 4 counterclockwise" under it, robot follows its gyro](images/blocks/blocks-robot.png)
 
 | Block | Python |
 | :--- | :--- |
@@ -122,7 +122,7 @@ Every *set up* block of every category, in one place, with the **comment** block
 | robot *follows* its gyro: IMU on port *3* | `imu_3 = IMU(3)` at the top and `imu=3` on the **set up robot** line after it (`drive_base = DriveBase(motor_4, motor_3, wheel_diameter=62.4, axle_track=170, imu=3)`: the base builds its own `Pose` from its ports, geometry and motor directions), then `drive_base.use_gyro(True)` where the block sits; no separate `Pose` line. With a [Pose block](#pose-where-the-robot-is) in the program the IMU goes on the pose's line instead (`pose = Pose(..., imu=3)`) and the robot adopts that pose (`pose=pose`) |
 | robot *stops following* its gyro: IMU on port *3* | `drive_base.use_gyro(False)` (the robot drives on its wheels alone again) |
 
-One robot per program. Without a **set up robot** block the robot is left motor 1, right motor 2, 56 mm wheels 112 mm apart. `then` here is *hold*, *coast*, *brake* or *coast (smart)* (a drive base has no *keep running*: use **drive at**). Both wheels run on one time base, so a straight is straight and an arc is an arc (if one wheel is held back, both wait for it); the distance between the wheels is measured between the tyres' contact patches — check it with one *turn robot 360 degrees* against a mark on the floor.
+One robot per program. Without a **set up robot** block the robot is the standard robot of every example: left motor 4 mounted mirrored (counterclockwise, unless a **set up motor** block for port 4 says otherwise), right motor 3, 62.4 mm wheels 170 mm apart. A **set up robot** block from the toolbox starts on that robot, with the mirrored motor's **set up motor 4** *counterclockwise* under it. `then` here is *hold*, *coast*, *brake* or *coast (smart)* (a drive base has no *keep running*: use **drive at**). Both wheels run on one time base, so a straight is straight and an arc is an arc (if one wheel is held back, both wait for it); the distance between the wheels is measured between the tyres' contact patches — check it with one *turn robot 360 degrees* against a mark on the floor.
 
 **Robot follows its gyro** makes the robot itself, not just its wheels, drive the path: the wheel encoders and an EVN IMU fixed to the chassis track where the robot really is (`evn.Pose`), and every straight, turn and arc is corrected as it goes, so scrub on a turn, a dragged cable and the gyro's drift do not add up over minutes. Put it before the first move and keep the robot still while the program starts: it waits, up to 35 s, for the IMU to settle (an `OSError` if the robot was moving). A robot pushed sideways is the one thing the pose cannot see. The `drive_base_gyro` example is the `drive_base` one with this block.
 
@@ -147,7 +147,7 @@ pose = Pose(4, 3, wheel_diameter=62.4, axle_track=170, reverse_left=True, imu=3,
 drive_base = DriveBase(motor_4, motor_3, wheel_diameter=62.4, axle_track=170, pose=pose)
 ```
 
-(after `imu_3 = IMU(3)` and `compass_14 = Compass(14)`): the pose takes the ports, the wheel and the track of **set up robot**, `reverse_left=True` for a motor set up counterclockwise, the IMU of **robot follows its gyro** (a *stops following* block alone adds none) and the compass of **set up pose**, and the board checks that the robot's and the pose's ports, directions, wheel and track agree. Without a pose block nothing changes: the robot builds its own pose from `imu=`. A program without **set up robot** gets the default robot's pose, `Pose(1, 2, wheel_diameter=56, axle_track=112)`, and no robot line. `examples/04_pose/` has a minimal program (a robot pushed by hand) and a complete one (30 cm out and back with the gyro and a compass).
+(after `imu_3 = IMU(3)` and `compass_14 = Compass(14)`): the pose takes the ports, the wheel and the track of **set up robot**, `reverse_left=True` for a motor set up counterclockwise, the IMU of **robot follows its gyro** (a *stops following* block alone adds none) and the compass of **set up pose**, and the board checks that the robot's and the pose's ports, directions, wheel and track agree. Without a pose block nothing changes: the robot builds its own pose from `imu=`. A program without **set up robot** gets the standard robot's pose, `Pose(4, 3, wheel_diameter=62.4, axle_track=170, reverse_left=True)`, and no robot line. `examples/04_pose/` has a minimal program (a robot pushed by hand) and a complete one (30 cm out and back with the gyro and a compass).
 
 ### Controllers
 
@@ -178,7 +178,7 @@ A line follower is **set** *pid* **to** (**PID** kp *1.5* ki *0.2* kd *0.08* out
 | motor *1* is done / is stalled | `motor_1.done()` / `motor_1.stalled()` |
 | robot distance (mm) / angle (deg) | `drive_base.distance()` / `drive_base.angle()` |
 | robot is done / is stalled | `drive_base.done()` / `drive_base.stalled()` |
-| button pressed? | `button.pressed()` |
+| button pressed? | `button.pressed()`; the program also starts with `set_stop_button(None)`: the button can be read at any moment, so it is an input and not the stop for the whole run (stop such a program with Ctrl+C or **Stop motors**), and a *wait for a button press* in the same program leaves it so |
 | battery voltage (mV) | `battery.voltage()` |
 | battery low? (below *6600* mV) | `battery.low(6600)`: true once the pack, over about the last second, is below the level (or a cell below half of it), until the pack is 150 mV above it again and the weaker cell at half of that. It can read true while the voltage still reads slightly above the level (a weak cell decides first). Any number fits (a computed level is rounded to the nearest mV). 6600 leaves about 35 minutes of driving before the pack switches the board off at about 6.1 V |
 | stopwatch time (ms) | `stopwatch.time()` (a `StopWatch` created at the top of the program) |
@@ -194,7 +194,7 @@ A line follower is **set** *pid* **to** (**PID** kp *1.5* ki *0.2* kd *0.08* out
 | wait until *…* | `while not …: wait(10)` |
 | wait forever | `while True: wait(1000)` (nothing can follow it) |
 | *reset* / *pause* / *resume* stopwatch | `stopwatch.reset()` / `stopwatch.pause()` / `stopwatch.resume()` |
-| wait for a button press | `while not button.pressed(): wait(10)` then `while button.pressed(): wait(10)` (the press also coasts every motor: a start trigger, not something to do mid-move) |
+| wait for a button press | `set_stop_button(None)`, `while not button.pressed(): wait(10)`, `while button.pressed(): wait(10)`, then `set_stop_button(button)`: the stop is off only while the block waits, so the press it waits for is an input and does not end the program, and after the release the button is the stop again (a press then ends the program). In a program that also has *button pressed?* the stop stays off for the run, and the two `set_stop_button` lines are left out |
 
 ### Board
 
@@ -282,14 +282,14 @@ Each sensor has its own sub-category under *Sensors*. Ports are the numbers prin
 | gesture sensor *1* colour | `gesture_sensor_1.color()` |
 | calibrate gesture sensor *1* colour *black (sensor covered)* / *white (a white sheet)* | `gesture_sensor_1.calibrate_black()` / `gesture_sensor_1.calibrate_white()`: the colour calibration, stored for the port like the colour sensor's. Turn the gesture engine off first (gesture mode freezes the colour); the sensor's LED is infrared, so black = the sensor covered completely, white = a white sheet in the room light |
 
-#### Weather sensor
+#### Environment sensor
 
-![The weather sensor's blocks: set up, temperature / humidity / air pressure](images/blocks/blocks-sensors-weather-sensor.png)
+![The environment sensor's blocks: set up, temperature / humidity / air pressure](images/blocks/blocks-sensors-environment-sensor.png)
 
 | Block | Python |
 | :--- | :--- |
-| set up weather sensor on port *1* | `env_sensor_1 = EnvSensor(1)` |
-| weather sensor *1* temperature (C) / humidity (%) / air pressure (Pa) | `env_sensor_1.temperature()` / `.humidity()` / `.pressure()` |
+| set up environment sensor on port *1* | `env_sensor_1 = EnvSensor(1)` |
+| environment sensor *1* temperature (C) / humidity (%) / air pressure (Pa) | `env_sensor_1.temperature()` / `.humidity()` / `.pressure()` |
 
 #### Compass
 
@@ -585,7 +585,7 @@ What the editor does behind the blocks. Not needed to build a program.
 
 - A `.evnblocks` file is JSON (the Blockly workspace); it can be committed, diffed and shared. `<name>.evnblocks.py` is rewritten at every run: edit the blocks, not that file. For the same reason *My projects* hides it, and a Python program of yours cannot be created, renamed or saved under a name ending in `.evnblocks` (the name box refuses it).
 
-A file made before the **set up** and **program** blocks existed opens with its set-up blocks stacked under **set up** and its stacks chained under **program** in the order they used to run (top to bottom, then left to right), so it generates the same program; the first edit saves it in the new format (`"version": 2`). What cannot be placed that way is left loose and named in the status line: a stack that ran after a *forever* ended by a *break* (nothing can follow *forever*), and a value block standing on its own. A file that breaks the rules (edited as text, or merged) opens whole: blocks in the wrong part are taken out as a stack of their own, beside the one they were in, and the blocks after them close up; a second **set up** / **program** is removed and its blocks come loose. The status line says what moved. A file that cannot be opened completely (a block this version does not know) is shown read-only and is never saved, run, uploaded or exported. Open a version-2 file only with this version of the extension or a later one: an earlier one cannot read it (its editor shows an error, and if you edit anyway it saves only what it could read). A file from a later version opens read-only here, and nothing is saved from it.
+A file made before the **set up** and **program** blocks existed opens with its set-up blocks stacked under **set up** and its stacks chained under **program** in the order they used to run (top to bottom, then left to right), so it generates the same program; the first edit saves it in the current format (`"version": 3`). What cannot be placed that way is left loose and named in the status line: a stack that ran after a *forever* ended by a *break* (nothing can follow *forever*), and a value block standing on its own. A file that breaks the rules (edited as text, or merged) opens whole: blocks in the wrong part are taken out as a stack of their own, beside the one they were in, and the blocks after them close up; a second **set up** / **program** is removed and its blocks come loose. The status line says what moved. A file that cannot be opened completely (a block this version does not know) is shown read-only and is never saved, run, uploaded or exported. A file saved before the standard robot became the default (`"version"` 1 or 2, up to 0.2.69) whose program drives or reads the robot without a **set up robot** block drove the old default robot then: it opens with a **set up robot** block for that robot (left motor 1, right motor 2, 56 mm wheels 112 mm apart, mm/s) added at the end of **set up**, and the status line says so, so it still drives the same motors the same way; the first edit saves it as `"version": 3`. To move it to the standard robot, delete that block. Open a version-3 file only with this version of the extension or a later one: an earlier one shows it read-only, says to update the extension, and never saves, runs, uploads or exports it. A file from a later version opens read-only here, and nothing is saved from it.
 
 ### Python blocks
 
@@ -610,7 +610,7 @@ Each device has the few calls a program usually needs; everything else in the AP
 
 - **Motors**: `gears`, `reset_angle=False` and `model=` in the constructor, `speed_unit()` / `full_speed(x)` after it, `control.pid()` / `evn()` / `target_tolerances()` / `stall_tolerances()`, `settings(max_voltage=…)`, `model`, `close()`; the module's `evn.configure_motor()` / `motor_config()` / `clear_calibration()` (the Board view's gear and right-click menu do these).
 - **Robot**: `curve()` (the older Pybricks sign convention of `arc()`), `state()`, `reset(distance, angle)`, `follower()`, `pose_error()`, `speed_unit()` to switch the unit mid-program (**set up robot** sets it once), `then=Stop.COAST_SMART` chains, `close()`.
-- **Every peripheral**: `close()`, `age()`, `read()` (the "wait for a new reading" form of each getter), `raw()`, and the tuning calls — colour sensor `gain()`, `integration_time()`, `ranges()` / `normalized()` (a calibrated white and black), `color_match()`, `thresholds()`, `lux()`, `color_temperature()`; distance sensor `timing_budget()`, `signal_rate_limit()`; gesture sensor `engines()`, `gain()`, `led()`, `gesture_config()`; weather sensor `oversampling()`, `filter()`, `standby()`, `forced()`; compass `field()`, `field_strength()`, `heading_confidence()`, `axes()`, `calibration()` (installing a calibration by hand), `calibrate_directions()` (the Board view draws it), `stored_calibration()`, `clear_calibration()`; touch pads `touched()`, `events()`, `data()`, `thresholds()`, `electrodes()`, `autoconfig()`; IMU `euler()`, `quaternion()`, `acceleration()`, `linear_acceleration()`, `gravity()`, `angular_velocity()`, `temperature()`, `tap()`, `screen_orientation()`, `calibration()`, `cancel_calibration()`, `clear_calibration()`, `calibrate_gyro()`, `settings()`, `ranges()`, `filter()`, `sample_rate()`, `axes()`, `dmp()`; ADC `raw()`, `inputs()`, `range()`, `data_rate()`, `continuous()`.
+- **Every peripheral**: `close()`, `age()`, `read()` (the "wait for a new reading" form of each getter), `raw()`, and the tuning calls — colour sensor `gain()`, `integration_time()`, `ranges()` / `normalized()` (a calibrated white and black), `color_match()`, `thresholds()`, `lux()`, `color_temperature()`; distance sensor `timing_budget()`, `signal_rate_limit()`; gesture sensor `engines()`, `gain()`, `led()`, `gesture_config()`; environment sensor `oversampling()`, `filter()`, `standby()`, `forced()`; compass `field()`, `field_strength()`, `heading_confidence()`, `axes()`, `calibration()` (installing a calibration by hand), `calibrate_directions()` (the Board view draws it), `stored_calibration()`, `clear_calibration()`; touch pads `touched()`, `events()`, `data()`, `thresholds()`, `electrodes()`, `autoconfig()`; IMU `euler()`, `quaternion()`, `acceleration()`, `linear_acceleration()`, `gravity()`, `angular_velocity()`, `temperature()`, `tap()`, `screen_orientation()`, `calibration()`, `cancel_calibration()`, `clear_calibration()`, `calibrate_gyro()`, `settings()`, `ranges()`, `filter()`, `sample_rate()`, `axes()`, `dmp()`; ADC `raw()`, `inputs()`, `range()`, `data_rate()`, `continuous()`.
 - **Displays**: the OLED's drawing calls (`pixel`, `line`, `rect`, `draw_circle`, `draw_text`, `splash`, `contrast`, `flip`, `invert`, `scroll`), the matrix's `bitmap()` / `animate()` / `orientation()` / `blink()` / `hline()` / `vline()` / `rect()`, the 7-segment's `digit()`, `char()`, `point()`, `segments()`.
 - **RGB LEDs**: `range()`, `on()` with a list, `blink()`, `animate()`, `hsv()`, `get()`, `invert()`, `count()`.
 - **Servo**: `set_range()`, `enable()` / `disable()`, and the constructor's `reverse=` / `range=` / `min_us=` / `max_us=`.
