@@ -1,5 +1,146 @@
 # Changelog
 
+## 0.2.71 (2026-10-26)
+- **Files: a write refused while a motor drives no longer corrupts or loses a file.** A refused `write()` writes
+  nothing and can be repeated; a refused `close()` still raises `OSError: [Errno 16] EBUSY` but keeps its data and
+  writes it once the motors stop (or at the program's end); a refused `open()` creates nothing. At most 8 open files
+  and directories per file system (`EMFILE` for the 9th, after one garbage collection); about 1.6 KB of heap is set
+  aside per mounted file system. `DataLog.save()` interrupted by a refusal closes its file at once (the rows written
+  so far reach it once the motors stop) instead of leaving it to the garbage collector. A file object never closed
+  still loses its buffered bytes when the garbage collector frees it while a motor drives (as in 0.2.70): close files
+  or use `with`. After a refused folder change on a board with many folders (about 48 nested or 125 in one folder,
+  counted over the whole file system), the rest of that program cannot write; soft-reset or power-cycle once: that
+  finishes the repair before `boot.py` (a one-time wait, about 15 s at 100 folders in a shallow tree, up to about
+  80 s) and writes work again; the editor waits for it and says "repairing the file system" (see the known
+  limitations).
+- **Firmware: a rare filesystem error on renames between folders fixed.** In 0.2.70 and earlier, `os.rename()` of the
+  only file in a folder into another folder could raise `OSError: 84` although the file was moved: about once in 1 600
+  renames when a program saves to a temporary folder and renames the file into place. From the second such error on,
+  the filesystem could be left damaged (a folder unreadable, or every write failing with `OSError: 84` after a reset,
+  until the flash is reformatted and its files lost). The firmware now carries a one-line fix to LittleFS, the
+  filesystem MicroPython uses (the upstream report: littlefs issue #949). On 0.2.70, keep a second file in the
+  temporary folder, or write the file in place.
+- **Firmware: an OLED the firmware cannot identify still opens.** `Display(port)` on a panel whose status byte does not follow the display commands (the EVN OLED's does; another SSD1306 board's may not) now opens it with a `WARNING:` line instead of timing out (`OSError(ETIMEDOUT)` in 0.2.70). Such a panel is not re-initialised after a reset without an unplug; open it again.
+- **Simulator scoring fixes**: the progress no longer freezes after a detour round an obstacle (it picks up where
+  the robot rejoins the line if the line skipped is within 200 mm plus the distance the robot drove; a cut across the
+  course is not scored, and the progress stays where the robot left the line - though driving back and forth off
+  the line counts as distance too) or at a dead end (a robot that turns round within about 100 mm of the arm's end
+  carries on down the arm instead of counting down; one that turns round further from the end, backs down the arm
+  or is put down on the way back is not scored on the way back, as before); the finish time is taken only when the robot arrives at the end
+  (put down there, it is neither negative nor taken at the first move); "off the line" no longer reads 14-23 mm on
+  the tile after a seesaw. The *Hazards sample*'s obstacle moves to a straight of its own on the way to the Goal,
+  after the bumps, the ramps and the seesaw, with floor on both sides to drive round it (between the seesaw and the
+  long ramp no robot could); the course is now 19 tiles, 6.0 m.
+- **Extension: the robot simulator** (docs/SIMULATOR.md). An EVN ALPHA with no board: the **EVN Simulator** panel shows
+  a robot on a line-following course (the Rescue Line tiles of the firmware's line-following simulation, an oval for
+  laps, or an empty floor), and while it is open the simulated board is the port **EVN simulator**. Run, Upload as
+  main.py, the REPL, Stop, the Board view (live motors, battery, colour sensors, the motor buttons, the command line)
+  and the Console all reach it, on the desktop and in the browser IDE, with no Python or mpremote installed. Open it
+  from *Start*, the Board view's new **Simulator** row, **EVN: Open the simulator** or the port picker.
+- **The simulated board acts as the board does**: `read()` returns at the sensor's next sample (it waited for a 10 ms
+  step, half the colour sensor's rate); in `SpeedUnit.PERCENT` the done() tolerances stay 50 deg/s; a file write while
+  a motor drives is `OSError: 16` (EBUSY) (`dc(0)` drives until any coast, and so does a motor the Board view's
+  buttons turn), a file error carries MicroPython's errno (`ENOENT` 2, not 44), and a file a program writes stays at
+  the next Run and is listed, downloaded and deleted in the Board view; `time` has the board's names only (no `time.time()`), `sys.print_exception()`
+  is there and `help()` prints the board's text; tracebacks show the program's frames only; and the binding's argument
+  rules and values: `drive(50)` in PERCENT is a `TypeError`, `arc(0, ...)` a `ValueError`, a move at speed 0 runs at
+  1 deg/s, `control.limits()` reads and applies the model's torque, keyword use of a positional-only argument is a
+  `TypeError`, `stall_timeout` is checked, `target_tolerances(speed=0)`, `full_speed(deg_s)` and wheels with different
+  gears are accepted, `motor.model` and `control.pid()` / `evn()` / `state()` are there (`pid()`, `evn()` and
+  `model.settings()` are kept and read back; the simulated controller does not use them), `DriveBase.state()` gives
+  floats and `Motor(1.0)` is a `TypeError`. Each Run starts in the flash's top folder again. A file deleted in the
+  Board view while the console is live is gone for the next program too (it could still be imported).
+- **The hardware configurator**: the simulated robot's drive base (motor model, ports, which motor is mounted
+  mirrored, wheel diameter, axle track) and up to four colour sensors (I2C port, position, height), kept per user;
+  **Copy setup code** gives the lines that build the robot in a program, **New program** writes a first line
+  follower for it. Drag the robot to place and turn it; the panel times each run and says when the course is done.
+- **The map builder** (docs/SIMULATOR.md, "Building a map"): build your own course from the tiles of a RoboCup Junior
+  Rescue Line competition set - all 37 kinds of its tile list (104 tiles: straights, gaps, kinks, zigzags, chicanes,
+  corners, roundabouts, intersections, the Start and the Goal, ramps), each drawn as printed and checked against the
+  drawings to within 2 mm. Place, turn and drag tiles on a 300 mm grid, and put the rules' 25 mm green intersection
+  markers on the junctions (T, crossings, Y, roundabouts: left, right, a dead end on both sides, straight on with
+  none - checked against all ten figures of the 2026 rules, 3.6); the builder draws the line the robot will be
+  scored along and says what is wrong (a tile off the line, a line that stops, a junction with no way on, a
+  roundabout with no way out, no Goal, more of a tile than the set has). Maps are kept per user, listed under *Course*, and export to / import from a `.evnmap.json` file. A new
+  course, *Tile set sample*, is 21 of the set's tiles from Start to Goal (7.7 m).
+- **The simulator in 3D** (docs/SIMULATOR.md, "The 3D elements"): the RoboCup Junior Rescue Line 2026 rules' 3D
+  elements. In the map builder a tile takes a **height** (a ramp climbs from it: 137.5 mm for a short ramp, 275 mm for
+  a long one, at 24.6°; a tile placed next to another takes its height), a tile 260 mm or more up (250 mm clear under it) is a **bridge** on
+  25 mm pillars that the robot drives under, a straight can be a **seesaw** (15° either way), and **obstacles**
+  (fixed, heavy or light enough to push), **speed bumps** (up to 10 mm) and **debris** (loose 3 mm dowels) go on the
+  course. The robot rolls over the heights (its wheels climb a bump's edge, the caster rests, the body and the sensors
+  scrape), gravity loads its motors up a ramp and holds or rolls it on one, it tips a seesaw, stops against what is
+  solid and pushes what is light, and drops off an edge. A new course, *Hazards sample (3D)*. The **3D** button shows
+  the course and the robot in 3D (orbit, zoom, follow).
+- **The robot's chassis, distance sensors and an IMU** in the configurator: its mass, body, height, clearance and
+  caster; up to four VL53L0X `DistanceSensor`s (they see obstacles, pillars and the sides of ramps) and an MPU-6500
+  `IMU` (heading, tilt on a ramp or a seesaw), with the firmware's API in the simulator's `evn`. The default robot
+  gets the owner's robot's distance sensor on port 5. The robot's tyres now grip and slip as tools/linefollow's model
+  has them (they used not to slip), and a colour sensor's reading follows its height over the floor.
+- **Fixed:** after the robot was put down (Back to start, or dragged), its colour sensors stopped sampling.
+- **Fixed in the simulated robot's motion and physics:** `run_time()` given while the motor turned kept the speed
+  it had and then stopped dead; it now goes the firmware's distance (a run from rest at the speed for the time:
+  186.7 degrees for `run_time(200, 1000)` after `run(800)`, 793 before) and is done at its time; with
+  `then=Stop.NONE` it goes the distance a run from rest covers with no slowing down and runs on from there at
+  `speed` (100 degrees/s after `run(1000)` and `run_time(100, 200, then=Stop.NONE)`, 400 before; a `time` too short
+  to reach `speed` now goes on up to it, as the board does: 1000 degrees/s after `run_time(1000, 300,
+  then=Stop.NONE)`, 900 before); a move with `then=Stop.NONE` never finished, so `run_time()` and `run_angle()` with
+  it and `wait=True` hung (they return at `time`, and at the target, as on the board); a `wait=True` move returned up
+  to 10 ms after it was done (now at the tick it is done, never before its `time`); a `run_angle()` or `run_target()`
+  given while the motor turned always carried its speed on, even toward a target too close to stop at or behind it,
+  and `run_time()` carried on a coasting or braked motor's speed (a move given while the motor turns over 5
+  degrees/s now chains the speed only when the motor is held by a command - `run()`, a move, `dc()` - with room to
+  stop before the target, else it starts from rest on the shaft and brakes, as the board does: up to 1500 degrees/s
+  off before);
+  `run_time(0, t)` kept a moving motor moving (it now holds it where it is, done when `t` is up); `curve(0, angle)`
+  did nothing (it turns on the spot, as on the board); a `turn()` during `drive()` stopped the forward motion in one tick (each wheel now gets
+  its own move as on the board: the outer wheel carries its speed on, the inner one brakes - the robot runs on about
+  30 mm and comes back to where the turn was called); a second `DriveBase` froze the first (every drive base is
+  ticked); the IMU's accelerometer never felt a crash (it reads the mean acceleration over its period, so driving into
+  a wall at 300 mm/s reads the +-2 g range's -2 g, 0 before); `dmp(False)` left the IMU at +-2 g where the board
+  goes back to +-16 g (a `dmp(False)` with the DMP already off keeps `ranges()`, as on the board), and
+  `linear_acceleration()`, `read()` and `angular_velocity()` were not held to the range; a pushed obstacle went into the side of a raised tile and
+  stayed there (it stops at the side, and still slides up a ramp onto the tile at its top; a box pushed slowly off a
+  raised tile came to rest up to 11 mm inside its footprint: the side now pushes it out at rest too, and a loose box
+  it meets, and loose boxes beyond that in a row up to 8 deep, are shoved on as far as they can go, at most 3 mm a
+  tick; a box jammed against a fixed one stays where it is; a row of 12 or more touching loose boxes still stops the
+  robot); a colour sensor sampled
+  every 5.0 ms, not 4.8 (2083 samples in 10 s, 2000 before); a 300 mm wheel on a Pololu 25D or a CHR-GM16 never
+  finished a move (the wheels' control law now assumes the configured wheel and mass, not a fixed 1.6 times the
+  motor's inertia: `straight(1000)` done in 0.68 s and 3.04 s; the default robot's moves end at their profile's end,
+  `straight(500)` in 1.28 s, 1.40 before).
+- The simulator runs the program in Pyodide (CPython 3.13 in WebAssembly) with an `evn` module that has the
+  simulated robot's hardware - `Motor`, `DriveBase`, `ColorSensor`, `PID`, `wait`, `StopWatch` and the rest of the
+  board's basics, with the firmware's arguments and errors - and MicroPython's `time.ticks_*`, `micropython.const`
+  and traceback layout. Pyodide (MPL-2.0) ships in the extension (`media/pyodide`, about 12 MB).
+- **Fixed: the panel reaches a running program.** The **Button** now reaches a program waiting for it
+  (`while not button.pressed(): wait(10)`, the *01 Board* example, used to wait for ever), a **Speed** change takes
+  effect at once instead of after the run, and **Stop** (Ctrl-C) coasts the motors, as the board does, and raises
+  exactly one `KeyboardInterrupt`: the program's `finally:` / `except KeyboardInterrupt:` runs to its end (a board call
+  in it used to raise a second one and cut it short), and the run ends after it. This works where the page can share
+  memory with the simulator, and where the editor's JavaScript engine has WebAssembly JS Promise Integration (the
+  program hands the simulator a turn every few milliseconds; each board call costs about 0.1 µs more of the computer's
+  time, and the program's clock is unchanged: its waits end where they asked, a late timer slows the run on the wall
+  instead); with JS Promise Integration the **Course** list can change the course mid-run too. With neither, the Button
+  and the Speed wait for the program's end as before, the Course list waits until no program runs, and Stop restarts the
+  simulated board (docs/SIMULATOR.md, "Good to know"). Pressing and releasing the Button with no program running starts
+  `main.py` when the board has one. `import signal` fails, as on the board (it has no such module). A `print()` without
+  a newline shows when the program waits, not only at the next newline. A new `Motor()` starts from its model's speed
+  and acceleration limits, and a new `IMU()` at 200 Hz, as on the board (a previous run's `control.limits()` or
+  `sample_rate()` used to carry over).
+- **The simulator's licence** (docs/SIMULATOR.md, "Licence"): the simulator is free until 31 December 2026. From 1
+  January 2027 it is free for 14 days from the first time it opens, and after that it opens with a licence key - one
+  line of text that starts with `EVNSIM1.`, checked by the extension itself with no internet connection, on the desktop
+  and in the browser IDE (on the desktop, Settings Sync carries it to your other computers). The panel's header and the
+  Board view's *Simulator* row say until when it is free, or the trial's days left. New commands: **EVN: Enter a
+  simulator licence key**, **EVN: Show the simulator licence**, **EVN: Remove the simulator licence key**. Schools in
+  Singapore can buy licences through Vendors@Gov; anyone else: kenneth@coresg.tech.
+- **Extension: updating the extension from inside VS Code works again** ("No Servers"). Recent VS Code desktop builds hand the extension a storage folder under a `vscode-userdata:` address that the installer cannot read from; the downloaded VSIX is now saved under the same folder's plain file path. An update started from 0.2.70 still runs 0.2.70's code: if it says "No Servers", use its **Download** button and install the VSIX by hand (Extensions view, *Install from VSIX...*) once.
+- **Firmware: the flash layout re-picked on the board** for this release's code (the OLED and file-system changes moved the interpreter 112 B and reordered the calls into RAM): every measured program loop is as fast as on 0.2.70 or faster (below).
+- Memory: static RAM headroom 5 852 B (0.2.70: 5 884 B) against the 5 644 B floor (the LittleFS guard's call chain raised it from 5 204 B); the Python heap 128 KB, of which the file system now keeps 1 632 B per mounted file system for the write guard.
+- **How this release was checked:** the release check on the drive-base board alone (two EV3 Medium wheels, an MPU-6500, a compass), 4 alternating runs against 0.2.70 and 0.2.62: motion (the loaded move set on the EV3 Medium) every row within noise and every move done in 4 of 4 runs, no motion-core miss; the main core's loops every row within noise of 0.2.70 - a drive program's polling loop -5.0 %, the Pose's price -6.5 %, the busy loop -3.1 % (-2.8 % with sensors open), `db.distance()` -1.7 %, the IMU + compass loop +1.0 % (docs/gates/0.2.71.md). The same code on 0.2.70's layout had run five of those loops 1.3-40 % slower, so the layout was searched on the board first.
+- **Known in this release:** single motor and drive-base getter calls cost more than on 0.2.70 on the drive-base board (accepted by the owner 2026-10-26, measured in 4 alternating runs an image): `motor.load()` 14 -> 42 us, `motor.done()` 10 -> 20 us, `model.state()` 47 -> 62 us, `db.done()` 16 -> 53 us a call; the first call after a pause (cold) +21 % to +177 % on 14 getters (angle, speed, load, stalled, done, control.stalled, angle.geared, model.state, pose.position / heading / state, db.angle / done / stalled). The loops above, which call them, are faster. The CHR-GM16-030PA settle (+1.3 ms vs 0.2.69) and W1 (a calculation running 3 s without a wait reboots the board) are unchanged from 0.2.70.
+
 ## 0.2.70 (2026-10-21)
 - **Firmware: the drive-base and motor fixes land** (issues #2-#17, held back from 0.2.68 and 0.2.69). Drive base: with `use_gyro(True)` a `drive()` loop is corrected again (#2); calling `use_gyro(True)` again on a moving base keeps the correction (it threw it away, and the robot swung about 6°, #3); a second base's `stop()` / `brake()` no longer switches off the first base's chassis loop (#4); `then=Stop.COAST_SMART` under the gyro keeps the pose correction (#5); `done()` stays False during a gyro `drive()` (it turned True after 2 s, #6); every maneuver accelerates at the `settings()` value, not at 96 % of it (#7). Motors: `dc()` under a voltage cap no longer makes `load()` read a load that is not there (#8); `run_time(..., then=Stop.NONE)` returns at the end of its time, and `run_time(0, t, then=Stop.NONE)` no longer creeps for ever (#11); `full_speed()` reads back right under a voltage cap (#12); a low-resolution custom encoder keeps `run()`'s exact speed (#13: an 80-count motor at `run(333)` for 270 s ended 20.5 counts short on 0.2.69, 0.8 on 0.2.70); an asymmetric `control.limits(acceleration=(a, d))` no longer slows every move (#14); `run_until_stalled(then=Stop.NONE)` no longer leaves the motor pushing into the obstruction at the full pack (#15); after a soft reset (Ctrl-D, or a Run from VS Code, which starts with one) a new `Motor(port)` starts from the defaults, not from the last program's stall tolerances, gains and settings; a `main.py` started again with the user button runs in the same boot and keeps them (#16); switching an axis the PID law holds to `control.law('adrc')` no longer kicks the motor the wrong way (#17). On the PID law: the stiction floor no longer pushes a negative `track_target()` the wrong way (#9), `stalled()` fires in reverse too, so `run_until_stalled(-speed)` returns (#10), and `stalled()` no longer reports a freely turning shaft. Each fix was reviewed and checked on the host; #5, #17 and the free-shaft `stalled()` fix on the host only, the others also on a board where the bug shows.
 - **Firmware: more time for your program.** The board's main core skips the drivers of devices nothing has opened, and the firmware's code is placed in flash by a layout measured on a board, so the fixes above no longer cost your program time (as they did in 0.2.68's builds). Measured by the release check on this release's own file against 0.2.69 (the drive-base board, 4 alternating runs): the time a pass takes is 20.2 % less for a busy loop, 50.3 % less for the `Pose`'s price, 17.4 % less for `db.distance()`, 39.6 % less for a drive program's polling loop, 41.2 % less for a loop reading the IMU and the compass and 17.4 % less for a busy loop with sensors open.

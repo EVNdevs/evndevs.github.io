@@ -2019,7 +2019,7 @@ class IMU:
     quaternion carry on through it. After a longer pause the waiting packets are dropped, and a turn
     made during that pause may be missing from ``heading()``.
     """
-    def __init__(self, port: int, /, *, calibrate: bool = False) -> None:
+    def __init__(self, port: int, *, calibrate: bool = False) -> None:
         """Start the IMU on I2C port 1..16. The port's stored calibration (``calibrate()``) is applied
         by default: its gyro and accelerometer offsets and its axes. ``calibrate=True`` runs a new one
         first (~2 s, the robot still on a level surface); a failed one raises ``RuntimeError``. On a port
@@ -2420,6 +2420,12 @@ class Display:
     the confirming re-send and can take up to about 740 ms on a panel that has just been plugged in;
     the confirming setup is re-sent on every attach. Bench-validated on the EVN OLED (an SSD1315)
     2026-09-17.
+
+    A device at the address whose status byte does not follow the display commands (a panel the
+    firmware cannot identify) is opened anyway, about 0.5 s later, and the constructor prints one
+    line ``WARNING: Display(n): the device at I2C 0x3c is not identified ...``: it draws as usual,
+    but a reset without an unplug (or an unplug shorter than about 0.3 s) leaves it dark until the
+    display is opened again; a longer unplug identifies whatever is plugged in afresh.
 
     **Scrolling**: the panel's RAM may not be written while a hardware scroll runs, so drawing is
     held back until it stops. The first drawing call after ``scroll()`` stops the scroll and repaints
@@ -2823,8 +2829,9 @@ class Flash:
     **refused while any motor is driving** (``run()``/``dc()``, an unfinished ``run_angle``/``run_target``/
     ``run_time`` or DriveBase maneuver, a moving ``track_target``) with ``OSError(EBUSY)`` (errno 16): a
     flash write would stall the 1 kHz motion engine for 45..400 ms, so the firmware refuses instead of
-    pausing. A holding, braked or coasting motor does not block a write; reads and ``import`` are never
-    refused. Write logs after the move (``stop()``/``hold()``/``wait=True``, then write) or catch the error
+    pausing. A holding, braked or coasting motor does not block a write. Reads and ``import`` are not refused,
+    except ``read()`` / ``seek()`` on a file opened for writing whose writes are not on the flash yet, and an
+    ``open()`` of a file whose refused ``close()`` is still waiting. Write logs after the move (``stop()``/``hold()``/``wait=True``, then write) or catch the error
     and write later."""
     def __init__(self) -> None: ...
 

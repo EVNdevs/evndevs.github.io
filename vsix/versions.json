@@ -1,0 +1,389 @@
+{
+  "versions": [
+    {
+      "version": "0.2.70",
+      "file": "evn-alpha-micropython-0.2.70.vsix",
+      "url": "https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.70/evn-alpha-micropython-0.2.70.vsix",
+      "sha256": "939386818f07ceb09f1518dab17b58fb3111a099176e459cdaf98047ca1f3d63",
+      "size": 4860802
+    },
+    {
+      "version": "0.2.69",
+      "file": "evn-alpha-micropython-0.2.69.vsix",
+      "url": "https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.69/evn-alpha-micropython-0.2.69.vsix",
+      "sha256": "630f19ffc880b3d3fd92d4f8743de24242ef100c5a94d54b827c40706de97014",
+      "size": 4856128
+    },
+    {
+      "version": "0.2.68",
+      "file": "evn-alpha-micropython-0.2.68.vsix",
+      "url": "https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.68/evn-alpha-micropython-0.2.68.vsix",
+      "sha256": "606bea508305ae04aa82043550753758c033ba9f67746b4705ab756c346a34ab",
+      "size": 4846283
+    },
+    {
+      "version": "0.2.67",
+      "file": "evn-alpha-micropython-0.2.67.vsix",
+      "url": "https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.67/evn-alpha-micropython-0.2.67.vsix",
+      "sha256": "0b04200c71b6b0d687cefe498f2d4d8a0c06939de8f78fe00b9ca3893417390e",
+      "size": 2922945
+    },
+    {
+      "version": "0.2.66",
+      "file": "evn-alpha-micropython-0.2.66.vsix",
+      "url": "https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.66/evn-alpha-micropython-0.2.66.vsix",
+      "sha256": "c958ac1163e710050e06894ef5c4f71baa843962752b91557c7225aa53532758",
+      "size": 2919216
+    },
+    {
+      "version": "0.2.65",
+      "file": "evn-alpha-micropython-0.2.65.vsix",
+      "url": "https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.65/evn-alpha-micropython-0.2.65.vsix",
+      "sha256": "f7b4b8de71469810c7ca14fe8e316cbf3fabda15555ff6020cc9c121c8fbb013",
+      "size": 2842974
+    },
+    {
+      "version": "0.2.64",
+      "file": "evn-alpha-micropython-0.2.64.vsix",
+      "url": "https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.64/evn-alpha-micropython-0.2.64.vsix",
+      "sha256": "6120514fbe3dbab6df1a64026fd093a0059e7728b86a4742f0632952003a248f",
+      "size": 2838715
+    },
+    {
+      "version": "0.2.63",
+      "file": "evn-alpha-micropython-0.2.63.vsix",
+      "url": "https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.63/evn-alpha-micropython-0.2.63.vsix",
+      "sha256": "28aca7f4025e895f3a748e592981cd4a408d5089082f18c1e019a6d7bb66fe20",
+      "size": 2801730
+    },
+    {
+      "version": "0.2.62",
+      "file": "evn-alpha-micropython-0.2.62.vsix",
+      "url": "https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.62/evn-alpha-micropython-0.2.62.vsix",
+      "sha256": "05bfbbb1465db2f7815cb81e246030041ef36f2bc4d234441e2cf7b10cf98039",
+      "size": 2789046
+    },
+    {
+      "version": "0.2.61",
+      "file": "evn-alpha-micropython-0.2.61.vsix",
+      "url": "https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.61/evn-alpha-micropython-0.2.61.vsix",
+      "sha256": "744b04e8e08df0be819bf01ef7a584b5f0d9bf45ca71bb9978925a797f2c1eb8",
+      "size": 2785865
+    },
+    {
+      "version": "0.2.60",
+      "file": "evn-alpha-micropython-0.2.60.vsix",
+      "url": "https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.60/evn-alpha-micropython-0.2.60.vsix",
+      "sha256": "f7133235cd6624f74ede0bc967aa3fcc1b911d177e034bf06e7583903b87e872",
+      "size": 2757566
+    },
+    {
+      "version": "0.2.59",
+      "file": "evn-alpha-micropython-0.2.59.vsix",
+      "url": "https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.59/evn-alpha-micropython-0.2.59.vsix",
+      "sha256": "f882406acca6bbe766abb30fe3807622c8b76907cc62d749ca579c868dfbe5a3",
+      "size": 2675646
+    },
+    {
+      "version": "0.2.58",
+      "file": "evn-alpha-micropython-0.2.58.vsix",
+      "url": "https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.58/evn-alpha-micropython-0.2.58.vsix",
+      "sha256": "0fe0d7e66bb882e197fe1d3bc2acfce39781ef04b0c770aa736dc2d977912a7f",
+      "size": 2584248
+    },
+    {
+      "version": "0.2.57",
+      "file": "evn-alpha-micropython-0.2.57.vsix",
+      "url": "https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.57/evn-alpha-micropython-0.2.57.vsix",
+      "sha256": "43b988a30d9163c1c45758657e5707ded9dd5584fec492a11f48ccfa76233306",
+      "size": 2495711
+    },
+    {
+      "version": "0.2.56",
+      "file": "evn-alpha-micropython-0.2.56.vsix",
+      "url": "https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.56/evn-alpha-micropython-0.2.56.vsix",
+      "sha256": "0201c07076569ff99236d65fd9081c1f8c3c78ec3b313bcd9ec05a73eb6617d3",
+      "size": 2491021
+    },
+    {
+      "version": "0.2.55",
+      "file": "evn-alpha-micropython-0.2.55.vsix",
+      "url": "https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.55/evn-alpha-micropython-0.2.55.vsix",
+      "sha256": "518a31e9dddca81d77c31ccef191904ac72f9a5e6cf2aa9809358d870338b611",
+      "size": 2489978
+    },
+    {
+      "version": "0.2.54",
+      "file": "evn-alpha-micropython-0.2.54.vsix",
+      "url": "https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.54/evn-alpha-micropython-0.2.54.vsix",
+      "sha256": "7ea5fbeb58cce55a0d26d953e68c71498f5cabed40e0ee0f91a48f3d3f112248",
+      "size": 2481086
+    },
+    {
+      "version": "0.2.53",
+      "file": "evn-alpha-micropython-0.2.53.vsix",
+      "url": "https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.53/evn-alpha-micropython-0.2.53.vsix",
+      "sha256": "9f32bd41100cd08a644cdf2033fd6d2a12811a00181ff4f9b0679e0963710ca3",
+      "size": 2463493
+    },
+    {
+      "version": "0.2.52",
+      "file": "evn-alpha-micropython-0.2.52.vsix",
+      "url": "https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.52/evn-alpha-micropython-0.2.52.vsix",
+      "sha256": "2d866f4b3271285b3891007e7d7783c687699537d6d90c4de9e2769683b329fd",
+      "size": 2461472
+    },
+    {
+      "version": "0.2.51",
+      "file": "evn-alpha-micropython-0.2.51.vsix",
+      "url": "https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.51/evn-alpha-micropython-0.2.51.vsix",
+      "sha256": "29caccee6d4a5a89949bd334fba4f84fe228d99639a90b8fd4410e2bd0d4df2e",
+      "size": 2460293
+    },
+    {
+      "version": "0.2.50",
+      "file": "evn-alpha-micropython-0.2.50.vsix",
+      "url": "https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.50/evn-alpha-micropython-0.2.50.vsix",
+      "sha256": "6c20666e00e0c70ea74f7c51d173619129e102ecd12efe4f0e3bce06194572c8",
+      "size": 2458340
+    },
+    {
+      "version": "0.2.49",
+      "file": "evn-alpha-micropython-0.2.49.vsix",
+      "url": "https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.49/evn-alpha-micropython-0.2.49.vsix",
+      "sha256": "3652e07e1aaaac8cb616c7cbbfab3dc00e438cc4fa214b02db84cfe44f530da5",
+      "size": 2457663
+    },
+    {
+      "version": "0.2.48",
+      "file": "evn-alpha-micropython-0.2.48.vsix",
+      "url": "https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.48/evn-alpha-micropython-0.2.48.vsix",
+      "sha256": "fa3571e3a0ee06d597f4990443d11b347070c40197a0305fd38f4faa907a3b0c",
+      "size": 2448189
+    },
+    {
+      "version": "0.2.47",
+      "file": "evn-alpha-micropython-0.2.47.vsix",
+      "url": "https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.47/evn-alpha-micropython-0.2.47.vsix",
+      "sha256": "facd470d175310939e62aade46266fb6d4db71bb4624c5bc3318e4b73c510a79",
+      "size": 2446907
+    },
+    {
+      "version": "0.2.46",
+      "file": "evn-alpha-micropython-0.2.46.vsix",
+      "url": "https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.46/evn-alpha-micropython-0.2.46.vsix",
+      "sha256": "c3f601a95ac037c2d234989766bec3b58f580dfe3dc72ed8fabca88bb2613121",
+      "size": 2445124
+    },
+    {
+      "version": "0.2.45",
+      "file": "evn-alpha-micropython-0.2.45.vsix",
+      "url": "https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.45/evn-alpha-micropython-0.2.45.vsix",
+      "sha256": "2f3dc30cb5ce2e1899ec03d31dcaae5c55d45e51f12100650257e8fce6432354",
+      "size": 2441198
+    },
+    {
+      "version": "0.2.44",
+      "file": "evn-alpha-micropython-0.2.44.vsix",
+      "url": "https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.44/evn-alpha-micropython-0.2.44.vsix",
+      "sha256": "0417917854e44157fc03f1b22824ab6251d2612fe2d22b5d83254842a56fe124",
+      "size": 2353256
+    },
+    {
+      "version": "0.2.43",
+      "file": "evn-alpha-micropython-0.2.43.vsix",
+      "url": "https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.43/evn-alpha-micropython-0.2.43.vsix",
+      "sha256": "db69c6096ef3fe36f4ccf8ffac987fe9e6cd0b1b95aab3c11875dcfc5c58dc81",
+      "size": 2352424
+    },
+    {
+      "version": "0.2.42",
+      "file": "evn-alpha-micropython-0.2.42.vsix",
+      "url": "https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.42/evn-alpha-micropython-0.2.42.vsix",
+      "sha256": "e353e63814e8e9967d5a58c808a58162b64a0baa591160c2cad4c2b69d55d019",
+      "size": 2350466
+    },
+    {
+      "version": "0.2.41",
+      "file": "evn-alpha-micropython-0.2.41.vsix",
+      "url": "https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.41/evn-alpha-micropython-0.2.41.vsix",
+      "sha256": "0c05dc44cb33c7a51e574128790563dfbbbcfd34a963dbe9c1a446e129e70d6d",
+      "size": 2348878
+    },
+    {
+      "version": "0.2.40",
+      "file": "evn-alpha-micropython-0.2.40.vsix",
+      "url": "https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.40/evn-alpha-micropython-0.2.40.vsix",
+      "sha256": "adb4f12ace45f987835247031caa8ed972d6086b824510407255cc2332dd9ef0",
+      "size": 2344006
+    },
+    {
+      "version": "0.2.39",
+      "file": "evn-alpha-micropython-0.2.39.vsix",
+      "url": "https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.39/evn-alpha-micropython-0.2.39.vsix",
+      "sha256": "cdffba9e4c3752aa1c992022d6ef932940f43ce27c47ad2ec70351e827d2505e",
+      "size": 2331256
+    },
+    {
+      "version": "0.2.38",
+      "file": "evn-alpha-micropython-0.2.38.vsix",
+      "url": "https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.38/evn-alpha-micropython-0.2.38.vsix",
+      "sha256": "e99398da565a008c16c089b67274df4d9f095cfac054896e777c698b687de2fb",
+      "size": 2245063
+    },
+    {
+      "version": "0.2.37",
+      "file": "evn-alpha-micropython-0.2.37.vsix",
+      "url": "https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.37/evn-alpha-micropython-0.2.37.vsix",
+      "sha256": "181d57b64b1204405b7d524ad0a358f92474f53f2a29da42574375747cc04c95",
+      "size": 2236932
+    },
+    {
+      "version": "0.2.36",
+      "file": "evn-alpha-micropython-0.2.36.vsix",
+      "url": "https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.36/evn-alpha-micropython-0.2.36.vsix",
+      "sha256": "1cbe350ad87d3d2aff70cfab5fa88b96a5c2ea0832ff6f90aacf8eab09bb36d1",
+      "size": 2233754
+    },
+    {
+      "version": "0.2.35",
+      "file": "evn-alpha-micropython-0.2.35.vsix",
+      "url": "https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.35/evn-alpha-micropython-0.2.35.vsix",
+      "sha256": "736b318f04271452070c2af54ac2fcebbe14842805bad92f2f3f2824be943d60",
+      "size": 1398536
+    },
+    {
+      "version": "0.2.34",
+      "file": "evn-alpha-micropython-0.2.34.vsix",
+      "url": "https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.34/evn-alpha-micropython-0.2.34.vsix",
+      "sha256": "397699f149987a06398bcc7df51beed24547c7deafe9ecdd5b49299c67cb63c0",
+      "size": 1397783
+    },
+    {
+      "version": "0.2.33",
+      "file": "evn-alpha-micropython-0.2.33.vsix",
+      "url": "https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.33/evn-alpha-micropython-0.2.33.vsix",
+      "sha256": "6ee28f79779ef7bd46b165e004986154939407331eae142963448c2a434aceef",
+      "size": 1373271
+    },
+    {
+      "version": "0.2.32",
+      "file": "evn-alpha-micropython-0.2.32.vsix",
+      "url": "https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.32/evn-alpha-micropython-0.2.32.vsix",
+      "sha256": "06ebc232c3214b5e89209e69d89c9d9d02120c3fb964b348f49a9e46a71bc5df",
+      "size": 1371320
+    },
+    {
+      "version": "0.2.31",
+      "file": "evn-alpha-micropython-0.2.31.vsix",
+      "url": "https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.31/evn-alpha-micropython-0.2.31.vsix",
+      "sha256": "2f0986e7624620cbe604ea462f5cd584ecb5274b7450053bf0b49b421f325990",
+      "size": 1371155
+    },
+    {
+      "version": "0.2.30",
+      "file": "evn-alpha-micropython-0.2.30.vsix",
+      "url": "https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.30/evn-alpha-micropython-0.2.30.vsix",
+      "sha256": "a974c74ffd6bd5b4f49616f9f3761fb76cf143de225de85b114a58594e87ef42",
+      "size": 1365607
+    },
+    {
+      "version": "0.2.29",
+      "file": "evn-alpha-micropython-0.2.29.vsix",
+      "url": "https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.29/evn-alpha-micropython-0.2.29.vsix",
+      "sha256": "8fde7d6cea83832a5e20b558b1512f176740f0b61bc03d269e09036a57605ebb",
+      "size": 1345957
+    },
+    {
+      "version": "0.2.28",
+      "file": "evn-alpha-micropython-0.2.28.vsix",
+      "url": "https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.28/evn-alpha-micropython-0.2.28.vsix",
+      "sha256": "dea769af4f2758396c5326ccef3b3804e06180da34ebd5df6684f084a73eeb3c",
+      "size": 1324592
+    },
+    {
+      "version": "0.2.27",
+      "file": "evn-alpha-micropython-0.2.27.vsix",
+      "url": "https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.27/evn-alpha-micropython-0.2.27.vsix",
+      "sha256": "196f68dce91f4ffa3a08f9e907b6c38f662afd353a7c4048c01e75e4eb97b7fe",
+      "size": 1319382
+    },
+    {
+      "version": "0.2.26",
+      "file": "evn-alpha-micropython-0.2.26.vsix",
+      "url": "https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.26/evn-alpha-micropython-0.2.26.vsix",
+      "sha256": "cf438dc860093446cc95fc40659de5942848a392886af4aa340677bf6e175807",
+      "size": 1318336
+    },
+    {
+      "version": "0.2.25",
+      "file": "evn-alpha-micropython-0.2.25.vsix",
+      "url": "https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.25/evn-alpha-micropython-0.2.25.vsix",
+      "sha256": "d3891058597e945976aa1e0c38d5e266b85e5f8c8376125d0dfc5cd5f5fab886",
+      "size": 1307115
+    },
+    {
+      "version": "0.2.24",
+      "file": "evn-alpha-micropython-0.2.24.vsix",
+      "url": "https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.24/evn-alpha-micropython-0.2.24.vsix",
+      "sha256": "956f303bc8b79257c30abca073ce64cc34f5223f29ff4c751cdbd87aff9ffc91",
+      "size": 1306501
+    },
+    {
+      "version": "0.2.23",
+      "file": "evn-alpha-micropython-0.2.23.vsix",
+      "url": "https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.23/evn-alpha-micropython-0.2.23.vsix",
+      "sha256": "37e7a00540d9a09ff49fbb22d525d90f03c0a1d0e498a5c33cfd22a93394185c",
+      "size": 1305050
+    },
+    {
+      "version": "0.2.22",
+      "file": "evn-alpha-micropython-0.2.22.vsix",
+      "url": "https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.22/evn-alpha-micropython-0.2.22.vsix",
+      "sha256": "c67bacfdf65bb2c132d1c04b43825199fadad060103cbeaebeefc6b602e3a22c",
+      "size": 1302305
+    },
+    {
+      "version": "0.2.21",
+      "file": "evn-alpha-micropython-0.2.21.vsix",
+      "url": "https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.21/evn-alpha-micropython-0.2.21.vsix",
+      "sha256": "865c0cf80dd0996d709b4ef5c62396f748e5a85c94c35f88a906c3ebf138253c",
+      "size": 1286580
+    },
+    {
+      "version": "0.2.20",
+      "file": "evn-alpha-micropython-0.2.20.vsix",
+      "url": "https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.20/evn-alpha-micropython-0.2.20.vsix",
+      "sha256": "43b5050d13b56dc05a6c6a0acdbda50979bc4cf86b1ca4c21477dd88222cdeca",
+      "size": 1251741
+    },
+    {
+      "version": "0.2.19",
+      "file": "evn-alpha-micropython-0.2.19.vsix",
+      "url": "https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.19/evn-alpha-micropython-0.2.19.vsix",
+      "sha256": "4e05dbf13e6f25223b815c13879adb2cd90d35e734c052f406f3e62f06c5873b",
+      "size": 1251935
+    },
+    {
+      "version": "0.2.18",
+      "file": "evn-alpha-micropython-0.2.18.vsix",
+      "url": "https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.18/evn-alpha-micropython-0.2.18.vsix",
+      "sha256": "e07efda1e43efbcc233d4636b0f4338c53aa0181c4fa5a66c536653b4f6b9da7",
+      "size": 1250829
+    },
+    {
+      "version": "0.2.17",
+      "file": "evn-alpha-micropython-0.2.17.vsix",
+      "url": "https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.17/evn-alpha-micropython-0.2.17.vsix",
+      "sha256": "d7c60c9c824a4f555bc28255746b212eaa0ae4eddcad02d48f3557579ba897b9",
+      "size": 1231772
+    },
+    {
+      "version": "0.2.16",
+      "file": "evn-alpha-micropython-0.2.16.vsix",
+      "url": "https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.16/evn-alpha-micropython-0.2.16.vsix",
+      "sha256": "9692f9fb8179f6ed09460401de89ca6df6b06ae68a98e2cef1f92dc1cc095ae6",
+      "size": 972750
+    }
+  ]
+}

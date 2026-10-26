@@ -118,6 +118,7 @@ For autocomplete on `evn`, choose **Open my projects folder as the workspace** i
 - [Recording data](DATA_LOGGER.md): the data logger and `evn.DataLog`.
 - [A program that starts from the user button](MAIN_PY.md): a robot that runs without a computer.
 - [Working without the USB cable](BLUETOOTH.md): the board's prompt over Bluetooth.
+- [The robot simulator](SIMULATOR.md): run your programs on a simulated robot, with no board.
 - [Commands and updates](COMMANDS.md): every `EVN:` command.
 - [The board](BOARD.md): buttons, lights and the pinout.
 - [Troubleshooting](TROUBLESHOOTING.md): when something does not work, and how to report it.

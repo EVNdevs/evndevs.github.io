@@ -10,7 +10,7 @@
 <script>
   /* /<route>/<slug> -> /#/<route>/<slug>; the routes are site.js's (scripts/publish_public.py writes them) */
   (function () {
-    var ROUTES = ["getting-started", "programs", "board-view", "data-logger", "main-py", "bluetooth", "commands", "board", "troubleshooting", "repl", "calibration", "api", "api-robot", "api-sensors", "api-displays", "api-extended", "api-system", "blocks", "known-limitations", "changelog", "changelog-full", "downloads"], ROOT = "https://evn.coresg.tech/";
+    var ROUTES = ["getting-started", "programs", "board-view", "data-logger", "main-py", "bluetooth", "simulator", "commands", "board", "troubleshooting", "repl", "calibration", "api", "api-robot", "api-sensors", "api-displays", "api-extended", "api-system", "blocks", "known-limitations", "changelog", "changelog-full", "downloads"], ROOT = "https://evn.coresg.tech/";
     var base = new URL(ROOT).pathname;
     var path = location.pathname;
     if (path.indexOf(base) !== 0) { return; }

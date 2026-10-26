@@ -76,7 +76,8 @@ for name in os.listdir():                        # the working folder
 # A flash write stops the 1 kHz motion engine for 45..400 ms, so the board refuses it while any
 # motor is driving (run(), dc(), a move still under way): OSError with errno 16 (EBUSY), from
 # open(), write(), flush() or close() - whichever reaches the flash first. Holding, braked and
-# coasting motors do not block a write, and reading is never refused.
+# coasting motors do not block a write, and reading is not refused (except a file opened for writing
+# that still holds unwritten data). A refused close() keeps its data and writes it once the motors stop.
 motor = Motor(1)
 angles = []                                      # keep the log in RAM while the motor runs ...
 motor.run(300)

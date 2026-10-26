@@ -4,6 +4,31 @@ The main changes of each release, in a few lines. The [full changelog](../CHANGE
 the tools and the measurements behind each release. What is not tested yet is on
 [Known limitations and help us test](KNOWN_LIMITATIONS.md).
 
+## 0.2.71 (2026-10-26)
+
+- **New: the robot simulator.** No board needed: the **EVN Simulator** panel is a simulated EVN ALPHA robot on a
+  line-following course (the Rescue Line tiles with ramps, a seesaw, bumps and obstacles, an oval, or a map you build),
+  with a 3D view. While the panel is open the simulated board is the port **EVN simulator**: Run, Upload as main.py, the
+  REPL, Stop, the Board view and the Console all reach it, on the desktop and in the browser IDE. Your program runs in
+  Python that ships inside the extension (Pyodide), so nothing else needs installing. Open it from *Start*, the Board
+  view's **Simulator** row, **EVN: Open the simulator** or the port picker ([The robot simulator](SIMULATOR.md)).
+- **New: the simulator's licence.** The simulator is free until 31 December 2026. From 1 January 2027 it is free for 14 days
+  from the first time it opens, and after that it opens with a licence key, checked with no internet connection. The
+  panel's header and the Board view's *Simulator* row say until when it is free, or the trial's days left. Schools in
+  Singapore can buy licences through Vendors@Gov; anyone else: [kenneth@coresg.tech](mailto:kenneth@coresg.tech)
+  ([Licence](SIMULATOR.md#licence)).
+- **Fixed: a file write while a motor drives no longer damages the file.** The write is still refused with
+  `OSError: 16` (EBUSY), but nothing is written or lost: repeat it once the motors stop. A refused `close()` keeps its
+  data and writes it when the motors stop. Close files or use `with`: a file left open still loses its unwritten
+  bytes if it is freed while a motor drives.
+- **Fixed: a rare file system error when moving a file between folders.** `os.rename()` of a folder's only file into
+  another folder could fail with `OSError: 84` (about once in 1 600 renames) and, from the second time on, damage the
+  file system. The firmware carries a fix to LittleFS, the file system MicroPython uses.
+- **Fixed: updating the extension from inside VS Code** ("No Servers"). Updating from 0.2.70 may still show it once:
+  use the message's **Download** button and install the downloaded VSIX by hand.
+  **Known issue:** single calls such as `motor.load()` or `db.done()` take a few tens of microseconds longer than on
+  0.2.70; a program's loops as a whole run as fast or faster.
+
 ## 0.2.70 (2026-10-21)
 
 - **New: the user button stops a program.** A press coasts every motor at once and ends the running program with

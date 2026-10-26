@@ -5,8 +5,12 @@ the EVN site is built from the components below, and this file carries their not
 MicroPython (with the libraries of its tree the firmware compiles in), and ST's VL53L1X ultra lite driver. Which
 licence governs the ST material is still an open question for the EVN owner (item 22 of `docs/OPEN_QUESTIONS.md`
 in the firmware repository); the ST entry below is a precaution until it is settled. The extension's own
-third-party files, the Blockly block editor (Apache License 2.0) and the Jost typeface (SIL Open Font License 1.1),
-ship in the extension with their licence files beside them (`media/blockly/LICENSE`, `media/fonts/LICENSE-Jost.txt`).
+third-party files, the Blockly block editor (Apache License 2.0), the Jost typeface (SIL Open Font License 1.1) and
+Pyodide 0.28.3 - CPython 3.13 compiled to WebAssembly, the robot simulator's Python (Mozilla Public License 2.0;
+CPython itself: the PSF License Agreement) - ship in the extension with their licence files beside them
+(`media/blockly/LICENSE`, `media/fonts/LICENSE-Jost.txt`, and for Pyodide the files in `media/pyodide/` listed
+under "Pyodide" below; the sources: <https://github.com/pyodide/pyodide/tree/0.28.3> and
+<https://github.com/python/cpython>).
 
 ## Raspberry Pi pico-sdk
 
@@ -123,3 +127,20 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ```
+
+## Pyodide (the robot simulator's Python)
+
+The robot simulator runs Pyodide 0.28.3 (<https://github.com/pyodide/pyodide/tree/0.28.3>): CPython 3.13.2
+compiled to WebAssembly with Emscripten 4.0.9 (Pyodide's `Makefile.envs`). Its files ship in `media/pyodide/`
+(in the extension and in the browser IDE), and these licence texts ship beside them, each copied verbatim from the
+upstream file named:
+
+| Component in `pyodide.asm.wasm` / `pyodide.asm.js` / `python_stdlib.zip` | Licence | File beside it | Copied from |
+|---|---|---|---|
+| Pyodide | Mozilla Public License 2.0 | `LICENSE-Pyodide.txt` | Pyodide's `LICENSE` |
+| CPython 3.13 | PSF License Agreement | `LICENSE-CPython.txt` | CPython's `LICENSE` |
+| The code CPython incorporates: expat, libmpdec (mpdecimal), zlib and the others it lists | each its own, as listed | `LICENSE-CPython-incorporated.txt` | "Licenses and Acknowledgements for Incorporated Software", `Doc/license.rst` at CPython v3.13.2 |
+| Emscripten's runtime | MIT / University of Illinois NCSA | `LICENSE-Emscripten.txt` | Emscripten 4.0.9 `LICENSE` |
+| musl libc (Emscripten's C library) | MIT | `COPYRIGHT-musl.txt` | Emscripten 4.0.9 `system/lib/libc/musl/COPYRIGHT` |
+| libffi | MIT | `LICENSE-libffi.txt` | libffi `LICENSE` at f08493d2 (the commit Pyodide's `cpython/Makefile` builds) |
+| HACL* (the hash functions) | MIT | `LICENSE-HACL.txt` | the header of `Modules/_hacl/Hacl_Hash_SHA2.h` at CPython v3.13.2 |

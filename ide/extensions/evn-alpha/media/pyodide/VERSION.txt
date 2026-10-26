@@ -1,0 +1,1 @@
+Pyodide 0.28.3 (CPython 3.13 in WebAssembly, https://pyodide.org, MPL-2.0; CPython: PSF License)

@@ -7,6 +7,7 @@
   <url><loc>https://evn.coresg.tech/data-logger/</loc></url>
   <url><loc>https://evn.coresg.tech/main-py/</loc></url>
   <url><loc>https://evn.coresg.tech/bluetooth/</loc></url>
+  <url><loc>https://evn.coresg.tech/simulator/</loc></url>
   <url><loc>https://evn.coresg.tech/commands/</loc></url>
   <url><loc>https://evn.coresg.tech/board/</loc></url>
   <url><loc>https://evn.coresg.tech/troubleshooting/</loc></url>
@@ -24,5 +25,6 @@
   <url><loc>https://evn.coresg.tech/changelog-full/</loc></url>
   <url><loc>https://evn.coresg.tech/downloads/</loc></url>
   <url><loc>https://evn.coresg.tech/examples/</loc></url>
+  <url><loc>https://evn.coresg.tech/vsix/</loc></url>
   <url><loc>https://evn.coresg.tech/ide/</loc></url>
 </urlset>

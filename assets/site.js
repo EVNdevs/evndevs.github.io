@@ -31,6 +31,7 @@
     'data-logger':     { file: 'docs/DATA_LOGGER.md',     title: 'Recording data', part: 'getting-started' },
     'main-py':         { file: 'docs/MAIN_PY.md',         title: 'A program that starts from the user button', part: 'getting-started' },
     'bluetooth':       { file: 'docs/BLUETOOTH.md',       title: 'Working without the USB cable', part: 'getting-started' },
+    'simulator':       { file: 'docs/SIMULATOR.md',       title: 'The robot simulator', part: 'getting-started' },
     'commands':        { file: 'docs/COMMANDS.md',        title: 'Commands and updates', part: 'getting-started' },
     'board':           { file: 'docs/BOARD.md',           title: 'The board: buttons, lights and pins', part: 'getting-started' },
     'troubleshooting': { file: 'docs/TROUBLESHOOTING.md', title: 'Troubleshooting', part: 'getting-started' },
@@ -56,7 +57,7 @@
     /* the full engineering log, linked from What's new (CHANGELOG.md: the release tools read it) */
     'changelog-full':  { file: 'docs/CHANGELOG.md',       title: 'Full changelog', part: 'changelog' }
   };
-  var ORDER = ['getting-started', 'programs', 'board-view', 'data-logger', 'main-py', 'bluetooth', 'commands', 'board',
+  var ORDER = ['getting-started', 'programs', 'board-view', 'data-logger', 'main-py', 'bluetooth', 'simulator', 'commands', 'board',
                'troubleshooting', 'repl', 'calibration', 'api', 'api-robot', 'api-sensors', 'api-displays', 'api-extended',
                'api-system', 'blocks', 'known-limitations', 'changelog', 'changelog-full'];
   /* The documents whose route takes a heading slug (#/api/<slug>): their bare route ends in a slash. */
@@ -875,16 +876,20 @@
       note.appendChild(el('strong', null, 'Install from VSIX…'));
       note.appendChild(document.createTextNode(' → pick the file. Then run '));
       note.appendChild(el('code', null, 'EVN: Install mpremote'));
-      note.appendChild(document.createTextNode(' once.'));
+      note.appendChild(document.createTextNode(' once. '));
+      var older = el('a', null, 'Older versions of the extension');   // the versions page (#202): GitHub Releases
+      older.href = 'vsix/';
+      note.appendChild(older);
+      note.appendChild(document.createTextNode('.'));
       dlBox.appendChild(note);
 
       if (ext.version) { b2.textContent = 'Download the extension ' + ext.version; }   // the link stays on the install steps
     }).catch(function (e) {
       dlBox.textContent = '';
       var p = el('p', 'notice', 'The download list (latest.json) could not be read (' + e.message +
-        '). The files are in the public repository: ');
-      var a1 = el('a', null, 'the VSIX');
-      a1.href = REPO + '/tree/main/vsix';
+        '). The files: ');
+      var a1 = el('a', null, 'the VSIX (every version)');
+      a1.href = 'vsix/';
       var a2 = el('a', null, 'the firmware UF2');
       a2.href = REPO + '/tree/main/firmware';
       p.appendChild(a1);

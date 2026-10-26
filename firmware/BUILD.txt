@@ -1,8 +1,8 @@
 EVN_ALPHA_MicroPython.uf2
-source: 0.2.69 + the drive-base and motor fixes #2-#17 (re-landed, SF-1) + tick2 + vbat (MC-73) + C0-50 + audit package C + the BQ25887 driver fixes (batt, battperf) + the SSD1306 second signature + ux06 + the user-button stop (#133), on the board-searched pad5 layout; cand3 b9d8a570's image fb4191ab byte for byte (rule 4 on it: EV3 Large OQ 34, Pololu 25D / CHR-GM16 / NXT s1021) with main 81663521 (host, bench and record lanes; EVN_BENCH_POSE_AGE off: 0 bytes) and the version string 0.2.70 (no bench suffix: built in a fresh release dir, build_rel70; cand3's images carried -cand3, so rodata and 35 float-routine veneers sit at other addresses than on fb4191ab); static headroom 5884 B (floor 5204 B); the Python heap at 128 KB
-built: 2026-10-21 (MicroPython v1.26.1, pico-sdk 2.3.0; SOURCE_DATE_EPOCH=1792584000 = noon UTC 2026-10-21)
+source: 0.2.70 + the LittleFS refusal guard (lfsfix: a write refused while a motor drives writes nothing; OQ 46 (d), OQ 50-52, OQ 56 (b), OQ 57-60) + LittleFS v2.11's #949 NULL pdir write on a relocating rename patched (lfsnull) + the SSD1306 ACK-only fallback with a warning (ssd, OQ 31 (c)) + relprep + the simulator lanes (extension only), on the layout re-picked on COM22 (EVN_RELEASE_PAD_PY 4988 / _MODULES 2408 / _HAL 2792; 0.2.70's pads failed the gate's Core 0 rows); the version string 0.2.71 with no bench suffix (built in a fresh release dir, build_rel71b); static headroom 5852 B (floor 5644 B); the Python heap at 128 KB
+built: 2026-10-25 (MicroPython v1.26.1, pico-sdk 2.3.0; SOURCE_DATE_EPOCH=1792929600 = noon UTC 2026-10-25)
 flash: single-line 03h boot2, PICO_FLASH_SPI_CLKDIV=4
 toolchain: arm-none-eabi-gcc 15.2.1 (Arm GNU Toolchain 15.2.Rel1), pico-sdk 2.3.0, MicroPython v1.26.1
-md5: ff0f26db74eea933200bd1a8ef7ae897
+md5: 7c824f1f9bd99e72877952681f1e5be8
 reproduce: cmake -G Ninja -DEVN_MICROPYTHON=ON + ninja with SOURCE_DATE_EPOCH = noon UTC of the built: date (py/makeversionhdr.py embeds MICROPY_BUILD_DATE); release_public.py does this and refuses on an md5 mismatch
-version: 0.2.70
+version: 0.2.71

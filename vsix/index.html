@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Extension versions - EVN ALPHA MicroPython</title>
+<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/site.css">
+<style>
+ .ex-page { padding-top: 40px; padding-bottom: 64px; max-width: 880px; }
+ .ex-list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+ .ex-row { display: flex; gap: 16px; align-items: flex-start; justify-content: space-between; padding: 14px 0;
+           border-bottom: 1px solid var(--line); }
+ .ex-row .t strong { display: block; color: var(--heading); font-weight: 600; }
+ .ex-row .ex-file { display: block; color: var(--muted); font-family: ui-monospace, Consolas, monospace; font-size: 13px; }
+ .ex-row .go { display: flex; gap: 8px; flex: 0 0 auto; }
+</style>
+</head><body>
+<a class="skip" href="#main">Skip to the content</a>
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="../#/" aria-label="EVN ALPHA MicroPython, home">
+      <span class="mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M17.48 5.66Q17.48 4.56 17.41 4.15Q17.35 3.73 17.22 3.49Q17.08 3.25 16.82 3.08Q16.56 2.91 15.84 2.72V2H21.13V2.72Q20.47 2.89 20.2 3.04Q19.93 3.19 19.76 3.42Q19.59 3.66 19.5 4.12Q19.41 4.59 19.41 5.66V22H14.74L8.47 11.23Q7.18 9.02 6.51 7.6H6.37Q6.52 10.75 6.52 14.25V18.34Q6.52 19.52 6.63 20.03Q6.74 20.53 7.07 20.8Q7.4 21.06 8.23 21.28V22H2.87V21.28Q3.78 21.05 4.09 20.76Q4.4 20.48 4.49 19.95Q4.59 19.42 4.59 18.34V5.66Q4.59 4.65 4.51 4.19Q4.44 3.73 4.27 3.47Q4.1 3.22 3.82 3.06Q3.55 2.91 2.87 2.72V2H9.66L14.77 10.85Q15.21 11.61 16 13.09Q16.79 14.57 17.41 15.89H17.64Q17.48 12.39 17.48 8.24ZM17.79 20.71V19.23L8.54 3.29H6.21V4.14L15.82 20.71Z"/></svg>
+      </span>
+      <span class="words">
+        <span class="word-1">EVN ALPHA</span>
+        <span class="word-2">MicroPython</span>
+      </span>
+    </a>
+    <nav class="site-nav" id="nav" aria-label="Documentation">
+      <!-- No entry is the home page (the brand is), so nothing is lit there; "Downloads" is lit only on
+           #/downloads. What's new is in the footer and beside each download. -->
+      <a href="../#/getting-started" data-doc="getting-started">Getting started</a>
+      <a href="../#/calibration/" data-doc="calibration">Calibration</a>
+      <a href="../#/api/" data-doc="api">API</a>
+      <a href="../#/blocks/" data-doc="blocks">Blocks</a>
+      <a href="./" aria-current="page">Examples</a>
+      <a href="ide/" target="_blank" rel="noopener">Browser IDE</a>
+      <a href="../#/downloads" data-doc="downloads">Downloads</a>
+      <a href="../#/getting-started/7-reporting-problems">Help</a>
+      <a href="https://github.com/EVNdevs/evndevs.github.io" target="_blank" rel="noopener">GitHub</a>
+    </nav>
+    <div class="header-tools">
+      <button class="icon-btn" id="theme-btn" type="button" aria-label="Switch between the light and the dark colour scheme">
+        <svg class="theme-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+        <svg class="theme-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M4.2 4.2l1.6 1.6M18.2 18.2l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.2 19.8l1.6-1.6M18.2 5.8l1.6-1.6"/></svg>
+      </button>
+      <button class="icon-btn" id="menu-btn" type="button" aria-label="Menu" aria-expanded="false" aria-controls="nav">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 6.5h17M3.5 12h17M3.5 17.5h17"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+<main id="main" tabindex="-1">
+<div class="wrap ex-page">
+<h1>Extension versions</h1>
+<p>Every published version of the EVN ALPHA VS Code extension (.vsix). Install one with <em>Extensions: Install from
+   VSIX...</em> in VS Code; the newest is the one the extension's update check offers.</p>
+<ul class="ex-list">
+  <li class="ex-row">
+    <div class="t"><strong>0.2.71 (current)</strong><span class="ex-file">evn-alpha-micropython-0.2.71.vsix</span></div>
+    <div class="go"><a class="btn btn-ghost" href="evn-alpha-micropython-0.2.71.vsix" download>This site</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>0.2.70</strong><span class="ex-file">evn-alpha-micropython-0.2.70.vsix</span></div>
+    <div class="go"><a class="btn btn-ghost" href="https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.70/evn-alpha-micropython-0.2.70.vsix">GitHub release</a> <a class="btn btn-ghost" href="evn-alpha-micropython-0.2.70.vsix" download>This site</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>0.2.69</strong><span class="ex-file">evn-alpha-micropython-0.2.69.vsix</span></div>
+    <div class="go"><a class="btn btn-ghost" href="https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.69/evn-alpha-micropython-0.2.69.vsix">GitHub release</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>0.2.68</strong><span class="ex-file">evn-alpha-micropython-0.2.68.vsix</span></div>
+    <div class="go"><a class="btn btn-ghost" href="https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.68/evn-alpha-micropython-0.2.68.vsix">GitHub release</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>0.2.67</strong><span class="ex-file">evn-alpha-micropython-0.2.67.vsix</span></div>
+    <div class="go"><a class="btn btn-ghost" href="https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.67/evn-alpha-micropython-0.2.67.vsix">GitHub release</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>0.2.66</strong><span class="ex-file">evn-alpha-micropython-0.2.66.vsix</span></div>
+    <div class="go"><a class="btn btn-ghost" href="https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.66/evn-alpha-micropython-0.2.66.vsix">GitHub release</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>0.2.65</strong><span class="ex-file">evn-alpha-micropython-0.2.65.vsix</span></div>
+    <div class="go"><a class="btn btn-ghost" href="https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.65/evn-alpha-micropython-0.2.65.vsix">GitHub release</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>0.2.64</strong><span class="ex-file">evn-alpha-micropython-0.2.64.vsix</span></div>
+    <div class="go"><a class="btn btn-ghost" href="https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.64/evn-alpha-micropython-0.2.64.vsix">GitHub release</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>0.2.63</strong><span class="ex-file">evn-alpha-micropython-0.2.63.vsix</span></div>
+    <div class="go"><a class="btn btn-ghost" href="https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.63/evn-alpha-micropython-0.2.63.vsix">GitHub release</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>0.2.62</strong><span class="ex-file">evn-alpha-micropython-0.2.62.vsix</span></div>
+    <div class="go"><a class="btn btn-ghost" href="https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.62/evn-alpha-micropython-0.2.62.vsix">GitHub release</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>0.2.61</strong><span class="ex-file">evn-alpha-micropython-0.2.61.vsix</span></div>
+    <div class="go"><a class="btn btn-ghost" href="https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.61/evn-alpha-micropython-0.2.61.vsix">GitHub release</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>0.2.60</strong><span class="ex-file">evn-alpha-micropython-0.2.60.vsix</span></div>
+    <div class="go"><a class="btn btn-ghost" href="https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.60/evn-alpha-micropython-0.2.60.vsix">GitHub release</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>0.2.59</strong><span class="ex-file">evn-alpha-micropython-0.2.59.vsix</span></div>
+    <div class="go"><a class="btn btn-ghost" href="https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.59/evn-alpha-micropython-0.2.59.vsix">GitHub release</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>0.2.58</strong><span class="ex-file">evn-alpha-micropython-0.2.58.vsix</span></div>
+    <div class="go"><a class="btn btn-ghost" href="https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.58/evn-alpha-micropython-0.2.58.vsix">GitHub release</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>0.2.57</strong><span class="ex-file">evn-alpha-micropython-0.2.57.vsix</span></div>
+    <div class="go"><a class="btn btn-ghost" href="https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.57/evn-alpha-micropython-0.2.57.vsix">GitHub release</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>0.2.56</strong><span class="ex-file">evn-alpha-micropython-0.2.56.vsix</span></div>
+    <div class="go"><a class="btn btn-ghost" href="https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.56/evn-alpha-micropython-0.2.56.vsix">GitHub release</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>0.2.55</strong><span class="ex-file">evn-alpha-micropython-0.2.55.vsix</span></div>
+    <div class="go"><a class="btn btn-ghost" href="https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.55/evn-alpha-micropython-0.2.55.vsix">GitHub release</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>0.2.54</strong><span class="ex-file">evn-alpha-micropython-0.2.54.vsix</span></div>
+    <div class="go"><a class="btn btn-ghost" href="https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.54/evn-alpha-micropython-0.2.54.vsix">GitHub release</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>0.2.53</strong><span class="ex-file">evn-alpha-micropython-0.2.53.vsix</span></div>
+    <div class="go"><a class="btn btn-ghost" href="https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.53/evn-alpha-micropython-0.2.53.vsix">GitHub release</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>0.2.52</strong><span class="ex-file">evn-alpha-micropython-0.2.52.vsix</span></div>
+    <div class="go"><a class="btn btn-ghost" href="https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.52/evn-alpha-micropython-0.2.52.vsix">GitHub release</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>0.2.51</strong><span class="ex-file">evn-alpha-micropython-0.2.51.vsix</span></div>
+    <div class="go"><a class="btn btn-ghost" href="https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.51/evn-alpha-micropython-0.2.51.vsix">GitHub release</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>0.2.50</strong><span class="ex-file">evn-alpha-micropython-0.2.50.vsix</span></div>
+    <div class="go"><a class="btn btn-ghost" href="https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.50/evn-alpha-micropython-0.2.50.vsix">GitHub release</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>0.2.49</strong><span class="ex-file">evn-alpha-micropython-0.2.49.vsix</span></div>
+    <div class="go"><a class="btn btn-ghost" href="https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.49/evn-alpha-micropython-0.2.49.vsix">GitHub release</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>0.2.48</strong><span class="ex-file">evn-alpha-micropython-0.2.48.vsix</span></div>
+    <div class="go"><a class="btn btn-ghost" href="https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.48/evn-alpha-micropython-0.2.48.vsix">GitHub release</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>0.2.47</strong><span class="ex-file">evn-alpha-micropython-0.2.47.vsix</span></div>
+    <div class="go"><a class="btn btn-ghost" href="https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.47/evn-alpha-micropython-0.2.47.vsix">GitHub release</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>0.2.46</strong><span class="ex-file">evn-alpha-micropython-0.2.46.vsix</span></div>
+    <div class="go"><a class="btn btn-ghost" href="https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.46/evn-alpha-micropython-0.2.46.vsix">GitHub release</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>0.2.45</strong><span class="ex-file">evn-alpha-micropython-0.2.45.vsix</span></div>
+    <div class="go"><a class="btn btn-ghost" href="https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.45/evn-alpha-micropython-0.2.45.vsix">GitHub release</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>0.2.44</strong><span class="ex-file">evn-alpha-micropython-0.2.44.vsix</span></div>
+    <div class="go"><a class="btn btn-ghost" href="https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.44/evn-alpha-micropython-0.2.44.vsix">GitHub release</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>0.2.43</strong><span class="ex-file">evn-alpha-micropython-0.2.43.vsix</span></div>
+    <div class="go"><a class="btn btn-ghost" href="https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.43/evn-alpha-micropython-0.2.43.vsix">GitHub release</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>0.2.42</strong><span class="ex-file">evn-alpha-micropython-0.2.42.vsix</span></div>
+    <div class="go"><a class="btn btn-ghost" href="https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.42/evn-alpha-micropython-0.2.42.vsix">GitHub release</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>0.2.41</strong><span class="ex-file">evn-alpha-micropython-0.2.41.vsix</span></div>
+    <div class="go"><a class="btn btn-ghost" href="https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.41/evn-alpha-micropython-0.2.41.vsix">GitHub release</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>0.2.40</strong><span class="ex-file">evn-alpha-micropython-0.2.40.vsix</span></div>
+    <div class="go"><a class="btn btn-ghost" href="https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.40/evn-alpha-micropython-0.2.40.vsix">GitHub release</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>0.2.39</strong><span class="ex-file">evn-alpha-micropython-0.2.39.vsix</span></div>
+    <div class="go"><a class="btn btn-ghost" href="https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.39/evn-alpha-micropython-0.2.39.vsix">GitHub release</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>0.2.38</strong><span class="ex-file">evn-alpha-micropython-0.2.38.vsix</span></div>
+    <div class="go"><a class="btn btn-ghost" href="https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.38/evn-alpha-micropython-0.2.38.vsix">GitHub release</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>0.2.37</strong><span class="ex-file">evn-alpha-micropython-0.2.37.vsix</span></div>
+    <div class="go"><a class="btn btn-ghost" href="https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.37/evn-alpha-micropython-0.2.37.vsix">GitHub release</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>0.2.36</strong><span class="ex-file">evn-alpha-micropython-0.2.36.vsix</span></div>
+    <div class="go"><a class="btn btn-ghost" href="https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.36/evn-alpha-micropython-0.2.36.vsix">GitHub release</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>0.2.35</strong><span class="ex-file">evn-alpha-micropython-0.2.35.vsix</span></div>
+    <div class="go"><a class="btn btn-ghost" href="https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.35/evn-alpha-micropython-0.2.35.vsix">GitHub release</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>0.2.34</strong><span class="ex-file">evn-alpha-micropython-0.2.34.vsix</span></div>
+    <div class="go"><a class="btn btn-ghost" href="https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.34/evn-alpha-micropython-0.2.34.vsix">GitHub release</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>0.2.33</strong><span class="ex-file">evn-alpha-micropython-0.2.33.vsix</span></div>
+    <div class="go"><a class="btn btn-ghost" href="https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.33/evn-alpha-micropython-0.2.33.vsix">GitHub release</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>0.2.32</strong><span class="ex-file">evn-alpha-micropython-0.2.32.vsix</span></div>
+    <div class="go"><a class="btn btn-ghost" href="https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.32/evn-alpha-micropython-0.2.32.vsix">GitHub release</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>0.2.31</strong><span class="ex-file">evn-alpha-micropython-0.2.31.vsix</span></div>
+    <div class="go"><a class="btn btn-ghost" href="https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.31/evn-alpha-micropython-0.2.31.vsix">GitHub release</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>0.2.30</strong><span class="ex-file">evn-alpha-micropython-0.2.30.vsix</span></div>
+    <div class="go"><a class="btn btn-ghost" href="https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.30/evn-alpha-micropython-0.2.30.vsix">GitHub release</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>0.2.29</strong><span class="ex-file">evn-alpha-micropython-0.2.29.vsix</span></div>
+    <div class="go"><a class="btn btn-ghost" href="https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.29/evn-alpha-micropython-0.2.29.vsix">GitHub release</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>0.2.28</strong><span class="ex-file">evn-alpha-micropython-0.2.28.vsix</span></div>
+    <div class="go"><a class="btn btn-ghost" href="https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.28/evn-alpha-micropython-0.2.28.vsix">GitHub release</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>0.2.27</strong><span class="ex-file">evn-alpha-micropython-0.2.27.vsix</span></div>
+    <div class="go"><a class="btn btn-ghost" href="https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.27/evn-alpha-micropython-0.2.27.vsix">GitHub release</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>0.2.26</strong><span class="ex-file">evn-alpha-micropython-0.2.26.vsix</span></div>
+    <div class="go"><a class="btn btn-ghost" href="https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.26/evn-alpha-micropython-0.2.26.vsix">GitHub release</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>0.2.25</strong><span class="ex-file">evn-alpha-micropython-0.2.25.vsix</span></div>
+    <div class="go"><a class="btn btn-ghost" href="https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.25/evn-alpha-micropython-0.2.25.vsix">GitHub release</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>0.2.24</strong><span class="ex-file">evn-alpha-micropython-0.2.24.vsix</span></div>
+    <div class="go"><a class="btn btn-ghost" href="https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.24/evn-alpha-micropython-0.2.24.vsix">GitHub release</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>0.2.23</strong><span class="ex-file">evn-alpha-micropython-0.2.23.vsix</span></div>
+    <div class="go"><a class="btn btn-ghost" href="https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.23/evn-alpha-micropython-0.2.23.vsix">GitHub release</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>0.2.22</strong><span class="ex-file">evn-alpha-micropython-0.2.22.vsix</span></div>
+    <div class="go"><a class="btn btn-ghost" href="https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.22/evn-alpha-micropython-0.2.22.vsix">GitHub release</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>0.2.21</strong><span class="ex-file">evn-alpha-micropython-0.2.21.vsix</span></div>
+    <div class="go"><a class="btn btn-ghost" href="https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.21/evn-alpha-micropython-0.2.21.vsix">GitHub release</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>0.2.20</strong><span class="ex-file">evn-alpha-micropython-0.2.20.vsix</span></div>
+    <div class="go"><a class="btn btn-ghost" href="https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.20/evn-alpha-micropython-0.2.20.vsix">GitHub release</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>0.2.19</strong><span class="ex-file">evn-alpha-micropython-0.2.19.vsix</span></div>
+    <div class="go"><a class="btn btn-ghost" href="https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.19/evn-alpha-micropython-0.2.19.vsix">GitHub release</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>0.2.18</strong><span class="ex-file">evn-alpha-micropython-0.2.18.vsix</span></div>
+    <div class="go"><a class="btn btn-ghost" href="https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.18/evn-alpha-micropython-0.2.18.vsix">GitHub release</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>0.2.17</strong><span class="ex-file">evn-alpha-micropython-0.2.17.vsix</span></div>
+    <div class="go"><a class="btn btn-ghost" href="https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.17/evn-alpha-micropython-0.2.17.vsix">GitHub release</a></div>
+  </li>
+  <li class="ex-row">
+    <div class="t"><strong>0.2.16</strong><span class="ex-file">evn-alpha-micropython-0.2.16.vsix</span></div>
+    <div class="go"><a class="btn btn-ghost" href="https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.16/evn-alpha-micropython-0.2.16.vsix">GitHub release</a></div>
+  </li>
+</ul>
+</div>
+</main>
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="f-brand">
+      <span class="f-logo"><img src="../assets/core-logo.webp" alt="" width="48" height="48"></span>
+      <span>
+        <strong>EVN ALPHA</strong>
+        <span>A Centre of Robotics Excellence project.<br>Singapore.</span>
+        <span class="f-credit">EVN was created by
+          <a href="https://www.linkedin.com/in/kc-robotics/" target="_blank" rel="noopener">Kenneth Chow</a> and
+          <a href="https://www.linkedin.com/in/heng-teng-yi/" target="_blank" rel="noopener">Heng Teng Yi</a> &middot;
+          <a href="https://www.kickstarter.com/projects/thenaturalevolution/evn-the-natural-evolution-of-the-lego-mindstorms-system" target="_blank" rel="noopener">The story on Kickstarter</a>
+        </span>
+      </span>
+    </div>
+    <div class="f-col">
+      <h2>Documentation</h2>
+      <ul>
+        <li><a href="../#/getting-started">Getting started</a></li>
+        <li><a href="../#/calibration/">Calibrating your robot</a></li>
+        <li><a href="../#/api/">API reference</a></li>
+        <li><a href="../#/blocks/">Blocks reference</a></li>
+        <li><a href="../#/repl">Using the REPL</a></li>
+        <li><a href="../#/known-limitations">Known limitations</a></li>
+        <!-- SITE-09: reports go to the site repository's issues, through its report-a-problem form (site.js REPORT_URL) -->
+        <li><a href="https://github.com/EVNdevs/evndevs.github.io/issues/new?template=report-a-problem.yml" target="_blank" rel="noopener">Report a problem</a></li>
+        <li><a href="../#/changelog">What's new</a></li>
+      </ul>
+    </div>
+    <div class="f-col">
+      <h2>Downloads</h2>
+      <ul>
+        <li><a href="../#/downloads">VS Code extension</a></li>
+        <li><a href="../#/downloads">Firmware (UF2)</a></li>
+        <li><a href="./" aria-current="page">Example programs</a></li>
+      </ul>
+    </div>
+    <div class="f-col">
+      <h2>EVN</h2>
+      <ul>
+        <li><a href="https://coresg.tech/evn" target="_blank" rel="noopener">The EVN ALPHA controller</a></li>
+        <li><a href="https://github.com/EVNdevs" target="_blank" rel="noopener">GitHub organisation</a></li>
+        <li><a href="https://github.com/EVNdevs/EVN-arduino" target="_blank" rel="noopener">Arduino library</a></li>
+        <li><a href="https://edu.coresg.tech/" target="_blank" rel="noopener">Centre of Robotics Excellence</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="f-legal">
+    MIT licensed. LEGO&reg;, Technic&trade; and MINDSTORMS&reg; are trademarks of the LEGO Group, which does
+    not sponsor, authorise or endorse this project.
+  </div>
+</footer>
+</body></html>

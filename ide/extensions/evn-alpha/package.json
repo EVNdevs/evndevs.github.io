@@ -2,7 +2,7 @@
   "name": "evn-alpha-micropython",
   "displayName": "EVN ALPHA MicroPython",
   "description": "Early-access tooling for the EVN ALPHA robotics controller: flash the MicroPython firmware, run programs, open the REPL, autocomplete for the evn motor API, and a Blockly block editor that generates MicroPython.",
-  "version": "0.2.70",
+  "version": "0.2.71",
   "publisher": "evn-alpha",
   "license": "MIT",
   "preview": true,
@@ -579,6 +579,44 @@
         "icon": "$(arrow-swap)"
       },
       {
+        "command": "evn.simulator.open",
+        "title": "Open the simulator (a simulated robot to run programs on)",
+        "category": "EVN",
+        "icon": "$(beaker)"
+      },
+      {
+        "command": "evn.simulator.configure",
+        "title": "Configure the simulated robot",
+        "category": "EVN",
+        "icon": "$(gear)"
+      },
+      {
+        "command": "evn.simulator.newProgram",
+        "title": "New line-follower program for the simulated robot",
+        "category": "EVN"
+      },
+      {
+        "command": "evn.simulator.copySetup",
+        "title": "Copy the simulated robot's setup code",
+        "category": "EVN"
+      },
+      {
+        "command": "evn.simulator.enterLicence",
+        "title": "Enter a simulator licence key",
+        "category": "EVN",
+        "icon": "$(key)"
+      },
+      {
+        "command": "evn.simulator.showLicence",
+        "title": "Show the simulator licence",
+        "category": "EVN"
+      },
+      {
+        "command": "evn.simulator.removeLicence",
+        "title": "Remove the simulator licence key",
+        "category": "EVN"
+      },
+      {
         "command": "evn.dataLogger.open",
         "title": "Open data logger",
         "category": "EVN",
@@ -1003,6 +1041,11 @@
           "command": "evn.dataLogger.open",
           "when": "view == evn.board",
           "group": "navigation@5"
+        },
+        {
+          "command": "evn.simulator.open",
+          "when": "view == evn.board",
+          "group": "2_more@3"
         }
       ],
       "view/item/context": [
@@ -1430,6 +1473,31 @@
           "command": "evn.dataLogger.add",
           "when": "view == evn.board && viewItem =~ /^evnBoard(MotorPort(Set(Driving|Calibrating)?)?|Battery|DeviceKnown(Imu|Compass|Color)?|DeviceWatched(Imu|Compass|Color)?)$/",
           "group": "4_log@1"
+        },
+        {
+          "command": "evn.simulator.configure",
+          "when": "view == evn.board && viewItem == evnBoardSimulator",
+          "group": "inline@1"
+        },
+        {
+          "command": "evn.simulator.copySetup",
+          "when": "view == evn.board && viewItem == evnBoardSimulator",
+          "group": "1_sim@1"
+        },
+        {
+          "command": "evn.simulator.newProgram",
+          "when": "view == evn.board && viewItem == evnBoardSimulator",
+          "group": "1_sim@0"
+        },
+        {
+          "command": "evn.simulator.showLicence",
+          "when": "view == evn.board && viewItem == evnBoardSimulator",
+          "group": "2_licence@0"
+        },
+        {
+          "command": "evn.simulator.enterLicence",
+          "when": "view == evn.board && viewItem == evnBoardSimulator",
+          "group": "2_licence@1"
         }
       ],
       "editor/context": [
@@ -1650,7 +1718,7 @@
           "icon": "media/evn-n-cambria.svg",
           "contextualTitle": "EVN ALPHA",
           "visibility": "visible",
-          "initialSize": 2
+          "initialSize": 3
         },
         {
           "id": "evn.projects",
@@ -1658,7 +1726,7 @@
           "icon": "media/evn-n-cambria.svg",
           "contextualTitle": "EVN ALPHA projects",
           "visibility": "visible",
-          "initialSize": 3
+          "initialSize": 4
         },
         {
           "id": "evn.examples",
@@ -1666,7 +1734,7 @@
           "icon": "media/evn-n-cambria.svg",
           "contextualTitle": "EVN ALPHA examples",
           "visibility": "visible",
-          "initialSize": 3
+          "initialSize": 4
         }
       ],
       "evnBoard": [
@@ -1701,17 +1769,17 @@
       {
         "view": "evn.board",
         "when": "!evn.hasMpremote && evn.hasPython",
-        "contents": "The extension talks to the board with mpremote, a small Python tool.\n\n[Install mpremote](command:evn.installMpremote)\n\nAlready installed in another Python? [Set the Python path](command:workbench.action.openSettings?%5B%22evn.pythonPath%22%5D)."
+        "contents": "The extension talks to the board with mpremote, a small Python tool.\n\n[Install mpremote](command:evn.installMpremote)\n\nAlready installed in another Python? [Set the Python path](command:workbench.action.openSettings?%5B%22evn.pythonPath%22%5D).\n\nNo board at hand? [Open the simulator](command:evn.simulator.open): a simulated robot that runs your programs, with no board and no Python."
       },
       {
         "view": "evn.board",
         "when": "!evn.hasMpremote && !evn.hasPython && evn.webSerial",
-        "contents": "No serial port has been granted to this page yet.\n\n[Choose the board port](command:evn.selectPort)\n\nThe browser asks which device this page may use: pick the EVN ALPHA (USB 2E8A:000A), or \"Any serial port\" for a Bluetooth link."
+        "contents": "No serial port has been granted to this page yet.\n\n[Choose the board port](command:evn.selectPort)\n\nThe browser asks which device this page may use: pick the EVN ALPHA (USB 2E8A:000A), or \"Any serial port\" for a Bluetooth link.\n\nNo board at hand? [Open the simulator](command:evn.simulator.open): a simulated robot that runs your programs, with no board and no Python."
       },
       {
         "view": "evn.board",
         "when": "!evn.hasMpremote && !evn.hasPython && !evn.webSerial",
-        "contents": "This browser cannot reach a serial port, so the board cannot be used from here.\n\nWeb Serial works in Chrome, Edge and Opera, over https or on localhost. Everything that does not need the board - the examples, the blocks editor, your programs - works in any browser."
+        "contents": "This browser cannot reach a serial port, so the board cannot be used from here.\n\nWeb Serial works in Chrome, Edge and Opera, over https or on localhost. Everything that does not need the board - the examples, the blocks editor, your programs - works in any browser.\n\nNo board at hand? [Open the simulator](command:evn.simulator.open): a simulated robot that runs your programs, with no board and no Python."
       }
     ],
     "walkthroughs": [

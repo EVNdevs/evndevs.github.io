@@ -13,6 +13,13 @@ Every command of the extension is in the command palette (**Ctrl+Shift+P**); typ
 | Restart the board without flashing | a board in BOOTSEL mode starts the firmware already on it, writing nothing |
 | Install mpremote | install the Python tool the extension talks to the board with |
 | Select board port | choose which board to use when several are connected; it is remembered by its USB serial number |
+| Open the simulator (a simulated robot to run programs on) | open the *Simulator* panel: a simulated robot that is the board for Run, the REPL and the *Board* view while it is open ([Simulator](SIMULATOR.md)) |
+| Configure the simulated robot | open the hardware configurator: the simulated robot's motors, wheels and sensors ([Simulator](SIMULATOR.md#configuring-the-robot)) |
+| New line-follower program for the simulated robot | a first line follower for the robot you configured, `line_follower.py` in your projects folder ([Simulator](SIMULATOR.md#running-a-program)) |
+| Copy the simulated robot's setup code | the lines that build the configured robot in a program, on the clipboard ([Simulator](SIMULATOR.md#configuring-the-robot)) |
+| Enter a simulator licence key | paste the key that opens the simulator after its 14-day trial; it is checked as you paste it ([Simulator](SIMULATOR.md#licence)) |
+| Show the simulator licence | who the licence is for and its last day, or the trial's days left ([Simulator](SIMULATOR.md#licence)) |
+| Remove the simulator licence key | take the key off this computer ([Simulator](SIMULATOR.md#licence)) |
 | Name this board | give the board a name, shown in the status bar as `EVN: Kenneth's robot (COM7)` |
 | List files on the board | the board's files, in the *EVN ALPHA log* output panel |
 | Reset the board | restart it (motors coast; `main.py` then waits for the user button) |
