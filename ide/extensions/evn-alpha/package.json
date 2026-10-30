@@ -2,7 +2,7 @@
   "name": "evn-alpha-micropython",
   "displayName": "EVN ALPHA MicroPython",
   "description": "Early-access tooling for the EVN ALPHA robotics controller: flash the MicroPython firmware, run programs, open the REPL, autocomplete for the evn motor API, and a Blockly block editor that generates MicroPython.",
-  "version": "0.2.71",
+  "version": "0.2.72",
   "publisher": "evn-alpha",
   "license": "MIT",
   "preview": true,
@@ -617,6 +617,27 @@
         "category": "EVN"
       },
       {
+        "command": "evn.challenge.saveSubmission",
+        "title": "Save a challenge submission",
+        "category": "EVN"
+      },
+      {
+        "command": "evn.challenge.makeTeacherKey",
+        "title": "Make a teacher key (for challenge submissions)",
+        "category": "EVN"
+      },
+      {
+        "command": "evn.challenge.openSubmission",
+        "title": "Open a challenge submission",
+        "category": "EVN"
+      },
+      {
+        "command": "evn.openLessons",
+        "title": "Open lessons",
+        "category": "EVN",
+        "icon": "$(mortar-board)"
+      },
+      {
         "command": "evn.dataLogger.open",
         "title": "Open data logger",
         "category": "EVN",
@@ -687,6 +708,11 @@
         {
           "command": "evn.dataLogger.view",
           "when": "resourceExtname == .csv",
+          "group": "navigation@9"
+        },
+        {
+          "command": "evn.challenge.openSubmission",
+          "when": "resourceExtname == .evnsub",
           "group": "navigation@9"
         }
       ],
@@ -1603,6 +1629,23 @@
           "default": true,
           "description": "After running a file, stay connected in the REPL so the program's output stays visible and the board can be inspected (Ctrl+] leaves the REPL)."
         },
+        "evn.simulator.sbc.basePort": {
+          "type": "number",
+          "default": 47800,
+          "minimum": 1024,
+          "maximum": 65530,
+          "description": "The simulator's camera stream for your own programs (OpenCV): its HTTP port on 127.0.0.1 (http://127.0.0.1:47800/cam/1/stream.mjpg). Taken: the next free block of six; the port in use is in the Simulator panel and in ~/.evn/sim-endpoints.json."
+        },
+        "evn.simulator.sbc.requireToken": {
+          "type": "boolean",
+          "default": true,
+          "description": "The simulator's camera stream answers only requests with your token (?token= or Authorization: Bearer; kept in ~/.evn/sim-token). Leave on for a shared PC: other users' programs can reach 127.0.0.1 too."
+        },
+        "evn.simulator.sbc.endpointsFile": {
+          "type": "boolean",
+          "default": true,
+          "description": "Write the simulator's camera stream port and your token to ~/.evn/sim-endpoints.json (readable by you only) while the Simulator panel is open, for your programs to find them."
+        },
         "evn.blocks.renderer": {
           "type": "string",
           "enum": [
@@ -1653,6 +1696,25 @@
           "default": "https://evn.coresg.tech",
           "scope": "application",
           "description": "Web address of the online documentation. The Documentation button opens it; \"Open online documentation for the symbol under the cursor\" opens it at the matching section of the API reference. The update check reads latest.json from it and installs only a VSIX published there, so it is a user setting only (a folder's settings cannot change it)."
+        },
+        "evn.challenge.runs": {
+          "type": "integer",
+          "default": 5,
+          "minimum": 1,
+          "maximum": 20,
+          "description": "How many times Run challenge (Simulator panel, on a challenge course) runs your program, each from a slightly different start. The runs are part of a submission. The panel's Runs box sets it."
+        },
+        "evn.challenge.teacherCode": {
+          "type": "string",
+          "default": "",
+          "scope": "application",
+          "description": "Your teacher's code (it starts with EVNTCH1.): a challenge submission is sealed for your teacher and EVN, so only they can open it. Save a challenge submission asks for it the first time."
+        },
+        "evn.lessonsUrl": {
+          "type": "string",
+          "default": "https://learn.coresg.tech",
+          "scope": "application",
+          "description": "Web address of the lessons site. \"EVN: Open lessons\" opens it, signed in with the simulator licence key kept here when that key unlocks the lessons (the key is sent to this address only, never put in a link). https only (http only to this computer), so it is a user setting only (a folder's settings cannot change it)."
         },
         "evn.updates.check": {
           "type": "boolean",

@@ -474,6 +474,7 @@ _HELP = (
     "                     heading_confidence(): 0 not ready, 0.5 ready but the DMP's own gyro\n"
     '                     calibration (8-25 s still) not landed - heading() may still creep - 1 landed\n'
     '                     calibrate(pose=1), turn the robot half a turn, calibrate(pose=2): slope left out\n'
+    '                     find_front(): after calibrate(), tip it nose-down 20-45 deg, hold 2 s: front set\n'
     '                     cancel_calibration()\n'
     '  MatrixLED(p)       pixel(row,col) get() hline() vline() rect() bitmap() image() icon(Icon.HEART)\n'
     "                     char('A') number(-99..99) text('HI', on=500, off=50) animate([...], 500)\n"
@@ -486,6 +487,7 @@ _HELP = (
     '                     clear_row() pixel() line() rect() draw_pixel/draw_line/draw_box/draw_circle/\n'
     '                     draw_text width height frame() splash() show() contrast() flip() invert()\n'
     '                     on() off() scroll() scroll_stop() fade() zoom() all_on() command() mirror(True)\n'
+    "                     set_font('small') (draw_text's 4x6 font) ports(True) (the 16 I2C ports, live)\n"
     '                     close()\n'
     '  RGBLED(servo)      set(led,r,g,b) fill() range() clear() get() on(Color.RED) off()\n'
     '                     blink(Color.BLUE,[500,500]) animate([...],250) pattern() stop() brightness()\n'

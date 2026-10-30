@@ -1,5 +1,208 @@
 # Changelog
 
+## 0.2.72 (2026-10-31)
+- **Simulator: challenges.** Three new courses, *Obstacle course* Levels 1 to 3: get the robot from the blue start box into the green goal, around red obstacles. On a challenge course the panel's header has **Runs** (1 to 20) and **Run challenge**: your program runs that many times, each from a start moved and turned a little at random, and every run is scored (50 at the goal, up to 40 for speed against the level's par time, 10 more if it touched nothing; the score is the mean, so reliability counts as much as speed). Runs are fast and exactly repeatable: the same program, robot and start give the same result on any computer. **Try** on a run puts the robot at its start. **Save submission…** seals your program, robot and results for your teacher's code and EVN as a `.evnsub` file; teachers make their key with **EVN: Make a teacher key**, and **EVN: Open a challenge submission** re-runs a submission and says whether it is verified ([Simulator](docs/SIMULATOR.md#challenges)).
+- **Lessons: EVN: Open lessons.** The new command opens the EVN lessons site ([learn.coresg.tech](https://learn.coresg.tech)) in your browser. If the licence key you entered for the simulator unlocks the lessons, you are signed in; otherwise you see the site's sign-in page and its free preview. The key is never put in a link: the extension trades it with the site for a one-time sign-in address that lasts two minutes. A key may unlock the simulator, the lessons or both, and is signed in on a limited number of devices at once; the site's *Account* page lists them and signs one out. The site's address is the `evn.lessonsUrl` setting (https only) ([Simulator](docs/SIMULATOR.md#lessons)).
+- **Firmware: `imu.find_front()` - the IMU's front axis from one nose-down tip** (GitHub #63). Gravity cannot tell forward on a level robot, so `calibrate()` finds the top axis and kept the front where it could. After `calibrate()` on a level surface, `find_front()` waits while you lift the robot's back so it tips nose-down 20 to 45 degrees and hold it still about 2 s, then picks the sensor axis pointing forward (sign included), puts it into `axes()` and stores it with the port's calibration (while a motor drives, it is in force at once and written to the flash by the next `calibration()` once no motor drives; a power-off before that loses it); it returns that axis. A slow lift is waited out: it answers only once the robot holds still. It refuses in plain words a tip under 20 degrees ("tip it further"), a diagonal one ("tip it nose-down, not sideways"), one over 60 degrees (the top axis in force is not up: calibrate first), or no still tip within 30 s. A tip straight sideways or nose-up cannot be told apart by gravity and names that side. Blocks: **calibrate IMU** has a *front: tip it nose-down* choice. The Board view's one-click *level + front* comes later.
+- **Firmware: `Motor.calibrate()` returns once its record is in flash** (a known issue since 0.2.70: it returned
+  up to about 0.1 s before the write, so switching the board off straight after it could lose the calibration). The wait
+  adds up to about 0.15 s (often none), none on a port whose call already waits for the shaft's rest (the Pololu 25D). With another
+  motor driving, the flash is not written (as before): the call returns 0.25 s after the run with the result in
+  force and prints `WARNING: Motor(n): calibration in force, not stored yet: ...`; the record is written once every
+  motor has stopped (`evn.calibration(port)["stored"]`). A failed write prints a warning too (before: silent).
+- **Firmware: a `DistanceSensor` (VL53L0X) left mid-setup recovers without a power cycle.** The chip's setup steps
+  switch it to other register pages or hold it in reset for a moment; one failed I2C transaction there, or the program
+  ending (or `close()`) in the middle, used to leave it so, and it then answered with the wrong ID - `lost`, or
+  `OSError: no VL53L0X on port n` - until the board was switched off and on (seen on a bench board: an untouched sensor
+  went `lost` under the port map, then read 0x3F where its ID belongs). The driver now remembers a port it left
+  mid-setup and puts the chip back with ST's own register writes before it reads the ID again (at the close, at the
+  next re-try, at the next `DistanceSensor(n)`); a chip it has just released from reset gets about 1 ms to boot before
+  anything is sent to it. On a bench board a test script made those writes to a real sensor left in each state its
+  setup can leave (another register page, the private access, the memory read, held in reset): each time the sensor
+  answered with its ID again within 1 ms, no power cycle. One of those states reads 0x3F at the place the bench
+  board's sensor did: the sensor left in the private access on page 1. The firmware with this fix then ran 600 s on
+  a bench board with a `DistanceSensor` open, and the sensor never went `lost`, so the firmware's own recovery was not
+  exercised there. A port it did not leave so is never written before its ID is read; one it did is never written
+  while a `ColorSensor` or a `VL53L1X` is open on it, nor when a colour sensor answers there; and neither the OLED port map (`Display.ports()`)
+  nor `VL53L1X(n)` sends such a port the VL53L1X ID probe (to this chip a register write). The memory of such a port
+  lasts until the board resets: after `machine.reset()`, the reset button or a firmware update (the sensor still
+  powered), a chip left mid-setup still needs the power cycle.
+- **The LSM6DSV comes in a later release.** `evn.LSM6DSV(port)` (the ST LSM6DSV gyro and accelerometer with its own sensor fusion), the QMC6309 compass behind it, a `Pose` / `DriveBase` that follow it, its blocks and examples are not in this release: the firmware is built without them, so programs on the MPU-6500 `IMU` keep their speed. They ship once they cost those programs nothing.
+- **Firmware: the OLED start picture** (held since 0.2.70). A `Display(port)` opens with the EVN mark (the N of the EVN site's icon) in the middle of the panel, and keeps it until the program draws: the first call that draws on the screen (`write()`, `print()`, `pixel()`, `clear()`, ...) blanks the screen first, then draws (a bare newline, or a pixel off the panel, draws nothing and keeps it); `contrast()`, `flip()`, `invert()`, `on()`, `off()` and `scroll()` keep it. `splash()` shows the mark again, and the next drawing call blanks it the same way. `mirror(True)` keeps the mark until the first printable character is mirrored.
+- **Firmware: `Display.ports(True)`, a live map of the 16 I2C ports** (held since 0.2.70; docs/API_DISPLAYS.md, "Port map"). The screen shows ports 1-8 down the left and 9-16 down the right in a small 4x6 font: a plain number for an empty port, a boxed one for a port where a device answers, with the name of a known device (`?` for one the firmware does not know) or, for a device your program has open, its newest reading, live (`123 mm`, `h 271`, `C 1234`, ...). The firmware identifies one port every 0.1 s by its ID register (all 16 in 1.6 s), never a port a program has open or uses through `evn.I2C`, and never waits. Reading an ID register writes the register's number first, so a chip that is not an EVN device but answers at an address an EVN device uses receives those bytes about every 1.6 s while the map is on: one byte at 0x01, 0x0D, 0x1E, 0x39, 0x5A-0x5D, 0x68-0x6B and 0x76-0x77; two (0x02, then 0x03) at 0x48-0x4B; and at 0x29 up to four in three writes (0xC0, 0x92, then 0x01 0x0F, which writes 0x0F into register 0x01 of a chip with 8-bit registers). A port expander such as a PCF8574A takes them as data. The map owns the screen (it repaints every 0.2 s); while it is on, a busy loop runs about 2-2.5 % slower (measured on one board on a test build); off, it costs nothing. `ports(False)`, `close()` or a soft reset ends it. Example: `13_display/display_complete.py`.
+- **Firmware: `Display.set_font('small')`** - `draw_text()` in the 4x6 Tom Thumb font (4 pixels a character, 6 rows), as the EV3 screen's `set_font()`; `'normal'` (8x8) is the default and comes back with a new `Display(port)` or a soft reset. `write()`, `label()`, `data()`, `text()`, `print()` and the mirror stay 8x8.
+- **Firmware: less work on the main core between your program's steps and in the `Motor` / `DriveBase` getters.** The interpreter checks whether the board's service poll is due before calling it (it is called about one time in eight, at the same moments as before), and the most used getters (`Motor.angle()` and `done()`, the drive base's `distance()`, `angle()`, `state()` and `done()`) use divisors and limits worked out once, with the same results to the last bit for the same encoder reading (`db.state()` now takes its distance and angle from one reading). What this changes in your program's speed against 0.2.71 is measured by this release's release check, and its numbers are recorded with it (`docs/gates/0.2.72.md` in the EVN repository).
+- **Simulator: an RCJ ramp scores 10 for each inclined tile by default** (docs/SIMULATOR.md, "The referee"; rules 3.7.4).
+  The referee's ramp setting now starts at *per tile*: a ramp two tiles long scores 20, not 10, so a run up a
+  long ramp scores more than before. The 2026 rules score per ramp tile (the 2025 rules already did in 3.7.4; the 2026
+  final removed the leftover once-a-ramp sentence from 5.6.1). *ramp: per ramp* in the referee's settings keeps the
+  old way (10 once a ramp).
+- **Simulator: a WRO drive base preset in the configurator** (docs/SIMULATOR.md, "The WRO drive base preset").
+  **Preset: WRO drive base** writes the EVN owner's competition drive base into the form - two EV3 Medium wheels on
+  ports 3 (mirrored) and 2, 62.6 mm wheels 176.7 mm apart, its body and rollers - measured from its LDraw model; your
+  sensors and other hardware stay, and **Apply** uses it on any course.
+- **Simulator: dragging or turning a tile no longer deletes the tiles it would lie on.** In the map builder, a tile
+  dragged onto another tile (with no bridge's clearance between them) goes back where it was, and a turn that would
+  lay it on another tile is not made; the builder says why and how to replace that tile (pick this one in the list and
+  put it on the cell). Before, the other tile was removed with no undo. Putting a tile on a cell still replaces what
+  is there.
+- **Simulator: custom tiles, ink drawn over ink.** An arc drawn again over an arc on the same circle (twice, either
+  way round, or part of it) is one line, as a redrawn straight already was; before, the tile had no route or one
+  that folded back, with no warning. Ink drawn beside a line's centre (two lines a few mm apart, their ink
+  overlapping) is warned "ink drawn over ink" in the tile editor and the map.
+- **Simulator: a tile's Height no longer deletes the tile under it.** In the map builder, a Height that would leave a
+  tile less than a bridge's 225 mm clear from another tile on its cell is refused and said (the least clearance and
+  the height that makes a bridge); before, the other tile was removed with no undo. Putting a tile on a cell still
+  replaces what is there.
+- **Browser IDE, developer mode only (`?evn-dev=sim`): the Simulator panel is the board while it is open** (docs/WEB.md,
+  "Developer mode"). The developer mode's stand-in board and the panel's robot were both "EVN simulator", and the
+  Console stayed on the stand-in (which runs no Python) while the panel said "in use as the board". Opening the panel
+  now unplugs the stand-in and plugs the robot in under the name (the Console and the Board view follow it at the first
+  port poll after a 4.5 s gap: 5-9 s), as without the developer mode; closing the panel brings the stand-in back.
+- **Simulator: ramp and seesaw angles, low bridges and zone walls** (docs/SIMULATOR.md, "Building a map"). A ramp's
+  incline and a seesaw's tilt are set per tile (a field beside **Ramp** / **Seesaw**, `"incline"` in the map JSON: any
+  angle over 0 up to 45 degrees; absent, 24.6 and 15 as before, so saved maps lay out exactly as they did). A ramp
+  climbs its plan x tan(angle); past the rules' 25 degrees (3.7.2), or a seesaw from 20 (3.8.2), the map says so and
+  whether it is within the rules' +-10 % (3.11.5). A bridge with 225 to 250 mm under it and zone walls of 90 to
+  100 mm are built and warned instead of refused (3.2.3, 3.9.3: the rules' value less 3.11.5's -10 %); less is
+  still refused, and the builder puts a tile on an occupied cell in place of what is there unless the two make such a
+  bridge. An object on a seesaw is left out as a simulator limit (rules 3.8.3 bars
+  only scoring elements there).
+- **Simulator: WRO RoboMission Junior 2026** (docs/SIMULATOR.md, "WRO RoboMission"). A new course (in this release the
+  Course list shows it in developer mode only; it comes to everyone in a later release): the 2362 x 1143 mm table with its 50 mm walls, the 27 game objects at their start places (the artefacts and the
+  dirt laid from a seed; **Randomise**), and a WRO referee that times the 2-minute run from Run, scores it by the
+  Junior scoring sheet (230 points), marks an illegal start and keeps the last result until the next Run (**End run**
+  is the team's STOP). The robot pushes the objects, a claw grips, lifts and sets them down, and the colour and
+  distance sensors see them; the physics is plan-only (nothing tips over or breaks). The floor is a schematic until
+  you load WRO's own mat PDF (**Load WRO mat...**; kept in the extension's storage - on your computer, or on the remote host under Remote-SSH,
+  WSL or Codespaces - never shipped or uploaded). Not affiliated
+  with or endorsed by the World Robot Olympiad Association.
+- **Simulator: the RCJ official fields** (docs/SIMULATOR.md, "Official RCJ fields"). The map builder imports a
+  Rescue Line field saved by the RCJ Map Editor (**Import RCJ field…**) and lists the eight 2026 official fields
+  under **Open…** > **2026 official fields** (bundled; the RCJ Rescue Committee's fields, the rescue CMS's tile
+  images under its MIT licence). Each imports with the CMS's own course order and published counts; designs the tile
+  library has not become custom tiles, their arcs kept as arcs. The warnings say where an official field breaks a
+  rule as the simulator reads it. An imported field's speed bumps lie across the line, crossed near their middle
+  rather than alongside an arm, each on its own tile; a field whose bumps fit nowhere imports in about a
+  second, its bumps left out (said) rather than laid over another item.
+- **Simulator: the referee's lack of progress by the 5.5 figures** (docs/SIMULATOR.md, "The referee"). The line lost
+  (5.5.1b): the robot may go anywhere within the next tile, but must be over the line where it crosses that tile's
+  exit; a line not in the sequence (5.5.1c): the robot carried along another line where it crosses a tile's edge -
+  a branch not taken, a line beside, a later part of the course, or back onto the tile before. No other automatic
+  call: the new `autoCaptain` setting (off) calls the captain's lack of progress after 30 s without progress, or
+  with the robot far off the course, for unattended runs. The next tile counts as reached when more than half of the
+  robot is on it with its line sensors over that tile's line (the band between its outermost colour sensors and the
+  line's half width plus 3 mm beyond them, so a one-sensor edge follower is over the line; it was
+  its front sensors within 70 mm of the line), the same band as at the exit, so a robot driving beside the line is
+  called on its first tile. A back-up over the joint just crossed is not a wrong line.
+- **Simulator: the referee scores the Start tile and every speed bump.** A game started on the Start tile scores its
+  5 points (the figure under 5.6.3), so every referee score is 5 higher than before; a speed bump anywhere on a tile
+  scores the tile's 10, not only one over the line, and each bump scores once (one lying across two tiles, or on a
+  tile the course crosses twice).
+- **Simulator: custom tiles - any design within the rules** (docs/SIMULATOR.md, "Custom tiles"). A map may carry its
+  own tiles (`customTiles`): lines and arcs of any width 10-20 mm, gaps, junctions with printed green markers, the red
+  Goal strip. Their routes come from the drawn line; the rules' bounds (3.3.1 width, 3.3.2 gaps, 3.3.5 the Goal
+  strip, 3.6 junctions and markers, 3.8.3 seesaws) are warned, naming the rule - only a tile that cannot be built
+  (ink off the tile, no line, bad data) is refused, so a real competition tile always opens. Maps without
+  custom tiles lay out exactly as before.
+- **Simulator: the map builder's tile editor** (docs/SIMULATOR.md, "The tile editor"). New tile… or Edit a copy of a
+  placed tile: straights, arcs (a centre may lie up to 100 mm off the tile: a gentle curve), gaps, green markers and
+  the Goal's red strip on a 5 mm grid (arcs in 15-degree steps), the line width 10-20 mm, Undo; Delete takes off the
+  selected piece, never the placed tile behind the editor. Each change is checked live by the map's own rules check, a refused tile cannot be
+  saved; a saved tile is placed and turned from the palette like a library tile.
+- **Simulator: the tile library is examples, not a set** (rules 3.1.4: "There are different tile designs (teams can find
+  examples under Section 3.3, 'Line')"). A map may use any number of each library tile: the "n placed, the set has m"
+  warning is gone, and the builder's tile list shows one competition set's count as information only.
+- **Simulator: `evn.UART`** (docs/SIMULATOR.md, "Serial headers"). `UART(1)` / `UART(2)` in the simulator take the
+  board's arguments and raise its errors, and time the wire in simulated time as the board's PL011 does (the 1023-byte
+  send ring, the 32-byte FIFO, the 255-byte receive ring with `overflow()`, read timeouts in simulated milliseconds).
+  Received bytes, the overflow count and the port's format carry across Stop / Run, as on the board. No link to a
+  process on the PC yet: written bytes go nowhere.
+- **Simulator: cameras for your own programs** (docs/SIMULATOR.md, "Cameras"). Up to two cameras on the simulated
+  robot (Raspberry Pi Camera Module 2 / 3 / 3 Wide, Global Shutter, a USB webcam, or custom: where it sits and looks,
+  resolution, field of view, frame rate, latency, JPEG / PNG), their frames timed by the simulation's clock (the same
+  frame numbers and times at every Speed) and streamed on 127.0.0.1 with your token for OpenCV
+  (`cv2.VideoCapture(".../cam/1/stream.mjpg?token=...")`, or `frame.jpg` with the frame's simulated times in its
+  headers). The 3D view shows each camera's field of view, **Camera** previews the first camera's frames, and
+  **Copy OpenCV code** gives the Python lines. A line no longer shows a thin grey break where two pieces of a named
+  course's line meet (in the 3D view too), and the 3D view draws again after the browser drops and restores its WebGL
+  context.
+- **Simulator: the referee's game by the rules** (docs/SIMULATOR.md, "The referee"). Every new game (the robot put
+  down by hand, the referee turned on) starts from the map's field - victims, obstacles, debris and seesaws back
+  (5.6.7); the dead victim scores only when placed after both live ones are rescued (5.6.6); a game started off the
+  Start tile, or with the robot driven or reprogrammed from outside mid-game, is marked *practice* with its reason
+  (5.3.7, 4.1.1); **LoP: restart** restarts main.py at a lack of progress, as a power cycle would (4.2.8).
+- **Simulator: any line tile as a ramp** (docs/SIMULATOR.md, rules 3.7.5). In the map builder, a selected straight,
+  corner, gap tile, T or crossing can be laid as a ramp (its *Ramp* box): the short ramp's 24.6° slope with its line
+  and green markers on it, a ramp to the robot, the colour sensors and the referee (scored with the ramp it belongs to).
+  It climbs to whichever drawn side is picked (`"ramp": 1-3` in the map's JSON; `true` as before, to its top), so a
+  T's through line can climb; a line leaving the slope across its side needs a matching ramp beside it (one climbing
+  the same way from the same height) - onto a flat tile that side is a wall, which the builder warns of (rules
+  3.2.1). Ticking Ramp re-seats the objects on the tile on the slope. The builder warns of a ramp rising straight into a
+  drop-off, or dropping straight into a rise, along the line (rules 3.7.6: no peak; a flat tile between). A curve can
+  be laid as a ramp too: its arcs lie on the slope as polylines a point every 2 mm, which the robot, its colour sensors
+  and the referee read as the flat curve's.
+- **Simulator: the line and the obstacles clear of the field's edge** (docs/SIMULATOR.md, rules 3.3.4, 3.5.7). The map
+  builder warns, naming the tile and the distance, where the line comes within 100 mm of the field's edge (a tile's
+  side with nothing beyond, or a step of more than 5 mm: a raised tile's or a ramp's side), a wall, a bridge's pillar,
+  a seesaw or an obstacle it does not run through, and where an obstacle comes within 250 mm of the field's edge or of
+  an inclined tile. A warning only: every saved map still opens. The *Tile set sample* and the *Hazards sample* are
+  now warned (their tiles reach the field's edge; the Hazards obstacle stands on a one-tile-wide straight).
+- **Simulator: the RCJ game sample, rules sizes, the start behind the joint** (docs/SIMULATOR.md). A new course and
+  map builder sample, *RCJ game sample*: a whole Rescue Line game - a gap, a bump, a seesaw, ramps, a junction and a
+  dead end, an obstacle, checkpoints, the evacuation zone with its victims and the Goal. A speed bump may be as large
+  as a tile (rules 3.5.1), and the rules' sizes are accepted to their +-10 % tolerance (3.11.5) with a warning: a bump
+  11 mm high, debris 3.3 mm (a bump longer than 330 mm, which 0.2.71 allowed, still opens, with a warning). A robot longer than the Start tile allows in front of its axle starts pulled back behind
+  the joint (5.4.1).
+- **Simulator: the referee rescues the victims** (docs/SIMULATOR.md, "The referee"; rules 5.5.6, 5.6.6-5.6.10). A
+  victim at rest for 0.2 s entirely inside its evacuation point, the robot not touching it, is rescued: the referee
+  takes it out of the play and the multiplier counts it once (live into green, the dead one into red after both
+  live). At a lack of progress a victim the robot holds is put down at the nearest clear spot under it (never onto
+  another victim or an evacuation point), one it only pushes stays, and one carried out of the zone is
+  put back at random in it, the same places for the same seed. The referee card shows the victims rescued.
+- **Simulator: mechanisms** (docs/SIMULATOR.md, "Mechanisms"). The configurator puts a claw, a lift arm, a scoop, a
+  storage bin or a release door on the robot, on a servo or a motor port (two presets: an arm + claw on servos 1 / 2,
+  a scoop on motor 3 with a door on servo 1). They follow the shafts, grip, lift, carry and drop balls; the weight
+  they carry loads the servo or motor (an overloaded servo stalls) and the robot. A claw's gripper contacts on a
+  touch-array electrode or ADC input tell a live (conductive) victim from a dead one; a ball-held switch says one is
+  in. Drawn in 2D and 3D.
+- **Simulator: victims** (docs/SIMULATOR.md, "The 3D elements"; RoboCup Junior Rescue Line 2026 rules 3.10). The map
+  builder places live victims (silver, conductive), dead victims (black) and fake ones (a grey or black ball, or a
+  printed image) in the evacuation zone, and **Randomise victims** puts 2 live + 1 dead (and fakes) at random from a
+  seed, the same seed the same places. They are 45 mm, 70 g balls with an off-centre centre of mass that roll and are
+  pushed as the loose balls are; a colour sensor reads a live one silver-bright and a dead one dark, a distance
+  sensor sees them. A map is refused when a victim is the wrong size or weight, off the zone's floor or on an
+  evacuation point.
+- **Simulator: loose balls** (docs/SIMULATOR.md, "The 3D elements"). A map can place balls (`"type": "ball"`:
+  radius, mass, colour, an optional off-centre centre of mass - what the victims of rules 3.10 will be built on). They
+  fall, bounce a little, roll down ramps as a solid sphere does, rest on gentle slopes (an off-centre one on steeper
+  ones), and are stopped by tiles, walls, obstacles and each other; the robot pushes them, and a ball held by a wall
+  (or by an obstacle a wall holds) stops the robot. The panel draws them in 2D and 3D. The engine also has kinematic shapes on the robot (for scoops
+  and claws to come) that carry, lift and squeeze them and report the load they feel.
+- **Simulator: servos, touch arrays, ADCs and switches** (docs/SIMULATOR.md, "What the simulated board has"). `Servo`,
+  `TouchArray` (MPR121) and `ADC` (ADS1115) run in the simulator with the board's constructors, methods, readbacks
+  and errors. The configurator fits servos on S1-S4 (a Geekservo 270 / 360 / continuous or a generic one: it follows
+  its pulse at 500 deg/s and stalls under a load beyond its 0.196 N m) and touch arrays and ADCs on I2C ports, with
+  limit switches and bumpers on their electrodes and inputs: a feeler that closes on a wall, a block, a ramp, a raised
+  tile, the seesaw or a bump within its reach and stays closed while pressed against it. The panel shows each servo's
+  shaft.
+- **Simulator: the evacuation zone** (docs/SIMULATOR.md, "Building a map"; RoboCup Junior Rescue Line 2026 rules
+  3.9). The map builder's **Evacuation zone** puts a 4 x 3 cell room on the map: 120 x 90 cm with its 20 mm walls,
+  which stand inside its cells so the tiles round it are untouched (100 mm high unless set; white, grey, blue, yellow or wood), an entrance with a silver strip and an exit with a
+  black strip (each one cell's edge of its outline, chosen in the builder), the red and green evacuation points
+  (30 cm triangles with 60 mm walls) in two corners away from the doorways. The line ends at the entrance and begins
+  again at the exit; the robot, its distance sensors and pushed obstacles meet the walls; a colour sensor reads the
+  silver strip brighter than the white (an assumption: a real strip read at an angle reads dark). Victims: the
+  entry above.
+- **Simulator: the RCJ Rescue Line referee** (docs/SIMULATOR.md, "The referee"; rules 3.4, 5.3-5.7 of the 2026
+  draft). On a map the panel keeps the score live: the 8-minute game clock, the tiles reached in the line's sequence,
+  hazard points once a pass, checkpoints (marked in the map builder) at 5 / 3 / 1 / 0 points a tile by the attempt,
+  lacks of progress called by the panel's button or by the referee when the line is lost past the next tile or a line
+  out of sequence is reached - never for going round an obstacle, backing up or turning (the robot put back on the last checkpoint, the seesaws ahead tipped its way, the start
+  button pressed for it), the exit bonus after 5 s stopped on the Goal and the evacuation zone multiplier (its victims
+  to come). A ramp scores per ramp (5.6.1) or per tile (3.7.4), a setting.
+- **Known in this release:** one calculation that runs 3 s without reaching a wait (one huge integer calculation such as `3**100000`) trips the 3 s watchdog and reboots the board, as on 0.2.71: the motors coast and `evn.reset_cause()` returns `"watchdog"`. The CHR-GM16-030PA 9V 1:63 settles 1.3 ms later than on 0.2.69 (0.2.70's known issue). On the drive-base test robot (56 mm wheels) the `DriveBase` defaults ask about 1 400 wheel °/s; its loaded wheels reach about 850, so a default turn or straight cannot follow its profile. A HiTechnic Color V2 times out about 2 reads in 800 at 300 kHz; a `VL53L1X` read blocks about 3.8 s after the sensor is unplugged with several devices open. 0.2.67's known issues against 0.2.66 were not measured again (a `DriveBase` with different acceleration and deceleration limits caps both by the larger one; `DriveBase.hold()`'s 3-5° oscillation in up to about 1 in 9 holds; `imu.acceleration` +28 % against 0.2.62; USB output dropped after 500 ms without a host read; auto exposure benched on the `ColorSensor` only; `imu.calibrate_gyro()` under a `Pose` +4.3 %). An update straight from 0.2.70 may still say "No Servers" once (0.2.70's own code runs it); the Download button works. Single getter calls against 0.2.71 (accepted by the owner 2026-10-31; measured in 8 alternating runs an image on the drive-base board, the same getters on the motor board): `db.state()` 38 -> 55 us a call, `pose.position()` 16 -> 21 us, `pose.state()` 21 -> 26 us, the compass's `field` 38 -> 53 us, `imu.acceleration()` 21 -> 26 us, `motor.load()` 11.3 -> 12.7 us; the first call after a pause (cold) +19 % to +114 % on 12 getters (angle, stalled, control.stalled, imu.acceleration / tilt, pose.position / heading / state, db.distance / angle / done / stalled). Faster than 0.2.71: `db.done()` 18 -> 11 us, `db.distance()` 15 -> 12 us, `db.angle()` 15 -> 13 us, `model.state()` 21 -> 17 us, `motor.done()` 5.2 -> 4.2 us, and the loops that call them (the drive-base poll -11 %; docs/gates/0.2.72.md). `Display.ports()` can name an `LSM6DSV` on a port (it identifies the chip by its ID), while the `LSM6DSV` class is not in this release (above): `evn.LSM6DSV` raises `AttributeError`.
+
 ## 0.2.71 (2026-10-26)
 - **Files: a write refused while a motor drives no longer corrupts or loses a file.** A refused `write()` writes
   nothing and can be repeated; a refused `close()` still raises `OSError: [Errno 16] EBUSY` but keeps its data and

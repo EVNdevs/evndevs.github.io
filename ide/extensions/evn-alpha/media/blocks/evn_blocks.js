@@ -1071,9 +1071,10 @@
             type: 'evn_imu_calibrate',
             message0: 'calibrate IMU %1 %2',
             args0: [portField(I2C_PORTS), { type: 'field_dropdown', name: 'POSE', options: [
-                ['(still and level, about 2 s)', '0'], ['first pose of two', '1'], ['second pose, after half a turn', '2']] }],
+                ['(still and level, about 2 s)', '0'], ['first pose of two', '1'], ['second pose, after half a turn', '2'],
+                ['front: tip it nose-down, hold 2 s', 'front']] }],
             previousStatement: null, nextStatement: null, style: 'evn_sense_blocks',
-            tooltip: 'Measure the gyro bias and the accelerometer offsets and store them on the board for this port; the robot must not move. On a surface that is not quite level use two poses: measure the first, turn the robot about half a turn on the same spot, then the second (within 2 minutes).',
+            tooltip: 'Measure the gyro bias and the accelerometer offsets and store them on the board for this port; the robot must not move. On a surface that is not quite level use two poses: measure the first, turn the robot about half a turn on the same spot, then the second (within 2 minutes). Front, after a level calibration: lift the robot\'s back so it tips nose-down 20 to 45 degrees and hold it still about 2 s; the board finds which way is forward and stores it.',
         },
         {
             type: 'evn_adc_setup',
@@ -3153,6 +3154,7 @@
     };
     generator.forBlock['evn_imu_calibrate'] = function (block) {
         const pose = block.getFieldValue('POSE');
+        if (pose === 'front') return deviceRef(block, 'IMU') + '.find_front()\n';
         return deviceRef(block, 'IMU') + '.calibrate(' + (pose === '1' || pose === '2' ? 'pose=' + pose : '') + ')\n';
     };
     generator.forBlock['evn_imu_up'] = function (block) {

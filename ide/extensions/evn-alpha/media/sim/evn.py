@@ -1,8 +1,8 @@
 """evn - the EVN ALPHA module, as the simulator runs it (docs/SIMULATOR.md).
 
 The same names, signatures, units and errors as the firmware's bindings (stubs/evn.pyi) for what the simulated robot
-has: Motor, DriveBase, ColorSensor, DistanceSensor, IMU, PID, wait, StopWatch, stop_all, battery, button, led, and the
-constants. The motors and the sensors are the simulator's (src/sim/engine, through the _evnsim module); everything
+has: Motor, DriveBase, ColorSensor, DistanceSensor, IMU, Servo, TouchArray, ADC, PID, wait, StopWatch, stop_all, battery,
+button, led, UART, and the constants. The motors and the sensors are the simulator's (src/sim/engine, through the _evnsim module); everything
 else of the firmware's API is present by name and says plainly that the simulated robot does not have it.
 """
 import _evnsim as _s
@@ -1567,6 +1567,12 @@ class IMU:
     def cancel_calibration(self):
         self._live()
 
+    def find_front(self):
+        # the board's refusal type (RuntimeError "IMU find_front: ..."): the simulated robot stays level on its
+        # mat, so the nose-down tip the board waits for never comes; the axes stay as they are
+        self._live()
+        raise RuntimeError("IMU find_front: the simulated robot cannot be tipped - run it on the board")
+
     def ranges(self, *, gyro=None, accel=None):
         self._live()
         if gyro is None and accel is None:
@@ -1931,23 +1937,19 @@ def _absent(name, what):
     def __init__(self, port=None, *a, **k):
         if port is None:
             raise OSError("the simulated robot has no %s" % what)
-        raise OSError("no %s on port %s: the simulated robot has a drive base, colour and distance sensors and an IMU "
-                      "(the hardware configurator)" % (what, port))
+        raise OSError("no %s on port %s: the simulated robot has a drive base, colour and distance sensors, an IMU, "
+                      "servos, touch arrays and ADCs (the hardware configurator)" % (what, port))
     return type(name, (), {"__init__": __init__})
 
 
 Compass = _absent("Compass", "compass")
 GestureSensor = _absent("GestureSensor", "APDS-9960 gesture sensor")
 EnvSensor = _absent("EnvSensor", "BME280 environment sensor")
-TouchArray = _absent("TouchArray", "MPR121 touch array")
-ADC = _absent("ADC", "ADS1115 ADC")
 MatrixLED = _absent("MatrixLED", "matrix LED")
 SevenSegmentLED = _absent("SevenSegmentLED", "seven-segment display")
 Display = _absent("Display", "OLED display")
 RGBLED = _absent("RGBLED", "RGB LED strip")
-Servo = _absent("Servo", "servo")
 Bluetooth = _absent("Bluetooth", "Bluetooth module")
-UART = _absent("UART", "UART")
 I2C = _absent("I2C", "I2C device")
 HiTechnicColorSensor = _absent("HiTechnicColorSensor", "HiTechnic colour sensor")
 HiTechnicCompass = _absent("HiTechnicCompass", "HiTechnic compass")
@@ -1959,3 +1961,755 @@ DataLog = _absent("DataLog", "data logger")
 ADRC = _absent("ADRC", "ADRC controller")
 Flash = _absent("Flash", "flash block device (its files are the Simulator panel's)")
 Icon = _absent("Icon", "matrix LED icon set (no matrix LED)")
+
+
+# ---------------------------------------------------------------- servos, touch arrays and ADCs (peripherals.ts)
+# The bindings' checks and messages (micropython/modules/evn_periph.c Servo, evn_toucharray.c, evn_adc.c); the driver's
+# state is the simulator's (src/sim/engine/peripherals.ts). A limit switch or bumper is an ADC input or a touch-array
+# electrode, as on the board (it has no switch class): docs/SIMULATOR.md "Servos, touch arrays, ADCs and switches".
+
+_s_sv_open, _s_sv_owned, _s_sv_get, _s_sv_do, _s_sv_wait = _s.sv_open, _s.sv_owned, _s.sv_get, _s.sv_do, _s.sv_wait
+_s_ta_open, _s_ta_get, _s_ta_events, _s_ta_data = _s.ta_open, _s.ta_get, _s.ta_events, _s.ta_data
+_s_ta_cfg, _s_ta_set, _s_ta_close = _s.ta_cfg, _s.ta_set, _s.ta_close
+_s_ad_open, _s_ad_cfg, _s_ad_get, _s_ad_read, _s_ad_set, _s_ad_close = _s.ad_open, _s.ad_cfg, _s.ad_get, _s.ad_read, _s.ad_set, _s.ad_close
+
+_UNSET = object()
+# hal/hal_servo.c's profiles: range (0: continuous), min_us, max_us, start, max_dps
+_SERVO_PROFILES = {
+    "generic": (180, 500, 2500, 90.0, 500.0),
+    "geekservo_270": (270, 600, 2400, 135.0, 500.0),
+    "geekservo_cr": (0, 600, 2400, 0.0, 0.0),
+    "geekservo_360": (360, 500, 2500, 180.0, 400.0),
+}
+
+
+def _flt(v):
+    """MicroPython's mp_obj_get_float: an int, a float or a bool, else TypeError."""
+    if not isinstance(v, (int, float)):
+        raise TypeError("can't convert %s to float" % type(v).__name__)
+    return float(v)
+
+
+def _finite(v, what):
+    v = _flt(v)
+    if v != v or v in (float("inf"), float("-inf")):
+        raise ValueError("%s must be a finite number" % what)
+    return v
+
+
+class Servo:
+    """A hobby servo on servo port 1..4: the pulse the program sets, the tracked position the board reports (it has no
+    encoder: angle() is where the pulse sends the horn, not where a load holds it)."""
+
+    def __init__(self, port, profile=None, reverse=False, *, range=None, min_us=None, max_us=None, start=None, max_dps=None):
+        n = _int(port)
+        if not 1 <= n <= 4:
+            raise ValueError("servo must be 1..4")
+        if profile is None:
+            name = "geekservo_270"
+        elif not isinstance(profile, str):
+            raise TypeError("can't convert '%s' object to str implicitly" % type(profile).__name__)
+        elif profile in _SERVO_PROFILES:
+            name = profile
+        else:
+            raise ValueError("profile must be 'generic', 'geekservo_270', 'geekservo_360' or 'geekservo_cr'")
+        rng, lo, hi, st, dps = _SERVO_PROFILES[name]
+        if range is not None:
+            r = _int(range)
+            if r < 0 or r > 3600:
+                raise ValueError("range must be 0 (continuous) .. 3600 degrees")
+            rng = r
+            if start is None:
+                st = r * 0.5
+        if min_us is not None:
+            lo = _int(min_us)
+            if not 200 <= lo <= 2800:
+                raise ValueError("min_us must be 200..2800")
+        if max_us is not None:
+            hi = _int(max_us)
+            if not 200 <= hi <= 2800:
+                raise ValueError("max_us must be 200..2800")
+        if lo < 200 or hi > 2800 or lo >= hi:
+            raise ValueError("pulse range must satisfy 200 <= min_us < max_us <= 2800")
+        if start is not None:
+            st = _finite(start, "start")
+        if max_dps is not None:
+            dps = _finite(max_dps, "max_dps")
+        if rng and (st < 0 or st > rng):
+            raise ValueError("start must be within the range")
+        if rng and dps < 1:
+            raise ValueError("max_dps must be >= 1")
+        self._port = n
+        self._closed = False
+        self._token = _s_sv_open(n, name, rng, lo, hi, st, dps, bool(reverse))
+
+    def _check(self):
+        if self._closed:
+            raise ValueError("Servo is closed")
+        if not _s_sv_owned(self._port, self._token):
+            raise ValueError("Servo(%d) was replaced by a newer Servo(%d)" % (self._port, self._port))
+
+    def _fixed(self):
+        st = _s_sv_get(self._port)
+        if st[5] == 0:
+            raise TypeError("continuous-rotation servo: use duty()")
+        return st
+
+    def __repr__(self):
+        p = self._port
+        if self._closed or not _s_sv_owned(p, self._token):
+            return "Servo(%d, %s)" % (p, "closed" if self._closed else "replaced")
+        st = _s_sv_get(p)
+        if st[5] == 0:
+            return "Servo(%d, profile='%s', continuous, %d..%d us, duty=%d%%)" % (p, st[4], st[6], st[7], int(st[3]))
+        return "Servo(%d, profile='%s', range=%d, %d..%d us, position=%d, %s)" % (
+            p, st[4], st[5], st[6], st[7], int(st[1]), "reverse" if st[10] else "direct")
+
+    def pulse(self, us=_UNSET, /):
+        self._check()
+        if us is _UNSET:
+            return int(_s_sv_get(self._port)[0])
+        us = _int(us)
+        if not 200 <= us <= 2800:
+            raise ValueError("pulse must be 200..2800 us")
+        _s_sv_do(self._port, "us", us, 0)
+
+    def angle(self, degrees=_UNSET, reverse=False, /):
+        self._check()
+        st = self._fixed()
+        if degrees is _UNSET:
+            return float(st[1])
+        d = _finite(degrees, "angle")
+        if d < 0 or d > st[5]:
+            raise ValueError("angle must be 0..%d" % st[5])
+        _s_sv_do(self._port, "angle", d, bool(reverse))
+
+    def move(self, angle, speed=None, wait=True):
+        self._check()
+        st = self._fixed()
+        d = _finite(angle, "angle")
+        if d < 0 or d > st[5]:
+            raise ValueError("angle must be 0..%d" % st[5])
+        dps = abs(st[9] if speed is None else _finite(speed, "speed"))
+        if dps == 0:
+            raise ValueError("speed must be non-zero (use angle() to jump)")
+        _s_sv_do(self._port, "move", d, dps)
+        if wait:
+            _s_sv_wait(self._port)
+
+    def done(self):
+        self._check()
+        return not _s_sv_get(self._port)[2]
+
+    def duty(self, percent=_UNSET, /):
+        self._check()
+        st = _s_sv_get(self._port)
+        if st[5] != 0:
+            raise TypeError("fixed-range servo: use angle() / move()")
+        if percent is _UNSET:
+            return float(st[3])
+        d = _finite(percent, "duty")
+        if d < -100 or d > 100:
+            raise ValueError("duty must be -100..100")
+        _s_sv_do(self._port, "duty", d, 0)
+
+    def stop(self):
+        self._check()
+        _s_sv_do(self._port, "stop", 0, 0)
+
+    def profile(self):
+        self._check()
+        st = _s_sv_get(self._port)
+        return (st[4], int(st[5]), int(st[6]), int(st[7]), float(st[8]), float(st[9]), bool(st[10]))
+
+    def set_range(self, min_us, max_us, /):
+        self._check()
+        lo, hi = _int(min_us), _int(max_us)
+        if lo < 200 or hi > 2800 or lo >= hi:
+            raise ValueError("range must satisfy 200 <= min < max <= 2800 us")
+        _s_sv_do(self._port, "range", lo, hi)
+
+    def enable(self):
+        self._check()
+        _s_sv_do(self._port, "enable", 0, 0)
+
+    def disable(self):
+        self._check()
+        _s_sv_do(self._port, "disable", 0, 0)
+
+    def close(self):
+        if not self._closed and _s_sv_owned(self._port, self._token):
+            _s_sv_do(self._port, "close", 0, 0)
+            self._closed = True
+
+
+_TA_CDT = (0.0, 0.5, 1.0, 2.0, 4.0, 8.0, 16.0, 32.0)
+
+
+def _ta_channel(c):
+    c = _int(c)
+    if not 0 <= c <= 12:
+        raise ValueError("channel must be 0..12 (12 = proximity)")
+    return c
+
+
+class TouchArray:
+    """An MPR121 touch array on I2C port 1..16: its electrodes read the configurator's switches (or a mechanism's
+    contacts); a closed contact is a touch of ~500 counts against the 12 / 6 thresholds."""
+
+    def __init__(self, port, /):
+        port = _int(port)
+        if not 1 <= port <= 16:
+            raise ValueError("port must be 1..16")
+        _chk(_s_ta_open(port))
+        self._port = port
+
+    def _cfg(self):
+        return _chk(_s_ta_cfg(self._port))
+
+    def _get(self):
+        return _chk(_s_ta_get(self._port))
+
+    def __repr__(self):
+        r = _s_ta_cfg(self._port)
+        if type(r) is str:
+            return "TouchArray(%d, closed)" % self._port
+        return "TouchArray(%d, electrodes=%d, proximity=%d, thresholds=(%d, %d), update=%d ms)" % (
+            self._port, r[0], r[1], r[14], r[27], r[6] * r[5])
+
+    def touched(self):
+        return int(self._get()[0])
+
+    def read(self, channel, /):
+        c = _ta_channel(channel)
+        return bool(int(self._get()[0]) & (1 << c))
+
+    def pressed(self):
+        return bool(int(self._get()[0]) & 0x0FFF)
+
+    def proximity(self):
+        return bool(int(self._get()[0]) & 0x1000)
+
+    def events(self):
+        r = _chk(_s_ta_events(self._port))
+        return (int(r[0]), int(r[1]))
+
+    def data(self, channel, /):
+        c = _ta_channel(channel)
+        r = _chk(_s_ta_data(self._port, c))
+        return (int(r[0]), int(r[1]))
+
+    def thresholds(self, *args, **kw):
+        cfg = self._cfg()
+        for k in kw:
+            if k not in ("touch", "release", "channel"):
+                raise TypeError("unexpected keyword argument '%s'" % k)
+        if len(args) > 2:
+            raise TypeError("function takes 3 positional arguments but %d were given" % (len(args) + 1))
+        read_one = len(args) == 1 and "release" not in kw
+        if read_one and "channel" in kw:
+            raise TypeError("thresholds(channel) or thresholds(touch, release, channel=)")
+        v = {"touch": None, "release": None}
+        for name, a in zip(("touch", "release"), args):
+            if name in kw:
+                raise TypeError("argument '%s' given twice" % name)
+            v[name] = a
+        for name in ("touch", "release"):
+            if name in kw:
+                v[name] = kw[name]
+        if read_one:
+            c = _ta_channel(v["touch"])
+            return (int(cfg[14 + c]), int(cfg[27 + c]))
+        ch = -1 if kw.get("channel") is None else _ta_channel(kw["channel"])
+        i = 0 if ch < 0 else ch
+        if v["touch"] is None and v["release"] is None:
+            return (int(cfg[14 + i]), int(cfg[27 + i]))
+        t = int(cfg[14 + i]) if v["touch"] is None else _int(v["touch"])
+        r = int(cfg[27 + i]) if v["release"] is None else _int(v["release"])
+        if not (0 <= t <= 255 and 0 <= r <= 255):
+            raise ValueError("thresholds must be 0..255")
+        _chk(_s_ta_set(self._port, "thr", ch, t, r, 0, 0))
+
+    def debounce(self, *a):
+        cfg = self._cfg()
+        if not a:
+            return (int(cfg[2]), int(cfg[3]))
+        if len(a) != 2:
+            raise TypeError("debounce(touch, release)")
+        t, r = _int(a[0]), _int(a[1])
+        if not (0 <= t <= 7 and 0 <= r <= 7):
+            raise ValueError("debounce must be 0..7")
+        _chk(_s_ta_set(self._port, "deb", t, r, 0, 0, 0))
+
+    def electrodes(self, count=None, proximity=None):
+        cfg = self._cfg()
+        if count is None and proximity is None:
+            return (int(cfg[0]), int(cfg[1]))
+        n = int(cfg[0]) if count is None else _int(count)
+        p = int(cfg[1]) if proximity is None else _int(proximity)
+        if not 1 <= n <= 12:
+            raise ValueError("count must be 1..12")
+        if not 0 <= p <= 3:
+            raise ValueError("proximity must be 0..3")
+        _chk(_s_ta_set(self._port, "ele", n, p, 0, 0, 0))
+
+    def sampling(self, *a):
+        cfg = self._cfg()
+        if not a:
+            return (int(cfg[4]), int(cfg[5]), int(cfg[6]))
+        if len(a) != 3:
+            raise TypeError("sampling(first, second, interval_ms)")
+        f, s2, ms = _int(a[0]), _int(a[1]), _int(a[2])
+        ffi = (6, 10, 18, 34).index(f) if f in (6, 10, 18, 34) else -1
+        sfi = (4, 6, 10, 18).index(s2) if s2 in (4, 6, 10, 18) else -1
+        esi = (1, 2, 4, 8, 16, 32, 64, 128).index(ms) if ms in (1, 2, 4, 8, 16, 32, 64, 128) else -1
+        if ffi < 0:
+            raise ValueError("first must be 6, 10, 18 or 34")
+        if sfi < 0:
+            raise ValueError("second must be 4, 6, 10 or 18")
+        if esi < 0:
+            raise ValueError("interval must be 1, 2, 4, 8, 16, 32, 64 or 128 ms")
+        _chk(_s_ta_set(self._port, "smp", ffi, sfi, esi, 0, 0))
+
+    def charge(self, *a):
+        cfg = self._cfg()
+        if not a:
+            return (int(cfg[7]), float(cfg[8]))
+        if len(a) != 2:
+            raise TypeError("charge(current_uA, time_us)")
+        cdc, us = _int(a[0]), _flt(a[1])
+        cdt = _TA_CDT.index(us) if us in _TA_CDT else -1
+        if not 0 <= cdc <= 63:
+            raise ValueError("current must be 0..63 uA")
+        if cdt < 0:
+            raise ValueError("time must be 0, 0.5, 1, 2, 4, 8, 16 or 32 us")
+        _chk(_s_ta_set(self._port, "chg", cdc, cdt, 0, 0, 0))
+
+    def autoconfig(self, enable=None, reconfig=None, vdd=None):
+        cfg = self._cfg()
+        if enable is None:
+            return (bool(cfg[9]), bool(cfg[10]), int(cfg[11]), int(cfg[12]), int(cfg[13]))
+        usl, tl, lsl = int(cfg[11]), int(cfg[12]), int(cfg[13])
+        if vdd is not None:
+            v = _flt(vdd)
+            if v < 1.71 or v > 3.6:
+                raise ValueError("vdd must be 1.71..3.6 V")
+            u = min(255.0, (v - 0.7) / v * 256.0)
+            usl, tl, lsl = int(u + 0.5), int(u * 0.9 + 0.5), int(u * 0.65 + 0.5)
+        en = bool(enable)
+        re = en if reconfig is None else bool(reconfig)
+        _chk(_s_ta_set(self._port, "auto", int(en), int(re), usl, tl, lsl))
+
+    def out_of_range(self):
+        self._get()
+        return 0
+
+    def overcurrent(self):
+        self._get()
+        return False
+
+    def clear_overcurrent(self):
+        self._cfg()
+        _chk(_s_ta_set(self._port, "clroc", 0, 0, 0, 0, 0))
+
+    def age(self):
+        return int(self._get()[1])
+
+    def close(self):
+        _s_ta_close(self._port)
+
+
+_ADC_FSR_MV = (6144, 4096, 2048, 1024, 512, 256)
+_ADC_SPS = (8, 16, 32, 64, 128, 250, 475, 860)
+
+
+class ADC:
+    """An ADS1115 on I2C port 1..16: AIN0..3 read the configurator's volts and switches (or a mechanism's sources)."""
+
+    def __init__(self, port, /):
+        port = _int(port)
+        if not 1 <= port <= 16:
+            raise ValueError("port must be 1..16")
+        _chk(_s_ad_open(port))
+        self._port = port
+
+    def _cfg(self):
+        return _chk(_s_ad_cfg(self._port))
+
+    def _input(self, a):
+        cfg = self._cfg()
+        if a is not _UNSET:
+            i = _int(a)
+            if not 0 <= i <= 7:
+                raise ValueError("input must be 0..7")
+            return i
+        if cfg[3] >= 0:
+            return int(cfg[3])
+        for i in range(8):
+            if cfg[2] & (1 << i):
+                return i
+        return 0
+
+    def _get(self, a):
+        return _chk(_s_ad_get(self._port, self._input(a)))
+
+    def __repr__(self):
+        r = _s_ad_cfg(self._port)
+        if type(r) is str:
+            return "ADC(%d, closed)" % self._port
+        s = "ADC(%d, inputs=0x%02x, range=%d mV, data_rate=%d" % (self._port, r[2], _ADC_FSR_MV[r[0]], _ADC_SPS[r[1]])
+        if r[3] >= 0:
+            s += ", continuous=%d" % r[3]
+        return s + ")"
+
+    def raw(self, input=_UNSET, /):
+        return int(self._get(input)[0])
+
+    def voltage(self, input=_UNSET, /):
+        return float(self._get(input)[1])
+
+    def read(self, input=_UNSET, /):
+        i = self._input(input)
+        r = _chk(_s_ad_get(self._port, i))
+        return float(_chk(_s_ad_read(self._port, i, r[3])))
+
+    def inputs(self, seq=_UNSET, /):
+        cfg = self._cfg()
+        if seq is _UNSET:
+            return tuple(i for i in range(8) if cfg[2] & (1 << i))
+        mask = 0
+        # a bool is not an int to the binding (mp_obj_is_int), and mp_obj_get_array refuses it: TypeError (review r1 N5)
+        if isinstance(seq, int) and not isinstance(seq, bool):
+            v = _int(seq)
+            if not 0 <= v <= 7:
+                raise ValueError("input must be 0..7")
+            mask = 1 << v
+        else:
+            if not isinstance(seq, (list, tuple)):
+                raise TypeError("object '%s' isn't a tuple or list" % type(seq).__name__)
+            for x in seq:
+                v = _int(x)
+                if not 0 <= v <= 7:
+                    raise ValueError("input must be 0..7")
+                mask |= 1 << v
+        if mask == 0:
+            raise ValueError("at least one input")
+        _chk(_s_ad_set(self._port, "inputs", mask))
+
+    def range(self, volts=_UNSET, /):
+        cfg = self._cfg()
+        if volts is _UNSET:
+            return _ADC_FSR_MV[cfg[0]] / 1000.0
+        v = _flt(volts)
+        mv = int(v * 1000.0 + 0.5) if v >= 0 else -1
+        if mv not in _ADC_FSR_MV:
+            raise ValueError("range must be 6.144, 4.096, 2.048, 1.024, 0.512 or 0.256")
+        _chk(_s_ad_set(self._port, "fsr", _ADC_FSR_MV.index(mv)))
+
+    def data_rate(self, sps=_UNSET, /):
+        cfg = self._cfg()
+        if sps is _UNSET:
+            return _ADC_SPS[cfg[1]]
+        s = _int(sps)
+        if s not in _ADC_SPS:
+            raise ValueError("data_rate must be 8, 16, 32, 64, 128, 250, 475 or 860")
+        _chk(_s_ad_set(self._port, "dr", _ADC_SPS.index(s)))
+
+    def continuous(self, input=_UNSET, /):
+        cfg = self._cfg()
+        if input is _UNSET:
+            return int(cfg[3]) if cfg[3] >= 0 else None
+        i = -1
+        if input is not None:
+            i = _int(input)
+            if not 0 <= i <= 7:
+                raise ValueError("input must be 0..7")
+        _chk(_s_ad_set(self._port, "cont", i))
+
+    def age(self, input=_UNSET, /):
+        return int(self._get(input)[2])
+
+    def close(self):
+        _s_ad_close(self._port)
+
+
+# ---------------------------------------------------------------- UART (uart.ts)
+# micropython/modules/evn_periph.c l.1091-1558 (the owner, 2026-09-28: "Follow machine uart"): the constructor, init()
+# and every method with the binding's arguments, ranges, errors and messages; py/stream.c's read / readinto / readall /
+# write / iteration over the binding's read, as the board runs them. The port - rings, FIFOs, the wire's timing in
+# simulated time, what carries across Stop / Run - is the simulator's (src/sim/engine/uart.ts, SIMULATOR_SBC_DESIGN.md
+# §4.1, §5.6). No link to a process yet (S2): what a program writes goes nowhere and nothing arrives.
+
+_s_ua_open, _s_ua_init, _s_ua_close, _s_ua_fmt, _s_ua_write = _s.ua_open, _s.ua_init, _s.ua_close, _s.ua_fmt, _s.ua_write
+_s_ua_read, _s_ua_readline, _s_ua_any, _s_ua_txdone, _s_ua_flush = _s.ua_read, _s.ua_readline, _s.ua_any, _s.ua_txdone, _s.ua_flush
+_s_ua_break, _s_ua_flush_rx, _s_ua_overflow, _s_ua_repl = _s.ua_break, _s.ua_flush_rx, _s.ua_overflow, _s.ua_repl
+
+_UART_PINS = ((0, 1), (8, 9))   # Serial1 = uart0 GP0 / GP1, Serial2 = uart1 GP8 / GP9 (hal_uart.c l.12-15)
+_UART_BUF = 256                 # py/stream.c DEFAULT_BUFFER_SIZE: read()'s chunk
+
+
+class _MpErrno(OSError):
+    """MicroPython's OSError(n): str `[Errno 110] ETIMEDOUT`, args (n,), named OSError."""
+
+    def __init__(self, n, name):
+        super().__init__(n, name)
+        self.args = (n,)
+        self._name = name
+
+    def __str__(self):
+        return "[Errno %d] %s" % (self.errno, self._name)
+
+    def __repr__(self):
+        return "OSError(%d,)" % self.errno
+
+
+_MpErrno.__name__ = _MpErrno.__qualname__ = "OSError"
+
+
+def _uchk(r):
+    if type(r) is str and r == _ERR + "OSError: ETIMEDOUT":
+        raise _MpErrno(110, "ETIMEDOUT")   # mp_raise_OSError(MP_ETIMEDOUT): the queued bytes did not leave in time
+    return _chk(r)
+
+
+def _uart_ms(v, err):
+    v = _int(v)
+    if v < 0:
+        raise ValueError(err)
+    return v
+
+
+def _rbuf(buf):
+    """mp_get_buffer_raise(.., MP_BUFFER_READ): a str's UTF-8 bytes, any buffer's bytes, else TypeError."""
+    if isinstance(buf, str):
+        return buf.encode()
+    try:
+        return bytes(memoryview(buf).cast("B"))
+    except TypeError:
+        raise TypeError("object with buffer protocol required")
+
+
+def _uart_parse(f, t, baudrate, bits, parity, stop, timeout, timeout_char, invert, txbuf, rxbuf):
+    """uart_parse: into f = [baud, bits, parity (0 none, 1 even, 2 odd), stop, invert] and t = [timeout, timeout_char],
+    which hold the current settings; every refusal raises before anything is applied."""
+    if baudrate is not _UNSET:
+        b = _int(baudrate)
+        if b < 300 or b > 3000000:
+            raise ValueError("baudrate out of range")
+        f[0] = b
+    if bits is not _UNSET:
+        b = _int(bits)
+        if b < 5 or b > 8:
+            raise ValueError("bits must be 5, 6, 7 or 8")
+        f[1] = b
+    if parity is not _UNSET:
+        if parity is None:
+            f[2] = 0
+        else:
+            p = _int(parity)
+            if p != 0 and p != 1:
+                raise ValueError("parity must be None, 0 (even) or 1 (odd)")
+            f[2] = 2 if p else 1
+    if stop is not _UNSET:
+        s = _int(stop)
+        if s != 1 and s != 2:
+            raise ValueError("stop must be 1 or 2")
+        f[3] = s
+    if timeout is not _UNSET:
+        t[0] = _uart_ms(timeout, "timeout must be >= 0 ms")
+    if timeout_char is not _UNSET:
+        t[1] = _uart_ms(timeout_char, "timeout_char must be >= 0 ms")
+    if invert is not _UNSET:
+        i = _int(invert)
+        if i & ~3:
+            raise ValueError("bad inversion mask")
+        f[4] = i
+    if txbuf is not _UNSET and _int(txbuf) > 1023:
+        raise ValueError("txbuf too large: the transmit ring holds 1023 bytes")
+    if rxbuf is not _UNSET and _int(rxbuf) > 255:
+        raise ValueError("rxbuf too large: the receive ring holds 255 bytes")
+    floor = 13000 // f[0] + 1   # hal_uart_char_ms: one 13-bit character + 1 ms at the (new) baud
+    if t[1] < floor:
+        t[1] = floor
+
+
+class UART:
+    """A serial header as machine.UART: id 1 = Serial1 (GP0 / GP1), 2 = Serial2 (GP8 / GP9)."""
+
+    INV_TX = 1
+    INV_RX = 2
+
+    def __init__(self, id, baudrate=_UNSET, bits=_UNSET, parity=_UNSET, stop=_UNSET, *, timeout=_UNSET,
+                 timeout_char=_UNSET, invert=_UNSET, txbuf=_UNSET, rxbuf=_UNSET):
+        self._closed = True
+        self._id = 0
+        n = _int(id)
+        if n < 1 or n > 2:
+            raise ValueError("uart must be 1 (Serial1) or 2 (Serial2)")
+        f = [115200, 8, 0, 1, 0]
+        t = [0, 0]
+        _uart_parse(f, t, baudrate, bits, parity, stop, timeout, timeout_char, invert, txbuf, rxbuf)
+        self._id = n
+        self._timeout, self._tchar = t
+        _uchk(_s_ua_open(n, f[0], f[1], f[2], f[3], f[4]))
+        self._closed = False
+
+    def _live(self):
+        if self._closed:
+            raise ValueError("UART is closed")
+
+    def _fmt(self):
+        return [int(x) for x in _s_ua_fmt(self._id).split(",")]
+
+    def __repr__(self):
+        n = self._id
+        if self._closed:
+            return "UART(%d, closed)" % n
+        b, bits, par, st, inv = self._fmt()
+        return ("UART(%d, baudrate=%d, bits=%d, parity=%s, stop=%d, tx=%d, rx=%d, txbuf=1023, rxbuf=255, timeout=%d, "
+                "timeout_char=%d, invert=%s)" % (n, b, bits, ("None", "0", "1")[par if par <= 2 else 0], st,
+                                                 _UART_PINS[n - 1][0], _UART_PINS[n - 1][1], self._timeout, self._tchar,
+                                                 ("None", "INV_TX", "INV_RX", "INV_TX|INV_RX")[inv & 3]))
+
+    def init(self, baudrate=_UNSET, bits=_UNSET, parity=_UNSET, stop=_UNSET, *, timeout=_UNSET, timeout_char=_UNSET,
+             invert=_UNSET, txbuf=_UNSET, rxbuf=_UNSET):
+        self._live()
+        f = self._fmt()
+        t = [self._timeout, self._tchar]
+        _uart_parse(f, t, baudrate, bits, parity, stop, timeout, timeout_char, invert, txbuf, rxbuf)
+        _uchk(_s_ua_init(self._id, f[0], f[1], f[2], f[3], f[4]))
+        self._timeout, self._tchar = t
+
+    def deinit(self):
+        if not self._closed:
+            _s_ua_close(self._id)
+            self._closed = True
+
+    close = deinit
+
+    def _rw(self, size):
+        """mp_stream_rw over the binding's read: a short read calls again (one more `timeout`); None: nothing came."""
+        out = b""
+        while size > 0:
+            r = _s_ua_read(self._id, size, self._timeout, self._tchar)
+            if r is None:
+                return out if out else None
+            r = r.encode("latin-1")
+            out += r
+            size -= len(r)
+        return out
+
+    def _readall(self):
+        """py/stream.c stream_readall: 256-byte chunks until a read finds nothing."""
+        out = b""
+        cur = _UART_BUF
+        while True:
+            r = _s_ua_read(self._id, cur, self._timeout, self._tchar)
+            if r is None:
+                return out if out else None
+            r = r.encode("latin-1")
+            out += r
+            cur = cur - len(r) if len(r) < cur else _UART_BUF
+
+    def read(self, nbytes=None, /):
+        n = -1
+        if nbytes is not None:
+            n = _int(nbytes)
+            if n < -1:
+                raise ValueError("nbytes must not be negative")
+        if n == 0:
+            return b""      # py/stream.c never calls the stream's read for 0 bytes: no closed check (as the board)
+        self._live()
+        return self._readall() if n == -1 else self._rw(n)
+
+    def readinto(self, buf, nbytes=_UNSET, /):
+        try:
+            mv = memoryview(buf)
+        except TypeError:
+            raise TypeError("object with buffer protocol required")
+        if mv.readonly:
+            raise TypeError("object with buffer protocol required")
+        mv = mv.cast("B")
+        ln = mv.nbytes
+        if nbytes is not _UNSET:
+            k = _int(nbytes)
+            ln = ln if k < 0 or k > ln else k   # an mp_uint_t: a negative count is more than the buffer
+        if ln == 0:
+            return 0        # mp_stream_rw with size 0 never reaches uart_live (as the board)
+        self._live()
+        r = self._rw(ln)
+        if r is None:
+            return None
+        mv[:len(r)] = r
+        return len(r)
+
+    def readline(self, size=None, *, timeout=None):
+        self._live()
+        mx = -1
+        if size is not None:
+            mx = _int(size)
+            if mx < -1:
+                raise ValueError("size must not be negative")
+        to = self._timeout if timeout is None else _uart_ms(timeout, "timeout must be >= 0 ms")
+        if mx == 0:
+            return b""
+        r = _s_ua_readline(self._id, mx, to)
+        return None if r is None else r.encode("latin-1")
+
+    def write(self, buf, *a):
+        if len(a) > 2:
+            raise TypeError("function takes at most 4 positional arguments")
+        data = _rbuf(buf)
+        off, mx = 0, len(data)
+        if len(a) == 1:
+            mx = _int(a[0])
+        elif len(a) == 2:
+            off, mx = _int(a[0]), _int(a[1])
+        if off < 0 or off > len(data):
+            off = len(data)
+        data = data[off:] if mx < 0 else data[off:off + mx]
+        if not data:
+            return 0
+        self._live()
+        _s_ua_write(self._id, data.decode("latin-1"))
+        return len(data)
+
+    def any(self):
+        self._live()
+        return int(_s_ua_any(self._id))
+
+    def txdone(self):
+        self._live()
+        return bool(_s_ua_txdone(self._id))
+
+    def flush(self):
+        self._live()
+        if not _s_ua_flush(self._id):
+            raise _MpErrno(110, "ETIMEDOUT")
+
+    def sendbreak(self):
+        self._live()
+        _uchk(_s_ua_break(self._id))
+
+    def flush_rx(self):
+        self._live()
+        _s_ua_flush_rx(self._id)
+
+    def overflow(self):
+        self._live()
+        return int(_s_ua_overflow(self._id))
+
+    def repl(self, enable=_UNSET, /):
+        self._live()
+        if enable is _UNSET:
+            return bool(_s_ua_repl(self._id))
+        _s_ua_repl(self._id, 1 if enable else 0)
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        line = self.readline()
+        if not line:
+            raise StopIteration
+        return line

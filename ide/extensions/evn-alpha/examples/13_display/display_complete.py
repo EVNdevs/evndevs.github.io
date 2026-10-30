@@ -1,7 +1,7 @@
 """Display: the whole API
 
 Every Display method once: text on the 16 x 8 character grid, label / data rows, the print()
-console and mirroring, drawing with pixels and with the EV3 screen names, the whole picture as
+console and mirroring, the I2C port map, drawing with pixels and with the EV3 screen names, the whole picture as
 bytes, and the panel's own settings and effects. Every setting the example changes it puts back,
 and it ends with a blank screen.
 
@@ -47,6 +47,12 @@ print("on USB and here")
 wait(1500)
 display.mirror(False)                    # back to USB only
 
+# --- the I2C port map: what is plugged into each port, live -------------------------------------
+display.ports(True)                      # ports 1-8 on the left, 9-16 on the right; a boxed number
+print("port map:", display.ports())      # has a device: its name, or its reading once a program opens it
+wait(3500)                               # one port a tenth of a second: all 16 in 1.6 s
+display.ports(False)                     # a blank screen again
+
 # --- pixels, lines and rectangles (every corner must be on the screen) ------------------------
 display.clear()
 display.pixel(0, 0, True)                # light the top left pixel
@@ -66,6 +72,9 @@ display.draw_circle(64, 32, 20, fill=True)
 display.draw_circle(64, 32, 8, fill=True, color=Color.WHITE)   # erase a smaller disc inside
 display.draw_pixel(120, 60)
 display.draw_text(80, 4, "EV3", text_color=Color.WHITE, background_color=Color.BLACK)  # dark on lit
+display.set_font("small")                # draw_text() in the 4x6 font: 4 pixels a character
+display.draw_text(80, 50, "small text")
+display.set_font("normal")               # back to 8x8 (write(), print() and text() are always 8x8)
 wait(2000)
 
 # --- the whole picture as 1024 bytes -----------------------------------------------------------

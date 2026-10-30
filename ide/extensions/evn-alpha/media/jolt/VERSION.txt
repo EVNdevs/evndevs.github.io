@@ -1,0 +1,1 @@
+JoltPhysics.js 1.1.1 (Jolt Physics 6f8bc72f, MIT), built with emsdk 6.0.13 -DCROSS_PLATFORM_DETERMINISTIC=ON (tools/sim/jolt/build_jolt.sh); jolt.wasm sha256 3d21c531ceaaa49ae3a84498c92d338f948e3e44ebcda88e52f49952af8e255d, jolt.glue.js sha256 4a318bc35ce7ee8f23693e20ed31a05644647aa12ccee72a7bab2698dec88bb4

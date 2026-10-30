@@ -326,7 +326,7 @@ Each sensor has its own sub-category under *Sensors*. Ports are the numbers prin
 | IMU *1* has *the top* facing up | `imu_1.up() == Side.TOP` (`BOTTOM`, `FRONT`, `BACK`, `LEFT`, `RIGHT`) |
 | IMU *1* *is still* / *is ready (gyro settled)* / *has calibrated its gyro (steadiest heading)* | `imu_1.stationary()` / `imu_1.ready()` / `imu_1.heading_confidence() == 1` (the IMU's DMP has measured its gyro itself, 8 to 25 s still, so the heading no longer creeps; `ready()` comes about a second after the robot is still with a stored calibration) |
 | set IMU *1* heading to *0* | `imu_1.reset_heading()`; another angle: `imu_1.reset_heading(45)` |
-| calibrate IMU *1* *(still and level)* / *first pose of two* / *second pose* | `imu_1.calibrate()` / `imu_1.calibrate(pose=1)` / `imu_1.calibrate(pose=2)` (stored on the board for the port; two poses on a surface that is not level: half a turn in between) |
+| calibrate IMU *1* *(still and level)* / *first pose of two* / *second pose* / *front: tip it nose-down* | `imu_1.calibrate()` / `imu_1.calibrate(pose=1)` / `imu_1.calibrate(pose=2)` (stored on the board for the port; two poses on a surface that is not level: half a turn in between) / `imu_1.find_front()` (after a level calibration: lift the robot's back so it tips nose-down 20°–45° and hold it still about 2 s; the front axis found is stored with the port's calibration) |
 
 #### ADC
 

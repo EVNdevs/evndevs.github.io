@@ -9,5 +9,5 @@ own, and they fetch these files cross-origin.
 
 To try it locally: node scripts/serve_ide.js  (then http://localhost:8765/ide/).
 
-extension: evn-alpha-micropython 0.2.71
-generated: 2026-10-26T02:27:29.396Z
+extension: evn-alpha-micropython 0.2.72
+generated: 2026-10-30T14:10:18.368Z

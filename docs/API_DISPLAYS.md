@@ -12,7 +12,7 @@ Plug the EVN OLED into an I2C port; only SDA and SCL are used. Text sits on a gr
 
 | Call | Notes |
 | :--- | :--- |
-| `oled = Display(port, addr=0x3C, *, flip=False)` | `port` 1..16; `addr` 0x3C (the EVN OLED) or 0x3D, else `ValueError`; `flip=True` mounts the picture rotated 180°. `OSError` if nothing answers at the address, `OSError` when two displays are already open, `OSError(ETIMEDOUT)` if the panel does not come up; a device at the address whose status byte does not follow the display commands (a panel the firmware cannot identify) is opened anyway, about 0.5 s later, with one line `WARNING: Display(n): the device at I2C 0x3c is not identified ...`: it draws as usual, but a panel that resets without being unplugged (or is unplugged for less than about 0.3 s) stays dark until the display is opened again, and a longer unplug identifies whatever is plugged in afresh; `MemoryError` (`"Display(n): no memory for the display's 1024-byte frame"`) when the heap cannot supply the picture's memory, taken from the heap here and given back at `close()` or the soft reboot. Returns with the panel blank and on, contrast 207 (≈ 55 ms; up to ≈ 740 ms on a panel that has just been plugged in) |
+| `oled = Display(port, addr=0x3C, *, flip=False)` | `port` 1..16; `addr` 0x3C (the EVN OLED) or 0x3D, else `ValueError`; `flip=True` mounts the picture rotated 180°. `OSError` if nothing answers at the address, `OSError` when two displays are already open, `OSError(ETIMEDOUT)` if the panel does not come up; a device at the address whose status byte does not follow the display commands (a panel the firmware cannot identify) is opened anyway, about 0.5 s later, with one line `WARNING: Display(n): the device at I2C 0x3c is not identified ...`: it draws as usual, but a panel that resets without being unplugged (or is unplugged for less than about 0.3 s) stays dark until the display is opened again, and a longer unplug identifies whatever is plugged in afresh; `MemoryError` (`"Display(n): no memory for the display's 1024-byte frame"`) when the heap cannot supply the picture's memory, taken from the heap here and given back at `close()` or the soft reboot. Returns with the EVN mark (the N of the EVN site's icon) in the middle of the panel and the panel on, contrast 207 (≈ 55 ms; up to ≈ 740 ms on a panel that has just been plugged in). The mark stays until the program draws: the first drawing call of any kind (`write()`, `print()`, `pixel()`, `clear()`, …) blanks the screen first, then draws; `contrast()`, `flip()`, `invert()`, `on()`, `off()` and `scroll()` keep it. An empty or control-only `print()` output (a bare newline, a cursor move) keeps it, and so does `draw_pixel()` at a point off the screen, which draws nothing |
 
 ### Text
 
@@ -23,7 +23,7 @@ Plug the EVN OLED into an I2C port; only SDA and SCL are used. Text sits on a gr
 | `oled.data(row, value)` | `value` after the row's label, the rest of the row cleared (the EVN Arduino `writeData`); the same types as `write()`: `oled.label(1, "Dist:"); oled.data(1, 123)` |
 | `oled.text(col, row, text, invert=False)` | characters from column 0..15 (else `ValueError`) on a row, no padding, cut at the right edge; `invert=True` draws dark on lit. Returns how many characters were written |
 | `oled.print(*args, sep=" ", end="\n")` | like the built-in `print()`, on the text grid at a cursor: wraps at 16 characters and scrolls up at the bottom (the eighth row is used before the first scroll). `sep` and `end` are keywords; `clear()` puts the cursor back at the top left |
-| `oled.mirror([enable])` | `oled.mirror(True)` copies everything the board prints (the REPL, every `print()`, tracebacks) to this display's console, with or without a USB host; one display at a time. `mirror(False)`, `close()` or a soft reset (Ctrl-D) ends it; `oled.mirror()` says whether this display is mirroring. Each mirrored line scrolls the whole panel, so a program that prints steadily keeps it busy |
+| `oled.mirror([enable])` | `oled.mirror(True)` copies everything the board prints (the REPL, every `print()`, tracebacks) to this display's console, with or without a USB host; one display at a time. `mirror(False)`, `close()` or a soft reset (Ctrl-D) ends it; `oled.mirror()` says whether this display is mirroring. Each mirrored line scrolls the whole panel, so a program that prints steadily keeps it busy. `mirror(True)` alone keeps the EVN mark, and so does mirrored output with nothing printable in it (a bare newline); the first mirrored printable character clears it. On this display `mirror(True)` ends `ports()` |
 | `oled.clear_row(row)` | blank one row 0..7 and forget its label |
 | `oled.clear()` | blank the whole screen, forget every label and put the `print()` cursor at the top left |
 
@@ -38,10 +38,11 @@ Plug the EVN OLED into an I2C port; only SDA and SCL are used. Text sits on a gr
 | `oled.draw_line(x1, y1, x2, y2, width=1, color=Color.BLACK)` | a line `width` 1..64 pixels thick (a square brush, so a thick line runs `width / 2` past its ends); clipped at the edges |
 | `oled.draw_box(x1, y1, x2, y2, r=0, fill=False, color=Color.BLACK)` | a rectangle with corner radius `r` (≥ 0; `r=0` = `rect()`), outlined or filled; clipped at the edges |
 | `oled.draw_circle(x, y, r, fill=False, color=Color.BLACK)` | a circle of radius `r` 0..255 around (x, y), outlined or filled; clipped at the edges |
-| `oled.draw_text(x, y, text, text_color=Color.BLACK, background_color=None)` | 8×8 characters with their top-left corner at a pixel position; `background_color=None` leaves the pixels around the letters as they are, a colour fills or erases them; clipped at the edges |
+| `oled.draw_text(x, y, text, text_color=Color.BLACK, background_color=None)` | characters with their top-left corner at a pixel position, in the font `set_font()` chose (8×8 by default); `background_color=None` leaves the pixels around the letters as they are, a colour fills or erases them; clipped at the edges |
+| `oled.set_font(font)` | the font of `draw_text()`, as the EV3 screen's `set_font()`: `'normal'` (8×8, 8 pixels a character, the default) or `'small'` (the 4×6 Tom Thumb font, 4 pixels a character and 6 rows: 5 above the line, 1 for the tails of g, j, p, q, y); anything else raises `ValueError`. `write()`, `label()`, `data()`, `text()`, `print()` and the mirror stay 8×8 on the 16 × 8 grid. A new `Display(port)` or a soft reset starts at `'normal'`; the EVN mark stays until the next drawing call |
 | `oled.width`, `oled.height` | 128 and 64 |
 | `oled.frame([data])` | the whole picture as 1024 bytes, page by page: byte `page * 128 + x` holds the pixels (x, 8 × page .. 8 × page + 7), bit 0 the top one. `oled.frame()` returns it, `oled.frame(data)` replaces it (another length raises `ValueError`) |
-| `oled.splash()` | the EVN logo; forgets every label |
+| `oled.splash()` | the EVN mark again, as at the start; forgets every label. The next drawing call blanks the screen first |
 | `oled.show()` | send every pending change to the panel now and wait: ≈ 30 ms for a whole new picture, ≈ 1 ms for one pixel. While an `IMU` or a `Compass` runs, their reads go between the picture's 16 chunks (a few ms more for a whole picture), so the IMU and the pose never fall a whole picture behind. Stops a hardware scroll first. `OSError` while the display is unplugged |
 
 ### Panel
@@ -59,7 +60,13 @@ Plug the EVN OLED into an I2C port; only SDA and SCL are used. Text sits on a gr
 | `oled.zoom(enable=True, /)` | the panel's zoom-in (every row shown twice as tall); `False` ends it |
 | `oled.all_on(enable=True, /)` | light every pixel whatever the picture (a panel test); `False` shows the picture again |
 | `oled.command(data)` | send 1..32 raw command bytes to the panel, for anything not wrapped (another length raises `ValueError`) |
-| `oled.close()` | switch the panel off, end a `mirror()` and free the port |
+| `oled.close()` | switch the panel off, end a `mirror()` or `ports()` and free the port |
+
+### Port map
+
+| Call | Notes |
+| :--- | :--- |
+| `oled.ports([enable])` | `oled.ports(True)` turns the screen into a live map of the 16 I2C ports, in the small 4×6 font: ports 1..8 down the left half, 9..16 down the right, one row each. A **plain** number means nothing answers on that port; a number **in a lit box** (dark on light, like the EVN icon) means a device does. Beside the number, up to 12 characters: `?` for a device the firmware does not know; the name of a known device no program has open — `VL53L0X`, `VL53L1X`, `TCS34725`, `TCS34727`, `TCS3430`, `APDS9960`, `HMC5883L`, `QMC5883L`, `MPU6500`, `LSM6DSV`, `OLED`, `HT COLOR` / `HT COMPASS` (HiTechnic), `BME280`, `ADS1115`, `MPR121`, `HT16K33` (LED matrix / seven-segment), and `BAT` on port 16 for the board's own charger (a HuskyLens has no ID register the map may read: it shows `?` until a program opens it); for a device the program has open, its newest reading, live, whether or not the program reads it: a distance `123 mm` / `1.23 m` / `far` (`s 6`: a range status the sensor's `distance()` does not accept either), a colour sensor's clear count `C 1234` (the TCS3430 `Y …`), the gesture sensor's proximity `px 40`, a heading `h 271` (compass, IMU, HiTechnic compass), a HiTechnic colour number `# 12`, a temperature `23.5 C`, the ADC's newest input `3.30 V`, the lowest touched pad `t 3` (`t 3+` with more, `t -` none), the HuskyLens's objects `obj 2`, the name for outputs; `---` before its first reading and `lost` (boxed) while it does not answer. `I2C` marks a port the program talks to through `evn.I2C`. The firmware identifies one port every 0.1 s by its ID register (all 16 in 1.6 s), never one a program has open or uses through `evn.I2C`, and never waits; while the map is on, a busy loop runs about 2-2.5 % slower (measured on the board, 2026-10-20: 2.0, 2.3 and 2.5 %). Reading an ID register writes the register's number first, so a chip that is not an EVN device but answers at an address an EVN device uses receives those bytes about every 1.6 s while the map is on: one byte at 0x01, 0x0D, 0x1E, 0x39, 0x5A–0x5D, 0x68–0x6B and 0x76–0x77; two (0x02, then 0x03) at 0x48–0x4B; and at 0x29 up to four in three writes (0xC0, 0x92, then 0x01 0x0F, which writes 0x0F into register 0x01 of a chip with 8-bit registers). A port expander such as a PCF8574A takes them as data. A device unplugged shows as empty on the next pass; one plugged in shows on the next pass. One display at a time (a second display takes it over and the first is cleared); `ports(True)` on the display already showing the map changes nothing. `ports(False)`, `close()` or a soft reset (Ctrl-D) ends it and the screen is cleared; on this display `ports(True)` ends `mirror()` and `mirror(True)` ends the map. **The map owns the screen**: it repaints the whole screen every 0.2 s, so anything a program draws while it runs is overwritten. `oled.ports()` says whether this display shows the map. Off, the map costs nothing |
 
 **Example**
 
@@ -69,6 +76,13 @@ oled = Display(16)
 oled.write(0, "Distance")
 oled.label(1, "mm:")
 oled.data(1, 123)
+```
+
+```python
+from evn import Display, DistanceSensor
+oled = Display(7)
+oled.ports(True)          # 7 shows OLED, every other port what is plugged in
+d = DistanceSensor(1)     # port 1 now shows the distance, live
 ```
 
 **Notes**

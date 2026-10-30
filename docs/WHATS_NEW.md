@@ -4,6 +4,26 @@ The main changes of each release, in a few lines. The [full changelog](../CHANGE
 the tools and the measurements behind each release. What is not tested yet is on
 [Known limitations and help us test](KNOWN_LIMITATIONS.md).
 
+## 0.2.72 (2026-10-31)
+
+- **New in the simulator: challenges.** Three *Obstacle course* levels, each run many times from a start moved a
+  little at random and scored on reaching the goal, speed and touching nothing; a run can be saved as a sealed
+  submission for a teacher to check ([Challenges](SIMULATOR.md#challenges)).
+- **New: EVN: Open lessons** opens the EVN lessons site in your browser, signed in if your licence key unlocks the
+  lessons ([Lessons](SIMULATOR.md#lessons)).
+- **New: `imu.find_front()`** finds the MPU-6500 `IMU`'s front axis from one nose-down tip after a level
+  `calibrate()`, and stores it with the port's calibration; in Blocks, *calibrate IMU*'s *front: tip it nose-down*
+  ([Sensors](API_SENSORS.md)).
+- **Fixed: a `DistanceSensor` (VL53L0X) left mid-setup recovers without switching the board off and on** (it used to
+  answer with the wrong ID, `lost`, until a power cycle).
+- **The LSM6DSV comes in a later release:** `evn.LSM6DSV(port)` is not in this release's firmware, so programs on
+  the MPU-6500 `IMU` keep their speed.
+- **New on the OLED display:** the EVN mark when a `Display` opens, until your program draws; `ports(True)`, a live
+  map of the 16 I2C ports that names each device or shows its reading; `set_font('small')` for `draw_text()` in a
+  4x6 font ([Displays](API_DISPLAYS.md)).
+- **Fixed: `Motor.calibrate()` returns once its result is in flash**, so switching the board off straight after it
+  no longer loses the calibration (with another motor driving, it says so and stores the result once the motors stop).
+
 ## 0.2.71 (2026-10-26)
 
 - **New: the robot simulator.** No board needed: the **EVN Simulator** panel is a simulated EVN ALPHA robot on a

@@ -3,7 +3,7 @@
 Every IMU method once, as steps you follow at the robot: the calibration stored on the board
 (applied by itself when the IMU opens), waiting for the gyro to settle, the heading and the
 orientation, taps, the stillness settings, the one-pose calibration (still on a level table; run
-here in the background) and the two-pose calibration (half a turn in between, for a surface that
+here in the background), the front axis from a nose-down tip and the two-pose calibration (half a turn in between, for a surface that
 is not level), then the raw mode without the DMP and its settings. The program waits for the
 user button before each step that needs your hands, and prints what to do; to leave early, press
 Stop in the editor (or Ctrl-C).
@@ -147,7 +147,20 @@ while imu.calibration()["busy"]:                 # calibration() finishes it whe
     wait(50)
 show(imu.calibration())
 
-# --- step 7: the two-pose calibration ------------------------------------------------------------
+# --- step 7: the front axis from a nose-down tip -------------------------------------------------
+# On a level robot gravity shows only the top axis; tipped nose-down, it shows which axis points
+# forward. find_front() puts that axis into force (axes(front=...)) and stores it with step 6's
+# calibration (same top axis).
+press_button("FRONT AXIS: after the button, lift the back of the robot, its nose on the table,\n"
+             "tipped 20 to 45 degrees, and hold it still for 2 s (you have 30 s).")
+try:
+    print("front axis:", imu.find_front())       # about 2 s after the robot holds still
+except RuntimeError as e:                        # too shallow, too steep, sideways, or not held still
+    print(e)
+print("axes (top, front):", imu.axes())
+show(imu.calibration())
+
+# --- step 8: the two-pose calibration ------------------------------------------------------------
 # One pose cannot tell a tilted mount from a sloped table. Two poses on the same spot, turned
 # half a turn in between, can: a slope up to 20 degrees is left out (reported as "slope").
 press_button("TWO-POSE CALIBRATION: put the robot on a flat surface (it may slope a little);\n"
@@ -176,7 +189,7 @@ except RuntimeError as e:                        # it moved during a pose, or th
     print(e)
 show(imu.calibration())
 
-# --- step 8: raw mode: the registers without the DMP ------------------------------------------------
+# --- step 9: raw mode: the registers without the DMP ------------------------------------------------
 # The orientation getters (tilt, euler, quaternion, gravity, linear_acceleration) need the DMP.
 press_button("Leave the robot still on the table for the next few seconds.")
 imu.dmp(False)                                   # raw registers, 1 kHz, 2000 deg/s, 16 g

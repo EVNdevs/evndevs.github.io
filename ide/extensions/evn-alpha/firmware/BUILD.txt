@@ -1,8 +1,8 @@
 EVN_ALPHA_MicroPython.uf2
-source: 0.2.70 + the LittleFS refusal guard (lfsfix: a write refused while a motor drives writes nothing; OQ 46 (d), OQ 50-52, OQ 56 (b), OQ 57-60) + LittleFS v2.11's #949 NULL pdir write on a relocating rename patched (lfsnull) + the SSD1306 ACK-only fallback with a warning (ssd, OQ 31 (c)) + relprep + the simulator lanes (extension only), on the layout re-picked on COM22 (EVN_RELEASE_PAD_PY 4988 / _MODULES 2408 / _HAL 2792; 0.2.70's pads failed the gate's Core 0 rows); the version string 0.2.71 with no bench suffix (built in a fresh release dir, build_rel71b); static headroom 5852 B (floor 5644 B); the Python heap at 128 KB
-built: 2026-10-25 (MicroPython v1.26.1, pico-sdk 2.3.0; SOURCE_DATE_EPOCH=1792929600 = noon UTC 2026-10-25)
+source: 0.2.71 + main through s1030c with the LSM6DSV compiled out (EVN_LSM6DSV=OFF, OQ 69 (a): its firmware byte for byte image G, s1028's lsmg) + the drive base hot getters placed at 0.2.71's lines (V3k: .evn_place, tools/place_hole.py, tools/check_place.py a link step) on the pads HAL 3716 / PY 4948 / MODULES 1640 (hpm, s1028 padg); screened on COM22 against 0.2.71 (docs/session/2026-10-30_s1030c/place/grade_COM22.txt: every graded Core 0 row within noise or faster); the version string 0.2.72 with no bench suffix (built in build_rc72b, = build_rc72 byte for byte); static headroom 5788 B (floor 5636 B); the Python heap at 128 KB
+built: 2026-10-30 (MicroPython v1.26.1, pico-sdk 2.3.0; SOURCE_DATE_EPOCH=1793361600 = noon UTC 2026-10-30)
 flash: single-line 03h boot2, PICO_FLASH_SPI_CLKDIV=4
 toolchain: arm-none-eabi-gcc 15.2.1 (Arm GNU Toolchain 15.2.Rel1), pico-sdk 2.3.0, MicroPython v1.26.1
-md5: 7c824f1f9bd99e72877952681f1e5be8
-reproduce: cmake -G Ninja -DEVN_MICROPYTHON=ON + ninja with SOURCE_DATE_EPOCH = noon UTC of the built: date (py/makeversionhdr.py embeds MICROPY_BUILD_DATE); release_public.py does this and refuses on an md5 mismatch
-version: 0.2.71
+md5: f941fcfd7f8f964b7483dc9bb84db376
+reproduce: cmake -G Ninja -DEVN_MICROPYTHON=ON -DEVN_LSM6DSV=OFF + ninja with SOURCE_DATE_EPOCH = noon UTC of the built: date (py/makeversionhdr.py embeds MICROPY_BUILD_DATE); release_public.py does this and refuses on an md5 mismatch
+version: 0.2.72

@@ -379,7 +379,14 @@ class Motor:
         checks it. ``evn.calibration(port)["cogging_edges"]`` says what the port runs on. On a port with the
         cogging feed-forward the waiting call returns once the coasted shaft has rested 0.3 s after the
         calibration (the feed-forward's detent phase is taken from that rest; at most 0.6 s more), so the
-        first move after it runs with the feed-forward."""
+        first move after it runs with the feed-forward.
+        The waiting call returns once the record is in flash (at once or up to about 0.15 s after the run; ``["stored"]`` is
+        then True), so the board may be switched off straight after it - not during it: power lost during the
+        write loses the stored records of all four ports. The firmware never writes the flash while a motor
+        drives: with another motor running, the call returns 0.25 s after the run with the result in force,
+        prints ``WARNING: Motor(n): calibration in force, not stored yet: ...`` and the record is written once
+        every motor has stopped (``evn.calibration(port)["stored"]`` turns True). While another port's
+        calibration still runs (``wait=False``), its last waiting ``calibrate()`` stores both."""
 
     # settings
     @overload
@@ -2052,6 +2059,24 @@ class IMU:
         off level the accelerometer was calibrated at, None when it was not), "warning" (what the last
         calibration left out, or a caution; else None), "two_pose", "slope" (degrees a two-pose
         calibration left out this session, else None), "waiting" (between pose=1 and pose=2)}``."""
+    def find_front(self) -> str:
+        """Find the front axis from one nose-down tip (the front gravity cannot see on a level robot). Call
+        it after ``calibrate()`` on a level surface (the one-click "level + front"): it waits while you tip
+        the robot **nose-down** 20-45 degrees (lift its back, the nose stays on the table) and hold it still
+        about 2 s, then picks the sensor axis pointing forward, sign included, puts it into force as
+        ``axes(front=...)`` and stores it with this port's calibration (when it has one on the same top
+        axis; otherwise it stands until ``close()``; while a motor drives it is written to the flash by the
+        next ``calibration()`` once no motor drives: ``calibration()["pending"]`` until then; a power-off
+        before that loses it). It answers once the robot holds still: a
+        tip still changing by more than about 2 degrees a second is waited out, so the answer comes about 2 s
+        (at most about 3.5 s) after the robot comes to rest. A finished ``calibrate(wait=False)`` is stored and
+        applied first, as ``calibration()`` does; ``ValueError`` while a calibration runs or a ``pose=1``
+        waits for its ``pose=2``. Returns the axis (``'x'``, ``'-y'`` ...). Raises
+        ``RuntimeError("IMU find_front: ...")`` in plain words: tipped less than 20 degrees ("tip it
+        further"), more than 60 ("calibrate() on a level surface first" when the top axis is wrong),
+        tipped diagonally ("tip it nose-down, not sideways"), or not held still within 30 s. A tip
+        straight sideways, or nose-up, cannot be told apart from gravity alone: it names that side as
+        the front - tip it nose-down. Ctrl-C cancels it; nothing changes."""
     def cancel_calibration(self) -> None:
         """Drop a calibration in progress (a ``wait=False`` run, or a first pose waiting for its turn);
         nothing is stored."""
@@ -2411,6 +2436,13 @@ class SevenSegmentLED:
 class Display:
     """EVN 128x64 OLED (SSD1306 / SSD1315, an EVN Standard Peripheral) on I2C port 1..16.
 
+    Opening it shows the EVN mark (the N of the EVN site's icon, 64x64 in the middle of the panel)
+    until the program draws: the first drawing call of any kind (``write()``, ``print()``,
+    ``pixel()``, ``clear()``, ...) clears the screen first, then draws. ``contrast()``, ``flip()``,
+    ``invert()``, ``on()``, ``off()`` and ``scroll()`` keep the mark (``flip()`` turns it with the
+    screen). An empty or control-only ``print()`` output (a bare newline, a cursor move) keeps it, and
+    so does ``draw_pixel()`` at a point off the screen, which draws nothing.
+
     Text is a 16-column x 8-row grid of 8x8 characters. Changes are streamed to the panel in the
     background (a full repaint takes about 30 ms with ``show()``, about 57 ms streamed); a display
     that is unplugged raises ``OSError`` from ``show()``, ``all_on()``, ``scroll()``,
@@ -2471,7 +2503,8 @@ class Display:
     def draw_pixel(self, x: int, y: int, color: Union[Color, bool] = True) -> None:
         """EV3 screen names: ``Color.BLACK`` (the default ink) lights a pixel; ``Color.NONE`` (value 0)
         and any grey with value >= 50 (``Color.WHITE``, ``Color.GRAY``) erase, as does ``False``.
-        Coordinates off the screen are clipped, not refused."""
+        Coordinates off the screen are clipped, not refused; an off-screen point draws nothing and
+        keeps the EVN mark the display opened with."""
     def draw_line(self, x1: int, y1: int, x2: int, y2: int, width: int = 1, color: Union[Color, bool] = True) -> None:
         """``width`` 1..64."""
     def draw_box(self, x1: int, y1: int, x2: int, y2: int, r: int = 0, fill: bool = False,
@@ -2481,7 +2514,14 @@ class Display:
         """``r`` 0..255."""
     def draw_text(self, x: int, y: int, text: object, text_color: Union[Color, bool] = True,
                   background_color: Union[Color, bool, None] = None) -> None:
-        """8x8 glyphs at a pixel position; ``background_color=None`` is transparent."""
+        """Text at a pixel position in the font ``set_font()`` chose (8x8 by default, or the small
+        4x6); ``background_color=None`` is transparent."""
+    def set_font(self, font: str, /) -> None:
+        """The font of ``draw_text()``: ``'normal'`` (8x8, 8 pixels a character, the default) or
+        ``'small'`` (the 4x6 Tom Thumb font, 4 pixels a character, 6 rows). ``write()``, ``label()``,
+        ``data()``, ``text()``, ``print()`` and the mirror stay 8x8 on the 16x8 grid. Opening the
+        display again, or a soft reset, puts ``'normal'`` back; the EVN mark stays until the next
+        drawing call. Any other font raises ``ValueError``."""
     def print(self, *args: object, sep: str = " ", end: str = "\n") -> None:
         """Like the builtin ``print()`` on the 16x8 text grid: wraps, scrolls up at the bottom;
         ``clear()`` homes the cursor."""
@@ -2492,14 +2532,44 @@ class Display:
         """Copy the board's stdout - the REPL, every print(), tracebacks - to this display's console,
         with or without a USB host. One display at a time; ``mirror(False)``, ``close()`` or a soft
         reset (Ctrl-D) ends it. Each mirrored line costs a scroll of the frame, so a program that
-        prints steadily keeps the panel busy."""
+        prints steadily keeps the panel busy. ``mirror(True)`` alone keeps the EVN mark, and so does
+        mirrored output with nothing printable in it (a bare newline); the first mirrored printable
+        character clears it. On this display ``mirror(True)`` ends ``ports()``."""
+    @overload
+    def ports(self) -> bool: ...
+    @overload
+    def ports(self, enable: bool, /) -> None:
+        """Show the state of the 16 I2C ports on this display, in a small 4x6 font: ports 1-8 down the
+        left half, 9-16 down the right. A plain number means nothing answers on that port; a number in
+        a lit box means a device does. Beside it: ``?`` for a device the firmware does not know, the
+        name of a known device no program has open (``VL53L0X``, ``VL53L1X``, ``TCS34725``,
+        ``TCS34727``, ``TCS3430``, ``APDS9960``, ``HMC5883L``, ``QMC5883L``, ``MPU6500``, ``LSM6DSV``,
+        ``OLED``, ``HT COLOR``, ``HT COMPASS``, ``BME280``, ``ADS1115``, ``MPR121``, ``HT16K33``; ``BAT``
+        on port 16 is the board's charger; a HuskyLens shows ``?`` until a program opens it), and for a
+        device the program has open its newest reading, live, whether or not the program reads it
+        (``123 mm``, ``C 1234``, ``px 40``, ``h 271``, ``23.5 C``, ``3.30 V``, ``t 3``, ``# 12``,
+        ``obj 2``; ``---`` before the first, ``lost`` when it stops answering); ``I2C`` for a port the
+        program uses through ``evn.I2C``. The firmware identifies one port every 0.1 s by its ID
+        register (a pass over all 16 takes 1.6 s), never one a program has open, and never waits; while
+        the map is on a busy loop runs about 2-2.5 % slower. Reading an ID register writes its register
+        number first, so a chip that is not an EVN device but answers at an address an EVN device uses
+        receives those bytes about every 1.6 s while the map is on: one byte at 0x01, 0x0D, 0x1E, 0x39,
+        0x5A-0x5D, 0x68-0x6B and 0x76-0x77; two (0x02, then 0x03) at 0x48-0x4B; and at 0x29 up to four
+        in three writes (0xC0, 0x92, then 0x01 0x0F, which writes 0x0F into register 0x01 of a chip with
+        8-bit registers). A port expander takes them as data. One display at a time;
+        ``ports(False)``, ``close()`` or a soft reset (Ctrl-D) ends it and blanks the screen;
+        ``ports(True)`` again changes nothing, and on this display ``ports(True)`` ends ``mirror()`` and
+        the reverse. The map owns the screen: it repaints the whole screen every 0.2 s, so anything
+        drawn while it runs is overwritten. ``ports()`` says whether this display shows the map."""
+    def _cells(self) -> Tuple[Tuple[bool, str], ...]:
+        """Bench hook: ``(boxed, text)`` for ports 1..16, what the port map draws for each now."""
     @overload
     def frame(self) -> bytes: ...
     @overload
     def frame(self, data: bytes, /) -> None:
         """The page-major frame buffer; exactly 1024 bytes."""
     def splash(self) -> None:
-        """The EVN logo."""
+        """Show the EVN mark again, as when the display was opened; the next drawing call clears it."""
     def show(self) -> None:
         """Push every pending change now and wait for it (about 30 ms for a whole new picture). While
         an ``IMU`` or a ``Compass`` runs, their reads go between the picture's 16 chunks, so the IMU is
@@ -2540,7 +2610,7 @@ class Display:
     def command(self, data: bytes, /) -> None:
         """Raw command bytes (1..32) for anything not wrapped."""
     def close(self) -> None:
-        """Panel off and release the port (a ``mirror()`` on this display ends). Idempotent; every other call then raises ``ValueError("Display is closed")``."""
+        """Panel off and release the port (a ``mirror()`` or ``ports()`` on this display ends). Idempotent; every other call then raises ``ValueError("Display is closed")``."""
 
 
 class RGBLED:

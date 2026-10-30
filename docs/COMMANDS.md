@@ -20,6 +20,10 @@ Every command of the extension is in the command palette (**Ctrl+Shift+P**); typ
 | Enter a simulator licence key | paste the key that opens the simulator after its 14-day trial; it is checked as you paste it ([Simulator](SIMULATOR.md#licence)) |
 | Show the simulator licence | who the licence is for and its last day, or the trial's days left ([Simulator](SIMULATOR.md#licence)) |
 | Remove the simulator licence key | take the key off this computer ([Simulator](SIMULATOR.md#licence)) |
+| Open lessons | the lessons site in your browser, signed in with the licence key you entered when that key unlocks the lessons; otherwise its sign-in page and free preview ([Simulator](SIMULATOR.md#lessons)) |
+| Save a challenge submission | seal the last challenge you ran (Run challenge in the Simulator panel) for your teacher and EVN, as a `.evnsub` file to hand in ([Simulator](SIMULATOR.md#handing-it-in)) |
+| Make a teacher key (for challenge submissions) | for teachers: your key file (keep it to yourself) and the teacher code to give your class ([Simulator](SIMULATOR.md#for-teachers)) |
+| Open a challenge submission | for teachers: open a student's `.evnsub` with your key, re-run it in the simulator and see whether it is verified ([Simulator](SIMULATOR.md#for-teachers)) |
 | Name this board | give the board a name, shown in the status bar as `EVN: Kenneth's robot (COM7)` |
 | List files on the board | the board's files, in the *EVN ALPHA log* output panel |
 | Reset the board | restart it (motors coast; `main.py` then waits for the user button) |

@@ -18,8 +18,11 @@ No VS Code? The browser IDE needs no install. Do steps 1 and 2, open the IDE in 
 ## 1. What you need
 
 - **An EVN ALPHA board.** [The board](BOARD.md) shows its buttons, lights and ports.
-- **Two 18650 Li-ion cells.** The motors run from the cells, not from USB.
-  They must deliver a high current: each motor port can draw 3 A RMS, 4 A peak ([current ratings](BOARD.md#current-ratings)).
+- **Two flat-top 18650 Li-ion cells** (a flat + end, no button). They go in the board's own holder, in series.
+  The motors run from the cells, not from USB, so the cells must deliver a high current:
+  choose cells rated **at least 25 A continuous**. The cells shipped to customers in Singapore are P26B.
+  Why 25 A: four motor ports at 4 A peak each draw 16 A, and the board's 5 V and 3.3 V supplies up to 4.5 A more
+  when the cells are nearly empty. That is 20.5 A at worst, plus headroom ([current ratings](BOARD.md#current-ratings)).
 - **A USB-C data cable.** Some USB-C cables only charge. With one of those the computer never sees the board.
 - **One LEGO EV3 or NXT motor** with its cable, for the first program.
 - **A computer** with Windows, macOS or Linux, and:
