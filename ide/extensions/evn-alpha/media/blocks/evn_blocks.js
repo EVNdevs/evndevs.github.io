@@ -383,7 +383,9 @@
                 { type: 'field_dropdown', name: 'PORT', options: PORTS },
             ],
             previousStatement: null, nextStatement: null, style: 'evn_advanced_blocks',
-            tooltip: 'Control law: ADRC (self-calibrated, the default) or the tuned PID cascade.',
+            // #139 ARCH-07: the PID law left the MicroPython firmware and control.law() with it - the block still loads
+            // (a saved file keeps its blocks) and generates `pass  # (removed block ...)` only: every motor runs the ADRC; not in the toolbox
+            tooltip: 'Removed: every motor runs the self-calibrated ADRC law (the PID law and control.law() left the firmware). This block does nothing; delete it.',
         },
         {
             type: 'evn_python',
@@ -2656,9 +2658,26 @@
     generator.forBlock[PROGRAM_HAT] = function (block) {
         return block.getNextBlock() ? '# The main program starts here.\n' : '';
     };
+    /** A comment-only body (an if / loop / function holding nothing but comment blocks) must still hold a statement:
+     * Blockly's Python generator adds `pass` only to an EMPTY body, so the first comment that writes a line in such a
+     * body writes `pass  # text` (review pidout r1 S1). True for that block. A top-level stack (under a hat) needs
+     * none. The removed law block writes `pass` itself, so a body holding one is never comment-only. */
+    function firstLineOfCommentOnlyBody(block) {
+        if (!block.getSurroundParent()) { return false; }
+        let first = block;
+        for (let p = first.getPreviousBlock(); p && p.getNextBlock() === first; p = first.getPreviousBlock()) { first = p; }
+        const writes = (b) => String(b.getFieldValue('TEXT') || '').replace(/[\r\n]+/g, ' ').trim() !== '';
+        let firstWriter = null;
+        for (let b = first; b; b = b.getNextBlock()) {
+            if (b.type !== COMMENT) { return false; }
+            if (!firstWriter && writes(b)) { firstWriter = b; }
+        }
+        return firstWriter === block;
+    }
     generator.forBlock[COMMENT] = function (block) {
         const text = String(block.getFieldValue('TEXT') || '').replace(/[\r\n]+/g, ' ').trim();
-        return text ? '# ' + text + '\n' : '';
+        if (!text) { return ''; }
+        return (firstLineOfCommentOnlyBody(block) ? 'pass  # ' : '# ') + text + '\n';
     };
     generator.forBlock['evn_motor_setup'] = function (block) {
         motorRef(block);            // the definition is all the setup does
@@ -2918,7 +2937,10 @@
         return ['evn.calibration(' + block.getFieldValue('PORT') + ")['calibrated']", Order.MEMBER];
     };
     generator.forBlock['evn_motor_law'] = function (block) {
-        return motorRef(block) + '.control.law(' + generator.quote_(block.getFieldValue('LAW')) + ')\n';
+        // removed (#139 ARCH-07): never a call - control.law() is not in the firmware any more
+        // `pass`: a statement, so the block alone in an if / loop / function body still parses (review pidout r1 S1)
+        return 'pass  # (removed block: "use ' + block.getFieldValue('LAW') + ' control for motor ' + block.getFieldValue('PORT')
+            + '" - every motor runs the ADRC law)\n';
     };
     /* ---- Standard Peripherals ------------------------------------------------------------- */
 
@@ -4056,11 +4078,11 @@ def ${generator.FUNCTION_NAME_PLACEHOLDER_}(name):
                     { kind: 'block', type: 'evn_motor_calibrate' },
                     { kind: 'block', type: 'evn_motor_calibrated' },
                     // one limit at a time (Pybricks' "configure [maximum speed]"); the three-input evn_motor_limits still loads
-                    // and generates, but set all three at once with made-up defaults, so it left the toolbox
+                    // and generates, but set all three at once with made-up defaults, so it left the toolbox; evn_motor_law
+                    // (control.law) left with the PID law (#139 ARCH-07): it loads and generates `pass  # ...` only
                     { kind: 'block', type: 'evn_motor_limit', inputs: { VALUE: shadowNum(500) } },
                     { kind: 'block', type: 'evn_motor_dc', inputs: { DUTY: shadowNum(50) } },
                     { kind: 'block', type: 'evn_motor_track_target', inputs: { ANGLE: shadowNum(0) } },
-                    { kind: 'block', type: 'evn_motor_law' },
                     { kind: 'block', type: 'evn_python' },
                     { kind: 'block', type: 'evn_python_value' },
                 ],

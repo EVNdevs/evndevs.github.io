@@ -58,17 +58,6 @@
         "description": "Speed / acceleration / torque limits",
         "body": "${1:m}.control.limits(speed=${2:1000}, acceleration=(${3:1000}, ${4:1000}), torque=${5:400})"
     },
-    "EVN tuning knobs": {
-        "prefix": "evn-tuning",
-        "description": "PID-law knobs (control.law(\"pid\") first; the default adrc law ignores them)",
-        "body": [
-            "${1:m}.control.law(\"pid\")                 # pid()/evn() act on the PID law only",
-            "print(\"pid\", ${1:m}.control.pid())        # (kp, ki, kd, integral_deadzone, integral_limit)",
-            "print(\"evn\", ${1:m}.control.evn())        # (endpoint_kd, start_duty %, hold_duty %, friction_ff %)",
-            "${1:m}.control.pid(integral_limit=${2:20})",
-            "${1:m}.control.evn(start_duty=${3:83}, hold_duty=${4:50}, friction_ff=${5:20})"
-        ]
-    },
     "EVN two motors": {
         "prefix": "evn-two-motors",
         "description": "Drive two motors together with wait=False",

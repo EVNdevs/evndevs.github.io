@@ -347,7 +347,7 @@ _HELP = (
     '  m.run_target(500, 0, then=Stop.COAST, wait=False)\n'
     '  m.run(300); m.stop()              # forever / coast\n'
     '  m.angle(), m.speed(), m.load(), m.stalled(), m.done()\n'
-    '  m.control.limits(), m.control.pid(), m.control.target_tolerances()\n'
+    '  m.control.limits(), m.control.target_tolerances(), m.control.state()\n'
     '  m.settings(max_voltage=7000, stall_timeout=1000), m.model.state(), m.close()\n'
     '  wait(500); sw = StopWatch(); sw.time()   # ms\n'
     '  Motor(2, speed_unit=SpeedUnit.PERCENT)   # speeds in % of full_speed()\n'
@@ -363,7 +363,6 @@ _HELP = (
     '  # an encoder counting against its drive runs away: coasted in ~0.25 s, RuntimeError -> calibrate()\n'
     "  evn.calibration(1)['cogging_edges']       # and whether its rotor cogs: the detent period, edges\n"
     '  evn.motor_config(3), evn.calibration(3), evn.clear_calibration(3), evn.clock()\n'
-    "  m.control.law()                          # 'adrc' (default) | 'pid'\n"
     '\n'
     'Drive base (Pybricks robotics.DriveBase; mm, mm/s, deg, deg/s, clockwise +):\n'
     '  db = DriveBase(Motor(4, Direction.COUNTERCLOCKWISE), Motor(3), 62.4, 170, imu=3)\n'

@@ -7,7 +7,6 @@ else of the firmware's API is present by name and says plainly that the simulate
 """
 import _evnsim as _s
 import math as _math
-import struct as _struct
 from array import array as _array
 
 # every runtime function bound once, at import: a call is then one global lookup, not a global and an attribute lookup
@@ -226,33 +225,6 @@ _MODEL_FIG = {
     "JGA25-370 6V 77RPM": (1766, 6000, 217567), "Pololu 25D 9.7:1 HP 12V": (5615, 12000, 68428),
     "CHR-GM16-030PA 9V 1:63": (9124, 9000, 42110), "CM22-2230 12V 1:49": (1698, 12000, 226340),
 }
-# control.pid() / control.evn() defaults: the firmware compiles one block for the EV3 Medium and one for every other
-# model (motion_engine.c axis_model_pid_defaults, firmware units: duty per mdeg), and reads them out in Pybricks units
-# through the model's torque constant once, in float32 (evn_motor.c gain_factor: 1000 x 7400 mV x 178956 /
-# d_torque_d_voltage; lroundf). The simulated controller is the simulator's own: these are stored and read back, not
-# used.
-_PID_BLOCK = {    # kp_pos, ki_pos, kp_vel, endpoint_kp_vel, start_duty, min_duty, friction_ff permille
-    "EV3 Medium": (1.851e-4, 1.086e-6, 2.018e-6, 1.0e-6, 0.83, 0.50, 200),
-    None: (2.0e-4, 8.0e-7, 1.0e-5, 2.5e-6, 0.12, 0.20, 500),
-}
-
-
-def _f32(x):
-    return _struct.unpack("f", _struct.pack("f", x))[0]
-
-
-def _pid_defaults(name):
-    kp, ki, kv, ekv, sd, md, ff = _PID_BLOCK.get(name, _PID_BLOCK[None])
-    k = _MODEL_FIG.get(name, _MODEL_FIG["EV3 Large"])[0]
-    f = _f32(_f32(1000.0 * 7400.0) * _f32(_f32(178956.0) / _f32(float(k))))
-
-    def out(g):
-        return int(_math.floor(_f32(_f32(g) * f) + 0.5))      # lroundf (the values are positive)
-    return ([out(kp), out(ki), out(kv), 0.75, 20],
-            [out(ekv), int(_math.floor(_f32(_f32(sd) * 100.0) + 0.5)), int(_math.floor(_f32(_f32(md) * 100.0) + 0.5)),
-             int(ff // 10)])
-
-
 _OBS_DEF = (50000, 50, 500, 50, 45, 200, 5000, 20000)    # motion/motion_engine.c: the observer's settings
 
 
@@ -274,9 +246,6 @@ class Control:
         # the tolerances in output deg/s, as the firmware keeps them (a SpeedUnit changes how they read, not them)
         self._tol = [50.0, 1.0]
         self._stall = [50.0, 50]
-        self._law = "adrc"
-        name = _s_m_model(m.port)
-        self._pid, self._evn = _pid_defaults(name)
 
     @property
     def scale(self):
@@ -350,47 +319,6 @@ class Control:
         if time is not None:
             self._stall[1] = t
         self._apply()
-
-    def law(self, law=None, /):
-        if law is None:
-            return self._law
-        if law not in ("adrc", "pid"):
-            raise ValueError("law must be 'adrc' or 'pid'")
-        self._law = law
-
-    def pid(self, kp=None, ki=None, kd=None, integral_deadzone=None, integral_limit=None):
-        """Stored and read back; the simulated controller does not use them (the board applies them to law("pid"))."""
-        self._m._live()
-        given = (kp, ki, kd, integral_deadzone, integral_limit)
-        if all(v is None for v in given):
-            return tuple(self._pid)
-        g = [None if v is None else _num(v, n) for v, n in zip(given, ("kp", "ki", "kd", "integral_deadzone", "integral_limit"))]
-        if any(v is not None and v < 0 for v in g[:3]):
-            raise ValueError("gains must not be negative")
-        if g[3] is not None and not 0 <= g[3] <= 5:
-            raise ValueError("integral_deadzone must be 0..5 deg")
-        if g[4] is not None and not 0 <= g[4] <= 100:
-            raise ValueError("integral_limit must be 0..100 % duty")
-        for i, v in enumerate(g):
-            if v is not None:
-                self._pid[i] = float(v) if i == 3 else int(round(v))
-
-    def evn(self, endpoint_kd=None, start_duty=None, hold_duty=None, friction_ff=None):
-        """Stored and read back; the simulated controller does not use them (the board applies them to law("pid"))."""
-        self._m._live()
-        given = (endpoint_kd, start_duty, hold_duty, friction_ff)
-        if all(v is None for v in given):
-            return tuple(self._evn)
-        g = [None if v is None else _num(v, n) for v, n in zip(given, ("endpoint_kd", "start_duty", "hold_duty", "friction_ff"))]
-        if g[0] is not None and g[0] < 0:
-            raise ValueError("endpoint_kd out of range")
-        if any(v is not None and not 0 <= v <= 100 for v in g[1:3]):
-            raise ValueError("duty must be 0..100 %")
-        if g[3] is not None and not 0 <= g[3] <= 200:
-            raise ValueError("friction_ff must be 0..200 %")
-        for i, v in enumerate(g):
-            if v is not None:
-                self._evn[i] = int(round(v))
 
     def state(self):
         """(reference_deg, x1_deg, x2_degs, x3_degs2, applied_mv, hold, assist). The simulator has no ESO: the

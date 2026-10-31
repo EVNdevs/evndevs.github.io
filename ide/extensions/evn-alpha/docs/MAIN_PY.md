@@ -33,7 +33,7 @@ Between two button runs there is no soft reset. A module your `main.py` imports 
 
 A `Pose(...)` your `main.py` makes again on the same sources takes the last run's over. A setting one run changes is still in force in the next, so set what the program needs at its start.
 
-**Run** from the editor starts with a soft reset instead, which closes everything.
+**Run** from the editor starts with a soft reset instead (so does Ctrl-D). Every Python object goes with it - your program, its modules and their objects start from nothing - but the sensors that are slow to start are kept ready, as on a button run: an `IMU` (no DMP reload, no wait for `ready()`, its gyro calibration kept; `heading()` 0), a `VL53L1X`, a `HuskyLens` and the colour sensors (`ColorSensor`, `TCS3430`, the HiTechnic colour sensors). A kept sensor does nothing until your program opens it: a program that never uses it runs as fast as with the sensor switched off. The next program's `IMU(port)`, `VL53L1X(port)` and so on then starts in exactly the state a first start would give it - the default settings and the port's stored calibration - only sooner. A sensor the last program re-configured (another rate, timing budget or exposure), one that was unplugged or swapped, and one no program has used through a whole run start again from scratch. Motors, servos, displays, LED strips and every other device start fresh, and the motors coast at every program's end as before. `close()` still switches a sensor off.
 
 ## If the program misbehaves
 

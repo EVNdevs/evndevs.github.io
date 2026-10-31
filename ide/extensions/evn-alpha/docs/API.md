@@ -6,7 +6,7 @@ Everything a program needs comes from the `evn` module:
 from evn import Motor, Port, Stop, Direction, SpeedUnit, wait, StopWatch
 ```
 
-The `Motor` class follows the Pybricks `Motor` reference (https://docs.pybricks.com/en/latest/pupdevices/motor.html) for names, argument order, keyword defaults and units, so the Pybricks documentation also applies here. A function that the EVN ALPHA has and Pybricks does not has its own name (`control.evn()`). No argument is accepted that would silently do nothing. The differences are listed in [Deviations from Pybricks](#deviations-from-pybricks).
+The `Motor` class follows the Pybricks `Motor` reference (https://docs.pybricks.com/en/latest/pupdevices/motor.html) for names, argument order, keyword defaults and units, so the Pybricks documentation also applies here. A function that the EVN ALPHA has and Pybricks does not has its own name (`calibrate()`). No argument is accepted that would silently do nothing. The differences are listed in [Deviations from Pybricks](#deviations-from-pybricks).
 
 **How each object is described.** Every object has its own section, with the same layout:
 
@@ -48,7 +48,7 @@ Each part is a page of its own; every object keeps its complete section, with it
 - **Ctrl-C** coasts all four motors, whether a program is running or not. Connecting `mpremote` (which every extension command does) sends Ctrl-C too.
 - **Ctrl-D** (soft reboot) coasts all motors.
 - The **user button** coasts all motors and ends the running program (`SystemExit`, as Pybricks); no motor moves again until the next program starts; held 2 s it reboots the board. A program that reads the button (`evn.button.pressed()`) calls `evn.set_stop_button(None)` first, as with Pybricks' `hub.system.set_stop_button(None)`: the press is then an input and stops nothing, until the program ends (`evn.set_stop_button(evn.button)` turns the stop on again). Ctrl-C and `evn.stop_all()` still stop the motors. Closing the port (DTR drop) while no program runs coasts the motors a REPL line left running; a running program is never cut.
-- A 3 s hardware **watchdog** reboots a frozen board; motors coast on reset and `main.py` is skipped, after soft reboots too, until the board next restarts. It is fed between Python steps and in every wait, so a single calculation that runs longer than 3 s without reaching a wait (one huge integer calculation such as `3**100000`) also reboots the board ([details](TROUBLESHOOTING.md#known-limitations-of-this-build)).
+- A 3 s hardware **watchdog** reboots a frozen board; motors coast on reset and `main.py` is skipped, after soft reboots too, until the board next restarts. It is fed between Python steps and in every wait, and while one huge integer calculation runs (such as `3**100000`, about 4 s) for at most 30 s; printing a huge number (`print(3**100000)`, or `3**100000` typed at the REPL) takes longer than that and still reboots the board, and so does any other single operation that runs longer than 3 s without reaching a wait ([details](TROUBLESHOOTING.md#known-limitations-of-this-build)).
 - A motor whose encoder counts against its drive (a non-LEGO motor before its first `calibrate()`) is **coasted by the runaway guard** within about a quarter of a second of running away under a closed-loop command, and the program gets a `RuntimeError` telling it to calibrate the motor ([details](API_ROBOT.md)).
 - A program run from the extension (**Run**, Ctrl+F5, in VS Code or the browser IDE) ends with every motor coasting, whether it finished or raised an exception. The REPL that follows still has the program's variables. Typing at the REPL yourself is different: there is no program boundary. Motors keep their last command until you `stop()` or `close()` them (or use `with Motor(1) as m:`), press Ctrl-C, or call `evn.stop_all()`.
 
@@ -62,8 +62,7 @@ Each part is a page of its own; every object keeps its complete section, with it
 | `reset_angle()` with no argument | resets to the absolute marker angle | makes the current position 0 (EV3/NXT encoders have no absolute marker) |
 | `reset_angle(angle=…)` | `angle` may be given as a keyword | `angle` is positional only: `reset_angle(90)` (a keyword raises `TypeError`) |
 | `speed(window)` | averages over `window` ms | `speed()` only; the controller's own estimate is reported |
-| `control.pid()` `integral_rate` | caps integral growth | not offered; `integral_limit` and `integral_deadzone` are the real anti-windup knobs |
-| `control.pid()` units | torque controller | converted through the nominal pack voltage and the model's torque constant; EVN-specific terms live in `control.evn()` |
+| `control.pid()` | the position controller's gains, set by hand | not offered: every motor runs the self-calibrated ADRC law; `calibrate()` measures each motor |
 | `run_until_stalled` | any obstruction; `duty_limit` is the stall torque | the same: the stall is reported once the drive sits at `duty_limit` (or the pack) and the shaft does not turn; the first 150 ms of a move are ignored |
 | Absolute angle range | unbounded | unbounded (64-bit) |
 | `settings()` | may return more fields | `(max_voltage, stall_timeout)` — the stall timeout is EVN's own (a `wait=True` move returns once `stalled()` has held that long; 0 = wait for ever, as Pybricks) |

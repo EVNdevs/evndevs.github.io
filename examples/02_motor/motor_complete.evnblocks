@@ -550,42 +550,33 @@
                                                                                                                                   },
                                                                                                                                   "next": {
                                                                                                                                     "block": {
-                                                                                                                                      "type": "evn_motor_law",
+                                                                                                                                      "type": "evn_motor_stop",
                                                                                                                                       "fields": {
-                                                                                                                                        "LAW": "adrc",
+                                                                                                                                        "ACTION": "hold",
                                                                                                                                         "PORT": "1"
                                                                                                                                       },
                                                                                                                                       "next": {
                                                                                                                                         "block": {
-                                                                                                                                          "type": "evn_motor_stop",
-                                                                                                                                          "fields": {
-                                                                                                                                            "ACTION": "hold",
-                                                                                                                                            "PORT": "1"
+                                                                                                                                          "type": "evn_wait",
+                                                                                                                                          "inputs": {
+                                                                                                                                            "TIME": {
+                                                                                                                                              "shadow": {
+                                                                                                                                                "type": "math_number",
+                                                                                                                                                "fields": {
+                                                                                                                                                  "NUM": 500
+                                                                                                                                                }
+                                                                                                                                              }
+                                                                                                                                            }
                                                                                                                                           },
                                                                                                                                           "next": {
                                                                                                                                             "block": {
-                                                                                                                                              "type": "evn_wait",
-                                                                                                                                              "inputs": {
-                                                                                                                                                "TIME": {
-                                                                                                                                                  "shadow": {
-                                                                                                                                                    "type": "math_number",
-                                                                                                                                                    "fields": {
-                                                                                                                                                      "NUM": 500
-                                                                                                                                                    }
-                                                                                                                                                  }
-                                                                                                                                                }
+                                                                                                                                              "type": "evn_comment",
+                                                                                                                                              "fields": {
+                                                                                                                                                "TEXT": "the end: every motor coasts"
                                                                                                                                               },
                                                                                                                                               "next": {
                                                                                                                                                 "block": {
-                                                                                                                                                  "type": "evn_comment",
-                                                                                                                                                  "fields": {
-                                                                                                                                                    "TEXT": "the end: every motor coasts"
-                                                                                                                                                  },
-                                                                                                                                                  "next": {
-                                                                                                                                                    "block": {
-                                                                                                                                                      "type": "evn_stop_all"
-                                                                                                                                                    }
-                                                                                                                                                  }
+                                                                                                                                                  "type": "evn_stop_all"
                                                                                                                                                 }
                                                                                                                                               }
                                                                                                                                             }

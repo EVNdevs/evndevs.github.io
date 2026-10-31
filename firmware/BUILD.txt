@@ -1,8 +1,8 @@
 EVN_ALPHA_MicroPython.uf2
-source: 0.2.71 + main through s1030c with the LSM6DSV compiled out (EVN_LSM6DSV=OFF, OQ 69 (a): its firmware byte for byte image G, s1028's lsmg) + the drive base hot getters placed at 0.2.71's lines (V3k: .evn_place, tools/place_hole.py, tools/check_place.py a link step) on the pads HAL 3716 / PY 4948 / MODULES 1640 (hpm, s1028 padg); screened on COM22 against 0.2.71 (docs/session/2026-10-30_s1030c/place/grade_COM22.txt: every graded Core 0 row within noise or faster); the version string 0.2.72 with no bench suffix (built in build_rc72b, = build_rc72 byte for byte); static headroom 5788 B (floor 5636 B); the Python heap at 128 KB
-built: 2026-10-30 (MicroPython v1.26.1, pico-sdk 2.3.0; SOURCE_DATE_EPOCH=1793361600 = noon UTC 2026-10-30)
+source: 0.2.72 + main through s1030d (integration worktree-int-1030d + the layout pick worktree-pick-1030d, 486b7fd6) with the LSM6DSV compiled out (EVN_LSM6DSV=OFF) and the image's layout locked to variant I (micropython/layout: lock.json, island.json, lock_place.ld; layout_lock_apply / layout_island_apply link steps, layout_lock_check PASS at the link: 4690 locked sections, 51 holes, 47 placed, 119 island slots) on the 0.2.72 placement (check_place PASS, 4 moves, 3 holes); picked on COM22 in the R/H/I screen (246a4e92); the version string 0.2.73 with no bench suffix (built in build_rc73: section addresses / sizes and every symbol equal to the screened I image build_pick_I2 7595a200, which differs only in the 11 build-date bytes); static headroom 8572 B (floor 5636 B); the Python heap at 128 KB
+built: 2026-11-01 (MicroPython v1.26.1, pico-sdk 2.3.0; SOURCE_DATE_EPOCH=1793534400 = noon UTC 2026-11-01, the publish date; made on 2026-10-31)
 flash: single-line 03h boot2, PICO_FLASH_SPI_CLKDIV=4
 toolchain: arm-none-eabi-gcc 15.2.1 (Arm GNU Toolchain 15.2.Rel1), pico-sdk 2.3.0, MicroPython v1.26.1
-md5: f941fcfd7f8f964b7483dc9bb84db376
-reproduce: cmake -G Ninja -DEVN_MICROPYTHON=ON -DEVN_LSM6DSV=OFF + ninja with SOURCE_DATE_EPOCH = noon UTC of the built: date (py/makeversionhdr.py embeds MICROPY_BUILD_DATE); release_public.py does this and refuses on an md5 mismatch
-version: 0.2.72
+md5: 11fb46e1faa9975a6376db3f2557b428
+reproduce: cmake -G Ninja -DEVN_MICROPYTHON=ON -DEVN_LSM6DSV=OFF -DEVN_LAYOUT_LOCK=<repo>/micropython/layout + ninja with SOURCE_DATE_EPOCH = noon UTC of the built: date (py/makeversionhdr.py embeds MICROPY_BUILD_DATE, GCC __DATE__); release_public.py does this and refuses on an md5 mismatch
+version: 0.2.73

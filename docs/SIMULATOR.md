@@ -1073,9 +1073,9 @@ and errors:
   where the board counts from the shaft (unchanged). The drive base's wheels keep their own rule: a maneuver given
   while the base moves carries each wheel's speed on when it has room to stop, also after `stop()` / `brake()`, where
   the board starts the wheels from rest.
-  `control.pid()`, `control.evn()` and `model.settings()` keep and read back what you set (the firmware's defaults
-  for the motor's model until then), but the simulated motor's controller is the simulator's own and does not use
-  them; `control.state()` and `model.state()` read the measured angle and speed in deg/s (no observer estimates,
+  `model.settings()` keeps and reads back what you set (the firmware's defaults for the motor's model until then),
+  but the simulated motor's controller is the simulator's own and does not use it (`control.pid()`, `control.evn()`
+  and `control.law()` are not there: the firmware has none); `control.state()` and `model.state()` read the measured angle and speed in deg/s (no observer estimates,
   current 0).
 - `DriveBase`: `straight`, `turn`, `curve`, `arc`, `drive` (deg/s or `SpeedUnit.PERCENT` steering), `stop`,
   `brake`, `hold`, `distance`, `angle`, `state`, `reset`, `done`, `stalled`, `settings()`. `curve(0, angle)` turns

@@ -87,8 +87,6 @@ m.run_angle(500, -360)
 m.control.limits(speed, accel, torque)           # back to what they were
 
 print("target tolerances", m.control.target_tolerances(), "stall tolerances", m.control.stall_tolerances())
-print("law", m.control.law(), "PID gains", m.control.pid(), "EVN terms", m.control.evn())
-m.control.law("adrc")                            # the default law ("pid" is the older one)
 print("controller: done", m.control.done(), "stalled", m.control.stalled(), "load", m.control.load())
 print("controller state", m.control.state())
 

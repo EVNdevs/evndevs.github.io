@@ -76,8 +76,7 @@
         "evn_motor_calibrated",
         "evn_motor_limit",
         "evn_motor_dc",
-        "evn_motor_track_target",
-        "evn_motor_law"
+        "evn_motor_track_target"
       ],
       "skip": {
         "configure_motor": "changes what the board stores for the port; do it from the Board view (gear button) on purpose",

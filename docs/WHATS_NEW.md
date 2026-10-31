@@ -4,7 +4,25 @@ The main changes of each release, in a few lines. The [full changelog](../CHANGE
 the tools and the measurements behind each release. What is not tested yet is on
 [Known limitations and help us test](KNOWN_LIMITATIONS.md).
 
-## 0.2.72 (2026-10-31)
+## 0.2.73 (2026-10-31)
+
+- **Faster: a Run from the editor keeps the slow-starting sensors ready.** An `IMU` no longer reloads and
+  waits for `ready()` at every Run, and keeps the gyro calibration it has learnt; a `VL53L1X`, a `HuskyLens` and
+  the colour sensors are kept ready too. Each still starts with its default settings and the port's stored
+  calibration ([What a button run keeps](MAIN_PY.md#what-a-button-run-keeps)).
+- **Changed: `control.pid()`, `control.evn()` and `control.law()` are gone.** Every motor runs the
+  self-calibrated control law; a program that calls one of them gets `AttributeError`, so delete the line
+  (`calibrate()`, `control.limits()` and `settings(max_voltage=...)` are what tune a motor). In Blocks, the
+  "use ADRC / PID control" block does nothing and can be deleted.
+- **Changed: in raw mode or with `dmp(True, gyro_cal=False)` the `IMU` learns its gyro bias only while the
+  robot is still and no motor drives,** so a bump or a motor start no longer goes into it; `ready()` comes
+  about 3 s after the motors stop ([Sensors](API_SENSORS.md#heading-and-motion-heading-reset_heading)).
+- **Fixed: one huge integer calculation (such as `3**100000`) no longer reboots the board,** if it takes under
+  about 30 s. Printing such a number still does: `print(3**100000)` (or `3**100000` typed at the REPL) takes far
+  longer than 30 s to turn into text. Other single operations over 3 s without a wait still reboot it too
+  ([Known limitations](TROUBLESHOOTING.md#known-limitations-of-this-build)).
+
+## 0.2.72 (2026-10-30)
 
 - **New in the simulator: challenges.** Three *Obstacle course* levels, each run many times from a start moved a
   little at random and scored on reaching the goal, speed and touching nothing; a run can be saved as a sealed

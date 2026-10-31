@@ -84,42 +84,6 @@ class Control:
         """
 
     @overload
-    def pid(self) -> Tuple[int, int, int, float, int]: ...
-    @overload
-    def pid(self, kp: Optional[float] = None, ki: Optional[float] = None, kd: Optional[float] = None,
-            integral_deadzone: Optional[float] = None, integral_limit: Optional[float] = None) -> None:
-        """Position controller gains in uNm/deg, uNm/(deg*s), uNm/(deg/s) (the Pybricks convention).
-
-        ``integral_deadzone`` (deg, 0..5) is the endpoint deadzone - read back as a float in degrees (default
-        0.75, i.e. 1.5 encoder edges), the one value in the tuple that is not an int; ``integral_limit`` (% duty,
-        0..100, default 20) is the largest contribution the integrator may make (anti-windup).
-        There is no ``integral_rate`` (a growth-rate cap has no counterpart in this loop); passing it
-        raises ``TypeError``. A negative gain raises ``ValueError``.
-        Changes affect this motor object only, and only the ``"pid"`` control law.
-        """
-
-    @overload
-    def law(self) -> str: ...
-    @overload
-    def law(self, law: str, /) -> None:
-        """Control law: "adrc" (default: active disturbance rejection, self-calibrated) or "pid" (the tuned
-        cascade; ``pid()`` / ``evn()`` parameters apply to it only). Anything else raises ``ValueError``."""
-
-    @overload
-    def evn(self) -> Tuple[int, int, int, int]: ...
-    @overload
-    def evn(self, endpoint_kd: Optional[float] = None, start_duty: Optional[float] = None,
-            hold_duty: Optional[float] = None, friction_ff: Optional[float] = None) -> None:
-        """EVN ALPHA's own tuned parameters of the ``"pid"`` law (the getter returns the per-model optimum).
-
-        Like ``pid()``, they act only when ``law("pid")`` is selected; the default ``"adrc"`` law
-        is self-calibrated and ignores them.
-        ``endpoint_kd``: velocity gain inside the endpoint window (same units as ``kd``).
-        ``start_duty`` / ``hold_duty`` (% duty, 0..100): stiction floors, breakaway push and least duty
-        held near the target. ``friction_ff`` (%, 0..200): Coulomb friction feed-forward.
-        """
-
-    @overload
     def target_tolerances(self) -> Tuple[float, float]: ...
     @overload
     def target_tolerances(self, speed: Optional[float] = None, position: Optional[float] = None) -> None:
@@ -201,7 +165,7 @@ class Motor:
     """
 
     control: Control
-    """The controller settings of this motor: ``motor.control.limits()``, ``target_tolerances()``, ``stall_tolerances()``, ``law()`` ... (see ``Control``)."""
+    """The controller settings of this motor: ``motor.control.limits()``, ``target_tolerances()``, ``stall_tolerances()``, ``state()`` ... (see ``Control``)."""
     model: Model
     """The observer (motor model) estimates of this motor (see ``Model``)."""
 
@@ -232,9 +196,8 @@ class Motor:
         (made for the other model) is not applied until ``calibrate()`` runs again. ``ValueError`` for
         an unknown name; ``RuntimeError`` if the port is moving.
 
-        A soft reset (Ctrl-D) returns every port's ``control.stall_tolerances()``, ``model.settings()``,
-        ``control.pid()`` and ``control.evn()`` to the defaults; the port's ``calibrate()`` record, the motor model and
-        ``control.law()`` are kept. Within a boot (later button runs included) a new ``Motor(port)`` keeps what the
+        A soft reset (Ctrl-D) returns every port's ``control.stall_tolerances()`` and ``model.settings()`` to the
+        defaults; the port's ``calibrate()`` record and the motor model are kept. Within a boot (later button runs included) a new ``Motor(port)`` keeps what the
         port was set to (a module that set up the motor keeps its setup); the limits, tolerances and ``settings()``
         start from its arguments.
         """
@@ -424,9 +387,7 @@ class DriveBase:
     started on the same 1 kHz tick, so the wheels stay proportional and a straight is straight. The two
     keep one clock: when a wheel is held back (blocked, or loaded more than it can drive) its move waits and
     the other wheel's waits with it, so the robot pauses on its path instead of turning about the held wheel
-    (``drive()`` too). The shared wait is the default ``"adrc"`` control law's: wheels on
-    ``control.law("pid")`` do not share it, and with one wheel on each law the ``"adrc"`` wheel's wait holds
-    the ``"pid"`` one, never the reverse. A direct ``Motor`` command on one wheel while a maneuver is in
+    (``drive()`` too). A direct ``Motor`` command on one wheel while a maneuver is in
     force coasts the other wheel (Pybricks).
     A motor that already belongs to a DriveBase is taken over (that base is closed), so re-running the
     ``DriveBase(...)`` line with the same ``Motor`` objects works, and so does a whole re-run cell: a new
@@ -662,7 +623,7 @@ class PID:
     as the measurement rises). Parallel form; the
     derivative is taken on the measurement (a setpoint step never kicks the output) through a first-order filter
     of ``filter`` ms (0 = unfiltered); the integral stops adding while the output sits on a limit in the
-    direction it would push (clamping anti-windup, the rule the board's own motor PID uses) and is bounded by
+    direction it would push (clamping anti-windup) and is bounded by
     ``integral_limit`` (output units) when one is given. ``limits``: ``None`` / ``False`` (none), a number ``x``
     (``(-x, x)``) or ``(low, high)``; set them to what the actuator accepts (``dc()``: 100).
 
@@ -1968,7 +1929,8 @@ class IMU:
     ``ready()`` waits. Keep the robot still until ``ready()``: with a stored calibration
     (``calibrate()``) that is about a second; without one the DMP learns its gyro bias 8..25 s into
     stillness (moved early, it may not for a long time - ``dmp(True, gyro_cal=False)`` then lets the
-    driver average the bias itself after 1 s still, ``ready()`` in about 2 s). Once ready, a robot at
+    driver average the bias itself after 1 s still with no motor driving, ``ready()`` in about 2 s; the
+    robot moving or a motor driving drops that average and it starts again, see ``ready()``). Once ready, a robot at
     rest keeps its heading: while it is still (and no motor drives) the firmware measures the small gyro
     bias a calibration leaves (its drift with temperature) and takes it off ``heading()`` and
     ``angular_velocity()``, so the heading no longer creeps in the seconds before the DMP's own
@@ -2097,7 +2059,8 @@ class IMU:
         calibration is measured and taken off, so the heading of a robot at rest stays put (a steady turn
         slower than 0.5 deg/s by hand would be taken for bias while it lasts). While the robot moves, what
         is left is the change of that bias after the last rest and the measurement's uncertainty (see
-        ``IMU``)."""
+        ``IMU``). In raw mode it keeps its value until the driver's own gyro bias has landed: about 2 s with
+        the robot still and no motor driving (see ``ready()``), or a ``calibrate_gyro(n)``."""
     def reset_heading(self, angle: float = 0, /) -> None:
         """The current pose reads as ``angle``. In a program run again from the button, a later
         ``IMU(port)`` of the same run then keeps the heading, the run's first one included (see ``IMU``)."""
@@ -2118,10 +2081,20 @@ class IMU:
         (the DMP calibrates that far into stillness and the orientation settles a second or two after), or
         at once when the raw gyro bias is under the threshold, while the heading drifts at that bias until
         the DMP has learnt it (``heading_confidence()`` 0.5); raw mode,
-        or ``dmp(True, gyro_cal=False)``, averages a second of readings by itself after 1 s still (for 2 s
-        at most when no ``Pose`` reads the IMU: a raw-mode one is then read in turn with the other
-        devices, so with many open it collects fewer; one a ``Pose`` reads always takes the whole
-        second's). A ``reset_heading()`` once it is True holds. ``heading_confidence()`` says whether the heading can still creep after it."""
+        or ``dmp(True, gyro_cal=False)``, averages a second of readings by itself after 1 s still with no
+        motor driving (for 2 s at most when no ``Pose`` reads the IMU: a raw-mode one is then read in turn
+        with the other devices, so with many open it collects fewer; one a ``Pose`` reads always takes the
+        whole second's). The robot moving (``stationary()`` False) or a motor driving drops that average,
+        and ``ready()`` waits for it to start again once ``stationary()`` has held 1 s and no motor drives
+        (a stillness that lasted through a motor's run counts). A motor drives in ``run()`` at any speed -
+        ``run(0)`` and ``DriveBase.drive(0, 0)`` used as a stop included - and ``dc()``, while a command
+        has not been taken up yet, and in ``track_target()`` while its shaft moves 1 deg/s or more; one
+        holding after a finished move, braked or coasting does not. So ``ready()`` needs about 2 s with the
+        robot still and no motor driving, and a program whose motor drives from start to end never reaches
+        it in these modes (raw mode's ``heading()`` keeps its value meanwhile); ``calibrate_gyro(n)`` is the
+        explicit way out. Its limit: a turn by hand or on a turntable that reads as still (a steady rate
+        from before the average to after it, or speeding up very gently) becomes the bias - keep the robot
+        still until ``ready()``. A ``reset_heading()`` once it is True holds. ``heading_confidence()`` says whether the heading can still creep after it."""
     def heading_confidence(self) -> float:
         """How far ``heading()`` can be trusted not to creep, read from the IMU's state: ``0`` not ``ready()``;
         ``0.5`` ``ready()``, but the DMP has not calibrated its gyro yet (the heading may creep); ``1`` calibrated.
@@ -2190,7 +2163,9 @@ class IMU:
         default ``gyro_cal=True``); with ``dmp(True, gyro_cal=False)`` it measures and returns it. One
         reading per new sample read, so with many devices open a raw IMU collects them more slowly than its
         rate; it waits while readings keep coming and raises ``OSError`` only when none has come for three
-        periods plus the other devices' turns plus 0.1 s."""
+        periods plus the other devices' turns plus 0.1 s. Unlike the automatic average of raw mode and
+        ``dmp(True, gyro_cal=False)`` (see ``ready()``) it is not judged on motion or motors: the way to a
+        bias while a motor has to keep driving - keeping the robot still is then up to you."""
     @overload
     def ranges(self) -> Tuple[int, int]: ...
     @overload
