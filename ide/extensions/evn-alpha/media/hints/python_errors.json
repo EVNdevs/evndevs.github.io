@@ -1,0 +1,260 @@
+{
+  "v": 1,
+  "about": "Plain-language hints for the commonest Python errors (docs/ACCESSIBILITY.md). Each row: an error type and a pattern for its message as the board prints it (board) and as the simulator prints it (sim); the hint names the line and where to look. Patterns use JavaScript named groups (?<name>...). Setting: evn.python.errorHints.",
+  "rows": [
+    {
+      "id": "unexpected-indent",
+      "board": {
+        "type": "IndentationError",
+        "pattern": "^unexpected indent$"
+      },
+      "sim": {
+        "type": "SyntaxError",
+        "pattern": "^unexpected indent$"
+      },
+      "hint": "Line {line}: look at how far in this line begins, and how far in the line above it begins."
+    },
+    {
+      "id": "unindent-mismatch",
+      "board": {
+        "type": "IndentationError",
+        "pattern": "^unindent doesn't match any outer indent level$"
+      },
+      "sim": {
+        "type": "SyntaxError",
+        "pattern": "^unindent does not match any outer indentation level$"
+      },
+      "hint": "Line {line}: look at how far in this line begins, and how far in each line above it begins."
+    },
+    {
+      "id": "expected-block",
+      "sim": {
+        "type": "SyntaxError",
+        "pattern": "^expected an indented block(?: after .*)?$"
+      },
+      "hint": "Line {line}: look at this line and at the colon (:) that ends the line above it."
+    },
+    {
+      "id": "invalid-syntax",
+      "board": {
+        "type": "SyntaxError",
+        "pattern": "^invalid syntax$"
+      },
+      "sim": {
+        "type": "SyntaxError",
+        "pattern": "^(?:invalid syntax.*|expected ':'|'[(\\[{]' was never closed|unmatched '[)\\]}]'|closing parenthesis '[)\\]}]' does not match opening parenthesis '[(\\[{]'.*|unterminated (?:triple-quoted )?string literal.*|Missing parentheses in call to .*)$"
+      },
+      "hint": "Line {line}: look at this line and the one above it, sign by sign: colons, brackets, quote marks, and the spaces at the start."
+    },
+    {
+      "id": "name-undefined",
+      "board": {
+        "type": "NameError",
+        "pattern": "^name '(?<name>[^']*)' isn't defined$"
+      },
+      "sim": {
+        "type": "NameError",
+        "pattern": "^name '(?<name>[^']*)' is not defined$"
+      },
+      "hint": "Line {line}: look at '{name}' here and where it first appears above."
+    },
+    {
+      "id": "no-module",
+      "board": {
+        "type": "ImportError",
+        "pattern": "^no module named '(?<name>[^']*)'$"
+      },
+      "sim": [
+        {
+          "type": "ModuleNotFoundError",
+          "pattern": "^No module named '(?<name>[^']*)'$"
+        },
+        {
+          "type": "ImportError",
+          "pattern": "^no module named '(?<name>[^']*)'(?:: .*)?$"
+        }
+      ],
+      "hint": "Line {line}: look at the module name '{name}'; EVN's own module is called evn."
+    },
+    {
+      "id": "no-attribute",
+      "board": {
+        "type": "AttributeError",
+        "pattern": "^(?:'[^']*' object|type object '[^']*'|module '[^']*') has no attribute '(?<attr>[^']*)'$"
+      },
+      "sim": {
+        "type": "AttributeError",
+        "pattern": "^(?:'[^']*' object|type object '[^']*'|module '[^']*') has no attribute '(?<attr>[^']*)'$"
+      },
+      "hint": "Line {line}: look at '{attr}' here; hover the name before the dot to see what it has."
+    },
+    {
+      "id": "arguments-own",
+      "board": [
+        {
+          "type": "TypeError",
+          "pattern": "^\\w+\\(\\) takes \\d+ positional arguments but \\d+ were given$"
+        },
+        {
+          "type": "TypeError",
+          "pattern": "^function missing required positional argument #\\d+$"
+        }
+      ],
+      "sim": [
+        {
+          "type": "TypeError",
+          "pattern": "^\\w+\\(\\) takes (?:from \\d+ to )?\\d+ positional arguments? but \\d+ (?:was|were) given$"
+        },
+        {
+          "type": "TypeError",
+          "pattern": "^\\w+\\(\\) missing \\d+ required (?:positional|keyword-only) arguments?: .*$"
+        }
+      ],
+      "hint": "Line {line}: count the values in this call and the names in the def line of the function it calls."
+    },
+    {
+      "id": "arguments-api",
+      "board": [
+        {
+          "type": "TypeError",
+          "pattern": "^function takes \\d+ positional arguments but \\d+ were given$"
+        },
+        {
+          "type": "TypeError",
+          "pattern": "^function missing \\d+ required positional arguments$"
+        },
+        {
+          "type": "TypeError",
+          "pattern": "^function expected at most \\d+ arguments, got \\d+$"
+        },
+        {
+          "type": "TypeError",
+          "pattern": "^extra positional arguments given$"
+        },
+        {
+          "type": "TypeError",
+          "pattern": "^'\\w+' argument required$"
+        }
+      ],
+      "sim": [
+        {
+          "type": "TypeError",
+          "pattern": "^function takes at most \\d+ positional arguments$"
+        },
+        {
+          "type": "TypeError",
+          "pattern": "^'\\w+' argument required$"
+        },
+        {
+          "type": "TypeError",
+          "pattern": "^\\w+\\.\\w+\\(\\) takes (?:from \\d+ to )?\\d+ positional arguments? but \\d+ (?:was|were) given$"
+        },
+        {
+          "type": "TypeError",
+          "pattern": "^\\w+\\.\\w+\\(\\) missing \\d+ required (?:positional|keyword-only) arguments?: .*$"
+        }
+      ],
+      "hint": "Line {line}: count the values in the call on this line; hover the name to see what it takes."
+    },
+    {
+      "id": "unknown-keyword",
+      "board": {
+        "type": "TypeError",
+        "pattern": "^unexpected keyword argument '(?<kw>[^']*)'$"
+      },
+      "sim": {
+        "type": "TypeError",
+        "pattern": "^(?:[\\w.]+\\(\\) got an )?unexpected keyword argument '(?<kw>[^']*)'$"
+      },
+      "hint": "Line {line}: look at the name '{kw}' before the = sign; hover the function to see the names it takes."
+    },
+    {
+      "id": "mixed-types",
+      "board": [
+        {
+          "type": "TypeError",
+          "pattern": "^unsupported types for \\w+: '[^']*', '[^']*'$"
+        },
+        {
+          "type": "TypeError",
+          "pattern": "^can't convert '[^']*' object to \\w+ implicitly$"
+        }
+      ],
+      "sim": [
+        {
+          "type": "TypeError",
+          "pattern": "^unsupported operand type\\(s\\) for .+: '[^']*' and '[^']*'$"
+        },
+        {
+          "type": "TypeError",
+          "pattern": "^can only concatenate \\w+ \\(not \"[^\"]*\"\\) to \\w+$"
+        },
+        {
+          "type": "TypeError",
+          "pattern": "^'[^']+' not supported between instances of '[^']*' and '[^']*'$"
+        }
+      ],
+      "hint": "Line {line}: look at the values on each side of the sign on this line."
+    },
+    {
+      "id": "not-callable",
+      "board": {
+        "type": "TypeError",
+        "pattern": "^'[^']*' object isn't callable$"
+      },
+      "sim": {
+        "type": "TypeError",
+        "pattern": "^'[^']*' object is not callable$"
+      },
+      "hint": "Line {line}: look for round brackets ( ) after a name that holds a value, not a function."
+    },
+    {
+      "id": "divide-by-zero",
+      "board": {
+        "type": "ZeroDivisionError",
+        "pattern": "^divide by zero$"
+      },
+      "sim": {
+        "type": "ZeroDivisionError",
+        "pattern": "^(?:(?:float |integer )?(?:division|modulo|floor division)(?: or modulo)? by zero|float divmod\\(\\)|float modulo|0\\.0 cannot be raised to a negative power)$"
+      },
+      "hint": "Line {line}: look at the numbers on each side of /, //, %, ** or divmod on this line, and what each holds."
+    },
+    {
+      "id": "index-range",
+      "board": {
+        "type": "IndexError",
+        "pattern": "^(?:list|tuple|str|bytes|bytearray|array|range) index out of range$"
+      },
+      "sim": {
+        "type": "IndexError",
+        "pattern": "^(?:list|tuple|string|bytes|bytearray|array|range)(?: assignment)? index out of range$"
+      },
+      "hint": "Line {line}: look at the number in [ ] and how many items there are; the first item is number 0."
+    },
+    {
+      "id": "port-range",
+      "board": {
+        "type": "ValueError",
+        "pattern": "^port must be 1\\.\\.(?:4 \\(Port\\.A\\.\\.Port\\.D\\)|16)$"
+      },
+      "sim": {
+        "type": "ValueError",
+        "pattern": "^port must be 1\\.\\.(?:4 \\(Port\\.A\\.\\.Port\\.D\\)|16)$"
+      },
+      "hint": "Line {line}: look at each number given to a call on this line; the message above says which numbers it takes."
+    },
+    {
+      "id": "device-no-answer",
+      "board": {
+        "type": "OSError",
+        "pattern": "^(?:\\[Errno (?:5|19|110)\\] (?:EIO|ENODEV|ETIMEDOUT)|16|.+ on port \\d+ not responding|no .+ on port \\d+ .*)$"
+      },
+      "sim": {
+        "type": "OSError",
+        "pattern": "^(?:the simulated robot has no .+|no .+ on port .+|\\[Errno 110\\] ETIMEDOUT)$"
+      },
+      "hint": "Line {line}: look at the device this line uses."
+    }
+  ]
+}

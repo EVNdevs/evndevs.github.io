@@ -1,5 +1,100 @@
 # Changelog
 
+## 0.2.74 (2026-11-04)
+- **Simulator: the WRO RoboMission Junior 2026 course runs on a physics engine** (docs/SIMULATOR.md, "WRO
+  RoboMission"; still in developer mode only). The game objects are now the EVN owner's LEGO models of WRO's
+  building instructions, brick by brick, and they are solid bodies of the Jolt Physics engine: the robot pushes them,
+  a claw grips, lifts and sets them down, they stack, slide and tip over, and the colour and distance sensors read
+  them where they lie, tipped ones included. An object that is not upright scores as the scoring sheet says (a toppled
+  red tower scores nothing). The engine is loaded only when this course is picked; the other courses are unchanged.
+- **Simulator, WRO Junior 2026: two red towers in one red target area score once** (WRO's Q&A of 2026-06-17): the
+  referee counts the better tower in each target area (15 completely, 10 partly); the other reads "target taken".
+- **NumPy and Matplotlib on the desktop notebook: a first-use download (NOTEBOOK_DESIGN.md NB-6, OQ 88 ruled (c)).**
+  The VSIX still carries no notebook package; it now carries their list, the tracked `media/nb/nb-packages.json` (a
+  few KB; `npm run package` needs no wheel cache), and `prepublish.js` refuses a package without it or with one off the
+  lock. The first time a cell imports one, the cell stops with one line
+  naming what is missing, and a prompt like *Install mpremote*'s offers **Install NumPy and Matplotlib (14.8 MB)** or
+  **Cancel**; **EVN: Install notebook packages** does the same from the palette. The 19 files come from the site's
+  browser-IDE copy (`<evn.docsUrl>/ide/extensions/evn-alpha/media/pyodide/`, https or a local host only; a redirect is followed only on that
+  origin, so another host is never contacted) into `globalStorageUri/nb-packages/pyodide-<version>/`, one install at a time (a lock file; a second window is
+  told another is installing), through the window's own staging folder: each file must match the
+  list's size and sha256 (the list itself must match the shipped, pinned lock), a mismatch is fetched once more and
+  then refused, a cut download resumes with a Range request next time, and the set is moved into place only when
+  whole, so a kernel never sees a partial set. Cancel (at the prompt or during the download) keeps nothing. No
+  request is made before the click. The site's `nb-packages.json` is read first: a site on another Pyodide gives one
+  line and fetches nothing; packages left from another Pyodide give the kernel's "for Pyodide X; this extension needs
+  Y" line and go after the new install. Offline, or a stall (30 s without data), ends with one line, never a hang.
+  After the install a **Restart Python** button restarts the notebook's kernel. Tested by `scripts/nb6_install_rows.js`
+  (a local stand-in site, with three mutants) from `test_notebook.js`, and the real wheels installed and loaded offline
+  in `test_notebook_packages.js`.
+- **A hint under the commonest errors.** When a program you run stops with an error, on the board or in the
+  simulator, the terminal adds one line that starts `Hint:`, naming the line and where to look, for example
+  `Hint: Line 3: look at 'prnt' here and where it first appears above.` It never says what the error means. A
+  program you stop gets none. The setting `evn.python.errorHints` (`on` / `off`) turns hints off. A challenge run's
+  result shows none yet.
+- **Autocomplete in the browser IDE (and wherever Pylance does not run).** Typing `evn.` offers every name of the
+  module, `m1.` (with `m1 = Motor(1)`) exactly the motor's methods and properties, and a call (`m1.run_angle(`) shows
+  its parameters with their types and defaults, the current one highlighted, and the first paragraph of its
+  documentation - from the same stub as the hover. Nothing is offered inside a string or a comment. The setting
+  `evn.python.completion` follows the hover's rule: `auto` (default) answers only where no Pylance / Pyright /
+  BasedPyright serves the file with the stubs (so a Pylance user never sees two lists), `always`, `off`. *EVN: Check
+  Python setup* says which applies. Tested by `scripts/test_completion.js` (with mutants) and a `test_web.js` row in
+  the browser IDE (A11Y_DESIGN.md §4.6, A6).
+- **Hovers and completion follow where a name is bound.** A name is taken for an `evn` object only by its last
+  assignment before the cursor: after `m1 = 3`, `m1` is no longer a `Motor`; a function's parameter hides an outer name
+  inside that function only; `Motor = 3`, `def Motor` or `evn = 3` hides the import. In a notebook, a cell sees the
+  imports and objects of the Python cells above it. A dot that starts a continuation line inside brackets is followed
+  too.
+- **The notebook's ways in (NOTEBOOK_DESIGN.md NB-5).** EVN: New notebook (`EVN Projects/Notebooks/Notebook.ipynb`, its
+  first cell reading the newest log through `evn_nb.data()`); Open in notebook on a CSV from the data viewer's page, the
+  Explorer's context menu and the Board view's download prompt (the same CSV reopens the same notebook; a CSV outside
+  the projects folder is copied into `Data/` first, never over a file); Check this cell (runs a cell's
+  `metadata.evn.check` through the check runner CHK will register; until then it says the check cannot run yet); Show
+  data table (a figure output's `evn_table`, also from a saved and reopened file). A figure's alt text and table are
+  now saved in the `.ipynb`: VS Code's ipynb serializer kept only an output's `metadata.metadata`, and dropped them. The
+  user page is `docs/NOTEBOOK.md`.
+- **Extension updates on a slow link no longer fail after 2 minutes.** The update download used to be cut off 120 s
+  after it started, so a large update over a busy school connection could fail. It is still never stopped in its first
+  2 minutes; after that it stops only when no data arrives for 30 s, or when it takes longer than its size allows at
+  64 kB/s (at most 30 minutes). The notification shows how much has arrived and has a **Cancel** button.
+  **Release rule (NB-0):** these limits act only when the *installed* extension downloads the next update, so this
+  change must ship in a published release **before** any release that grows the VSIX (the notebook's packages,
+  NOTEBOOK_DESIGN.md NB-3 to NB-5).
+
+- **Firmware: the first getter call after a pause (cold) is fast again** (0.2.73's known issue). 0.2.73's new gyro-bias
+  average grew the `IMU`'s motion-tracking code and moved it in the flash cache, so a getter called after a pause cost
+  3 to 21 % more than in 0.2.72. The average now runs as a function of its own and the tracking code keeps its place:
+  every cold getter measured is faster than in 0.2.73 (alternating runs against 0.2.73). On the motor board all 18,
+  by 4 to 14 us (`done()` 41.5 -> 35.8 us, `stalled()` 54.5 -> 47.0 us, `db.stalled()` 52.8 -> 45.0 us, `db.done()`
+  115.5 -> 101.5 us); on the drive-base board all 19, by 3 to 11 us (`done()` 48.6 -> 44.5 us, `db.stalled()` 66.9 ->
+  58.0 us, `db.done()` 132.8 -> 121.8 us). Every getter called in a loop (hot) is as fast as in 0.2.73.
+- **Firmware: an `IMU` mounted on its side settles from the first reading:** `ready()` comes about 0.7 s after the
+  `IMU()` call instead of about 4 s. On such a mount `heading()`, a `Pose` and `DriveBase.use_gyro(True)` need `axes()`
+  naming the face that is up (as before): without it `heading()` does not follow turns about the vertical from the
+  first packet (0.2.73 hid that for its first ~4 s), a tilt about the body's z axis goes into it 1:1 and a turn past
+  ±90° steps it by ~180°, and a `Pose` turns about a horizontal axis. On such a mount `screen_orientation()` now
+  reports in the frame turned up from that side, so a level side mount reports no orientation until it tilts. A robot
+  held on its side when `IMU()` starts and then put down level now starts 90° off and waits for the attitude to settle
+  (it used to start right). A vibrating surface (a running 3D printer on the same table) delays `ready()`, which waits
+  for 250 ms of stillness (unchanged, now documented)
+  ([heading and motion](docs/API_SENSORS.md#heading-and-motion-heading-reset_heading)).
+- **Known in this release:** W1 is partly fixed (0.2.73): one huge integer power, product, division or conversion
+  runs up to about 30 s without rebooting the board, but printing or `str()` of a huge number such as `3**100000` still
+  runs past that and reboots it about 33 s after the line began, and any other single operation that runs 3 s without
+  reaching a wait (a search in a very long string, a regular expression that backtracks without end) still trips the
+  3 s watchdog: the motors coast and `evn.reset_cause()` returns `"watchdog"`. The CHR-GM16-030PA 9V 1:63 settles
+  1.3 ms later than on 0.2.69 (0.2.70's known issue). On the drive-base test robot (56 mm wheels) the `DriveBase`
+  defaults ask about 1 400 wheel °/s; its loaded wheels reach about 850, so a default turn or straight cannot follow its
+  profile. A HiTechnic Color V2 times out about 2 reads in 800 at 300 kHz; a `VL53L1X` read blocks about 3.8 s after
+  the sensor is unplugged with several devices open. 0.2.67's known issues against 0.2.66 were not measured again (a
+  `DriveBase` with different acceleration and deceleration limits caps both by the larger one; `DriveBase.hold()`'s
+  3-5° oscillation in up to about 1 in 9 holds; `imu.acceleration` +28 % against 0.2.62; USB output dropped after
+  500 ms without a host read; auto exposure benched on the `ColorSensor` only; `imu.calibrate_gyro()` under a `Pose`
+  +4.3 %). An update straight from 0.2.70 may still say "No Servers" once (0.2.70's own code runs it); the Download
+  button works. 0.2.72's single getter costs against 0.2.71 (below) were not measured again.
+  `Display.ports()` can name an `LSM6DSV` on a port (it identifies the chip by its ID), while the `LSM6DSV` class is not
+  in this release: `evn.LSM6DSV` raises `AttributeError`. An EV3 Medium overshoots a loaded move's target by 0.73° on average, 0.3° more than on 0.2.62 and within run-to-run noise of 0.2.73 (accepted by the owner). This release was gated on the drive-base board alone: the JGA25-370 and the CHR-GM16-030PA were not measured against 0.2.73.
+
 ## 0.2.73 (2026-10-31)
 - **Firmware: one huge integer calculation of up to about 30 s no longer reboots the board** (W1, a known issue since 0.2.69). The 3 s hardware watchdog was fed only between Python steps and in waits, so one calculation such as `3**100000` (about 4 s) rebooted the board. A huge integer's power, product or division, and its conversion to or from text, are now fed while they run, for at most 30 s from the start: one still running then is taken as a frozen board, and the watchdog reboots it about 3 s later, as before. **Printing a huge number still reboots the board:** turning it into text is far slower than computing it (the conversion goes over the whole number once for every digit it writes), so `print(3**100000)`, `str(3**100000)`, or typing `3**100000` at the REPL (which prints the result) runs past 30 s and the board reboots about 33 s after the line began; compute with the number and print a part of it (`x % 10**20`), or print a smaller one. A frozen board still reboots 3 s after its last Python step; other single operations over 3 s without a wait (a search in a very long string, a regular expression that backtracks without end) still reboot it. While such a calculation runs the board does not answer the console; Ctrl-C, the extension's Stop and the end of the program take effect when it ends (a motor move already running goes on until then), and the user button still coasts the motors at once. Host-checked (`tools/host_tests/run_longop.py`: the feed, and a hang that still trips, with mutants of a feed that never stops and one that never starts).
 - **Firmware: a Run from the editor keeps the slow-starting sensors warm** (GitHub #120, PERF-15). Every Run (and

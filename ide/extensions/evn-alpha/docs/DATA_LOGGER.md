@@ -63,7 +63,7 @@ They are plain CSV, one row per value:
 
 `time_s` is the board's own clock, in seconds since Record, to the microsecond. A gap or jitter in the data is the board's, not the cable's.
 
-Excel opens the file as it is; filter the `quantity` column. In Python: `pandas.read_csv(f, comment='#')`.
+Excel opens the file as it is; filter the `quantity` column. In Python: `pandas.read_csv(f, comment='#')`, or **Open in notebook** to read it in the extension's own Python ([The notebook](NOTEBOOK.md)).
 
 ## Logging from your own program
 
@@ -97,7 +97,7 @@ The whole class is in the API reference, [DataLog](API_SYSTEM.md#datalog--record
 
 ![A recorded log in the data viewer: the file name and when it started, the chart in lanes, the overview strip and the statistics of the span in view](images/datalogger-viewer.png)
 
-Click a log under *Data logs*, or **Open log...** in the logger, or right-click any `.csv` and **Open in data viewer**.
+Click a log under *Data logs*, or **Open log...** in the logger, or right-click any `.csv` and **Open in data viewer**. **Open in notebook** at the top of the page reads the log in a Python notebook ([The notebook](NOTEBOOK.md)).
 
 Each unit gets its own lane with its own scale, on one time axis.
 

@@ -20,6 +20,11 @@ Every command of the extension is in the command palette (**Ctrl+Shift+P**); typ
 | Enter a simulator licence key | paste the key that opens the simulator after its 14-day trial; it is checked as you paste it ([Simulator](SIMULATOR.md#licence)) |
 | Show the simulator licence | who the licence is for and its last day, or the trial's days left ([Simulator](SIMULATOR.md#licence)) |
 | Remove the simulator licence key | take the key off this computer ([Simulator](SIMULATOR.md#licence)) |
+| Restart notebook kernel | in a notebook (`.ipynb`) on the *EVN Python (offline)* kernel: start its Python again; its variables are cleared. The kernel runs Python in the extension, with no network and nothing to install |
+| New notebook | a new notebook in the *Notebooks* folder of your projects folder, its first cell reading your newest data log ([The notebook](NOTEBOOK.md#making-a-notebook)) |
+| Open in notebook | a notebook that reads a CSV file: right-click the file, or use the button in the data viewer or after a download from the *Board* view; the same file opens the same notebook again ([The notebook](NOTEBOOK.md#making-a-notebook)) |
+| Check this cell | in a lesson's notebook, run the cell's check and write its verdict under the cell (lesson checks come in a later version) ([The notebook](NOTEBOOK.md#what-it-has)) |
+| Show data table | the numbers a chart in a notebook cell was drawn from, as text beside the notebook ([The notebook](NOTEBOOK.md#what-it-has)) |
 | Open lessons | the lessons site in your browser, signed in with the licence key you entered when that key unlocks the lessons; otherwise its sign-in page and free preview ([Simulator](SIMULATOR.md#lessons)) |
 | Save a challenge submission | seal the last challenge you ran (Run challenge in the Simulator panel) for your teacher and EVN, as a `.evnsub` file to hand in ([Simulator](SIMULATOR.md#handing-it-in)) |
 | Make a teacher key (for challenge submissions) | for teachers: your key file (keep it to yourself) and the teacher code to give your class ([Simulator](SIMULATOR.md#for-teachers)) |

@@ -4,6 +4,27 @@ The main changes of each release, in a few lines. The [full changelog](../CHANGE
 the tools and the measurements behind each release. What is not tested yet is on
 [Known limitations and help us test](KNOWN_LIMITATIONS.md).
 
+## 0.2.74 (2026-11-04)
+
+- **New: autocomplete in the browser IDE.** Typing `evn.` lists the module's names, `m1.` a motor's methods, and a
+  call shows its parameters as you type them, with their types and defaults. On the desktop it fills in wherever
+  Pylance does not run, such as an example opened from the *Examples* view; the setting is `evn.python.completion`
+  ([Programs](PROGRAMS.md#autocomplete-and-help-while-you-type)).
+- **New: Python notebooks.** **EVN: New notebook** makes a notebook whose first cell reads your newest data log, and
+  **Open in notebook** (in the data viewer, on a CSV in the Explorer, after a Board-view download) reads one log. The
+  notebook runs Python in the extension, with no network. The browser IDE has NumPy and Matplotlib; on the desktop
+  they are a one-click download (14.8 MB) the first time a cell imports one, each file checked, then they work
+  offline (**EVN: Install notebook packages** installs them ahead). Every chart has a description and a data table
+  (**Show data table**), both saved with the notebook ([The notebook](NOTEBOOK.md)).
+
+- **Faster: the first getter call after a pause is quick again.** 0.2.73 made such a call (`done()`, `angle()`,
+  `db.distance()`, `pose.heading()` ...) 3 to 21 % slower than 0.2.72; every one measured is now faster than in
+  0.2.73, by 3 to 14 us. Getters called in a loop are as fast as before.
+- **Faster: an `IMU` mounted on its side is `ready()` in about 0.7 s instead of about 4 s.** On such a mount,
+  `heading()`, a `Pose` and `DriveBase.use_gyro(True)` need `axes()` naming the face that is up; a vibrating surface
+  (a running 3D printer on the same table) delays `ready()`
+  ([Sensors](API_SENSORS.md#heading-and-motion-heading-reset_heading)).
+
 ## 0.2.73 (2026-10-31)
 
 - **Faster: a Run from the editor keeps the slow-starting sensors ready.** An `IMU` no longer reloads and

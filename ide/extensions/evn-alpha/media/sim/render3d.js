@@ -16,11 +16,29 @@
  * media/sim/wroMat.js makes both, at most 4096 px a side) - white while it has none.
  *
  * The WRO game objects (§4.2, §4.4; increment W4): a geometry whose world3d has `games` draws each object brick by brick -
- * world3d.gameMeshes[its `mesh`] (src/sim/engine/gameMesh.ts: the objects file's mesh.boxes, the model's frame), one
+ * world3d.gameMeshes[its `mesh`] (src/sim/engine/gameMesh.ts: the objects file's mesh.boxes, the model's frame) and its
+ * studs, world3d.gameStuds[its `mesh`] when its file has them (a props file, SIMULATOR_PROPS_DESIGN.md §4), one
  * static mesh per model and colour, built once per course (setGeom) - posed each frame from the snapshot's
- * hazards.games (x, y, yaw, base height z0: a lifted, stacked or held object where the snapshot puts it; plan-only
- * physics, so never tipped) with one model matrix per object written into scratch arrays: the objects' pass allocates
+ * hazards.games (x, y, yaw, base height z0: a lifted, stacked or held object where the snapshot puts it; a frame that
+ * carries q - an engine body, SIMULATOR_ENGINE_DESIGN.md §2.7 - at trans(x, y, z) rot(q)) with one model matrix per object written into scratch arrays: the objects' pass allocates
  * nothing per frame. A course without game objects draws exactly what it drew before (the pass is skipped).
+ *
+ * The objects' culls (s1031 part 10, OQ 73 (ae); SIMULATOR_PROPS_DESIGN.md §4 "The culls"; SIMULATOR_ENGINE_DESIGN.md
+ * §2.8.2 readings 60 / 61): option `cull` - true (the 3D view and the camera worker: frustum, lod and pattern), or
+ * { lod, frustum, back, pattern } naming some (the measuring hook; `back` only so) - and the objects' pass, per object from
+ * the camera's view-projection alone (so each is deterministic from the pose and the scene): `frustum` skips an object
+ * whose model box lies beyond one plane of the view frustum (no visible pixel moves); `lod` draws its studs with 12, 8 or
+ * 6 sides by their largest pixel radius r = f 2.4 mm sec(theta) / w over the box - w its nearest depth, theta its widest
+ * angle off the optical axis (both at a corner: an off-axis disc projects up to 1 / cos theta larger than on the axis) -
+ * n >= pi sqrt(r / (2 eps)), eps 0.5 px, snapped up to a prebuilt mesh, so no stud's outline strays more than eps px; none
+ * under 2 px across; `pattern` shades a stud grid on a brick top whose studs the cut-off dropped (a fragment term in a
+ * second program, no geometry), faded out before its period falls under 2 px anywhere on the object's tops (the period's
+ * lower bound 8 mm f h / d^2: h the eye's height over the highest patterned top under it, d the box's farthest corner -
+ * foreshortening included, so it never aliases); `back` culls back faces (every object mesh wound counter-clockwise seen
+ * from outside; opt-in only: it moves antialiased edge pixels and buys ~nothing after the frustum cull). A stud's side is
+ * its outline, so no stud is dropped for where the eye is (1739231b's eye cull dropped visible studs; review studlod r1
+ * B1). Without `cull` (a test's stand-in) the pass is exactly the one before them. Nothing per frame allocates: the stud
+ * meshes are built in setGeom.
  *
  * Units: mm, the world frame x right / y up (seen from above), z up.
  */
@@ -60,6 +78,13 @@
     function dot(a, b) { return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]; }
     function cross(a, b) { return [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]]; }
     function norm(a) { const l = Math.hypot(a[0], a[1], a[2]) || 1; return [a[0] / l, a[1] / l, a[2] / l]; }
+    /** a frame's q drawable by gameTilt (§2.7; J3c-1 r1b N4): a list of four finite numbers, not all zero; anything else
+     *  (none, the wrong length, a NaN / an infinity, the zero quaternion) draws as a frame without q. Nothing allocated. */
+    function tiltQ(t) {
+        if (!t || t.length !== 4) { return false; }
+        const n = t[0] * t[0] + t[1] * t[1] + t[2] * t[2] + t[3] * t[3];
+        return n > 0 && Number.isFinite(n);
+    }
     /** the rotation part of a matrix, for the normals (the scales here are positive; good enough for shading) */
     function rot3(m) { return [m[0], m[1], m[2], m[4], m[5], m[6], m[8], m[9], m[10]]; }
 
@@ -77,6 +102,38 @@ void main() {
     vec3 c = useTex > 0.5 ? texture2D(tex, vuv).rgb : color;
     gl_FragColor = vec4(c * (0.58 + 0.42 * d), alpha);
 }`;
+    /* the objects' program when `cull` has `pattern` (built only for a course whose objects have studs): FS and, on a
+     * brick top whose studs the cut-off dropped (pat > 0, its strength: patOf fades it to 0 before the grid's period falls
+     * under 2 px), a stud grid - that top's uv is (u, -1 - v) on its studs' 8 mm grid (buildGames, cullGroup), every other
+     * face's uv in [0, 1] - each stud a soft disc up to 14 % darker, 4.8 mm across */
+    const FS_PAT = `
+precision mediump float;
+uniform vec3 color; uniform float alpha; uniform sampler2D tex; uniform float useTex; uniform vec3 light; uniform float pat;
+varying vec3 vn; varying vec2 vuv;
+void main() {
+    float d = max(dot(normalize(vn), light), 0.0);
+    vec3 c = useTex > 0.5 ? texture2D(tex, vuv).rgb : color;
+    if (pat > 0.0 && vuv.y < -0.5) { vec2 g = fract(vec2(vuv.x, -vuv.y)) - 0.5; c *= 1.0 - 0.14 * pat * (1.0 - smoothstep(0.22, 0.38, length(g))); }
+    gl_FragColor = vec4(c * (0.58 + 0.42 * d), alpha);
+}`;
+    /* the stud level of detail (props design §4 "The culls"): a stud's radius 2.4 mm; an n-gon inscribed in a circle of r px
+     * strays r (1 - cos(pi / n)) ~ r pi^2 / (2 n^2) px from it, at most eps when n >= pi sqrt(r / (2 eps)) - so n sides
+     * serve up to r = 2 eps (n / pi)^2 px (6: 3.65, 8: 6.48, 12: 14.59; past that the 12-gon, the finest built); under
+     * STUD_MIN_R px (2 px across) no stud; the pattern's grid (8 mm) at full strength from PAT_P1 px a period down,
+     * fading to none at PAT_P0 (Nyquist: under 2 px a period it would alias) */
+    const STUD_R = 2.4, STUD_EPS = 0.5, STUD_MIN_R = 1, PAT_P0 = 2, PAT_P1 = 3;
+    const lodR = (n) => 2 * STUD_EPS * (n / Math.PI) * (n / Math.PI);
+    const LOD_R6 = lodR(6), LOD_R8 = lodR(8);
+    /** a program of vs + fs, its attributes bound to `bind`'s locations ({ p, n, uv }) when given */
+    function program(gl, vs, fs, bind) {
+        const sh = (type, src) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) { throw new Error(gl.getShaderInfoLog(s)); } return s; };
+        const pr = gl.createProgram();
+        gl.attachShader(pr, sh(gl.VERTEX_SHADER, vs));
+        gl.attachShader(pr, sh(gl.FRAGMENT_SHADER, fs));
+        if (bind) { for (const a of ['p', 'n', 'uv']) { if (bind[a] >= 0) { gl.bindAttribLocation(pr, bind[a], a); } } }
+        gl.linkProgram(pr);
+        return pr;
+    }
 
     function hex(c) { const v = parseInt(c.slice(1), 16); return [(v >> 16 & 255) / 255, (v >> 8 & 255) / 255, (v & 255) / 255]; }
 
@@ -113,6 +170,32 @@ void main() {
         quad(out, P(1, 1, -1), P(-1, 1, -1), P(-1, 1, 1), P(1, 1, 1));
         quad(out, P(1, -1, -1), P(1, 1, -1), P(1, 1, 1), P(1, -1, 1));
         quad(out, P(-1, 1, -1), P(-1, -1, -1), P(-1, -1, 1), P(-1, 1, 1));
+    }
+    /** a stud (SIMULATOR_PROPS_DESIGN.md §4 (a); J3c-1 DR2): a 12-gon cylinder 4.8 mm across, 1.7 mm high, standing on
+     *  (x, y, z) - its brick's top - its 12 sides (24 triangles) and its top cap as a fan from one rim vertex (10), no
+     *  bottom: 34 triangles, each wound outward (counter-clockwise seen from outside), appended to out */
+    function studInto(out, x, y, z) {
+        const n = 12, r = 2.4, zt = z + 1.7, P = [];
+        for (let i = 0; i < n; i++) { const a = 2 * Math.PI * i / n; P.push([x + r * Math.cos(a), y + r * Math.sin(a)]); }
+        for (let i = 0; i < n; i++) { const a = P[i], b = P[(i + 1) % n]; quad(out, [a[0], a[1], z], [b[0], b[1], z], [b[0], b[1], zt], [a[0], a[1], zt]); }
+        for (let i = 1; i < n - 1; i++) { for (const v of [P[0], P[i], P[i + 1]]) { out.push(v[0], v[1], zt, 0, 0, 1, 0, 0); } }
+    }
+    /** a stud of `sides` sides (the culls' level of detail: 8 and 6; 12 is studInto's, the same vertices): its sides (2 n
+     *  triangles) and its top cap as a fan from one rim vertex (n - 2), no bottom: 3 n - 2 triangles, each wound outward */
+    function studSidesInto(out, x, y, z, sides) {
+        const r = STUD_R, zt = z + 1.7, Q = [];
+        for (let i = 0; i < sides; i++) { const a = 2 * Math.PI * i / sides; Q.push([x + r * Math.cos(a), y + r * Math.sin(a)]); }
+        for (let i = 0; i < sides; i++) { const a = Q[i], b = Q[(i + 1) % sides]; quad(out, [a[0], a[1], z], [b[0], b[1], z], [b[0], b[1], zt], [a[0], a[1], zt]); }
+        for (let i = 1; i < sides - 1; i++) { for (const v of [Q[0], Q[i], Q[i + 1]]) { out.push(v[0], v[1], zt, 0, 0, 1, 0, 0); } }
+    }
+    /** a model's box for the frustum cull: [x0, y0, z0, x1, y1, z1] over its bricks and its studs (each 2.4 mm round its
+     *  foot, 1.7 mm up), as a Float32Array */
+    function modelBox(boxes, studs) {
+        const bb = [Infinity, Infinity, Infinity, -Infinity, -Infinity, -Infinity];
+        const grow = (x0, y0, z0, x1, y1, z1) => { bb[0] = Math.min(bb[0], x0); bb[1] = Math.min(bb[1], y0); bb[2] = Math.min(bb[2], z0); bb[3] = Math.max(bb[3], x1); bb[4] = Math.max(bb[4], y1); bb[5] = Math.max(bb[5], z1); };
+        for (const b of boxes) { grow(b[0], b[1], b[2], b[3], b[4], b[5]); }
+        for (const u of studs || []) { grow(u[0] - STUD_R, u[1] - STUD_R, u[2], u[0] + STUD_R, u[1] + STUD_R, u[2] + 1.7); }
+        return new Float32Array(bb);
     }
     /** a cylinder of radius 1 and length 1 along z, centred */
     function cylData(n = 24) {
@@ -214,10 +297,26 @@ void main() {
             this.floor = null;
             // the game objects (setGeom: buildGames): each model's meshes by colour, and per object its groups and start pose
             this.gameMeshes = new Map();
+            this.gameBoxes = new Map();   // with the culls: each model's box [x0, y0, z0, x1, y1, z1] (its bricks and studs)
+            this.gamePt = new Map();      // with the pattern: each model's patterned tops' heights (model frame), ascending
             this.gameDraw = [];
             // the objects' pass's scratch (drawGames): one model-view-projection and normal matrix, rewritten per object
             this.gMvp = new Float32Array(16);
             this.gNm = new Float32Array(9);
+            // the objects' culls (the header): which are on; the pass's per-frame values (cullBegin), no allocation per frame
+            const cu = opts.cull === true ? { lod: true, frustum: true, pattern: true } : (opts.cull || {});
+            this.cLod = !!cu.lod; this.cFrustum = !!cu.frustum; this.cBack = !!cu.back; this.cPattern = !!cu.pattern;
+            this.cull = this.cLod || this.cFrustum || this.cBack || this.cPattern;
+            this.cW = 640;          // the viewport (frame() sets it): the pixel focal length is vp's x scale x W / 2
+            this.cH = 480;
+            this.cFpx = 0;          // that focal length, px (|vp's x row| W / 2: not under the true one)
+            this.cFmin = 0;         // the true focal length, px, the smaller of x and y (the pattern's period: not over)
+            // tan of a clip point's angle off the optical axis: kx ndc x + bx (y alike), from vp's rows (cullBegin)
+            this.cKx = 0; this.cBx = 0; this.cKy = 0; this.cBy = 0;
+            this.pr2 = null;        // the pattern program (FS_PAT), its locations, and the main locations while it draws
+            this.loc2 = null;
+            this.locMain = null;
+            this.light = new Float32Array(norm([0.35, -0.45, 1]));
         }
 
         /** a texture of a canvas, or of { w, h, data } (RGBA bytes, rows top-down: the WRO floor) */
@@ -334,7 +433,10 @@ void main() {
         buildGames(w3) {
             const gl = this.gl;
             for (const groups of this.gameMeshes.values()) { for (const g of groups) { gl.deleteBuffer(g.mesh.buf); } }
+            for (const groups of this.gameMeshes.values()) { for (const g of groups) { for (const m of [g.m8, g.m6]) { if (m) { gl.deleteBuffer(m.buf); } } } }
             this.gameMeshes.clear();
+            this.gameBoxes.clear();
+            this.gamePt.clear();
             this.gameDraw = [];
             if (!w3 || !w3.games || !w3.games.length || !w3.gameMeshes) { return; }
             for (const key of Object.keys(w3.gameMeshes)) {
@@ -344,12 +446,68 @@ void main() {
                     let d = byColour.get(ck);
                     if (!d) { d = { rgb: c, data: [] }; byColour.set(ck, d); }
                     boxInto(d.data, b[0], b[1], b[2], b[3], b[4], b[5]);
+                    if (this.cull) { (d.bx ??= []).push(b); }
+                }
+                // its studs (a props file's mesh.studs, gameMesh.ts gameStuds; J3c-1 DR2), after the boxes in their colour's
+                // mesh (the W4 rows read bricks from vertex k * 36); none on today's files
+                const st = w3.gameStuds ? w3.gameStuds[key] : null;
+                if (st) {
+                    for (const u of st) {
+                        const sc = u[3], sk = `${sc[0]},${sc[1]},${sc[2]}`;
+                        let d = byColour.get(sk);
+                        if (!d) { d = { rgb: sc, data: [] }; byColour.set(sk, d); }
+                        studInto(d.data, u[0], u[1], u[2]);
+                        if (this.cull) { (d.su ??= []).push(u); }
+                    }
                 }
                 const groups = [];
-                for (const d of byColour.values()) { groups.push({ mesh: new Mesh(gl, d.data), color: new Float32Array([d.rgb[0] / 255, d.rgb[1] / 255, d.rgb[2] / 255]) }); }
+                for (const d of byColour.values()) {
+                    const ex = this.cull ? this.cullGroup(d) : null;
+                    groups.push({ mesh: new Mesh(gl, d.data), color: new Float32Array([d.rgb[0] / 255, d.rgb[1] / 255, d.rgb[2] / 255]), ...ex });
+                }
                 this.gameMeshes.set(key, groups);
+                if (this.cull) { this.gameBoxes.set(key, modelBox(w3.gameMeshes[key], st)); }
+                const pt = [...new Set(groups.flatMap((q) => q.ptz || []))].sort((p, q) => p - q);
+                if (pt.length) { this.gamePt.set(key, new Float32Array(pt)); }
             }
-            this.gameDraw = w3.games.map((g) => ({ groups: this.gameMeshes.get(g.mesh) || null, at: g.at }));
+            this.gameDraw = w3.games.map((g) => ({ groups: this.gameMeshes.get(g.mesh) || null, at: g.at, bb: this.cull ? this.gameBoxes.get(g.mesh) || null : null, pt: this.gamePt.get(g.mesh) || null }));
+            if (this.cPattern && !this.pr2 && [...this.gameMeshes.values()].some((gs) => gs.some((q) => q.pat))) {
+                this.pr2 = program(gl, VS, FS_PAT, this.loc);
+                this.loc2 = {};
+                for (const a of ['p', 'n', 'uv']) { this.loc2[a] = gl.getAttribLocation(this.pr2, a); }
+                for (const u of ['mvp', 'nm', 'color', 'alpha', 'tex', 'useTex', 'light', 'pat']) { this.loc2[u] = gl.getUniformLocation(this.pr2, u); }
+            }
+        }
+
+        /** a colour's culling data (buildGames, `cull`; d: its boxes bx and studs su, the file's order, and its mesh data):
+         *  nBox its box vertices (the first in its mesh), nStud its studs (after them, 102 vertices each), m8 / m6 its
+         *  studs as 8- and 6-gons (lod; same order), pat whether a top carries the stud grid's uv (pattern: each box top
+         *  with a listed stud of its colour standing on it, its six vertices' uv set to (u, -1 - v) on the grid of its
+         *  studs, the corner stud's centre at (0.5, -1.5)), ptz those tops' heights */
+        cullGroup(d) {
+            const gl = this.gl, bx = d.bx || [], su = d.su || [];
+            const ex = { nBox: bx.length * 36, nStud: su.length, m8: null, m6: null, pat: false, ptz: [] };
+            if (su.length && this.cLod) {
+                const a8 = [], a6 = [];
+                for (const u of su) { studSidesInto(a8, u[0], u[1], u[2], 8); studSidesInto(a6, u[0], u[1], u[2], 6); }
+                ex.m8 = new Mesh(gl, a8); ex.m6 = new Mesh(gl, a6);
+            }
+            if (this.cPattern) {
+                bx.forEach((b, k) => {
+                    const on = su.filter((u) => Math.abs(u[2] - b[5]) < 1e-6 && u[0] > b[0] && u[0] < b[3] && u[1] > b[1] && u[1] < b[4]);
+                    if (!on.length) { return; }
+                    const sx = Math.min(...on.map((u) => u[0])), sy = Math.min(...on.map((u) => u[1]));
+                    // boxInto's first quad is the top (six vertices)
+                    for (let v = 0; v < 6; v++) {
+                        const o = (k * 36 + v) * 8;
+                        d.data[o + 6] = (d.data[o] - sx) / 8 + 0.5;
+                        d.data[o + 7] = -1 - ((d.data[o + 1] - sy) / 8 + 0.5);
+                    }
+                    ex.pat = true;
+                    ex.ptz.push(b[5]);
+                });
+            }
+            return ex;
         }
 
         /** a tile: its top with its paint, and its sides down to what it stands on (`thick` under its top: a slab) */
@@ -419,6 +577,7 @@ void main() {
             const gl = this.gl;
             if (!gl || !this.geom) { return; }
             gl.viewport(0, 0, W, H);
+            this.cW = W; this.cH = H;
             const [br, bgc, bb] = hex(bg && bg.length === 7 ? bg : '#e9e9eb');
             gl.clearColor(br, bgc, bb, 1);
             gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -482,6 +641,7 @@ void main() {
          *  gMvp / gNm, then one draw per colour of its model's static meshes. Nothing allocated: plain loops, no closures,
          *  no matrix arrays (M4.mul and draw() allocate; this pass does not). */
         drawGames(vp, hz) {
+            if (this.cull) { this.cullBegin(vp); }
             const gl = this.gl, L = this.loc, G = this.gameDraw, n = G.length;
             const gz = hz && hz.games && hz.games.length === n ? hz.games : null;
             const mvp = this.gMvp, nm = this.gNm;
@@ -494,19 +654,24 @@ void main() {
                 const g = G[i], groups = g.groups;
                 if (!groups) { continue; }
                 const q = gz ? gz[i] : null;
-                const x = q ? q.x : g.at[0], y = q ? q.y : g.at[1], z = q ? q.z0 : (g.at[3] || 0), a = (q ? q.a : g.at[2]) * D2R;
-                const c = Math.cos(a), s = Math.sin(a);
-                // vp x trans(x, y, z) x rz(a), column-major (M4.trans / M4.rz)
-                for (let r = 0; r < 4; r++) {
-                    const v0 = vp[r], v1 = vp[4 + r], v2 = vp[8 + r];
-                    mvp[r] = v0 * c + v1 * s;
-                    mvp[4 + r] = v1 * c - v0 * s;
-                    mvp[8 + r] = v2;
-                    mvp[12 + r] = v0 * x + v1 * y + v2 * z + vp[12 + r];
+                // a frame carrying its orientation q (an engine body, SIMULATOR_ENGINE_DESIGN.md §2.7; J3c-1): gameTilt; a frame
+                // without q (today's frames, the geometry's place) as before
+                if (q && tiltQ(q.q)) { this.gameTilt(vp, q); } else {
+                    const x = q ? q.x : g.at[0], y = q ? q.y : g.at[1], z = q ? q.z0 : (g.at[3] || 0), a = (q ? q.a : g.at[2]) * D2R;
+                    const c = Math.cos(a), s = Math.sin(a);
+                    // vp x trans(x, y, z) x rz(a), column-major (M4.trans / M4.rz)
+                    for (let r = 0; r < 4; r++) {
+                        const v0 = vp[r], v1 = vp[4 + r], v2 = vp[8 + r];
+                        mvp[r] = v0 * c + v1 * s;
+                        mvp[4 + r] = v1 * c - v0 * s;
+                        mvp[8 + r] = v2;
+                        mvp[12 + r] = v0 * x + v1 * y + v2 * z + vp[12 + r];
+                    }
+                    nm[0] = c; nm[1] = s; nm[2] = 0; nm[3] = -s; nm[4] = c; nm[5] = 0; nm[6] = 0; nm[7] = 0; nm[8] = 1;
+                    gl.uniformMatrix4fv(L.mvp, false, mvp);
+                    gl.uniformMatrix3fv(L.nm, false, nm);
                 }
-                nm[0] = c; nm[1] = s; nm[2] = 0; nm[3] = -s; nm[4] = c; nm[5] = 0; nm[6] = 0; nm[7] = 0; nm[8] = 1;
-                gl.uniformMatrix4fv(L.mvp, false, mvp);
-                gl.uniformMatrix3fv(L.nm, false, nm);
+                if (this.cull) { this.drawCulled(g, q, groups); continue; }
                 for (let k = 0; k < groups.length; k++) {
                     const p = groups[k];
                     gl.bindBuffer(gl.ARRAY_BUFFER, p.mesh.buf);
@@ -517,6 +682,139 @@ void main() {
                     gl.drawArrays(gl.TRIANGLES, 0, p.mesh.n);
                 }
             }
+            if (this.cull) { this.cullEnd(); }
+        }
+
+        /** the culls' per-frame values from vp (drawGames, `cull`): the pixel focal lengths, the off-axis angle's terms,
+         *  back-face culling on, the pattern program in use (this.loc its locations until cullEnd). Nothing allocated. */
+        cullBegin(vp) {
+            const gl = this.gl;
+            // vp's x row r0 = A v0 + B v2 (the projection's x scale A, the principal point's term B, the view's unit rows
+            // v0 / v2), its w row r3 = -S v2 (S 1 for M4.persp and camera.ts): |r0| >= A, so cFpx is not under the true f
+            this.cFpx = Math.hypot(vp[0], vp[4], vp[8]) * this.cW / 2;
+            const S = Math.hypot(vp[3], vp[7], vp[11]);
+            if (S > 0) {
+                // B = -(r0 . r3) / S, A = |r0 + (B / S) r3|; tan theta_x = X / -Z = (S ndc_x + B) / A (y alike, rows 1 / 3)
+                const Bx = -(vp[0] * vp[3] + vp[4] * vp[7] + vp[8] * vp[11]) / S, By = -(vp[1] * vp[3] + vp[5] * vp[7] + vp[9] * vp[11]) / S;
+                const Ax = Math.hypot(vp[0] + Bx / S * vp[3], vp[4] + Bx / S * vp[7], vp[8] + Bx / S * vp[11]);
+                const Ay = Math.hypot(vp[1] + By / S * vp[3], vp[5] + By / S * vp[7], vp[9] + By / S * vp[11]);
+                this.cKx = S / Ax; this.cBx = Bx / Ax; this.cKy = S / Ay; this.cBy = By / Ay;
+                this.cFmin = Math.min(Ax * this.cW, Ay * this.cH) / (2 * S);
+            } else { this.cKx = 0; this.cBx = 0; this.cKy = 0; this.cBy = 0; this.cFmin = 0; }
+            if (this.cBack) { gl.enable(gl.CULL_FACE); gl.cullFace(gl.BACK); gl.frontFace(gl.CCW); }
+            if (this.pr2) { this.locMain = this.loc; this.loc = this.loc2; gl.useProgram(this.pr2); gl.uniform3fv(this.loc2.light, this.light); }
+        }
+
+        /** the end of the culled pass: back faces drawn again, the main program and its locations back */
+        cullEnd() {
+            const gl = this.gl;
+            if (this.cBack) { gl.disable(gl.CULL_FACE); }
+            if (this.locMain) { gl.useProgram(this.pr); this.loc = this.locMain; this.locMain = null; }
+        }
+
+        /** one object with the culls (its matrix in gMvp and set): its model box's corners in clip space - beyond one plane
+         *  all, skipped (frustum); the nearest depth w and the widest off-axis angle theta (each at a corner: 1 / w and
+         *  sec theta are quasi-convex, so their peaks over the box are at vertices) give its studs' largest pixel radius
+         *  r = f 2.4 sec / w and their sides (lod; none under STUD_MIN_R with lod or pattern); past the cut-off the
+         *  pattern's strength (patOf); then per colour its boxes and its studs (one draw at 12 sides, two at 8 / 6).
+         *  Nothing allocated. */
+        drawCulled(g, q, groups) {
+            const gl = this.gl, L = this.loc, m = this.gMvp, bb = g.bb;
+            let out = 63, wmin = Infinity, sec2 = 1;
+            if (bb) {
+                for (let c = 0; c < 8; c++) {
+                    const x = c & 1 ? bb[3] : bb[0], y = c & 2 ? bb[4] : bb[1], z = c & 4 ? bb[5] : bb[2];
+                    const cx = m[0] * x + m[4] * y + m[8] * z + m[12], cy = m[1] * x + m[5] * y + m[9] * z + m[13];
+                    const cz = m[2] * x + m[6] * y + m[10] * z + m[14], cw = m[3] * x + m[7] * y + m[11] * z + m[15];
+                    out &= (cx < -cw ? 1 : 0) | (cx > cw ? 2 : 0) | (cy < -cw ? 4 : 0) | (cy > cw ? 8 : 0) | (cz < -cw ? 16 : 0) | (cz > cw ? 32 : 0);
+                    if (cw < wmin) { wmin = cw; }
+                    if (cw > 0) {
+                        const tx = this.cKx * cx / cw + this.cBx, ty = this.cKy * cy / cw + this.cBy, t2 = 1 + tx * tx + ty * ty;
+                        if (t2 > sec2) { sec2 = t2; }
+                    }
+                }
+            } else { out = 0; }
+            if (this.cFrustum && out) { return; }
+            let sides = 12;
+            if (this.cLod || this.cPattern) {
+                const r = wmin > 0 ? this.cFpx * STUD_R * Math.sqrt(sec2) / wmin : Infinity;
+                sides = r < STUD_MIN_R ? 0 : !this.cLod ? 12 : r <= LOD_R6 ? 6 : r <= LOD_R8 ? 8 : 12;
+            }
+            if (L.pat) { gl.uniform1f(L.pat, sides === 0 ? this.patOf(g, m, bb) : 0); }
+            for (let k = 0; k < groups.length; k++) {
+                const p = groups[k];
+                const ns = sides === 0 ? 0 : p.nStud;
+                const first = sides === 12 ? p.nBox + ns * 102 : p.nBox;
+                gl.uniform3fv(L.color, p.color);
+                if (first > 0) {
+                    gl.bindBuffer(gl.ARRAY_BUFFER, p.mesh.buf);
+                    gl.vertexAttribPointer(L.p, 3, gl.FLOAT, false, 32, 0);
+                    gl.vertexAttribPointer(L.n, 3, gl.FLOAT, false, 32, 12);
+                    gl.vertexAttribPointer(L.uv, 2, gl.FLOAT, false, 32, 24);
+                    gl.drawArrays(gl.TRIANGLES, 0, first);
+                }
+                if (sides === 12 || ns === 0) { continue; }
+                const sm = sides === 8 ? p.m8 : p.m6;
+                gl.bindBuffer(gl.ARRAY_BUFFER, sm.buf);
+                gl.vertexAttribPointer(L.p, 3, gl.FLOAT, false, 32, 0);
+                gl.vertexAttribPointer(L.n, 3, gl.FLOAT, false, 32, 12);
+                gl.vertexAttribPointer(L.uv, 2, gl.FLOAT, false, 32, 24);
+                gl.drawArrays(gl.TRIANGLES, 0, ns * (3 * sides - 2) * 3);
+            }
+        }
+
+        /** the stud pattern's strength on an object past the cut-off (drawCulled; m its model-view-projection, bb its box):
+         *  1 down to 0 as the lower bound P of its grid's period, px, goes from PAT_P1 to PAT_P0 (so it never shows under
+         *  2 px a period, where it would alias). The eye in the model's frame E (clip x, y, w all 0 there: rows 0, 1, 3 of
+         *  m, Cramer); h = E.z - the highest patterned top under E (a top over the eye faces away; none under it: 0); d the
+         *  box's farthest corner from E. At a point of a top at distance d' from the eye, depth w <= d', the projection
+         *  scales every direction in the top by at least f cos(gamma) / w (gamma the ray's angle to the top's normal,
+         *  cos = h' / d' >= h / d), so the period >= 8 mm f h / d^2 (f the smaller true focal length). An orthographic
+         *  vp: none. Nothing allocated. */
+        patOf(g, m, bb) {
+            const pt = g.pt;
+            if (!pt || !bb || !(this.cFmin > 0)) { return 0; }
+            const a = m[0], b = m[4], c = m[8], d = m[12], e = m[1], f = m[5], k0 = m[9], h0 = m[13], i = m[3], j = m[7], k = m[11], l = m[15];
+            const det = a * (f * k - k0 * j) - b * (e * k - k0 * i) + c * (e * j - f * i);
+            if (!(Math.abs(det) > 0)) { return 0; }
+            const ex = (-d * (f * k - k0 * j) - b * (k0 * l - h0 * k) + c * (f * l - h0 * j)) / det;
+            const ey = (a * (k0 * l - h0 * k) + d * (e * k - k0 * i) + c * (h0 * i - e * l)) / det;
+            const ez = (a * (h0 * j - f * l) - b * (h0 * i - e * l) - d * (e * j - f * i)) / det;
+            if (!Number.isFinite(ex + ey + ez)) { return 0; }
+            let top = -Infinity;
+            for (let t = 0; t < pt.length; t++) { if (pt[t] < ez) { top = pt[t]; } }
+            if (top === -Infinity) { return 0; }
+            const dx = Math.max(Math.abs(bb[0] - ex), Math.abs(bb[3] - ex)), dy = Math.max(Math.abs(bb[1] - ey), Math.abs(bb[4] - ey)), dz = Math.max(Math.abs(bb[2] - ez), Math.abs(bb[5] - ez));
+            const P = 8 * this.cFmin * (ez - top) / (dx * dx + dy * dy + dz * dz);
+            return P <= PAT_P0 ? 0 : P >= PAT_P1 ? 1 : (P - PAT_P0) / (PAT_P1 - PAT_P0);
+        }
+
+        /** a frame carrying q (§2.7; J3c-1): vp x trans(x, y, z) x rot(q) into the scratch gMvp, rot(q) into gNm, both set as the uniforms (a
+         *  rotation is its own inverse transpose). q = [w, x, y, z], scaled by 2 / |q|^2 (a quaternion off unit length by
+         *  float rounding still draws a rotation); (x, y, z) mm is the model frame's origin. Column-major (M4); nothing
+         *  allocated. */
+        gameTilt(vp, f) {
+            const m = this.gMvp, N = this.gNm, t = f.q;
+            const w = t[0], qx = t[1], qy = t[2], qz = t[3];
+            const k = 2 / (w * w + qx * qx + qy * qy + qz * qz);
+            const xx = qx * qx * k, yy = qy * qy * k, zz = qz * qz * k, xy = qx * qy * k, xz = qx * qz * k, yz = qy * qz * k;
+            const wx = w * qx * k, wy = w * qy * k, wz = w * qz * k;
+            // R (model -> world), row by row
+            const r00 = 1 - yy - zz, r01 = xy - wz, r02 = xz + wy;
+            const r10 = xy + wz, r11 = 1 - xx - zz, r12 = yz - wx;
+            const r20 = xz - wy, r21 = yz + wx, r22 = 1 - xx - yy;
+            const px = f.x, py = f.y, pz = f.z;
+            for (let r = 0; r < 4; r++) {
+                const v0 = vp[r], v1 = vp[4 + r], v2 = vp[8 + r];
+                m[r] = v0 * r00 + v1 * r10 + v2 * r20;
+                m[4 + r] = v0 * r01 + v1 * r11 + v2 * r21;
+                m[8 + r] = v0 * r02 + v1 * r12 + v2 * r22;
+                m[12 + r] = v0 * px + v1 * py + v2 * pz + vp[12 + r];
+            }
+            N[0] = r00; N[1] = r10; N[2] = r20; N[3] = r01; N[4] = r11; N[5] = r21; N[6] = r02; N[7] = r12; N[8] = r22;
+            const gl = this.gl, L = this.loc;
+            gl.uniformMatrix4fv(L.mvp, false, m);
+            gl.uniformMatrix3fv(L.nm, false, N);
         }
 
         /** a speed bump's top: its circular segment over its outline, each point's paint the floor's under it (uv: its

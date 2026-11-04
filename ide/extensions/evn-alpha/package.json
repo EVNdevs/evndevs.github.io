@@ -2,7 +2,7 @@
   "name": "evn-alpha-micropython",
   "displayName": "EVN ALPHA MicroPython",
   "description": "Early-access tooling for the EVN ALPHA robotics controller: flash the MicroPython firmware, run programs, open the REPL, autocomplete for the evn motor API, and a Blockly block editor that generates MicroPython.",
-  "version": "0.2.73",
+  "version": "0.2.74",
   "publisher": "evn-alpha",
   "license": "MIT",
   "preview": true,
@@ -45,7 +45,8 @@
     "onFileSystem:evn-example",
     "onFileSystem:evn-projects",
     "onView:evn.console",
-    "onCustomEditor:evn.dataLogViewer"
+    "onCustomEditor:evn.dataLogViewer",
+    "onNotebook:jupyter-notebook"
   ],
   "browser": "./dist/web/extension.js",
   "capabilities": {
@@ -123,6 +124,26 @@
       {
         "command": "evn.newProject",
         "title": "New project folder (examples, autocomplete stubs)",
+        "category": "EVN"
+      },
+      {
+        "command": "evn.profile.backup",
+        "title": "Back up my work",
+        "category": "EVN"
+      },
+      {
+        "command": "evn.profile.restore",
+        "title": "Restore from a backup",
+        "category": "EVN"
+      },
+      {
+        "command": "evn.profile.myProgress",
+        "title": "My progress",
+        "category": "EVN"
+      },
+      {
+        "command": "evn.profile.delete",
+        "title": "Delete my progress here",
         "category": "EVN"
       },
       {
@@ -579,6 +600,46 @@
         "icon": "$(arrow-swap)"
       },
       {
+        "command": "evn.nb.restartKernel",
+        "title": "Restart notebook kernel",
+        "category": "EVN",
+        "icon": "$(debug-restart)"
+      },
+      {
+        "command": "evn.nb.newNotebook",
+        "title": "New notebook",
+        "category": "EVN",
+        "icon": "$(notebook)"
+      },
+      {
+        "command": "evn.nb.openInNotebook",
+        "title": "Open in notebook",
+        "category": "EVN"
+      },
+      {
+        "command": "evn.nb.checkCell",
+        "title": "Check this cell",
+        "category": "EVN",
+        "icon": "$(pass)"
+      },
+      {
+        "command": "evn.nb.showDataTable",
+        "title": "Show data table",
+        "category": "EVN",
+        "icon": "$(table)"
+      },
+      {
+        "command": "evn.nb.openStarter",
+        "title": "Open a lesson starter notebook",
+        "category": "EVN"
+      },
+      {
+        "command": "evn.nb.installPackages",
+        "title": "Install notebook packages (NumPy and Matplotlib)",
+        "category": "EVN",
+        "icon": "$(cloud-download)"
+      },
+      {
         "command": "evn.simulator.open",
         "title": "Open the simulator (a simulated robot to run programs on)",
         "category": "EVN",
@@ -666,6 +727,25 @@
       }
     ],
     "menus": {
+      "notebook/toolbar": [
+        {
+          "command": "evn.nb.restartKernel",
+          "when": "notebookType == jupyter-notebook && notebookKernel == evn-alpha.evn-alpha-micropython/evn-python-offline",
+          "group": "navigation/execute@9"
+        }
+      ],
+      "notebook/cell/title": [
+        {
+          "command": "evn.nb.checkCell",
+          "when": "notebookType == jupyter-notebook && notebookCellType == code",
+          "group": "evn@1"
+        },
+        {
+          "command": "evn.nb.showDataTable",
+          "when": "notebookType == jupyter-notebook && notebookCellType == code && notebookCellHasOutputs",
+          "group": "evn@2"
+        }
+      ],
       "editor/title/run": [
         {
           "command": "evn.runFile",
@@ -711,12 +791,37 @@
           "group": "navigation@9"
         },
         {
+          "command": "evn.nb.openInNotebook",
+          "when": "resourceExtname == .csv",
+          "group": "navigation@9"
+        },
+        {
           "command": "evn.challenge.openSubmission",
           "when": "resourceExtname == .evnsub",
           "group": "navigation@9"
         }
       ],
       "commandPalette": [
+        {
+          "command": "evn.nb.restartKernel",
+          "when": "notebookType == jupyter-notebook"
+        },
+        {
+          "command": "evn.nb.checkCell",
+          "when": "notebookType == jupyter-notebook"
+        },
+        {
+          "command": "evn.nb.showDataTable",
+          "when": "notebookType == jupyter-notebook"
+        },
+        {
+          "command": "evn.nb.openStarter",
+          "when": "false"
+        },
+        {
+          "command": "evn.nb.installPackages",
+          "when": "!isWeb"
+        },
         {
           "command": "evn.installMpremote",
           "when": "evn.hasPython"
@@ -1690,6 +1795,34 @@
           ],
           "default": "auto",
           "description": "Hover documentation for the evn module in Python files, from the extension's own copy of the stubs (typings/evn.pyi)."
+        },
+        "evn.python.errorHints": {
+          "type": "string",
+          "enum": [
+            "on",
+            "off"
+          ],
+          "enumDescriptions": [
+            "After a program stops with an error, one line starting \"Hint:\" names the line and where to look",
+            "No hint: the error is shown exactly as the board or the simulator prints it"
+          ],
+          "default": "on",
+          "description": "A plain-language hint under the error when a program you run stops with one (on the board or in the simulator). It points to the line and where to look; it never says what the error means. It applies from the next run."
+        },
+        "evn.python.completion": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "always",
+            "off"
+          ],
+          "enumDescriptions": [
+            "Complete evn names and show their parameters only where no Pylance / Pyright / BasedPyright does: the browser IDE, Jedi, no Python extension, examples opened from the Examples view, and files the evn stubs do not reach",
+            "Always offer the extension's evn completions and parameter hints, also next to the language server's",
+            "Never: completions and parameter hints come from the language server only"
+          ],
+          "default": "auto",
+          "description": "Completion (after evn. or a Motor, DriveBase ... variable and its dot) and parameter hints in a call for the evn module in Python files, from the extension's own copy of the stubs (typings/evn.pyi)."
         },
         "evn.docsUrl": {
           "type": "string",

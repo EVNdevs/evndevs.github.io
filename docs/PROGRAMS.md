@@ -20,6 +20,8 @@ The output appears in the *EVN ALPHA* terminal. While the program runs, the stat
 
 If the program raises an error, the traceback is clickable: `File "<stdin>", line 12` opens your program at line 12.
 
+Under the commonest errors one more line starts `Hint:`. It names the line and where to look (`Hint: Line 12: look at 'prnt' here and where it first appears above.`), and never says what the error means. The setting `evn.python.errorHints` is `on` or `off`.
+
 When a program ends, finished or stopped by an error, every motor coasts. The terminal says `program finished; the motors are coasting`, as a Pybricks program ends stopped.
 
 ### The prompt after a run
@@ -47,6 +49,8 @@ The stop goes straight to the board's port. If the port cannot be reached, the t
 
 *My projects* lists everything in that folder: Python programs in its **Python** folder, blocks programs in its **Blocks** folder. Each file has **Run on the board** and **Upload as main.py** next to it. Its right-click menu has Rename, Duplicate, Delete and **Show in the file explorer**.
 
+**Your progress and backups.** Your progress (micro-lessons done, checks passed, challenge levels) is saved in the hidden folder `.evn` inside your projects folder, beside your programs; *My projects* does not show it. **EVN: Back up my work** saves your programs and your progress as one `.zip` file where you choose (Documents by default). Keep it on a school drive or a USB stick. **EVN: Restore from a backup** reads one back: it adds programs that are missing and never writes over a program you have. **EVN: My progress** shows what is saved and offers backup, restore, *Undo the last restore*, the progress page, and **Delete my progress here** (your programs are kept). If your Documents folder is synced (OneDrive, Google Drive), `.evn` is synced with your programs.
+
 A Python program cannot be named `something.evnblocks` (or `.evnblocks.py`). That name belongs to the file a blocks program writes when it runs, so the name box refuses it and says why.
 
 ## Examples
@@ -64,6 +68,8 @@ On disk the folders are `examples/01_board/` to `examples/23_controllers/` and `
 Autocomplete for `evn` works inside the projects folder once it is the workspace: choose **Open my projects folder as the workspace** in the *My projects* `...` menu. The folder already has the stubs and settings it needs.
 
 Hover over an `evn` name (`Motor`, `run_angle`, `imu.heading`) to see its signature and documentation. Where Pylance does not show it (the browser IDE, an example opened from *Examples*), the extension shows the same text itself. The setting `evn.python.hover` is `auto`, `always` or `off`.
+
+In the same places the extension also completes as you type: after `evn.` every name of the module, after `m1.` (with `m1 = Motor(1)`) the motor's methods and properties, and the names a `from evn import` brings in. Inside a call (`m1.run_angle(`) it shows the parameters with their types and defaults, the one you are typing highlighted, and the first paragraph of the documentation. Nothing is offered inside a string or a comment. The setting `evn.python.completion` is `auto` (only where Pylance does not complete), `always` or `off`. The suggest list and the parameter hints are read out by a screen reader.
 
 **Ctrl+F1** on a word (`Motor`, `run_angle`, `battery`, `StopWatch`) opens the online API reference at that word's section. It is also *Open online documentation for the symbol under the cursor* in the right-click menu. The setting `evn.docsUrl` names the site it opens.
 

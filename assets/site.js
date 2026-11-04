@@ -29,6 +29,7 @@
     'programs':        { file: 'docs/PROGRAMS.md',        title: 'Programs: run, stop, ports and units', part: 'getting-started' },
     'board-view':      { file: 'docs/BOARD_VIEW.md',      title: 'The Board view and the live console', part: 'getting-started' },
     'data-logger':     { file: 'docs/DATA_LOGGER.md',     title: 'Recording data', part: 'getting-started' },
+    'notebook':        { file: 'docs/NOTEBOOK.md',        title: 'The notebook', part: 'getting-started' },
     'main-py':         { file: 'docs/MAIN_PY.md',         title: 'A program that starts from the user button', part: 'getting-started' },
     'bluetooth':       { file: 'docs/BLUETOOTH.md',       title: 'Working without the USB cable', part: 'getting-started' },
     'simulator':       { file: 'docs/SIMULATOR.md',       title: 'The robot simulator', part: 'getting-started' },
@@ -57,7 +58,7 @@
     /* the full engineering log, linked from What's new (CHANGELOG.md: the release tools read it) */
     'changelog-full':  { file: 'docs/CHANGELOG.md',       title: 'Full changelog', part: 'changelog' }
   };
-  var ORDER = ['getting-started', 'programs', 'board-view', 'data-logger', 'main-py', 'bluetooth', 'simulator', 'commands', 'board',
+  var ORDER = ['getting-started', 'programs', 'board-view', 'data-logger', 'notebook', 'main-py', 'bluetooth', 'simulator', 'commands', 'board',
                'troubleshooting', 'repl', 'calibration', 'api', 'api-robot', 'api-sensors', 'api-displays', 'api-extended',
                'api-system', 'blocks', 'known-limitations', 'changelog', 'changelog-full'];
   /* The documents whose route takes a heading slug (#/api/<slug>): their bare route ends in a slash. */

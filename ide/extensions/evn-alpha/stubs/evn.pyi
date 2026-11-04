@@ -9,7 +9,7 @@ servo ports 1..4, serial ports 1..2.
 
 Units: angle deg, speed deg/s, acceleration deg/s^2, time ms, duty %, torque mNm, voltage mV.
 
-Signatures follow the firmware bindings (`micropython/modules/evn_*.c`). A parameter written
+Signatures follow the firmware's own bindings. A parameter written
 before ``/`` is positional-only: the binding takes no keywords for it. A parameter written
 after ``*`` is keyword-only.
 """
@@ -542,8 +542,8 @@ class DriveBase:
         matches the base's ..." and turns ``use_gyro`` off). With no pose on the base but a ``Pose`` the program built running,
         it adopts that one after the full check (ports, directions, gears, wheel diameter and axle track: a
         ``ValueError`` names what differs) and holds it from then on, so ``robot.pose`` returns it. With no pose
-        anywhere: ``ValueError`` ("DriveBase(..., imu=port) builds one, pose= takes yours"). With an IMU on the Pose it
-        first waits (up to 35 s) for ``IMU.ready()`` - about a second of stillness with a stored IMU calibration,
+        anywhere: ``ValueError`` ("DriveBase(..., imu=port) builds one, pose= takes yours"). With an IMU on the Pose (its ``axes()``
+        naming the face that is up, see ``IMU``) it first waits (up to 35 s) for ``IMU.ready()`` - about a second of stillness with a stored IMU calibration,
         8..25 s while the DMP learns its gyro bias without one and the orientation settles a second or two after - and a
         loop armed before that would correct toward a drifting heading (Pybricks calibrates the hub IMU before any
         program runs, so its users never see this); ``OSError`` if it never comes (the robot was moving), when the
@@ -611,8 +611,8 @@ class DriveBase:
         """Bench diagnostic: (left deg, right deg, left deg/s, right deg/s) since ``reset()``, wheel degrees."""
 
 class PID:
-    """A PID controller for a loop the program runs itself (EVN's own; Pybricks has no such class): the maths in
-    C on Core 0 (``motion/user_ctrl.c``), several times faster than the same loop written in Python, the terms
+    """A PID controller for a loop the program runs itself (EVN's own; Pybricks has no such class): the maths runs
+    compiled in the firmware on Core 0, several times faster (estimated) than the same loop written in Python, the terms
     readable for teaching. Nothing in it touches the motors: ``update()`` returns a number the program sends
     where it likes - ``Motor.dc()``, ``Motor.run()``, ``DriveBase.drive()``, a servo.
 
@@ -687,7 +687,7 @@ class ADRC:
     """An active disturbance rejection controller (linear ADRC) for a loop the program runs itself: an
     extended-state observer estimates the measurement, its rate (order 2) and everything else acting on the
     plant (the "disturbance": friction, a load, a push, a model error), and the control law cancels it. The
-    maths in C on Core 0 (``motion/user_ctrl.c``; the observer's gains are the board's own motor law's). Nothing
+    maths runs compiled in the firmware on Core 0 (order 2's observer gains are the board's own motor law's). Nothing
     in it touches the motors.
 
     ``ADRC(b0, wc, *, order=1, wo=None, limits=None, dt_max=200)``. The plant it assumes: order 1,
@@ -1922,10 +1922,10 @@ class IMU:
     360), nose up gives a positive pitch, left side up a positive roll, ``up()`` names the side
     facing up, taps and the Android orientation are reported once each, and a hot-plug into the same
     socket keeps the settings and the heading. The DMP starts from the side the module lies on (it
-    reads the accelerometer once at start), so ``tilt()``, ``up()`` and ``heading()`` are right from
-    the first reading whether the module is mounted upright or upside down. A module mounted on its
-    side, a robot started well off level or turned over just after ``IMU()`` takes a few seconds to
-    settle: meanwhile ``heading()`` follows the gyro's turn about the vertical (a turn is kept) and
+    reads the accelerometer once at start), so ``tilt()`` and ``up()`` are right from the first reading
+    whether the module is mounted upright, upside down or on its side, and so is ``heading()`` once
+    ``axes()`` names the face that is up (below). A robot
+    started well off level or turned over just after ``IMU()`` takes a few seconds to settle: meanwhile ``heading()`` follows the gyro's turn about the vertical (a turn is kept) and
     ``ready()`` waits. Keep the robot still until ``ready()``: with a stored calibration
     (``calibrate()``) that is about a second; without one the DMP learns its gyro bias 8..25 s into
     stillness (moved early, it may not for a long time - ``dmp(True, gyro_cal=False)`` then lets the
@@ -1944,7 +1944,12 @@ class IMU:
     ``angular_velocity()`` but not the orientation, so ``heading()`` drifts at the sensor's raw gyro
     bias (about a degree per 5 s on the bench unit, more on others): ``calibrate()`` once removes it.
     A module mounted upside down needs ``axes(top='-z')`` (``calibrate()`` sets it) for the body
-    frame to read upright.
+    frame to read upright, and one mounted on its side ``axes(top=...)`` naming the sensor face that is
+    up. ``heading()``, a ``Pose`` reading this IMU and ``DriveBase.use_gyro(True)`` need that top: they
+    take the turn about the body's z axis. On a side mount without it, ``heading()`` does not follow a
+    turn about the vertical, a tilt about the body's z axis goes into it one to one, and a turn past
+    +-90 degrees steps it by about 180; a ``Pose`` turns about a horizontal axis. A vibrating surface
+    (a running 3D printer on the same table) delays ``ready()``: it waits for 250 ms of stillness.
 
     Raises: ``ValueError("port must be 1..16")``; ``OSError("no MPU-6500 on port %d (I2C 0x68)")``;
     ``OSError(EIO)`` when both slots are taken, ``OSError(ETIMEDOUT)`` for no first sample;
@@ -2060,7 +2065,9 @@ class IMU:
         slower than 0.5 deg/s by hand would be taken for bias while it lasts). While the robot moves, what
         is left is the change of that bias after the last rest and the measurement's uncertainty (see
         ``IMU``). In raw mode it keeps its value until the driver's own gyro bias has landed: about 2 s with
-        the robot still and no motor driving (see ``ready()``), or a ``calibrate_gyro(n)``."""
+        the robot still and no motor driving (see ``ready()``), or a ``calibrate_gyro(n)``. It needs
+        ``axes()`` whose top is the face that is up (see ``IMU``): mounted on its side without it, the
+        heading does not follow turns."""
     def reset_heading(self, angle: float = 0, /) -> None:
         """The current pose reads as ``angle``. In a program run again from the button, a later
         ``IMU(port)`` of the same run then keeps the heading, the run's first one included (see ``IMU``)."""
@@ -2077,7 +2084,7 @@ class IMU:
         calibrated gyro under the threshold on every axis, and (DMP) the orientation agreeing with the
         accelerometer within 5 degrees (with ``dmp(True, gyro_cal=False)``, whose DMP never learns the
         bias, also once it has settled where the bias holds it). With a stored calibration that is about
-        a second of stillness (a few more on a module mounted on its side); without one up to 8..25 s
+        a second of stillness; without one up to 8..25 s
         (the DMP calibrates that far into stillness and the orientation settles a second or two after), or
         at once when the raw gyro bias is under the threshold, while the heading drifts at that bias until
         the DMP has learnt it (``heading_confidence()`` 0.5); raw mode,
@@ -2094,7 +2101,9 @@ class IMU:
         it in these modes (raw mode's ``heading()`` keeps its value meanwhile); ``calibrate_gyro(n)`` is the
         explicit way out. Its limit: a turn by hand or on a turntable that reads as still (a steady rate
         from before the average to after it, or speeding up very gently) becomes the bias - keep the robot
-        still until ``ready()``. A ``reset_heading()`` once it is True holds. ``heading_confidence()`` says whether the heading can still creep after it."""
+        still until ``ready()``. A ``reset_heading()`` once it is True holds. ``heading_confidence()`` says whether the heading can still creep after it.
+        A vibrating surface (a running 3D printer on the same table) delays it: it waits for
+        ``stationary()``, 250 ms of readings inside the ``settings()`` thresholds."""
     def heading_confidence(self) -> float:
         """How far ``heading()`` can be trusted not to creep, read from the IMU's state: ``0`` not ``ready()``;
         ``0.5`` ``ready()``, but the DMP has not calibrated its gyro yet (the heading may creep); ``1`` calibrated.
@@ -2156,7 +2165,9 @@ class IMU:
         """``'portrait'``, ``'landscape'``, ``'reverse portrait'`` or ``'reverse landscape'`` of an
         orientation change not yet returned, else ``None`` - each event is reported once, as ``tap()``
         does. **The DMP's own x/y**, which ``axes()`` does not remap (taps are remapped): the sensor's x and y
-        for a module that started upright or on its side, its x and -y for one that started upside down."""
+        for a module that started upright, its x and -y for one that started upside down, and for one that
+        started on its side the frame turned up from that side (x up: -z and y; -x up: z and y; y up: x and -z;
+        -y up: x and z)."""
     def calibrate_gyro(self, samples: int = 500, /) -> Optional[Tuple[int, int, int]]:
         """Average ``samples`` (1..65535) still readings and subtract the bias; returns the bias in
         counts, or ``None`` while the DMP's own gyro calibration owns the bias (``dmp(True)`` with its
@@ -2205,7 +2216,9 @@ class IMU:
     @overload
     def axes(self, *, top: Optional[str] = None, front: Optional[str] = None) -> None:
         """Which chip axes point up and forward (``'x'``, ``'y'``, ``'z'``, ``'-x'`` ...); ``None``
-        keeps the current value, two equal axes raise ``ValueError``."""
+        keeps the current value, two equal axes raise ``ValueError``. On a module mounted upside down
+        or on its side, ``top`` must name the face that is up: ``heading()``, a ``Pose`` and
+        ``DriveBase.use_gyro(True)`` take the turn about it (see ``IMU``)."""
     def age(self) -> int:
         """Milliseconds since the sensor measured the cached reading (in DMP mode, when the chip produced
         the packet - after a busy moment the queued packets are read a little late and ``age()`` says so)."""
@@ -2217,7 +2230,7 @@ class IMU:
         timestamp_us, dmp_up, attitude_ok)`` - the driver's FIFO resets (``dmp_restarts`` of them escalated to a DMP
         restart), and its packet time base: packets decoded, the epoch (bumped whenever packets were dropped), when
         the newest was produced and when it was read, on the board's microsecond clock; then the sensor axis the
-        DMP started from as up (3 = z, -3 = -z: upright or upside down, 0 = not chosen yet) and whether its
+        DMP started from as up (+-1 x, +-2 y, +-3 z: the sensor axis nearest up, 0 = not chosen yet) and whether its
         attitude gate is open (the orientation agreed with the accelerometer, or settled, since the DMP last
         started; ``ready()`` also needs it to agree at that moment unless ``gyro_cal=False``)."""
     def _factory_offsets(self) -> None:
@@ -3721,6 +3734,8 @@ class Pose:
     ``Pose(4, 3, 62.4, 170, reverse_left=True, imu=3, compass=14)``: left/right motor ports 1..4 with the wheel diameter and axle
     track in mm (both or neither), ``imu=`` / ``compass=`` the I2C ports of existing ``IMU`` / ``Compass``
     objects (``OSError`` if no object is on that port; the compass counts once a calibration is installed).
+    The IMU's ``axes()`` must name the face that is up: the Pose reads its gyro about the body's z axis
+    (see ``IMU``).
     ``reverse_left`` / ``reverse_right``: that motor's positive direction is backwards (a mirrored mount).
     ``imu_offset=(x_mm, y_mm)``: where the IMU sits, forward and left of the axle mid-point (e.g. ``(-50, 60)``
     for 50 mm behind, 60 mm left); a tape-measure value is enough, and it removes the acceleration a turning

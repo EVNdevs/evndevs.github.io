@@ -1,6 +1,7 @@
 /* The data logger's page: the sources to record (live mode), the chart and the statistics (both modes).
  * The extension (src/dataLogger.ts) sends: init, sources, state, series, data, reset, note, point, captured, empty.
- * It is sent: ready, toggle, rate, name, start, stop, capture, openFile, revealData.
+ * It is sent: ready, toggle, rate, name, start, stop, capture, openFile, revealData, openNotebook (a file's page only:
+ * the CSV in a notebook, NOTEBOOK_DESIGN.md NB-5).
  *
  * The chart is lanes on one time axis: one lane per unit (a unitless reading gets a lane of its own
  * method), each with its own y-axis, so two quantities never share a scale (no dual axes). Drag across
@@ -69,7 +70,8 @@
     ui.recBtn = h('button', { class: 'btn primary', onclick: () => vscode.postMessage({ type: st.rec === 'recording' || st.rec === 'waiting' ? 'stop' : 'start' }) });
     ui.open = h('button', { class: 'btn', text: 'Open log...', title: 'Open a CSV from EVN Projects/Data', onclick: () => vscode.postMessage({ type: 'openFile' }) });
     ui.folder = h('button', { class: 'btn', text: 'Data folder', title: 'Show EVN Projects/Data', onclick: () => vscode.postMessage({ type: 'revealData' }) });
-    const header = h('header', null, ui.h1, ui.sub, st.mode === 'live' ? [ui.name, ui.recBtn] : null, ui.open, ui.folder);
+    ui.notebook = h('button', { class: 'btn', text: 'Open in notebook', title: 'Read this CSV in a Python notebook (EVN Projects/Notebooks)', onclick: () => vscode.postMessage({ type: 'openNotebook' }) });
+    const header = h('header', null, ui.h1, ui.sub, st.mode === 'live' ? [ui.name, ui.recBtn] : ui.notebook, ui.open, ui.folder);
 
     ui.aside = h('aside');
     ui.srcNote = h('div', { class: 'note' });

@@ -177,6 +177,31 @@ upstream file named:
 | libffi | MIT | `LICENSE-libffi.txt` | libffi `LICENSE` at f08493d2 (the commit Pyodide's `cpython/Makefile` builds) |
 | HACL* (the hash functions) | MIT | `LICENSE-HACL.txt` | the header of `Modules/_hacl/Hacl_Hash_SHA2.h` at CPython v3.13.2 |
 
+## The notebook's packages (the browser IDE's notebook)
+
+The notebook (`docs/NOTEBOOK_DESIGN.md`) loads Pyodide 0.28.3's own builds of NumPy, Matplotlib and the packages they
+need, and Pyodide's unvendored standard-library modules, each wheel exactly as Pyodide publishes it (its sha256 is the
+one in `pyodide-lock.json`). They ship in the browser IDE in `media/pyodide/`, with these licence texts beside them in
+`media/pyodide/nb-licenses/` (from `licenses/nb/`, each copied verbatim from the file named). The VS Code extension
+(the VSIX) does not carry them until the owner's ruling on OQ 88.
+
+| Package (version) | Licence | File beside it | Copied from |
+|---|---|---|---|
+| NumPy 2.2.5 | BSD-3-Clause | `LICENSE-numpy.txt` | the wheel's `numpy-2.2.5.dist-info/LICENSE.txt` |
+| Matplotlib 3.8.4 | Matplotlib License (PSF-based), and the licences of the fonts and code it bundles | `LICENSE-matplotlib.txt` and `LICENSE-matplotlib-*.txt` (AMSFONTS, BAKOMA, CARLOGO, COLORBREWER, COURIERTEN, JSXTOOLS_RESIZE_OBSERVER, QHULL, QT4_EDITOR, SOLARIZED, STIX, YORICK) | the wheel's `matplotlib-3.8.4.dist-info/licenses/LICENSE/` |
+| contourpy 1.3.1 | BSD-3-Clause | `LICENSE-contourpy.txt` | its wheel's `.dist-info/LICENSE` |
+| cycler 0.12.1 | BSD-3-Clause | `LICENSE-cycler.txt` | its wheel's `.dist-info/LICENSE` |
+| fonttools 4.56.0 | MIT | `LICENSE-fonttools.txt` | its wheel's `.dist-info/LICENSE` |
+| kiwisolver 1.4.8 | BSD-3-Clause | `LICENSE-kiwisolver.txt` | its wheel's `.dist-info/licenses/LICENSE` |
+| packaging 24.2 | Apache-2.0 or BSD-2-Clause | `LICENSE-packaging.txt`, `LICENSE-packaging-APACHE.txt`, `LICENSE-packaging-BSD.txt` | its wheel's `.dist-info/licenses/` |
+| Pillow 11.3.0 | MIT-CMU | `LICENSE-pillow.txt` | its wheel's `.dist-info/licenses/LICENSE` |
+| pyparsing 3.2.1 | MIT | `LICENSE-pyparsing.txt` | its wheel's `.dist-info/LICENSE` |
+| python-dateutil 2.9.0.post0 | Apache-2.0 and BSD-3-Clause | `LICENSE-python-dateutil.txt` | its wheel's `.dist-info/LICENSE` |
+| pytz 2025.2 | MIT | `LICENSE-pytz.txt` | its wheel's `.dist-info/LICENSE.txt` |
+| six 1.17.0 | MIT | `LICENSE-six.txt` | its wheel's `.dist-info/LICENSE` |
+| OpenSSL 1.1.1w (`libopenssl`, for `ssl` and `hashlib`) | OpenSSL License and the original SSLeay License | `LICENSE-libopenssl.txt` | OpenSSL's `LICENSE` at tag `OpenSSL_1_1_1w` (the archive carries none) |
+| `sqlite3`, `lzma`, `hashlib`, `ssl`, `pydecimal`, `pydoc-data` (CPython 3.13's own modules, built apart) | PSF License Agreement; the libraries they link: SQLite (public domain) and liblzma (xz: public domain before 5.6, 0BSD from 5.6) | `LICENSE-CPython.txt`, `LICENSE-CPython-incorporated.txt` beside Pyodide's core | as under "Pyodide" above |
+
 ## Jolt Physics (the simulator's physics engine)
 
 The simulator's physics engine is Jolt Physics (Copyright 2021 Jorrit Rouwe, MIT; <https://github.com/jrouwe/JoltPhysics>,
@@ -228,3 +253,10 @@ Olympiad, WRO and RoboMission are names and trademarks of the World Robot Olympi
 with, endorsed by or sponsored by it, and neither is the simulator. WRO's mat and rules are WRO's: the user loads their
 own copy of the mat, which the extension keeps in its own storage on the user's computer (never uploaded, never in a
 run record) until they forget it.
+
+`assets/wro/elementary-2026.json` and `assets/wro/senior-2026.json` are EVN's own measurements, made the same way, of
+the World Robot Olympiad 2026 RoboMission Elementary game mat ("Robot Rockstars") and Senior game mat ("Mosaic
+Masters"): traced by `tools/wro/trace_mat.py` from WRO's Elementary and Senior printing files and the RoboMission
+Elementary, Senior and General Rules 2026, with short attributed quotes of those rules. They hold numbers only: no
+image, artwork or page of WRO's. What is said above of WRO's names and trademarks, of EVN's non-affiliation and of the
+user's own copy of a mat applies to them too.

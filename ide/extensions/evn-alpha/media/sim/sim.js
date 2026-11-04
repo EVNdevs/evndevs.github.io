@@ -50,6 +50,9 @@
     /** the last snapshot the worker posted, never written here (a drag writes `snap`'s pose): what a restart starts from
      *  (design §6 the restart path, W3b) */
     let posted;
+    /** the last snapshot that carried a rigid course's state bytes (hazards.engine: every 4th frame, runtime.ts BYTES_EVERY;
+     *  §1.7 2's cost rule, J3c-2): a restart starts from it when the last posted has none; dropped at a course switch */
+    let postedBytes;
     let geom;
     let led = false;
     let files = {};             // the Board view's uploads (the extension's 'files' message: never a program's file)
@@ -106,10 +109,27 @@
         return assets;
     }
 
+    /* ---- the physics engine (J4; SIMULATOR_ENGINE_DESIGN.md §1.3 "Loading"): the Jolt build's two files, fetched lazily
+     * when the first rigid course is picked (cfg.rigidCourses: the WRO Junior table) and posted with that course's `init`
+     * / `course` only - an RCJ worker is never sent them. The worker hashes both against the pin and refuses a mismatch. */
+    let joltBytes;
+    const needsEngine = (id) => (cfg.rigidCourses || []).includes(id);
+    function loadJoltBytes() {
+        if (!joltBytes) {
+            const get = (url, how) => fetch(url).then((r) => { if (!r.ok) { throw new Error(`${url.split('/').pop()}: ${r.status}`); } return r[how](); });
+            joltBytes = Promise.all([get(cfg.joltUrl + 'jolt.glue.js', 'text'), get(cfg.joltUrl + 'jolt.wasm', 'arrayBuffer')]).then(([glue, wasm]) => ({ glue, wasm }));
+            joltBytes.catch(() => { joltBytes = undefined; });
+        }
+        return joltBytes;
+    }
+    /** a copy of the bytes for one message (a worker restarted later needs them again) */
+    const joltFor = (j) => ({ jolt: { glue: j.glue, wasm: j.wasm.slice(0) } });
+
     function start(state) {
         ready = false;
         starting = (async () => {
             const a = await loadAssets();
+            const jolt = needsEngine(courseId) ? joltFor(await loadJoltBytes()) : {};
             const shared = typeof SharedArrayBuffer !== 'undefined' && self.crossOriginIsolated;
             ctl = shared ? new Int32Array(new SharedArrayBuffer(32)) : undefined;
             if (ctl) { new Float64Array(ctl.buffer, 16, 1)[0] = speed; }
@@ -121,7 +141,7 @@
             // a restart state with a field (a WRO table): the referee settings too, applied before the restore, so the
             // settings sent at `ready` lay nothing again (W3b, §6); without one (RCJ) the init is as before
             worker.postMessage({ type: 'init', pyodide: { asm: p.asm, wasm: p.wasm.slice(0), stdlib: p.stdlib.slice(0), lock: p.lock }, evn: a.evn, boot: a.boot,
-                version: cfg.version, hw, course: courseId, map: mapOf(courseId), ctl: ctl ? ctl.buffer : undefined, state, files, written, speed, camRun, ...wroFields().fields, ...(state && state.field ? { referee: refSet } : {}) });
+                version: cfg.version, hw, course: courseId, map: mapOf(courseId), ctl: ctl ? ctl.buffer : undefined, state, files, written, speed, camRun, ...wroFields().fields, ...(state && state.field ? { referee: refSet } : {}), ...jolt });
             while (outbox.length) { worker.postMessage(outbox.shift()); }
         })().catch((e) => { showNote(`The simulator could not start: ${e && e.message || e}`, true); setStatus('err', 'not started'); });
     }
@@ -129,7 +149,12 @@
     /** what comes for the board while its worker is (re)starting waits here, in order: the worker queues it behind
      *  its own start (the coast after a stopped run, the next Run) */
     const outbox = [];
-    function toWorker(m, transfer) { if (worker) { worker.postMessage(m, transfer || []); } else { outbox.push(m); } }
+    /** while a rigid course's engine files are on their way, its `course` (a slot filled when they come) and everything
+     *  after it wait here, in order */
+    const held = [];
+    function post0(m, transfer) { if (worker) { worker.postMessage(m, transfer || []); } else { outbox.push(m); } }
+    function toWorker(m, transfer) { if (held.length) { held.push({ m, transfer, ready: true }); } else { post0(m, transfer); } }
+    function flushHeld() { while (held.length && held[0].ready) { const e = held.shift(); post0(e.m, e.transfer); } }
 
     function onWorker(m) {
         switch (m.type) {
@@ -213,12 +238,24 @@
         start(posted ? restartState(posted) : undefined);
     }
 
-    /** a restarted worker's state from the last snapshot the worker posted: the pose, the motors' angles, the UARTs; on a
+    /** the frame a restart starts from (SIMULATOR_ENGINE_DESIGN.md §1.7 2's cost rule; J3c-2): the last one posted, or -
+     *  when it has no state bytes and an earlier one of this course had (a rigid course's bytes ride every 4th frame) - that
+     *  earlier one, whole (its pose, angles and field with its bytes: at most three frames, ~0.1 s, older) */
+    function restartFrame(last, withBytes) {
+        if (!last || (last.hazards && last.hazards.engine) || !withBytes) { return last; }
+        return withBytes;
+    }
+
+    /** a restarted worker's state from the last snapshot the worker posted (`last`): the pose, the motors' angles, the UARTs; on a
      *  course with game blocks (W3b, design §6 the restart path) also the servos' shafts, the field - the seed it was laid
      *  from (the geometry's, posted before any snap that shows a field laid from another seed) and every game block's pose,
-     *  support and hold - and the WRO referee's state. A state "carries a field" only there: RCJ's is as before */
-    function restartState(p) {
-        const s = { pose: p.pose, angles: p.motors.map((x) => x.angle), uart: p.uart };
+     *  support and hold - and the WRO referee's state. A state "carries a field" only there: RCJ's is as before.
+     *  On a rigid course the pose, the angles and the field come from restartFrame's frame (the one with the state bytes,
+     *  whole: J3c-2), the UARTs always from `last` - the ports' state is no engine state, and bytes an SBC sent in the
+     *  frames since the bytes' would be lost (J3c-2 fix: the uart group's READY-survives-a-restart row) */
+    function restartState(last) {
+        const p = restartFrame(last, postedBytes);
+        const s = { pose: p.pose, angles: p.motors.map((x) => x.angle), uart: last.uart };
         const games = p.hazards && p.hazards.games;
         // only for the course the panel has now (review r1 N2: a course switch the stopped worker never took gives a
         // state without a field: the new course starts as before); the seed the frame's own referee names first (N1: a
@@ -227,6 +264,8 @@
             const laid = p.referee && p.referee.kind === 'wro' && typeof p.referee.laidSeed === 'number' ? p.referee.laidSeed : undefined;
             s.servos = (p.servos || []).map((v) => ({ port: v.port, angle: v.angle }));
             s.field = { seed: laid !== undefined ? laid : typeof geom.seed === 'number' ? geom.seed : undefined, games };
+            // a rigid course's engine bytes (§1.7 2; J3c-2): the new worker restores them when their header matches
+            if (p.hazards.engine) { s.field.engine = p.hazards.engine; }
             if (p.referee && p.referee.kind === 'wro') { s.referee = p.referee; }
         }
         return s;
@@ -335,7 +374,7 @@
         if (chal.timer) { clearTimeout(chal.timer); }
         chal.timer = setTimeout(() => chFail(`run ${run}'s simulated clock stood still for ${CH_BUDGET_MS / 1000} s of this computer's time: a loop that never waits (no wait(), no board call) stops it`), CH_BUDGET_MS);
     }
-    const chEnds = { goal: 'goal', time: 'out of time', ended: 'stopped short', error: 'error' };
+    const chEnds = { goal: 'goal', time: 'out of time', ended: 'stopped short', error: 'error', still: 'stood still', touch: 'touched', visits: 'every target visited' };
     function chRow(r) {
         const tr = el('tr', { class: r.reached ? 'ok' : 'miss' },
             el('td', {}, String(r.run)),
@@ -352,7 +391,8 @@
         chal.busy = true;
         chal.id = m.id; chal.purpose = m.purpose;
         const lv = chCfg.levels.find((l) => l.id === m.job.level);
-        const chLimit = lv ? lv.limit : 90;
+        // the job's own version's limit (the host sends it: an older submission's level may differ from the list's)
+        const chLimit = Number.isFinite(m.limit) ? m.limit : lv ? lv.limit : 90;
         chBusy(true);
         $('#chCard').hidden = false;
         $('#chTitle').textContent = m.title;
@@ -450,7 +490,10 @@
         if (m.error) { $('#chProg').textContent = 'not scored'; showNote(`Challenge: ${m.error}`, true); return; }
         const s = m.summary;
         $('#chProg').textContent = 'done';
-        $('#chSum').textContent = `score ${s.score} · at the goal ${s.reached} of ${s.runs} · clean ${s.clean} · best ${s.best ?? '-'} s · median ${s.median ?? '-'} s`;
+        // a level's named values (COURSE_FORMAT_DESIGN.md §12.3) after the summary, an undefined one as -
+        const u = m.units || {};
+        const vals = s.values ? Object.entries(s.values).map(([k, v]) => ` · ${k} ${v ?? '-'}${v !== null && u[k] ? ' ' + u[k] : ''}`).join('') : '';
+        $('#chSum').textContent = `score ${s.score} · at the goal ${s.reached} of ${s.runs} · clean ${s.clean} · best ${s.best ?? '-'} s · median ${s.median ?? '-'} s${vals}`;
         if (chal.purpose === 'student') { $('#chSave').disabled = false; }
     }
 
@@ -519,10 +562,22 @@
 
     function setCourse(id, tell) {
         courseId = id;
+        postedBytes = undefined;
         courseOptions();
         userView = false;
         const wf = wroFields();
-        toWorker({ type: 'course', course: id, map: mapOf(id), ...wf.fields }, wf.transfer);
+        const msg = { type: 'course', course: id, map: mapOf(id), ...wf.fields };
+        if (needsEngine(id)) {
+            // the engine's files first (once; J4): the course goes with them, and every later message after it
+            const slot = { m: msg, transfer: wf.transfer, ready: false };
+            held.push(slot);
+            loadJoltBytes().then(joltFor, (e) => { showNote(`The physics engine could not load: ${e && e.message || e}`, true); return {}; }).then((jolt) => {
+                slot.m = { ...msg, ...jolt }; slot.ready = true;
+                flushHeld();
+            });
+        } else {
+            toWorker(msg, wf.transfer);
+        }
         if (tell) { vscode.postMessage({ type: 'course', course: id }); }
         wroHeader();
         challengeHeader();
@@ -556,6 +611,7 @@
     let lastTele = 0;
     function onSnap(s) {
         posted = s;
+        if (s.hazards && s.hazards.engine) { postedBytes = s; }
         snap = s;
         const last = trail[trail.length - 1];
         const p = s.pose;
@@ -1260,6 +1316,12 @@
                 const c = Math.cos(a), sn = Math.sin(a), place = (P) => P.map(([u, v]) => [x + u * c - v * sn, y + u * sn + v * c]);
                 ctx.lineWidth = Math.max(1, 1 / view.k / dpr);
                 ctx.strokeStyle = 'rgba(0,0,0,0.55)';
+                // an engine body's frame (a rigid course, §2.7: x, y, z, q): each part's world vertices to the plan, hulled
+                const tilted = q ? gamePlan(g.parts, q) : null;
+                if (tilted) {
+                    tilted.forEach((t) => { ctx.fillStyle = `rgb(${t.fill[0]},${t.fill[1]},${t.fill[2]})`; poly(t.pts); ctx.fill(); ctx.stroke(); });
+                    return;
+                }
                 g.parts.slice().sort((p1, p2) => p1.z[1] - p2.z[1]).forEach((pt) => {
                     ctx.fillStyle = `rgb(${pt.top[0]},${pt.top[1]},${pt.top[2]})`;
                     poly(place(pt.outline)); ctx.fill(); ctx.stroke();
@@ -1274,6 +1336,40 @@
             ctx.fillStyle = g;
             ctx.beginPath(); ctx.arc(at[0], at[1], bl.r, 0, 2 * Math.PI); ctx.fill();
         });
+    }
+
+    /** the 2D plan of a game object whose snapshot frame carries `q` (SIMULATOR_ENGINE_DESIGN.md §2.7; J3c-2): each part's
+     *  prism vertices (its outline at its z band, in the model frame) turned by q about the frame's origin (x, y, z) and
+     *  projected to the plan, the convex hull filled in the part's top colour, the parts sorted by their highest world z
+     *  (lowest first). null for a frame without a usable q (four finite numbers, not all zero) or without a finite x, y,
+     *  z: today's drawing from x, y, a then runs, unchanged */
+    function gamePlan(parts, f) {
+        const t = f && f.q;
+        if (!t || t.length !== 4 || !Number.isFinite(f.x) || !Number.isFinite(f.y) || !Number.isFinite(f.z)) { return null; }
+        const n = t[0] * t[0] + t[1] * t[1] + t[2] * t[2] + t[3] * t[3];
+        if (!(n > 0 && Number.isFinite(n))) { return null; }
+        const s = 2 / n, w = t[0], qx = t[1], qy = t[2], qz = t[3];
+        const R = [1 - s * (qy * qy + qz * qz), s * (qx * qy - w * qz), s * (qx * qz + w * qy),
+            s * (qx * qy + w * qz), 1 - s * (qx * qx + qz * qz), s * (qy * qz - w * qx),
+            s * (qx * qz - w * qy), s * (qy * qz + w * qx), 1 - s * (qx * qx + qy * qy)];
+        const out = parts.map((pt) => {
+            const P = [];
+            let top = -Infinity;
+            for (const [u, v] of pt.outline) {
+                for (const h of pt.z) {
+                    P.push([f.x + R[0] * u + R[1] * v + R[2] * h, f.y + R[3] * u + R[4] * v + R[5] * h]);
+                    top = Math.max(top, f.z + R[6] * u + R[7] * v + R[8] * h);
+                }
+            }
+            // the hull (monotone chain), counter-clockwise
+            P.sort((p1, p2) => p1[0] - p2[0] || p1[1] - p2[1]);
+            const cr = (o, p1, p2) => (p1[0] - o[0]) * (p2[1] - o[1]) - (p1[1] - o[1]) * (p2[0] - o[0]);
+            const lo = [], hi = [];
+            for (const p of P) { while (lo.length >= 2 && cr(lo[lo.length - 2], lo[lo.length - 1], p) <= 0) { lo.pop(); } lo.push(p); }
+            for (let k = P.length - 1; k >= 0; k--) { const p = P[k]; while (hi.length >= 2 && cr(hi[hi.length - 2], hi[hi.length - 1], p) <= 0) { hi.pop(); } hi.push(p); }
+            return { fill: pt.top, pts: lo.slice(0, -1).concat(hi.slice(0, -1)), top };
+        });
+        return out.sort((p1, p2) => p1.top - p2.top);
     }
 
     /** the speed bumps (they do not move: drawn with the floor) */
@@ -3326,7 +3422,7 @@
                             el('div', { class: 'row' }, el('span', { class: 'v', id: 'wMarks' })),
                             el('div', { class: 'row' },
                                 el('label', { title: 'The WRO referee scores the run (General Rules 10; Junior rules 3): turned on, the field is laid from the seed and the robot put at the start' }, el('input', { type: 'checkbox', id: 'wOn', checked: '', onchange: wroRefToggle }), ' referee'),
-                                el('span', { class: 'log', title: 'The game objects push, stack and are sensed in plan (docs/SIMULATOR_WRO_DESIGN.md §4.3): a real table may differ' }, 'plan-only physics'))),
+                                el('span', { class: 'log', title: 'The game objects are bodies of the physics engine (Jolt Physics; docs/SIMULATOR.md "WRO RoboMission"): they are pushed, gripped, stacked and tipped over, and the sensors read them where they lie; a real table may differ' }, 'physics engine'))),
                     ),
                     el('div', { class: 'hint run-only only2d' }, 'Drag the robot to move it, its handle to turn it (Shift: 15° steps). Drag the floor to pan, scroll to zoom.'),
                     el('div', { class: 'hint run-only only3d-view' }, 'Drag to turn the view, Shift+drag (or a right drag) to move it, scroll to zoom. Follow follows the robot. The robot is moved in the 2D view.'),

@@ -707,12 +707,11 @@ WRO and RoboMission are its names and trademarks, and WRO's mat and rules are WR
 | Not here | Elementary and Senior; the International Final's extra task; surprise rules; national organisers' versions |
 
 - **The walls** stop the robot's whole footprint from the floor up - a robot with more than 50 mm of clearance does not
-  drive under them - and every game object: a pushed object stops at a wall (and, pushed further, stops the robot),
-  and an object moved out of the robot after Apply (below) is moved only along a path that crosses no wall. So nothing
-  leaves the table.
-- **Back to start** puts the robot on the start and every object back at its start place; **drag the robot** to put it
-  anywhere, as on every course. Only the robot is dragged: the objects move when something pushes them. A robot put
-  down on an object pushes it out of the way, at most 3 mm a tick (1 ms).
+  drive under them - and every game object: a pushed object stops at a wall (and, pushed further, stops the robot).
+- **Back to start** puts the robot on the start and every object back at its start place, standing; **drag the robot**
+  to put it anywhere, as on every course. Only the robot is dragged: the objects move when something pushes them. A
+  robot put down on an object stays where you put it, and the object is slid out of it to the nearest clear spot on the
+  table (its height and its tilt kept); one with no clear spot near is left to the physics to push out.
 
 ### The mat
 
@@ -742,12 +741,12 @@ the clear channel here is the mean of red, green and blue (the TCS34725's own we
 
 ### The game objects
 
-Each object is rebuilt from WRO's building instructions as a LEGO model, brick by brick: its size from the bricks, its
-mass from the parts' weights (about +/-10 %). The visitors (red, green, blue and black, about 35 g each), the red
-towers (126.5 mm tall, about 125 g), the yellow towers - a base, and a top that rests on it by friction (it plugs into
-nothing) - the artefacts (blue, red, green, black and yellow, about 31 g), the dirt particles (a 2x4 brick, 2.3 g), the
-red and the white barrier and the parrot. The 2D view draws each part's outline in its top colour; the 3D view and the
-cameras show the models.
+Each object is the EVN owner's LEGO model of WRO's building instructions, brick by brick: its size from the bricks,
+its mass and its centre of mass from the parts' weights (about +/-10 %). The visitors (red, green, blue and black, about
+35 g each), the red towers (126.5 mm tall, about 125 g), the yellow towers - a base, and a top that rests on it by
+friction (it plugs into nothing) - the artefacts (blue, red, green, black and yellow, about 31 g), the dirt particles (a
+2x4 brick, 2.3 g), the red and the white barrier and the parrot. The 2D view draws each part's outline in its top
+colour; the 3D view and the cameras show the models, studs included.
 
 **Randomisation (Junior chapter 3).** The field is laid from a **seed** (1 to start with): the five artefact colours
 are shuffled and the first four go on the excavation site's four black squares, left to right (one artefact is not
@@ -756,36 +755,31 @@ another. The same seed gives the same field on every computer. **Randomise** in 
 header's chip shows it (*seed 1 (next seed 2)*), and the field is laid from it at the next **Back to start** - never
 under a run.
 
-**Physics in plan** (the card says *plan-only physics*). The objects slide on the mat and on each other with friction;
-they never tip over, fall over or break, so "upright" and "not damaged" in the scoring are always met. In plain terms:
+**Physics** (the card says *physics engine*). On this course the robot, its mechanisms, the walls and the objects are
+bodies of a physics engine (Jolt Physics), stepped with the robot every 1 ms. The objects are solid, with their own mass
+and friction: they slide, tip over, fall and rest on one another, as their models' shapes and weights make them. The
+panel loads the engine the first time you pick this course (a note says so if it cannot); the other courses never load
+it. In plain terms:
 
 - **Pushing.** The robot's body, wheels and mechanism parts push the objects, and an object pushes the ones it meets.
-  An object held by a wall (or by a row of objects against a wall) stops the robot. One pressed against the robot only
-  by the robot's own parts - a particle caught between a scoop's sides, say - is pushed out of the robot rather than
-  stopping it.
-- **Stacking.** An object can rest on another (a yellow top on its base) and moves with it.
+  An object held by a wall (or by a row of objects against a wall) stops the robot. A tall object pushed high up, or
+  hit hard, tips over and lies where it falls.
+- **Stacking.** An object can rest on another (a yellow top on its base) and moves with it while friction holds it;
+  pushed or tilted too far, it slides or falls off.
 - **Claws.** A claw grips an object its two jaws close on from opposite sides: the squeeze is the force the servo's (or
-  motor's) stall torque gives each jaw, and the object is held while the jaws' friction (MU 0.5) carries its weight -
-  the preset's claw (about 4.3 N a jaw) holds up to about 440 g, so any of the objects. A held object lifts, turns and
-  drives with the claw: its weight is on the arm's servo, its mass in the robot's. **When the claw opens** (a servo
-  commanded open again, a motor claw's jaws opened) the object is let go and drops onto what is under it - but never
-  onto the robot itself: while it hangs over the robot the claw keeps it until it is clear. **When Apply** in the
-  configurator removes or rebuilds the claw, its object is let go at once, wherever it is. If it then lies in the robot
-  or in a wall, it is moved out sideways at once, with what rests on it as one piece, by the shortest move found (24
-  directions, up to 300 mm) that leaves it clear of the robot, the walls and the other objects. It is never moved across a wall (one that
-  starts in a wall leaves it on the robot's side), and
-  the robot feels nothing of this move. If no such spot is found (a robot ringed by objects), it stays where it is, and
-  the robot pushes it out as it pushes any object it overlaps, feeling the push. A scoop, a bin or an arm's tray pushes
-  the objects but does not lift them: only a claw does.
-- **Mechanisms meet the table.** On this course a mechanism's parts meet the mat, the walls and the objects (on the
-  other courses only the balls): an arm lowered onto the mat, or a jaw closing on a wall, stops there as at an end
-  stop (a servo stalls, a motor is held). After Apply, an object that a rebuilt part (or the body) now lies in is moved
-  clear in the same way, with what rests on it; an object merely touching the robot, a wall or another object stays.
-- **Sensing.** A colour sensor looking down reads the top of an object under it (each colour on one fixed scale,
-  whatever mat is loaded: a white brick reads the same on the schematic and on the mat); one with **facing** `forward`
-  reads an object's side brick by brick (a tower's black window, the parrot's blue wing) within 30 mm (see
-  [Configuring the robot](#configuring-the-robot)). The distance sensors' beams and a switch's feeler meet the objects
-  too.
+  motor's) stall torque gives each jaw, and the jaws' friction holds the object. A held object lifts, turns and drives
+  with the claw, its weight on the arm. **When the claw opens** (a servo commanded open again, a motor claw's jaws
+  opened) the object drops onto what is under it. **When Apply** in the configurator rebuilds the robot, every object
+  stays where it lies (one the engine tipped stays tipped); one the old robot touched is woken, so an object a removed
+  or rebuilt claw held falls at once.
+- **Mechanisms meet the table.** On this course a mechanism's parts are bodies too: they meet the mat, the walls and the
+  objects (on the other courses only the balls). An arm lowered onto the mat, or a jaw closing on a wall, stops there
+  as at an end stop (a servo stalls, a motor is held), and an object can rest on a part as on any surface.
+- **Sensing.** The sensors read each object where the engine has it, tipped or lying included. A colour sensor looking
+  down reads the top of an object under it (each colour on one fixed scale, whatever mat is loaded: a white brick
+  reads the same on the schematic and on the mat); one with **facing** `forward` reads an object's side brick by brick
+  (a tower's black window, the parrot's blue wing) within 30 mm (see [Configuring the robot](#configuring-the-robot)).
+  The distance sensors' beams and a switch's feeler meet the objects too.
 
 ### The WRO referee
 
@@ -852,7 +846,11 @@ How the referee reads the rules where they leave a choice (in the team's favour,
 - **A yellow tower** is a top resting on a base with its centre over the base's top pad, at any turn (the top plugs
   into nothing); it scores by where the base is. A base alone scores nothing.
 - **Moved** (3.5) is a part of a barrier or the parrot touching the mat outside every grey area: one pushed wholly
-  into another grey area is not moved.
+  into another grey area is not moved. A barrier or the parrot that tips over is whole, so not damaged: it is moved
+  only by where it then touches the mat.
+- **Upright** is an object standing on its base: its top side up and its centre of mass over the outline of the bricks
+  it stands on. A visitor or an artefact completely in its area but not upright scores as partly in (5); a red tower
+  not upright, or a yellow tower whose top or base is not upright, scores nothing.
 
 ### Restarting
 
@@ -865,11 +863,8 @@ without a restart, the run ends as with End run, once the robot stands still.
 
 ### Not modelled
 
-- Tipping, falling, stacking under load and breaking: the objects slide flat (a later step adds them), so "upright"
-  and "not damaged" are always met, and the robot never loses a part (10.4).
-- Lifting by a scoop, a bin or a tray (only a claw lifts), and the held object pushing a motor claw's jaws back open.
-- A held object lowered onto the robot's own parts passes through them: the mechanisms and what they hold meet only
-  the mat, the walls and the objects.
+- Breaking: an object never loses a brick and the robot never loses a part (10.4), so "not damaged" is always met.
+- A mechanism's parts pass through the robot's own body: they meet the mat, the walls and the objects only.
 - The run record and verifying a result: no WRO result is verifiable yet.
 - The other age groups, the International Final's extra task and surprise rules.
 

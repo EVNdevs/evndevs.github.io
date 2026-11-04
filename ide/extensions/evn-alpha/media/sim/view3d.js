@@ -88,7 +88,7 @@
 
         get ok() { return !!this.gl; }
 
-        newScene() { return new Scene3D(this.gl, { canvas2d: (w, h) => Object.assign(document.createElement('canvas'), { width: w, height: h }), showCams: true }); }
+        newScene() { return new Scene3D(this.gl, { canvas2d: (w, h) => Object.assign(document.createElement('canvas'), { width: w, height: h }), showCams: true, cull: true }); }
 
         /** the seesaws' tilt and thickness the panel's config gives (sim.js), handed to the scene */
         get seesawDeg() { return this.scene && this.scene.seesawDeg; }

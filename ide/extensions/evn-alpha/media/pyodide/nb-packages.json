@@ -1,0 +1,231 @@
+{
+ "pyodide": "0.28.3",
+ "roots": [
+  "numpy",
+  "matplotlib"
+ ],
+ "stdlib_extras": [
+  "hashlib",
+  "lzma",
+  "pydecimal",
+  "pydoc-data",
+  "sqlite3",
+  "ssl"
+ ],
+ "packages": {
+  "contourpy": {
+   "file": "contourpy-1.3.1-cp313-cp313-pyodide_2025_0_wasm32.whl",
+   "sha256": "3fe3d224ef8129f7be7062cf44c26a38a6cb6a1f07e11e93f33ec502476a40e7",
+   "imports": [
+    "contourpy"
+   ],
+   "depends": [
+    "numpy"
+   ],
+   "licence": "BSD-3-Clause",
+   "bytes": 132421
+  },
+  "cycler": {
+   "file": "cycler-0.12.1-py3-none-any.whl",
+   "sha256": "4c163eac65b7ced9007b4259575c045a172dd45d36de7e25ae97b2be67b4a7d1",
+   "imports": [
+    "cycler"
+   ],
+   "depends": [
+    "six"
+   ],
+   "licence": "BSD-3-Clause",
+   "bytes": 8321
+  },
+  "fonttools": {
+   "file": "fonttools-4.56.0-py3-none-any.whl",
+   "sha256": "862f1298792269b5882f145efc0b2683b5101d30152e43152f2a9ee90e55755a",
+   "imports": [
+    "fontTools"
+   ],
+   "depends": [],
+   "licence": "MIT",
+   "bytes": 1089800
+  },
+  "hashlib": {
+   "file": "hashlib-1.0.0-cp313-cp313-pyodide_2025_0_wasm32.whl",
+   "sha256": "b5c736c84ce26cba4e5096c6b9d173a357666af5993cc08395bfb8bac997bb98",
+   "imports": [
+    "_hashlib"
+   ],
+   "depends": [
+    "libopenssl"
+   ],
+   "licence": "PSF-2.0",
+   "bytes": 11288
+  },
+  "kiwisolver": {
+   "file": "kiwisolver-1.4.8-cp313-cp313-pyodide_2025_0_wasm32.whl",
+   "sha256": "01451f4a9f0dcd93ea6d9e2e577a793d4c9082fbf1f59cfb8ff3ba376f28d3e3",
+   "imports": [
+    "kiwisolver"
+   ],
+   "depends": [],
+   "licence": "BSD-3-Clause",
+   "bytes": 36920
+  },
+  "libopenssl": {
+   "file": "libopenssl-1.1.1w.zip",
+   "sha256": "48965994b6ace00d3ebbc2dc1b65c11978582620f4ef6c71a50d9ea4c5fc7437",
+   "imports": [],
+   "depends": [],
+   "licence": "OpenSSL",
+   "bytes": 796824
+  },
+  "lzma": {
+   "file": "lzma-1.0.0-cp313-cp313-pyodide_2025_0_wasm32.whl",
+   "sha256": "18523e1b59a6acc64857615fb48718ed6666ad1a562abf6707541427d3b01ace",
+   "imports": [
+    "lzma",
+    "_lzma"
+   ],
+   "depends": [],
+   "licence": "PSF-2.0",
+   "bytes": 75702
+  },
+  "matplotlib": {
+   "file": "matplotlib-3.8.4-cp313-cp313-pyodide_2025_0_wasm32.whl",
+   "sha256": "4082bc4a9f7ab494137014991fe8afe83218aaaeb6bb4dbd6fd2b40c464742e5",
+   "imports": [
+    "pylab",
+    "mpl_toolkits",
+    "matplotlib"
+   ],
+   "depends": [
+    "contourpy",
+    "cycler",
+    "fonttools",
+    "kiwisolver",
+    "numpy",
+    "packaging",
+    "pillow",
+    "pyparsing",
+    "python-dateutil",
+    "pytz"
+   ],
+   "licence": "PSF-based (Matplotlib License)",
+   "bytes": 6722016
+  },
+  "numpy": {
+   "file": "numpy-2.2.5-cp313-cp313-pyodide_2025_0_wasm32.whl",
+   "sha256": "3db3c4f3e0448f4d62a85c262692f1260ccd8a91335442bd2442f21ffeddb558",
+   "imports": [
+    "numpy"
+   ],
+   "depends": [],
+   "licence": "BSD-3-Clause",
+   "bytes": 3109648
+  },
+  "packaging": {
+   "file": "packaging-24.2-py3-none-any.whl",
+   "sha256": "fdbc12e70e25c89b3e95a853f09065c629ebd6add9bf7a788ce6cfdb35b5c7b0",
+   "imports": [
+    "packaging"
+   ],
+   "depends": [],
+   "licence": "Apache-2.0 OR BSD-2-Clause",
+   "bytes": 71930
+  },
+  "pillow": {
+   "file": "pillow-11.3.0-cp313-cp313-pyodide_2025_0_wasm32.whl",
+   "sha256": "52984112ca668d60291a7868011a04d66baf526d27e5eaef0a8a16e7ef22ab6c",
+   "imports": [
+    "PIL"
+   ],
+   "depends": [],
+   "licence": "MIT-CMU",
+   "bytes": 1058399
+  },
+  "pydecimal": {
+   "file": "pydecimal-1.0.0-cp313-cp313-pyodide_2025_0_wasm32.whl",
+   "sha256": "6947ddeab2ad1443433cb65bf13b3c43872a575c658554df4a4462f52c95e1f4",
+   "imports": [
+    "_pydecimal"
+   ],
+   "depends": [],
+   "licence": "PSF-2.0",
+   "bytes": 49194
+  },
+  "pydoc-data": {
+   "file": "pydoc_data-1.0.0-cp313-cp313-pyodide_2025_0_wasm32.whl",
+   "sha256": "6987ee86ae7cbebd0a675290a143f13b82344caef0d1a32ae574983db14783f6",
+   "imports": [
+    "pydoc_data"
+   ],
+   "depends": [],
+   "licence": "PSF-2.0",
+   "bytes": 178311
+  },
+  "pyparsing": {
+   "file": "pyparsing-3.2.1-py3-none-any.whl",
+   "sha256": "7d595baa16a4640b541ef894a01f1724425bc5b6a07be5e55b1168d637ba7747",
+   "imports": [
+    "pyparsing"
+   ],
+   "depends": [],
+   "licence": "MIT",
+   "bytes": 107717
+  },
+  "python-dateutil": {
+   "file": "python_dateutil-2.9.0.post0-py2.py3-none-any.whl",
+   "sha256": "26b50ce706a17abdde09dbb95745a44f9320dfdb99e950c52b1a62a3d99e452c",
+   "imports": [
+    "dateutil"
+   ],
+   "depends": [
+    "six"
+   ],
+   "licence": "Apache-2.0 AND BSD-3-Clause",
+   "bytes": 229892
+  },
+  "pytz": {
+   "file": "pytz-2025.2-py2.py3-none-any.whl",
+   "sha256": "1d7f409837318a3a234a6394253a77900072616a42e5dba89c3214f70e77f31b",
+   "imports": [
+    "pytz"
+   ],
+   "depends": [],
+   "licence": "MIT",
+   "bytes": 509225
+  },
+  "six": {
+   "file": "six-1.17.0-py2.py3-none-any.whl",
+   "sha256": "618e0357f1724d937c20b75d691f0ba9e404de2701084e3c4f35995cfb879665",
+   "imports": [
+    "six"
+   ],
+   "depends": [],
+   "licence": "MIT",
+   "bytes": 11050
+  },
+  "sqlite3": {
+   "file": "sqlite3-1.0.0-cp313-cp313-pyodide_2025_0_wasm32.whl",
+   "sha256": "bc9429a898016f040272b57e44c3beb7cebfa18226cc856d0b4abca88c8ceea7",
+   "imports": [
+    "sqlite3",
+    "_sqlite3"
+   ],
+   "depends": [],
+   "licence": "PSF-2.0",
+   "bytes": 566355
+  },
+  "ssl": {
+   "file": "ssl-1.0.0-cp313-cp313-pyodide_2025_0_wasm32.whl",
+   "sha256": "68e1ac39f5e5a83d0eda2baec3771d5322a04c0bc5d6395db2cd6ff0ef57b00a",
+   "imports": [
+    "ssl",
+    "_ssl"
+   ],
+   "depends": [
+    "libopenssl"
+   ],
+   "licence": "PSF-2.0",
+   "bytes": 65169
+  }
+ }
+}
