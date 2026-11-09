@@ -17,8 +17,10 @@
  *
  * The WRO game objects (§4.2, §4.4; increment W4): a geometry whose world3d has `games` draws each object brick by brick -
  * world3d.gameMeshes[its `mesh`] (src/sim/engine/gameMesh.ts: the objects file's mesh.boxes, the model's frame) and its
- * studs, world3d.gameStuds[its `mesh`] when its file has them (a props file, SIMULATOR_PROPS_DESIGN.md §4), one
- * static mesh per model and colour, built once per course (setGeom) - posed each frame from the snapshot's
+ * studs, world3d.gameStuds[its `mesh`] when its file has them (a props file, SIMULATOR_PROPS_DESIGN.md §4), each along
+ * its own direction (a stood-up Elementary model's sideways studs: SIMULATOR_PROPS_ELEMENTARY.md §5 E-C10, EP-c, D150),
+ * and its pieces, world3d.gamePieces[its `mesh`] (EP-c, D151: a pin's collar and shaft and a hose piece as capped 12-gon
+ * cylinders, a knuckle as its prism), one static mesh per model and colour, built once per course (setGeom) - posed each frame from the snapshot's
  * hazards.games (x, y, yaw, base height z0: a lifted, stacked or held object where the snapshot puts it; a frame that
  * carries q - an engine body, SIMULATOR_ENGINE_DESIGN.md §2.7 - at trans(x, y, z) rot(q)) with one model matrix per object written into scratch arrays: the objects' pass allocates
  * nothing per frame. A course without game objects draws exactly what it drew before (the pass is skipped).
@@ -174,7 +176,8 @@ void main() {
     /** a stud (SIMULATOR_PROPS_DESIGN.md §4 (a); J3c-1 DR2): a 12-gon cylinder 4.8 mm across, 1.7 mm high, standing on
      *  (x, y, z) - its brick's top - its 12 sides (24 triangles) and its top cap as a fan from one rim vertex (10), no
      *  bottom: 34 triangles, each wound outward (counter-clockwise seen from outside), appended to out */
-    function studInto(out, x, y, z) {
+    function studInto(out, x, y, z, dir) {
+        if (dir !== undefined && dir !== '+z') { studDirInto(out, x, y, z, dir, 12); return; }
         const n = 12, r = 2.4, zt = z + 1.7, P = [];
         for (let i = 0; i < n; i++) { const a = 2 * Math.PI * i / n; P.push([x + r * Math.cos(a), y + r * Math.sin(a)]); }
         for (let i = 0; i < n; i++) { const a = P[i], b = P[(i + 1) % n]; quad(out, [a[0], a[1], z], [b[0], b[1], z], [b[0], b[1], zt], [a[0], a[1], zt]); }
@@ -182,19 +185,100 @@ void main() {
     }
     /** a stud of `sides` sides (the culls' level of detail: 8 and 6; 12 is studInto's, the same vertices): its sides (2 n
      *  triangles) and its top cap as a fan from one rim vertex (n - 2), no bottom: 3 n - 2 triangles, each wound outward */
-    function studSidesInto(out, x, y, z, sides) {
+    function studSidesInto(out, x, y, z, sides, dir) {
+        if (dir !== undefined && dir !== '+z') { studDirInto(out, x, y, z, dir, sides); return; }
         const r = STUD_R, zt = z + 1.7, Q = [];
         for (let i = 0; i < sides; i++) { const a = 2 * Math.PI * i / sides; Q.push([x + r * Math.cos(a), y + r * Math.sin(a)]); }
         for (let i = 0; i < sides; i++) { const a = Q[i], b = Q[(i + 1) % sides]; quad(out, [a[0], a[1], z], [b[0], b[1], z], [b[0], b[1], zt], [a[0], a[1], zt]); }
         for (let i = 1; i < sides - 1; i++) { for (const v of [Q[0], Q[i], Q[i + 1]]) { out.push(v[0], v[1], zt, 0, 0, 1, 0, 0); } }
     }
-    /** a model's box for the frustum cull: [x0, y0, z0, x1, y1, z1] over its bricks and its studs (each 2.4 mm round its
-     *  foot, 1.7 mm up), as a Float32Array */
-    function modelBox(boxes, studs) {
+    /** EP-c (D150): the proper rotations (row-major, det +1) that turn an upward stud's +z to a stud's direction, so its
+     *  outward winding is kept; a direction not listed is refused */
+    const STUD_DIR = {
+        '+x': [0, 0, 1, 0, 1, 0, -1, 0, 0], '-x': [0, 0, -1, 0, 1, 0, 1, 0, 0],
+        '+y': [1, 0, 0, 0, 0, 1, 0, -1, 0], '-y': [1, 0, 0, 0, 0, -1, 0, 1, 0], '-z': [1, 0, 0, 0, -1, 0, 0, 0, -1],
+    };
+    /** a ring of `n` sides (radius rr round (cu, cv) in a local frame u, v, w) from w0 to w1, mapped by R (row-major,
+     *  det +1) and offset o into the model's frame: its sides (2 n triangles), its top cap at w1 as a fan from one rim
+     *  vertex (n - 2), and with `bottom` its cap at w0 (n - 2), each wound outward; `ring` the local outline (counter-
+     *  clockwise seen from +w), when given, instead of the n-gon */
+    function ringInto(out, n, rr, cu, cv, w0, w1, R, o, bottom, ring) {
+        const map = (u, v, w) => [o[0] + R[0] * u + R[1] * v + R[2] * w, o[1] + R[3] * u + R[4] * v + R[5] * w, o[2] + R[6] * u + R[7] * v + R[8] * w];
+        const Q = ring || [];
+        if (!ring) { for (let i = 0; i < n; i++) { const a = 2 * Math.PI * i / n; Q.push([cu + rr * Math.cos(a), cv + rr * Math.sin(a)]); } }
+        const m = Q.length, lo = Q.map((q) => map(q[0], q[1], w0)), hi = Q.map((q) => map(q[0], q[1], w1));
+        for (let i = 0; i < m; i++) { const j = (i + 1) % m; quad(out, lo[i], lo[j], hi[j], hi[i]); }
+        const up = [R[2], R[5], R[8]];
+        for (let i = 1; i < m - 1; i++) { for (const v of [hi[0], hi[i], hi[i + 1]]) { out.push(v[0], v[1], v[2], up[0], up[1], up[2], 0, 0); } }
+        if (bottom) { for (let i = 1; i < m - 1; i++) { for (const v of [lo[0], lo[i + 1], lo[i]]) { out.push(v[0], v[1], v[2], -up[0], -up[1], -up[2], 0, 0); } } }
+    }
+    /** a stud of `sides` sides standing on (x, y, z) along `dir` (EP-c, D150): studInto's stud turned by STUD_DIR[dir] -
+     *  the same 3 n - 2 triangles, its foot on its brick's face, 1.7 mm out along dir */
+    function studDirInto(out, x, y, z, dir, sides) {
+        const R = STUD_DIR[dir];
+        if (!R) { throw new Error(`a stud's direction ${dir} is not one of +z, ${Object.keys(STUD_DIR).join(', ')}`); }
+        ringInto(out, sides, STUD_R, 0, 0, 0, 1.7, R, [x, y, z], false, null);
+    }
+    /** SP-b (ES D205): a sphere piece (gameMesh.ts, the Senior ball) - 16 segments round z by 8 bands pole to pole, every
+     *  vertex on the sphere about c, its normal radial (smooth: a ball, not a faceted part), wound outward; the poles'
+     *  bands one triangle a segment: 16 x (2 x 8 - 2) = 224 triangles, appended to out */
+    function sphereInto(out, c, r) {
+        const NU = 16, NV = 8, P = (i, j) => { const t = Math.PI * i / NV, f = 2 * Math.PI * j / NU; return [Math.sin(t) * Math.cos(f), Math.sin(t) * Math.sin(f), Math.cos(t)]; };
+        const put = (n) => { out.push(c[0] + r * n[0], c[1] + r * n[1], c[2] + r * n[2], n[0], n[1], n[2], 0, 0); };
+        for (let i = 0; i < NV; i++) {
+            for (let j = 0; j < NU; j++) {
+                const a = P(i, j), b = P(i + 1, j), d = P(i + 1, j + 1), e = P(i, j + 1);
+                if (i < NV - 1) { put(a); put(b); put(d); }
+                if (i > 0) { put(a); put(d); put(e); }
+            }
+        }
+    }
+    /** EP-c (D151): the cyclic axis maps (det +1) of a cylinder along x / y / z: local (u, v, w), w along the axis */
+    const CYL_AXIS = [[0, 0, 1, 1, 0, 0, 0, 1, 0], [0, 1, 0, 0, 0, 1, 1, 0, 0], [1, 0, 0, 0, 1, 0, 0, 0, 1]];
+    /** SP-c (ES D207): the refusal of a drawn piece whose kind is none of the three (gameMesh.ts MeshPiece), naming it */
+    const PIECE_REFUSED = (q) => `a drawn piece's kind ${JSON.stringify(q && q.kind)} (piece ${q && q.name}) is not one render3d.js draws (sphere, cylinder, prism)`;
+    /** a drawn piece (gameMesh.ts MeshPiece; EP-c, D151): a `cylinder` - a capped 12-gon inscribed in its box along its
+     *  axis (2 x 12 sides + 2 x 10 caps: 44 triangles, the bake's CYL_TRIANGLES) - or a `prism`, its plan outline over its
+     *  band (2 n + 2 (n - 2)), each wound outward, appended to out; the vertices it added */
+    function pieceInto(out, q) {
+        const at = out.length;
+        if (q.kind === 'sphere') { sphereInto(out, q.c, q.r); return (out.length - at) / 8; }
+        if (q.kind === 'cylinder') {
+            const b = q.box, a = q.axis, lo = [b[0], b[1], b[2]], hi = [b[3], b[4], b[5]], u = (a + 1) % 3, v = (a + 2) % 3;
+            ringInto(out, 12, (hi[u] - lo[u]) / 2, (lo[u] + hi[u]) / 2, (lo[v] + hi[v]) / 2, lo[a], hi[a], CYL_AXIS[a], [0, 0, 0], true, null);
+        } else {
+            // SP-c (ES D207): a kind the drawing does not know is refused by name, never drawn as a prism
+            if (q.kind !== 'prism') { throw new Error(PIECE_REFUSED(q)); }
+            let P = q.outline, A = 0;
+            for (let i = 0; i < P.length; i++) { const p = P[i], r = P[(i + 1) % P.length]; A += p[0] * r[1] - r[0] * p[1]; }
+            if (A < 0) { P = P.slice().reverse(); }
+            ringInto(out, P.length, 0, 0, 0, q.z[0], q.z[1], CYL_AXIS[2], [0, 0, 0], true, P);
+        }
+        return (out.length - at) / 8;
+    }
+    /** a piece's box [x0, y0, z0, x1, y1, z1] (its cylinder's box; a prism's outline's bounds over its band) */
+    function pieceBox(q) {
+        if (q.kind === 'cylinder') { return q.box; }
+        if (q.kind === 'sphere') { return [q.c[0] - q.r, q.c[1] - q.r, q.c[2] - q.r, q.c[0] + q.r, q.c[1] + q.r, q.c[2] + q.r]; }
+        if (q.kind !== 'prism') { throw new Error(PIECE_REFUSED(q)); }
+        const xs = q.outline.map((p) => p[0]), ys = q.outline.map((p) => p[1]);
+        return [Math.min(...xs), Math.min(...ys), q.z[0], Math.max(...xs), Math.max(...ys), q.z[1]];
+    }
+    /** a model's box for the frustum cull: [x0, y0, z0, x1, y1, z1] over its bricks, its studs (each 2.4 mm round its
+     *  foot, 1.7 mm out along its direction) and its pieces (EP-c), as a Float32Array */
+    function modelBox(boxes, studs, pieces) {
         const bb = [Infinity, Infinity, Infinity, -Infinity, -Infinity, -Infinity];
         const grow = (x0, y0, z0, x1, y1, z1) => { bb[0] = Math.min(bb[0], x0); bb[1] = Math.min(bb[1], y0); bb[2] = Math.min(bb[2], z0); bb[3] = Math.max(bb[3], x1); bb[4] = Math.max(bb[4], y1); bb[5] = Math.max(bb[5], z1); };
         for (const b of boxes) { grow(b[0], b[1], b[2], b[3], b[4], b[5]); }
-        for (const u of studs || []) { grow(u[0] - STUD_R, u[1] - STUD_R, u[2], u[0] + STUD_R, u[1] + STUD_R, u[2] + 1.7); }
+        for (const u of studs || []) {
+            const R = u[4] !== undefined && u[4] !== '+z' ? STUD_DIR[u[4]] : null;
+            if (!R) { grow(u[0] - STUD_R, u[1] - STUD_R, u[2], u[0] + STUD_R, u[1] + STUD_R, u[2] + 1.7); continue; }
+            // the stud's local box [-r, r] x [-r, r] x [0, 1.7] turned: per model axis its half-width across and its reach along
+            const e = [0, 1, 2].map((k) => [STUD_R * (Math.abs(R[3 * k]) + Math.abs(R[3 * k + 1])), 1.7 * R[3 * k + 2]]);
+            grow(u[0] - e[0][0] + Math.min(0, e[0][1]), u[1] - e[1][0] + Math.min(0, e[1][1]), u[2] - e[2][0] + Math.min(0, e[2][1]),
+                u[0] + e[0][0] + Math.max(0, e[0][1]), u[1] + e[1][0] + Math.max(0, e[1][1]), u[2] + e[2][0] + Math.max(0, e[2][1]));
+        }
+        for (const q of pieces || []) { const b = pieceBox(q); grow(b[0], b[1], b[2], b[3], b[4], b[5]); }
         return new Float32Array(bb);
     }
     /** a cylinder of radius 1 and length 1 along z, centred */
@@ -424,6 +508,33 @@ void main() {
                 const under = (geom.paint || []).filter((p) => p.tile === undefined || p.tile === null || Math.abs(level(p.tile) - base) < 40);
                 this.statics.push({ mesh: new Mesh(gl, m.data), tex: this.texture(this.paintCanvas(rect, under, Math.min(4, 1024 / Math.max(rect[2] - rect[0], rect[3] - rect[1])))) });
             }
+            // EN2 (ES §4.4, D176): a WRO package's decals (the Senior pattern paper) - flat polygons 0.1 mm over the floor,
+            // under every body, in their colours; the geometry carries them with its seed, so a new seed's paper comes with
+            // its field (this rebuild); static, one mesh a decal (`decal`: its cell index)
+            for (const d of geom.decals || []) {
+                const out = [], P = d.poly;
+                for (let i = 1; i + 1 < P.length; i++) {
+                    for (const q of [P[0], P[i], P[i + 1]]) { out.push(q[0], q[1], 0.1, 0, 0, 1, 0, 0); }
+                }
+                if (out.length) { this.statics.push({ mesh: new Mesh(gl, out), color: d.rgb.map((v) => v / 255), decal: d.k }); }
+            }
+            // EN1 (G§2.7): each fixture's pieces from their drawing faces (base then top vertices, model axes) at its pose,
+            // flat-shaded in its colour (lifted to 24 of 255 so a black frame's faces still shade); static, one mesh a fixture
+            for (const fx of (w3 && w3.fixtures) || []) {
+                const out = [], a = fx.at[2] * Math.PI / 180, c = Math.cos(a), s = Math.sin(a);
+                const W = (q, z) => [fx.at[0] + q[0] * c - q[1] * s, fx.at[1] + q[0] * s + q[1] * c, (fx.at[3] || 0) + z];
+                for (const p of fx.pieces) {
+                    const V = p.base.map((q) => W(q, p.z[0])).concat(p.top.map((q) => W(q, p.z[1])));
+                    for (const t of p.tris) {
+                        const A = V[t[0]], B = V[t[1]], C = V[t[2]];
+                        if (!A || !B || !C) { continue; }
+                        const n = norm(cross(sub(B, A), sub(C, A)));
+                        for (const P of [A, B, C]) { out.push(P[0], P[1], P[2], n[0], n[1], n[2], 0, 0); }
+                    }
+                }
+                const col = fx.colour.map((v) => Math.max(24, v) / 255);
+                if (out.length) { this.statics.push({ mesh: new Mesh(gl, out), color: col }); }
+            }
             this.buildGames(w3);
         }
 
@@ -448,15 +559,26 @@ void main() {
                     boxInto(d.data, b[0], b[1], b[2], b[3], b[4], b[5]);
                     if (this.cull) { (d.bx ??= []).push(b); }
                 }
+                // its pieces (EP-c, D151: gameMesh.ts gamePieces - the pins, the hose, the knuckles), after the boxes in
+                // their colour's mesh, before its studs (with the culls counted with the boxes: drawn at every level)
+                const pc = w3.gamePieces ? w3.gamePieces[key] : null;
+                if (pc) {
+                    for (const q of pc) {
+                        const qk = `${q.rgb[0]},${q.rgb[1]},${q.rgb[2]}`;
+                        let d = byColour.get(qk);
+                        if (!d) { d = { rgb: q.rgb, data: [] }; byColour.set(qk, d); }
+                        d.pv = (d.pv || 0) + pieceInto(d.data, q);
+                    }
+                }
                 // its studs (a props file's mesh.studs, gameMesh.ts gameStuds; J3c-1 DR2), after the boxes in their colour's
-                // mesh (the W4 rows read bricks from vertex k * 36); none on today's files
+                // mesh (the W4 rows read bricks from vertex k * 36); none on today's files; each along its direction (EP-c)
                 const st = w3.gameStuds ? w3.gameStuds[key] : null;
                 if (st) {
                     for (const u of st) {
                         const sc = u[3], sk = `${sc[0]},${sc[1]},${sc[2]}`;
                         let d = byColour.get(sk);
                         if (!d) { d = { rgb: sc, data: [] }; byColour.set(sk, d); }
-                        studInto(d.data, u[0], u[1], u[2]);
+                        studInto(d.data, u[0], u[1], u[2], u[4]);
                         if (this.cull) { (d.su ??= []).push(u); }
                     }
                 }
@@ -466,7 +588,7 @@ void main() {
                     groups.push({ mesh: new Mesh(gl, d.data), color: new Float32Array([d.rgb[0] / 255, d.rgb[1] / 255, d.rgb[2] / 255]), ...ex });
                 }
                 this.gameMeshes.set(key, groups);
-                if (this.cull) { this.gameBoxes.set(key, modelBox(w3.gameMeshes[key], st)); }
+                if (this.cull) { this.gameBoxes.set(key, modelBox(w3.gameMeshes[key], st, pc)); }
                 const pt = [...new Set(groups.flatMap((q) => q.ptz || []))].sort((p, q) => p - q);
                 if (pt.length) { this.gamePt.set(key, new Float32Array(pt)); }
             }
@@ -480,21 +602,22 @@ void main() {
         }
 
         /** a colour's culling data (buildGames, `cull`; d: its boxes bx and studs su, the file's order, and its mesh data):
-         *  nBox its box vertices (the first in its mesh), nStud its studs (after them, 102 vertices each), m8 / m6 its
+         *  nBox its box and piece vertices (the first in its mesh; EP-c: the pieces after the boxes), nStud its studs (after them, 102 vertices each), m8 / m6 its
          *  studs as 8- and 6-gons (lod; same order), pat whether a top carries the stud grid's uv (pattern: each box top
          *  with a listed stud of its colour standing on it, its six vertices' uv set to (u, -1 - v) on the grid of its
          *  studs, the corner stud's centre at (0.5, -1.5)), ptz those tops' heights */
         cullGroup(d) {
             const gl = this.gl, bx = d.bx || [], su = d.su || [];
-            const ex = { nBox: bx.length * 36, nStud: su.length, m8: null, m6: null, pat: false, ptz: [] };
+            const ex = { nBox: bx.length * 36 + (d.pv || 0), nStud: su.length, m8: null, m6: null, pat: false, ptz: [] };
             if (su.length && this.cLod) {
                 const a8 = [], a6 = [];
-                for (const u of su) { studSidesInto(a8, u[0], u[1], u[2], 8); studSidesInto(a6, u[0], u[1], u[2], 6); }
+                for (const u of su) { studSidesInto(a8, u[0], u[1], u[2], 8, u[4]); studSidesInto(a6, u[0], u[1], u[2], 6, u[4]); }
                 ex.m8 = new Mesh(gl, a8); ex.m6 = new Mesh(gl, a6);
             }
             if (this.cPattern) {
                 bx.forEach((b, k) => {
-                    const on = su.filter((u) => Math.abs(u[2] - b[5]) < 1e-6 && u[0] > b[0] && u[0] < b[3] && u[1] > b[1] && u[1] < b[4]);
+                    // an upward stud only (EP-c: a sideways stud stands on no top)
+                    const on = su.filter((u) => (u[4] === undefined || u[4] === '+z') && Math.abs(u[2] - b[5]) < 1e-6 && u[0] > b[0] && u[0] < b[3] && u[1] > b[1] && u[1] < b[4]);
                     if (!on.length) { return; }
                     const sx = Math.min(...on.map((u) => u[0])), sy = Math.min(...on.map((u) => u[1]));
                     // boxInto's first quad is the top (six vertices)
@@ -589,7 +712,13 @@ void main() {
             gl.uniform3fv(this.loc.light, norm([0.35, -0.45, 1]));
             const s = this.snap;
             const I = M4.id();
-            for (const st of this.statics) { this.draw(vp, I, st.color, { mesh: st.mesh, tex: st.tex }); }
+            for (const st of this.statics) {
+                // EN2 (D176, review en2 r1 S2): a decal 0.1 mm over the floor is pulled toward the eye by a polygon offset, so it
+                // stays in front of the floor at any zoom (the 0.1 mm alone runs out of depth precision from about 8 m out)
+                if (st.decal !== undefined) { gl.enable(gl.POLYGON_OFFSET_FILL); gl.polygonOffset(-1, -1); }
+                this.draw(vp, I, st.color, { mesh: st.mesh, tex: st.tex });
+                if (st.decal !== undefined) { gl.disable(gl.POLYGON_OFFSET_FILL); }
+            }
             const w3 = this.geom.world3d;
             const hz = s && s.hazards;
             if (w3) {

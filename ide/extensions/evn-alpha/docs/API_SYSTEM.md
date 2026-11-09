@@ -24,13 +24,14 @@ evn.UART(id, baudrate=115200, bits=8, parity=None, stop=1, *, timeout=0, timeout
 | `timeout` | 0 | ms a read waits for its first byte (`read()`, `readinto()`, and each byte of `readline()`) |
 | `timeout_char` | 0 | ms a read waits for each next byte; raised to one character time + 1 ms (13 bits: 2 ms at 9600, 1 ms at 115200, 44 ms at 300) |
 | `invert` | 0 | `UART.INV_TX`, `UART.INV_RX` or both: that line idles low (the RX pad is then pulled down, so an unplugged header still reads idle) |
-| `txbuf`, `rxbuf` | 1023, 255 | the transmit and receive rings are fixed in static RAM: a size up to theirs (or 0 / negative, as rp2's "not given") is accepted so `machine.UART` code runs unchanged, and the ring stays its full size (`print(uart)` shows 1023 / 255); a larger one raises `ValueError` |
+| `txbuf` | 1023 | the transmit ring is fixed in static RAM: a size up to 1023 (or 0 / negative, as rp2's "not given") is accepted so `machine.UART` code runs unchanged, and the ring stays its full size (`print(uart)` shows 1023); a larger one raises `ValueError` |
+| `rxbuf` | 255 | `rxbuf` up to 255 (or 0 / negative, rp2's "not given") is the static 255-byte receive ring, which costs no heap; 256..16384 is a receive ring of that many bytes on the MicroPython heap (opt-in, 2026-11-01: 255 bytes fill in about 11 ms at 230400 baud, 22 ms at 115200), kept until `deinit()`, `init(rxbuf=...)` or the soft reboot, `MemoryError` when the heap has no room for it (nothing changes then); above 16384 `ValueError` (16384 is 0.7 s at 230400 baud). `print(uart)` shows the ring in force |
 
 **Methods**
 
 | Call | Does |
 | :--- | :--- |
-| `init(baudrate, bits, parity, stop, *, timeout, timeout_char, invert, txbuf, rxbuf)` | re-configure; every setting left out stays as it is (`init(9600)` changes the baud only). The bytes already queued go out first, at the old settings (`OSError(ETIMEDOUT)` past the `flush()` bound); nothing queued or received is dropped |
+| `init(baudrate, bits, parity, stop, *, timeout, timeout_char, invert, txbuf, rxbuf)` | re-configure; every setting left out stays as it is (`init(9600)` changes the baud only). The bytes already queued go out first, at the old settings (`OSError(ETIMEDOUT)` past the `flush()` bound); nothing queued is dropped. `rxbuf=` resizes the receive ring: the bytes already received move across, oldest first, as many as the new ring holds (the rest count in `overflow()`) |
 | `write(buf)` | queue the bytes (a `str` is sent as UTF-8); returns `len(buf)`. Every byte is queued, never dropped: it waits only while the 1 KiB transmit ring is full |
 | `read()`, `read(n)` | up to `n` bytes (everything without `n`): the first byte waits at most `timeout`, each next one at most `timeout_char`. When a gap of `timeout_char` ends a burst short of `n` (always, without `n`), the read waits once more, up to `timeout`, for further bytes, then returns what came (as `machine.UART`: the stream reads again); `None` when nothing came |
 | `readinto(buf)`, `readinto(buf, n)` | the same into a `bytearray` / `memoryview` (with the same extra `timeout` wait after a short burst): the number of bytes stored, or `None` |
@@ -40,8 +41,8 @@ evn.UART(id, baudrate=115200, bits=8, parity=None, stop=1, *, timeout=0, timeout
 | `flush()` | wait until everything queued has been sent (ring, FIFO and shift register); `OSError(ETIMEDOUT)` past (33 + 1024) × 26 bit times: 0.24 s at 115200, 92 s at 300 |
 | `txdone()` | `True` when nothing is left to send |
 | `sendbreak()` | the queued bytes go out first, then TX is held low for two frames (2.1 ms at 9600 8N1) |
-| `deinit()`, `close()` | release the port — it keeps running and keeps its queued bytes — so a `Bluetooth` object or another `UART` can take it; the REPL is taken off it; every later call raises `ValueError("UART is closed")` (build a new object to use it again) |
-| `overflow()` | EVN's: bytes the receive ring (255 bytes) dropped since the last call, plus FIFO overrun events (read and clear; 0 = nothing lost) |
+| `deinit()`, `close()` | release the port — it keeps running and keeps its queued bytes — so a `Bluetooth` object or another `UART` can take it; the REPL is taken off it; a heap receive ring (`rxbuf` above 255) is freed and the port is back on its 255-byte ring (the oldest 255 bytes received stay); every later call raises `ValueError("UART is closed")` (build a new object to use it again) |
+| `overflow()` | EVN's: bytes the receive ring (255 bytes, or `rxbuf`) dropped since the last call, plus FIFO overrun events (read and clear; 0 = nothing lost) |
 | `flush_rx()` | EVN's: drop everything received and not read yet (not `flush()`, which waits for output) |
 | `repl(True)`, `repl(False)`, `repl()` | EVN's: the MicroPython REPL on this port as well as USB (a USB-serial adapter on the header); survives a soft reboot |
 
@@ -64,7 +65,8 @@ print(line.strip() if line else "nothing came")
 | `UART(0)`, `UART(1)` | `UART(1)`, `UART(2)` | the numbers printed on the board's serial headers |
 | `tx=`, `rx=`, `cts=`, `rts=` pins | not accepted (`TypeError`) | each header is wired to fixed pins |
 | `flow=`, `UART.RTS`, `UART.CTS` | not accepted | the headers carry TX and RX only; the PL011's CTS / RTS pins are servo ports 1–4 |
-| `txbuf=` / `rxbuf=` any size | up to 1023 / 255 accepted, the ring staying its full size; larger: `ValueError` | the rings are fixed in static RAM, shared with `Bluetooth` and the serial REPL; a smaller request is accepted so ported code runs, and a GPS program's `rxbuf=512` is refused rather than silently given 255 |
+| `txbuf=` any size | up to 1023 accepted, the ring staying its full size; larger: `ValueError` | the transmit ring is fixed in static RAM, shared with `Bluetooth` and the serial REPL; a smaller request is accepted so ported code runs |
+| `rxbuf=` any size | up to 255: the static 255-byte ring; 256..16384: a heap ring of that size; larger: `ValueError` | the default ring costs no heap; a program that receives a stream asks for more (a GPS program's `rxbuf=512` gets 512 bytes on the heap) |
 | `bits` 5..8 unchecked (9 misbehaves), `parity` any int | `bits` 5..8, `parity` `None` / `0` / `1`, else `ValueError` | a setting the hardware cannot take is refused, never ignored |
 | `write()` returns a short count (or `None`) after `timeout` | every byte queued, `len(buf)` returned, no timeout | EVN's rule: serial writes are never lossy |
 | `init()` resets the UART (queued bytes lost) | waits for the queued bytes, then changes only what differs | never lossy; bytes received at the old settings stay readable |

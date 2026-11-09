@@ -3,7 +3,7 @@
 The simulator is an EVN ALPHA you can run programs on without a board: a robot on a line-following course, in a
 panel next to your program - with the RoboCup Junior Rescue Line course's 3D elements (ramps, raised tiles and bridges,
 seesaws, speed bumps, debris, obstacles) and its evacuation zone, which the robot climbs, rides, scrapes over and bumps into, and a
-WRO RoboMission Junior table with its game objects and referee. It is a board like any other to the extension - you connect to it, Run your program,
+WRO RoboMission Junior, Elementary and Senior tables with their game objects and referee. It is a board like any other to the extension - you connect to it, Run your program,
 watch it in the Board view, open the REPL, stop it - and the same program file runs on a real EVN ALPHA built like
 the simulated robot.
 
@@ -96,7 +96,11 @@ sensor for the obstacle, the IMU's pitch for the ramp) is the next step.
   line from its exit to the Goal; it lays out with no warnings. The *Oval* is a closed
   loop for timing laps; *Straight*, *Curves*, *Corners*, *Zigzag*, *Bumps*, *Hairpins*, *Gaps* and *Crossings* are
   one kind of tile each; *Empty floor* has no line, for driving and turning. *WRO RoboMission Junior 2026* is the WRO
-  table with its 27 game objects and its referee ([WRO RoboMission](#wro-robomission)). The maps you build are listed
+  table with its 27 game objects and its referee ([WRO RoboMission](#wro-robomission)), *WRO RoboMission Elementary
+  2026* the same table with Elementary's mat, its 16 game objects and its referee
+  ([WRO RoboMission Elementary 2026](#wro-robomission-elementary-2026)), *WRO RoboMission Senior 2026* the same table
+  with Senior's mat, the mosaic frame on its pattern paper, its 71 game objects and its referee
+  ([WRO RoboMission Senior 2026](#wro-robomission-senior-2026)). The maps you build are listed
   under *Your maps*.
 - **Speed**: how fast simulated time runs against the clock (¼× to 4×). Your program's clock - `wait()`,
   `StopWatch`, `time.ticks_ms()` - is the simulated one, so a program behaves the same at every speed.
@@ -119,6 +123,140 @@ sensor for the obstacle, the IMU's pitch for the ramp) is the next step.
   elements the robot's **height** (mm) and its pitch and roll, and each colour sensor's reading, each distance
   sensor's range, the IMU's heading and each motor's speed. When the robot drives off an edge or tips over, the panel
   says so. **Back to start** also puts the seesaws, the obstacles and the debris back where the map has them.
+
+### The tools pane
+
+**Tools** opens a pane where everything works from the keyboard and states its values as text; what a tool does is
+also said through a live region, so a screen reader announces it (the panel's route for a learner who cannot drag).
+
+- **The robot's pose** is shown as text (`x 400 mm, y 300 mm, heading 40°`; 0° faces +x, + is to the left). Type a
+  **start x, y and heading** and press **Put robot here** (or Enter in a field): the robot is put down there as a drag
+  would, when no program runs. A pose off the course, or an empty field, is refused and the reason said.
+- **Nudge buttons** move the robot 10 mm along x or y and turn it 5°.
+- **Select robot** (or a click on the robot) lets the **arrow keys** do the same: left, right, up, down move it 10 mm
+  across the view, Shift with left or right turns it 5°. Escape or a click on the floor lets go. A press that moves
+  under 5 px is a click, under 12 px by finger, and past that a drag, which puts the robot down. A dashed box and a line
+  of text on the floor mark a selected robot; the keys belong to a text field while it has the focus, and to the map
+  builder while it is open. A key never throws a game away: during an RCJ game (and with its result on the card) and
+  during a WRO run the arrow keys leave the robot where it is, and say why. A drag, a typed pose and the buttons are
+  deliberate, and do what they always did: a new RCJ game, or the end of the WRO run.
+- **The pen** sits at the middle of the axle and draws the trail. **Pen is down / up** lifts and lowers it, for every run
+  after, and a run's own `simtrail.pen_up()` lasts for that run. **Copy path as CSV** copies what was drawn as
+  `x_mm,y_mm` lines, a blank line where the pen came up.
+- **The errors** show after each run as one line, said by a screen reader too, and with **Print these to the output
+  when a run ends** ticked they go to the output as well (off by default, so a program's output stays what the board
+  would print). They read the simulator's true pose:
+  - the **end-point error** is the gap from the robot to the **target** (typed here, or `simtrail.target()`; with no
+    target, the run's start);
+  - the **closing error** is the gap between the two ends of the last stroke, from where the pen went down to where it
+    came up (no stroke: from the run's start), with the heading faced off beside it;
+  - the **true heading error** is the robot's heading less the target's (no heading given: the run's start's), the
+    smaller way round, + to the left.
+
+  A Run, a robot put down and a new course start the measuring again. After Stop on a computer that has to end the
+  worker to stop a program, measuring starts again from where the robot stands.
+
+- **The grid** draws a line every 50, 100, 300 or 500 mm over the course, labelled in mm.
+- **The ruler** and **the protractor** take typed coordinates: the ruler two points, the protractor a vertex and two
+  arms. **Measure** (or Enter in a field) draws them on the 2D view and states the value:
+  `Ruler: 500.0 mm from (0, 0) to (300, 400), bearing 53.1°.`,
+  `Protractor: 90.0° at (10, 20), from arm 1 (110, 20) to the left to arm 2 (10, 120).` **From robot** fills the first
+  point from the robot (the protractor's first arm along its heading), and **Pick on floor** takes clicks for the points
+  in turn (Escape stops).
+- **Markers** are numbered crosses to drop on the floor, to mark where the robot stopped: **Drop at robot** (or M while
+  the robot is selected) marks the middle of the axle, **Drop here** a typed x and y, **Pick on floor** a click each.
+  The list states where each one is, how far from the one before and from the robot, with a Remove button for each;
+  **Clear** takes them all. They stay across runs, go with the course, and nothing on the course senses them (up to 50).
+
+A program reads the same through `simtrail`, a simulator-only module (the board has no pen and no true pose, so `evn`
+stays the board's API, and `import simtrail` fails on the board):
+
+```python
+import simtrail
+
+simtrail.pen_up()                 # and pen_down(): a new stroke starts where the pen goes down
+simtrail.target(600, 450, 90)     # x and y in mm together, heading in degrees (optional); target() goes back to the run's start
+print(simtrail.end_error())       # mm
+print(simtrail.closing_error())   # mm, the last stroke's ends; closing_error(2) adds 2 mm for each degree between them
+print(simtrail.heading_error())   # degrees, + to the left
+print(simtrail.report())          # the panel's line
+```
+
+`closing_error(2)` is G5's closing error while the pen stays down for the whole run, as the last stroke is then the run.
+After a `pen_up()` they part: G5 measures from the run's start to its end, and `closing_error()` stays with the stroke
+that ended at the `pen_up()`, whatever the robot does next.
+
+`target()` takes x and y together, with or without a heading, or nothing at all; anything else (`target(100)`,
+`target(heading=90)`, `target('a', 5)`, `target(float('nan'), 0)`) raises a `ValueError`, in every run, as the panel's
+fields refuse it, and the target set before stays.
+
+**A read is refused in a scored or sealed run**, with `simtrail.ReadRefused` (a `RuntimeError`): every one of these is the true pose. A challenge
+run or a verification has no reader at all, and runs in a worker hardened against the program. Under the panel's RCJ or
+WRO referee `simtrail` refuses in the same way, but that is the API's refusal and no more: the panel's worker is not
+hardened, a program there can use `import js` to read what the worker sends the panel, or to turn the referee off, and
+nothing the panel's referee scores is sealed. The pen and the target still work in all of these, doing nothing to the
+run, so a program that draws runs as it is. A program that reads stops there, and in a Run challenge that is the program's
+end, not a failed run: the run is judged as it stands, and the refusal is stated under its row, so a program that draws
+and prints `closing_error()` last keeps its points, while a read mid-program still stops the program at that line. Reads take no simulated time: a loop that calls nothing else stops the simulated clock, as any loop that never
+calls the board does.
+
+### The plot
+
+**Plot** opens a pane that plots what a program could print, against time: any motor, any sensor, and every printed
+`name=value`. Open it before you press **Run**: nothing is kept while it is shut, and each Run starts it again, shut or
+open, so a Run made with it shut leaves it empty, and it says so. To compare two Runs, print both from one program, or
+**Copy CSV** after each: a Run keeps no earlier trace.
+
+- **The robot's channels** are named as **Copy setup code** names the objects, and hold what those getters return:
+  `left.angle()`, `right.speed()`, `sensor1.normalized()[0]` (the clear channel; `[1]` to `[3]` red, green, blue),
+  `distance5.distance()`, `imu.heading()`, `battery.voltage()`; a motor with no object there is `motor4.angle()`, as `motor4 = Motor(4)`. A getter's
+  sign and rounding are kept (a mirrored `left` reads as `Motor(1, Direction.COUNTERCLOCKWISE)`), and a motor's angle and
+  the heading read from the Run, as `Motor(...)` and `IMU(...)` at a program's start do, on every Run. A colour reading is
+  to within a count of the chip. A distance with no target is a gap in the line.
+- **The robot's channels assume the setup code, unchanged, made at the program's start.** They do not know what a program
+  did to its own objects. After `reset_angle()`, `reset_heading()`, `Motor(..., reset_angle=False)`, a different `Direction`,
+  gear or `speed_unit`, `calibrate_black()` or `calibrate_white()` (by far more than a count) or a new exposure on a colour
+  sensor, an IMU's `axes()` or its full-turn setting, an object made after a wait, or a second object on a port (the channel
+  keeps the first's zero and sign), the program's numbers and these
+  differ; with a wheel still turning at **Run**, the zero is out by what it turned until the object was made. For an
+  exact value, print it: the pane says this too.
+- **Printed channels**: a `name=value` in a printed line is a sample of `name`, so `print("error=%d" % e)` makes a
+  channel called `error`, and `print("t=%d w=%d" % (t, w))` makes two. `v = 3 mm/s` and `a=1, b=2` count too. A name is
+  ASCII letters, digits and `_`, and the value a number standing alone: `speed=100mm` and `tempé=5` make no channel, and
+  `x=1,000` reads 1. `None`, `nan` and `inf` are gaps, `True` and `False` 1 and 0. Printed names are ticked as they come, up
+  to six.
+- **Traces** are told apart by their line (solid, dashed, dotted and so on), their marker, and a label at the end of the
+  line, which sits beside the trace's marker. The list under the plot gives each trace's look and its lowest, highest and
+  latest value in words. Six at most. Values closer than a millionth of a millionth of their size are ruled as one value.
+  **Each trace on its own scale** fits each one to the height of the plot, for channels of different sizes.
+- **Pause** stops taking samples so that you can read them: the run goes on, and the line has a gap when you resume. A Run
+  that comes while paused has no start here, and the pane says so.
+  **Clear** throws the samples away.
+- **Cursors A and B** read the samples as text: `A at 2.5 s: left.angle() -120 deg, distance5.distance() 430 mm.`, and with
+  both placed the difference, `B less A: ...`. Each is a slider, so the arrow keys step it one sample at a time, Home and
+  End go to the ends, and a screen reader says each stop; or type an x and press **Go** (or Enter), or click the plot
+  (Shift-click for B). A cursor stays on its sample as more come, until that sample is pushed out; then it moves to the
+  oldest. **Cursors off** takes them away.
+- **Against** chooses the x axis. On **Automatic** it is time since the plot started, except for a log printed after its
+  run: those lines come all at once and carry no time, so they go against their own `t` if they print one, else against
+  the line number. A printed channel can be the axis too, for speed against distance. A line printed while the run goes
+  sits at the time of the last frame the panel had, about 33 ms of your computer's time; for exact times print your own.
+
+- **Table** shows the samples as a table, the plot's x axis first, 50 rows at a time, following the latest rows until you
+  go back with **Earlier rows**. A dash is no sample in that row, `none` a reading of no number. The table, the cursors and
+  the list give values to three decimals, or three figures under 1. An axis rules its own step's decimals; where those are too
+  wide for the tick, the ticks count from a base the plot states once (`y: 23.0000002 + tick`).
+- **Copy CSV** and **Save CSV** export the ticked channels, with `time_s`, the printed `line` where there are printed
+  channels, and the column a log is plotted against, every value in full. An empty cell is no sample or no reading. Times
+  are the plot's, from its start; a line's own `t` is its own column, and a printed `line`, `time_s` or `run` is headed
+  `printed line`, `printed time_s` or `printed run`. Samples that cross a Run (one came while paused) get a `run` column, 1 the
+  oldest, as each Run reads from its own zeros. In the browser IDE, **Save CSV** writes to that browser's own store of projects, not
+  to your disk; there **Copy CSV** is the way to a spreadsheet.
+
+Each channel keeps its last 6000 samples (200 s of frames), and at most 32 printed names are read: the pane says what went.
+A program never sees the plot, and **the plot shows only what a program could print**: never the true pose, the course's
+progress, a motor's voltage or a servo's true shaft, so judged runs in the panel show nothing a sensor would not. During
+**Run challenge** nothing is taken at all: those runs happen apart from the panel, and their output is in their report.
 
 ## Building a map
 
@@ -263,7 +401,8 @@ What the simulator makes of the tiles:
   place seen from above. The
   *elevated* tiles (#10E, #41E) are the tiles a raised course is built of; any tile can be given a height.
 - **Green markers are part of the floor**: the colour sensors see them (green on white: a TCS34725 reads them with
-  green above red and blue), so a program finds them as on a real course. The starter program (**New program**)
+  green above red and blue, and `color()` says `Color.GREEN`: it is the board's classifier), so a program finds them as
+  on a real course. The starter program (**New program**)
   does not look for them: it goes straight over a crossing, which is right only where the course has no markers.
 - The tiles' geometry comes from the drawings' dimensions and is checked against the drawings' own ink: every
   tile matches within 2 mm (`scripts/test_simulator.js`; the ink is taken out of the PDF by
@@ -527,8 +666,12 @@ scored and the robot is never put back) and on again (a new game from where the 
   own line crosses a joint up to the tile after next and the robot moves on along it. So a branch not taken, a line
   beside the course (figure 5), a later part of it (figure 6) and the course's line driven back onto the tile before
   (figure 3: turned round, or reversing on past the whole tile before) are called; a back-up within the tile or
-  back over the joint it has just crossed (heading on along the course), a turn on the spot, crossing a line square
-  or passing beside it are not. Nothing else is automatic: stopping, circling or wandering off
+  back over the joint it has just crossed or the one ahead of it (heading on along the course), a back-up from short
+  of a joint it never crossed (the small backward settle at the end of a straight among them), a turn on the spot
+  (which also leaves a back-up's call standing), crossing a line square or passing beside it are not. One known
+  exception, not the rules' (`docs/TODO.md`): a robot left facing back along the course, by a turn on the spot or
+  driving on tail first, with its sensors 20-50 mm past a joint of its own line that way, is called though it has
+  stopped there. Nothing else is automatic: stopping, circling or wandering off
   the course are not against the rules. For unattended runs the engine's `autoCaptain`
   setting (off) calls the team captain's 5.5.1a, logged as the captain's, when the robot's centre is over `offTiles`
   (300 mm) off the tiles, over `lostOff` (400 mm) from the line, or after `autoCaptainS` (30 s) without 10 mm of
@@ -658,9 +801,13 @@ challenge submission**.
    student may have run the challenge many times and handed in the luckiest set of starts, or written a program that only
    works from those: the score from new starts shows how reliable the program really is. Grade on it, or on both.
 
-Verification needs the Simulator (it opens it) and the version of the level the student ran (the report says when a
-newer extension changed the level). The program runs walled off from the judge: it cannot send the panel results of its
-own, nor change how the simulator computes (JavaScript's own objects are frozen before it runs), and every run runs in
+Verification needs the Simulator (it opens it), the version of the level the student ran (the report says when a newer
+extension changed the level), and a simulator whose engine is the one the file was made on: a release can change how the
+robot moves, as the one that brought a drive base's speed down to what its wheels can do at the pack did, and a file is
+sure to verify only on the engine that made it. On another it may not: a run that comes out differently reads **NOT
+VERIFIED**, another version of the extension among the causes the report gives. The re-run and the new starts still run.
+The program runs walled off from the judge: it cannot send the panel results of its own, nor change how the simulator
+computes (JavaScript's own objects are frozen before it runs), and every run runs in
 a worker of its own, so nothing a program does in one run reaches the next; the score is summed up by the extension,
 not the panel.
 
@@ -683,9 +830,8 @@ but a real run differs from the simulator's:
 
 ## WRO RoboMission
 
-In this release the Course list shows the WRO course in developer mode only (the hidden setting
-`"evn.developer.courses": true` in your settings, then close and reopen the panel); it comes to everyone in a later
-release.
+The Course list shows all three WRO courses, Junior, Elementary and Senior, to everyone: no setting is needed (0.2.72
+to 0.2.74 listed Junior only in developer mode).
 
 **WRO RoboMission Junior 2026** in the Course list is the World Robot Olympiad's RoboMission Junior game of the 2026
 season, "Heritage Heroes", as the rules of its International Final give it (*RoboMission Junior Game Rules, Season
@@ -694,17 +840,17 @@ game objects at their start places, and a WRO referee that times the 2-minute ru
 sheet. The simulator is not affiliated with or endorsed by the World Robot Olympiad Association; World Robot Olympiad,
 WRO and RoboMission are its names and trademarks, and WRO's mat and rules are WRO's.
 
-![The WRO RoboMission Junior 2026 table from above on the simulator's schematic floor (no mat loaded): the roads and black lines, the coloured scoring areas, and the 27 game objects at their start places](images/simulator-wro-2d.png)
+![The WRO RoboMission Junior 2026 table from above on the simulator's schematic floor (no mat loaded): the roads and black lines, the coloured scoring areas, the printed marks that score nothing (grey squares, sponsor panels, symbols), the museum's facade, and the 27 game objects at their start places](images/simulator-wro-2d.png)
 
 | What | WRO RoboMission Junior 2026 |
 | :-- | :-- |
 | Table | 2362 x 1143 mm, the mat filling it; walls 50 mm high outside its four edges (General Rules 7.2) |
 | Start | the white 250 x 250 mm square of the start area (7.8): the robot facing right, the middle of its whole outline - body, wheels, sensors and mechanisms, every servo at the middle of its travel - on the square's centre |
-| Floor | the mat you load (below), else a schematic drawn from EVN's own measurement of it |
+| Floor | the mat you load (below), else a schematic drawn from EVN's own measurement of it: every printed area and mark in its colour - the unscored grey squares, sponsor panels and symbols, the cards under the tower starts, the museum's facade, the targets' grey stone ground and the excavation site's dirt too - without the pictures (houses, walls, bricks, mounds, the street under the visitor marks) |
 | Objects | 4 visitors, 2 red towers, 2 yellow towers (a base and a top each), 4 of the 5 artefacts, 10 dirt particles, 2 barriers, the parrot |
 | Run | 2 minutes from the program's Run (10.1); the time in full seconds, truncated (10.8) |
 | Score | the Junior scoring sheet, 230 points at most |
-| Not here | Elementary and Senior; the International Final's extra task; surprise rules; national organisers' versions |
+| Not here | the other categories (Elementary and Senior have their own sections: [Elementary](#wro-robomission-elementary-2026), [Senior](#wro-robomission-senior-2026)); the International Final's extra task; surprise rules; national organisers' versions |
 
 - **The walls** stop the robot's whole footprint from the floor up - a robot with more than 50 mm of clearance does not
   drive under them - and every game object: a pushed object stops at a wall (and, pushed further, stops the robot).
@@ -775,6 +921,14 @@ it. In plain terms:
 - **Mechanisms meet the table.** On this course a mechanism's parts are bodies too: they meet the mat, the walls and the
   objects (on the other courses only the balls). An arm lowered onto the mat, or a jaw closing on a wall, stops there
   as at an end stop (a servo stalls, a motor is held), and an object can rest on a part as on any surface.
+- **Fixtures.** A fixed part of a game's field - [Senior](#wro-robomission-senior-2026)'s mosaic frame - is solid and never
+  moves: objects slide, rest and tip on it, and the sensors read it. The robot's wheels and caster do not climb it: a
+  robot driven at it stops at its edge on a tyre or the caster (its body passes over it when the clearance is more than 6 mm,
+  else the body stops there), where a real wheel would climb the frame's 6 mm.
+- **The pattern paper.** Senior's mosaic pattern is a paper under the frame: each opening shows its
+  cell's colour, drawn from the field's seed with the rest of the field (a new paper after *Randomise* and *Back to
+  start*). A colour sensor looking down through an opening reads the paper's colour (on the same fixed scale as the
+  objects); over the frame's bars it reads the frame. The paper has no thickness: a tile dropped in rests on the floor.
 - **Sensing.** The sensors read each object where the engine has it, tipped or lying included. A colour sensor looking
   down reads the top of an object under it (each colour on one fixed scale, whatever mat is loaded: a white brick
   reads the same on the schematic and on the mat); one with **facing** `forward` reads an object's side brick by brick
@@ -831,25 +985,36 @@ STOP.
 
 How the referee reads the rules where they leave a choice (in the team's favour, General Rules 10.6):
 
-- An object's **footprint** is what of it touches the mat. **Completely in** is the footprint inside the area; **partly
-  in** is it meeting the area without being inside. An area's own boundary line is part of it, and so are the
+- An object's **footprint** is what of it touches the mat, up to 1 mm above it, whatever else it rests on (the reading
+  Elementary and Senior have). **Completely in** is the footprint inside the area; **partly in** is it meeting the area
+  without being inside. An area's own boundary line is part of it, and so are the
   exhibition spots inside the museum and the black squares inside the excavation site. A visitor's area is its
   colour's: green the excavation site, red the museum, black and blue their visitor areas.
 - **0.5 mm at every edge goes to the team**: an object up to 0.5 mm over an area's edge is still inside it, and one up to
   0.5 mm into an area it must not touch does not touch it.
-- **To score in missions 3.1-3.3, an object must be on the mat**: one held by the claw or resting on another object
-  scores nothing (a yellow top scores on its base), and one in an area of another colour scores nothing.
+- **To score in missions 3.1-3.3, an object must touch the mat**: one lifted clear of it by the claw (more than 1 mm), or
+  lying wholly on another object, scores nothing (a yellow top scores on its base), and one in an area of another colour
+  scores nothing. One touching its area while resting partly on another object or on the robot is judged by the part on
+  the mat: a visitor with one side up on a dirt particle and its other edge in its area scores 5 (not upright). One
+  carried flat on a robot part within 1 mm of the mat counts as touching it and scores.
 - **The negative conditions are read as written** (3.4, 3.5): only what touches the mat can touch an area. **Dirt**
-  scores when it does not touch the cobblestone area, held or lying on another object included. **A barrier or the
-  parrot** held by the claw, lifted, or resting on another object touches no mat outside the grey areas, so it is not
-  moved and scores its 10 points.
+  scores when it does not touch the cobblestone area, held or lying wholly on another object included; dirt resting
+  partly on something with a part on the cobblestone touches it and scores nothing. **A barrier or the parrot** held by
+  the claw, lifted, or lying wholly on another object touches no mat outside the grey areas, so it is not moved and scores
+  its 10 points; one resting partly on something with a part on the mat outside the grey areas is moved.
 - **A yellow tower** is a top resting on a base with its centre over the base's top pad, at any turn (the top plugs
-  into nothing); it scores by where the base is. A base alone scores nothing.
+  into nothing); it scores by where the base is, and the base must stand on the mat and on nothing else. A base alone
+  scores nothing.
 - **Moved** (3.5) is a part of a barrier or the parrot touching the mat outside every grey area: one pushed wholly
   into another grey area is not moved. A barrier or the parrot that tips over is whole, so not damaged: it is moved
   only by where it then touches the mat.
 - **Upright** is an object standing on its base: its top side up and its centre of mass over the outline of the bricks
-  it stands on. A visitor or an artefact completely in its area but not upright scores as partly in (5); a red tower
+  it stands on. A visitor, an artefact and a red tower must also tilt no more than a corner of the base lifted 1 mm along
+  its diagonal: 0.80 degrees for a visitor, 1.27 for an artefact, 0.85 for a red tower (Elementary's meaning: WRO's answer of
+  2026-06-30, a microphone partly lifted is not upright). What you can rely on: an object standing flat is upright,
+  and one tilted by a whole edge lifted 1 mm (1.2 degrees for a red tower, 1.8 for an artefact) is not. So a tower leaning
+  on a robot part when the run ends can lose its points with its raised edge under 1 mm: back the robot off. A yellow
+  tower's top and base take the first two tests only. A visitor or an artefact completely in its area but not upright scores as partly in (5); a red tower
   not upright, or a yellow tower whose top or base is not upright, scores nothing.
 
 ### Restarting
@@ -863,12 +1028,206 @@ without a restart, the run ends as with End run, once the robot stands still.
 
 ### Not modelled
 
-- Breaking: an object never loses a brick and the robot never loses a part (10.4), so "not damaged" is always met.
+- Breaking: an object never loses a brick and the robot never loses a part (10.4), so on Junior "not damaged" is always
+  met (Elementary's amplifier knob and Senior's barrier balls can come off: their sections).
 - A mechanism's parts pass through the robot's own body: they meet the mat, the walls and the objects only.
 - The run record and verifying a result: no WRO result is verifiable yet.
-- The other age groups, the International Final's extra task and surprise rules.
+- The International Final's extra task and surprise rules.
 
 ![The same table in the 3D view: the game objects brick by brick on the schematic floor, and the WRO referee's card in the top left (the score of the field before a run, Run starts the 2 minutes)](images/simulator-wro-3d.png)
+
+### WRO RoboMission Elementary 2026
+
+**WRO RoboMission Elementary 2026** is the World Robot Olympiad's RoboMission Elementary game of the 2026 season,
+"Robot Rockstars", as the rules of its International Final give it (*RoboMission Elementary Game Rules, Season 2026*,
+version of 15 January 2026, and the *RoboMission General Rules 2026*): the same table, its own mat, the 16 game objects
+at their start places, and the WRO referee scoring the 2-minute run by the Elementary scoring sheet. Pick **WRO
+RoboMission Elementary 2026** in the Course list. Everything above
+holds on it as on Junior - the walls, Back to start and dragging the robot, loading the mat, the physics, the referee's
+run, start, end, time and marks, and restarting; what differs is here. The same not-affiliated note applies: WRO's mat
+and rules are WRO's.
+
+![The WRO RoboMission Elementary 2026 table from above on the simulator's schematic floor (no mat loaded): the stage at the left end with the amplifier, the two speakers, the cable areas and the light-green microphone area, the backstage in the bottom left corner, the two cables near the stage, the note start squares with the notes along the top edge, the six coloured note targets across the middle, the clef on its mark left of them, the truck's instrument marks with the instruments and the microphone at the bottom, the unscored grey squares and white sponsor panels, and the robot on the white start area inside its blue border at the right, facing left](images/simulator-wro-elementary-2d.png)
+
+| What | WRO RoboMission Elementary 2026 |
+| :-- | :-- |
+| Table | as Junior's: 2362 x 1143 mm, the mat filling it, walls 50 mm high |
+| Start | the white 250 x 250 mm square inside the blue start area at the table's right end (7.8): the robot facing **left**, towards the field, the middle of its whole outline on the square's centre |
+| Floor | the Elementary mat you load (**Load WRO mat...** on this course: the printing file of the Elementary 2026 mat from <https://wro-association.org>, checked as Junior's is and kept apart from it), else a schematic of it: every printed area and mark in its colour - the unscored grey squares and sponsor panels too (markings for surprise rules, scoring nothing) - without the artwork |
+| Objects | 2 cables; the guitar, the keyboard and the congas (the instruments); the microphone; 6 notes (red, green, black, white, yellow, blue); the clef; the amplifier, with its knob; 2 speakers |
+| Run | 2 minutes from the program's Run (10.1); the time in full seconds, truncated (10.8) |
+| Score | the Elementary scoring sheet, 255 points at most |
+| Start checks | Junior's, with at most **4** motors (servos counted, 5.2.8) and **no camera** (5.2.7: cameras are for Junior and Senior): a camera in the configuration marks *illegal start: the robot has a camera: cameras are not allowed in this category (5.2.7)*. The run still runs and scores |
+| Not here | the International Final's extra task; surprise rules; national organisers' versions |
+
+**The game objects** are the EVN owner's LEGO models of WRO's building instructions, brick by brick, as on Junior: their
+size from the bricks, their mass and centre of mass from the parts' weights (about +/-10 %). The notes (27 to 56 g; the
+black and the yellow one about 70 mm tall, the others about 80 mm), the cables (a long beam on two feet, 25 g), the
+guitar (41 g) and the microphone (80 g), both about 128 mm tall, the keyboard (49 g), the congas (66 g), the clef (65 g,
+about 125 mm), the amplifier (110 g) and the speakers (57 g each). Each stands on its mark the way the rules' photos of
+the field show it: the amplifier's front, with its knob, towards the field, the instruments and the microphone with
+their long side along the truck, the speakers' fronts into the field, the white note turned the other way to the rest.
+The sideways studs (the congas', the keyboard's, the speakers', the knob's), the pins and the hose pieces are drawn as
+they are on the models.
+
+**Randomisation (Elementary chapter 3).** The red and the green note always start on their own squares; from the seed,
+the black, white, yellow and blue notes are shuffled onto the four light-green squares, left to right (all four used).
+Nothing else is drawn. **Randomise** and the seed chip work as on Junior.
+
+**Scoring**, of the field when the run ends, by the Elementary scoring sheet:
+
+| Mission | Condition | Each | Max |
+| :-- | :-- | --: | --: |
+| 3.1 Connect the amplifier with the speakers | a cable completely in a grey cable area and upright (one cable an area scores) | 15 | 30 |
+| | partly in it, or not upright | 5 | |
+| 3.2 Prepare the show | the microphone completely in its light-green area on the stage and upright | 20 | 20 |
+| | partly in it, or not upright | 10 | |
+| | an instrument (guitar, keyboard, congas) completely in the backstage area | 15 | 45 |
+| 3.3 Play the song | a note completely in the target of its colour (its grey border included) and upright | 20 | 120 |
+| | partly in it, or not upright | 10 | |
+| 3.4 Bonus | the clef, the amplifier and each speaker not moved and not damaged (each) | 10 | 40 |
+| | | | **255** |
+
+How the referee reads the Elementary rules where they leave a choice (the rest as on Junior: 0.5 mm at every edge to
+the team, an area's boundary line part of it, an object held by the claw scoring nothing):
+
+- **Touching is what touches the mat.** An object is judged by the part of it that touches the mat - *completely in* is
+  that part inside the area and no other - whatever else it rests on: a cable with one foot on a speaker's top is judged
+  by its other foot, and a note whose base rests partly on a cable's foot by the part of its base on the mat (not upright
+  there, so 10).
+- **Upright** is standing on its base: the base fully on the mat (no point of it more than 1 mm up, the engine's touching distance). A microphone
+  lifted partly by the claw, one edge still on the mat, is not upright and scores 10 (WRO's Q&A, 2026-06-30); the same
+  holds for a cable and a note. **An instrument scores 15 completely in backstage however it lies**, turned over on its
+  side included (the rules' photo).
+- **The right colour.** A note completely in another colour's target scores 0 (*wrong colour*), standing or lying.
+- **One cable an area**: with both cables in one grey area, the better one scores there; one in each area scores both.
+- **The bonus.** An object is *moved* when it no longer touches its printed start mark **or** is no longer upright
+  (the rules' photos: either alone is moved), so one carried off its mark - lifted more than 1 mm, the engine's touching distance - scores 0. The
+  amplifier is **damaged** when its knob is off its seat (the rules' photo: the knob on the mat beside it, 0).
+- **The bonus without a task.** A run where the robot never leaves the start area still scores the bonus (40; WRO's
+  Q&A, 2026-06-17), and its time is 120 s: the bonus alone is not a task (10.12).
+
+**Not modelled on Elementary** (the card's *physics engine* note says it too), besides the list above:
+
+- **A wheel climbing a game object.** The robot's wheels and caster never ride up onto an object: driven at a cable's
+  foot or a note they push it, or stop at it when it is held, where a real wheel might climb a low one.
+- **Studs and pins hold by friction only.** A model's studs and pins are rigid parts of its body: where one object sits
+  on another it rests there by contact and friction, never plugged in (no clutch). The amplifier's knob is the one
+  separate part: it sits on its pin held by friction alone, so a blow along the pin (a sweep at about 0.5 m/s) slides it
+  off and the amplifier is damaged, where a real knob's clutch may hold.
+- **Breaking**: no object loses a brick; only the knob comes off.
+
+![The same table in the 3D view: the game objects brick by brick on the schematic floor, and the referee's card in the top left with the field's score before a run, 40 of 255 (the bonus: the clef, the amplifier and the speakers on their marks)](images/simulator-wro-elementary-3d.png)
+
+### WRO RoboMission Senior 2026
+
+**WRO RoboMission Senior 2026** is the World Robot Olympiad's RoboMission Senior game of the 2026 season, "Mosaic
+Masters", as the rules of its International Final give it (*RoboMission Senior Game Rules, Season 2026*, version of 15
+January 2026, and the *RoboMission General Rules 2026*): the same table, its own mat, WRO's mosaic frame fixed in the
+middle of it with a pattern paper under it, the 71 game objects at their start places, and the WRO referee scoring the
+2-minute run by the Senior scoring sheet. Pick **WRO RoboMission Senior 2026** in the Course list. Everything in the
+WRO RoboMission section holds on it as on Junior - the walls, Back to start and dragging the robot, loading the mat, the
+physics (its fixtures and the pattern paper are Senior's), the referee's run, start, end, time and marks, and
+restarting; what differs is here. The same not-affiliated note applies: WRO's mat, frame and rules are WRO's.
+
+![The WRO RoboMission Senior 2026 table from above on the simulator's schematic floor (no mat loaded): the robot on the white start area inside its blue border in the bottom left corner, facing right; the 24 mosaic tiles on their squares at the left end, six of each colour; the mosaic frame in the middle, its top black and its twelve openings showing the pattern paper of seed 1, its notch towards the bottom edge, among the blue, yellow, green and white cement targets; the four barriers with their balls on their L-shaped marks around them; the brown parking space; the cement elements at random in piles, some lying across others, in their four storage areas at the right end; the white sponsor area beside the start and the three tools on their grey areas along the bottom edge; the roads and the black lines](images/simulator-wro-senior-2d.png)
+
+| What | WRO RoboMission Senior 2026 |
+| :-- | :-- |
+| Table | as Junior's: 2362 x 1143 mm, the mat filling it, walls 50 mm high |
+| Start | the white 250 x 250 mm square inside the blue start area in the table's bottom left corner (7.8): the robot facing **right**, along the table, the middle of its whole outline on the square's centre |
+| Floor | the Senior mat you load (**Load WRO mat...** on this course: the printing file of the Senior 2026 mat from <https://wro-association.org>, checked as Junior's is and kept apart from it), else a schematic of it: the roads, the black lines and the printed areas and marks in their colours, without the artwork (the city's buildings, cars, pool and palm trees) |
+| Frame | WRO's 3D-printed mosaic frame (the engine's pieces baked from WRO's own 3D file), fixed on its white marking in the middle of the field, the notch towards the bottom edge, with the pattern paper under it (below) |
+| Objects | 3 tools (the rectangular trowel, the cement bowl, the masonry trowel); 24 mosaic tiles (6 each of yellow, blue, green and white); 40 cement elements (10 of each colour); 4 barriers (2 red with a blue ball, 2 black with a red ball) |
+| Run | 2 minutes from the program's Run (10.1); the time in full seconds, truncated (10.8) |
+| Score | the Senior scoring sheet, 233 points at most |
+| Start checks | Junior's, with at most **6** motors (servos counted, 5.2.8); cameras are allowed (5.2.7: in Junior and Senior). Each that fails marks an *illegal start*; the run still runs and scores |
+| Not here | the International Final's extra task; surprise rules; national organisers' versions (the task without the frame included) |
+
+**The game objects** are the EVN owner's LEGO models of WRO's building instructions, brick by brick, as on Junior: their
+size from the bricks, their mass and centre of mass from the parts' weights (about +/-10 %). The rectangular trowel
+(27 g), the cement bowl (39 g, standing on a 32 mm foot under its 80 mm ring) and the masonry trowel (52 g, lying on its
+blade as in the rules' photo) start on their grey areas along the bottom edge; the mosaic tiles (a block of six 2 x 4
+bricks, 32 x 32 mm and 30.5 mm tall with its studs, 14 g) on their squares at the left end, six of a colour; the cement
+elements (a 1 x 6 brick, 1.8 g) in their colour's storage area at the right end; the barriers (about 77 g, and a
+52 mm ball of 14 g seated on the studs round the hole in the top) on their L-shaped marks around the mosaic area and the
+cement targets. A cement element is very light, as Junior's dirt: a touch of the robot pushes it
+aside.
+
+**The mosaic frame** is a fixture: a solid part of the field that never moves (WRO tapes it down). It is 216 x 166 mm
+and 6 mm high - a plate standing 2 mm off the mat on a rim along three of its sides - with 4 x 3 openings at a 50 mm
+pitch, each a funnel 38 mm wide at the top narrowing to 34 mm at the plate's underside, so a tile set over an opening
+slides down into it. Objects slide, rest and tip on it, and the sensors read it (its top is black). The robot's wheels
+and caster do not climb it: a robot driven at it stops at its edge on a tyre or the caster - its body passes over it when
+its clearance is more than 6 mm, else the body stops there - where a real wheel would climb the frame's 6 mm.
+
+**The pattern paper** is under the frame: each opening shows its cell's colour - yellow, blue, green or white, the
+colours of the mat's cement targets - and the mosaic to build is that pattern. A colour sensor looking down through an
+opening reads the paper (on the same fixed scale as the objects); over the bars it reads the frame. The paper has no
+thickness: a tile dropped into an opening rests on the floor.
+
+**Randomisation (Senior chapter 3).** From the seed, first the cement: each colour's ten elements are laid one by one at
+a random place and turn wholly inside their storage area, at least 1 mm in from its edge; one that lands on others lies on them, as the rules allow (Senior 3, p. 6: "can even be
+stacked on each other") - one on one or across two or more, never more than two high, and only where it rests (one that
+would tip is placed again); about five piles a field; then the paper: each of the 12 openings gets one of the four colours, drawn again until no colour
+is used more than 6 times (there are six tiles of each). The tools, the tiles and the barriers always start on their
+marks. **Randomise** and the seed chip work as on Junior: a new seed gives a new paper and new cement places.
+
+**Scoring**, of the field when the run ends, by the Senior scoring sheet:
+
+| Mission | Condition | Each | Max |
+| :-- | :-- | --: | --: |
+| 3.1 Provide the tools | the rectangular trowel completely in the sponsor area (the white area with the logos next to the start area) | 15 | 15 |
+| | partly in it | 5 | |
+| | the cement bowl completely in the parking space (the whole brown area) | 15 | 15 |
+| | partly in it | 5 | |
+| | the masonry trowel completely in the start area (the white square, without the blue border) | 15 | 15 |
+| | partly in it | 5 | |
+| 3.2 Put the mosaic in place | a mosaic tile correctly placed: in an opening, only on the paper of the cell of its colour, standing evenly | 10 | 120 |
+| | incorrectly placed: the wrong colour, or not standing evenly, but touching the paper | 5 | |
+| 3.3 Deliver the cement | a cement element completely in the cement target of its colour | 1 | 40 |
+| 3.4 Bonus for barriers | a barrier not damaged and not moved (each of four) | 7 | 28 |
+| | | | **233** |
+
+How the referee reads the Senior rules where they leave a choice (the rest as on Junior: 0.5 mm at every edge to the
+team, an area's boundary line part of it, an object held by the claw scoring nothing):
+
+- **Touching is what touches the mat**, as on Elementary: an object is judged by the part of it that touches the mat -
+  *completely in* is that part inside the area and no other - whatever else it rests on. A trowel with one edge on a
+  cement element and the other on the sponsor area is completely in (15); the cement bowl touches the mat with its foot
+  only, so a bowl whose ring hangs over the parking space's edge, its foot inside, is completely in (15).
+- **A mosaic tile** scores in the opening whose paper it touches, one tile an opening (the best one). **Standing
+  evenly** is a face of it flat, within 3 degrees: upright, on its side or upside down on its studs, it scores 10 on its
+  colour's cell and 5 on another. Tipped into an opening with one edge up on a bar or a slope, or leaning on another
+  object with its low edge on the paper, it scores 5. A tile lying level on a bar or on another tile touches no paper and
+  scores nothing.
+- **A stacked cement element** scores when it touches no mat outside its target and every element it lies on, directly
+  or through others, is completely in that target too (S p. 12): one lying across two elements that are in scores, even
+  where its end overhangs the target's edge; one partly stacked whose low end touches the mat outside does not. Any
+  object it lies on counts the same way (a tile, a tool), colour aside. **An element on the frame scores nothing**: one
+  whose outline in plan meets the frame's printed marking, and any element lying on it, is not in its target.
+- **The barriers' bonus.** A barrier is *moved* when a part of it touches the mat outside every grey area (one pushed
+  wholly into another barrier's grey L is not moved, the plural read as written), and *damaged* when its ball is no
+  longer on its seat on the top (the rules' photo: "ball is not on top anymore"). The ball is a separate body: a knock
+  can unseat it, and it then rolls where the physics takes it.
+- **The bonus without a task.** A run where the robot never leaves the start area still scores the bonus (28; WRO's
+  Q&A, 2026-06-17), and its time is 120 s: the bonus alone is not a task (10.12).
+
+**Not modelled on Senior** (the card's *physics engine* note says it too), besides the list above:
+
+- **A wheel climbing the frame or a game object.** The robot's wheels and caster never ride up onto the frame (they stop
+  at its edge, above) or onto an object: driven at a cement element or a tile they push it, or stop at it when it is
+  held, where a real wheel might climb a low one.
+- **Studs hold by friction only.** A model's studs are rigid parts of its body: a cement element set on another rests
+  there by contact and friction, never plugged in (no clutch), and so does a barrier's ball on its seat.
+- **Breaking**: no object loses a brick and no tool breaks (the rules' *tool broken*, 0, never happens); only a barrier's
+  ball comes off its seat. The frame never moves or bends.
+- **Taller or leaning piles at the start.** A starting pile here is at most two high and every top lies flat, studs up;
+  a real referee may build a taller pile, lean one element on another, or lay one on its side or upside down.
+- **The paper**: it has no thickness and is exactly the openings (34 mm squares: WRO's PowerPoint for printing
+  patterns is not used); the frame is always present (the national organisers' variant without it is not offered).
+
+![The same table in the 3D view: the frame, the tiles, the cement elements, the barriers with their balls and the tools brick by brick on the schematic floor, and the referee's card in the top left with the field's score before a run, 28 of 233 (the bonus: the four barriers not moved)](images/simulator-wro-senior-3d.png)
 
 ## Configuring the robot
 
@@ -1164,9 +1523,18 @@ preset) or lets it slip. An arm lifts it; a tray carries what rolls onto it; a d
 Back on the shafts: the weight of a mechanism's parts and what the balls press on its parts and on those of what rides
 on it (their weight, a push, the jaws' friction as they lift), as a torque about its hinge, averaged over 0.1 s (the
 gear train's give; a load that comes at once - a heavy ball dropped into a scoop - reaches the shaft over 0.1-0.3 s,
-so an overloaded servo moves near its free speed that long before it stalls) - a servo slows under it and, beyond its stall torque, stalls and is driven back (a heavy victim in
+so an overloaded servo moves near its free speed that long before it stalls; the parts' own weight is on the shaft from the first tick of a fresh world) - a servo slows under it and, beyond its stall torque, stalls and is driven back (a heavy victim in
 a claw on a weak servo is never lifted: the jaws slide up it); a motor feels it as a load its controller holds. The
 balls carried off the floor add to the robot's mass for driving (each once, a ball in a claw inside a bin too).
+
+**Against the course.** The course's obstacles, pillars and evacuation-zone walls stop a mechanism's parts at their own
+heights, as they stop the body. A part driven into one stops the robot there (a loose obstacle is pushed, and the
+referee's contact is the body's); a bar above an obstacle's top passes over it. A joint swung into one stops at the
+last clear angle, its actuator stalled against it, as at an end stop (`stalled()` is True, `run_until_stalled`
+returns there), and moves away freely. Not modelled: a joint pushes nothing out of its way, a part's contact is no load
+on its actuator, a claw's own jaws close through a block, and ramps, raised tiles, seesaws and the floor stop no part
+(a scoop's lip goes under the floor to take a ball off it). A robot put down with a part more than 5 mm into a block
+stays there, the joint free. On the WRO tables the parts are bodies: see *Physics*.
 
 **Presets:** "Arm + claw on servos 1 / 2" (an arm 110 mm long pivoting 70 mm up, 30 mm ahead of the axle: pitch =
 servo 1's angle - 135; a claw on its tip: gap = 0.8 x (servo 2's angle - 60) mm, 60 mm open at 135; its gripper
@@ -1198,7 +1566,11 @@ s), a `write()` queues every byte (a 1023-byte ring, then the 32-byte FIFO and t
 return at once, up to 1056 after the binding's 1 ms retry, more as the wire drains), read timeouts are simulated
 milliseconds with rp2's rules (a short `read(n)` waits one more `timeout`), the 255-byte receive ring drops and counts
 what it cannot take (`overflow()`, read-and-clear: 300 unread bytes keep 255 and count 45), and a byte at another baud,
-width, parity or polarity is lost uncounted, as a framing error is on the board. **Between runs, as the board:** a Stop
+width, parity or polarity is lost uncounted, as a framing error is on the board. `rxbuf=` is the board's from 0.2.75: 256 to
+16384 is a receive ring of that size, shown by `print()`; a resize keeps the oldest bytes and counts the rest; `close()`
+and a Stop go back to the 255-byte ring, the oldest 255 bytes kept and the rest counted. Above 16384 it raises `ValueError`; the
+board's `MemoryError` for a ring the heap has no room for does not occur here, as the simulator has no MicroPython heap.
+**Between runs, as the board:** a Stop
 releases the object but the port runs on; the bytes received meanwhile (255 at most, then `overflow()`) and the port's
 format are the next program's - a program that reads a packet stream should resync, as on the robot. A port receives
 only once a program has opened it since power-on (the panel's start, Apply of a robot, the referee's restart). One
@@ -1216,7 +1588,19 @@ firmware's error (`OSError: no MPU-6500 on port 3 (I2C 0x68)`, `OSError: no MPR1
 program opens it: `Compass(3)` raises `OSError: no compass on port 3: the simulated robot has a drive base, colour and
 distance sensors, an IMU, servos, touch arrays and ADCs (the hardware configurator)`. So do the other I2C devices, `Bluetooth`,
 `Pose`, `DataLog` and `ADRC` in this version; a `DriveBase` drives on its encoders (its `imu=`, `compass=` and `pose=`
-are not simulated yet: read an `IMU()` for the heading). `Motor.calibrate()` returns at once (the simulated motor
+are not simulated yet: read an `IMU()` for the heading).
+
+`pose.noise()` and `pose.settings()`'s noise keywords come with the real `Pose`, the curriculum's SIMAPI item.
+**`robot.use_gyro()`** takes the board's arguments (`wait=`, `timeout=`) with
+its refusals; a simulated base never holds a pose, so `use_gyro()` reads `False` and `use_gyro(True)` raises the board's
+`ValueError` for a base with no pose. Nothing waits for `IMU.ready()`.
+
+**The electrothermal limit.** `m.control.thermal()` reads as the board's, with each model's figures: all zero on a
+model without promoted figures, `thermal(True)` a `ValueError` there; on the CM22-2230 and the Pololu 25D the switch
+works and starts off at every `Motor(port)`. The winding heat is not modelled, so a stall counts nothing: `derated` stays
+`False` and `heat_ms` 0, and the drive is never cut to `hold_mv`, where the board cuts it after 2 s at the cap.
+
+`Motor.calibrate()` returns at once (the simulated motor
 is known exactly); `evn.configure_motor()` is the configurator's job. `read()` returns at the sensor's next sample,
 as on the board, to the simulator's 1 ms step (a colour cycle of 4.8 ms reads every 5 ms). Arguments the firmware
 takes by position only are positional-only here too (`m.run(speed=100)` is a `TypeError`).
@@ -1279,7 +1663,8 @@ ramps and the profiled moves, a mirrored motor's sign. What it leaves out:
 - a call into the board takes a fixed small time (tens of µs, as the board's do), but Python itself runs at your
   computer's speed, not the board's;
 - the sensors read a perfect floor through their calibration (no room light, no shadows, no mains flicker), with
-  0.8 % noise;
+  0.8 % noise, one draw shared by a colour sample's four channels: an assumption, not a measurement, so a dark reading
+  may hold its hue better here than on a real chip;
 - the battery stays near 7.9 V.
 
 So a program that works in the simulator is the right program; its constants (speeds, gains) may still need a

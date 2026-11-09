@@ -8,6 +8,9 @@
     <meta name="apple-mobile-web-app-title" content="EVN ALPHA IDE">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
 
+    <!-- this build's version (scripts/ide_offline.js stamps it): the service worker serves a page its own version's files -->
+    <meta name="evn-ide-version" content="0.2.75+205660d38995">
+
     <!-- filled in by the script below, from wherever this page is served -->
     <meta id="vscode-workbench-web-configuration" data-settings="{}">
     <meta id="vscode-workbench-builtin-extensions" data-settings="[]">
@@ -105,6 +108,39 @@
         }
         config.configurationDefaults = { 'workbench.startupEditor': 'none', '[evn-dev]': evnDev };
         void origin;
+        /* The IDE's own service worker (docs/curriculum/OFFLINE_DESIGN.md §8.2): sw.js, scoped to this folder, caches
+           the workbench and the extension host's files so a reload works offline. ?evn-sw=off (or a kill-switch build,
+           "off" below) unregisters it, deletes its evn-ide-* caches and reloads once (only while a worker was there);
+           it registers nothing. */
+        var EVN_SW_MODE = "on";
+        var nav = window.navigator;
+        if (nav && 'serviceWorker' in nav && window.isSecureContext) {
+            /* a kill-switch sw.js (build_web_ide.js --sw-kill) asks every tab to reload once it has removed itself */
+            nav.serviceWorker.addEventListener('message', function (e) {
+                if (e.data && e.data.evnSw === 'reload') { window.location.reload(); }
+            });
+            if (EVN_SW_MODE === 'off' || query.get('evn-sw') === 'off') {
+                Promise.all([
+                    nav.serviceWorker.getRegistrations(),
+                    window.caches ? window.caches.keys() : Promise.resolve([])
+                ]).then(function (got) {
+                    var regs = got[0].filter(function (r) { return r.scope === here.href; });
+                    var names = got[1].filter(function (n) { return n.indexOf('evn-ide-') === 0; });
+                    /* one reload, and only while a worker was registered or controls this page: a cache the departing
+                       worker made again meanwhile is deleted on the reloaded page, with no further reload */
+                    var reload = regs.length > 0 || !!nav.serviceWorker.controller;
+                    if (!reload && !names.length) { return; }
+                    return Promise.all(regs.map(function (r) { return r.unregister(); })
+                        .concat(names.map(function (n) { return window.caches.delete(n); })))
+                        .then(function () { if (reload) { window.location.reload(); } });
+                }).catch(function (e) { console.warn('EVN: could not remove the offline copy', e); });
+            } else {
+                window.addEventListener('load', function () {
+                    nav.serviceWorker.register(new URL('sw.js', here).href, { scope: here.href })
+                        .catch(function (e) { console.warn('EVN: no offline copy (the service worker did not register)', e); });
+                });
+            }
+        }
         document.getElementById('vscode-workbench-web-configuration')
             .setAttribute('data-settings', JSON.stringify(config));
         globalThis._VSCODE_FILE_ROOT = new URL("vscode/out/", here).toString();

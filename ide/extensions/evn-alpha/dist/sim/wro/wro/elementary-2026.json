@@ -1,0 +1,8303 @@
+{
+ "meta": {
+  "title": "WRO 2026 RoboMission Elementary \"Robot Rockstars\" mat - traced geometry",
+  "frame": "x right from the mat left edge, y UP from the mat bottom edge, millimetres; start area at the right (robot put down facing -x, design \u00a73.1)",
+  "mat_size_mm": [
+   2362.0,
+   1143.0
+  ],
+  "source_pdf": "WRO-2026-GameMat-Elementary-Printing-File.pdf (wro-association.org; EVN_WRO_MAT_ELEMENTARY)",
+  "source_pdf_sha256": "8d58381fdcd9bc1784ae893e5b133707ca81f19aff51e31ca41c02276466c4d9",
+  "page_pt": [
+   6695.43,
+   3240.0
+  ],
+  "scale": "1 pt = 25.4/72 mm (page size equals the mat size, no bleed)",
+  "colour_note": "colour_srgb = mean sRGB (0-255) of a PyMuPDF render of the PDF at 2 px/mm, region eroded 2 mm; vector_fill_srgb = the design fill. A printed mat under real light will differ.",
+  "script": "trace_mat.py",
+  "drawings_total": 50479,
+  "cmyk_note": "fill_cmyk = the drawing's fill as the PDF states it (DeviceCMYK operands 0..1, read from the page's content stream; the file's output intent is U.S. Web Coated (SWOP) v2); drawing = its index in get_drawings() (the paint order). The schematic (src/sim/engine/wroSchematic.ts) paints these through pdf.js's formula.",
+  "printing_files_sha256": {
+   "junior_2026": "efa98dc76dddc594cedbcb719333a03d259878778714c54dac1a4e4a9d853d48",
+   "elementary_2026": "8d58381fdcd9bc1784ae893e5b133707ca81f19aff51e31ca41c02276466c4d9",
+   "senior_2026": "2b4b288e9109cac83d269ba5a8dbe2e224bf2d2469cb59c3d227c03e24466f53",
+   "junior_2025": "83d3130fbf51e0b5d0721608e140d8a6a886e67f659951223ddf3606b8a8c683"
+  },
+  "rules_pdf": "RoboMission Elementary Game Rules 2026 (EVN_WRO_RULES_ELEMENTARY); no page rendered",
+  "rules_pdf_sha256": "3ec1bb2b16c298676f180da0b664963a4ab4e36a85408ab4b54fb4c8b187877f",
+  "general_rules_pdf": "RoboMission General Rules 2026 (EVN_WRO_RULES_GENERAL)",
+  "general_rules_pdf_sha256": "90a28d8bf77f628227e5f544ec57b5230d620f3ae581f092bed1fda23de9e795",
+  "rules_checks": [
+   {
+    "what": "mat width (mm)",
+    "source": "WRO-2026-RoboMission-General-Rules.pdf p. 10, 7.2: \"2362 mm x 1143 mm\"",
+    "stated": 2362.0,
+    "traced": 2362.0,
+    "tolerance": 0.5,
+    "ok": true
+   },
+   {
+    "what": "mat height (mm)",
+    "source": "WRO-2026-RoboMission-General-Rules.pdf p. 10, 7.2: \"2362 mm x 1143 mm\"",
+    "stated": 1143.0,
+    "traced": 1143.0,
+    "tolerance": 0.5,
+    "ok": true
+   },
+   {
+    "what": "start area side (mm)",
+    "source": "WRO-2026-RoboMission-General-Rules.pdf p. 6 / p. 10, 5.1 / 7.5: the robot \"250 mm x 250 mm x 250 mm\" fits the start area",
+    "stated": 250.0,
+    "traced": 250.0,
+    "tolerance": 0.05,
+    "ok": true
+   }
+  ],
+  "fill_collisions": [
+   {
+    "srgb": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "fills": [
+     [
+      0.973,
+      0.949,
+      0.918,
+      0.984
+     ],
+     [
+      0.973,
+      0.953,
+      0.925,
+      0.984
+     ],
+     [
+      0.922,
+      0.902,
+      0.871,
+      0.933
+     ],
+     [
+      0.898,
+      0.898,
+      0.898,
+      0.898
+     ],
+     [
+      0.875,
+      0.851,
+      0.824,
+      0.882
+     ],
+     [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ]
+    ]
+   }
+  ],
+  "overpaint": {
+   "rule": "every later drawing / any image or shading (its extent: its clip, review r2 NEW-1) reaching > 0.5 mm both inside and outside a region carrying a `rule` is listed here with its reason, or the trace stops (review r1 S2; 10 px/mm local raster of the vector outlines)",
+   "candidates_inside": 52,
+   "candidates_tested": 0,
+   "candidates_blank": 0,
+   "allowed": [],
+   "after": [
+    {
+     "region": "backstage",
+     "paint_from": 41140,
+     "reason": "derived from the pink #33686 less the grey band #41140: the furniture painted between them (listed) lies inside the backstage area by rule (p. 11 3.2, \"including all the furniture\"), its overhang past the edges under the later band; the paint after the band is judged",
+     "skipped_from": 33686,
+     "skipped_straddles": [
+      34063,
+      34676,
+      34688,
+      35357,
+      35367,
+      35957,
+      40289,
+      40290,
+      40291,
+      40325,
+      40326,
+      40327,
+      40328,
+      40329,
+      40330,
+      40338,
+      40344
+     ]
+    },
+    {
+     "region": "start_area",
+     "paint_from": 49569,
+     "reason": "derived from the blue border #49569 (inset 11.5 mm): the paint after the border is judged"
+    }
+   ]
+  },
+  "names": "region names = the J2b fixture's mat references (scripts/fixtures/games_paper/wro-2026-elementary.json); _1 = upper, _2 = lower"
+ },
+ "regions": {
+  "start_area_frame": {
+   "type": "rect",
+   "rect": [
+    2039.0,
+    435.0,
+    2312.0,
+    708.0
+   ],
+   "size_mm": [
+    273.0,
+    273.0
+   ],
+   "colour_srgb": [
+    35,
+    63,
+    142
+   ],
+   "colour_std": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "vector_fill_srgb": [
+    36,
+    64,
+    143
+   ],
+   "source": "vector: drawing #49569 (re), blue border of the start square",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": [
+    0.0,
+    -0.0,
+    0.0,
+    0.0
+   ],
+   "notes": "outer edge of the blue border (border 11.5 mm wide); its white inside is under the WRO panel image (no vector fill)",
+   "drawing": 49569,
+   "fill_cmyk": [
+    1.0,
+    0.9,
+    0.1,
+    0.0
+   ]
+  },
+  "start_area": {
+   "type": "rect",
+   "rect": [
+    2050.5,
+    446.5,
+    2300.5,
+    696.5
+   ],
+   "size_mm": [
+    250.0,
+    250.0
+   ],
+   "colour_srgb": [
+    235,
+    223,
+    192
+   ],
+   "colour_std": [
+    57.8,
+    60.1,
+    97.8
+   ],
+   "vector_fill_srgb": [
+    255,
+    255,
+    255
+   ],
+   "source": "derived: the blue border #49569 inset 11.5 mm on each side (Senior's border #37334 and its white #37335 are exactly that); asserted against the WRO panel image placed on the white (xref 8271, its bbox within 0.05 mm); the 2 px/mm render edge scan (inward across each edge every 10 mm, the first pixel no longer the border blue) recorded, not asserted",
+   "uncertainty_mm": 0.05,
+   "notes": "General Rules 7.8: \"The start area of the robot is exclusively the white area within a coloured border\". Colour sample includes the printed WRO panel inside it.",
+   "panel_image_bbox": [
+    2050.49,
+    446.49,
+    2300.51,
+    696.51
+   ],
+   "panel_image_xref": 8271,
+   "edge_scan_offsets_mm": {
+    "left": [
+     -0.5,
+     -0.5,
+     -0.5
+    ],
+    "right": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "bottom": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "top": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "rule": {
+    "rules_pdf": "WRO-2026-RoboMission-General-Rules.pdf",
+    "page": 10,
+    "text": "7.8 the white area within a coloured border"
+   },
+   "fill_cmyk": [
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "paint_after": 49569
+  },
+  "cable_grey_1": {
+   "type": "polygon",
+   "polygon": [
+    [
+     55.77,
+     1045.01
+    ],
+    [
+     19.79,
+     840.96
+    ],
+    [
+     98.28,
+     827.12
+    ],
+    [
+     134.26,
+     1031.17
+    ]
+   ],
+   "bbox": [
+    19.79,
+    827.12,
+    134.26,
+    1045.01
+   ],
+   "colour_srgb": [
+    181,
+    181,
+    181
+   ],
+   "colour_std": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "vector_fill_srgb": [
+    181,
+    181,
+    181
+   ],
+   "source": "vector: drawing #49476 (path), grey area between speaker and amplifier (a rectangle tilted on the mat)",
+   "uncertainty_mm": 0.05,
+   "notes": "3.1 \"place the cables in the grey areas between speakers and amplifier\"",
+   "drawing": 49476,
+   "fill_cmyk": [
+    0.297,
+    0.235,
+    0.239,
+    0.0
+   ],
+   "rule": {
+    "rules_pdf": "WRO-2026-RoboMission-Elementary-Game-Rules.pdf",
+    "page": 8,
+    "text": "3.1 cable completely / partly in the grey area"
+   }
+  },
+  "cable_grey_2": {
+   "type": "polygon",
+   "polygon": [
+    [
+     55.77,
+     440.99
+    ],
+    [
+     19.79,
+     645.04
+    ],
+    [
+     98.28,
+     658.88
+    ],
+    [
+     134.26,
+     454.83
+    ]
+   ],
+   "bbox": [
+    19.79,
+    440.99,
+    134.26,
+    658.88
+   ],
+   "colour_srgb": [
+    181,
+    181,
+    181
+   ],
+   "colour_std": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "vector_fill_srgb": [
+    181,
+    181,
+    181
+   ],
+   "source": "vector: drawing #49478 (path), grey area between speaker and amplifier (a rectangle tilted on the mat)",
+   "uncertainty_mm": 0.05,
+   "notes": "3.1 \"place the cables in the grey areas between speakers and amplifier\"",
+   "drawing": 49478,
+   "fill_cmyk": [
+    0.297,
+    0.235,
+    0.239,
+    0.0
+   ],
+   "rule": {
+    "rules_pdf": "WRO-2026-RoboMission-Elementary-Game-Rules.pdf",
+    "page": 8,
+    "text": "3.1 cable completely / partly in the grey area"
+   }
+  },
+  "cable_1_start": {
+   "type": "rect",
+   "rect": [
+    554.3,
+    1037.2,
+    713.7,
+    1069.1
+   ],
+   "size_mm": [
+    159.4,
+    31.9
+   ],
+   "colour_srgb": [
+    214,
+    131,
+    135
+   ],
+   "colour_std": [
+    40.9,
+    14.0,
+    16.6
+   ],
+   "vector_fill_srgb": [
+    242,
+    122,
+    125
+   ],
+   "source": "vector: the pink I-shaped mark #49502 (bar) + #49503 / #49504 (feet); rect = their bounding box",
+   "uncertainty_mm": 0.05,
+   "notes": "start mark (rules p. 4: \"close to the stage at the upper and lower end\"); the parts in `parts`",
+   "parts": [
+    [
+     554.3,
+     1045.2,
+     713.7,
+     1061.1
+    ],
+    [
+     578.2,
+     1037.2,
+     594.1,
+     1069.1
+    ],
+    [
+     673.9,
+     1037.2,
+     689.8,
+     1069.1
+    ]
+   ],
+   "drawings": [
+    49502,
+    49503,
+    49504
+   ],
+   "fill_cmyk": [
+    0.0,
+    0.652,
+    0.398,
+    0.0
+   ],
+   "rule": {
+    "rules_pdf": "WRO-2026-RoboMission-Elementary-Game-Rules.pdf",
+    "page": 4,
+    "text": "Cables: position on the field"
+   }
+  },
+  "cable_2_start": {
+   "type": "rect",
+   "rect": [
+    554.3,
+    73.9,
+    713.7,
+    105.8
+   ],
+   "size_mm": [
+    159.4,
+    31.9
+   ],
+   "colour_srgb": [
+    207,
+    128,
+    130
+   ],
+   "colour_std": [
+    50.0,
+    11.5,
+    11.1
+   ],
+   "vector_fill_srgb": [
+    242,
+    122,
+    125
+   ],
+   "source": "vector: the pink I-shaped mark #49499 (bar) + #49500 / #49501 (feet); rect = their bounding box",
+   "uncertainty_mm": 0.05,
+   "notes": "start mark (rules p. 4: \"close to the stage at the upper and lower end\"); the parts in `parts`",
+   "parts": [
+    [
+     554.3,
+     81.9,
+     713.7,
+     97.8
+    ],
+    [
+     578.2,
+     73.9,
+     594.1,
+     105.8
+    ],
+    [
+     673.9,
+     73.9,
+     689.8,
+     105.8
+    ]
+   ],
+   "drawings": [
+    49499,
+    49500,
+    49501
+   ],
+   "fill_cmyk": [
+    0.0,
+    0.652,
+    0.398,
+    0.0
+   ],
+   "rule": {
+    "rules_pdf": "WRO-2026-RoboMission-Elementary-Game-Rules.pdf",
+    "page": 4,
+    "text": "Cables: position on the field"
+   }
+  },
+  "microphone_target": {
+   "type": "rect",
+   "rect": [
+    220.25,
+    695.2,
+    299.95,
+    790.8
+   ],
+   "size_mm": [
+    79.7,
+    95.6
+   ],
+   "colour_srgb": [
+    195,
+    216,
+    45
+   ],
+   "colour_std": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "vector_fill_srgb": [
+    196,
+    217,
+    46
+   ],
+   "source": "vector: drawing #49475 (re), light green area on the stage",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": [
+    0.25,
+    0.3,
+    0.05,
+    -0.3
+   ],
+   "notes": "",
+   "drawing": 49475,
+   "fill_cmyk": [
+    0.28,
+    0.0,
+    1.0,
+    0.0
+   ],
+   "rule": {
+    "rules_pdf": "WRO-2026-RoboMission-Elementary-Game-Rules.pdf",
+    "page": 10,
+    "text": "3.2 \"* The microphone target area is the light green area on the stage.\""
+   }
+  },
+  "backstage_pink": {
+   "type": "rect",
+   "rect": [
+    0.0,
+    0.0,
+    400.14,
+    323.52
+   ],
+   "size_mm": [
+    400.14,
+    323.52
+   ],
+   "colour_srgb": [
+    165,
+    123,
+    146
+   ],
+   "colour_std": [
+    74.2,
+    42.5,
+    57.9
+   ],
+   "vector_fill_srgb": [
+    207,
+    143,
+    186
+   ],
+   "source": "vector: drawing #33686 (re), pink fill of the backstage corner",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": null,
+   "notes": "the pink under the furniture; the backstage area is this less the grey border (backstage)",
+   "drawing": 33686,
+   "fill_cmyk": [
+    0.162,
+    0.509,
+    0.023,
+    0.0
+   ]
+  },
+  "backstage_border": {
+   "type": "polygon",
+   "polygon": [
+    [
+     0.0,
+     323.52
+    ],
+    [
+     0.0,
+     317.22
+    ],
+    [
+     393.81,
+     317.22
+    ],
+    [
+     393.81,
+     0.0
+    ],
+    [
+     400.15,
+     0.0
+    ],
+    [
+     400.14,
+     323.52
+    ]
+   ],
+   "bbox": [
+    0.0,
+    0.0,
+    400.15,
+    323.52
+   ],
+   "colour_srgb": [
+    186,
+    184,
+    180
+   ],
+   "colour_std": [
+    56.5,
+    49.0,
+    47.0
+   ],
+   "vector_fill_srgb": [
+    214,
+    209,
+    204
+   ],
+   "source": "vector: drawing #41140 (path), the grey border along the backstage's top and right edges (an L band)",
+   "uncertainty_mm": 0.05,
+   "notes": "excluded from the backstage area (p. 11 footnote)",
+   "drawing": 41140,
+   "fill_cmyk": [
+    0.143,
+    0.137,
+    0.155,
+    0.011
+   ]
+  },
+  "backstage": {
+   "type": "rect",
+   "rect": [
+    0.0,
+    0.0,
+    393.81,
+    317.22
+   ],
+   "size_mm": [
+    393.81,
+    317.22
+   ],
+   "colour_srgb": [
+    164,
+    121,
+    144
+   ],
+   "colour_std": [
+    74.9,
+    41.4,
+    58.1
+   ],
+   "vector_fill_srgb": [
+    207,
+    143,
+    186
+   ],
+   "source": "vector: the pink #33686 less the grey band #41140 (its inner corner); pink area - band area - this = -3.32 mm^2",
+   "uncertainty_mm": 0.05,
+   "notes": "3.2 instruments; \"including all the furniture, but without the grey border\" (p. 11). Colour sample includes the furniture.",
+   "rule": {
+    "rules_pdf": "WRO-2026-RoboMission-Elementary-Game-Rules.pdf",
+    "page": 11,
+    "text": "3.2 \"* The backstage area is the pink area in the bottom left corner including all the furniture, but without the grey border.\""
+   }
+  },
+  "instrument_start_1": {
+   "type": "rect",
+   "rect": [
+    1116.55,
+    77.95,
+    1164.35,
+    109.85
+   ],
+   "size_mm": [
+    47.8,
+    31.9
+   ],
+   "colour_srgb": [
+    199,
+    197,
+    226
+   ],
+   "colour_std": [
+    23.4,
+    23.4,
+    12.0
+   ],
+   "vector_fill_srgb": [
+    181,
+    178,
+    217
+   ],
+   "source": "vector: drawing #49511 (re), lavender start mark in the truck (left to right)",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": [
+    -0.05,
+    0.05,
+    -0.35,
+    0.15
+   ],
+   "notes": "which instrument / the microphone starts on which mark is the rules' p. 4-5 photo: named with the object models (the fixture's guitar_start / keyboard_start / congas_start / microphone_start)",
+   "drawing": 49511,
+   "fill_cmyk": [
+    0.273,
+    0.266,
+    0.0,
+    0.0
+   ],
+   "rule": {
+    "rules_pdf": "WRO-2026-RoboMission-Elementary-Game-Rules.pdf",
+    "page": 4,
+    "text": "Instruments & microphone: \"at the lower end in the truck\""
+   }
+  },
+  "instrument_start_2": {
+   "type": "rect",
+   "rect": [
+    1240.0,
+    81.05,
+    1335.6,
+    109.85
+   ],
+   "size_mm": [
+    95.6,
+    28.8
+   ],
+   "colour_srgb": [
+    198,
+    196,
+    226
+   ],
+   "colour_std": [
+    23.2,
+    23.2,
+    11.8
+   ],
+   "vector_fill_srgb": [
+    181,
+    178,
+    217
+   ],
+   "source": "vector: drawing #49509 (re), lavender start mark in the truck (left to right)",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": [
+    -0.0,
+    -0.05,
+    0.4,
+    0.15
+   ],
+   "notes": "which instrument / the microphone starts on which mark is the rules' p. 4-5 photo: named with the object models (the fixture's guitar_start / keyboard_start / congas_start / microphone_start)",
+   "drawing": 49509,
+   "fill_cmyk": [
+    0.273,
+    0.266,
+    0.0,
+    0.0
+   ],
+   "rule": {
+    "rules_pdf": "WRO-2026-RoboMission-Elementary-Game-Rules.pdf",
+    "page": 4,
+    "text": "Instruments & microphone: \"at the lower end in the truck\""
+   }
+  },
+  "instrument_start_3": {
+   "type": "rect",
+   "rect": [
+    1411.7,
+    77.95,
+    1459.5,
+    109.85
+   ],
+   "size_mm": [
+    47.8,
+    31.9
+   ],
+   "colour_srgb": [
+    199,
+    197,
+    226
+   ],
+   "colour_std": [
+    23.4,
+    23.4,
+    11.9
+   ],
+   "vector_fill_srgb": [
+    181,
+    178,
+    217
+   ],
+   "source": "vector: drawing #49507 (re), lavender start mark in the truck (left to right)",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": [
+    0.3,
+    0.05,
+    0.0,
+    0.15
+   ],
+   "notes": "which instrument / the microphone starts on which mark is the rules' p. 4-5 photo: named with the object models (the fixture's guitar_start / keyboard_start / congas_start / microphone_start)",
+   "drawing": 49507,
+   "fill_cmyk": [
+    0.273,
+    0.266,
+    0.0,
+    0.0
+   ],
+   "rule": {
+    "rules_pdf": "WRO-2026-RoboMission-Elementary-Game-Rules.pdf",
+    "page": 4,
+    "text": "Instruments & microphone: \"at the lower end in the truck\""
+   }
+  },
+  "instrument_start_4": {
+   "type": "rect",
+   "rect": [
+    1534.1,
+    77.95,
+    1620.5,
+    109.85
+   ],
+   "size_mm": [
+    86.4,
+    31.9
+   ],
+   "colour_srgb": [
+    198,
+    196,
+    226
+   ],
+   "colour_std": [
+    23.2,
+    23.2,
+    11.9
+   ],
+   "vector_fill_srgb": [
+    181,
+    178,
+    217
+   ],
+   "source": "vector: drawing #49505 (re), lavender start mark in the truck (left to right)",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": [
+    0.4,
+    0.05,
+    0.0,
+    0.15
+   ],
+   "notes": "which instrument / the microphone starts on which mark is the rules' p. 4-5 photo: named with the object models (the fixture's guitar_start / keyboard_start / congas_start / microphone_start)",
+   "drawing": 49505,
+   "fill_cmyk": [
+    0.273,
+    0.266,
+    0.0,
+    0.0
+   ],
+   "rule": {
+    "rules_pdf": "WRO-2026-RoboMission-Elementary-Game-Rules.pdf",
+    "page": 4,
+    "text": "Instruments & microphone: \"at the lower end in the truck\""
+   }
+  },
+  "note_target_red": {
+   "type": "rect",
+   "rect": [
+    1341.51,
+    486.53,
+    1421.21,
+    566.23
+   ],
+   "size_mm": [
+    79.7,
+    79.7
+   ],
+   "colour_srgb": [
+    78,
+    81,
+    82
+   ],
+   "colour_std": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "vector_fill_srgb": [
+    79,
+    82,
+    82
+   ],
+   "source": "vector: drawing #49487 (re), grey-bordered square, its inner square #49488 red",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": [
+    -8.01,
+    -0.03,
+    7.79,
+    0.27
+   ],
+   "notes": "target \"including grey border\" = this outer square",
+   "drawing": 49487,
+   "fill_cmyk": [
+    0.588,
+    0.486,
+    0.486,
+    0.427
+   ],
+   "colour": "red",
+   "rule": {
+    "rules_pdf": "WRO-2026-RoboMission-Elementary-Game-Rules.pdf",
+    "page": 11,
+    "text": "3.3 \"Note is completely in corresponding-coloured note target area (including grey border)\""
+   }
+  },
+  "note_target_red_inner": {
+   "type": "rect",
+   "rect": [
+    1357.46,
+    502.48,
+    1405.26,
+    550.28
+   ],
+   "size_mm": [
+    47.8,
+    47.8
+   ],
+   "colour_srgb": [
+    200,
+    32,
+    38
+   ],
+   "colour_std": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "vector_fill_srgb": [
+    201,
+    33,
+    38
+   ],
+   "source": "vector: drawing #49488 (re), red square inside the grey border",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": [
+    0.04,
+    0.02,
+    -0.26,
+    -0.28
+   ],
+   "notes": "",
+   "drawing": 49488,
+   "fill_cmyk": [
+    0.143,
+    1.0,
+    1.0,
+    0.049
+   ]
+  },
+  "note_target_green": {
+   "type": "rect",
+   "rect": [
+    1508.77,
+    555.25,
+    1588.47,
+    634.95
+   ],
+   "size_mm": [
+    79.7,
+    79.7
+   ],
+   "colour_srgb": [
+    78,
+    81,
+    82
+   ],
+   "colour_std": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "vector_fill_srgb": [
+    79,
+    82,
+    82
+   ],
+   "source": "vector: drawing #49489 (re), grey-bordered square, its inner square #49490 green",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": [
+    -0.27,
+    -0.25,
+    1.53,
+    0.55
+   ],
+   "notes": "target \"including grey border\" = this outer square",
+   "drawing": 49489,
+   "fill_cmyk": [
+    0.588,
+    0.486,
+    0.486,
+    0.427
+   ],
+   "colour": "green",
+   "rule": {
+    "rules_pdf": "WRO-2026-RoboMission-Elementary-Game-Rules.pdf",
+    "page": 11,
+    "text": "3.3 \"Note is completely in corresponding-coloured note target area (including grey border)\""
+   }
+  },
+  "note_target_green_inner": {
+   "type": "rect",
+   "rect": [
+    1524.72,
+    571.2,
+    1572.52,
+    619.0
+   ],
+   "size_mm": [
+    47.8,
+    47.8
+   ],
+   "colour_srgb": [
+    30,
+    120,
+    65
+   ],
+   "colour_std": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "vector_fill_srgb": [
+    31,
+    120,
+    66
+   ],
+   "source": "vector: drawing #49490 (re), green square inside the grey border",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": [
+    -0.22,
+    -0.2,
+    -0.02,
+    -0.0
+   ],
+   "notes": "",
+   "drawing": 49490,
+   "fill_cmyk": [
+    0.849,
+    0.291,
+    0.947,
+    0.169
+   ]
+  },
+  "note_target_yellow": {
+   "type": "rect",
+   "rect": [
+    1025.47,
+    511.15,
+    1105.17,
+    590.85
+   ],
+   "size_mm": [
+    79.7,
+    79.7
+   ],
+   "colour_srgb": [
+    78,
+    81,
+    82
+   ],
+   "colour_std": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "vector_fill_srgb": [
+    79,
+    82,
+    82
+   ],
+   "source": "vector: drawing #49491 (re), grey-bordered square, its inner square #49492 yellow",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": [
+    -0.47,
+    -1.65,
+    0.33,
+    1.15
+   ],
+   "notes": "target \"including grey border\" = this outer square",
+   "drawing": 49491,
+   "fill_cmyk": [
+    0.588,
+    0.486,
+    0.486,
+    0.427
+   ],
+   "colour": "yellow",
+   "rule": {
+    "rules_pdf": "WRO-2026-RoboMission-Elementary-Game-Rules.pdf",
+    "page": 11,
+    "text": "3.3 \"Note is completely in corresponding-coloured note target area (including grey border)\""
+   }
+  },
+  "note_target_yellow_inner": {
+   "type": "rect",
+   "rect": [
+    1041.42,
+    527.1,
+    1089.22,
+    574.9
+   ],
+   "size_mm": [
+    47.8,
+    47.8
+   ],
+   "colour_srgb": [
+    250,
+    239,
+    58
+   ],
+   "colour_std": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "vector_fill_srgb": [
+    250,
+    240,
+    59
+   ],
+   "source": "vector: drawing #49492 (re), yellow square inside the grey border",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": [
+    0.08,
+    0.4,
+    -0.22,
+    -0.4
+   ],
+   "notes": "",
+   "drawing": 49492,
+   "fill_cmyk": [
+    0.032,
+    0.0,
+    0.867,
+    0.0
+   ]
+  },
+  "note_target_black": {
+   "type": "rect",
+   "rect": [
+    1181.27,
+    453.25,
+    1260.97,
+    532.95
+   ],
+   "size_mm": [
+    79.7,
+    79.7
+   ],
+   "colour_srgb": [
+    78,
+    81,
+    82
+   ],
+   "colour_std": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "vector_fill_srgb": [
+    79,
+    82,
+    82
+   ],
+   "source": "vector: drawing #49493 (re), grey-bordered square, its inner square #49494 black",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": [
+    -8.27,
+    -1.75,
+    7.53,
+    3.05
+   ],
+   "notes": "target \"including grey border\" = this outer square",
+   "drawing": 49493,
+   "fill_cmyk": [
+    0.588,
+    0.486,
+    0.486,
+    0.427
+   ],
+   "colour": "black",
+   "rule": {
+    "rules_pdf": "WRO-2026-RoboMission-Elementary-Game-Rules.pdf",
+    "page": 11,
+    "text": "3.3 \"Note is completely in corresponding-coloured note target area (including grey border)\""
+   }
+  },
+  "note_target_black_inner": {
+   "type": "rect",
+   "rect": [
+    1197.22,
+    469.2,
+    1245.02,
+    517.0
+   ],
+   "size_mm": [
+    47.8,
+    47.8
+   ],
+   "colour_srgb": [
+    10,
+    20,
+    30
+   ],
+   "colour_std": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "vector_fill_srgb": [
+    10,
+    20,
+    31
+   ],
+   "source": "vector: drawing #49494 (re), black square inside the grey border",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": [
+    -0.22,
+    0.3,
+    -0.02,
+    -0.0
+   ],
+   "notes": "",
+   "drawing": 49494,
+   "fill_cmyk": [
+    0.837,
+    0.714,
+    0.593,
+    0.767
+   ]
+  },
+  "note_target_blue": {
+   "type": "rect",
+   "rect": [
+    1650.37,
+    619.05,
+    1730.07,
+    698.75
+   ],
+   "size_mm": [
+    79.7,
+    79.7
+   ],
+   "colour_srgb": [
+    78,
+    81,
+    82
+   ],
+   "colour_std": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "vector_fill_srgb": [
+    79,
+    82,
+    82
+   ],
+   "source": "vector: drawing #49495 (re), grey-bordered square, its inner square #49496 blue",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": [
+    -8.37,
+    -1.05,
+    1.43,
+    0.75
+   ],
+   "notes": "target \"including grey border\" = this outer square",
+   "drawing": 49495,
+   "fill_cmyk": [
+    0.588,
+    0.486,
+    0.486,
+    0.427
+   ],
+   "colour": "blue",
+   "rule": {
+    "rules_pdf": "WRO-2026-RoboMission-Elementary-Game-Rules.pdf",
+    "page": 11,
+    "text": "3.3 \"Note is completely in corresponding-coloured note target area (including grey border)\""
+   }
+  },
+  "note_target_blue_inner": {
+   "type": "rect",
+   "rect": [
+    1666.32,
+    635.0,
+    1714.12,
+    682.8
+   ],
+   "size_mm": [
+    47.8,
+    47.8
+   ],
+   "colour_srgb": [
+    37,
+    89,
+    168
+   ],
+   "colour_std": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "vector_fill_srgb": [
+    38,
+    89,
+    168
+   ],
+   "source": "vector: drawing #49496 (re), blue square inside the grey border",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": [
+    0.18,
+    0.0,
+    -0.12,
+    -0.3
+   ],
+   "notes": "",
+   "drawing": 49496,
+   "fill_cmyk": [
+    0.907,
+    0.714,
+    0.0,
+    0.0
+   ]
+  },
+  "note_target_white": {
+   "type": "rect",
+   "rect": [
+    1818.37,
+    715.25,
+    1898.07,
+    794.95
+   ],
+   "size_mm": [
+    79.7,
+    79.7
+   ],
+   "colour_srgb": [
+    78,
+    81,
+    82
+   ],
+   "colour_std": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "vector_fill_srgb": [
+    79,
+    82,
+    82
+   ],
+   "source": "vector: drawing #49497 (re), grey-bordered square, its inner square #49498 white",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": [
+    0.13,
+    -1.25,
+    1.43,
+    1.05
+   ],
+   "notes": "target \"including grey border\" = this outer square",
+   "drawing": 49497,
+   "fill_cmyk": [
+    0.588,
+    0.486,
+    0.486,
+    0.427
+   ],
+   "colour": "white",
+   "rule": {
+    "rules_pdf": "WRO-2026-RoboMission-Elementary-Game-Rules.pdf",
+    "page": 11,
+    "text": "3.3 \"Note is completely in corresponding-coloured note target area (including grey border)\""
+   }
+  },
+  "note_target_white_inner": {
+   "type": "rect",
+   "rect": [
+    1834.32,
+    731.2,
+    1882.12,
+    779.0
+   ],
+   "size_mm": [
+    47.8,
+    47.8
+   ],
+   "colour_srgb": [
+    255,
+    255,
+    255
+   ],
+   "colour_std": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "vector_fill_srgb": [
+    255,
+    255,
+    255
+   ],
+   "source": "vector: drawing #49498 (re), white square inside the grey border",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": [
+    0.18,
+    0.3,
+    -0.12,
+    -0.0
+   ],
+   "notes": "",
+   "drawing": 49498,
+   "fill_cmyk": [
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  "note_random_start_1": {
+   "type": "rect",
+   "rect": [
+    1215.05,
+    1043.6,
+    1246.95,
+    1075.5
+   ],
+   "size_mm": [
+    31.9,
+    31.9
+   ],
+   "colour_srgb": [
+    160,
+    208,
+    134
+   ],
+   "colour_std": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "vector_fill_srgb": [
+    161,
+    209,
+    135
+   ],
+   "source": "vector: drawing #49484 (re), note start square at the upper end",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": [
+    -0.05,
+    -0.1,
+    0.05,
+    0.0
+   ],
+   "notes": "",
+   "drawing": 49484,
+   "fill_cmyk": [
+    0.398,
+    0.0,
+    0.621,
+    0.0
+   ],
+   "rule": {
+    "rules_pdf": "WRO-2026-RoboMission-Elementary-Game-Rules.pdf",
+    "page": 7,
+    "text": "\"Four of the notes (black, white, yellow, blue) are randomly placed on the four light green squares ... The positions of the green and red note are not random.\""
+   }
+  },
+  "note_random_start_2": {
+   "type": "rect",
+   "rect": [
+    1346.95,
+    1043.6,
+    1378.85,
+    1075.5
+   ],
+   "size_mm": [
+    31.9,
+    31.9
+   ],
+   "colour_srgb": [
+    160,
+    208,
+    134
+   ],
+   "colour_std": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "vector_fill_srgb": [
+    161,
+    209,
+    135
+   ],
+   "source": "vector: drawing #49483 (re), note start square at the upper end",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": [
+    0.05,
+    -0.1,
+    -0.35,
+    0.0
+   ],
+   "notes": "",
+   "drawing": 49483,
+   "fill_cmyk": [
+    0.398,
+    0.0,
+    0.621,
+    0.0
+   ],
+   "rule": {
+    "rules_pdf": "WRO-2026-RoboMission-Elementary-Game-Rules.pdf",
+    "page": 7,
+    "text": "\"Four of the notes (black, white, yellow, blue) are randomly placed on the four light green squares ... The positions of the green and red note are not random.\""
+   }
+  },
+  "note_red_start": {
+   "type": "rect",
+   "rect": [
+    1478.85,
+    1043.6,
+    1510.75,
+    1075.5
+   ],
+   "size_mm": [
+    31.9,
+    31.9
+   ],
+   "colour_srgb": [
+    200,
+    32,
+    38
+   ],
+   "colour_std": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "vector_fill_srgb": [
+    201,
+    33,
+    38
+   ],
+   "source": "vector: drawing #49486 (re), note start square at the upper end",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": [
+    0.15,
+    -0.1,
+    -0.25,
+    0.0
+   ],
+   "notes": "",
+   "drawing": 49486,
+   "fill_cmyk": [
+    0.143,
+    1.0,
+    1.0,
+    0.049
+   ],
+   "rule": {
+    "rules_pdf": "WRO-2026-RoboMission-Elementary-Game-Rules.pdf",
+    "page": 7,
+    "text": "\"Four of the notes (black, white, yellow, blue) are randomly placed on the four light green squares ... The positions of the green and red note are not random.\""
+   }
+  },
+  "note_green_start": {
+   "type": "rect",
+   "rect": [
+    1610.75,
+    1043.6,
+    1642.65,
+    1075.5
+   ],
+   "size_mm": [
+    31.9,
+    31.9
+   ],
+   "colour_srgb": [
+    30,
+    120,
+    65
+   ],
+   "colour_std": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "vector_fill_srgb": [
+    31,
+    120,
+    66
+   ],
+   "source": "vector: drawing #49485 (re), note start square at the upper end",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": [
+    -0.25,
+    -0.1,
+    7.85,
+    8.0
+   ],
+   "notes": "",
+   "drawing": 49485,
+   "fill_cmyk": [
+    0.849,
+    0.291,
+    0.947,
+    0.169
+   ],
+   "rule": {
+    "rules_pdf": "WRO-2026-RoboMission-Elementary-Game-Rules.pdf",
+    "page": 7,
+    "text": "\"Four of the notes (black, white, yellow, blue) are randomly placed on the four light green squares ... The positions of the green and red note are not random.\""
+   }
+  },
+  "note_random_start_3": {
+   "type": "rect",
+   "rect": [
+    1742.65,
+    1043.6,
+    1774.55,
+    1075.5
+   ],
+   "size_mm": [
+    31.9,
+    31.9
+   ],
+   "colour_srgb": [
+    160,
+    208,
+    134
+   ],
+   "colour_std": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "vector_fill_srgb": [
+    161,
+    209,
+    135
+   ],
+   "source": "vector: drawing #49482 (re), note start square at the upper end",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": [
+    -0.15,
+    -0.1,
+    -0.05,
+    0.0
+   ],
+   "notes": "",
+   "drawing": 49482,
+   "fill_cmyk": [
+    0.398,
+    0.0,
+    0.621,
+    0.0
+   ],
+   "rule": {
+    "rules_pdf": "WRO-2026-RoboMission-Elementary-Game-Rules.pdf",
+    "page": 7,
+    "text": "\"Four of the notes (black, white, yellow, blue) are randomly placed on the four light green squares ... The positions of the green and red note are not random.\""
+   }
+  },
+  "note_random_start_4": {
+   "type": "rect",
+   "rect": [
+    1874.55,
+    1043.6,
+    1906.45,
+    1075.5
+   ],
+   "size_mm": [
+    31.9,
+    31.9
+   ],
+   "colour_srgb": [
+    160,
+    208,
+    134
+   ],
+   "colour_std": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "vector_fill_srgb": [
+    161,
+    209,
+    135
+   ],
+   "source": "vector: drawing #49481 (re), note start square at the upper end",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": [
+    -0.05,
+    -0.1,
+    0.05,
+    0.0
+   ],
+   "notes": "",
+   "drawing": 49481,
+   "fill_cmyk": [
+    0.398,
+    0.0,
+    0.621,
+    0.0
+   ],
+   "rule": {
+    "rules_pdf": "WRO-2026-RoboMission-Elementary-Game-Rules.pdf",
+    "page": 7,
+    "text": "\"Four of the notes (black, white, yellow, blue) are randomly placed on the four light green squares ... The positions of the green and red note are not random.\""
+   }
+  },
+  "clef_mark": {
+   "type": "rect",
+   "rect": [
+    830.0,
+    533.96,
+    877.8,
+    565.84
+   ],
+   "size_mm": [
+    47.81,
+    31.88
+   ],
+   "colour_srgb": [
+    0,
+    173,
+    239
+   ],
+   "colour_std": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "vector_fill_srgb": [
+    0,
+    173,
+    240
+   ],
+   "source": "vector: drawing #49474 (re), cyan mark in the middle at the left end of the staff lines",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": [
+    0.0,
+    0.04,
+    -0.3,
+    -0.34
+   ],
+   "notes": "",
+   "drawing": 49474,
+   "fill_cmyk": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "rule": {
+    "rules_pdf": "WRO-2026-RoboMission-Elementary-Game-Rules.pdf",
+    "page": 13,
+    "text": "3.4 \"moved: no longer touches its initial position and is no longer upright\""
+   }
+  },
+  "amplifier_mark": {
+   "type": "rect",
+   "rect": [
+    37.25,
+    695.2,
+    85.05,
+    790.8
+   ],
+   "size_mm": [
+    47.8,
+    95.6
+   ],
+   "colour_srgb": [
+    10,
+    20,
+    30
+   ],
+   "colour_std": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "vector_fill_srgb": [
+    10,
+    20,
+    31
+   ],
+   "source": "vector: drawing #49477 (re), black mark on the stage",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": [
+    0.25,
+    0.3,
+    -0.05,
+    -0.3
+   ],
+   "notes": "",
+   "drawing": 49477,
+   "fill_cmyk": [
+    0.837,
+    0.714,
+    0.593,
+    0.767
+   ],
+   "rule": {
+    "rules_pdf": "WRO-2026-RoboMission-Elementary-Game-Rules.pdf",
+    "page": 13,
+    "text": "3.4 moved"
+   }
+  },
+  "speaker_1_mark": {
+   "type": "polygon",
+   "polygon": [
+    [
+     101.4,
+     1101.8
+    ],
+    [
+     85.05,
+     1056.88
+    ],
+    [
+     112.11,
+     1047.03
+    ],
+    [
+     128.46,
+     1091.95
+    ]
+   ],
+   "bbox": [
+    85.05,
+    1047.03,
+    128.46,
+    1101.8
+   ],
+   "colour_srgb": [
+    37,
+    89,
+    168
+   ],
+   "colour_std": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "vector_fill_srgb": [
+    38,
+    89,
+    168
+   ],
+   "source": "vector: drawing #49479 (path), blue mark on the stage (a rectangle turned on the mat)",
+   "uncertainty_mm": 0.05,
+   "notes": "",
+   "drawing": 49479,
+   "fill_cmyk": [
+    0.907,
+    0.714,
+    0.0,
+    0.0
+   ],
+   "rule": {
+    "rules_pdf": "WRO-2026-RoboMission-Elementary-Game-Rules.pdf",
+    "page": 13,
+    "text": "3.4 moved"
+   }
+  },
+  "speaker_2_mark": {
+   "type": "polygon",
+   "polygon": [
+    [
+     101.4,
+     384.2
+    ],
+    [
+     85.05,
+     429.12
+    ],
+    [
+     112.11,
+     438.97
+    ],
+    [
+     128.46,
+     394.05
+    ]
+   ],
+   "bbox": [
+    85.05,
+    384.2,
+    128.46,
+    438.97
+   ],
+   "colour_srgb": [
+    37,
+    89,
+    168
+   ],
+   "colour_std": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "vector_fill_srgb": [
+    38,
+    89,
+    168
+   ],
+   "source": "vector: drawing #49480 (path), blue mark on the stage (a rectangle turned on the mat)",
+   "uncertainty_mm": 0.05,
+   "notes": "",
+   "drawing": 49480,
+   "fill_cmyk": [
+    0.907,
+    0.714,
+    0.0,
+    0.0
+   ],
+   "rule": {
+    "rules_pdf": "WRO-2026-RoboMission-Elementary-Game-Rules.pdf",
+    "page": 13,
+    "text": "3.4 moved"
+   }
+  },
+  "unscored_square_1_outer": {
+   "type": "rect",
+   "rect": [
+    67.0,
+    77.95,
+    114.8,
+    125.75
+   ],
+   "size_mm": [
+    47.8,
+    47.8
+   ],
+   "colour_srgb": [
+    168,
+    169,
+    169
+   ],
+   "colour_std": [
+    36.1,
+    35.9,
+    35.9
+   ],
+   "vector_fill_srgb": [
+    204,
+    204,
+    204
+   ],
+   "source": "vector: drawing #49557 (re), nested grey square 1 (outer), a surprise-rule marking",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": [
+    0.0,
+    0.05,
+    0.2,
+    -0.25
+   ],
+   "notes": "not scored (rules p. 2: markings not used at local or national events); drawn as printed",
+   "drawing": 49557,
+   "fill_cmyk": [
+    0.195,
+    0.15,
+    0.156,
+    0.0
+   ]
+  },
+  "unscored_square_1_middle": {
+   "type": "rect",
+   "rect": [
+    74.95,
+    85.9,
+    106.85,
+    117.8
+   ],
+   "size_mm": [
+    31.9,
+    31.9
+   ],
+   "colour_srgb": [
+    134,
+    134,
+    134
+   ],
+   "colour_std": [
+    23.4,
+    23.0,
+    23.0
+   ],
+   "vector_fill_srgb": [
+    150,
+    150,
+    150
+   ],
+   "source": "vector: drawing #49558 (re), nested grey square 1 (middle), a surprise-rule marking",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": [
+    0.05,
+    0.1,
+    0.15,
+    0.2
+   ],
+   "notes": "not scored (rules p. 2: markings not used at local or national events); drawn as printed",
+   "drawing": 49558,
+   "fill_cmyk": [
+    0.438,
+    0.359,
+    0.363,
+    0.013
+   ]
+  },
+  "unscored_square_1_core": {
+   "type": "rect",
+   "rect": [
+    82.95,
+    93.9,
+    98.85,
+    109.8
+   ],
+   "size_mm": [
+    15.9,
+    15.9
+   ],
+   "colour_srgb": [
+    99,
+    100,
+    100
+   ],
+   "colour_std": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "vector_fill_srgb": [
+    99,
+    101,
+    101
+   ],
+   "source": "vector: drawing #49559 (re), nested grey square 1 (core), a surprise-rule marking",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": [
+    0.05,
+    0.1,
+    0.15,
+    0.2
+   ],
+   "notes": "not scored (rules p. 2: markings not used at local or national events); drawn as printed",
+   "drawing": 49559,
+   "fill_cmyk": [
+    0.603,
+    0.519,
+    0.513,
+    0.212
+   ]
+  },
+  "unscored_square_2_outer": {
+   "type": "rect",
+   "rect": [
+    1755.4,
+    109.85,
+    1803.2,
+    157.65
+   ],
+   "size_mm": [
+    47.8,
+    47.8
+   ],
+   "colour_srgb": [
+    168,
+    168,
+    168
+   ],
+   "colour_std": [
+    36.1,
+    35.8,
+    35.8
+   ],
+   "vector_fill_srgb": [
+    204,
+    204,
+    204
+   ],
+   "source": "vector: drawing #49560 (re), nested grey square 2 (outer), a surprise-rule marking",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": [
+    0.1,
+    0.15,
+    -0.2,
+    -0.15
+   ],
+   "notes": "not scored (rules p. 2: markings not used at local or national events); drawn as printed",
+   "drawing": 49560,
+   "fill_cmyk": [
+    0.195,
+    0.15,
+    0.156,
+    0.0
+   ]
+  },
+  "unscored_square_2_middle": {
+   "type": "rect",
+   "rect": [
+    1763.35,
+    117.8,
+    1795.25,
+    149.7
+   ],
+   "size_mm": [
+    31.9,
+    31.9
+   ],
+   "colour_srgb": [
+    133,
+    133,
+    133
+   ],
+   "colour_std": [
+    23.5,
+    23.1,
+    23.1
+   ],
+   "vector_fill_srgb": [
+    150,
+    150,
+    150
+   ],
+   "source": "vector: drawing #49561 (re), nested grey square 2 (middle), a surprise-rule marking",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": [
+    0.15,
+    0.2,
+    0.25,
+    -0.2
+   ],
+   "notes": "not scored (rules p. 2: markings not used at local or national events); drawn as printed",
+   "drawing": 49561,
+   "fill_cmyk": [
+    0.438,
+    0.359,
+    0.363,
+    0.013
+   ]
+  },
+  "unscored_square_2_core": {
+   "type": "rect",
+   "rect": [
+    1771.35,
+    125.8,
+    1787.25,
+    141.7
+   ],
+   "size_mm": [
+    15.9,
+    15.9
+   ],
+   "colour_srgb": [
+    99,
+    100,
+    100
+   ],
+   "colour_std": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "vector_fill_srgb": [
+    99,
+    101,
+    101
+   ],
+   "source": "vector: drawing #49562 (re), nested grey square 2 (core), a surprise-rule marking",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": [
+    0.15,
+    0.2,
+    0.25,
+    -0.2
+   ],
+   "notes": "not scored (rules p. 2: markings not used at local or national events); drawn as printed",
+   "drawing": 49562,
+   "fill_cmyk": [
+    0.603,
+    0.519,
+    0.513,
+    0.212
+   ]
+  },
+  "unscored_square_3_outer": {
+   "type": "rect",
+   "rect": [
+    1981.0,
+    1027.7,
+    2028.8,
+    1075.5
+   ],
+   "size_mm": [
+    47.8,
+    47.8
+   ],
+   "colour_srgb": [
+    168,
+    169,
+    169
+   ],
+   "colour_std": [
+    36.2,
+    35.9,
+    35.9
+   ],
+   "vector_fill_srgb": [
+    204,
+    204,
+    204
+   ],
+   "source": "vector: drawing #49563 (re), nested grey square 3 (outer), a surprise-rule marking",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": [
+    -0.0,
+    0.3,
+    -0.3,
+    0.0
+   ],
+   "notes": "not scored (rules p. 2: markings not used at local or national events); drawn as printed",
+   "drawing": 49563,
+   "fill_cmyk": [
+    0.195,
+    0.15,
+    0.156,
+    0.0
+   ]
+  },
+  "unscored_square_3_middle": {
+   "type": "rect",
+   "rect": [
+    1988.95,
+    1035.65,
+    2020.85,
+    1067.55
+   ],
+   "size_mm": [
+    31.9,
+    31.9
+   ],
+   "colour_srgb": [
+    134,
+    134,
+    134
+   ],
+   "colour_std": [
+    23.5,
+    23.0,
+    23.0
+   ],
+   "vector_fill_srgb": [
+    150,
+    150,
+    150
+   ],
+   "source": "vector: drawing #49564 (re), nested grey square 3 (middle), a surprise-rule marking",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": [
+    0.05,
+    -0.15,
+    0.15,
+    -0.05
+   ],
+   "notes": "not scored (rules p. 2: markings not used at local or national events); drawn as printed",
+   "drawing": 49564,
+   "fill_cmyk": [
+    0.438,
+    0.359,
+    0.363,
+    0.013
+   ]
+  },
+  "unscored_square_3_core": {
+   "type": "rect",
+   "rect": [
+    1996.95,
+    1043.65,
+    2012.85,
+    1059.55
+   ],
+   "size_mm": [
+    15.9,
+    15.9
+   ],
+   "colour_srgb": [
+    99,
+    100,
+    100
+   ],
+   "colour_std": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "vector_fill_srgb": [
+    99,
+    101,
+    101
+   ],
+   "source": "vector: drawing #49565 (re), nested grey square 3 (core), a surprise-rule marking",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": [
+    0.05,
+    -0.15,
+    0.15,
+    -0.05
+   ],
+   "notes": "not scored (rules p. 2: markings not used at local or national events); drawn as printed",
+   "drawing": 49565,
+   "fill_cmyk": [
+    0.603,
+    0.519,
+    0.513,
+    0.212
+   ]
+  },
+  "unscored_square_4_outer": {
+   "type": "rect",
+   "rect": [
+    965.0,
+    691.35,
+    1012.8,
+    739.15
+   ],
+   "size_mm": [
+    47.8,
+    47.8
+   ],
+   "colour_srgb": [
+    168,
+    168,
+    168
+   ],
+   "colour_std": [
+    36.1,
+    35.9,
+    35.9
+   ],
+   "vector_fill_srgb": [
+    204,
+    204,
+    204
+   ],
+   "source": "vector: drawing #49566 (re), nested grey square 4 (outer), a surprise-rule marking",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": [
+    0.0,
+    0.15,
+    0.2,
+    -0.15
+   ],
+   "notes": "not scored (rules p. 2: markings not used at local or national events); drawn as printed",
+   "drawing": 49566,
+   "fill_cmyk": [
+    0.195,
+    0.15,
+    0.156,
+    0.0
+   ]
+  },
+  "unscored_square_4_middle": {
+   "type": "rect",
+   "rect": [
+    972.95,
+    699.3,
+    1004.85,
+    731.2
+   ],
+   "size_mm": [
+    31.9,
+    31.9
+   ],
+   "colour_srgb": [
+    133,
+    134,
+    134
+   ],
+   "colour_std": [
+    23.5,
+    23.0,
+    23.0
+   ],
+   "vector_fill_srgb": [
+    150,
+    150,
+    150
+   ],
+   "source": "vector: drawing #49567 (re), nested grey square 4 (middle), a surprise-rule marking",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": [
+    0.05,
+    0.2,
+    0.15,
+    0.3
+   ],
+   "notes": "not scored (rules p. 2: markings not used at local or national events); drawn as printed",
+   "drawing": 49567,
+   "fill_cmyk": [
+    0.438,
+    0.359,
+    0.363,
+    0.013
+   ]
+  },
+  "unscored_square_4_core": {
+   "type": "rect",
+   "rect": [
+    980.95,
+    707.3,
+    996.85,
+    723.2
+   ],
+   "size_mm": [
+    15.9,
+    15.9
+   ],
+   "colour_srgb": [
+    99,
+    100,
+    100
+   ],
+   "colour_std": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "vector_fill_srgb": [
+    99,
+    101,
+    101
+   ],
+   "source": "vector: drawing #49568 (re), nested grey square 4 (core), a surprise-rule marking",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": [
+    0.05,
+    0.2,
+    0.15,
+    0.3
+   ],
+   "notes": "not scored (rules p. 2: markings not used at local or national events); drawn as printed",
+   "drawing": 49568,
+   "fill_cmyk": [
+    0.603,
+    0.519,
+    0.513,
+    0.212
+   ]
+  },
+  "sponsor_panel_lower": {
+   "type": "rect",
+   "rect": [
+    1940.0,
+    0.0,
+    2160.0,
+    170.0
+   ],
+   "size_mm": [
+    220.0,
+    170.0
+   ],
+   "colour_srgb": [
+    242,
+    244,
+    245
+   ],
+   "colour_std": [
+    45.8,
+    37.8,
+    36.0
+   ],
+   "vector_fill_srgb": [
+    255,
+    255,
+    255
+   ],
+   "source": "vector: drawing #49473 (re), white sponsor panel (its logos are images on it, not traced)",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": null,
+   "notes": "not scored; drawn as printed (white)",
+   "drawing": 49473,
+   "fill_cmyk": [
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  "sponsor_panel_upper": {
+   "type": "rect",
+   "rect": [
+    876.0,
+    973.0,
+    1096.0,
+    1143.0
+   ],
+   "size_mm": [
+    220.0,
+    170.0
+   ],
+   "colour_srgb": [
+    206,
+    212,
+    225
+   ],
+   "colour_std": [
+    80.2,
+    71.7,
+    56.3
+   ],
+   "vector_fill_srgb": [
+    255,
+    255,
+    255
+   ],
+   "source": "vector: drawing #49570 (re), white sponsor panel (its logos are images on it, not traced)",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": null,
+   "notes": "not scored; drawn as printed (white)",
+   "drawing": 49570,
+   "fill_cmyk": [
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  }
+ },
+ "lines": {
+  "line_49516": {
+   "kind": "straight",
+   "rect": [
+    559.0,
+    821.5,
+    709.0,
+    841.5
+   ],
+   "centreline": [
+    [
+     559.0,
+     831.5
+    ],
+    [
+     709.0,
+     831.5
+    ]
+   ],
+   "width_mm": 20.0,
+   "source": "vector: drawing #49516 (re), centreline = long-axis midline",
+   "uncertainty_mm": 0.05,
+   "drawing": 49516,
+   "fill_cmyk": [
+    0.837,
+    0.714,
+    0.593,
+    0.767
+   ],
+   "colour_srgb": [
+    10,
+    20,
+    30
+   ]
+  },
+  "line_49517": {
+   "kind": "straight",
+   "rect": [
+    624.0,
+    321.5,
+    644.0,
+    821.5
+   ],
+   "centreline": [
+    [
+     634.0,
+     321.5
+    ],
+    [
+     634.0,
+     821.5
+    ]
+   ],
+   "width_mm": 20.0,
+   "source": "vector: drawing #49517 (re), centreline = long-axis midline",
+   "uncertainty_mm": 0.05,
+   "drawing": 49517,
+   "fill_cmyk": [
+    0.837,
+    0.714,
+    0.593,
+    0.767
+   ],
+   "colour_srgb": [
+    10,
+    20,
+    30
+   ]
+  },
+  "line_49518": {
+   "kind": "straight",
+   "rect": [
+    559.0,
+    301.5,
+    709.0,
+    321.5
+   ],
+   "centreline": [
+    [
+     559.0,
+     311.5
+    ],
+    [
+     709.0,
+     311.5
+    ]
+   ],
+   "width_mm": 20.0,
+   "source": "vector: drawing #49518 (re), centreline = long-axis midline",
+   "uncertainty_mm": 0.05,
+   "drawing": 49518,
+   "fill_cmyk": [
+    0.837,
+    0.714,
+    0.593,
+    0.767
+   ],
+   "colour_srgb": [
+    10,
+    20,
+    30
+   ]
+  },
+  "line_49520": {
+   "kind": "straight",
+   "rect": [
+    896.0,
+    305.35,
+    2312.0,
+    325.35
+   ],
+   "centreline": [
+    [
+     896.0,
+     315.35
+    ],
+    [
+     2312.0,
+     315.35
+    ]
+   ],
+   "width_mm": 20.0,
+   "source": "vector: drawing #49520 (re), centreline = long-axis midline",
+   "uncertainty_mm": 0.05,
+   "drawing": 49520,
+   "fill_cmyk": [
+    0.837,
+    0.714,
+    0.593,
+    0.767
+   ],
+   "colour_srgb": [
+    10,
+    20,
+    30
+   ]
+  },
+  "line_49521": {
+   "kind": "straight",
+   "rect": [
+    2292.0,
+    265.35,
+    2312.0,
+    365.35
+   ],
+   "centreline": [
+    [
+     2302.0,
+     265.35
+    ],
+    [
+     2302.0,
+     365.35
+    ]
+   ],
+   "width_mm": 20.0,
+   "source": "vector: drawing #49521 (re), centreline = long-axis midline",
+   "uncertainty_mm": 0.05,
+   "drawing": 49521,
+   "fill_cmyk": [
+    0.837,
+    0.714,
+    0.593,
+    0.767
+   ],
+   "colour_srgb": [
+    10,
+    20,
+    30
+   ]
+  },
+  "line_49522": {
+   "kind": "straight",
+   "rect": [
+    876.0,
+    265.35,
+    896.0,
+    365.35
+   ],
+   "centreline": [
+    [
+     886.0,
+     265.35
+    ],
+    [
+     886.0,
+     365.35
+    ]
+   ],
+   "width_mm": 20.0,
+   "source": "vector: drawing #49522 (re), centreline = long-axis midline",
+   "uncertainty_mm": 0.05,
+   "drawing": 49522,
+   "fill_cmyk": [
+    0.837,
+    0.714,
+    0.593,
+    0.767
+   ],
+   "colour_srgb": [
+    10,
+    20,
+    30
+   ]
+  },
+  "line_49524": {
+   "kind": "straight",
+   "rect": [
+    1131.0,
+    169.85,
+    1151.0,
+    305.35
+   ],
+   "centreline": [
+    [
+     1141.0,
+     169.85
+    ],
+    [
+     1141.0,
+     305.35
+    ]
+   ],
+   "width_mm": 20.0,
+   "source": "vector: drawing #49524 (re), centreline = long-axis midline",
+   "uncertainty_mm": 0.05,
+   "drawing": 49524,
+   "fill_cmyk": [
+    0.837,
+    0.714,
+    0.593,
+    0.767
+   ],
+   "colour_srgb": [
+    10,
+    20,
+    30
+   ]
+  },
+  "line_49525": {
+   "kind": "straight",
+   "rect": [
+    1091.0,
+    149.85,
+    1191.0,
+    169.85
+   ],
+   "centreline": [
+    [
+     1091.0,
+     159.85
+    ],
+    [
+     1191.0,
+     159.85
+    ]
+   ],
+   "width_mm": 20.0,
+   "source": "vector: drawing #49525 (re), centreline = long-axis midline",
+   "uncertainty_mm": 0.05,
+   "drawing": 49525,
+   "fill_cmyk": [
+    0.837,
+    0.714,
+    0.593,
+    0.767
+   ],
+   "colour_srgb": [
+    10,
+    20,
+    30
+   ]
+  },
+  "line_49527": {
+   "kind": "straight",
+   "rect": [
+    1278.01,
+    169.85,
+    1298.01,
+    305.35
+   ],
+   "centreline": [
+    [
+     1288.01,
+     169.85
+    ],
+    [
+     1288.01,
+     305.35
+    ]
+   ],
+   "width_mm": 20.0,
+   "source": "vector: drawing #49527 (re), centreline = long-axis midline",
+   "uncertainty_mm": 0.05,
+   "drawing": 49527,
+   "fill_cmyk": [
+    0.837,
+    0.714,
+    0.593,
+    0.767
+   ],
+   "colour_srgb": [
+    10,
+    20,
+    30
+   ]
+  },
+  "line_49528": {
+   "kind": "straight",
+   "rect": [
+    1238.01,
+    149.85,
+    1338.01,
+    169.85
+   ],
+   "centreline": [
+    [
+     1238.01,
+     159.85
+    ],
+    [
+     1338.01,
+     159.85
+    ]
+   ],
+   "width_mm": 20.0,
+   "source": "vector: drawing #49528 (re), centreline = long-axis midline",
+   "uncertainty_mm": 0.05,
+   "drawing": 49528,
+   "fill_cmyk": [
+    0.837,
+    0.714,
+    0.593,
+    0.767
+   ],
+   "colour_srgb": [
+    10,
+    20,
+    30
+   ]
+  },
+  "line_49530": {
+   "kind": "straight",
+   "rect": [
+    1426.15,
+    169.85,
+    1446.15,
+    305.35
+   ],
+   "centreline": [
+    [
+     1436.15,
+     169.85
+    ],
+    [
+     1436.15,
+     305.35
+    ]
+   ],
+   "width_mm": 20.0,
+   "source": "vector: drawing #49530 (re), centreline = long-axis midline",
+   "uncertainty_mm": 0.05,
+   "drawing": 49530,
+   "fill_cmyk": [
+    0.837,
+    0.714,
+    0.593,
+    0.767
+   ],
+   "colour_srgb": [
+    10,
+    20,
+    30
+   ]
+  },
+  "line_49531": {
+   "kind": "straight",
+   "rect": [
+    1386.15,
+    149.85,
+    1486.15,
+    169.85
+   ],
+   "centreline": [
+    [
+     1386.15,
+     159.85
+    ],
+    [
+     1486.15,
+     159.85
+    ]
+   ],
+   "width_mm": 20.0,
+   "source": "vector: drawing #49531 (re), centreline = long-axis midline",
+   "uncertainty_mm": 0.05,
+   "drawing": 49531,
+   "fill_cmyk": [
+    0.837,
+    0.714,
+    0.593,
+    0.767
+   ],
+   "colour_srgb": [
+    10,
+    20,
+    30
+   ]
+  },
+  "line_49533": {
+   "kind": "straight",
+   "rect": [
+    1566.0,
+    169.85,
+    1586.0,
+    305.35
+   ],
+   "centreline": [
+    [
+     1576.0,
+     169.85
+    ],
+    [
+     1576.0,
+     305.35
+    ]
+   ],
+   "width_mm": 20.0,
+   "source": "vector: drawing #49533 (re), centreline = long-axis midline",
+   "uncertainty_mm": 0.05,
+   "drawing": 49533,
+   "fill_cmyk": [
+    0.837,
+    0.714,
+    0.593,
+    0.767
+   ],
+   "colour_srgb": [
+    10,
+    20,
+    30
+   ]
+  },
+  "line_49534": {
+   "kind": "straight",
+   "rect": [
+    1526.0,
+    149.85,
+    1626.0,
+    169.85
+   ],
+   "centreline": [
+    [
+     1526.0,
+     159.85
+    ],
+    [
+     1626.0,
+     159.85
+    ]
+   ],
+   "width_mm": 20.0,
+   "source": "vector: drawing #49534 (re), centreline = long-axis midline",
+   "uncertainty_mm": 0.05,
+   "drawing": 49534,
+   "fill_cmyk": [
+    0.837,
+    0.714,
+    0.593,
+    0.767
+   ],
+   "colour_srgb": [
+    10,
+    20,
+    30
+   ]
+  },
+  "line_49536": {
+   "kind": "straight",
+   "rect": [
+    896.0,
+    859.5,
+    2312.0,
+    879.5
+   ],
+   "centreline": [
+    [
+     896.0,
+     869.5
+    ],
+    [
+     2312.0,
+     869.5
+    ]
+   ],
+   "width_mm": 20.0,
+   "source": "vector: drawing #49536 (re), centreline = long-axis midline",
+   "uncertainty_mm": 0.05,
+   "drawing": 49536,
+   "fill_cmyk": [
+    0.837,
+    0.714,
+    0.593,
+    0.767
+   ],
+   "colour_srgb": [
+    10,
+    20,
+    30
+   ]
+  },
+  "line_49537": {
+   "kind": "straight",
+   "rect": [
+    2292.0,
+    819.5,
+    2312.0,
+    919.5
+   ],
+   "centreline": [
+    [
+     2302.0,
+     819.5
+    ],
+    [
+     2302.0,
+     919.5
+    ]
+   ],
+   "width_mm": 20.0,
+   "source": "vector: drawing #49537 (re), centreline = long-axis midline",
+   "uncertainty_mm": 0.05,
+   "drawing": 49537,
+   "fill_cmyk": [
+    0.837,
+    0.714,
+    0.593,
+    0.767
+   ],
+   "colour_srgb": [
+    10,
+    20,
+    30
+   ]
+  },
+  "line_49538": {
+   "kind": "straight",
+   "rect": [
+    876.0,
+    819.5,
+    896.0,
+    919.5
+   ],
+   "centreline": [
+    [
+     886.0,
+     819.5
+    ],
+    [
+     886.0,
+     919.5
+    ]
+   ],
+   "width_mm": 20.0,
+   "source": "vector: drawing #49538 (re), centreline = long-axis midline",
+   "uncertainty_mm": 0.05,
+   "drawing": 49538,
+   "fill_cmyk": [
+    0.837,
+    0.714,
+    0.593,
+    0.767
+   ],
+   "colour_srgb": [
+    10,
+    20,
+    30
+   ]
+  },
+  "line_49540": {
+   "kind": "straight",
+   "rect": [
+    1880.5,
+    879.5,
+    1900.5,
+    983.5
+   ],
+   "centreline": [
+    [
+     1890.5,
+     879.5
+    ],
+    [
+     1890.5,
+     983.5
+    ]
+   ],
+   "width_mm": 20.0,
+   "source": "vector: drawing #49540 (re), centreline = long-axis midline",
+   "uncertainty_mm": 0.05,
+   "drawing": 49540,
+   "fill_cmyk": [
+    0.837,
+    0.714,
+    0.593,
+    0.767
+   ],
+   "colour_srgb": [
+    10,
+    20,
+    30
+   ]
+  },
+  "line_49541": {
+   "kind": "straight",
+   "rect": [
+    1840.5,
+    983.6,
+    1940.5,
+    1003.6
+   ],
+   "centreline": [
+    [
+     1840.5,
+     993.6
+    ],
+    [
+     1940.5,
+     993.6
+    ]
+   ],
+   "width_mm": 20.0,
+   "source": "vector: drawing #49541 (re), centreline = long-axis midline",
+   "uncertainty_mm": 0.05,
+   "drawing": 49541,
+   "fill_cmyk": [
+    0.837,
+    0.714,
+    0.593,
+    0.767
+   ],
+   "colour_srgb": [
+    10,
+    20,
+    30
+   ]
+  },
+  "line_49543": {
+   "kind": "straight",
+   "rect": [
+    1748.6,
+    879.5,
+    1768.6,
+    983.5
+   ],
+   "centreline": [
+    [
+     1758.6,
+     879.5
+    ],
+    [
+     1758.6,
+     983.5
+    ]
+   ],
+   "width_mm": 20.0,
+   "source": "vector: drawing #49543 (re), centreline = long-axis midline",
+   "uncertainty_mm": 0.05,
+   "drawing": 49543,
+   "fill_cmyk": [
+    0.837,
+    0.714,
+    0.593,
+    0.767
+   ],
+   "colour_srgb": [
+    10,
+    20,
+    30
+   ]
+  },
+  "line_49544": {
+   "kind": "straight",
+   "rect": [
+    1708.6,
+    983.6,
+    1808.6,
+    1003.6
+   ],
+   "centreline": [
+    [
+     1708.6,
+     993.6
+    ],
+    [
+     1808.6,
+     993.6
+    ]
+   ],
+   "width_mm": 20.0,
+   "source": "vector: drawing #49544 (re), centreline = long-axis midline",
+   "uncertainty_mm": 0.05,
+   "drawing": 49544,
+   "fill_cmyk": [
+    0.837,
+    0.714,
+    0.593,
+    0.767
+   ],
+   "colour_srgb": [
+    10,
+    20,
+    30
+   ]
+  },
+  "line_49546": {
+   "kind": "straight",
+   "rect": [
+    1613.85,
+    879.5,
+    1633.85,
+    983.5
+   ],
+   "centreline": [
+    [
+     1623.85,
+     879.5
+    ],
+    [
+     1623.85,
+     983.5
+    ]
+   ],
+   "width_mm": 20.0,
+   "source": "vector: drawing #49546 (re), centreline = long-axis midline",
+   "uncertainty_mm": 0.05,
+   "drawing": 49546,
+   "fill_cmyk": [
+    0.837,
+    0.714,
+    0.593,
+    0.767
+   ],
+   "colour_srgb": [
+    10,
+    20,
+    30
+   ]
+  },
+  "line_49547": {
+   "kind": "straight",
+   "rect": [
+    1573.85,
+    983.6,
+    1673.85,
+    1003.6
+   ],
+   "centreline": [
+    [
+     1573.85,
+     993.6
+    ],
+    [
+     1673.85,
+     993.6
+    ]
+   ],
+   "width_mm": 20.0,
+   "source": "vector: drawing #49547 (re), centreline = long-axis midline",
+   "uncertainty_mm": 0.05,
+   "drawing": 49547,
+   "fill_cmyk": [
+    0.837,
+    0.714,
+    0.593,
+    0.767
+   ],
+   "colour_srgb": [
+    10,
+    20,
+    30
+   ]
+  },
+  "line_49549": {
+   "kind": "straight",
+   "rect": [
+    1484.8,
+    879.5,
+    1504.8,
+    983.5
+   ],
+   "centreline": [
+    [
+     1494.8,
+     879.5
+    ],
+    [
+     1494.8,
+     983.5
+    ]
+   ],
+   "width_mm": 20.0,
+   "source": "vector: drawing #49549 (re), centreline = long-axis midline",
+   "uncertainty_mm": 0.05,
+   "drawing": 49549,
+   "fill_cmyk": [
+    0.837,
+    0.714,
+    0.593,
+    0.767
+   ],
+   "colour_srgb": [
+    10,
+    20,
+    30
+   ]
+  },
+  "line_49550": {
+   "kind": "straight",
+   "rect": [
+    1444.8,
+    983.6,
+    1544.8,
+    1003.6
+   ],
+   "centreline": [
+    [
+     1444.8,
+     993.6
+    ],
+    [
+     1544.8,
+     993.6
+    ]
+   ],
+   "width_mm": 20.0,
+   "source": "vector: drawing #49550 (re), centreline = long-axis midline",
+   "uncertainty_mm": 0.05,
+   "drawing": 49550,
+   "fill_cmyk": [
+    0.837,
+    0.714,
+    0.593,
+    0.767
+   ],
+   "colour_srgb": [
+    10,
+    20,
+    30
+   ]
+  },
+  "line_49552": {
+   "kind": "straight",
+   "rect": [
+    1352.9,
+    879.5,
+    1372.9,
+    983.5
+   ],
+   "centreline": [
+    [
+     1362.9,
+     879.5
+    ],
+    [
+     1362.9,
+     983.5
+    ]
+   ],
+   "width_mm": 20.0,
+   "source": "vector: drawing #49552 (re), centreline = long-axis midline",
+   "uncertainty_mm": 0.05,
+   "drawing": 49552,
+   "fill_cmyk": [
+    0.837,
+    0.714,
+    0.593,
+    0.767
+   ],
+   "colour_srgb": [
+    10,
+    20,
+    30
+   ]
+  },
+  "line_49553": {
+   "kind": "straight",
+   "rect": [
+    1312.9,
+    983.6,
+    1412.9,
+    1003.6
+   ],
+   "centreline": [
+    [
+     1312.9,
+     993.6
+    ],
+    [
+     1412.9,
+     993.6
+    ]
+   ],
+   "width_mm": 20.0,
+   "source": "vector: drawing #49553 (re), centreline = long-axis midline",
+   "uncertainty_mm": 0.05,
+   "drawing": 49553,
+   "fill_cmyk": [
+    0.837,
+    0.714,
+    0.593,
+    0.767
+   ],
+   "colour_srgb": [
+    10,
+    20,
+    30
+   ]
+  },
+  "line_49555": {
+   "kind": "straight",
+   "rect": [
+    1221.0,
+    879.5,
+    1241.0,
+    983.5
+   ],
+   "centreline": [
+    [
+     1231.0,
+     879.5
+    ],
+    [
+     1231.0,
+     983.5
+    ]
+   ],
+   "width_mm": 20.0,
+   "source": "vector: drawing #49555 (re), centreline = long-axis midline",
+   "uncertainty_mm": 0.05,
+   "drawing": 49555,
+   "fill_cmyk": [
+    0.837,
+    0.714,
+    0.593,
+    0.767
+   ],
+   "colour_srgb": [
+    10,
+    20,
+    30
+   ]
+  },
+  "line_49556": {
+   "kind": "straight",
+   "rect": [
+    1181.0,
+    983.6,
+    1281.0,
+    1003.6
+   ],
+   "centreline": [
+    [
+     1181.0,
+     993.6
+    ],
+    [
+     1281.0,
+     993.6
+    ]
+   ],
+   "width_mm": 20.0,
+   "source": "vector: drawing #49556 (re), centreline = long-axis midline",
+   "uncertainty_mm": 0.05,
+   "drawing": 49556,
+   "fill_cmyk": [
+    0.837,
+    0.714,
+    0.593,
+    0.767
+   ],
+   "colour_srgb": [
+    10,
+    20,
+    30
+   ]
+  }
+ },
+ "line_junctions": [
+  {
+   "stem": "line_49517",
+   "end": 0,
+   "joins": "line_49518",
+   "at": [
+    634.0,
+    311.5
+   ]
+  },
+  {
+   "stem": "line_49517",
+   "end": 1,
+   "joins": "line_49516",
+   "at": [
+    634.0,
+    831.5
+   ]
+  },
+  {
+   "stem": "line_49520",
+   "end": 0,
+   "joins": "line_49522",
+   "at": [
+    886.0,
+    315.35
+   ]
+  },
+  {
+   "stem": "line_49524",
+   "end": 0,
+   "joins": "line_49525",
+   "at": [
+    1141.0,
+    159.85
+   ]
+  },
+  {
+   "stem": "line_49524",
+   "end": 1,
+   "joins": "line_49520",
+   "at": [
+    1141.0,
+    315.35
+   ]
+  },
+  {
+   "stem": "line_49527",
+   "end": 0,
+   "joins": "line_49528",
+   "at": [
+    1288.01,
+    159.85
+   ]
+  },
+  {
+   "stem": "line_49527",
+   "end": 1,
+   "joins": "line_49520",
+   "at": [
+    1288.01,
+    315.35
+   ]
+  },
+  {
+   "stem": "line_49530",
+   "end": 0,
+   "joins": "line_49531",
+   "at": [
+    1436.15,
+    159.85
+   ]
+  },
+  {
+   "stem": "line_49530",
+   "end": 1,
+   "joins": "line_49520",
+   "at": [
+    1436.15,
+    315.35
+   ]
+  },
+  {
+   "stem": "line_49533",
+   "end": 0,
+   "joins": "line_49534",
+   "at": [
+    1576.0,
+    159.85
+   ]
+  },
+  {
+   "stem": "line_49533",
+   "end": 1,
+   "joins": "line_49520",
+   "at": [
+    1576.0,
+    315.35
+   ]
+  },
+  {
+   "stem": "line_49536",
+   "end": 0,
+   "joins": "line_49538",
+   "at": [
+    886.0,
+    869.5
+   ]
+  },
+  {
+   "stem": "line_49540",
+   "end": 0,
+   "joins": "line_49536",
+   "at": [
+    1890.5,
+    869.5
+   ]
+  },
+  {
+   "stem": "line_49540",
+   "end": 1,
+   "joins": "line_49541",
+   "at": [
+    1890.5,
+    993.6
+   ]
+  },
+  {
+   "stem": "line_49543",
+   "end": 0,
+   "joins": "line_49536",
+   "at": [
+    1758.6,
+    869.5
+   ]
+  },
+  {
+   "stem": "line_49543",
+   "end": 1,
+   "joins": "line_49544",
+   "at": [
+    1758.6,
+    993.6
+   ]
+  },
+  {
+   "stem": "line_49546",
+   "end": 0,
+   "joins": "line_49536",
+   "at": [
+    1623.85,
+    869.5
+   ]
+  },
+  {
+   "stem": "line_49546",
+   "end": 1,
+   "joins": "line_49547",
+   "at": [
+    1623.85,
+    993.6
+   ]
+  },
+  {
+   "stem": "line_49549",
+   "end": 0,
+   "joins": "line_49536",
+   "at": [
+    1494.8,
+    869.5
+   ]
+  },
+  {
+   "stem": "line_49549",
+   "end": 1,
+   "joins": "line_49550",
+   "at": [
+    1494.8,
+    993.6
+   ]
+  },
+  {
+   "stem": "line_49552",
+   "end": 0,
+   "joins": "line_49536",
+   "at": [
+    1362.9,
+    869.5
+   ]
+  },
+  {
+   "stem": "line_49552",
+   "end": 1,
+   "joins": "line_49553",
+   "at": [
+    1362.9,
+    993.6
+   ]
+  },
+  {
+   "stem": "line_49555",
+   "end": 0,
+   "joins": "line_49536",
+   "at": [
+    1231.0,
+    869.5
+   ]
+  },
+  {
+   "stem": "line_49555",
+   "end": 1,
+   "joins": "line_49556",
+   "at": [
+    1231.0,
+    993.6
+   ]
+  }
+ ],
+ "roads": {
+  "road_49515": {
+   "type": "rect",
+   "rect": [
+    559.0,
+    321.5,
+    709.0,
+    821.5
+   ],
+   "source": "vector: drawing #49515 (re), white",
+   "drawing": 49515,
+   "fill_cmyk": [
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  "road_49519": {
+   "type": "rect",
+   "rect": [
+    896.0,
+    265.35,
+    2312.0,
+    365.35
+   ],
+   "source": "vector: drawing #49519 (re), white",
+   "drawing": 49519,
+   "fill_cmyk": [
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  "road_49523": {
+   "type": "rect",
+   "rect": [
+    1091.0,
+    169.85,
+    1191.0,
+    305.35
+   ],
+   "source": "vector: drawing #49523 (re), white",
+   "drawing": 49523,
+   "fill_cmyk": [
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  "road_49526": {
+   "type": "rect",
+   "rect": [
+    1238.01,
+    169.85,
+    1338.01,
+    305.35
+   ],
+   "source": "vector: drawing #49526 (re), white",
+   "drawing": 49526,
+   "fill_cmyk": [
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  "road_49529": {
+   "type": "rect",
+   "rect": [
+    1386.15,
+    169.85,
+    1486.15,
+    305.35
+   ],
+   "source": "vector: drawing #49529 (re), white",
+   "drawing": 49529,
+   "fill_cmyk": [
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  "road_49532": {
+   "type": "rect",
+   "rect": [
+    1526.0,
+    169.85,
+    1626.0,
+    305.35
+   ],
+   "source": "vector: drawing #49532 (re), white",
+   "drawing": 49532,
+   "fill_cmyk": [
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  "road_49535": {
+   "type": "rect",
+   "rect": [
+    896.0,
+    819.5,
+    2312.0,
+    919.5
+   ],
+   "source": "vector: drawing #49535 (re), white",
+   "drawing": 49535,
+   "fill_cmyk": [
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  "road_49539": {
+   "type": "rect",
+   "rect": [
+    1840.5,
+    879.5,
+    1940.5,
+    983.7
+   ],
+   "source": "vector: drawing #49539 (re), white",
+   "drawing": 49539,
+   "fill_cmyk": [
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  "road_49542": {
+   "type": "rect",
+   "rect": [
+    1708.6,
+    879.5,
+    1808.6,
+    983.7
+   ],
+   "source": "vector: drawing #49542 (re), white",
+   "drawing": 49542,
+   "fill_cmyk": [
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  "road_49545": {
+   "type": "rect",
+   "rect": [
+    1573.85,
+    879.5,
+    1673.85,
+    983.7
+   ],
+   "source": "vector: drawing #49545 (re), white",
+   "drawing": 49545,
+   "fill_cmyk": [
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  "road_49548": {
+   "type": "rect",
+   "rect": [
+    1444.8,
+    879.5,
+    1544.8,
+    983.7
+   ],
+   "source": "vector: drawing #49548 (re), white",
+   "drawing": 49548,
+   "fill_cmyk": [
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  "road_49551": {
+   "type": "rect",
+   "rect": [
+    1312.9,
+    879.5,
+    1412.9,
+    983.7
+   ],
+   "source": "vector: drawing #49551 (re), white",
+   "drawing": 49551,
+   "fill_cmyk": [
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  "road_49554": {
+   "type": "rect",
+   "rect": [
+    1181.0,
+    879.5,
+    1281.0,
+    983.7
+   ],
+   "source": "vector: drawing #49554 (re), white",
+   "drawing": 49554,
+   "fill_cmyk": [
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  }
+ },
+ "colours_misc": {
+  "white_road": {
+   "colour_srgb": [
+    255,
+    255,
+    255
+   ],
+   "colour_std": [
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  "black_line": {
+   "colour_srgb": [
+    10,
+    20,
+    30
+   ],
+   "colour_std": [
+    1.5,
+    1.6,
+    1.4
+   ]
+  },
+  "reflectance_white_place": {
+   "at": [
+    1604.0,
+    285.35
+   ],
+   "source": "road #49519: its centre x, midway between its bottom edge and line #49520's"
+  },
+  "reflectance_black_place": {
+   "at": [
+    1604.0,
+    315.35
+   ],
+   "source": "line #49520's centre"
+  },
+  "mat_ground": {
+   "drawings": [
+    0,
+    8235,
+    17432,
+    26629
+   ],
+   "fill_cmyk": [
+    0.395,
+    0.31,
+    0.311,
+    0.145
+   ],
+   "notes": "the grey base fills under everything (one stated CMYK)"
+  }
+ },
+ "groups": {
+  "start": [
+   "start_area",
+   "start_area_frame"
+  ],
+  "cable_areas": [
+   "cable_grey_1",
+   "cable_grey_2"
+  ],
+  "instrument_starts_left_to_right": [
+   "instrument_start_1",
+   "instrument_start_2",
+   "instrument_start_3",
+   "instrument_start_4"
+  ],
+  "note_target": {
+   "red": "note_target_red",
+   "blue": "note_target_blue",
+   "green": "note_target_green",
+   "yellow": "note_target_yellow",
+   "white": "note_target_white",
+   "black": "note_target_black"
+  },
+  "note_target_min_gap_mm": 61.9,
+  "note_random_starts": [
+   "note_random_start_1",
+   "note_random_start_2",
+   "note_random_start_3",
+   "note_random_start_4"
+  ],
+  "fixture_starts": {
+   "clef_start": "clef_mark",
+   "amplifier_start": "amplifier_mark",
+   "speaker_1_start": "speaker_1_mark",
+   "speaker_2_start": "speaker_2_mark",
+   "cable_1_start": "cable_1_start",
+   "cable_2_start": "cable_2_start"
+  },
+  "fixture_random_starts": {
+   "note_black_start": "note_random_starts",
+   "note_blue_start": "note_random_starts",
+   "note_white_start": "note_random_starts",
+   "note_yellow_start": "note_random_starts"
+  },
+  "fixture_starts_unresolved": {
+   "guitar_start": "D3: which object stands on which lavender mark (instrument_starts_left_to_right)",
+   "keyboard_start": "D3: which object stands on which lavender mark (instrument_starts_left_to_right)",
+   "congas_start": "D3: which object stands on which lavender mark (instrument_starts_left_to_right)",
+   "microphone_start": "D3: which object stands on which lavender mark (instrument_starts_left_to_right)"
+  },
+  "unscored_marks": [
+   "unscored_square_1_outer",
+   "unscored_square_1_middle",
+   "unscored_square_1_core",
+   "unscored_square_2_outer",
+   "unscored_square_2_middle",
+   "unscored_square_2_core",
+   "unscored_square_3_outer",
+   "unscored_square_3_middle",
+   "unscored_square_3_core",
+   "unscored_square_4_outer",
+   "unscored_square_4_middle",
+   "unscored_square_4_core",
+   "sponsor_panel_lower",
+   "sponsor_panel_upper"
+  ]
+ },
+ "identity": {
+  "method": "Design \u00a73.1 6 / \u00a73.2: a point pair 1.5 mm either side of an edge of each region drawn by a rectangle (its middle first, then 1 mm steps along it, at least 3 mm from its ends; an edge on the mat's own border has no outside), each point where the topmost paint is a flat fill (the 2 px/mm render's 3 x 3 patch: standard deviation under 3/255 in every channel, in sRGB and in a DeviceCMYK render; that CMYK within 2/255 of a fill the content stream states), the inside the region's own fill, the outside another. A probe side passes when its colour is nearer its expected palette colour than half the distance from that colour to the nearest colour of another class (sRGB 0..255, Euclidean), and its nearest palette colour is of its own class; a pair's two sides are of different classes. Stated fills closer than merge_srgb under either conversion are one class (one colour to the eye). Checked here under MuPDF's ICC conversion (the file's SWOP v2 output intent; MuPDF renders the probes) and pdf.js's DeviceCMYK formula - the pdf.js side is formula-only: MuPDF's DeviceCMYK render of each probe put through pdf.js's formula, which shows the palette is separable under it, not that pdf.js renders the mat so. That proof is W1b's loader test on the real mat (design \u00a78, run whenever the mat is present), under pdf.js with its ICC path off (no wasm, no iccUrl: \u00a73.2).",
+  "flat_std_max": 3.0,
+  "offset_mm": 1.5,
+  "edge_end_margin_mm": 3.0,
+  "merge_srgb": 4.0,
+  "pdfjs_formula": "pdf.js src/core/colorspace.js DeviceCmykCS #toRgb (verified against pdfjs-dist 6.4.299 build/pdf.worker.mjs); trace_mat.py pdfjs_cmyk_to_rgb()",
+  "palette": [
+   {
+    "cmyk": [
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "klass": 0,
+    "srgb_mupdf_icc": [
+     255,
+     255,
+     255
+    ],
+    "srgb_pdfjs": [
+     255,
+     255,
+     255
+    ],
+    "margin_mupdf_icc": 19.51,
+    "margin_pdfjs": 16.01
+   },
+   {
+    "cmyk": [
+     0.032,
+     0.0,
+     0.867,
+     0.0
+    ],
+    "klass": 1,
+    "srgb_mupdf_icc": [
+     250,
+     239,
+     58
+    ],
+    "srgb_pdfjs": [
+     255,
+     234,
+     88
+    ],
+    "margin_mupdf_icc": 30.51,
+    "margin_pdfjs": 33.34
+   },
+   {
+    "cmyk": [
+     0.078,
+     0.08,
+     0.0,
+     0.0
+    ],
+    "klass": 2,
+    "srgb_mupdf_icc": [
+     230,
+     228,
+     242
+    ],
+    "srgb_pdfjs": [
+     233,
+     234,
+     245
+    ],
+    "margin_mupdf_icc": 19.51,
+    "margin_pdfjs": 16.01
+   },
+   {
+    "cmyk": [
+     0.143,
+     1.0,
+     1.0,
+     0.049
+    ],
+    "klass": 3,
+    "srgb_mupdf_icc": [
+     200,
+     32,
+     38
+    ],
+    "srgb_pdfjs": [
+     220,
+     42,
+     26
+    ],
+    "margin_mupdf_icc": 46.19,
+    "margin_pdfjs": 49.51
+   },
+   {
+    "cmyk": [
+     0.162,
+     0.509,
+     0.023,
+     0.0
+    ],
+    "klass": 4,
+    "srgb_mupdf_icc": [
+     207,
+     142,
+     186
+    ],
+    "srgb_pdfjs": [
+     211,
+     146,
+     195
+    ],
+    "margin_mupdf_icc": 27.41,
+    "margin_pdfjs": 29.53
+   },
+   {
+    "cmyk": [
+     0.195,
+     0.15,
+     0.156,
+     0.0
+    ],
+    "klass": 5,
+    "srgb_mupdf_icc": [
+     203,
+     203,
+     203
+    ],
+    "srgb_pdfjs": [
+     203,
+     209,
+     208
+    ],
+    "margin_mupdf_icc": 17.72,
+    "margin_pdfjs": 17.92
+   },
+   {
+    "cmyk": [
+     0.273,
+     0.266,
+     0.0,
+     0.0
+    ],
+    "klass": 6,
+    "srgb_mupdf_icc": [
+     181,
+     179,
+     217
+    ],
+    "srgb_pdfjs": [
+     179,
+     187,
+     223
+    ],
+    "margin_mupdf_icc": 17.72,
+    "margin_pdfjs": 17.92
+   },
+   {
+    "cmyk": [
+     0.279,
+     0.567,
+     0.676,
+     0.3
+    ],
+    "klass": 7,
+    "srgb_mupdf_icc": [
+     140,
+     94,
+     71
+    ],
+    "srgb_pdfjs": [
+     145,
+     92,
+     67
+    ],
+    "margin_mupdf_icc": 4.39,
+    "margin_pdfjs": 5.48
+   },
+   {
+    "cmyk": [
+     0.28,
+     0.0,
+     1.0,
+     0.0
+    ],
+    "klass": 8,
+    "srgb_mupdf_icc": [
+     195,
+     216,
+     45
+    ],
+    "srgb_pdfjs": [
+     195,
+     215,
+     66
+    ],
+    "margin_mupdf_icc": 30.51,
+    "margin_pdfjs": 33.34
+   },
+   {
+    "cmyk": [
+     0.307,
+     0.571,
+     0.71,
+     0.353
+    ],
+    "klass": 9,
+    "srgb_mupdf_icc": [
+     128,
+     87,
+     62
+    ],
+    "srgb_pdfjs": [
+     131,
+     85,
+     59
+    ],
+    "margin_mupdf_icc": 7.76,
+    "margin_pdfjs": 7.76
+   },
+   {
+    "cmyk": [
+     0.319,
+     0.533,
+     0.646,
+     0.314
+    ],
+    "klass": 10,
+    "srgb_mupdf_icc": [
+     132,
+     96,
+     74
+    ],
+    "srgb_pdfjs": [
+     135,
+     94,
+     71
+    ],
+    "margin_mupdf_icc": 4.39,
+    "margin_pdfjs": 5.48
+   },
+   {
+    "cmyk": [
+     0.395,
+     0.31,
+     0.311,
+     0.145
+    ],
+    "klass": 11,
+    "srgb_mupdf_icc": [
+     140,
+     143,
+     144
+    ],
+    "srgb_pdfjs": [
+     136,
+     147,
+     147
+    ],
+    "margin_mupdf_icc": 6.8,
+    "margin_pdfjs": 5.79
+   },
+   {
+    "cmyk": [
+     0.398,
+     0.0,
+     0.621,
+     0.0
+    ],
+    "klass": 12,
+    "srgb_mupdf_icc": [
+     160,
+     208,
+     134
+    ],
+    "srgb_pdfjs": [
+     155,
+     213,
+     137
+    ],
+    "margin_mupdf_icc": 30.5,
+    "margin_pdfjs": 31.15
+   },
+   {
+    "cmyk": [
+     0.438,
+     0.359,
+     0.363,
+     0.013
+    ],
+    "klass": 13,
+    "srgb_mupdf_icc": [
+     150,
+     150,
+     150
+    ],
+    "srgb_pdfjs": [
+     143,
+     154,
+     153
+    ],
+    "margin_mupdf_icc": 6.8,
+    "margin_pdfjs": 5.79
+   },
+   {
+    "cmyk": [
+     0.588,
+     0.486,
+     0.486,
+     0.427
+    ],
+    "klass": 14,
+    "srgb_mupdf_icc": [
+     78,
+     81,
+     82
+    ],
+    "srgb_pdfjs": [
+     71,
+     80,
+     80
+    ],
+    "margin_mupdf_icc": 16.78,
+    "margin_pdfjs": 17.04
+   },
+   {
+    "cmyk": [
+     0.603,
+     0.519,
+     0.513,
+     0.212
+    ],
+    "klass": 15,
+    "srgb_mupdf_icc": [
+     99,
+     100,
+     100
+    ],
+    "srgb_pdfjs": [
+     90,
+     100,
+     100
+    ],
+    "margin_mupdf_icc": 16.78,
+    "margin_pdfjs": 17.04
+   },
+   {
+    "cmyk": [
+     0.645,
+     0.505,
+     0.048,
+     0.019
+    ],
+    "klass": 16,
+    "srgb_mupdf_icc": [
+     102,
+     121,
+     177
+    ],
+    "srgb_pdfjs": [
+     85,
+     124,
+     185
+    ],
+    "margin_mupdf_icc": 27.46,
+    "margin_pdfjs": 33.82
+   },
+   {
+    "cmyk": [
+     0.674,
+     0.104,
+     0.875,
+     0.263
+    ],
+    "klass": 17,
+    "srgb_mupdf_icc": [
+     70,
+     135,
+     67
+    ],
+    "srgb_pdfjs": [
+     69,
+     138,
+     68
+    ],
+    "margin_mupdf_icc": 9.73,
+    "margin_pdfjs": 8.44
+   },
+   {
+    "cmyk": [
+     0.722,
+     0.118,
+     0.882,
+     0.302
+    ],
+    "klass": 18,
+    "srgb_mupdf_icc": [
+     53,
+     126,
+     64
+    ],
+    "srgb_pdfjs": [
+     56,
+     128,
+     64
+    ],
+    "margin_mupdf_icc": 9.73,
+    "margin_pdfjs": 6.98
+   },
+   {
+    "cmyk": [
+     0.745,
+     0.31,
+     0.91,
+     0.38
+    ],
+    "klass": 19,
+    "srgb_mupdf_icc": [
+     52,
+     97,
+     51
+    ],
+    "srgb_pdfjs": [
+     52,
+     98,
+     50
+    ],
+    "margin_mupdf_icc": 15.9,
+    "margin_pdfjs": 14.79
+   },
+   {
+    "cmyk": [
+     0.837,
+     0.714,
+     0.593,
+     0.767
+    ],
+    "klass": 20,
+    "srgb_mupdf_icc": [
+     10,
+     20,
+     30
+    ],
+    "srgb_pdfjs": [
+     18,
+     24,
+     30
+    ],
+    "margin_mupdf_icc": 6.48,
+    "margin_pdfjs": 6.5
+   },
+   {
+    "cmyk": [
+     0.849,
+     0.291,
+     0.947,
+     0.169
+    ],
+    "klass": 21,
+    "srgb_mupdf_icc": [
+     30,
+     120,
+     65
+    ],
+    "srgb_pdfjs": [
+     43,
+     123,
+     63
+    ],
+    "margin_mupdf_icc": 11.9,
+    "margin_pdfjs": 6.98
+   },
+   {
+    "cmyk": [
+     0.907,
+     0.714,
+     0.0,
+     0.0
+    ],
+    "klass": 22,
+    "srgb_mupdf_icc": [
+     37,
+     89,
+     168
+    ],
+    "srgb_pdfjs": [
+     25,
+     85,
+     173
+    ],
+    "margin_mupdf_icc": 18.41,
+    "margin_pdfjs": 21.28
+   },
+   {
+    "cmyk": [
+     0.919,
+     0.687,
+     0.501,
+     0.824
+    ],
+    "klass": 23,
+    "srgb_mupdf_icc": [
+     0,
+     12,
+     28
+    ],
+    "srgb_pdfjs": [
+     6,
+     20,
+     27
+    ],
+    "margin_mupdf_icc": 6.48,
+    "margin_pdfjs": 6.5
+   },
+   {
+    "cmyk": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "klass": 24,
+    "srgb_mupdf_icc": [
+     0,
+     173,
+     239
+    ],
+    "srgb_pdfjs": [
+     0,
+     185,
+     242
+    ],
+    "margin_mupdf_icc": 58.02,
+    "margin_pdfjs": 59.57
+   },
+   {
+    "cmyk": [
+     1.0,
+     0.9,
+     0.1,
+     0.0
+    ],
+    "klass": 25,
+    "srgb_mupdf_icc": [
+     35,
+     63,
+     142
+    ],
+    "srgb_pdfjs": [
+     14,
+     54,
+     146
+    ],
+    "margin_mupdf_icc": 18.41,
+    "margin_pdfjs": 21.28
+   }
+  ],
+  "worst_distance_over_margin": {
+   "mupdf_icc": 0.103,
+   "pdfjs": 0.599
+  },
+  "probes": [
+   {
+    "region": "start_area_frame",
+    "edge": "left",
+    "inside": [
+     2040.5,
+     571.5
+    ],
+    "outside": [
+     2037.5,
+     571.5
+    ],
+    "inside_cmyk": [
+     1.0,
+     0.9,
+     0.1,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.395,
+     0.31,
+     0.311,
+     0.145
+    ]
+   },
+   {
+    "region": "start_area_frame",
+    "edge": "right",
+    "inside": [
+     2310.5,
+     571.5
+    ],
+    "outside": [
+     2313.5,
+     571.5
+    ],
+    "inside_cmyk": [
+     1.0,
+     0.9,
+     0.1,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.395,
+     0.31,
+     0.311,
+     0.145
+    ]
+   },
+   {
+    "region": "start_area_frame",
+    "edge": "bottom",
+    "inside": [
+     2175.5,
+     436.5
+    ],
+    "outside": [
+     2175.5,
+     433.5
+    ],
+    "inside_cmyk": [
+     1.0,
+     0.9,
+     0.1,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.395,
+     0.31,
+     0.311,
+     0.145
+    ]
+   },
+   {
+    "region": "start_area_frame",
+    "edge": "top",
+    "inside": [
+     2175.5,
+     706.5
+    ],
+    "outside": [
+     2175.5,
+     709.5
+    ],
+    "inside_cmyk": [
+     1.0,
+     0.9,
+     0.1,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.395,
+     0.31,
+     0.311,
+     0.145
+    ]
+   },
+   {
+    "region": "microphone_target",
+    "edge": "left",
+    "inside": [
+     221.75,
+     743.0
+    ],
+    "outside": [
+     218.75,
+     743.0
+    ],
+    "inside_cmyk": [
+     0.28,
+     0.0,
+     1.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.319,
+     0.533,
+     0.646,
+     0.314
+    ]
+   },
+   {
+    "region": "microphone_target",
+    "edge": "right",
+    "inside": [
+     298.45,
+     743.0
+    ],
+    "outside": [
+     301.45,
+     743.0
+    ],
+    "inside_cmyk": [
+     0.28,
+     0.0,
+     1.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.307,
+     0.571,
+     0.71,
+     0.353
+    ]
+   },
+   {
+    "region": "microphone_target",
+    "edge": "bottom",
+    "inside": [
+     260.1,
+     696.7
+    ],
+    "outside": [
+     260.1,
+     693.7
+    ],
+    "inside_cmyk": [
+     0.28,
+     0.0,
+     1.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.319,
+     0.533,
+     0.646,
+     0.314
+    ]
+   },
+   {
+    "region": "microphone_target",
+    "edge": "top",
+    "inside": [
+     260.1,
+     789.3
+    ],
+    "outside": [
+     260.1,
+     792.3
+    ],
+    "inside_cmyk": [
+     0.28,
+     0.0,
+     1.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.307,
+     0.571,
+     0.71,
+     0.353
+    ]
+   },
+   {
+    "region": "instrument_start_1",
+    "edge": "left",
+    "inside": [
+     1118.05,
+     93.9
+    ],
+    "outside": [
+     1115.05,
+     93.9
+    ],
+    "inside_cmyk": [
+     0.273,
+     0.266,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.919,
+     0.687,
+     0.501,
+     0.824
+    ]
+   },
+   {
+    "region": "instrument_start_1",
+    "edge": "right",
+    "inside": [
+     1162.85,
+     93.9
+    ],
+    "outside": [
+     1165.85,
+     93.9
+    ],
+    "inside_cmyk": [
+     0.273,
+     0.266,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.919,
+     0.687,
+     0.501,
+     0.824
+    ]
+   },
+   {
+    "region": "instrument_start_1",
+    "edge": "top",
+    "inside": [
+     1149.45,
+     108.35
+    ],
+    "outside": [
+     1149.45,
+     111.35
+    ],
+    "inside_cmyk": [
+     0.273,
+     0.266,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.919,
+     0.687,
+     0.501,
+     0.824
+    ]
+   },
+   {
+    "region": "instrument_start_2",
+    "edge": "left",
+    "inside": [
+     1241.5,
+     95.45
+    ],
+    "outside": [
+     1238.5,
+     95.45
+    ],
+    "inside_cmyk": [
+     0.273,
+     0.266,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.078,
+     0.08,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "region": "instrument_start_2",
+    "edge": "right",
+    "inside": [
+     1334.1,
+     95.45
+    ],
+    "outside": [
+     1337.1,
+     95.45
+    ],
+    "inside_cmyk": [
+     0.273,
+     0.266,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.078,
+     0.08,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "region": "instrument_start_2",
+    "edge": "bottom",
+    "inside": [
+     1304.8,
+     82.55
+    ],
+    "outside": [
+     1304.8,
+     79.55
+    ],
+    "inside_cmyk": [
+     0.273,
+     0.266,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.919,
+     0.687,
+     0.501,
+     0.824
+    ]
+   },
+   {
+    "region": "instrument_start_2",
+    "edge": "top",
+    "inside": [
+     1304.8,
+     108.35
+    ],
+    "outside": [
+     1304.8,
+     111.35
+    ],
+    "inside_cmyk": [
+     0.273,
+     0.266,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.919,
+     0.687,
+     0.501,
+     0.824
+    ]
+   },
+   {
+    "region": "instrument_start_3",
+    "edge": "left",
+    "inside": [
+     1413.2,
+     93.9
+    ],
+    "outside": [
+     1410.2,
+     93.9
+    ],
+    "inside_cmyk": [
+     0.273,
+     0.266,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.919,
+     0.687,
+     0.501,
+     0.824
+    ]
+   },
+   {
+    "region": "instrument_start_3",
+    "edge": "right",
+    "inside": [
+     1458.0,
+     93.9
+    ],
+    "outside": [
+     1461.0,
+     93.9
+    ],
+    "inside_cmyk": [
+     0.273,
+     0.266,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.919,
+     0.687,
+     0.501,
+     0.824
+    ]
+   },
+   {
+    "region": "instrument_start_3",
+    "edge": "bottom",
+    "inside": [
+     1444.6,
+     79.45
+    ],
+    "outside": [
+     1444.6,
+     76.45
+    ],
+    "inside_cmyk": [
+     0.273,
+     0.266,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.919,
+     0.687,
+     0.501,
+     0.824
+    ]
+   },
+   {
+    "region": "instrument_start_3",
+    "edge": "top",
+    "inside": [
+     1444.6,
+     108.35
+    ],
+    "outside": [
+     1444.6,
+     111.35
+    ],
+    "inside_cmyk": [
+     0.273,
+     0.266,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.919,
+     0.687,
+     0.501,
+     0.824
+    ]
+   },
+   {
+    "region": "instrument_start_4",
+    "edge": "left",
+    "inside": [
+     1535.6,
+     93.9
+    ],
+    "outside": [
+     1532.6,
+     93.9
+    ],
+    "inside_cmyk": [
+     0.273,
+     0.266,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.919,
+     0.687,
+     0.501,
+     0.824
+    ]
+   },
+   {
+    "region": "instrument_start_4",
+    "edge": "right",
+    "inside": [
+     1619.0,
+     93.9
+    ],
+    "outside": [
+     1622.0,
+     93.9
+    ],
+    "inside_cmyk": [
+     0.273,
+     0.266,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.919,
+     0.687,
+     0.501,
+     0.824
+    ]
+   },
+   {
+    "region": "instrument_start_4",
+    "edge": "bottom",
+    "inside": [
+     1593.3,
+     79.45
+    ],
+    "outside": [
+     1593.3,
+     76.45
+    ],
+    "inside_cmyk": [
+     0.273,
+     0.266,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.919,
+     0.687,
+     0.501,
+     0.824
+    ]
+   },
+   {
+    "region": "instrument_start_4",
+    "edge": "top",
+    "inside": [
+     1593.3,
+     108.35
+    ],
+    "outside": [
+     1593.3,
+     111.35
+    ],
+    "inside_cmyk": [
+     0.273,
+     0.266,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.919,
+     0.687,
+     0.501,
+     0.824
+    ]
+   },
+   {
+    "region": "note_target_red",
+    "edge": "left",
+    "inside": [
+     1343.01,
+     526.38
+    ],
+    "outside": [
+     1340.01,
+     526.38
+    ],
+    "inside_cmyk": [
+     0.588,
+     0.486,
+     0.486,
+     0.427
+    ],
+    "outside_cmyk": [
+     0.395,
+     0.31,
+     0.311,
+     0.145
+    ]
+   },
+   {
+    "region": "note_target_red",
+    "edge": "right",
+    "inside": [
+     1419.71,
+     526.38
+    ],
+    "outside": [
+     1422.71,
+     526.38
+    ],
+    "inside_cmyk": [
+     0.588,
+     0.486,
+     0.486,
+     0.427
+    ],
+    "outside_cmyk": [
+     0.395,
+     0.31,
+     0.311,
+     0.145
+    ]
+   },
+   {
+    "region": "note_target_red",
+    "edge": "bottom",
+    "inside": [
+     1381.36,
+     488.03
+    ],
+    "outside": [
+     1381.36,
+     485.03
+    ],
+    "inside_cmyk": [
+     0.588,
+     0.486,
+     0.486,
+     0.427
+    ],
+    "outside_cmyk": [
+     0.395,
+     0.31,
+     0.311,
+     0.145
+    ]
+   },
+   {
+    "region": "note_target_red",
+    "edge": "top",
+    "inside": [
+     1381.36,
+     564.73
+    ],
+    "outside": [
+     1381.36,
+     567.73
+    ],
+    "inside_cmyk": [
+     0.588,
+     0.486,
+     0.486,
+     0.427
+    ],
+    "outside_cmyk": [
+     0.395,
+     0.31,
+     0.311,
+     0.145
+    ]
+   },
+   {
+    "region": "note_target_red_inner",
+    "edge": "left",
+    "inside": [
+     1358.96,
+     526.38
+    ],
+    "outside": [
+     1355.96,
+     526.38
+    ],
+    "inside_cmyk": [
+     0.143,
+     1.0,
+     1.0,
+     0.049
+    ],
+    "outside_cmyk": [
+     0.588,
+     0.486,
+     0.486,
+     0.427
+    ]
+   },
+   {
+    "region": "note_target_red_inner",
+    "edge": "right",
+    "inside": [
+     1403.76,
+     526.38
+    ],
+    "outside": [
+     1406.76,
+     526.38
+    ],
+    "inside_cmyk": [
+     0.143,
+     1.0,
+     1.0,
+     0.049
+    ],
+    "outside_cmyk": [
+     0.588,
+     0.486,
+     0.486,
+     0.427
+    ]
+   },
+   {
+    "region": "note_target_red_inner",
+    "edge": "bottom",
+    "inside": [
+     1381.36,
+     503.98
+    ],
+    "outside": [
+     1381.36,
+     500.98
+    ],
+    "inside_cmyk": [
+     0.143,
+     1.0,
+     1.0,
+     0.049
+    ],
+    "outside_cmyk": [
+     0.588,
+     0.486,
+     0.486,
+     0.427
+    ]
+   },
+   {
+    "region": "note_target_red_inner",
+    "edge": "top",
+    "inside": [
+     1381.36,
+     548.78
+    ],
+    "outside": [
+     1381.36,
+     551.78
+    ],
+    "inside_cmyk": [
+     0.143,
+     1.0,
+     1.0,
+     0.049
+    ],
+    "outside_cmyk": [
+     0.588,
+     0.486,
+     0.486,
+     0.427
+    ]
+   },
+   {
+    "region": "note_target_green",
+    "edge": "left",
+    "inside": [
+     1510.27,
+     595.1
+    ],
+    "outside": [
+     1507.27,
+     595.1
+    ],
+    "inside_cmyk": [
+     0.588,
+     0.486,
+     0.486,
+     0.427
+    ],
+    "outside_cmyk": [
+     0.395,
+     0.31,
+     0.311,
+     0.145
+    ]
+   },
+   {
+    "region": "note_target_green",
+    "edge": "right",
+    "inside": [
+     1586.97,
+     597.1
+    ],
+    "outside": [
+     1589.97,
+     597.1
+    ],
+    "inside_cmyk": [
+     0.588,
+     0.486,
+     0.486,
+     0.427
+    ],
+    "outside_cmyk": [
+     0.395,
+     0.31,
+     0.311,
+     0.145
+    ]
+   },
+   {
+    "region": "note_target_green",
+    "edge": "bottom",
+    "inside": [
+     1548.62,
+     556.75
+    ],
+    "outside": [
+     1548.62,
+     553.75
+    ],
+    "inside_cmyk": [
+     0.588,
+     0.486,
+     0.486,
+     0.427
+    ],
+    "outside_cmyk": [
+     0.395,
+     0.31,
+     0.311,
+     0.145
+    ]
+   },
+   {
+    "region": "note_target_green",
+    "edge": "top",
+    "inside": [
+     1548.62,
+     633.45
+    ],
+    "outside": [
+     1548.62,
+     636.45
+    ],
+    "inside_cmyk": [
+     0.588,
+     0.486,
+     0.486,
+     0.427
+    ],
+    "outside_cmyk": [
+     0.395,
+     0.31,
+     0.311,
+     0.145
+    ]
+   },
+   {
+    "region": "note_target_green_inner",
+    "edge": "left",
+    "inside": [
+     1526.22,
+     595.1
+    ],
+    "outside": [
+     1523.22,
+     595.1
+    ],
+    "inside_cmyk": [
+     0.849,
+     0.291,
+     0.947,
+     0.169
+    ],
+    "outside_cmyk": [
+     0.588,
+     0.486,
+     0.486,
+     0.427
+    ]
+   },
+   {
+    "region": "note_target_green_inner",
+    "edge": "right",
+    "inside": [
+     1571.02,
+     595.1
+    ],
+    "outside": [
+     1574.02,
+     595.1
+    ],
+    "inside_cmyk": [
+     0.849,
+     0.291,
+     0.947,
+     0.169
+    ],
+    "outside_cmyk": [
+     0.588,
+     0.486,
+     0.486,
+     0.427
+    ]
+   },
+   {
+    "region": "note_target_green_inner",
+    "edge": "bottom",
+    "inside": [
+     1548.62,
+     572.7
+    ],
+    "outside": [
+     1548.62,
+     569.7
+    ],
+    "inside_cmyk": [
+     0.849,
+     0.291,
+     0.947,
+     0.169
+    ],
+    "outside_cmyk": [
+     0.588,
+     0.486,
+     0.486,
+     0.427
+    ]
+   },
+   {
+    "region": "note_target_green_inner",
+    "edge": "top",
+    "inside": [
+     1548.62,
+     617.5
+    ],
+    "outside": [
+     1548.62,
+     620.5
+    ],
+    "inside_cmyk": [
+     0.849,
+     0.291,
+     0.947,
+     0.169
+    ],
+    "outside_cmyk": [
+     0.588,
+     0.486,
+     0.486,
+     0.427
+    ]
+   },
+   {
+    "region": "note_target_yellow",
+    "edge": "left",
+    "inside": [
+     1026.97,
+     551.0
+    ],
+    "outside": [
+     1023.97,
+     551.0
+    ],
+    "inside_cmyk": [
+     0.588,
+     0.486,
+     0.486,
+     0.427
+    ],
+    "outside_cmyk": [
+     0.395,
+     0.31,
+     0.311,
+     0.145
+    ]
+   },
+   {
+    "region": "note_target_yellow",
+    "edge": "right",
+    "inside": [
+     1103.67,
+     551.0
+    ],
+    "outside": [
+     1106.67,
+     551.0
+    ],
+    "inside_cmyk": [
+     0.588,
+     0.486,
+     0.486,
+     0.427
+    ],
+    "outside_cmyk": [
+     0.395,
+     0.31,
+     0.311,
+     0.145
+    ]
+   },
+   {
+    "region": "note_target_yellow",
+    "edge": "bottom",
+    "inside": [
+     1074.32,
+     512.65
+    ],
+    "outside": [
+     1074.32,
+     509.65
+    ],
+    "inside_cmyk": [
+     0.588,
+     0.486,
+     0.486,
+     0.427
+    ],
+    "outside_cmyk": [
+     0.395,
+     0.31,
+     0.311,
+     0.145
+    ]
+   },
+   {
+    "region": "note_target_yellow",
+    "edge": "top",
+    "inside": [
+     1065.32,
+     589.35
+    ],
+    "outside": [
+     1065.32,
+     592.35
+    ],
+    "inside_cmyk": [
+     0.588,
+     0.486,
+     0.486,
+     0.427
+    ],
+    "outside_cmyk": [
+     0.395,
+     0.31,
+     0.311,
+     0.145
+    ]
+   },
+   {
+    "region": "note_target_yellow_inner",
+    "edge": "left",
+    "inside": [
+     1042.92,
+     551.0
+    ],
+    "outside": [
+     1039.92,
+     551.0
+    ],
+    "inside_cmyk": [
+     0.032,
+     0.0,
+     0.867,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.588,
+     0.486,
+     0.486,
+     0.427
+    ]
+   },
+   {
+    "region": "note_target_yellow_inner",
+    "edge": "right",
+    "inside": [
+     1087.72,
+     551.0
+    ],
+    "outside": [
+     1090.72,
+     551.0
+    ],
+    "inside_cmyk": [
+     0.032,
+     0.0,
+     0.867,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.588,
+     0.486,
+     0.486,
+     0.427
+    ]
+   },
+   {
+    "region": "note_target_yellow_inner",
+    "edge": "bottom",
+    "inside": [
+     1065.32,
+     528.6
+    ],
+    "outside": [
+     1065.32,
+     525.6
+    ],
+    "inside_cmyk": [
+     0.032,
+     0.0,
+     0.867,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.588,
+     0.486,
+     0.486,
+     0.427
+    ]
+   },
+   {
+    "region": "note_target_yellow_inner",
+    "edge": "top",
+    "inside": [
+     1065.32,
+     573.4
+    ],
+    "outside": [
+     1065.32,
+     576.4
+    ],
+    "inside_cmyk": [
+     0.032,
+     0.0,
+     0.867,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.588,
+     0.486,
+     0.486,
+     0.427
+    ]
+   },
+   {
+    "region": "note_target_black",
+    "edge": "left",
+    "inside": [
+     1182.77,
+     493.1
+    ],
+    "outside": [
+     1179.77,
+     493.1
+    ],
+    "inside_cmyk": [
+     0.588,
+     0.486,
+     0.486,
+     0.427
+    ],
+    "outside_cmyk": [
+     0.395,
+     0.31,
+     0.311,
+     0.145
+    ]
+   },
+   {
+    "region": "note_target_black",
+    "edge": "right",
+    "inside": [
+     1259.47,
+     493.1
+    ],
+    "outside": [
+     1262.47,
+     493.1
+    ],
+    "inside_cmyk": [
+     0.588,
+     0.486,
+     0.486,
+     0.427
+    ],
+    "outside_cmyk": [
+     0.395,
+     0.31,
+     0.311,
+     0.145
+    ]
+   },
+   {
+    "region": "note_target_black",
+    "edge": "bottom",
+    "inside": [
+     1221.12,
+     454.75
+    ],
+    "outside": [
+     1221.12,
+     451.75
+    ],
+    "inside_cmyk": [
+     0.588,
+     0.486,
+     0.486,
+     0.427
+    ],
+    "outside_cmyk": [
+     0.395,
+     0.31,
+     0.311,
+     0.145
+    ]
+   },
+   {
+    "region": "note_target_black",
+    "edge": "top",
+    "inside": [
+     1221.12,
+     531.45
+    ],
+    "outside": [
+     1221.12,
+     534.45
+    ],
+    "inside_cmyk": [
+     0.588,
+     0.486,
+     0.486,
+     0.427
+    ],
+    "outside_cmyk": [
+     0.395,
+     0.31,
+     0.311,
+     0.145
+    ]
+   },
+   {
+    "region": "note_target_black_inner",
+    "edge": "left",
+    "inside": [
+     1198.72,
+     493.1
+    ],
+    "outside": [
+     1195.72,
+     493.1
+    ],
+    "inside_cmyk": [
+     0.837,
+     0.714,
+     0.593,
+     0.767
+    ],
+    "outside_cmyk": [
+     0.588,
+     0.486,
+     0.486,
+     0.427
+    ]
+   },
+   {
+    "region": "note_target_black_inner",
+    "edge": "right",
+    "inside": [
+     1243.52,
+     493.1
+    ],
+    "outside": [
+     1246.52,
+     493.1
+    ],
+    "inside_cmyk": [
+     0.837,
+     0.714,
+     0.593,
+     0.767
+    ],
+    "outside_cmyk": [
+     0.588,
+     0.486,
+     0.486,
+     0.427
+    ]
+   },
+   {
+    "region": "note_target_black_inner",
+    "edge": "bottom",
+    "inside": [
+     1221.12,
+     470.7
+    ],
+    "outside": [
+     1221.12,
+     467.7
+    ],
+    "inside_cmyk": [
+     0.837,
+     0.714,
+     0.593,
+     0.767
+    ],
+    "outside_cmyk": [
+     0.588,
+     0.486,
+     0.486,
+     0.427
+    ]
+   },
+   {
+    "region": "note_target_black_inner",
+    "edge": "top",
+    "inside": [
+     1221.12,
+     515.5
+    ],
+    "outside": [
+     1221.12,
+     518.5
+    ],
+    "inside_cmyk": [
+     0.837,
+     0.714,
+     0.593,
+     0.767
+    ],
+    "outside_cmyk": [
+     0.588,
+     0.486,
+     0.486,
+     0.427
+    ]
+   },
+   {
+    "region": "note_target_blue",
+    "edge": "left",
+    "inside": [
+     1651.87,
+     659.9
+    ],
+    "outside": [
+     1648.87,
+     659.9
+    ],
+    "inside_cmyk": [
+     0.588,
+     0.486,
+     0.486,
+     0.427
+    ],
+    "outside_cmyk": [
+     0.395,
+     0.31,
+     0.311,
+     0.145
+    ]
+   },
+   {
+    "region": "note_target_blue",
+    "edge": "right",
+    "inside": [
+     1728.57,
+     658.9
+    ],
+    "outside": [
+     1731.57,
+     658.9
+    ],
+    "inside_cmyk": [
+     0.588,
+     0.486,
+     0.486,
+     0.427
+    ],
+    "outside_cmyk": [
+     0.645,
+     0.505,
+     0.048,
+     0.019
+    ]
+   },
+   {
+    "region": "note_target_blue",
+    "edge": "bottom",
+    "inside": [
+     1691.22,
+     620.55
+    ],
+    "outside": [
+     1691.22,
+     617.55
+    ],
+    "inside_cmyk": [
+     0.588,
+     0.486,
+     0.486,
+     0.427
+    ],
+    "outside_cmyk": [
+     0.395,
+     0.31,
+     0.311,
+     0.145
+    ]
+   },
+   {
+    "region": "note_target_blue",
+    "edge": "top",
+    "inside": [
+     1691.22,
+     697.25
+    ],
+    "outside": [
+     1691.22,
+     700.25
+    ],
+    "inside_cmyk": [
+     0.588,
+     0.486,
+     0.486,
+     0.427
+    ],
+    "outside_cmyk": [
+     0.395,
+     0.31,
+     0.311,
+     0.145
+    ]
+   },
+   {
+    "region": "note_target_blue_inner",
+    "edge": "left",
+    "inside": [
+     1667.82,
+     658.9
+    ],
+    "outside": [
+     1664.82,
+     658.9
+    ],
+    "inside_cmyk": [
+     0.907,
+     0.714,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.588,
+     0.486,
+     0.486,
+     0.427
+    ]
+   },
+   {
+    "region": "note_target_blue_inner",
+    "edge": "right",
+    "inside": [
+     1712.62,
+     658.9
+    ],
+    "outside": [
+     1715.62,
+     658.9
+    ],
+    "inside_cmyk": [
+     0.907,
+     0.714,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.588,
+     0.486,
+     0.486,
+     0.427
+    ]
+   },
+   {
+    "region": "note_target_blue_inner",
+    "edge": "bottom",
+    "inside": [
+     1690.22,
+     636.5
+    ],
+    "outside": [
+     1690.22,
+     633.5
+    ],
+    "inside_cmyk": [
+     0.907,
+     0.714,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.588,
+     0.486,
+     0.486,
+     0.427
+    ]
+   },
+   {
+    "region": "note_target_blue_inner",
+    "edge": "top",
+    "inside": [
+     1690.22,
+     681.3
+    ],
+    "outside": [
+     1690.22,
+     684.3
+    ],
+    "inside_cmyk": [
+     0.907,
+     0.714,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.588,
+     0.486,
+     0.486,
+     0.427
+    ]
+   },
+   {
+    "region": "note_target_white",
+    "edge": "left",
+    "inside": [
+     1819.87,
+     755.1
+    ],
+    "outside": [
+     1816.87,
+     755.1
+    ],
+    "inside_cmyk": [
+     0.588,
+     0.486,
+     0.486,
+     0.427
+    ],
+    "outside_cmyk": [
+     0.395,
+     0.31,
+     0.311,
+     0.145
+    ]
+   },
+   {
+    "region": "note_target_white",
+    "edge": "right",
+    "inside": [
+     1896.57,
+     755.1
+    ],
+    "outside": [
+     1899.57,
+     755.1
+    ],
+    "inside_cmyk": [
+     0.588,
+     0.486,
+     0.486,
+     0.427
+    ],
+    "outside_cmyk": [
+     0.395,
+     0.31,
+     0.311,
+     0.145
+    ]
+   },
+   {
+    "region": "note_target_white",
+    "edge": "bottom",
+    "inside": [
+     1858.22,
+     716.75
+    ],
+    "outside": [
+     1858.22,
+     713.75
+    ],
+    "inside_cmyk": [
+     0.588,
+     0.486,
+     0.486,
+     0.427
+    ],
+    "outside_cmyk": [
+     0.395,
+     0.31,
+     0.311,
+     0.145
+    ]
+   },
+   {
+    "region": "note_target_white",
+    "edge": "top",
+    "inside": [
+     1858.22,
+     793.45
+    ],
+    "outside": [
+     1858.22,
+     796.45
+    ],
+    "inside_cmyk": [
+     0.588,
+     0.486,
+     0.486,
+     0.427
+    ],
+    "outside_cmyk": [
+     0.395,
+     0.31,
+     0.311,
+     0.145
+    ]
+   },
+   {
+    "region": "note_target_white_inner",
+    "edge": "left",
+    "inside": [
+     1835.82,
+     755.1
+    ],
+    "outside": [
+     1832.82,
+     755.1
+    ],
+    "inside_cmyk": [
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.588,
+     0.486,
+     0.486,
+     0.427
+    ]
+   },
+   {
+    "region": "note_target_white_inner",
+    "edge": "right",
+    "inside": [
+     1880.62,
+     755.1
+    ],
+    "outside": [
+     1883.62,
+     755.1
+    ],
+    "inside_cmyk": [
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.588,
+     0.486,
+     0.486,
+     0.427
+    ]
+   },
+   {
+    "region": "note_target_white_inner",
+    "edge": "bottom",
+    "inside": [
+     1858.22,
+     732.7
+    ],
+    "outside": [
+     1858.22,
+     729.7
+    ],
+    "inside_cmyk": [
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.588,
+     0.486,
+     0.486,
+     0.427
+    ]
+   },
+   {
+    "region": "note_target_white_inner",
+    "edge": "top",
+    "inside": [
+     1858.22,
+     777.5
+    ],
+    "outside": [
+     1858.22,
+     780.5
+    ],
+    "inside_cmyk": [
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.588,
+     0.486,
+     0.486,
+     0.427
+    ]
+   },
+   {
+    "region": "note_random_start_1",
+    "edge": "left",
+    "inside": [
+     1216.55,
+     1059.55
+    ],
+    "outside": [
+     1213.55,
+     1059.55
+    ],
+    "inside_cmyk": [
+     0.398,
+     0.0,
+     0.621,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.722,
+     0.118,
+     0.882,
+     0.302
+    ]
+   },
+   {
+    "region": "note_random_start_1",
+    "edge": "right",
+    "inside": [
+     1245.45,
+     1059.55
+    ],
+    "outside": [
+     1248.45,
+     1059.55
+    ],
+    "inside_cmyk": [
+     0.398,
+     0.0,
+     0.621,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.674,
+     0.104,
+     0.875,
+     0.263
+    ]
+   },
+   {
+    "region": "note_random_start_1",
+    "edge": "bottom",
+    "inside": [
+     1231.0,
+     1045.1
+    ],
+    "outside": [
+     1231.0,
+     1042.1
+    ],
+    "inside_cmyk": [
+     0.398,
+     0.0,
+     0.621,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.674,
+     0.104,
+     0.875,
+     0.263
+    ]
+   },
+   {
+    "region": "note_random_start_1",
+    "edge": "top",
+    "inside": [
+     1231.0,
+     1074.0
+    ],
+    "outside": [
+     1231.0,
+     1077.0
+    ],
+    "inside_cmyk": [
+     0.398,
+     0.0,
+     0.621,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.745,
+     0.31,
+     0.91,
+     0.38
+    ]
+   },
+   {
+    "region": "note_random_start_2",
+    "edge": "left",
+    "inside": [
+     1348.45,
+     1059.55
+    ],
+    "outside": [
+     1345.45,
+     1059.55
+    ],
+    "inside_cmyk": [
+     0.398,
+     0.0,
+     0.621,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.674,
+     0.104,
+     0.875,
+     0.263
+    ]
+   },
+   {
+    "region": "note_random_start_2",
+    "edge": "right",
+    "inside": [
+     1377.35,
+     1059.55
+    ],
+    "outside": [
+     1380.35,
+     1059.55
+    ],
+    "inside_cmyk": [
+     0.398,
+     0.0,
+     0.621,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.674,
+     0.104,
+     0.875,
+     0.263
+    ]
+   },
+   {
+    "region": "note_random_start_2",
+    "edge": "bottom",
+    "inside": [
+     1362.9,
+     1045.1
+    ],
+    "outside": [
+     1362.9,
+     1042.1
+    ],
+    "inside_cmyk": [
+     0.398,
+     0.0,
+     0.621,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.674,
+     0.104,
+     0.875,
+     0.263
+    ]
+   },
+   {
+    "region": "note_random_start_2",
+    "edge": "top",
+    "inside": [
+     1362.9,
+     1074.0
+    ],
+    "outside": [
+     1362.9,
+     1077.0
+    ],
+    "inside_cmyk": [
+     0.398,
+     0.0,
+     0.621,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.674,
+     0.104,
+     0.875,
+     0.263
+    ]
+   },
+   {
+    "region": "note_red_start",
+    "edge": "left",
+    "inside": [
+     1480.35,
+     1059.55
+    ],
+    "outside": [
+     1477.35,
+     1059.55
+    ],
+    "inside_cmyk": [
+     0.143,
+     1.0,
+     1.0,
+     0.049
+    ],
+    "outside_cmyk": [
+     0.674,
+     0.104,
+     0.875,
+     0.263
+    ]
+   },
+   {
+    "region": "note_red_start",
+    "edge": "right",
+    "inside": [
+     1509.25,
+     1059.55
+    ],
+    "outside": [
+     1512.25,
+     1059.55
+    ],
+    "inside_cmyk": [
+     0.143,
+     1.0,
+     1.0,
+     0.049
+    ],
+    "outside_cmyk": [
+     0.674,
+     0.104,
+     0.875,
+     0.263
+    ]
+   },
+   {
+    "region": "note_red_start",
+    "edge": "bottom",
+    "inside": [
+     1494.8,
+     1045.1
+    ],
+    "outside": [
+     1494.8,
+     1042.1
+    ],
+    "inside_cmyk": [
+     0.143,
+     1.0,
+     1.0,
+     0.049
+    ],
+    "outside_cmyk": [
+     0.674,
+     0.104,
+     0.875,
+     0.263
+    ]
+   },
+   {
+    "region": "note_red_start",
+    "edge": "top",
+    "inside": [
+     1494.8,
+     1074.0
+    ],
+    "outside": [
+     1494.8,
+     1077.0
+    ],
+    "inside_cmyk": [
+     0.143,
+     1.0,
+     1.0,
+     0.049
+    ],
+    "outside_cmyk": [
+     0.745,
+     0.31,
+     0.91,
+     0.38
+    ]
+   },
+   {
+    "region": "note_green_start",
+    "edge": "left",
+    "inside": [
+     1612.25,
+     1059.55
+    ],
+    "outside": [
+     1609.25,
+     1059.55
+    ],
+    "inside_cmyk": [
+     0.849,
+     0.291,
+     0.947,
+     0.169
+    ],
+    "outside_cmyk": [
+     0.674,
+     0.104,
+     0.875,
+     0.263
+    ]
+   },
+   {
+    "region": "note_green_start",
+    "edge": "right",
+    "inside": [
+     1641.15,
+     1059.55
+    ],
+    "outside": [
+     1644.15,
+     1059.55
+    ],
+    "inside_cmyk": [
+     0.849,
+     0.291,
+     0.947,
+     0.169
+    ],
+    "outside_cmyk": [
+     0.674,
+     0.104,
+     0.875,
+     0.263
+    ]
+   },
+   {
+    "region": "note_green_start",
+    "edge": "bottom",
+    "inside": [
+     1626.7,
+     1045.1
+    ],
+    "outside": [
+     1626.7,
+     1042.1
+    ],
+    "inside_cmyk": [
+     0.849,
+     0.291,
+     0.947,
+     0.169
+    ],
+    "outside_cmyk": [
+     0.674,
+     0.104,
+     0.875,
+     0.263
+    ]
+   },
+   {
+    "region": "note_green_start",
+    "edge": "top",
+    "inside": [
+     1626.7,
+     1074.0
+    ],
+    "outside": [
+     1626.7,
+     1077.0
+    ],
+    "inside_cmyk": [
+     0.849,
+     0.291,
+     0.947,
+     0.169
+    ],
+    "outside_cmyk": [
+     0.674,
+     0.104,
+     0.875,
+     0.263
+    ]
+   },
+   {
+    "region": "note_random_start_3",
+    "edge": "left",
+    "inside": [
+     1744.15,
+     1059.55
+    ],
+    "outside": [
+     1741.15,
+     1059.55
+    ],
+    "inside_cmyk": [
+     0.398,
+     0.0,
+     0.621,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.674,
+     0.104,
+     0.875,
+     0.263
+    ]
+   },
+   {
+    "region": "note_random_start_3",
+    "edge": "right",
+    "inside": [
+     1773.05,
+     1059.55
+    ],
+    "outside": [
+     1776.05,
+     1059.55
+    ],
+    "inside_cmyk": [
+     0.398,
+     0.0,
+     0.621,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.674,
+     0.104,
+     0.875,
+     0.263
+    ]
+   },
+   {
+    "region": "note_random_start_3",
+    "edge": "bottom",
+    "inside": [
+     1758.6,
+     1045.1
+    ],
+    "outside": [
+     1758.6,
+     1042.1
+    ],
+    "inside_cmyk": [
+     0.398,
+     0.0,
+     0.621,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.674,
+     0.104,
+     0.875,
+     0.263
+    ]
+   },
+   {
+    "region": "note_random_start_3",
+    "edge": "top",
+    "inside": [
+     1758.6,
+     1074.0
+    ],
+    "outside": [
+     1758.6,
+     1077.0
+    ],
+    "inside_cmyk": [
+     0.398,
+     0.0,
+     0.621,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.745,
+     0.31,
+     0.91,
+     0.38
+    ]
+   },
+   {
+    "region": "note_random_start_4",
+    "edge": "left",
+    "inside": [
+     1876.05,
+     1059.55
+    ],
+    "outside": [
+     1873.05,
+     1059.55
+    ],
+    "inside_cmyk": [
+     0.398,
+     0.0,
+     0.621,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.674,
+     0.104,
+     0.875,
+     0.263
+    ]
+   },
+   {
+    "region": "note_random_start_4",
+    "edge": "right",
+    "inside": [
+     1904.95,
+     1059.55
+    ],
+    "outside": [
+     1907.95,
+     1059.55
+    ],
+    "inside_cmyk": [
+     0.398,
+     0.0,
+     0.621,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.745,
+     0.31,
+     0.91,
+     0.38
+    ]
+   },
+   {
+    "region": "note_random_start_4",
+    "edge": "bottom",
+    "inside": [
+     1893.5,
+     1045.1
+    ],
+    "outside": [
+     1893.5,
+     1042.1
+    ],
+    "inside_cmyk": [
+     0.398,
+     0.0,
+     0.621,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.674,
+     0.104,
+     0.875,
+     0.263
+    ]
+   },
+   {
+    "region": "note_random_start_4",
+    "edge": "top",
+    "inside": [
+     1888.5,
+     1074.0
+    ],
+    "outside": [
+     1888.5,
+     1077.0
+    ],
+    "inside_cmyk": [
+     0.398,
+     0.0,
+     0.621,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.674,
+     0.104,
+     0.875,
+     0.263
+    ]
+   },
+   {
+    "region": "clef_mark",
+    "edge": "left",
+    "inside": [
+     831.5,
+     549.9
+    ],
+    "outside": [
+     828.5,
+     549.9
+    ],
+    "inside_cmyk": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.395,
+     0.31,
+     0.311,
+     0.145
+    ]
+   },
+   {
+    "region": "clef_mark",
+    "edge": "right",
+    "inside": [
+     876.3,
+     549.9
+    ],
+    "outside": [
+     879.3,
+     549.9
+    ],
+    "inside_cmyk": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.395,
+     0.31,
+     0.311,
+     0.145
+    ]
+   },
+   {
+    "region": "clef_mark",
+    "edge": "bottom",
+    "inside": [
+     853.9,
+     535.46
+    ],
+    "outside": [
+     853.9,
+     532.46
+    ],
+    "inside_cmyk": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.395,
+     0.31,
+     0.311,
+     0.145
+    ]
+   },
+   {
+    "region": "clef_mark",
+    "edge": "top",
+    "inside": [
+     853.9,
+     564.34
+    ],
+    "outside": [
+     853.9,
+     567.34
+    ],
+    "inside_cmyk": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.395,
+     0.31,
+     0.311,
+     0.145
+    ]
+   },
+   {
+    "region": "amplifier_mark",
+    "edge": "left",
+    "inside": [
+     38.75,
+     743.0
+    ],
+    "outside": [
+     35.75,
+     743.0
+    ],
+    "inside_cmyk": [
+     0.837,
+     0.714,
+     0.593,
+     0.767
+    ],
+    "outside_cmyk": [
+     0.319,
+     0.533,
+     0.646,
+     0.314
+    ]
+   },
+   {
+    "region": "amplifier_mark",
+    "edge": "right",
+    "inside": [
+     83.55,
+     743.0
+    ],
+    "outside": [
+     86.55,
+     743.0
+    ],
+    "inside_cmyk": [
+     0.837,
+     0.714,
+     0.593,
+     0.767
+    ],
+    "outside_cmyk": [
+     0.319,
+     0.533,
+     0.646,
+     0.314
+    ]
+   },
+   {
+    "region": "amplifier_mark",
+    "edge": "bottom",
+    "inside": [
+     61.15,
+     696.7
+    ],
+    "outside": [
+     61.15,
+     693.7
+    ],
+    "inside_cmyk": [
+     0.837,
+     0.714,
+     0.593,
+     0.767
+    ],
+    "outside_cmyk": [
+     0.307,
+     0.571,
+     0.71,
+     0.353
+    ]
+   },
+   {
+    "region": "amplifier_mark",
+    "edge": "top",
+    "inside": [
+     61.15,
+     789.3
+    ],
+    "outside": [
+     61.15,
+     792.3
+    ],
+    "inside_cmyk": [
+     0.837,
+     0.714,
+     0.593,
+     0.767
+    ],
+    "outside_cmyk": [
+     0.319,
+     0.533,
+     0.646,
+     0.314
+    ]
+   },
+   {
+    "region": "unscored_square_1_outer",
+    "edge": "left",
+    "inside": [
+     68.5,
+     101.85
+    ],
+    "outside": [
+     65.5,
+     101.85
+    ],
+    "inside_cmyk": [
+     0.195,
+     0.15,
+     0.156,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.162,
+     0.509,
+     0.023,
+     0.0
+    ]
+   },
+   {
+    "region": "unscored_square_1_outer",
+    "edge": "right",
+    "inside": [
+     113.3,
+     102.85
+    ],
+    "outside": [
+     116.3,
+     102.85
+    ],
+    "inside_cmyk": [
+     0.195,
+     0.15,
+     0.156,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.162,
+     0.509,
+     0.023,
+     0.0
+    ]
+   },
+   {
+    "region": "unscored_square_1_outer",
+    "edge": "bottom",
+    "inside": [
+     90.9,
+     79.45
+    ],
+    "outside": [
+     90.9,
+     76.45
+    ],
+    "inside_cmyk": [
+     0.195,
+     0.15,
+     0.156,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.162,
+     0.509,
+     0.023,
+     0.0
+    ]
+   },
+   {
+    "region": "unscored_square_1_outer",
+    "edge": "top",
+    "inside": [
+     91.9,
+     124.25
+    ],
+    "outside": [
+     91.9,
+     127.25
+    ],
+    "inside_cmyk": [
+     0.195,
+     0.15,
+     0.156,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.162,
+     0.509,
+     0.023,
+     0.0
+    ]
+   },
+   {
+    "region": "unscored_square_1_middle",
+    "edge": "left",
+    "inside": [
+     76.45,
+     101.85
+    ],
+    "outside": [
+     73.45,
+     101.85
+    ],
+    "inside_cmyk": [
+     0.438,
+     0.359,
+     0.363,
+     0.013
+    ],
+    "outside_cmyk": [
+     0.195,
+     0.15,
+     0.156,
+     0.0
+    ]
+   },
+   {
+    "region": "unscored_square_1_middle",
+    "edge": "right",
+    "inside": [
+     105.35,
+     101.85
+    ],
+    "outside": [
+     108.35,
+     101.85
+    ],
+    "inside_cmyk": [
+     0.438,
+     0.359,
+     0.363,
+     0.013
+    ],
+    "outside_cmyk": [
+     0.195,
+     0.15,
+     0.156,
+     0.0
+    ]
+   },
+   {
+    "region": "unscored_square_1_middle",
+    "edge": "bottom",
+    "inside": [
+     90.9,
+     87.4
+    ],
+    "outside": [
+     90.9,
+     84.4
+    ],
+    "inside_cmyk": [
+     0.438,
+     0.359,
+     0.363,
+     0.013
+    ],
+    "outside_cmyk": [
+     0.195,
+     0.15,
+     0.156,
+     0.0
+    ]
+   },
+   {
+    "region": "unscored_square_1_middle",
+    "edge": "top",
+    "inside": [
+     90.9,
+     116.3
+    ],
+    "outside": [
+     90.9,
+     119.3
+    ],
+    "inside_cmyk": [
+     0.438,
+     0.359,
+     0.363,
+     0.013
+    ],
+    "outside_cmyk": [
+     0.195,
+     0.15,
+     0.156,
+     0.0
+    ]
+   },
+   {
+    "region": "unscored_square_1_core",
+    "edge": "left",
+    "inside": [
+     84.45,
+     101.85
+    ],
+    "outside": [
+     81.45,
+     101.85
+    ],
+    "inside_cmyk": [
+     0.603,
+     0.519,
+     0.513,
+     0.212
+    ],
+    "outside_cmyk": [
+     0.438,
+     0.359,
+     0.363,
+     0.013
+    ]
+   },
+   {
+    "region": "unscored_square_1_core",
+    "edge": "right",
+    "inside": [
+     97.35,
+     101.85
+    ],
+    "outside": [
+     100.35,
+     101.85
+    ],
+    "inside_cmyk": [
+     0.603,
+     0.519,
+     0.513,
+     0.212
+    ],
+    "outside_cmyk": [
+     0.438,
+     0.359,
+     0.363,
+     0.013
+    ]
+   },
+   {
+    "region": "unscored_square_1_core",
+    "edge": "bottom",
+    "inside": [
+     90.9,
+     95.4
+    ],
+    "outside": [
+     90.9,
+     92.4
+    ],
+    "inside_cmyk": [
+     0.603,
+     0.519,
+     0.513,
+     0.212
+    ],
+    "outside_cmyk": [
+     0.438,
+     0.359,
+     0.363,
+     0.013
+    ]
+   },
+   {
+    "region": "unscored_square_1_core",
+    "edge": "top",
+    "inside": [
+     90.9,
+     108.3
+    ],
+    "outside": [
+     90.9,
+     111.3
+    ],
+    "inside_cmyk": [
+     0.603,
+     0.519,
+     0.513,
+     0.212
+    ],
+    "outside_cmyk": [
+     0.438,
+     0.359,
+     0.363,
+     0.013
+    ]
+   },
+   {
+    "region": "unscored_square_2_outer",
+    "edge": "left",
+    "inside": [
+     1756.9,
+     133.75
+    ],
+    "outside": [
+     1753.9,
+     133.75
+    ],
+    "inside_cmyk": [
+     0.195,
+     0.15,
+     0.156,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.395,
+     0.31,
+     0.311,
+     0.145
+    ]
+   },
+   {
+    "region": "unscored_square_2_outer",
+    "edge": "right",
+    "inside": [
+     1801.7,
+     133.75
+    ],
+    "outside": [
+     1804.7,
+     133.75
+    ],
+    "inside_cmyk": [
+     0.195,
+     0.15,
+     0.156,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.395,
+     0.31,
+     0.311,
+     0.145
+    ]
+   },
+   {
+    "region": "unscored_square_2_outer",
+    "edge": "bottom",
+    "inside": [
+     1779.3,
+     111.35
+    ],
+    "outside": [
+     1779.3,
+     108.35
+    ],
+    "inside_cmyk": [
+     0.195,
+     0.15,
+     0.156,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.395,
+     0.31,
+     0.311,
+     0.145
+    ]
+   },
+   {
+    "region": "unscored_square_2_outer",
+    "edge": "top",
+    "inside": [
+     1779.3,
+     156.15
+    ],
+    "outside": [
+     1779.3,
+     159.15
+    ],
+    "inside_cmyk": [
+     0.195,
+     0.15,
+     0.156,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.395,
+     0.31,
+     0.311,
+     0.145
+    ]
+   },
+   {
+    "region": "unscored_square_2_middle",
+    "edge": "left",
+    "inside": [
+     1764.85,
+     133.75
+    ],
+    "outside": [
+     1761.85,
+     133.75
+    ],
+    "inside_cmyk": [
+     0.438,
+     0.359,
+     0.363,
+     0.013
+    ],
+    "outside_cmyk": [
+     0.195,
+     0.15,
+     0.156,
+     0.0
+    ]
+   },
+   {
+    "region": "unscored_square_2_middle",
+    "edge": "right",
+    "inside": [
+     1793.75,
+     133.75
+    ],
+    "outside": [
+     1796.75,
+     133.75
+    ],
+    "inside_cmyk": [
+     0.438,
+     0.359,
+     0.363,
+     0.013
+    ],
+    "outside_cmyk": [
+     0.195,
+     0.15,
+     0.156,
+     0.0
+    ]
+   },
+   {
+    "region": "unscored_square_2_middle",
+    "edge": "bottom",
+    "inside": [
+     1779.3,
+     119.3
+    ],
+    "outside": [
+     1779.3,
+     116.3
+    ],
+    "inside_cmyk": [
+     0.438,
+     0.359,
+     0.363,
+     0.013
+    ],
+    "outside_cmyk": [
+     0.195,
+     0.15,
+     0.156,
+     0.0
+    ]
+   },
+   {
+    "region": "unscored_square_2_middle",
+    "edge": "top",
+    "inside": [
+     1779.3,
+     148.2
+    ],
+    "outside": [
+     1779.3,
+     151.2
+    ],
+    "inside_cmyk": [
+     0.438,
+     0.359,
+     0.363,
+     0.013
+    ],
+    "outside_cmyk": [
+     0.195,
+     0.15,
+     0.156,
+     0.0
+    ]
+   },
+   {
+    "region": "unscored_square_2_core",
+    "edge": "left",
+    "inside": [
+     1772.85,
+     133.75
+    ],
+    "outside": [
+     1769.85,
+     133.75
+    ],
+    "inside_cmyk": [
+     0.603,
+     0.519,
+     0.513,
+     0.212
+    ],
+    "outside_cmyk": [
+     0.438,
+     0.359,
+     0.363,
+     0.013
+    ]
+   },
+   {
+    "region": "unscored_square_2_core",
+    "edge": "right",
+    "inside": [
+     1785.75,
+     133.75
+    ],
+    "outside": [
+     1788.75,
+     133.75
+    ],
+    "inside_cmyk": [
+     0.603,
+     0.519,
+     0.513,
+     0.212
+    ],
+    "outside_cmyk": [
+     0.438,
+     0.359,
+     0.363,
+     0.013
+    ]
+   },
+   {
+    "region": "unscored_square_2_core",
+    "edge": "bottom",
+    "inside": [
+     1779.3,
+     127.3
+    ],
+    "outside": [
+     1779.3,
+     124.3
+    ],
+    "inside_cmyk": [
+     0.603,
+     0.519,
+     0.513,
+     0.212
+    ],
+    "outside_cmyk": [
+     0.438,
+     0.359,
+     0.363,
+     0.013
+    ]
+   },
+   {
+    "region": "unscored_square_2_core",
+    "edge": "top",
+    "inside": [
+     1779.3,
+     140.2
+    ],
+    "outside": [
+     1779.3,
+     143.2
+    ],
+    "inside_cmyk": [
+     0.603,
+     0.519,
+     0.513,
+     0.212
+    ],
+    "outside_cmyk": [
+     0.438,
+     0.359,
+     0.363,
+     0.013
+    ]
+   },
+   {
+    "region": "unscored_square_3_outer",
+    "edge": "left",
+    "inside": [
+     1982.5,
+     1051.6
+    ],
+    "outside": [
+     1979.5,
+     1051.6
+    ],
+    "inside_cmyk": [
+     0.195,
+     0.15,
+     0.156,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.279,
+     0.567,
+     0.676,
+     0.3
+    ]
+   },
+   {
+    "region": "unscored_square_3_outer",
+    "edge": "right",
+    "inside": [
+     2027.3,
+     1051.6
+    ],
+    "outside": [
+     2030.3,
+     1051.6
+    ],
+    "inside_cmyk": [
+     0.195,
+     0.15,
+     0.156,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.279,
+     0.567,
+     0.676,
+     0.3
+    ]
+   },
+   {
+    "region": "unscored_square_3_outer",
+    "edge": "bottom",
+    "inside": [
+     2004.9,
+     1029.2
+    ],
+    "outside": [
+     2004.9,
+     1026.2
+    ],
+    "inside_cmyk": [
+     0.195,
+     0.15,
+     0.156,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.279,
+     0.567,
+     0.676,
+     0.3
+    ]
+   },
+   {
+    "region": "unscored_square_3_outer",
+    "edge": "top",
+    "inside": [
+     2004.9,
+     1074.0
+    ],
+    "outside": [
+     2004.9,
+     1077.0
+    ],
+    "inside_cmyk": [
+     0.195,
+     0.15,
+     0.156,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.279,
+     0.567,
+     0.676,
+     0.3
+    ]
+   },
+   {
+    "region": "unscored_square_3_middle",
+    "edge": "left",
+    "inside": [
+     1990.45,
+     1051.6
+    ],
+    "outside": [
+     1987.45,
+     1051.6
+    ],
+    "inside_cmyk": [
+     0.438,
+     0.359,
+     0.363,
+     0.013
+    ],
+    "outside_cmyk": [
+     0.195,
+     0.15,
+     0.156,
+     0.0
+    ]
+   },
+   {
+    "region": "unscored_square_3_middle",
+    "edge": "right",
+    "inside": [
+     2019.35,
+     1051.6
+    ],
+    "outside": [
+     2022.35,
+     1051.6
+    ],
+    "inside_cmyk": [
+     0.438,
+     0.359,
+     0.363,
+     0.013
+    ],
+    "outside_cmyk": [
+     0.195,
+     0.15,
+     0.156,
+     0.0
+    ]
+   },
+   {
+    "region": "unscored_square_3_middle",
+    "edge": "bottom",
+    "inside": [
+     2004.9,
+     1037.15
+    ],
+    "outside": [
+     2004.9,
+     1034.15
+    ],
+    "inside_cmyk": [
+     0.438,
+     0.359,
+     0.363,
+     0.013
+    ],
+    "outside_cmyk": [
+     0.195,
+     0.15,
+     0.156,
+     0.0
+    ]
+   },
+   {
+    "region": "unscored_square_3_middle",
+    "edge": "top",
+    "inside": [
+     2004.9,
+     1066.05
+    ],
+    "outside": [
+     2004.9,
+     1069.05
+    ],
+    "inside_cmyk": [
+     0.438,
+     0.359,
+     0.363,
+     0.013
+    ],
+    "outside_cmyk": [
+     0.195,
+     0.15,
+     0.156,
+     0.0
+    ]
+   },
+   {
+    "region": "unscored_square_3_core",
+    "edge": "left",
+    "inside": [
+     1998.45,
+     1051.6
+    ],
+    "outside": [
+     1995.45,
+     1051.6
+    ],
+    "inside_cmyk": [
+     0.603,
+     0.519,
+     0.513,
+     0.212
+    ],
+    "outside_cmyk": [
+     0.438,
+     0.359,
+     0.363,
+     0.013
+    ]
+   },
+   {
+    "region": "unscored_square_3_core",
+    "edge": "right",
+    "inside": [
+     2011.35,
+     1051.6
+    ],
+    "outside": [
+     2014.35,
+     1051.6
+    ],
+    "inside_cmyk": [
+     0.603,
+     0.519,
+     0.513,
+     0.212
+    ],
+    "outside_cmyk": [
+     0.438,
+     0.359,
+     0.363,
+     0.013
+    ]
+   },
+   {
+    "region": "unscored_square_3_core",
+    "edge": "bottom",
+    "inside": [
+     2004.9,
+     1045.15
+    ],
+    "outside": [
+     2004.9,
+     1042.15
+    ],
+    "inside_cmyk": [
+     0.603,
+     0.519,
+     0.513,
+     0.212
+    ],
+    "outside_cmyk": [
+     0.438,
+     0.359,
+     0.363,
+     0.013
+    ]
+   },
+   {
+    "region": "unscored_square_3_core",
+    "edge": "top",
+    "inside": [
+     2004.9,
+     1058.05
+    ],
+    "outside": [
+     2004.9,
+     1061.05
+    ],
+    "inside_cmyk": [
+     0.603,
+     0.519,
+     0.513,
+     0.212
+    ],
+    "outside_cmyk": [
+     0.438,
+     0.359,
+     0.363,
+     0.013
+    ]
+   },
+   {
+    "region": "unscored_square_4_outer",
+    "edge": "left",
+    "inside": [
+     966.5,
+     715.25
+    ],
+    "outside": [
+     963.5,
+     715.25
+    ],
+    "inside_cmyk": [
+     0.195,
+     0.15,
+     0.156,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.395,
+     0.31,
+     0.311,
+     0.145
+    ]
+   },
+   {
+    "region": "unscored_square_4_outer",
+    "edge": "right",
+    "inside": [
+     1011.3,
+     715.25
+    ],
+    "outside": [
+     1014.3,
+     715.25
+    ],
+    "inside_cmyk": [
+     0.195,
+     0.15,
+     0.156,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.395,
+     0.31,
+     0.311,
+     0.145
+    ]
+   },
+   {
+    "region": "unscored_square_4_outer",
+    "edge": "bottom",
+    "inside": [
+     988.9,
+     692.85
+    ],
+    "outside": [
+     988.9,
+     689.85
+    ],
+    "inside_cmyk": [
+     0.195,
+     0.15,
+     0.156,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.395,
+     0.31,
+     0.311,
+     0.145
+    ]
+   },
+   {
+    "region": "unscored_square_4_outer",
+    "edge": "top",
+    "inside": [
+     988.9,
+     737.65
+    ],
+    "outside": [
+     988.9,
+     740.65
+    ],
+    "inside_cmyk": [
+     0.195,
+     0.15,
+     0.156,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.395,
+     0.31,
+     0.311,
+     0.145
+    ]
+   },
+   {
+    "region": "unscored_square_4_middle",
+    "edge": "left",
+    "inside": [
+     974.45,
+     715.25
+    ],
+    "outside": [
+     971.45,
+     715.25
+    ],
+    "inside_cmyk": [
+     0.438,
+     0.359,
+     0.363,
+     0.013
+    ],
+    "outside_cmyk": [
+     0.195,
+     0.15,
+     0.156,
+     0.0
+    ]
+   },
+   {
+    "region": "unscored_square_4_middle",
+    "edge": "right",
+    "inside": [
+     1003.35,
+     715.25
+    ],
+    "outside": [
+     1006.35,
+     715.25
+    ],
+    "inside_cmyk": [
+     0.438,
+     0.359,
+     0.363,
+     0.013
+    ],
+    "outside_cmyk": [
+     0.195,
+     0.15,
+     0.156,
+     0.0
+    ]
+   },
+   {
+    "region": "unscored_square_4_middle",
+    "edge": "bottom",
+    "inside": [
+     988.9,
+     700.8
+    ],
+    "outside": [
+     988.9,
+     697.8
+    ],
+    "inside_cmyk": [
+     0.438,
+     0.359,
+     0.363,
+     0.013
+    ],
+    "outside_cmyk": [
+     0.195,
+     0.15,
+     0.156,
+     0.0
+    ]
+   },
+   {
+    "region": "unscored_square_4_middle",
+    "edge": "top",
+    "inside": [
+     988.9,
+     729.7
+    ],
+    "outside": [
+     988.9,
+     732.7
+    ],
+    "inside_cmyk": [
+     0.438,
+     0.359,
+     0.363,
+     0.013
+    ],
+    "outside_cmyk": [
+     0.195,
+     0.15,
+     0.156,
+     0.0
+    ]
+   },
+   {
+    "region": "unscored_square_4_core",
+    "edge": "left",
+    "inside": [
+     982.45,
+     715.25
+    ],
+    "outside": [
+     979.45,
+     715.25
+    ],
+    "inside_cmyk": [
+     0.603,
+     0.519,
+     0.513,
+     0.212
+    ],
+    "outside_cmyk": [
+     0.438,
+     0.359,
+     0.363,
+     0.013
+    ]
+   },
+   {
+    "region": "unscored_square_4_core",
+    "edge": "right",
+    "inside": [
+     995.35,
+     715.25
+    ],
+    "outside": [
+     998.35,
+     715.25
+    ],
+    "inside_cmyk": [
+     0.603,
+     0.519,
+     0.513,
+     0.212
+    ],
+    "outside_cmyk": [
+     0.438,
+     0.359,
+     0.363,
+     0.013
+    ]
+   },
+   {
+    "region": "unscored_square_4_core",
+    "edge": "bottom",
+    "inside": [
+     988.9,
+     708.8
+    ],
+    "outside": [
+     988.9,
+     705.8
+    ],
+    "inside_cmyk": [
+     0.603,
+     0.519,
+     0.513,
+     0.212
+    ],
+    "outside_cmyk": [
+     0.438,
+     0.359,
+     0.363,
+     0.013
+    ]
+   },
+   {
+    "region": "unscored_square_4_core",
+    "edge": "top",
+    "inside": [
+     988.9,
+     721.7
+    ],
+    "outside": [
+     988.9,
+     724.7
+    ],
+    "inside_cmyk": [
+     0.603,
+     0.519,
+     0.513,
+     0.212
+    ],
+    "outside_cmyk": [
+     0.438,
+     0.359,
+     0.363,
+     0.013
+    ]
+   }
+  ]
+ }
+}

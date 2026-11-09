@@ -89,6 +89,7 @@ m.control.limits(speed, accel, torque)           # back to what they were
 print("target tolerances", m.control.target_tolerances(), "stall tolerances", m.control.stall_tolerances())
 print("controller: done", m.control.done(), "stalled", m.control.stalled(), "load", m.control.load())
 print("controller state", m.control.state())
+print("thermal limit", m.control.thermal())       # (on, derated, heat_ms, limit_ms, hold_mv, cool_ratio)
 
 # --- the motor's settings and model -----------------------------------------------------------------
 print("settings (max voltage mV, stall timeout ms):", m.settings())

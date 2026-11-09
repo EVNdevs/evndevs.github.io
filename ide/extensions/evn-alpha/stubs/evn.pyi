@@ -78,7 +78,8 @@ class Control:
         returns ``(speed, acceleration, torque)``; ``acceleration`` is a tuple when the two differ.
         Defaults (EV3 Large / Medium): speed 1000 / 1400 (or the calibrated no-load speed when higher),
         acceleration 2400 / 3000, torque 449 / 206; the NXT runs the Large's speed and acceleration, the
-        JGA25-370 460 and 2400, the Pololu 25D 3000 and 20000, the CHR-GM16 900 and 10000, the CM22-2230 700 and 5000. A
+        JGA25-370 its no-load speed at the cap in force (about 600 on the pack, 462 at max_voltage 6000) and
+        2400, the Pololu 25D 3000 and 20000, the CHR-GM16 900 and 10000, the CM22-2230 700 and 5000. A
         non-positive limit raises ``ValueError``;
         an acceleration sequence that is not two values raises ``ValueError``.
         """
@@ -108,6 +109,22 @@ class Control:
         """Same as ``Motor.done()``: the last profiled move is complete and the shaft is within ``target_tolerances()``."""
     def stalled(self) -> bool:
         """Same as ``Motor.stalled()``: at the allowed limit and not turning, for ``stall_tolerances()``."""
+    @overload
+    def thermal(self) -> Tuple[bool, bool, int, int, int, int]: ...
+    @overload
+    def thermal(self, on: bool, /) -> None:
+        """An opt-in, best-effort electrothermal limit (EVN's own), off by default: ``thermal(True)`` turns it on for
+        this motor, ``thermal()`` reads ``(on, derated, heat_ms, limit_ms, hold_mv, cool_ratio)``. Every ``Motor(port)``
+        starts with it off; only the CM22-2230 and the Pololu 25D have figures for it (``ValueError`` on any other
+        motor). An estimate, not a measurement: no thermal data exists for these motors, the board measures no motor
+        current or temperature, and the figures are a seller's table (CM22) or a proxy (Pololu gives no rated
+        current). On, a stall at the cap in force for 2 s derates the drive to ``hold_mv`` (1584 / 2100 mV) while the
+        shaft stays stalled; the whole drive is back ``heat_ms * cool_ratio`` ms after it is freed - 56 s (CM22) / 30 s
+        (25D) after a full 2 s, so squaring on a wall at full drive for over 2 s costs that wheel 56 s / 30 s.
+        ``settings()`` keeps reading the program's cap; ``calibrate()`` is refused while derated. Turned back on
+        before the count has cooled, a derate resumes; a stall while off is not counted. Never counted:
+        ``dc()`` under 100 %, a hold or move below the cap, creeping just above the stall speed at the cap, the PID
+        law."""
     def load(self, *, output: bool = False) -> int:
         """Same as ``Motor.load()``: the torque the calibrated motor does not account for, in mNm at the motor
         (positive = opposing a positive turn); ``output=True`` gives it at the output of the gears."""
@@ -183,7 +200,7 @@ class Motor:
         ``model``: the motor on the port, ``"EV3 Large"``, ``"EV3 Medium"``, ``"NXT"``,
         ``"JGA25-370 6V 77RPM"``, ``"Pololu 25D 9.7:1 HP 12V"``, ``"CHR-GM16-030PA 9V 1:63"`` or ``"CM22-2230 12V 1:49"``
         (``"large"``, ``"medium"``, ``"nxt"``, ``"jga25"``, ``"pololu25d_9_7"``, ``"chr16_63"``, ``"cm22_49"`` also work; the JGA25 is a 6 V
-        gearmotor, 3432 counts per revolution, the port capped at 6 V; the Pololu 25D is a 12 V high-power
+        gearmotor, 3432 counts per revolution, not capped - ``settings(max_voltage=6000)`` holds it to its rating; the Pololu 25D is a 12 V high-power
         gearmotor, 9.7:1, 464.64 counts per revolution, EV3 Medium control class; the CHR-GM16 is a 16 mm 9 V
         gearmotor, 1:63, 1764 counts per revolution, the port capped at 9 V (above the 2S pack: it never binds),
         EV3 Large control class; the CM22-2230 is a 22 mm 12 V planetary gearmotor, 1:49, 3136 counts per
@@ -294,7 +311,7 @@ class Motor:
     def full_speed(self, deg_s: float, /) -> None:
         """What 100 % means, in deg/s, at the present battery voltage: the no-load speed measured by
         ``calibrate()`` (stored in flash per port), or until then the motor model's rated no-load speed
-        (EV3 Large 1050, EV3 Medium 1560, NXT 1020 deg/s at 9 V; JGA25 462 deg/s at its 6 V cap; Pololu 6000 deg/s at 12 V; CHR-GM16 1290 deg/s at its 9 V cap;
+        (EV3 Large 1050, EV3 Medium 1560, NXT 1020 deg/s at 9 V; JGA25 462 deg/s at its 6 V rating; Pololu 6000 deg/s at 12 V; CHR-GM16 1290 deg/s at its 9 V cap;
         CM22-2230 1110 deg/s at 12 V) scaled
         by the voltage the motor sees (the pack, or its cap).
         Setting it stores deg/s per volt, so it keeps tracking the battery; a non-positive value raises
@@ -313,17 +330,25 @@ class Motor:
         returns the result, so several ports can calibrate together - and once that run has finished, the
         next ``calibrate()`` returns its result at once instead of measuring again. A command that moves,
         holds or stops the motor (or its DriveBase, ``close()``, a take-over, ``evn.stop_all()``) drops it;
-        reads and settings do not - after a drop, ``calibrate()`` measures afresh. One stored record per port. ``RuntimeError`` when the shaft does
-        not break away, the fit fails, or the result is not plausible - then nothing is applied or stored and
-        the port keeps its previous calibration (refused as the pulses end, before the slow ramps):
-        "the four pulses disagree on the motor's response time" (the slowest over 3x the fastest: something
-        rubbed or caught while it turned, or a mechanism on the shaft has play; a first pulse that alone
-        disagrees takes the time constant of the calibration's repeat of it instead, and its speed from the
-        second half of its own record - the drift check still runs), or
-        "running friction far below this motor model's" (a port set to a CHR-GM16 or an EV3 Medium, whose
-        result otherwise looks like that motor: something rubbed or caught, the port is set to another motor,
-        or a load grows with the speed - a fan: calibrate without it; not applied when the repeat lent the
-        first pulse its time constant - behind gear play such a load is stored). A result with a
+        reads and settings do not - after a drop, ``calibrate()`` measures afresh. One stored record per port.
+        ``RuntimeError`` only when no controller could run on what was measured - nothing is applied or stored
+        and the port keeps its previous calibration: no breakaway (at 0.80 duty, the high pulse or the ramp's
+        top), "no valid fit: the four pulses disagree on the motor's response time, no three within 2x", a pulse
+        with no fit under 20 deg/s ("positive pulse fit failed"), "no response", "fit out of range", "high
+        pulse not faster than low pulse". A wheel, an arm or a gear train may stay on: a load is measured with
+        the motor and the record is kept and used, with a warning - "running friction well above this motor model's"
+        (the load is in the numbers, ``full_speed()`` is lower: calibrate again when it changes; a light load
+        draws no note, and an NXT, a custom motor or a port nobody set have no line; naming the port's default
+        on an unconfigured board does not set it, nor the model it took from its record at a power-up),
+        "the four pulses disagree on the motor's response time" (the slowest over 3x the fastest,
+        or one fit none, three agreeing within 2x: something rubbed or caught, or a mechanism has play; the
+        response time from those three, the rest from all four, so b0 may be off; a first pulse that alone disagrees takes the time constant of the
+        calibration's repeat of it instead, and its speed from the second half of its own record, without a
+        note), or "running friction far below this motor model's" (a port set to a CHR-GM16 or an EV3 Medium,
+        whose result otherwise looks like that motor: a load grows with the speed - a fan -, something rubbed
+        or caught, or the port is set to another motor; not applied when the repeat lent the first pulse its
+        time constant). One of these, then the band's and the drift's, joined by "Also:" (a spread note leaves
+        a load out); the text lasts until the next power-up. Any other
         warning (outside the range the port's motor model is known for, "... is not plausible for this motor
         model" - stored and used; or the drift check: the mechanism ran more than 3 % faster or slower at the
         end than at the start - calibrate again after a minute of running; or one note naming both) prints
@@ -533,7 +558,7 @@ class DriveBase:
     @overload
     def use_gyro(self) -> bool: ...
     @overload
-    def use_gyro(self, enable: bool, /) -> None:
+    def use_gyro(self, use_gyro: bool, *, wait: bool = True, timeout: int = 35000) -> None:
         """Close the chassis loop over the base's ``Pose`` (see the class docstring). With a pose on the base
         (``imu=`` / ``compass=`` / ``pose=``) it re-checks that the geometry still agrees (a ``Pose.settings()``
         since the bind raises ``ValueError`` "use_gyro: the Pose's wheel_diameter and axle_track must equal the
@@ -543,11 +568,17 @@ class DriveBase:
         it adopts that one after the full check (ports, directions, gears, wheel diameter and axle track: a
         ``ValueError`` names what differs) and holds it from then on, so ``robot.pose`` returns it. With no pose
         anywhere: ``ValueError`` ("DriveBase(..., imu=port) builds one, pose= takes yours"). With an IMU on the Pose (its ``axes()``
-        naming the face that is up, see ``IMU``) it first waits (up to 35 s) for ``IMU.ready()`` - about a second of stillness with a stored IMU calibration,
+        naming the face that is up, see ``IMU``) it first waits (up to ``timeout`` ms, 35000 by default; 0 looks once) for ``IMU.ready()`` - about a second of stillness with a stored IMU calibration,
         8..25 s while the DMP learns its gyro bias without one and the orientation settles a second or two after - and a
         loop armed before that would correct toward a drifting heading (Pybricks calibrates the hub IMU before any
-        program runs, so its users never see this); ``OSError`` if it never comes (the robot was moving), when the
-        pose has no estimate yet, and from the next maneuver if the base's ``Pose`` was closed or replaced meanwhile
+        program runs, so its users never see this); ``OSError`` if it never comes (the robot was moving, or stands on
+        a vibrating surface). ``wait=False`` (EVN's, 2026-11-01) returns at once instead: until ``IMU.ready()`` the
+        robot drives on its wheels alone, exactly as with ``use_gyro(False)``, and the loop turns on at the first
+        maneuver, ``drive()`` or ``hold()`` (of a robot not already holding) started after it (``use_gyro()`` reads ``True`` from then; a maneuver
+        already running is not corrected until the next one); ``use_gyro(False)`` withdraws it. Turning on while moving
+        leaves the robot about 10 ms of travel short, as ``use_gyro(True)`` mid-move does. By default ``IMU.ready()`` needs rest, so
+        a program that never rests may never turn it on: ``use_gyro()`` staying ``False`` is the only sign. ``wait`` and
+        ``timeout`` go with ``use_gyro=True`` only, ``timeout`` with ``wait=True`` only (``TypeError`` otherwise). ``OSError`` also when the pose has no estimate yet, and from the next maneuver if the base's ``Pose`` was closed or replaced meanwhile
         (``use_gyro`` is then off; the loop never trims on a stranger's estimate). Called again while it is on, on
         the same ``Pose``, it re-checks the geometry and changes nothing else: the correction in force is kept (a
         robot holding after a maneuver does not move). The loop belongs to this robot: another ``DriveBase``'s
@@ -584,10 +615,14 @@ class DriveBase:
     def settings(self, straight_speed: Optional[float] = None, straight_acceleration: Union[None, float, Tuple[float, float]] = None,
                  turn_rate: Optional[float] = None, turn_acceleration: Union[None, float, Tuple[float, float]] = None) -> None:
         """``settings()`` -> (straight_speed mm/s, straight_acceleration mm/s^2, turn_rate deg/s, turn_acceleration
-        deg/s^2); an acceleration may be ``(accel, decel)``. Defaults: the weaker wheel's ``control.limits()``,
-        the straight acceleration at 75 % of it (about 770 mm/s, 1230 mm/s^2, 520 deg/s, 1100 deg/s^2 on two
-        Mediums with 62.4 mm wheels 170 mm apart: at the full 1630 mm/s^2 the tyres slip about 1.5 mm per 30 cm
-        out-and-back, invisible to the encoders); lower them for a heavier robot or a slick floor. A value above what the
+        deg/s^2); an acceleration may be ``(accel, decel)``. Defaults: the weaker wheel's ``control.limits()``
+        (about 770 mm/s, 1630 mm/s^2, 520 deg/s, 1100 deg/s^2 on two Mediums with 62.4 mm wheels 170 mm apart). A
+        robot whose tyres slip lowers the straight acceleration (``settings(straight_acceleration=1230)``, 75 %, was
+        clean on the test robot, where the full 1630 mm/s^2 slipped about 1.5 mm per 30 cm out-and-back, invisible to
+        the encoders). A wheel held back during the acceleration puts the robot up to about twice as far off its line as
+        at 75 %; once at speed it makes no difference. The full acceleration also lowers the top cruise a little (host
+        model: about 2 % on EV3 Medium, 4 % on EV3 Large), so a straight past about 5 m / 1.6 m arrives slightly later
+        than at 75 %. Lower the rest for a heavier robot or a slick floor. A value above what the
         weaker wheel can do is clamped to it and the getter reports the clamped value. In ``SpeedUnit.PERCENT`` the
         two speeds are % of the robot's full speed (straight: of ``full * pi * wheel_diameter / 360`` mm/s; turn: of
         ``full * wheel_diameter / axle_track`` deg/s), kept in mm/s / deg/s from the call and read back as whole % of
@@ -2087,8 +2122,17 @@ class IMU:
         a second of stillness; without one up to 8..25 s
         (the DMP calibrates that far into stillness and the orientation settles a second or two after), or
         at once when the raw gyro bias is under the threshold, while the heading drifts at that bias until
-        the DMP has learnt it (``heading_confidence()`` 0.5); raw mode,
-        or ``dmp(True, gyro_cal=False)``, averages a second of readings by itself after 1 s still with no
+        the DMP has learnt it (``heading_confidence()`` 0.5). Raw mode and ``dmp(True, gyro_cal=False)`` with
+        a stored calibration start from it: ``heading()`` integrates from the first reading and ``ready()``
+        waits for the orientation alone, motors driving or not (``heading_confidence()`` 0.5); the average below
+        still refines the bias at the first rest with no motor driving - then ``heading_confidence()`` reads 1 and,
+        in raw mode, ``heading()`` steps once by the stored bias's residual over that rest (taken back; since the
+        last ``reset_heading()`` if one came during it). At that first rest the stored calibration is also checked:
+        one that does not fit the module (more than the ``settings()`` angular-velocity threshold left) is dropped,
+        ``ready()`` goes False and waits for the average as without a calibration - so a robot whose motors then
+        drive without a rest never gets ``ready()`` back, and one that never rests with its motors stopped runs on
+        the stored calibration, unchecked, at 0.5. Without one, raw mode
+        or ``dmp(True, gyro_cal=False)`` averages a second of readings by itself after 1 s still with no
         motor driving (for 2 s at most when no ``Pose`` reads the IMU: a raw-mode one is then read in turn
         with the other devices, so with many open it collects fewer; one a ``Pose`` reads always takes the
         whole second's). The robot moving (``stationary()`` False) or a motor driving drops that average,
@@ -2097,8 +2141,8 @@ class IMU:
         ``run(0)`` and ``DriveBase.drive(0, 0)`` used as a stop included - and ``dc()``, while a command
         has not been taken up yet, and in ``track_target()`` while its shaft moves 1 deg/s or more; one
         holding after a finished move, braked or coasting does not. So ``ready()`` needs about 2 s with the
-        robot still and no motor driving, and a program whose motor drives from start to end never reaches
-        it in these modes (raw mode's ``heading()`` keeps its value meanwhile); ``calibrate_gyro(n)`` is the
+        robot still and no motor driving, and without a stored calibration a program whose motor drives from
+        start to end never reaches it in these modes (raw mode's ``heading()`` keeps its value meanwhile); ``calibrate_gyro(n)`` is the
         explicit way out. Its limit: a turn by hand or on a turntable that reads as still (a steady rate
         from before the average to after it, or speeding up very gently) becomes the bias - keep the robot
         still until ``ready()``. A ``reset_heading()`` once it is True holds. ``heading_confidence()`` says whether the heading can still creep after it.
@@ -2106,7 +2150,9 @@ class IMU:
         ``stationary()``, 250 ms of readings inside the ``settings()`` thresholds."""
     def heading_confidence(self) -> float:
         """How far ``heading()`` can be trusted not to creep, read from the IMU's state: ``0`` not ``ready()``;
-        ``0.5`` ``ready()``, but the DMP has not calibrated its gyro yet (the heading may creep); ``1`` calibrated.
+        ``0.5`` ``ready()``, but the gyro bias is not measured yet - the DMP has not calibrated its gyro, or raw mode
+        runs on a stored calibration until its own average lands at the first rest (the heading may creep); ``1``
+        calibrated.
 
         - ``0`` - not ``ready()`` yet: the heading may still move by degrees;
         - ``0.5`` - ``ready()``, but the gyro bias the heading builds on has not been measured on this module
@@ -2116,8 +2162,9 @@ class IMU:
           up to ~1.5 before 0.2.60). Without one, a module whose gyro bias happens to be small reads ``ready()``
           at once and its heading drifts at that bias - degrees in those seconds - until the DMP has learnt it.
           ``dmp(True, gyro_cal=False)`` stays here for good (its DMP never learns a bias);
-        - ``1`` - ``ready()`` and the bias measured: the DMP's own calibration has landed (raw mode: as soon as
-          ``ready()``, its heading builds on the driver's own average).
+        - ``1`` - ``ready()`` and the bias measured: the DMP's own calibration has landed (raw mode: once the
+          driver's own average has landed - at ``ready()`` without a stored calibration; with one, ``ready()``
+          comes on the stored bias at ``0.5`` and ``1`` follows at the first rest's average).
 
         ``ready()`` stays the ~1 s start (owner, 2026-10-02); a program that needs the steadiest heading waits
         for 1 with the robot still and a time limit (the DMP needs stillness to calibrate, and a robot handled
@@ -2717,9 +2764,12 @@ class Bluetooth:
     ``OSError("module is not in command mode")`` from the command-mode calls in data mode.
     """
     def __init__(self, port: int, baud: Optional[int] = None, name: Optional[str] = None, mode: Optional[str] = None,
-                 addr: Optional[str] = None, *, stay_in_command: bool = False, wait: bool = True) -> None:
+                 addr: Optional[str] = None, *, stay_in_command: bool = False, wait: bool = True,
+                 rxbuf: Optional[int] = None) -> None:
         """``name=None`` keeps "EVN Bluetooth", ``mode=None`` keeps ``'remote'``; ``baud`` left out means 230400, or
-        the port's own baud when the module already carries the REPL."""
+        the port's own baud when the module already carries the REPL. ``rxbuf``: ``None`` or up to 255 is the port's
+        255-byte receive buffer (about 11 ms of data at 230400 baud); 256..16384 a buffer of that many bytes on the
+        heap, freed by ``close()`` (``MemoryError`` when the heap has no room, ``ValueError`` above 16384)."""
     def write(self, data: bytes, /) -> int:
         """Queues every byte (never lossy): returns ``len(data)``; waits only while the port's 1 KiB transmit
         queue is full. Keep the module at 230400 or below so a large single write is not lost inside the
@@ -2733,8 +2783,8 @@ class Bluetooth:
         ``None`` on timeout (or if the module leaves data mode). Only the line leaves the receive
         buffer, so whatever arrived behind it is still there for ``read()``. ``timeout=0`` returns a
         line only if one is already complete and never waits; a negative timeout raises
-        ``ValueError("timeout must be >= 0 ms")``. A line longer than 255 bytes never completes: this
-        times out and ``overflow()`` counts what was dropped."""
+        ``ValueError("timeout must be >= 0 ms")``. A line longer than the receive buffer (255 bytes, or
+        ``rxbuf``) never completes: this times out and ``overflow()`` counts what was dropped."""
     def read_all(self) -> bytes:
         """Everything buffered, at once."""
     def any(self) -> int:
@@ -2742,7 +2792,7 @@ class Bluetooth:
     def waiting(self) -> int:
         """Bytes buffered (the Pybricks ``UARTDevice`` name of ``any()``)."""
     def overflow(self) -> int:
-        """Bytes the port's 256-byte receive ring had to drop since the last call because the program
+        """Bytes the port's receive ring (255 bytes, or ``rxbuf``) had to drop since the last call because the program
         read too slowly. Read and clear: zero means nothing was lost."""
     def clear(self) -> None:
         """Drop buffered input."""
@@ -2800,8 +2850,10 @@ class UART:
     from ``machine.UART`` (the API reference has the table): ``write()`` queues every byte and never times
     out; ``init()`` waits for the queued bytes before it changes the port; ``deinit()`` (= ``close()``)
     hands the port back and it keeps running; no ``tx`` / ``rx`` / ``cts`` / ``rts`` / ``flow`` (fixed
-    pins, TX and RX only) and no ``irq()``; ``txbuf`` / ``rxbuf`` only up to the fixed rings (1023 / 255
-    bytes; a smaller size is accepted for portability and the ring keeps its full size); ``readline(timeout=)`` for one call; ``overflow()``, ``flush_rx()``, ``repl()`` are EVN's.
+    pins, TX and RX only) and no ``irq()``; ``txbuf`` only up to the fixed 1023-byte ring (a smaller size
+    is accepted for portability and the ring keeps its full size); ``rxbuf`` up to 255 is the static 255-byte
+    ring (no heap), 256..16384 a ring of that many bytes on the heap until ``deinit()`` (255 bytes fill in about
+    11 ms at 230400 baud); ``readline(timeout=)`` for one call; ``overflow()``, ``flush_rx()``, ``repl()`` are EVN's.
 
     One object per header: ``UART(n)`` raises ``OSError("serial port %d is used by a Bluetooth
     object")`` while an ``evn.Bluetooth`` object holds the port, and ``OSError("serial port %d is
@@ -2814,7 +2866,7 @@ class UART:
     Raises: ``ValueError("uart must be 1 (Serial1) or 2 (Serial2)")``, ``ValueError("baudrate out of
     range")`` outside 300..3000000, ``ValueError`` for bits outside 5..8, parity other than None / 0 / 1,
     stop other than 1 / 2, a negative timeout, an inversion mask other than ``INV_TX | INV_RX`` bits, a
-    ``txbuf`` above 1023 or an ``rxbuf`` above 255; ``TypeError`` for ``tx`` / ``rx`` / ``cts`` / ``rts`` /
+    ``txbuf`` above 1023 or an ``rxbuf`` above 16384; ``MemoryError`` when the heap has no room for the ``rxbuf`` ring; ``TypeError`` for ``tx`` / ``rx`` / ``cts`` / ``rts`` /
     ``flow``; ``OSError(ETIMEDOUT)`` when the queued bytes do not leave in time for a change;
     ``ValueError("UART is closed")`` from every call after ``deinit()``.
     """
@@ -2828,10 +2880,12 @@ class UART:
         """Re-configure the port: every setting left out stays as it is (``init(9600)`` changes the baud
         only). Waits until the bytes already queued have been sent (at most the ``flush()`` bound, else
         ``OSError(ETIMEDOUT)``), then changes only what differs; nothing queued or received is dropped.
-        ``timeout_char`` is raised to one character time + 1 ms at the new baud. Not after ``deinit()``."""
+        ``timeout_char`` is raised to one character time + 1 ms at the new baud. ``rxbuf=`` resizes the receive
+        ring (the bytes received move across, oldest first, as many as it holds). Not after ``deinit()``."""
     def deinit(self) -> None:
         """Release the port so a ``Bluetooth`` object (or another ``UART`` object) can take it; the port
-        itself keeps running and keeps its queued bytes, and the REPL is taken off it. Idempotent; every
+        itself keeps running and keeps its queued bytes, and the REPL is taken off it; a heap receive ring
+        (``rxbuf`` above 255) is freed. Idempotent; every
         other method then raises ``ValueError("UART is closed")``; build a new object to use it again."""
     def close(self) -> None:
         """The same as ``deinit()`` (EVN's name before 0.2.60)."""
@@ -2866,7 +2920,7 @@ class UART:
     def any(self) -> int:
         """Bytes that can be read without waiting."""
     def overflow(self) -> int:
-        """Bytes the 256-byte receive ring had to drop since the last call (plus FIFO overrun events).
+        """Bytes the receive ring (255 bytes, or ``rxbuf``) had to drop since the last call (plus FIFO overrun events).
         Read and clear; 0 = nothing lost. EVN's."""
     def flush_rx(self) -> None:
         """Drop everything received and not read yet. EVN's (``flush()`` waits for output)."""
@@ -3513,15 +3567,19 @@ def set_stop_button(button: Union[Type[button], Tuple[Type[button], ...], List[T
     ``evn.button`` turns it on again (a press already held then counts once the button has been released);
     a tuple, list or set of buttons, as in Pybricks, is on (an empty one is off; anything else is a ``TypeError``). Every program starts with the stop on, and it is
     on again when the program ends (at the REPL a call lasts for its line, or the block pasted with it).
-    Ctrl-C, ``evn.stop_all()`` and holding the button 2 s (a reboot) still stop the motors."""
+    Ctrl-C and ``evn.stop_all()`` still stop the motors. The stop off turns off the 2 s hold-to-reboot too: the
+    button is the program's input, so Ctrl-C, the program's end or a power cycle with the button held (``main.py``
+    skipped) are the ways back; with the stop on (the default, the idle REPL) a 2 s hold reboots the board.
+    A program with the stop off that catches every error (a bare ``except:``) swallows Ctrl-C as well: then
+    only a power cycle with the button held (or ``picotool reboot -f`` over USB) gets out."""
 
 def configure_motor(port: int, model: Optional[str], *, counts_per_rev: Optional[float] = None,
                     rated_voltage: int = 0, no_load_speed: Optional[float] = None) -> None:
     """Say what is on motor port 1..4 and store it on the board, so a plain ``Motor(port)`` runs that motor
     from any host and after every reboot. ``model``: ``"EV3 Large"``, ``"EV3 Medium"``, ``"NXT"``,
     ``"JGA25-370 6V 77RPM"`` (``"jga25"``: a 6 V, 77 rpm, 1:78 gearmotor with an 11 cpr hall encoder, 3432
-    counts per revolution, the port capped at 6 V, EV3 Large control class, limits 460 deg/s and 2400
-    deg/s^2), ``"Pololu 25D 9.7:1 HP 12V"`` (``"pololu25d_9_7"``:
+    counts per revolution, rated 6 V but not capped (``Motor.settings(max_voltage=6000)`` holds it to its rating), EV3
+    Large control class, limits its no-load speed at the cap in force (about 600 deg/s on the pack) and 2400 deg/s^2), ``"Pololu 25D 9.7:1 HP 12V"`` (``"pololu25d_9_7"``:
     Pololu #4842, a 12 V high-power 9.68:1 gearmotor with a 48 CPR encoder, 464.64 counts per revolution,
     1000 rpm no-load at 12 V - about 3500 deg/s on the pack -, EV3 Medium control class, limits 3000 deg/s
     and 20000 deg/s^2; its stall current is
@@ -3555,9 +3613,9 @@ def motor_config(port: int, /) -> dict:
     'JGA25-370 6V 77RPM' / 'Pololu 25D 9.7:1 HP 12V' / 'CHR-GM16-030PA 9V 1:63' / 'CM22-2230 12V 1:49' /
     'custom'), "custom" (bool), "control_class" (the standard model the control starts from: a custom
     motor's, or a library motor's own - the JGA25, the CHR-GM16 and the CM22-2230 run the EV3 Large class,
-    the Pololu 25D the EV3 Medium class), "counts_per_rev", "rated_voltage" (mV, the port's voltage cap: a
-    custom motor's rated voltage, the JGA25's 6000, the CHR-GM16's 9000, the Pololu 25D's and the
-    CM22-2230's 12000 - above the pack, so it never binds -, 0 for
+    the Pololu 25D the EV3 Medium class), "counts_per_rev", "rated_voltage" (mV, the motor's rating - a custom motor's rated voltage is also its voltage cap; a library
+    motor's is no cap (owner, 2026-11-01) -: the JGA25's 6000, the CHR-GM16's 9000, the Pololu 25D's and the
+    CM22-2230's 12000, 0 for
     a LEGO motor), "no_load_speed" (deg/s at that voltage, at 9 V when uncapped; 0 =
     a custom motor gave none),
     "stored" (True when it is in flash and the port runs it), "session" (True while a program's
@@ -3609,9 +3667,10 @@ def calibration(port: int, /) -> dict:
     pulse the other three disagreed with, whose speed then comes from the second half of its own record),
     "warning" (what is wrong with the record: made for another motor, refused; implausible for the model, applied
     anyway; the mechanism drifted more than 3 % during the calibration - calibrate again after a minute of
-    running; else None), "error" (why the last calibrate() on this port failed or was refused - a result that was
-    not plausible, "the four pulses disagree on the motor's response time" or "running friction far below this motor
-    model's", was not stored - else None)}``."""
+    running; taken under a load, kept and used - "running friction well above this motor model's",
+    "the four pulses disagree on the motor's response time", "running friction far below this motor model's"; else
+    None), "error" (why the last calibrate() on this port failed or was refused - nothing was stored - else
+    None)}``."""
 
 def clock(seconds: Optional[int] = None, /) -> int:
     """The board's wall clock as seconds since 1970-01-01 UTC; 0 until a host sets it (no battery-backed
@@ -3808,8 +3867,35 @@ class Pose:
     @overload
     def settings(self) -> Tuple[float, float]: ...
     @overload
-    def settings(self, *, wheel_diameter: Optional[float] = None, axle_track: Optional[float] = None) -> None:
-        """``settings()`` -> (wheel_diameter mm, axle_track mm); ``settings(wheel_diameter=, axle_track=)`` applies a
+    def settings(self, *, wheel_diameter: Optional[float] = None, axle_track: Optional[float] = None,
+                 gyro_noise: Optional[float] = None, compass_noise: Optional[float] = None,
+                 accel_noise: Optional[float] = None, lateral_noise: Optional[float] = None,
+                 gyro_bias_walk: Optional[float] = None, accel_bias_walk: Optional[float] = None) -> None:
+        """``settings()`` -> (wheel_diameter mm, axle_track mm); ``noise()`` reads the noise figures below.
+
+        **The filter's noise figures** (what it trusts each source by; set any subset, live from the filter's
+        next step, not stored - a new Pose starts on the defaults; checked all before any is applied, so a
+        ``ValueError`` changes nothing; allowed on a ``DriveBase``'s Pose too). Each acts only on the sources
+        that use it: ``gyro_noise`` and ``gyro_bias_walk`` on a Pose with an IMU; ``compass_noise`` with a compass;
+        ``accel_noise``, ``lateral_noise`` and ``accel_bias_walk`` only on a Pose with an IMU and NO wheels (with
+        wheels the filter takes the speed from the encoders and reads no accelerometer, so these change nothing -
+        a ``DriveBase``'s Pose included):
+
+        - ``gyro_noise`` deg/s (0.001..10, default 0.1): the z gyro's noise per reading. The MPU-6500's rate
+          noise density is 0.01 deg/s/sqrt(Hz) (as this firmware quotes the TDK InvenSense MPU-6500 product
+          specification; the figure is still to be checked against the document), so 0.1 is
+          that density over about a 100 Hz band (the 92 Hz filter); about 0.14 at the IMU's 184 Hz default.
+        - ``compass_noise`` deg (0.01..90, default 2): a calibrated compass heading's noise - a judgement, no
+          source.
+        - ``accel_noise`` mm/s^2 (1..100000, default 1800) and ``lateral_noise`` mm/s^2 (1..100000, default 1500):
+          the accelerometer with the drive motors running, measured on one robot on one floor (2026-09-18). The
+          datasheet's 300 ug/sqrt(Hz) (as quoted, ~40 mm/s^2 at 184 Hz) is the still sensor; with it the filter
+          trusted the accelerometer under the motors' vibration and lost its wheel updates.
+        - ``gyro_bias_walk`` deg/s per sqrt(s) (0..1, default 0.000573 = 1e-5 rad/s) and ``accel_bias_walk``
+          mm/s^2 per sqrt(s) (0..10000, default 0.1): how fast the filter lets the biases move - first values,
+          untuned, no source. Larger tracks a drifting bias faster and noisier; 0 holds the bias as estimated.
+
+        ``settings(wheel_diameter=, axle_track=)`` applies a
         calibrated geometry (1..1000 / 1..2000 mm). The axle track that matters is the effective one, between the two
         contact patches as the robot really turns; measure it with one commanded 360 degree turn against a floor
         mark: ``t_eff = t * turned_by_the_encoders / 360``. That is the recipe for a Pose WITHOUT a base: with a
@@ -3819,6 +3905,10 @@ class Pose:
         the wheel parameters and their covariance restart. NOT stored: a power cycle brings back the constructor's
         numbers, so a program that needs the calibrated track sets it at start-up. The setter raises ``ValueError``
         without motor ports or for a value out of range, ``OSError`` (EIO) when the motor core did not answer."""
+    def noise(self) -> Tuple[float, float, float, float, float, float]:
+        """The filter's noise figures in force, in this order: ``(gyro_noise deg/s, compass_noise deg, accel_noise
+        mm/s^2, lateral_noise mm/s^2, gyro_bias_walk deg/s per sqrt(s), accel_bias_walk mm/s^2 per sqrt(s))`` -
+        the defaults until ``settings(<name>=)`` changes one (see ``settings``)."""
     def bounded(self) -> bool:
         """False while the live sources cannot bound the position (IMU alone, IMU + compass, none)."""
     def sources(self) -> Tuple[str, ...]:

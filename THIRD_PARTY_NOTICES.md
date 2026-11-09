@@ -179,15 +179,45 @@ upstream file named:
 
 ## The notebook's packages (the browser IDE's notebook)
 
-The notebook (`docs/NOTEBOOK_DESIGN.md`) loads Pyodide 0.28.3's own builds of NumPy, Matplotlib and the packages they
-need, and Pyodide's unvendored standard-library modules, each wheel exactly as Pyodide publishes it (its sha256 is the
+The notebook (`docs/NOTEBOOK_DESIGN.md`) loads Pyodide 0.28.3's own builds of NumPy, SciPy, Matplotlib and the packages
+they need, and Pyodide's unvendored standard-library modules, each wheel exactly as Pyodide publishes it (its sha256 is the
 one in `pyodide-lock.json`). They ship in the browser IDE in `media/pyodide/`, with these licence texts beside them in
 `media/pyodide/nb-licenses/` (from `licenses/nb/`, each copied verbatim from the file named). The VS Code extension
-(the VSIX) does not carry them until the owner's ruling on OQ 88.
+(the VSIX) does not carry them: by the owner's ruling on OQ 88 (c) the desktop downloads the same files from the site
+on first use (NB-6).
 
 | Package (version) | Licence | File beside it | Copied from |
 |---|---|---|---|
 | NumPy 2.2.5 | BSD-3-Clause | `LICENSE-numpy.txt` | the wheel's `numpy-2.2.5.dist-info/LICENSE.txt` |
+| SciPy 1.14.1 | BSD-3-Clause | `LICENSE-scipy.txt` | the wheel's `scipy-1.14.1.dist-info/LICENSE.txt` (the same bytes as SciPy's `LICENSE.txt` at tag v1.14.1) |
+| The code SciPy 1.14.1 bundles, with its licence text in the wheel | uarray: BSD-3-Clause; pocketfft: BSD-3-Clause; ARPACK: BSD-3-Clause; Qhull: the Qhull licence | `LICENSE-scipy-UARRAY.txt`, `LICENSE-scipy-POCKETFFT.txt`, `LICENSE-scipy-ARPACK.txt`, `LICENSE-scipy-QHULL.txt` | the wheel's `scipy/_lib/_uarray/LICENSE`, `scipy/fft/_pocketfft/LICENSE.md`, `scipy/sparse/linalg/_eigen/arpack/COPYING`, `scipy/spatial/qhull_src/COPYING.txt` |
+| Every component SciPy 1.14.1 bundles (Cephes, SuperLU, HiGHS, Boost.Math, UNU.RAN, fast_float, ryu and the rest: BSD, MIT and BSL-1.0 licences, each named with its files) | as listed in the file | `LICENSE-scipy-BUNDLED.txt` | SciPy's `LICENSES_bundled.txt` at tag v1.14.1 (the wheel's `.dist-info` carries only the BSD-3-Clause text). Its "For details, see" paths are older than 1.14.1's tree; the texts they point to are the `LICENSE-scipy-*.txt` rows below, each from the file named |
+| SciPy 1.14.1 bundles: fast_matrix_market | BSD-2-Clause | `LICENSE-scipy-FAST_MATRIX_MARKET.txt` | SciPy's 1.14.1 source release (PyPI `scipy-1.14.1.tar.gz`, sha256 `5a275584…08417`: the tag v1.14.1 with its submodules at their pinned commits): `scipy/io/_fast_matrix_market/LICENSE.txt` |
+| SciPy 1.14.1 bundles: fast_float (in fast_matrix_market) | MIT | `LICENSE-scipy-FAST_FLOAT.txt` | SciPy's 1.14.1 source release (PyPI `scipy-1.14.1.tar.gz`, sha256 `5a275584…08417`: the tag v1.14.1 with its submodules at their pinned commits): `scipy/io/_fast_matrix_market/fast_matrix_market/dependencies/fast_float/LICENSE-MIT` |
+| SciPy 1.14.1 bundles: ryu (in fast_matrix_market) | BSL-1.0 | `LICENSE-scipy-RYU.txt` | SciPy's 1.14.1 source release (PyPI `scipy-1.14.1.tar.gz`, sha256 `5a275584…08417`: the tag v1.14.1 with its submodules at their pinned commits): `scipy/io/_fast_matrix_market/fast_matrix_market/dependencies/ryu/LICENSE-Boost` |
+| SciPy 1.14.1 bundles: pystreambuf (cctbx) | BSD-3-Clause | `LICENSE-scipy-PYSTREAMBUF.txt` | SciPy's 1.14.1 source release (PyPI `scipy-1.14.1.tar.gz`, sha256 `5a275584…08417`: the tag v1.14.1 with its submodules at their pinned commits): `lines 1-56 (the licence comment) of scipy/io/_fast_matrix_market/src/pystreambuf.h` |
+| SciPy 1.14.1 bundles: decorator | BSD-2-Clause | `LICENSE-scipy-DECORATOR.txt` | SciPy's 1.14.1 source release (PyPI `scipy-1.14.1.tar.gz`, sha256 `5a275584…08417`: the tag v1.14.1 with its submodules at their pinned commits): `lines 1-28 (the licence comment) of scipy/_lib/decorator.py` |
+| SciPy 1.14.1 bundles: ID (interpolative decomposition) | BSD-3-Clause | `LICENSE-scipy-ID_DIST.txt` | SciPy's 1.14.1 source release (PyPI `scipy-1.14.1.tar.gz`, sha256 `5a275584…08417`: the tag v1.14.1 with its submodules at their pinned commits): `lines 31-75 (the licence) of scipy/linalg/src/id_dist/doc/doc.tex` |
+| SciPy 1.14.1 bundles: L-BFGS-B | BSD (as its README states); its Python wrapper MIT | `LICENSE-scipy-LBFGSB.txt` | SciPy's 1.14.1 source release (PyPI `scipy-1.14.1.tar.gz`, sha256 `5a275584…08417`: the tag v1.14.1 with its submodules at their pinned commits): `scipy/optimize/lbfgsb_src/README` |
+| SciPy 1.14.1 bundles: SuperLU | BSD-3-Clause | `LICENSE-scipy-SUPERLU.txt` | SciPy's 1.14.1 source release (PyPI `scipy-1.14.1.tar.gz`, sha256 `5a275584…08417`: the tag v1.14.1 with its submodules at their pinned commits): `scipy/sparse/linalg/_dsolve/SuperLU/License.txt` |
+| SciPy 1.14.1 bundles: PROPACK | BSD-3-Clause | `LICENSE-scipy-PROPACK.txt` | SciPy's 1.14.1 source release (PyPI `scipy-1.14.1.tar.gz`, sha256 `5a275584…08417`: the tag v1.14.1 with its submodules at their pinned commits): `scipy/sparse/linalg/_propack/PROPACK/license.txt` |
+| SciPy 1.14.1 bundles: HiGHS | MIT | `LICENSE-scipy-HIGHS.txt` | SciPy's 1.14.1 source release (PyPI `scipy-1.14.1.tar.gz`, sha256 `5a275584…08417`: the tag v1.14.1 with its submodules at their pinned commits): `scipy/_lib/highs/LICENSE` |
+| SciPy 1.14.1 bundles: HiGHS's filereaderlp | MIT | `LICENSE-scipy-HIGHS-FILEREADERLP.txt` | SciPy's 1.14.1 source release (PyPI `scipy-1.14.1.tar.gz`, sha256 `5a275584…08417`: the tag v1.14.1 with its submodules at their pinned commits): `scipy/_lib/highs/extern/filereaderlp/LICENSE` |
+| SciPy 1.14.1 bundles: HiGHS's pdqsort | zlib | `LICENSE-scipy-HIGHS-PDQSORT.txt` | SciPy's 1.14.1 source release (PyPI `scipy-1.14.1.tar.gz`, sha256 `5a275584…08417`: the tag v1.14.1 with its submodules at their pinned commits): `scipy/_lib/highs/extern/pdqsort/license.txt` |
+| SciPy 1.14.1 bundles: HiGHS's extern code under the Boost licence | BSL-1.0 | `LICENSE-scipy-HIGHS-BOOST.txt` | SciPy's 1.14.1 source release (PyPI `scipy-1.14.1.tar.gz`, sha256 `5a275584…08417`: the tag v1.14.1 with its submodules at their pinned commits): `scipy/_lib/highs/extern/LICENCE_1_0.txt` |
+| SciPy 1.14.1 bundles: Boost.Math | BSL-1.0 | `LICENSE-scipy-BOOST_MATH.txt` | SciPy's 1.14.1 source release (PyPI `scipy-1.14.1.tar.gz`, sha256 `5a275584…08417`: the tag v1.14.1 with its submodules at their pinned commits): `scipy/_lib/boost_math/LICENSE` |
+| SciPy 1.14.1 bundles: pocketfft (C++, scipy/_lib/pocketfft) | BSD-3-Clause | `LICENSE-scipy-POCKETFFT_CPP.txt` | SciPy's 1.14.1 source release (PyPI `scipy-1.14.1.tar.gz`, sha256 `5a275584…08417`: the tag v1.14.1 with its submodules at their pinned commits): `scipy/_lib/pocketfft/LICENSE.md` |
+| SciPy 1.14.1 bundles: COBYQA | BSD-3-Clause | `LICENSE-scipy-COBYQA.txt` | SciPy's 1.14.1 source release (PyPI `scipy-1.14.1.tar.gz`, sha256 `5a275584…08417`: the tag v1.14.1 with its submodules at their pinned commits): `scipy/_lib/cobyqa/LICENSE` |
+| SciPy 1.14.1 bundles: DIRECT | MIT | `LICENSE-scipy-DIRECT.txt` | SciPy's 1.14.1 source release (PyPI `scipy-1.14.1.tar.gz`, sha256 `5a275584…08417`: the tag v1.14.1 with its submodules at their pinned commits): `scipy/optimize/_direct/COPYING` |
+| SciPy 1.14.1 bundles: TNC | MIT | `LICENSE-scipy-TNC.txt` | SciPy's 1.14.1 source release (PyPI `scipy-1.14.1.tar.gz`, sha256 `5a275584…08417`: the tag v1.14.1 with its submodules at their pinned commits): `scipy/optimize/tnc/LICENSE` |
+| SciPy 1.14.1 bundles: ndimage (Peter J. Verveer) | BSD-3-Clause | `LICENSE-scipy-NDIMAGE.txt` | SciPy's 1.14.1 source release (PyPI `scipy-1.14.1.tar.gz`, sha256 `5a275584…08417`: the tag v1.14.1 with its submodules at their pinned commits): `scipy/ndimage/LICENSE.txt` |
+| SciPy 1.14.1 bundles: BiasedUrn | BSD-3-Clause (permission by Agner Fog) | `LICENSE-scipy-BIASEDURN.txt` | SciPy's 1.14.1 source release (PyPI `scipy-1.14.1.tar.gz`, sha256 `5a275584…08417`: the tag v1.14.1 with its submodules at their pinned commits): `scipy/stats/biasedurn/license.txt` |
+| SciPy 1.14.1 bundles: UNU.RAN | BSD-3-Clause (permission by its authors) | `LICENSE-scipy-UNURAN.txt` | SciPy's 1.14.1 source release (PyPI `scipy-1.14.1.tar.gz`, sha256 `5a275584…08417`: the tag v1.14.1 with its submodules at their pinned commits): `scipy/_lib/unuran/license.txt` |
+| SciPy 1.14.1 bundles: NumPy's logfactorial | BSD-3-Clause | `LICENSE-scipy-LOGFACTORIAL.txt` | SciPy's 1.14.1 source release (PyPI `scipy-1.14.1.tar.gz`, sha256 `5a275584…08417`: the tag v1.14.1 with its submodules at their pinned commits): `lines 1-34 (the licence comment) of scipy/stats/libnpyrandom/logfactorial.h` |
+| SciPy 1.14.1 bundles: array-api-compat | MIT | `LICENSE-scipy-ARRAY_API_COMPAT.txt` | SciPy's 1.14.1 source release (PyPI `scipy-1.14.1.tar.gz`, sha256 `5a275584…08417`: the tag v1.14.1 with its submodules at their pinned commits): `scipy/_lib/array_api_compat/LICENSE` |
+| SciPy 1.14.1 bundles: Tempita (a build tool; no code in the wheel) | MIT | `LICENSE-scipy-TEMPITA.txt` | SciPy's 1.14.1 source release (PyPI `scipy-1.14.1.tar.gz`, sha256 `5a275584…08417`: the tag v1.14.1 with its submodules at their pinned commits): `scipy/_build_utils/tempita/LICENSE.txt` |
+| OpenBLAS 0.3.26 (`libopenblas`, the linear algebra SciPy calls) | BSD-3-Clause | `LICENSE-libopenblas.txt` | OpenBLAS's `LICENSE` at tag v0.3.26 (the archive carries only `libopenblas.so`, no text) |
+| Reference LAPACK, built into OpenBLAS 0.3.26 | modified BSD (LAPACK's licence) | `LICENSE-libopenblas-LAPACK.txt` | OpenBLAS's `lapack-netlib/LICENSE` at tag v0.3.26 |
 | Matplotlib 3.8.4 | Matplotlib License (PSF-based), and the licences of the fonts and code it bundles | `LICENSE-matplotlib.txt` and `LICENSE-matplotlib-*.txt` (AMSFONTS, BAKOMA, CARLOGO, COLORBREWER, COURIERTEN, JSXTOOLS_RESIZE_OBSERVER, QHULL, QT4_EDITOR, SOLARIZED, STIX, YORICK) | the wheel's `matplotlib-3.8.4.dist-info/licenses/LICENSE/` |
 | contourpy 1.3.1 | BSD-3-Clause | `LICENSE-contourpy.txt` | its wheel's `.dist-info/LICENSE` |
 | cycler 0.12.1 | BSD-3-Clause | `LICENSE-cycler.txt` | its wheel's `.dist-info/LICENSE` |
@@ -259,4 +289,15 @@ the World Robot Olympiad 2026 RoboMission Elementary game mat ("Robot Rockstars"
 Masters"): traced by `tools/wro/trace_mat.py` from WRO's Elementary and Senior printing files and the RoboMission
 Elementary, Senior and General Rules 2026, with short attributed quotes of those rules. They hold numbers only: no
 image, artwork or page of WRO's. What is said above of WRO's names and trademarks, of EVN's non-affiliation and of the
-user's own copy of a mat applies to them too.
+user's own copy of a mat applies to them too. The extension keeps one copy per WRO mat, the user's own, each under its
+mat's name in its storage, and refuses one category's printing file on another category's table. The Elementary game
+package (`assets/games/wro-2026-elementary/game.json`) and its objects' interface file
+(`assets/wro/models/elementary-2026/interface.json`) are EVN's own, written from the Elementary rules: numbers and short
+attributed quotes, no image of WRO's.
+
+`assets/wro/models/senior-2026/frame.json` is EVN's own measurement of the World Robot Olympiad 2026 RoboMission
+Senior mosaic frame: convex pieces, sections, openings and a drawing mesh that `tools/wro/bake_frame.py` (in the EVN
+ALPHA repository) computes from the sections of WRO's 3D file of the frame (`Template without logo.stl`, WRO's Senior
+2026 materials), with its sha256. It holds numbers only: the geometry measured, no triangle of WRO's file, which is
+never shipped with the extension or kept in the repository. What is said above of WRO's names and trademarks and of
+EVN's non-affiliation applies to it too.

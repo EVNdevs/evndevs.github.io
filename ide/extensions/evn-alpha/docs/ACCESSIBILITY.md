@@ -30,6 +30,33 @@ Hint: Line 3: look at 'prnt' here and where it first appears above.
 run. Hints show again with `on`, the default. A teacher who wants learners to read errors with no help can turn them
 off on the class computers.
 
+## The blocks editor by keyboard
+
+The blocks editor works with the keyboard alone, and a screen reader reads each block by name. The keys come from
+Blockly, the library the editor is built on; EVN changes one of them (below).
+
+- **Getting in.** Tab moves through the toolbar buttons, then into the toolbox (the list of categories on the left),
+  then the blocks themselves. Inside the editor, T jumps to the toolbox and W to the blocks.
+- **Taking a block.** In the toolbox, the up and down arrows choose a category, the right arrow opens it, the up and
+  down arrows choose a block, and Enter takes it.
+- **Putting it in place.** The arrow keys move the block from one place it can go to the next; the screen reader says
+  where ("Moving after set up"). Enter puts it there; Escape puts it back. M starts the same move for a block already
+  in the program.
+- **The rules hold.** A set-up block goes only under "set up", and the program's blocks only under "program", as when
+  you drag them: a keyboard move never offers the other place.
+- **Changing a value.** The right arrow moves to the block's values; Enter opens one to type in, and Enter again keeps
+  it.
+- **Finding your way.** N and B jump to the next and previous stack of blocks, I reads where you are, and Alt+J shows
+  the block's tip. (In Blockly the tip is Ctrl+J, which in VS Code also opens and closes the panel, so EVN moved it.)
+- **The Python pane.** Tab reaches the line between the blocks and the Python; the left and right arrows widen and
+  narrow the Python pane, and Home and End give it its narrowest and widest. Tab then reaches the Python itself, so a
+  screen reader can read the program the blocks make.
+- **Messages.** What the editor says in its toolbar ("Python copied to the clipboard", a file that did not open) is
+  read out by a screen reader as it appears.
+- Ctrl+F5 runs the program and Ctrl+Shift+F5 stops the motors from anywhere in the editor, as in the rest of VS Code.
+
+This has been checked by automated tests only, in two browser engines; no one has yet tried it with a screen reader.
+
 ## Results of a simulator run without the panel
 
 The Simulator panel does not yet read its results aloud, and it has no text readout of the robot's position. Until it
@@ -40,6 +67,22 @@ does, a learner who cannot see the panel gets a run's results in two ways:
 - **A reader:** an adult at the keyboard reads the panel to the learner.
 
 Said plainly: a learner who cannot see the screen cannot yet follow a simulator run on their own.
+
+## On the lessons site
+
+The lesson pages are built to work with the keyboard alone and with a screen reader. Automated tests check them; a
+person's check with a screen reader is still to come.
+
+- **Skip to the lesson.** The first press of Tab on a page shows a *Skip to the lesson* link. Enter moves past the top
+  bar to the lesson itself.
+- **Where the focus is.** Whatever Tab reaches (a link, a button, a code block, a folded part) shows a clear outline.
+- **Code blocks.** Tab reaches each code block. The arrow keys then scroll a long line sideways. A screen reader names
+  each block by its length, for example "Code, 6 lines".
+- **Tables.** A screen reader names each table and reads each cell with its column or row heading.
+- **Text size.** The pages follow the browser's text size and zoom. At 200 % zoom, or on a narrow screen, the page does
+  not scroll sideways; only a long code line does, inside its block.
+- **Colours.** Text and the edges of boxes stand out from the page in the light and the dark theme. Windows contrast
+  themes keep the outlines and box edges.
 
 ## VS Code's own features
 

@@ -52,7 +52,7 @@ The **Motors** rows show the angle and speed of ports 1 to 4, four times a secon
 | Choice | Notes |
 | :--- | :--- |
 | *EV3 Large*, *EV3 Medium*, *NXT* | LEGO motors. |
-| *JGA25-370 6V 77RPM* | A 6 V gearmotor; the board caps it at 6 V. |
+| *JGA25-370 6V 77RPM* | A 6 V gearmotor; it runs on the pack (`m.settings(max_voltage=6000)` holds it to 6 V). |
 | *Pololu 25D 9.7:1 HP 12V* | A fast 12 V gearmotor, about 3500 deg/s on the battery. Never hold it stalled. |
 | *CHR-GM16-030PA 9V 1:63* | A 16 mm 9 V gearmotor, 1:63. Another ratio is a **Custom…** motor with 7 × 4 × the ratio counts. |
 | *CM22-2230 12V 1:49* | A 22 mm 12 V planetary gearmotor, 1:49, about 760 deg/s on the battery. Never hold it stalled: on a full battery its stall reaches the gearbox's maximum torque. Another ratio is a **Custom…** motor with 16 × 4 × the ratio counts. |

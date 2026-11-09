@@ -217,7 +217,8 @@ button { font-family: inherit; }
     background: transparent;
     transition: background 0.12s ease;
 }
-#splitter:hover::after, #splitter.dragging::after { background: var(--accent); }
+#splitter:hover::after, #splitter.dragging::after, #splitter:focus-visible::after { background: var(--accent); }
+#splitter:focus-visible { outline-offset: 0; }   /* keyboard focus (A11Y §4.7): the strip itself is outlined */
 body.resizing { cursor: col-resize; user-select: none; }
 body.resizing #blocklyDiv, body.resizing #codePane { pointer-events: none; }
 

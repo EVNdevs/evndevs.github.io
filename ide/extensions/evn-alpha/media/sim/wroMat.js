@@ -396,7 +396,14 @@
         return Promise.race([p, late]).finally(() => clearTimeout(t));
     }
 
-    /** The mat of the WRO course (one at a time). opts: wro (cfg.wro: { size, sha256, identity }), urls ({ pdf, worker,
+    /** a mat's name in the texts (cfg.wroMats' `name`; Junior's when absent, the only mat before EN4) */
+    const matName = (w) => (w && w.name) || 'WRO RoboMission Junior 2026';
+    /** the refusal by name (SIMULATOR_WRO_ES_DESIGN.md §6 EN4, D31): `other` the mat the file is, `w` the course's */
+    const byName = (other, w) => `This is the ${matName(other)} mat; the ${(w && w.course) || 'Junior'} course needs the ${matName(w).replace(/^WRO RoboMission /, '')} printing file. The floor stays as it is.`;
+
+    /** The mat of a WRO course (one at a time). opts: wro (cfg.wroMats' entry: { key, name, course, size, sha256, identity,
+     *  scaleBoxes }), others (the other mats' entries: a file that is one of them is refused by name - its traced sha256, or
+     *  its identity passing where this mat's fails; EN4 part 2), urls ({ pdf, worker,
      *  nonce }), canvas2d(w, h), running() (a program runs: nothing reaches the floor then), host ({ keep(sha256),
      *  refused(picked), forget() }: the extension's storage; `picked` is the sha256 the host gave a picked file),
      *  onChange(state | null) (every copy of the floor follows it), checkRaster(rgb) (the engine's own scale check,
@@ -445,6 +452,11 @@
                 return refuse('running', 'A mat cannot be loaded while a program runs: stop it first.');
             }
             if (this.busy) { return refuse('busy', 'A mat is being rendered already: load this one when that one is done.'); }
+            // one render a panel (review en4_p2 r1 S1): another course's mat rendering, a stored mat waits for it (idle())
+            if (o.othersBusy && o.othersBusy()) {
+                if (stored) { this.retry = bytes; return refuse('busy', 'The mat you loaded before is rendered when the other course\'s mat is done.', { held: true }); }
+                return refuse('busy', 'Another course\'s mat is being rendered: load this one when that one is done.');
+            }
             // the user's own pick replaces a stored mat still waiting for a run's end
             if (!stored) { this.held = null; this.retry = null; }
             this.busy = true;
@@ -491,6 +503,9 @@
             const o = this.o;
             const chk = () => { if (stop && stop.stopped) { throw new Error('the load was stopped'); } };
             const sha256 = await sha256Hex(bytes);
+            // another course's traced printing file: refused by name before any render (EN4-2)
+            const twin = sha256 !== o.wro.sha256 ? (o.others || []).find((x) => x.sha256 === sha256) : undefined;
+            if (twin) { return { refuse: 'identity', sha256, message: byName(twin, o.wro), extra: { other: twin.key } }; }
             let doc;
             try { doc = await openPdf(lib, bytes, worker); } catch (e) { return { refuse: 'pdf', message: `That file is not a PDF pdf.js can read (${errText(e)}).` }; }
             try {
@@ -503,7 +518,7 @@
                 if (page.rotate % 180) { [wmm, hmm] = [hmm, wmm]; }
                 const [W, H] = o.wro.size;
                 if (Math.abs(wmm - W) > SIZE_TOL || Math.abs(hmm - H) > SIZE_TOL) {
-                    return { refuse: 'size', message: `That page is ${wmm.toFixed(1)} x ${hmm.toFixed(1)} mm (its ${trim ? 'TrimBox' : 'MediaBox; no TrimBox inside the page found'}): the WRO RoboMission Junior 2026 mat is ${W} x ${H} mm.`, extra: { size: [wmm, hmm] } };
+                    return { refuse: 'size', message: `That page is ${wmm.toFixed(1)} x ${hmm.toFixed(1)} mm (its ${trim ? 'TrimBox' : 'MediaBox; no TrimBox inside the page found'}): the ${matName(o.wro)} mat is ${W} x ${H} mm.`, extra: { size: [wmm, hmm] } };
                 }
                 const big = await largestImageAsync(text, stop);
                 if (big.px > MAX_IMAGE_PX) { return { refuse: 'limit', message: `That PDF has an image of ${big.w} x ${big.h} px, over ${MAX_IMAGE_PX / 1e6} million pixels: a WRO mat's printing file has none.` }; }
@@ -525,8 +540,15 @@
                 const result = identify(im, pal, o.wro.identity);
                 if (!result.ok) {
                     free(img);
+                    // another mat's identity passing where this one's fails (a re-export of another course's file): by name
+                    for (const x of o.others || []) {
+                        if (!x.identity) { continue; }
+                        chk();
+                        const pal2 = await paletteColours(lib, x.identity.palette, o.canvas2d, worker);
+                        if (identify(im, pal2, x.identity).ok) { return { refuse: 'identity', sha256, message: byName(x, o.wro), extra: { other: x.key, result } }; }
+                    }
                     const f = result.failed[0];
-                    return { refuse: 'identity', sha256, message: `Not the WRO RoboMission Junior 2026 mat: the area "${f.region}" is not where or as the traced mat has it (its ${f.edge} edge, ${f.side}; ${result.failed.length} of ${result.sides} probe sides differ). The schematic stays.`, extra: { first: f.region, result, pal } };
+                    return { refuse: 'identity', sha256, message: `Not the ${matName(o.wro)} mat: the area "${f.region}" is not where or as the traced mat has it (its ${f.edge} edge, ${f.side}; ${result.failed.length} of ${result.sides} probe sides differ). The schematic stays.`, extra: { first: f.region, result, pal } };
                 }
                 const traced = sha256 === o.wro.sha256;
                 // the rasters, then the 2 px/mm canvas freed (its pixels: 43 MB, and its ImageData as much)
@@ -567,7 +589,7 @@
         /** No program runs now (sim.js, at each idle): the stored mat held for a run put on the floor, or rendered now
          *  when its render could not start then (N6). Resolves to what load() would, or null (nothing waited). */
         async idle() {
-            if (this.busy || this.o.running()) { return null; }
+            if (this.busy || this.o.running() || (this.o.othersBusy && this.o.othersBusy())) { return null; }
             if (this.held) { const s = this.held; this.held = null; this.retry = null; return this.commit(s, { stored: true }); }
             if (this.retry) { const b = this.retry; this.retry = null; return this.load(b, { stored: true }); }
             return null;
@@ -590,7 +612,8 @@
      *  same object): the simulation worker's raster (`wro-floor`; init and course messages carry `fields()`), the 3D
      *  view's and the cameras' floor texture, the 2D view's image. The floor is the mat when one is loaded, else the
      *  schematic (once the simulation worker has sent it), else none. opts: post(message, transfer) to the simulation
-     *  worker, view3d() (the 3D view or null), camWorker() (the camera worker or null), redraw(). */
+     *  worker, view3d() (the 3D view or null), camWorker() (the camera worker or null), redraw(), active() (EN4 part 2: this
+     *  link's course is the panel's; only then does it set the 3D view's and the cameras' floor - absent: always). */
     class FloorLink {
         constructor(mat, opts) {
             this.mat = mat;
@@ -622,6 +645,7 @@
             const c = this.current();
             const tex = c ? c.texture : null;
             this.ver++;
+            if (this.o.active && !this.o.active()) { return; }
             const v3 = this.o.view3d();
             if (v3) { v3.setFloor(tex); }
             const cw = this.o.camWorker();
@@ -637,5 +661,54 @@
         }
     }
 
-    root.EVNWroMat = { WroMat, FloorLink, PDF_OPTIONS, REFUSAL_KINDS, MAX_IMAGE_PX, RENDER_TIMEOUT_MS, PX_MM, TEX_MAX, pdfWorker, pdfBytes, palettePdf, cmykFill, loadPdfjs, openPdf, trimBoxOf, largestImage, largestImageAsync, uniformShare, renderBox, paletteColours, identify, margins, sampleAt, masterRaster, floorTexture, mipmaps, schematicFloor, sha256Hex };
+    /** Every WRO mat's loader and floor link, one pair per mat (EN4 part 2, SIMULATOR_WRO_ES_DESIGN.md §2.1: one FloorLink
+     *  per WRO course's mat; the two Junior ids share Junior's). mats: cfg.wroMats; make(entry, others) builds an entry's
+     *  { mat, link } (sim.js, the harness); the link's active() is `this.cur === entry`. select(courseId) on every course
+     *  switch: the new course's floor (its mat or its schematic, or none yet) onto the 3D view and the cameras. */
+    class WroCourses {
+        constructor(mats, make) {
+            this.entries = new Map();
+            this.cur = undefined;
+            for (const m of mats) {
+                const e = { cfg: m, hello: false, mat: null, link: null };
+                // othersBusy: another mat's loader renders (one render a panel; review en4_p2 r1 S1)
+                const built = make(m, mats.filter((x) => x !== m), () => this.cur === e, () => [...this.entries.values()].some((x) => x !== e && x.mat && x.mat.busy));
+                e.mat = built.mat; e.link = built.link;
+                this.entries.set(m.key, e);
+            }
+        }
+
+        /** a mat renders (any loader): Load and Forget wait on every course */
+        get busy() { for (const e of this.entries.values()) { if (e.mat.busy) { return true; } } return false; }
+
+        /** the entry of the mat a course is on (undefined: not a WRO course) */
+        of(courseId) { for (const e of this.entries.values()) { if (e.cfg.courses.includes(courseId)) { return e; } } return undefined; }
+
+        /** the panel is on this course now: its link's floor onto every copy (a course on no mat: nothing changes) */
+        select(courseId) {
+            const e = this.of(courseId);
+            if (e === this.cur) { return e; }
+            this.cur = e;
+            if (e) { e.link.apply(); }
+            return e;
+        }
+
+        /** a `wro-schematic` from the simulation worker: to its mat's link (`key` absent: Junior's, the only mat before) */
+        schematic(key, rgb, canvas2d) {
+            const e = this.entries.get(key || 'junior-2026');
+            if (e) { e.link.schematic(rgb, e.cfg.size[0], e.cfg.size[1], canvas2d); }
+            return e;
+        }
+
+        /** the fields an init or a course message carries for this course: its mat's raster (if any) and its key */
+        fields(courseId) {
+            const e = this.of(courseId);
+            if (!e) { return { fields: {}, transfer: [] }; }
+            const f = e.link.fields();
+            return { fields: { ...f.fields, wroMat: e.cfg.key }, transfer: f.transfer };
+        }
+
+    }
+
+    root.EVNWroMat = { WroMat, FloorLink, WroCourses, PDF_OPTIONS, REFUSAL_KINDS, MAX_IMAGE_PX, RENDER_TIMEOUT_MS, PX_MM, TEX_MAX, pdfWorker, pdfBytes, palettePdf, cmykFill, loadPdfjs, openPdf, trimBoxOf, largestImage, largestImageAsync, uniformShare, renderBox, paletteColours, identify, margins, sampleAt, masterRaster, floorTexture, mipmaps, schematicFloor, sha256Hex };
 })(typeof self !== 'undefined' ? self : this);

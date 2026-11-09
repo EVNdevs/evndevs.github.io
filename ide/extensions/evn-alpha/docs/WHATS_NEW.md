@@ -4,6 +4,24 @@ The main changes of each release, in a few lines. The [full changelog](../CHANGE
 the tools and the measurements behind each release. What is not tested yet is on
 [Known limitations and help us test](KNOWN_LIMITATIONS.md).
 
+## 0.2.75 (2026-11-08)
+
+- **Calibrate with the wheels on.** `calibrate()` now keeps a steady load in the record and warns, and refuses only when
+  the motor cannot be controlled at all ([Calibration](CALIBRATION.md)).
+- **The JGA25-370 runs on the battery.** No default 6 V cap: on paper up to 40 % more speed and torque on a full pack
+  (8.4 V against 6 V); measured at 8.2 V, 645 deg/s against 476, about 36 % faster.
+  `settings(max_voltage=6000)` holds it to the seller's rating ([Motor](API_ROBOT.md)).
+- **SciPy in the notebook.** `curve_fit`, filters and Bode plots, matrix exponentials and LQR gains, ODE solvers,
+  distance maps and nearest-neighbour search: SciPy now comes with NumPy and Matplotlib (on the desktop, in the same
+  one-click download, now 30.0 MB) ([The notebook](NOTEBOOK.md)).
+- **Straights at the motors' full acceleration again.** A `DriveBase` accelerates and brakes on straights at the whole
+  limit, not 75 % of it: short moves take up to about 13 % less time (host model). A robot whose tyres slip lowers it:
+  `robot.settings(straight_acceleration=1230)`, the old value on two EV3 Mediums with 62.4 mm wheels ([DriveBase](API_ROBOT.md)).
+- **A bigger receive buffer for `evn.UART` and `evn.Bluetooth`.** `rxbuf=` (256 to 16384 bytes, opt-in) keeps a stream
+  that arrives while the program waits or moves from overflowing the 255-byte default ([UART](API_SYSTEM.md)).
+- **WRO RoboMission Elementary and Senior 2026 in the simulator**, and Junior, Elementary and Senior in everyone's
+  Course list, each with its game objects as physics bodies and a referee scoring its own sheet ([Simulator](SIMULATOR.md)).
+
 ## 0.2.74 (2026-11-04)
 
 - **New: autocomplete in the browser IDE.** Typing `evn.` lists the module's names, `m1.` a motor's methods, and a

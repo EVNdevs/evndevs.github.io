@@ -1,0 +1,706 @@
+{
+ "format": "evn-wro-interface/1",
+ "meta": {
+  "id": "wro-2026-elementary",
+  "design": "SIMULATOR_WRO_ES_DESIGN.md §5.1 / §5.2 (EK); the props step (EP, SIMULATOR_PROPS_ELEMENTARY.md) fills model / mass / parts / members / tip and sets status 'model'",
+  "axes": "model axes: x along dims_mm[0], y along dims_mm[1] (the mark's sides as it lies on the mat at yaw 0: the amplifier's long side on y), z up, the origin at the footprint's bounding box middle (P5); a piece's z_mm its [bottom, top] above the mat",
+  "interfaceBody": "one convex prism per footprint piece over its z_mm (D48, Q-ES2 (a)); its mass the prism's volume at density_g_cm3, a placeholder: no physics outcome on an interface body is judged or listed; no members (D59)",
+  "heights": "SIMULATOR_PROPS_ELEMENTARY.md §3.1 (the owner's models against the building instructions; studs excluded), leads the props step replaces",
+  "generator": "tools/wro/elementary_package.py"
+ },
+ "models": {
+  "amplifier": {
+   "class": "amplifier",
+   "kind": "amplifier",
+   "count": 1,
+   "colours": [
+    "black",
+    "white",
+    "red"
+   ],
+   "rules": {
+    "dims_mm": [
+     47.8,
+     95.6
+    ],
+    "parts": [
+     {
+      "part": "3003",
+      "what": "the red 2 x 2 knob at an angle on a pin (a member, D58)",
+      "colour": "red",
+      "page": "BI p. 151"
+     }
+    ],
+    "footprint": [
+     {
+      "polygon": [
+       [
+        -23.9,
+        -47.8
+       ],
+       [
+        23.9,
+        -47.8
+       ],
+       [
+        23.9,
+        47.8
+       ],
+       [
+        -23.9,
+        47.8
+       ]
+      ],
+      "z_mm": [
+       0.0,
+       79.9
+      ]
+     }
+    ],
+    "height_mm": 79.9,
+    "source": "its black mark (amplifier_mark, drawing 49477); props §3.1 (BI pp. 126-152)"
+   },
+   "model": null,
+   "mass_g": null,
+   "com_mm": null,
+   "inertia_gcm2": null,
+   "parts": null,
+   "namedParts": null,
+   "members": null,
+   "tip": null,
+   "status": "interface",
+   "interfaceBody": {
+    "volume_cm3": 365.117,
+    "density_g_cm3": 0.4,
+    "mass_g": 146.047,
+    "tag": "MODEL"
+   },
+   "memberNames": [
+    "knob"
+   ]
+  },
+  "cable": {
+   "class": "cable",
+   "kind": "cable",
+   "count": 2,
+   "colours": [
+    "red"
+   ],
+   "rules": {
+    "dims_mm": [
+     159.4,
+     31.9
+    ],
+    "parts": [
+     {
+      "part": "3703",
+      "what": "Technic beam 1 x 16",
+      "colour": "red",
+      "page": "BI pp. 167-174"
+     },
+     {
+      "part": "78c18",
+      "what": "flex hose",
+      "colour": "flat silver",
+      "page": "BI pp. 167-174, 176-177"
+     }
+    ],
+    "footprint": [
+     {
+      "name": "foot_l",
+      "polygon": [
+       [
+        -55.8,
+        -15.95
+       ],
+       [
+        -39.9,
+        -15.95
+       ],
+       [
+        -39.9,
+        15.95
+       ],
+       [
+        -55.8,
+        15.95
+       ]
+      ],
+      "z_mm": [
+       0.0,
+       31.91
+      ]
+     },
+     {
+      "name": "foot_r",
+      "polygon": [
+       [
+        39.9,
+        -15.95
+       ],
+       [
+        55.8,
+        -15.95
+       ],
+       [
+        55.8,
+        15.95
+       ],
+       [
+        39.9,
+        15.95
+       ]
+      ],
+      "z_mm": [
+       0.0,
+       31.91
+      ]
+     },
+     {
+      "name": "bar_l",
+      "polygon": [
+       [
+        -79.7,
+        -7.95
+       ],
+       [
+        -55.8,
+        -7.95
+       ],
+       [
+        -55.8,
+        7.95
+       ],
+       [
+        -79.7,
+        7.95
+       ]
+      ],
+      "z_mm": [
+       9.6,
+       31.91
+      ]
+     },
+     {
+      "name": "bar_m",
+      "polygon": [
+       [
+        -39.9,
+        -7.95
+       ],
+       [
+        39.9,
+        -7.95
+       ],
+       [
+        39.9,
+        7.95
+       ],
+       [
+        -39.9,
+        7.95
+       ]
+      ],
+      "z_mm": [
+       9.6,
+       31.91
+      ]
+     },
+     {
+      "name": "bar_r",
+      "polygon": [
+       [
+        55.8,
+        -7.95
+       ],
+       [
+        79.7,
+        -7.95
+       ],
+       [
+        79.7,
+        7.95
+       ],
+       [
+        55.8,
+        7.95
+       ]
+      ],
+      "z_mm": [
+       9.6,
+       31.91
+      ]
+     }
+    ],
+    "height_mm": 31.91,
+    "source": "the trace's cable_1_start (drawings 49502-49504); props §3.1 / §3.2 (BI pp. 167-174)"
+   },
+   "model": null,
+   "mass_g": null,
+   "com_mm": null,
+   "inertia_gcm2": null,
+   "parts": null,
+   "namedParts": null,
+   "members": null,
+   "tip": null,
+   "status": "interface",
+   "interfaceBody": {
+    "volume_cm3": 77.634,
+    "density_g_cm3": 0.4,
+    "mass_g": 31.053,
+    "tag": "MODEL"
+   }
+  },
+  "clef": {
+   "class": "clef",
+   "kind": "clef",
+   "count": 1,
+   "colours": [
+    "blue",
+    "white"
+   ],
+   "rules": {
+    "dims_mm": [
+     47.81,
+     31.88
+    ],
+    "parts": [],
+    "footprint": [
+     {
+      "polygon": [
+       [
+        -23.905,
+        -15.94
+       ],
+       [
+        23.905,
+        -15.94
+       ],
+       [
+        23.905,
+        15.94
+       ],
+       [
+        -23.905,
+        15.94
+       ]
+      ],
+      "z_mm": [
+       0.0,
+       124.71
+      ]
+     }
+    ],
+    "height_mm": 124.71,
+    "source": "its cyan mark (clef_mark, drawing 49474); props §3.1 (BI pp. 2-16)"
+   },
+   "model": null,
+   "mass_g": null,
+   "com_mm": null,
+   "inertia_gcm2": null,
+   "parts": null,
+   "namedParts": null,
+   "members": null,
+   "tip": null,
+   "status": "interface",
+   "interfaceBody": {
+    "volume_cm3": 190.081,
+    "density_g_cm3": 0.4,
+    "mass_g": 76.032,
+    "tag": "MODEL"
+   }
+  },
+  "congas": {
+   "class": "instrument",
+   "kind": "instrument",
+   "count": 1,
+   "colours": [
+    "yellow",
+    "white"
+   ],
+   "rules": {
+    "dims_mm": [
+     95.6,
+     28.8
+    ],
+    "parts": [
+     {
+      "part": "Technic pins",
+      "what": "the two drums joined by Technic pins",
+      "page": "BI p. 112"
+     }
+    ],
+    "footprint": [
+     {
+      "polygon": [
+       [
+        -47.8,
+        -14.4
+       ],
+       [
+        47.8,
+        -14.4
+       ],
+       [
+        47.8,
+        14.4
+       ],
+       [
+        -47.8,
+        14.4
+       ]
+      ],
+      "z_mm": [
+       0.0,
+       47.9
+      ]
+     }
+    ],
+    "height_mm": 47.9,
+    "source": "the truck's mark 2 (instrument_start_2, by size: E5); props §3.1 (BI pp. 102-113)"
+   },
+   "model": null,
+   "mass_g": null,
+   "com_mm": null,
+   "inertia_gcm2": null,
+   "parts": null,
+   "namedParts": null,
+   "members": null,
+   "tip": null,
+   "status": "interface",
+   "interfaceBody": {
+    "volume_cm3": 131.882,
+    "density_g_cm3": 0.4,
+    "mass_g": 52.753,
+    "tag": "MODEL"
+   }
+  },
+  "guitar": {
+   "class": "instrument",
+   "kind": "instrument",
+   "count": 1,
+   "colours": [
+    "red"
+   ],
+   "rules": {
+    "dims_mm": [
+     47.8,
+     31.9
+    ],
+    "parts": [],
+    "footprint": [
+     {
+      "polygon": [
+       [
+        -23.9,
+        -15.95
+       ],
+       [
+        23.9,
+        -15.95
+       ],
+       [
+        23.9,
+        15.95
+       ],
+       [
+        -23.9,
+        15.95
+       ]
+      ],
+      "z_mm": [
+       0.0,
+       127.91
+      ]
+     }
+    ],
+    "height_mm": 127.91,
+    "source": "the truck's mark 3 (instrument_start_3, Q-E5); props §3.1 (BI pp. 114-125)"
+   },
+   "model": null,
+   "mass_g": null,
+   "com_mm": null,
+   "inertia_gcm2": null,
+   "parts": null,
+   "namedParts": null,
+   "members": null,
+   "tip": null,
+   "status": "interface",
+   "interfaceBody": {
+    "volume_cm3": 195.04,
+    "density_g_cm3": 0.4,
+    "mass_g": 78.016,
+    "tag": "MODEL"
+   }
+  },
+  "keyboard": {
+   "class": "instrument",
+   "kind": "instrument",
+   "count": 1,
+   "colours": [
+    "white",
+    "black",
+    "red"
+   ],
+   "rules": {
+    "dims_mm": [
+     86.4,
+     31.9
+    ],
+    "parts": [],
+    "footprint": [
+     {
+      "polygon": [
+       [
+        -43.2,
+        -15.95
+       ],
+       [
+        43.2,
+        -15.95
+       ],
+       [
+        43.2,
+        15.95
+       ],
+       [
+        -43.2,
+        15.95
+       ]
+      ],
+      "z_mm": [
+       0.0,
+       63.9
+      ]
+     }
+    ],
+    "height_mm": 63.9,
+    "source": "the truck's mark 4 (instrument_start_4, by size: E5); props §3.1 (BI pp. 89-101)"
+   },
+   "model": null,
+   "mass_g": null,
+   "com_mm": null,
+   "inertia_gcm2": null,
+   "parts": null,
+   "namedParts": null,
+   "members": null,
+   "tip": null,
+   "status": "interface",
+   "interfaceBody": {
+    "volume_cm3": 176.119,
+    "density_g_cm3": 0.4,
+    "mass_g": 70.447,
+    "tag": "MODEL"
+   }
+  },
+  "microphone": {
+   "class": "microphone",
+   "kind": "microphone",
+   "count": 1,
+   "colours": [
+    "white",
+    "black"
+   ],
+   "rules": {
+    "dims_mm": [
+     47.8,
+     31.9
+    ],
+    "parts": [
+     {
+      "part": "3830 / 3831",
+      "what": "hinge bricks locked by the 2 x 4 above",
+      "page": "BI pp. 73-80"
+     }
+    ],
+    "footprint": [
+     {
+      "polygon": [
+       [
+        -23.9,
+        -15.95
+       ],
+       [
+        23.9,
+        -15.95
+       ],
+       [
+        23.9,
+        15.95
+       ],
+       [
+        -23.9,
+        15.95
+       ]
+      ],
+      "z_mm": [
+       0.0,
+       127.91
+      ]
+     }
+    ],
+    "height_mm": 127.91,
+    "source": "the truck's mark 1 (instrument_start_1, Q-E5); props §3.1 (BI pp. 66-88)"
+   },
+   "model": null,
+   "mass_g": null,
+   "com_mm": null,
+   "inertia_gcm2": null,
+   "parts": null,
+   "namedParts": null,
+   "members": null,
+   "tip": null,
+   "status": "interface",
+   "interfaceBody": {
+    "volume_cm3": 195.04,
+    "density_g_cm3": 0.4,
+    "mass_g": 78.016,
+    "tag": "MODEL"
+   }
+  },
+  "note": {
+   "class": "note",
+   "kind": "note",
+   "count": 6,
+   "colours": [
+    "red",
+    "green",
+    "black",
+    "white",
+    "yellow",
+    "blue"
+   ],
+   "rules": {
+    "dims_mm": [
+     31.8,
+     31.8
+    ],
+    "parts": [
+     {
+      "part": "3001",
+      "what": "brick 2 x 4, two in the note's own colour",
+      "count": 2,
+      "page": "BI p. 17 step 16; pp. 26, 34, 41, 48, 56"
+     },
+     {
+      "part": "3035",
+      "what": "plate 4 x 8",
+      "colour": "white",
+      "count": 1,
+      "page": "BI pp. 17-65"
+     }
+    ],
+    "footprint": [
+     {
+      "polygon": [
+       [
+        -15.9,
+        -15.9
+       ],
+       [
+        15.9,
+        -15.9
+       ],
+       [
+        15.9,
+        15.9
+       ],
+       [
+        -15.9,
+        15.9
+       ]
+      ],
+      "z_mm": [
+       0.0,
+       79.91
+      ]
+     }
+    ],
+    "height_mm": 79.91,
+    "source": "the base exact (two 2 x 4 side by side, BI p. 17 step 16; the props design's CR3); props §3.1",
+    "heightByColour_mm": {
+     "black": 70.31,
+     "yellow": 70.31,
+     "blue": 79.91,
+     "green": 79.91,
+     "red": 79.91,
+     "white": 79.91
+    }
+   },
+   "model": null,
+   "mass_g": null,
+   "com_mm": null,
+   "inertia_gcm2": null,
+   "parts": null,
+   "namedParts": null,
+   "members": null,
+   "tip": null,
+   "status": "interface",
+   "interfaceBody": {
+    "volume_cm3": 80.808,
+    "density_g_cm3": 0.4,
+    "mass_g": 32.323,
+    "tag": "MODEL"
+   }
+  },
+  "speaker": {
+   "class": "speaker",
+   "kind": "speaker",
+   "count": 2,
+   "colours": [
+    "black",
+    "blue"
+   ],
+   "rules": {
+    "dims_mm": [
+     47.8,
+     28.8
+    ],
+    "parts": [],
+    "footprint": [
+     {
+      "polygon": [
+       [
+        -23.9,
+        -14.4
+       ],
+       [
+        23.9,
+        -14.4
+       ],
+       [
+        23.9,
+        14.4
+       ],
+       [
+        -23.9,
+        14.4
+       ]
+      ],
+      "z_mm": [
+       0.0,
+       103.9
+      ]
+     }
+    ],
+    "height_mm": 103.9,
+    "source": "its blue mark (speaker_1_mark / speaker_2_mark: 47.803 x 28.797, turned); props §3.1 (BI pp. 153-166)"
+   },
+   "model": null,
+   "mass_g": null,
+   "com_mm": null,
+   "inertia_gcm2": null,
+   "parts": null,
+   "namedParts": null,
+   "members": null,
+   "tip": null,
+   "status": "interface",
+   "interfaceBody": {
+    "volume_cm3": 143.033,
+    "density_g_cm3": 0.4,
+    "mass_g": 57.213,
+    "tag": "MODEL"
+   }
+  }
+ }
+}

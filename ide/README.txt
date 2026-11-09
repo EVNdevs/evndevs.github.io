@@ -9,5 +9,8 @@ own, and they fetch these files cross-origin.
 
 To try it locally: node scripts/serve_ide.js  (then http://localhost:8765/ide/).
 
-extension: evn-alpha-micropython 0.2.74
-generated: 2026-11-04T04:27:50.603Z
+sw.js is the IDE's own service worker and offline.json its list of files (docs/curriculum/OFFLINE_DESIGN.md
+8.2): copy them with the rest. Opening the page with ?evn-sw=off removes the offline copy from that browser.
+
+extension: evn-alpha-micropython 0.2.75
+generated: 2026-11-09T01:36:33.754Z

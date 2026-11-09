@@ -1,0 +1,193 @@
+{
+  "format": "evn-game/1",
+  "meta": {
+    "id": "wro-2026-elementary",
+    "league": "wro-robomission",
+    "season": 2026,
+    "category": "elementary",
+    "title": "Robot Rockstars",
+    "maxScore": 255,
+    "sources": [
+      { "doc": "WRO-2026-RoboMission-Elementary-Game-Rules.pdf", "sha256": "3ec1bb2b16c298676f180da0b664963a4ab4e36a85408ab4b54fb4c8b187877f", "where": "p. 14: the scoring sheet, Maximum Score 255; pp. 4-13 the objects, randomisation and missions" },
+      { "doc": "WRO-2026-RoboMission-General-Rules.pdf", "sha256": "90a28d8bf77f628227e5f544ec57b5230d620f3ae581f092bed1fda23de9e795", "where": "5.1, 5.2, 7.7, 7.8, 10.2, 10.7, 10.8, 10.12" },
+      { "doc": "WRO Q&A (Elementary, 2026-06-30; all ages, 2026-05-14 / 2026-06-17)", "where": "SIMULATOR_WRO_ES_DESIGN.md §3.4 (E-g), §3.5 (E/S-n)" }
+    ],
+    "engine": { "kernel": "staticField", "physics": "rigid", "engineModel": "jolt-1" },
+    "readings": { "OQ66": "SIMULATOR_WRO_DESIGN.md §10", "OQ70": "SIMULATOR_WRO_ES_DESIGN.md §10", "OQ73": "SIMULATOR_ENGINE_DESIGN.md §8; (cn) (3) default taken: one meaning of 'upright' in this package" },
+    "design": "SIMULATOR_WRO_ES_DESIGN.md §3 (EK): written by hand from the rules, reconciled with the J2b fixture (§2.2). DATA until EN3 / EN4: the contact source, touchesMat, supports lists, moved.source and robot.start.headingDeg are refused or ignored by today's loader (§8.1); J5 loads it"
+  },
+  "units": { "length": "mm", "mass": "g", "angle": "deg", "time": "s" },
+  "field": {
+    "table": { "size": [2362, 1143], "walls": { "h": 50, "t": 20 } },
+    "mat": { "geometry": "../../wro/elementary-2026.json", "sha256": "e54433ab30f769dbb0918012bf0295fe7970f9680a7bee795df568cf5403e7ea" },
+    "areas": {
+      "cable_areas": { "set": ["mat:cable_grey_1", "mat:cable_grey_2"] },
+      "mic_target": { "ref": "mat:microphone_target" },
+      "backstage": { "ref": "mat:backstage" },
+      "note_target": { "byColour": { "red": "mat:note_target_red", "green": "mat:note_target_green", "black": "mat:note_target_black", "white": "mat:note_target_white", "yellow": "mat:note_target_yellow", "blue": "mat:note_target_blue" } },
+      "mark_clef": { "ref": "mat:clef_mark" },
+      "mark_amplifier": { "ref": "mat:amplifier_mark" },
+      "mark_speaker_1": { "ref": "mat:speaker_1_mark" },
+      "mark_speaker_2": { "ref": "mat:speaker_2_mark" }
+    }
+  },
+  "materials": {},
+  "models": { "file": "../../wro/elementary-2026-props.json", "sha256": "afa21b2d1d455fcbccbc3e15fc3264191234ab015bc57abb20a2e18e011857d0" },
+  "fixtures": [],
+  "joints": [],
+  "objects": [
+    { "id": "cable_1", "model": "cable", "tags": { "kind": "cable" }, "start": { "region": "cable_1_start", "yawDeg": 0 } },
+    { "id": "cable_2", "model": "cable", "tags": { "kind": "cable" }, "start": { "region": "cable_2_start", "yawDeg": 0 } },
+    { "id": "guitar", "model": "guitar", "tags": { "kind": "instrument" }, "start": { "region": "instrument_start_3", "yawDeg": 0 } },
+    { "id": "keyboard", "model": "keyboard", "tags": { "kind": "instrument" }, "start": { "region": "instrument_start_4", "yawDeg": 0 } },
+    { "id": "congas", "model": "congas", "tags": { "kind": "instrument" }, "start": { "region": "instrument_start_2", "yawDeg": 0 } },
+    { "id": "microphone", "model": "microphone", "tags": { "kind": "microphone" }, "start": { "region": "instrument_start_1", "yawDeg": 0 } },
+    { "id": "note_red", "model": "note", "tags": { "kind": "note", "colour": "red" }, "start": { "region": "note_red_start", "yawDeg": 0 } },
+    { "id": "note_green", "model": "note", "tags": { "kind": "note", "colour": "green" }, "start": { "region": "note_green_start", "yawDeg": 0 } },
+    { "id": "note_black", "model": "note", "tags": { "kind": "note", "colour": "black" }, "start": { "draw": "notes", "yawDeg": 0 } },
+    { "id": "note_white", "model": "note", "tags": { "kind": "note", "colour": "white" }, "start": { "draw": "notes", "yawDeg": 0 } },
+    { "id": "note_yellow", "model": "note", "tags": { "kind": "note", "colour": "yellow" }, "start": { "draw": "notes", "yawDeg": 0 } },
+    { "id": "note_blue", "model": "note", "tags": { "kind": "note", "colour": "blue" }, "start": { "draw": "notes", "yawDeg": 0 } },
+    { "id": "clef", "model": "clef", "tags": { "kind": "clef" }, "start": { "region": "clef_mark", "yawDeg": 0 }, "moved": { "leftStart": "@mark_clef", "source": "contact" } },
+    { "id": "amplifier", "model": "amplifier", "tags": { "kind": "amplifier" }, "start": { "region": "amplifier_mark", "yawDeg": 0 }, "moved": { "leftStart": "@mark_amplifier", "source": "contact" } },
+    { "id": "speaker_1", "model": "speaker", "tags": { "kind": "speaker" }, "start": { "region": "speaker_1_mark", "yawDeg": 70 }, "moved": { "leftStart": "@mark_speaker_1", "source": "contact" } },
+    { "id": "speaker_2", "model": "speaker", "tags": { "kind": "speaker" }, "start": { "region": "speaker_2_mark", "yawDeg": 110 }, "moved": { "leftStart": "@mark_speaker_2", "source": "contact" } }
+  ],
+  "slots": {
+    "light_green": [
+      { "region": "note_random_start_1" }, { "region": "note_random_start_2" }, { "region": "note_random_start_3" }, { "region": "note_random_start_4" }
+    ]
+  },
+  "random": [
+    { "id": "notes", "type": "assign", "items": ["note_black", "note_white", "note_yellow", "note_blue"], "into": "light_green", "leftOut": "none", "tag": "RULE", "ref": "Elementary 3 (p. 7): four notes randomly on the four light green squares, red and green fixed" }
+  ],
+  "robot": {
+    "start": { "area": "mat:start_area", "mode": "completely", "using": "plan", "headingDeg": 180, "ref": "GR 10.2; SIMULATOR_WRO_ES_DESIGN.md §3.1 (D5, OQ 70 (r))" },
+    "checks": [
+      { "id": "size", "maxMm": [250, 250, 250], "tag": "RULE", "ref": "GR 5.1" },
+      { "id": "mass", "maxG": 1500, "tag": "RULE", "ref": "GR 5.2.1" },
+      { "id": "battery", "maxV": 14.8, "maxMah": 6000, "tag": "RULE", "ref": "WRO Q&A (all ages, 2026-05-14): 14.8 V nominal, 6000 mAh (E/S-n)" },
+      { "id": "motors", "max": 4, "countServos": true, "tag": "RULE", "ref": "GR 5.2.8" },
+      { "id": "camera", "allowed": false, "tag": "RULE", "ref": "GR 5.2.7: cameras are limited to Junior and Senior" }
+    ]
+  },
+  "run": {
+    "clock": { "start": "runMark", "limitS": 120 },
+    "end": [
+      { "id": "time", "ref": "GR 10.7.1" },
+      { "id": "stop", "when": "stopAsked & robotStill()", "ref": "GR 10.7.5" },
+      { "id": "programEnd", "when": "programEnded & robotStill()" },
+      { "id": "placed", "event": "handPlacement", "ref": "GR 10.7.2" }
+    ],
+    "still": { "dps": 1, "mms": 1, "s": 0.5, "tag": "READING" },
+    "time": { "record": "floorSeconds", "ifNoTask": 120, "ref": "GR 10.8, 10.12" },
+    "settle": { "mms": 1, "dps": 1, "s": 0.25, "maxS": 2, "tag": "MODEL" }
+  },
+  "rules": {
+    "defaults": {
+      "tol": { "value": 0.5, "tag": "READING", "ref": "OQ 66 (n), (p) carried (OQ 70 (a)): the 0.5 mm in the team's favour, per edge, mitred" },
+      "restMm": { "value": 1.0, "tag": "MODEL", "ref": "games.ts REST_MM; W3a rules S5" },
+      "contactMm": { "value": 0.2, "tag": "MODEL", "ref": "SIMULATOR_ENGINE_DESIGN.md §3.5 P4" },
+      "supportDeg": { "value": 60, "tag": "MODEL", "ref": "SIMULATOR_ENGINE_DESIGN.md §3.5 P4" },
+      "uprightMicDeg": { "value": 1.0, "tag": "READING", "ref": "D65: asin(restMm / D), D 57.5 mm (the 47.8 x 31.9 mark); WRO's Q&A 2026-06-30" },
+      "uprightNoteDeg": { "value": 1.27, "tag": "READING", "ref": "D65: asin(restMm / D), D 45.0 mm (the 31.8 mm base); OQ 73 (cn) (3) default" },
+      "uprightCableDeg": { "value": 0.49, "tag": "READING", "ref": "D65: asin(restMm / D), D 116.1 mm (the base that tilts on the mat: its two feet, 111.6 x 31.9, D68); OQ 73 (cn) (3) default" },
+      "uprightBonusDeg": { "value": 0.54, "tag": "READING", "ref": "D65: the least of the bonus classes' bounds (the amplifier, D 106.9 mm); OQ 73 (cn) (3) default" }
+    },
+    "named": {},
+    "missions": [
+      { "id": "3.1", "label": "Connect the amplifier with the speakers", "max": 30, "task": true },
+      { "id": "3.2", "label": "Prepare the show", "max": 65, "task": true },
+      { "id": "3.3", "label": "Play the song", "max": 120, "task": true },
+      { "id": "3.4", "label": "Bonus points", "max": 40, "task": false }
+    ],
+    "lines": [
+      { "id": "cables", "mission": "3.1",
+        "match": {
+          "roles": { "c": "kind:cable", "a": "@cable_areas" },
+          "score": "if(!held(c) & !damaged(c) & in(c, a, completely, contact) & upright(c, uprightCableDeg), 15, if(!held(c) & !damaged(c) & in(c, a, meets, contact), 5, 0))",
+          "labels": { "15": "Cable completely in a grey area and upright", "5": "Cable only partly in a grey area or not upright" } } },
+      { "id": "microphone", "mission": "3.2", "per": "o in kind:microphone",
+        "tiers": [
+          { "points": 20, "label": "Microphone completely in its target area and upright", "when": "!held(o) & !damaged(o) & in(o, @mic_target, completely, contact) & upright(o, uprightMicDeg)" },
+          { "points": 10, "label": "Microphone only partly in its target area or not upright", "when": "!held(o) & !damaged(o) & ((in(o, @mic_target, completely, contact) & !upright(o, uprightMicDeg)) | in(o, @mic_target, partly, contact))" }
+        ] },
+      { "id": "instruments", "mission": "3.2", "per": "o in kind:instrument",
+        "tiers": [
+          { "points": 15, "label": "Instrument completely in backstage", "when": "!held(o) & !damaged(o) & in(o, @backstage, completely, contact)" }
+        ] },
+      { "id": "notes", "mission": "3.3", "per": "o in kind:note", "let": { "own": "@note_target[o.colour]" },
+        "tiers": [
+          { "points": 20, "label": "Note completely in its colour's target (including grey border) and upright", "when": "!held(o) & !damaged(o) & in(o, own, completely, contact) & upright(o, uprightNoteDeg)" },
+          { "points": 10, "label": "Note partly in its colour's target (including grey border) or not upright", "when": "!held(o) & !damaged(o) & ((in(o, own, completely, contact) & !upright(o, uprightNoteDeg)) | in(o, own, partly, contact))" }
+        ],
+        "else": [ { "reason": "wrong colour", "when": "in(o, @note_target - own, meets, contact)" } ] },
+      { "id": "bonus", "mission": "3.4", "per": "o in kind:clef | kind:speaker | kind:amplifier",
+        "tiers": [
+          { "points": 10, "label": "Not damaged or moved", "when": "!held(o) & !damaged(o) & !moved(o) & upright(o, uprightBonusDeg)" }
+        ] }
+    ]
+  },
+  "examples": [
+    "examples/E0.laid.json",
+    "examples/E0.max.json",
+    "examples/E0.stopEarly.json",
+    "examples/E1.bound.json",
+    "examples/E1.edgeIn.a.json",
+    "examples/E1.edgeIn.b.json",
+    "examples/E1.edgeOut.a.json",
+    "examples/E1.edgeOut.b.json",
+    "examples/E1.footOnSpeaker.json",
+    "examples/E1.full.json",
+    "examples/E1.lifted.json",
+    "examples/E1.onRobot.json",
+    "examples/E1.onePerArea.json",
+    "examples/E1.out.json",
+    "examples/E1.partly.json",
+    "examples/E1.tipped.json",
+    "examples/E2.instr.edgeIn.json",
+    "examples/E2.instr.edgeOut.json",
+    "examples/E2.instr.full.json",
+    "examples/E2.instr.partly.json",
+    "examples/E2.instr.tipped.json",
+    "examples/E2.mic.bound.json",
+    "examples/E2.mic.boundOver.json",
+    "examples/E2.mic.edgeIn.0.json",
+    "examples/E2.mic.edgeIn.1.json",
+    "examples/E2.mic.edgeIn.2.json",
+    "examples/E2.mic.edgeIn.3.json",
+    "examples/E2.mic.edgeOut.0.json",
+    "examples/E2.mic.edgeOut.1.json",
+    "examples/E2.mic.edgeOut.2.json",
+    "examples/E2.mic.edgeOut.3.json",
+    "examples/E2.mic.full.json",
+    "examples/E2.mic.inBackstage.json",
+    "examples/E2.mic.lifted.json",
+    "examples/E2.mic.out.json",
+    "examples/E2.mic.partly.json",
+    "examples/E2.mic.tipped.json",
+    "examples/E3.border.json",
+    "examples/E3.bound.json",
+    "examples/E3.edgeIn.json",
+    "examples/E3.edgeOut.json",
+    "examples/E3.full.json",
+    "examples/E3.leanOnNote.json",
+    "examples/E3.lifted.json",
+    "examples/E3.onCableFoot.json",
+    "examples/E3.partly.json",
+    "examples/E3.partlyTipped.json",
+    "examples/E3.tipped.json",
+    "examples/E3.wrongColour.json",
+    "examples/E3.wrongColourTipped.json",
+    "examples/E4.amplifierDamaged.json",
+    "examples/E4.bound.json",
+    "examples/E4.clefCarried.json",
+    "examples/E4.clefHover.json",
+    "examples/E4.clefLying.json",
+    "examples/E4.clefOffMark.json",
+    "examples/E4.clefOnCable.json",
+    "examples/E4.clefPartlyOff.json",
+    "examples/E4.gapIn.json",
+    "examples/E4.gapOut.json"
+  ]
+}

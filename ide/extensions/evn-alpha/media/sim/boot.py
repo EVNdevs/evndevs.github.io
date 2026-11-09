@@ -20,6 +20,7 @@ import sys
 import types
 import builtins
 import os as _os
+import math as _math
 import errno as _cerrno
 
 import _evnsim
@@ -354,7 +355,7 @@ _HELP = (
     '  m.calibrate(); m.full_speed()            # self-calibration (about 12 s, shaft free; stored) / what 100 % is\n'
     '  m.calibrate(wait=False) ... m.calibrate() # start several ports, then join each (finished: its result at once)\n'
     "  evn.configure_motor(3, 'EV3 Medium')      # what is on the port, stored on the board: 'EV3 Large' / 'EV3 Medium' / 'NXT' / 'jga25' / 'pololu25d_9_7' / 'chr16_63' / 'cm22_49' / 'custom'\n"
-    "  evn.configure_motor(2, 'jga25')           # a library motor: the JGA25-370 6V 77RPM (3432 counts, 6 V cap)\n"
+    "  evn.configure_motor(2, 'jga25')           # a library motor: the JGA25-370 6V 77RPM (3432 counts, rated 6 V)\n"
     "  evn.configure_motor(1, 'pololu25d_9_7')   # a library motor: the Pololu 25D 9.7:1 HP 12V (464.64 counts)\n"
     "  evn.configure_motor(3, 'chr16_63')        # a library motor: the CHR-GM16-030PA 9V 1:63 (1764 counts, 9 V cap)\n"
     "  evn.configure_motor(2, 'cm22_49')         # a library motor: the CM22-2230 12V 1:49 (3136 counts, 12 V cap)\n"
@@ -609,6 +610,93 @@ def _import(name, globals=None, locals=None, fromlist=(), level=0):
 
 
 builtins.__import__ = _import
+
+# ---------------------------------------------------------------- simtrail: the panel's measuring tools
+# A simulator-only module (docs/SIMULATOR.md "The tools pane"): the board has no pen and no ground truth, so `evn` stays
+# the board's API and a program using this fails on the board at its import. It exists in every interpreter, so a program
+# that lifts the pen runs as it is in a challenge; the reader `_evntrail` is the panel worker's only (vm.ts `tools`).
+# Every read is the true pose (README §9 GT, never readable from learner code during a scored run): where there is no
+# reader, or where it answers nothing (a referee judging, workerCore.ts trailRefused), the read is refused: ReadRefused,
+# which a scored run takes as the program's end, not its failure (challengeRun.ts refusedRead, OQ 222).
+
+_TRAIL_REFUSED = "simtrail: true values cannot be read in a scored or sealed run: read them in a practice run, or after the run in the panel"
+
+
+def _trail_module():
+    m = types.ModuleType("simtrail")
+    m.__doc__ = "The simulator panel's pen and the end-point, closing and true heading errors. Simulator only."
+
+    class ReadRefused(RuntimeError):
+        """A true value read in a scored or sealed run: the program stops here, and the run goes on as if it had ended."""
+
+    def tools():
+        try:
+            return _real_import("_evntrail")
+        except ImportError:
+            return None
+
+    def read(what, *a):
+        t = tools()
+        v = t.read(what, *a) if t else None
+        if v is None:
+            raise ReadRefused(_TRAIL_REFUSED)
+        return v
+
+    def pen_down():
+        """The pen on the middle of the axle goes down: the path is drawn, and a new stroke starts here."""
+        t = tools()
+        if t:
+            t.pen(True)
+
+    def pen_up():
+        """The pen comes up: nothing is drawn, and the stroke ends here."""
+        t = tools()
+        if t:
+            t.pen(False)
+
+    def number(v):
+        # what a float holds and is finite: no bool, no text, no nan or inf, no int too large for a float
+        try:
+            return isinstance(v, (int, float)) and not isinstance(v, bool) and _math.isfinite(float(v))
+        except OverflowError:
+            return False
+
+    def target(x=None, y=None, heading=None):
+        """Where the run should end: x and y in mm on the floor, with a heading in degrees if wanted; no arguments: the run's start again."""
+        # here, before the reader, so a practice run and a sealed one refuse the same call; the panel's fields refuse it too
+        if (x is None) != (y is None) or (x is None and heading is not None):
+            raise ValueError("simtrail.target() takes x and y together, then a heading if wanted; no arguments go back to the run's start")
+        if not all(v is None or number(v) for v in (x, y, heading)):
+            raise ValueError("simtrail.target() takes finite numbers: x and y in mm, a heading in degrees")
+        # floats, for an int past 2**53 reaches the reader as no number (a BigInt) and would drop the target
+        x, y, heading = [None if v is None else float(v) for v in (x, y, heading)]
+        t = tools()
+        if t:
+            t.target(x, y, heading)
+
+    def end_error():
+        """The gap in mm from the robot to the target (none set: to the run's start)."""
+        return read("end")
+
+    def closing_error(per_degree=0):
+        """The gap in mm between the ends of the last stroke, plus per_degree mm for each degree between them."""
+        return read("closing", per_degree)
+
+    def heading_error():
+        """The true heading now less the target's (none: the run's start's) in degrees, + to the left."""
+        return read("heading")
+
+    def report():
+        """The panel's line: the end pose and the three errors."""
+        return read("report")
+
+    for f in (pen_down, pen_up, target, end_error, closing_error, heading_error, report):
+        setattr(m, f.__name__, f)
+    m.ReadRefused = ReadRefused
+    return m
+
+
+sys.modules["simtrail"] = _trail_module()
 
 # ---------------------------------------------------------------- running a program
 

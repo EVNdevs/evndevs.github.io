@@ -46,9 +46,11 @@ You can also read files with plain Python: `open()`, the `csv` module, `os.listd
 ## What it has
 
 - **Python's standard library:** `csv`, `statistics`, `math`, `random`, `json`, `datetime` and the rest. A few parts
-  (`sqlite3`, `lzma`, `ssl`) come with NumPy and Matplotlib, so on the desktop they arrive with them.
-- **NumPy and Matplotlib.** The browser IDE has them. On the desktop they are one download, the first time you need
-  them (see [NumPy and Matplotlib on the desktop](#numpy-and-matplotlib-on-the-desktop)).
+  (`sqlite3`, `lzma`, `ssl`) come with NumPy, SciPy and Matplotlib, so on the desktop they arrive with them.
+- **NumPy, SciPy and Matplotlib.** The browser IDE has them. On the desktop they are one download, the first time you
+  need them (see [NumPy, SciPy and Matplotlib on the desktop](#numpy-scipy-and-matplotlib-on-the-desktop)). SciPy
+  brings `scipy.optimize` (`curve_fit`), `scipy.signal` (`lfilter`, `bode`, `cont2discrete`), `scipy.linalg` (`expm`,
+  `solve_discrete_are`), `scipy.integrate` (`solve_ivp`), `scipy.ndimage` and `scipy.spatial` (`cKDTree`).
 - **Charts.** A Matplotlib figure shows under its cell. Each one has a description a screen reader reads out (its
   title, its axes and their ranges, its lines), and a data table: the numbers it was drawn from. Both are saved in the
   notebook, so they are still there when you open it again. Give your charts a title and axis labels with
@@ -60,7 +62,7 @@ You can also read files with plain Python: `open()`, the `csv` module, `os.listd
   `PASS ...` or `FAIL ...`, under the cell. Lesson checks come in a later version: until then the command tells you that
   the check cannot run yet.
 
-SciPy, pandas, OpenCV and scikit-learn are not in the notebook. A cell that imports one says so in one line.
+pandas, OpenCV and scikit-learn are not in the notebook. A cell that imports one says so in one line.
 
 ## Your files
 
@@ -98,23 +100,23 @@ The browser IDE keeps the notebook's Python and its packages once they have load
 open, the network can go and notebooks keep running, a new kernel included (after a restart, or in another
 notebook). A reload of the page needs the network until a later version keeps the whole IDE offline.
 
-The first time a browser runs a notebook that uses NumPy and Matplotlib, it downloads about 19 MB; after that, about
-24 KB. If the browser's site data is cleared while a notebook is open, a restart of the notebook's Python needs the
+The first time a browser runs a notebook that uses NumPy and Matplotlib, it downloads about 19 MB (about 34 MB with
+SciPy too); after that, about 24 KB. If the browser's site data is cleared while a notebook is open, a restart of the notebook's Python needs the
 network again.
 
 On an iPad, Safari deletes a site's storage after 7 days without use. So the notebook's packages stay within that
 window, or always for the IDE added to the Home Screen.
 
-The desktop extension needs the network once, to download NumPy and Matplotlib (next section). After that its
+The desktop extension needs the network once, to download NumPy, SciPy and Matplotlib (next section). After that its
 notebooks need no network.
 
-## NumPy and Matplotlib on the desktop
+## NumPy, SciPy and Matplotlib on the desktop
 
-The desktop extension does not come with NumPy and Matplotlib. You install them once, with one click, the same way as
+The desktop extension does not come with NumPy, SciPy and Matplotlib. You install them once, with one click, the same way as
 mpremote:
 
 1. The first time a cell imports one (`import numpy as np`), the cell stops with one line saying they are not installed
-   yet, and a message offers **Install NumPy and Matplotlib (14.8 MB)** or **Cancel**.
+   yet, and a message offers **Install NumPy, SciPy and Matplotlib (30.0 MB)** or **Cancel**.
 2. **Install** downloads them from the EVN site (the same files the browser IDE uses). The message shows how much has
    arrived and has a **Cancel** button.
 3. When it is done, click **Restart Python** (this clears the notebook's variables) and run the cell again. If you

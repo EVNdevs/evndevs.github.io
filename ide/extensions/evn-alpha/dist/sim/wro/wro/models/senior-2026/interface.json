@@ -1,0 +1,833 @@
+{
+ "format": "evn-wro-interface/1",
+ "meta": {
+  "id": "wro-2026-senior",
+  "design": "SIMULATOR_WRO_ES_DESIGN.md §5.1 / §5.3 (SK); the props step (SP, SIMULATOR_PROPS_SENIOR.md) fills model / mass / parts / members / tip and sets status 'model'",
+  "axes": "model axes: x along dims_mm[0], y along dims_mm[1] as it lies on the mat at yaw 0 (the barrier's L corner at -x / -y, as mark 1 lies), z up, the origin at the footprint's bounding box middle (P5); a piece's z_mm its [bottom, top] above the mat",
+  "interfaceBody": "one convex prism per footprint piece over its z_mm (D48, Q-ES2 (a)); its mass the prism's volume at density_g_cm3, a placeholder: no physics outcome on an interface body is judged or listed; no members (D59: the barriers' balls are SP's)",
+  "rulesExact": "tile and cement (ES §5.3): parts are per-brick boxes [x0, y0, z0, x1, y1, z1] in model axes from the rules' part lists; mass_g / com_mm / inertia_gcm2 by P10's rule (bake_objects.py's part table, per-brick uniform boxes, g cm^2 tensor elements [xx, yy, zz, xy, xz, yz]); studs not in the boxes",
+  "hull": "each entry's plan hull in model axes (counter-clockwise): the convex hull of its footprint pieces at every height, read by the package's poseIn draw (the cement's; games/draw.ts, D92)",
+  "heights": "SIMULATOR_PROPS_SENIOR.md §3.1 (the owner's models against the building instructions; studs excluded), leads the props step replaces",
+  "generator": "tools/wro/senior_package.py"
+ },
+ "models": {
+  "barrier": {
+   "class": "barrier",
+   "kind": "barrier",
+   "count": 4,
+   "colours": [
+    "black",
+    "red"
+   ],
+   "rules": {
+    "dims_mm": [
+     127.5,
+     127.5
+    ],
+    "parts": [
+     {
+      "part": "3009 / 3894",
+      "what": "an L of 1 x 6 bricks two studs wide, a 4 x 4 corner tower, the ball's cup on top",
+      "page": "BI pp. 2-40"
+     },
+     {
+      "part": "41250",
+      "what": "the ball, a member (L11; D49): not in this file (D59; SP adds it)",
+      "page": "rules p. 6"
+     }
+    ],
+    "footprint": [
+     {
+      "name": "tower",
+      "polygon": [
+       [
+        -63.75,
+        -63.75
+       ],
+       [
+        -31.85,
+        -63.75
+       ],
+       [
+        -31.85,
+        -31.85
+       ],
+       [
+        -63.75,
+        -31.85
+       ]
+      ],
+      "z_mm": [
+       0.0,
+       67.1
+      ]
+     },
+     {
+      "name": "arm_y",
+      "polygon": [
+       [
+        -63.75,
+        -31.85
+       ],
+       [
+        -47.85,
+        -31.85
+       ],
+       [
+        -47.85,
+        63.75
+       ],
+       [
+        -63.75,
+        63.75
+       ]
+      ],
+      "z_mm": [
+       0.0,
+       9.6
+      ]
+     },
+     {
+      "name": "arm_x",
+      "polygon": [
+       [
+        -31.85,
+        -63.75
+       ],
+       [
+        63.75,
+        -63.75
+       ],
+       [
+        63.75,
+        -47.85
+       ],
+       [
+        -31.85,
+        -47.85
+       ]
+      ],
+      "z_mm": [
+       0.0,
+       9.6
+      ]
+     }
+    ],
+    "height_mm": 76.71,
+    "source": "its L mark (barrier_mark_k's parts: arms 15.9 x 127.5, a 31.9 corner square), the L's corner at -x / -y at yaw 0 (mark 1); the tower 67.1 and the cup to 76.71 (props §3.1 / §3.2); the arms one course (a lead, SP's model)"
+   },
+   "model": null,
+   "mass_g": null,
+   "com_mm": null,
+   "inertia_gcm2": null,
+   "parts": null,
+   "namedParts": null,
+   "members": null,
+   "tip": null,
+   "status": "interface",
+   "interfaceBody": {
+    "volume_cm3": 97.466,
+    "density_g_cm3": 0.4,
+    "mass_g": 38.987,
+    "tag": "MODEL"
+   },
+   "memberNames": [
+    "ball"
+   ],
+   "hull": [
+    [
+     -63.75,
+     -63.75
+    ],
+    [
+     63.75,
+     -63.75
+    ],
+    [
+     63.75,
+     -47.85
+    ],
+    [
+     -47.85,
+     63.75
+    ],
+    [
+     -63.75,
+     63.75
+    ]
+   ]
+  },
+  "cement": {
+   "class": "cement",
+   "kind": "cement",
+   "count": 40,
+   "colours": [
+    "yellow",
+    "blue",
+    "green",
+    "white"
+   ],
+   "rules": {
+    "dims_mm": [
+     47.8,
+     7.8
+    ],
+    "parts": [
+     {
+      "part": "3009",
+      "what": "brick 1 x 6",
+      "count": 1,
+      "page": "BI p. 97, step 96; p. 100"
+     }
+    ],
+    "footprint": [
+     {
+      "polygon": [
+       [
+        -23.9,
+        -3.9
+       ],
+       [
+        23.9,
+        -3.9
+       ],
+       [
+        23.9,
+        3.9
+       ],
+       [
+        -23.9,
+        3.9
+       ]
+      ],
+      "z_mm": [
+       0.0,
+       9.6
+      ]
+     }
+    ],
+    "height_mm": 9.6,
+    "source": "ES §5.3 (rules-exact: 47.8 x 7.8 mm, 9.6 high plus studs); a light body (ES §4.2)"
+   },
+   "model": null,
+   "mass_g": 1.76,
+   "com_mm": [
+    0.0,
+    0.0,
+    4.8
+   ],
+   "inertia_gcm2": [
+    0.224,
+    3.486,
+    3.44,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "parts": [
+    {
+     "part": "3009",
+     "box_mm": [
+      -23.9,
+      -3.9,
+      0.0,
+      23.9,
+      3.9,
+      9.6
+     ],
+     "mass_g": 1.76
+    }
+   ],
+   "namedParts": null,
+   "members": null,
+   "tip": null,
+   "status": "rules-exact",
+   "hull": [
+    [
+     -23.9,
+     -3.9
+    ],
+    [
+     23.9,
+     -3.9
+    ],
+    [
+     23.9,
+     3.9
+    ],
+    [
+     -23.9,
+     3.9
+    ]
+   ]
+  },
+  "cement_bowl": {
+   "class": "cement_bowl",
+   "kind": "cement_bowl",
+   "count": 1,
+   "colours": [
+    "white",
+    "grey"
+   ],
+   "rules": {
+    "dims_mm": [
+     79.9,
+     79.9
+    ],
+    "parts": [
+     {
+      "part": "3001",
+      "what": "the foot: two white 2 x 4 (BI p. 95, step 94)",
+      "colour": "white",
+      "count": 2,
+      "page": "BI p. 95"
+     },
+     {
+      "part": "3022",
+      "what": "the bowl's 4 x 4 floor, four grey 2 x 2 plates",
+      "colour": "light bluish grey",
+      "count": 4,
+      "page": "BI pp. 89-96"
+     }
+    ],
+    "footprint": [
+     {
+      "name": "foot",
+      "polygon": [
+       [
+        -15.95,
+        -15.95
+       ],
+       [
+        15.95,
+        -15.95
+       ],
+       [
+        15.95,
+        15.95
+       ],
+       [
+        -15.95,
+        15.95
+       ]
+      ],
+      "z_mm": [
+       0.0,
+       9.6
+      ]
+     },
+     {
+      "name": "course",
+      "polygon": [
+       [
+        -23.95,
+        -23.95
+       ],
+       [
+        23.95,
+        -23.95
+       ],
+       [
+        23.95,
+        23.95
+       ],
+       [
+        -23.95,
+        23.95
+       ]
+      ],
+      "z_mm": [
+       9.6,
+       19.2
+      ]
+     },
+     {
+      "name": "plates",
+      "polygon": [
+       [
+        -31.95,
+        -31.95
+       ],
+       [
+        31.95,
+        -31.95
+       ],
+       [
+        31.95,
+        31.95
+       ],
+       [
+        -31.95,
+        31.95
+       ]
+      ],
+      "z_mm": [
+       19.2,
+       22.4
+      ]
+     },
+     {
+      "name": "ring",
+      "polygon": [
+       [
+        -39.95,
+        -39.95
+       ],
+       [
+        39.95,
+        -39.95
+       ],
+       [
+        39.95,
+        39.95
+       ],
+       [
+        -39.95,
+        39.95
+       ]
+      ],
+      "z_mm": [
+       22.4,
+       31.91
+      ]
+     }
+    ],
+    "height_mm": 31.91,
+    "source": "the foot = cement_bowl_start (drawing 37226, 31.9 x 31.9; CR-S1); the props design's §3.1 / §3.2 (BI pp. 89-96: foot, 6 x 6 course, two 4 x 8 plates, the ring; the hollow left out of the interface body)"
+   },
+   "model": null,
+   "mass_g": null,
+   "com_mm": null,
+   "inertia_gcm2": null,
+   "parts": null,
+   "namedParts": null,
+   "members": null,
+   "tip": null,
+   "status": "interface",
+   "interfaceBody": {
+    "volume_cm3": 105.574,
+    "density_g_cm3": 0.4,
+    "mass_g": 42.229,
+    "tag": "MODEL"
+   },
+   "hull": [
+    [
+     -39.95,
+     -39.95
+    ],
+    [
+     39.95,
+     -39.95
+    ],
+    [
+     39.95,
+     39.95
+    ],
+    [
+     -39.95,
+     39.95
+    ]
+   ]
+  },
+  "masonry_trowel": {
+   "class": "masonry_trowel",
+   "kind": "masonry_trowel",
+   "count": 1,
+   "colours": [
+    "white",
+    "red"
+   ],
+   "rules": {
+    "dims_mm": [
+     86.4,
+     79.7
+    ],
+    "parts": [
+     {
+      "part": "bricks",
+      "what": "the blade: nine courses of white bricks two studs thick, laid on its side (the props design's CR-S3)",
+      "colour": "white",
+      "page": "BI pp. 62-78"
+     }
+    ],
+    "footprint": [
+     {
+      "name": "step_47_8",
+      "polygon": [
+       [
+        -43.2,
+        -23.9
+       ],
+       [
+        -14.4,
+        -23.9
+       ],
+       [
+        -14.4,
+        23.9
+       ],
+       [
+        -43.2,
+        23.9
+       ]
+      ],
+      "z_mm": [
+       0.0,
+       15.9
+      ]
+     },
+     {
+      "name": "step_63_8",
+      "polygon": [
+       [
+        -14.4,
+        -31.9
+       ],
+       [
+        14.4,
+        -31.9
+       ],
+       [
+        14.4,
+        31.9
+       ],
+       [
+        -14.4,
+        31.9
+       ]
+      ],
+      "z_mm": [
+       0.0,
+       15.9
+      ]
+     },
+     {
+      "name": "step_79_7",
+      "polygon": [
+       [
+        14.4,
+        -39.85
+       ],
+       [
+        43.2,
+        -39.85
+       ],
+       [
+        43.2,
+        39.85
+       ],
+       [
+        14.4,
+        39.85
+       ]
+      ],
+      "z_mm": [
+       0.0,
+       15.9
+      ]
+     }
+    ],
+    "height_mm": 47.9,
+    "source": "the three stepped grey rects (masonry_trowel_start's parts, drawings 37225 / 37224 / 37223); the blade 15.9 mm thick on the mat; height_mm the handle's arm (props §3.1), not in the interface body"
+   },
+   "model": null,
+   "mass_g": null,
+   "com_mm": null,
+   "inertia_gcm2": null,
+   "parts": null,
+   "namedParts": null,
+   "members": null,
+   "tip": null,
+   "status": "interface",
+   "interfaceBody": {
+    "volume_cm3": 87.6,
+    "density_g_cm3": 0.4,
+    "mass_g": 35.04,
+    "tag": "MODEL"
+   },
+   "hull": [
+    [
+     -43.2,
+     -23.9
+    ],
+    [
+     -14.4,
+     -31.9
+    ],
+    [
+     14.4,
+     -39.85
+    ],
+    [
+     43.2,
+     -39.85
+    ],
+    [
+     43.2,
+     39.85
+    ],
+    [
+     14.4,
+     39.85
+    ],
+    [
+     -14.4,
+     31.9
+    ],
+    [
+     -43.2,
+     23.9
+    ]
+   ]
+  },
+  "rect_trowel": {
+   "class": "rect_trowel",
+   "kind": "rect_trowel",
+   "count": 1,
+   "colours": [
+    "white",
+    "red"
+   ],
+   "rules": {
+    "dims_mm": [
+     127.5,
+     63.8
+    ],
+    "parts": [
+     {
+      "part": "3035",
+      "what": "plate 4 x 8, four side by side (the 8 x 16 blade)",
+      "colour": "white",
+      "count": 4,
+      "page": "BI pp. 80-88"
+     }
+    ],
+    "footprint": [
+     {
+      "polygon": [
+       [
+        -63.75,
+        -31.9
+       ],
+       [
+        63.75,
+        -31.9
+       ],
+       [
+        63.75,
+        31.9
+       ],
+       [
+        -63.75,
+        31.9
+       ]
+      ],
+      "z_mm": [
+       0.0,
+       41.51
+      ]
+     }
+    ],
+    "height_mm": 41.51,
+    "source": "its grey start area (rect_trowel_start, drawing 37222); the props design's §3.1 (pp. 80-88)"
+   },
+   "model": null,
+   "mass_g": null,
+   "com_mm": null,
+   "inertia_gcm2": null,
+   "parts": null,
+   "namedParts": null,
+   "members": null,
+   "tip": null,
+   "status": "interface",
+   "interfaceBody": {
+    "volume_cm3": 337.663,
+    "density_g_cm3": 0.4,
+    "mass_g": 135.065,
+    "tag": "MODEL"
+   },
+   "hull": [
+    [
+     -63.75,
+     -31.9
+    ],
+    [
+     63.75,
+     -31.9
+    ],
+    [
+     63.75,
+     31.9
+    ],
+    [
+     -63.75,
+     31.9
+    ]
+   ]
+  },
+  "tile": {
+   "class": "tile",
+   "kind": "tile",
+   "count": 24,
+   "colours": [
+    "yellow",
+    "blue",
+    "green",
+    "white"
+   ],
+   "rules": {
+    "dims_mm": [
+     31.8,
+     31.8
+    ],
+    "parts": [
+     {
+      "part": "3001",
+      "what": "brick 2 x 4, six in three courses",
+      "count": 6,
+      "page": "BI pp. 42-61; Extra Task p. 2; 36 a colour, pp. 99-100"
+     }
+    ],
+    "footprint": [
+     {
+      "polygon": [
+       [
+        -15.9,
+        -15.9
+       ],
+       [
+        15.9,
+        -15.9
+       ],
+       [
+        15.9,
+        15.9
+       ],
+       [
+        -15.9,
+        15.9
+       ]
+      ],
+      "z_mm": [
+       0.0,
+       28.8
+      ]
+     }
+    ],
+    "height_mm": 28.8,
+    "source": "ES §5.3 (rules-exact: 31.8 x 31.8 mm, 28.8 high plus studs)"
+   },
+   "model": null,
+   "mass_g": 13.92,
+   "com_mm": [
+    0.0,
+    0.0,
+    14.4
+   ],
+   "inertia_gcm2": [
+    21.352,
+    21.352,
+    23.461,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "parts": [
+    {
+     "part": "3001",
+     "box_mm": [
+      -15.9,
+      -15.9,
+      0.0,
+      15.9,
+      0.0,
+      9.6
+     ],
+     "mass_g": 2.32
+    },
+    {
+     "part": "3001",
+     "box_mm": [
+      -15.9,
+      0.0,
+      0.0,
+      15.9,
+      15.9,
+      9.6
+     ],
+     "mass_g": 2.32
+    },
+    {
+     "part": "3001",
+     "box_mm": [
+      -15.9,
+      -15.9,
+      9.6,
+      0.0,
+      15.9,
+      19.2
+     ],
+     "mass_g": 2.32
+    },
+    {
+     "part": "3001",
+     "box_mm": [
+      0.0,
+      -15.9,
+      9.6,
+      15.9,
+      15.9,
+      19.2
+     ],
+     "mass_g": 2.32
+    },
+    {
+     "part": "3001",
+     "box_mm": [
+      -15.9,
+      -15.9,
+      19.2,
+      15.9,
+      0.0,
+      28.8
+     ],
+     "mass_g": 2.32
+    },
+    {
+     "part": "3001",
+     "box_mm": [
+      -15.9,
+      0.0,
+      19.2,
+      15.9,
+      15.9,
+      28.8
+     ],
+     "mass_g": 2.32
+    }
+   ],
+   "namedParts": null,
+   "members": null,
+   "tip": null,
+   "status": "rules-exact",
+   "hull": [
+    [
+     -15.9,
+     -15.9
+    ],
+    [
+     15.9,
+     -15.9
+    ],
+    [
+     15.9,
+     15.9
+    ],
+    [
+     -15.9,
+     15.9
+    ]
+   ]
+  }
+ }
+}

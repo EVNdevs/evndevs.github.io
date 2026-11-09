@@ -1983,6 +1983,28 @@
         const init = Blockly.Blocks[t].init;
         Blockly.Blocks[t].init = function () { init.call(this); this.setDeletable(false); };
     }
+    /* Spoken labels (A11Y_DESIGN §4.7 point 3: Blockly's ARIA composer builds a block's label from its fields, and an
+     * image with no alt text is read as "empty"): the "set up" hat's plug is decoration, so it says nothing and the hat
+     * reads "set up"; Blockly's own text block with no text reads "empty text", not only the quote marks and "empty".
+     * test_blocks_a11y.js checks every toolbox block type's label. */
+    {
+        const init = Blockly.Blocks[SETUP_HAT].init;
+        Blockly.Blocks[SETUP_HAT].init = function () {
+            init.call(this);
+            const icon = this.getField('ICON');
+            if (icon) { icon.computeAriaLabel = function () { return ''; }; }
+        };
+    }
+    if (Blockly.Blocks.text) {
+        const init = Blockly.Blocks.text.init;
+        Blockly.Blocks.text.init = function () {
+            init.call(this);
+            const field = this.getField('TEXT');
+            if (!field || !field.computeAriaLabel) { return; }
+            const base = field.computeAriaLabel;
+            field.computeAriaLabel = function (withType) { return this.getText() ? base.call(this, withType) : 'empty text'; };
+        };
+    }
     /* One object per serial header: Bluetooth blocks and UART blocks on the same port make
      * `bluetooth_N = Bluetooth(N)` and `uart_N = UART(N, ...)`, and the program stops at the start with
      * OSError("serial port N is used by a ..."). Said in the editor, on every serial block of the clash

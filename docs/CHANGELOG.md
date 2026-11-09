@@ -1,5 +1,155 @@
 # Changelog
 
+## 0.2.75 (2026-11-08)
+- **Simulator challenges: reading `simtrail`'s errors no longer costs the run.** A read in a scored run is still refused, now
+  with a named error, `simtrail.ReadRefused` (a `RuntimeError`): the program stops at that line and the run goes on as if
+  the program had ended there, so a program that draws its path and prints `closing_error()` last keeps its points. The
+  refusal is stated under the run's row.
+- **Simulator: the JGA25-370 runs on the pack too, as the firmware now does.** No default 6 V cap: `settings()` reads 9000,
+  `dc(100)` reaches 636 deg/s at 8.2 V (the bench unit: 645), and the speed limit follows the voltage as on the board
+  (`settings(max_voltage=6000)` gives 462; `control.limits(speed=)` sets a figure of your own). On every motor,
+  `full_speed()` and 100 % now follow `settings(max_voltage=)` and a `full_speed(deg_s)` scales with the supply, as on the
+  board; `max_voltage=0` reads 1 mV. `calibrate()` raises a speed limit under the motor's no-load speed to it, and `settings()`
+  and `speed_unit()` refuse a replaced or closed Motor, as on the board.
+- **Simulator: the RCJ referee no longer calls a lack of progress on a robot that stops or backs up on its own tile, facing
+  on along the course.** A straight that
+  ended 20-50 mm short of a tile's joint settled backward by a fraction of a millimetre, and the referee read that as
+  backing onto a line out of sequence (5.5.1c): about one stopping place in ten lost the attempt and the robot was put
+  back. A back-up now counts only over a joint the line sensors really crossed, and never over the tile's own joint ahead;
+  a real reverse past the tile before is still called, at any speed, at that tile's joint rather than as the reverse
+  begins. Still open: a robot facing back along the course (turned round, or driving on tail first) can be called where
+  it stops near a joint of its own line.
+- **`calibrate()` keeps a motor's load (ledger MC-59, the owner's ruling).** A wheel, an arm or a gear train may stay on the
+  shaft: `calibrate()` keeps the record and warns (`WARNING: Motor(n): ...`, `evn.calibration(port)["warning"]`), and raises
+  only when no controller could run on what it measured: no breakaway (0.80 duty, the high pulse, the ramp's top), no three
+  of the four pulses within 2x, or a shaft that did not keep turning. *the four pulses disagree...* and *running friction
+  far below...* are warnings now, and a pulse with no fit no longer ends the calibration. New: *running friction well above
+  this motor model's*, for a clear load that used to pass in silence (a light one still does: a clean motor's friction varies
+  as much). A kept record says its reason, and the model's band and the drift beside it, until the next power-up.
+- **Firmware: a `DriveBase` accelerates and brakes on straights at the motors' full limit again.** The straight
+  acceleration and deceleration default were 75 % of the limit, set from one robot's tyre slip on one floor (2026-09-20);
+  they are the whole limit again, as the turns and speeds already were (on two EV3 Medium motors with 62.4 mm wheels,
+  about 1630 mm/s^2 instead of 1230), so short moves take up to about 13 % less time on the host model. The price, also
+  on the host model: the top cruise of a default straight and of `drive()` drops about 2 % on EV3 Medium and 4 % on EV3
+  Large, so a straight past about 4.8 m (Medium) or 1.6 m (Large) arrives slightly later than before. A wheel that catches
+  during the acceleration puts the robot up to about twice as far off its line as at 75 %; once at speed it is the same. A
+  robot whose tyres slip lowers it: `robot.settings(straight_acceleration=1230)`.
+- **Firmware: the JGA25-370 runs on the battery, not capped at 6 V.** Its 6 V is the seller's rating, and the cap cost up
+  to about 29 % of its speed and torque on a full pack (taken off, up to 40 % more on paper; measured at 8.2 V,
+  `dc(100)` 645 deg/s against 476 under the cap). Like every other library motor it now sees the battery, and its
+  speed limit is its no-load speed at the voltage it runs on (about 600 deg/s on the pack; calibrated, the figure the
+  record gives). `m.settings(max_voltage=6000)` holds it to the seller's rating, and the speed limit follows (462 deg/s
+  uncalibrated); `control.limits(speed=)` sets a figure of your own, which a later cap no longer moves. `settings()` now
+  reads 9000, `calibrate()` pulses against the pack rather than 6 V, `run_until_stalled(duty_limit=)` is a share of
+  `max_voltage` so the same figure pushes harder into an end stop, and `control.limits()` reports the torque at 9 V
+  (912 mNm). A custom motor's rated voltage still caps it.
+- **Firmware: `DriveBase.use_gyro(True, wait=False)` and `timeout=`.** `use_gyro(True)` waits for `IMU.ready()` and raises
+  `OSError` after `timeout` ms (35000 by default). With `wait=False` it returns at once: the robot drives on its wheels
+  until the IMU is ready, and the gyro takes over at the first move after that, for a program that should not wait.
+  By default `IMU.ready()` needs the robot at rest, so a program that never rests may never get the gyro (`use_gyro()` stays
+  `False`). Turning on while moving leaves the robot about 10 ms of travel short. `wait=` and `timeout=` go with
+  `use_gyro(True)` only (`TypeError` otherwise).
+- **Firmware: `Motor.control.thermal()`, an opt-in, best-effort guard against holding a motor stalled at full drive**
+  (GitHub #144). **Off by default**: a program turns it on per motor with `control.thermal(True)` (every `Motor(port)`
+  starts with it off), and only the **CM22-2230** and the **Pololu 25D** have figures for it (`ValueError` on any other
+  motor). It is an estimate, not a measurement: these motors have no published thermal data, the board measures no
+  motor current or temperature, and the figures are a seller's table (CM22-2230) or a stand-in (Pololu gives no rated
+  current; its maximum-efficiency current is used). On, a stall at full drive for 2 s lowers the drive to a hold that
+  puts the rated current through the winding (1.58 V on the CM22, 2.10 V on the 25D) while the shaft stays stalled; the
+  full drive is back 56 s (CM22) / 30 s (25D) after the shaft is freed. A `DriveBase` slows both wheels together then,
+  `settings()` keeps reading your own voltage cap, and `calibrate()` is refused while derated, saying how many seconds
+  are left. It never counts `dc()` under 100 %, a hold below full drive, or a shaft creeping just above the stall speed.
+  `control.thermal()` reads `(on, derated, heat_ms, limit_ms, hold_mv, cool_ratio)`. `calibrate()`'s "cannot start"
+  error now names its reason.
+- **Firmware: `evn.UART` and `evn.Bluetooth` take a receive buffer bigger than 255 bytes** (`rxbuf=`, 256 to 16384
+  bytes, opt-in). The receive buffer holds 255 bytes, which the Bluetooth module's 230400 baud fills in about 11 ms, so
+  a program that waited, moved or printed for longer while data streamed in lost bytes (`overflow()` counted them), and
+  `rxbuf=` above 255 was refused. Now `UART(1, rxbuf=2048)` or `Bluetooth(2, rxbuf=2048)` takes a buffer of that size
+  from the program's memory, given back by `deinit()` / `close()` and at every soft reset (a Run from the editor,
+  Ctrl-D); without `rxbuf=` the buffer stays 255 bytes and uses none of it ([UART](docs/API_SYSTEM.md)).
+- **Firmware: `evn.set_stop_button(None)` also turns off the 2 s hold-to-reboot.** A program that reads the user button
+  could not see a hold of 2 s: the board restarted. Now, while a program has the stop off, the button is only its
+  input; Ctrl-C, the program's end, or switching the board off and on with the button held (main.py skipped) get you
+  back. With the stop on - the default - holding the button 2 s still restarts the board.
+- **Firmware: an IMU with a stored calibration starts from it in raw mode too.** With a record from `IMU.calibrate()`,
+  `dmp(False)` and `dmp(gyro_cal=False)` start from it: `heading()` integrates from the first reading, and `ready()`
+  comes once the orientation agrees, even with a motor driving. `heading_confidence()` reads 0.5 on the stored bias; in raw mode
+  it reads 1 once the automatic average has measured it at the first rest (`dmp(True, gyro_cal=False)` stays at 0.5, as before). A stored calibration that does not fit the module is
+  refused at the first rest, and the start falls back to the average. Without one nothing changes.
+- **Firmware: `Pose.settings()` takes the filter's noise figures** (`gyro_noise`, `compass_noise`, `accel_noise`,
+  `lateral_noise`, `gyro_bias_walk`, `accel_bias_walk`), live, range-checked all or nothing, not stored; the new
+  `Pose.noise()` returns them, and `settings()` still returns `(wheel_diameter, axle_track)`. The defaults are unchanged.
+- **Simulator: a move draws as it runs.** `straight()`, `turn()`, `curve()`, `run_angle()`, `run_target()` and every other
+  call that waits for a condition drew nothing until it ended; the robot jumped to its end state. They now draw as
+  smoothly as `wait()` does. Nothing simulated changes.
+- **Simulator: fewer false illegal starts for a robot of the full 250 x 250 mm.** On the WRO courses a robot that exactly
+  fills the start area is no longer marked "not completely inside the start area" or "larger than 250 x 250 x 250 mm" from
+  rounding or a few micrometres of engine error. An arm that sags or falls before the Run can still move the robot out,
+  as on a real table. A robot more than 0.005 mm outside the area is still marked.
+- **Simulator: the WRO RoboMission courses are in everyone's Course list** (docs/SIMULATOR.md, "WRO RoboMission").
+  WRO RoboMission Junior 2026, Elementary 2026 and Senior 2026 are listed for every user; the hidden developer setting
+  is no longer needed for them (0.2.72 to 0.2.74 listed Junior in developer mode only).
+- **Simulator: WRO RoboMission Senior 2026** (docs/SIMULATOR.md, "WRO RoboMission Senior 2026"). A new course, after
+  Elementary in the Course list: WRO's Senior game of 2026, "Mosaic Masters", on the same table - its own mat (load
+  WRO's Senior mat PDF; a schematic until then), WRO's 3D-printed mosaic frame fixed in the middle with a pattern paper
+  under it, and the 71 game objects (three tools, 24 mosaic tiles, 40 cement elements and four barriers with their
+  balls) as the EVN owner's LEGO models of WRO's building instructions, solid bodies of the physics engine as on
+  Junior, and a WRO referee that scores the 2-minute run by the Senior scoring sheet (233 points). The pattern paper and
+  the cement elements' places are drawn from the seed (**Randomise**), and the cement starts in random piles as the
+  rules allow (about five a field, flat, at most two high); a tile set over an opening slides into it down
+  the frame's funnel. More than 6 motors marks an illegal start; cameras are allowed. A knock can unseat a barrier's
+  ball, and the barrier is then damaged. Not modelled: a wheel climbing the frame or a game object (the robot stops at
+  the frame's edge); studs hold by friction only (no clutch); a starting pile is never taller than two or leaning, where a real
+  referee's may be; nothing breaks. Not affiliated with or endorsed by the
+  World Robot Olympiad Association.
+- **Simulator: WRO RoboMission Elementary 2026** (docs/SIMULATOR.md, "WRO RoboMission Elementary 2026"). A new course,
+  beside Junior in the Course list: WRO's Elementary game of 2026,
+  "Robot Rockstars", on the same table - its own mat (load WRO's Elementary mat PDF; a schematic until then), the 16
+  game objects (two cables, the guitar, the keyboard, the congas, the microphone, six notes, the clef, the amplifier
+  and two speakers) as the EVN owner's LEGO models of WRO's building instructions, solid bodies of the physics engine
+  as on Junior, and a WRO referee that scores the 2-minute run by the Elementary scoring sheet (255 points). The robot
+  starts facing left, into the field; four of the notes are shuffled from the seed (**Randomise**); more than 4
+  motors or any camera marks an illegal start. The amplifier's knob is a separate part: knocked off its pin, the
+  amplifier is damaged and its bonus is lost. Not modelled: a wheel climbing a game object; studs and pins hold by
+  friction only (no clutch). The referee card's notes now name each course's own sheet. Not affiliated with or
+  endorsed by the World Robot Olympiad Association.
+- **Simulator, WRO Junior 2026: "touching" read as on Elementary and Senior, "upright" as on Elementary** (docs/SIMULATOR.md,
+  "WRO RoboMission"). The three rule books print the same "touching" sentence, and Junior now reads it the same way: an
+  object is judged by what of it touches the mat, whatever else it rests on. And "upright" now means what WRO's answer on
+  Elementary's microphone says, on visitors, artefacts and red towers: partly lifted is not upright. Scores change in these states only.
+  - *Up.* A visitor, red tower or artefact touching its area while resting partly on another object or on the robot now
+    scores as its part on the mat reads (0.2.74: 0). If that lean tilts it more than about 1 degree it is not upright: a
+    visitor or artefact takes the lower 5, a red tower still 0.
+  - *Down.* A dirt particle touching the cobblestone while resting partly on something loses its 2 points; a barrier or
+    the parrot touching the mat outside the grey areas that way counts as moved and loses its 10 (0.2.74: both scored).
+    A visitor, artefact or red tower on the mat but tilted more than about 1 degree, one edge lifted by the claw or the
+    object leaning against the robot when the run ends, is no longer upright: a visitor 10 to 5, an artefact 15 to 5, a red
+    tower 15 or 10 to 0. An object standing flat keeps its score, so back the robot off a tall object before the run ends.
+  - *1 mm.* An object up to 1 mm above the mat counts as touching it, as on Elementary, so one carried on a robot part
+    that low now scores (0.2.74: 0, "held"). An object lifted clear of the mat, more than 1 mm, still scores 0 in missions
+    3.1-3.3, and dirt, a barrier or the parrot lifted clear score as before.
+  - Yellow towers are unchanged.
+- **Simulator, WRO Junior 2026: the default floor is drawn as printed.** Before you load the mat, the schematic now
+  shows every printed mark as Elementary's does: the four grey squares and the two sponsor panels (markings that score
+  nothing), the barrier symbols, the broken-tower symbols in the yellow squares, the cards under the tower starts, the
+  museum's facade, the grey stone under the targets and the excavation site's dirt. A colour sensor reads them as it would on the real mat. Scoring is
+  unchanged.
+- **Simulator, WRO Junior 2026: the artefacts stand the right way round** (fixed; 0.2.74 had them turned 90
+  degrees). Each artefact's two handles now stick out along the excavation site's row, parallel to the field's long
+  edge, as in the rules' photo of the field, so a claw coming from the field meets the handles. The drawing and the
+  physics body are the same model, so both are turned. The other game objects are unchanged.
+- **SciPy in the notebook (NOTEBOOK_DESIGN.md NB-7).** SciPy 1.14.1 and OpenBLAS 0.3.26 (Pyodide 0.28.3's own builds,
+  each checked against the lock's sha256) join NumPy and Matplotlib: in the browser IDE, loaded per import, and on the
+  desktop in the first-use download, now **Install NumPy, SciPy and Matplotlib (30.0 MB)** (21 files; it was 14.8 MB).
+  Their licences (SciPy's, the code it bundles, OpenBLAS's and its LAPACK's) are in `licenses/nb/` and
+  THIRD_PARTY_NOTICES.md. `test_notebook_packages.js` runs one cell per sampled lesson against a known answer, each
+  with a mutant (a wrong known answer fails): `curve_fit`, `lfilter`, `expm` / `cont2discrete`, `solve_discrete_are`,
+  `solve_ivp`, `bode`, `distance_transform_edt` / `cKDTree`.
+- **Known in this release:** one `stalled()` call after a pause (cold) is about 2 us slower than in 0.2.74 on the motor
+  board with the JGA25-370 and CHR-GM16 (46.12 -> 48.12 us, +4 %, 8 alternating runs an image; accepted by the owner
+  2026-11-07). The same image on the drive-base board makes that call 14 % faster (57.00 -> 48.75 us, 4 alternating runs
+  an image). Both boards now read about 48 us; 0.2.74 read 46 on one and 57 on the other.
+
 ## 0.2.74 (2026-11-04)
 - **Simulator: the WRO RoboMission Junior 2026 course runs on a physics engine** (docs/SIMULATOR.md, "WRO
   RoboMission"; still in developer mode only). The game objects are now the EVN owner's LEGO models of WRO's

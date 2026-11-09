@@ -9,6 +9,8 @@ import _evnsim as _s
 import math as _math
 from array import array as _array
 
+_UNSET = object()   # "not given", where the binding's MP_OBJ_NULL tells an absent argument from None
+
 # every runtime function bound once, at import: a call is then one global lookup, not a global and an attribute lookup
 # on _evnsim (ledger HT-56). _evnsim is built once per interpreter (vm.ts CONTROL_PY) and evn is imported anew at every
 # soft reset (boot.py reset()), so a binding is always the running interpreter's runtime.
@@ -16,6 +18,7 @@ _s_button, _s_interrupted, _s_led, _s_now_ms, _s_now_us = _s.button, _s.interrup
 _s_pack_mv, _s_stop_all, _s_version, _s_wait = _s.pack_mv, _s.stop_all, _s.version, _s.wait
 _s_m_cal, _s_m_claim, _s_m_dc, _s_m_done, _s_m_full = _s.m_cal, _s.m_claim, _s.m_dc, _s.m_done, _s.m_full
 _s_m_gen, _s_m_lib, _s_m_limits, _s_m_model, _s_m_run = _s.m_gen, _s.m_lib, _s.m_limits, _s.m_model, _s.m_run
+_s_m_limit_at_cap = _s.m_limit_at_cap
 _s_m_run_angle, _s_m_run_target, _s_m_run_time = _s.m_run_angle, _s.m_run_target, _s.m_run_time
 _s_m_stall_tol, _s_m_stalled, _s_m_state, _s_m_stop = _s.m_stall_tol, _s.m_stalled, _s.m_state, _s.m_stop
 _s_m_tol, _s_m_track, _s_m_vcap, _s_m_volts, _s_m_wait = _s.m_tol, _s.m_track, _s.m_vcap, _s.m_volts, _s.m_wait
@@ -159,7 +162,7 @@ class Color:
     def __init__(self, h, s=100, v=100):
         self.h = int(h) % 360
         self.s = max(0, min(100, int(s)))
-        self.v = max(0, min(100, int(v)))
+        self.v = max(-100, min(100, int(v)))   # evn_color_hsv: a negative v pushes a "no colour" candidate away
         self._name = None
 
     def __repr__(self):
@@ -218,14 +221,15 @@ def _ratio(gears):
 
 
 # the firmware's per-model figures the simulator needs for the Python side of a Motor (motion/motor_models.c):
-# d_torque_d_voltage and d_voltage_d_torque (the observer's scales) and the rated voltage that caps max_voltage
-# (mV, 0 = none)
+# d_torque_d_voltage and d_voltage_d_torque (the observer's scales)
 _MODEL_FIG = {
-    "EV3 Large": (3587, 0, 107106), "EV3 Medium": (7806, 0, 49219), "NXT": (2896, 0, 132663),
-    "JGA25-370 6V 77RPM": (1766, 6000, 217567), "Pololu 25D 9.7:1 HP 12V": (5615, 12000, 68428),
-    "CHR-GM16-030PA 9V 1:63": (9124, 9000, 42110), "CM22-2230 12V 1:49": (1698, 12000, 226340),
+    "EV3 Large": (3587, 107106), "EV3 Medium": (7806, 49219), "NXT": (2896, 132663),
+    "JGA25-370 6V 77RPM": (1766, 217567), "Pololu 25D 9.7:1 HP 12V": (5615, 68428),
+    "CHR-GM16-030PA 9V 1:63": (9124, 42110), "CM22-2230 12V 1:49": (1698, 226340),
 }
 _OBS_DEF = (50000, 50, 500, 50, 45, 200, 5000, 20000)    # motion/motion_engine.c: the observer's settings
+# the electrothermal limit's promoted figures (motor_models.c s_specs, thermal_promoted 1): limit_ms, hold_mv, cool_ratio
+_THERMAL_FIG = {"Pololu 25D 9.7:1 HP 12V": (2000, 2100, 15), "CM22-2230 12V 1:49": (2000, 1584, 28)}
 
 
 def _v_to_torque(name, mv):
@@ -236,7 +240,7 @@ def _v_to_torque(name, mv):
 
 def _torque_to_v(name, mnm):
     """evn_observer_torque_to_voltage, mV"""
-    k = _MODEL_FIG.get(name, _MODEL_FIG["EV3 Large"])[2]
+    k = _MODEL_FIG.get(name, _MODEL_FIG["EV3 Large"])[1]
     return 2147 * min(int(mnm * 1000.0), 1000000) // k
 
 
@@ -246,10 +250,27 @@ class Control:
         # the tolerances in output deg/s, as the firmware keeps them (a SpeedUnit changes how they read, not them)
         self._tol = [50.0, 1.0]
         self._stall = [50.0, 50]
+        self._thermal = False   # every Motor(port) starts with the limit off (motor_make_new)
 
     @property
     def scale(self):
         return self._m._ratio
+
+    def thermal(self, on=_UNSET, /):
+        """control_thermal. The switch and the figures are the board's; the simulator has no winding heat, so the state
+        read is the board's cold, undisturbed one: never derated, heat_ms 0 (docs/SIMULATOR.md)."""
+        m = self._m
+        m._live()
+        fig = _THERMAL_FIG.get(_s_m_model(m.port))
+        if on is not _UNSET:
+            if fig is not None:
+                self._thermal = bool(on)
+            elif on:
+                raise ValueError("thermal(True): no thermal figures for this motor model")
+            return None
+        if fig is None:
+            return (False, False, 0, 0, 0, 0)
+        return (self._thermal, False, 0, fig[0], fig[1], fig[2])
 
     def limits(self, speed=None, acceleration=None, torque=None):
         m = self._m
@@ -396,19 +417,25 @@ class Motor:
         self._unit = speed_unit
         self._closed = False
         self._base = None
-        self._full_set = None
+        self._full_k = 1.0
         self._torque = 0.0
         self._off = 0.0
         old = _motors[port]
         if old is not None and old is not self:
-            if old._base is not None:
-                old._base._why = "drive base closed: Motor(%d) was replaced by a newer Motor(%d); create a new DriveBase" % (port, port)
+            base = old._base
+            if base is not None:
+                # the base closes with it (evn_mp_drivebase_wheel_replaced): both wheels coast, both links go; the time
+                # is the Motor() call's (m_claim)
+                _s_db_close(base._id, base.left._closed, base.right._closed, False)
+                for m in (base.left, base.right):
+                    if m._base is base:
+                        m._base = None
+                base._why = "drive base closed: Motor(%d) was replaced by a newer Motor(%d); create a new DriveBase" % (port, port)
         self._gen = _s_m_claim(port)
         _motors[port] = self
-        name = _s_m_model(port)
-        rated = _MODEL_FIG.get(name, (0, 0, 0))[1]
-        # max_voltage: 9000 mV, or the motor's rated voltage when that is lower (evn_motor.c)
-        self._vmax = rated if 0 < rated < 9000 else 9000
+        # max_voltage: 9000 mV on every library motor, its rating no cap (evn_default_max_voltage_mv; the simulated
+        # robot has no custom motor, the one kind a rating caps)
+        self._vmax = 9000
         self.control = Control(self)
         self.model = Model(self)
         if profile is not None:
@@ -427,8 +454,9 @@ class Motor:
             raise RuntimeError("Motor(%d) was replaced by a newer Motor(%d)" % (self.port, self.port))
 
     def _full_shaft(self):
-        """100 %, shaft deg/s: full_speed(deg_s) when the program set it, else the model's at the pack"""
-        return self._full_set * self._ratio if self._full_set is not None else _s_m_full(self.port)
+        """100 %, shaft deg/s: the model's at the pack or max_voltage, scaled by what full_speed(deg_s) set (the board
+        stores that per volt, so it moves with the supply)"""
+        return self._full_k * _s_m_full(self.port, self._vmax / 1000.0)
 
     def _in_speed(self, v):
         _num(v, "speed")
@@ -569,6 +597,7 @@ class Motor:
         _chk(_s_m_track(self.port, (_num(target_angle, "target_angle") + self._off) * self._ratio * self._sign))
 
     def speed_unit(self, unit=None, /):
+        self._live()
         if unit is None:
             return self._unit
         if unit not in (SpeedUnit.DEG_S, SpeedUnit.PERCENT):
@@ -582,14 +611,18 @@ class Motor:
         v = _num(deg_s, "full speed")
         if not v > 0:
             raise ValueError("full speed must be positive")
-        self._full_set = float(v)
+        self._full_k = v * self._ratio / _s_m_full(self.port, self._vmax / 1000.0)
 
     def calibrate(self, wait=True):
         self._live()
         r = _s_m_cal(self.port)
+        # the 100 % model is the calibration's again; the limit rises to its figure, and one at the cap takes it (evn_motor.c)
+        self._full_k = 1.0
+        _s_m_limit_at_cap(self.port, self._full_shaft(), True)
         return (r[0], r[1], r[2], r[3]) if wait else None
 
     def settings(self, max_voltage=None, *, stall_timeout=None):
+        self._live()
         if max_voltage is None and stall_timeout is None:
             return (self._vmax, self._stall_timeout)
         if stall_timeout is not None:
@@ -601,8 +634,9 @@ class Motor:
             v = int(_num(max_voltage, "max_voltage"))
             if not 0 <= v <= 12000:
                 raise ValueError("max_voltage must be 0..12000 mV")
-            self._vmax = v
+            self._vmax = max(v, 1)    # 0 mV is the smallest cap, not "uncapped" (evn_motor.c), and settings() reads it
             self._apply_cap()
+            _s_m_limit_at_cap(self.port, self._full_shaft())
 
     def close(self):
         if self._closed or _motors[self.port] is not self:
@@ -643,9 +677,12 @@ class DriveBase:
             raise ValueError("speed_unit must be SpeedUnit.DEG_S or SpeedUnit.PERCENT")
         # wheels with different gears are allowed: the binding refuses them only when it builds a Pose (imu= /
         # compass=, refused above)
+        olds = []
         for m in (left_motor, right_motor):
             if m._base is not None:
                 m._base._why = "drive base closed: a newer DriveBase took Motor(%d)" % m.port
+                if m._base not in olds:
+                    olds.append(m._base)
         self.left = left_motor
         self.right = right_motor
         self._d = wheel_diameter
@@ -655,6 +692,14 @@ class DriveBase:
         self.pose = None
         self._id = _s_db_new(left_motor.port, right_motor.port, left_motor._sign * left_motor._ratio,
                              right_motor._sign * right_motor._ratio, wheel_diameter, axle_track)
+        # the older bases of these two Motor objects close, as drivebase_close: a closed Motor's port is left alone, both
+        # links go. By the Motor, not the port: a new Motor on a closed wheel's port leaves that base as it is. The same
+        # instant as db_new's charge, which is the call's
+        for b in olds:
+            _s_db_close(b._id, b.left._closed, b.right._closed, False)
+            for m in (b.left, b.right):
+                if m._base is b:
+                    m._base = None
         left_motor._base = self
         right_motor._base = self
 
@@ -664,6 +709,9 @@ class DriveBase:
         why = _s_db_closed(self._id)
         if why:
             raise RuntimeError(why)
+        # a wheel closed behind the base's back raises its own "motor closed" (evn_drivebase.c db_self)
+        self.left._live()
+        self.right._live()
 
     def _full(self):
         full = min(self.left._full_shaft() / self.left._ratio, self.right._full_shaft() / self.right._ratio)
@@ -728,8 +776,8 @@ class DriveBase:
         SpeedUnit.PERCENT: the binding's argument rules (evn_drivebase.c drivebase_drive)."""
         # the common form - drive(speed, turn_rate) in SpeedUnit.DEG_S, two finite numbers - goes straight to db_drive,
         # which refuses a closed base itself before the call is charged, as db_closed did (ledger HT-67); every other
-        # call takes the checks below in their order, a closed base first
-        if len(args) == 2 and not kw and not self._why and self._unit != SpeedUnit.PERCENT:
+        # call, and any call with a wheel's Motor closed (db_self), takes the checks below in their order, a closed base first
+        if len(args) == 2 and not kw and not self._why and not self.left._closed and not self.right._closed and self._unit != SpeedUnit.PERCENT:
             speed, turn = args
             ts, tt = type(speed), type(turn)
             if (ts is float or ts is int) and (tt is float or tt is int) and speed - speed == 0 and turn - turn == 0:
@@ -815,11 +863,25 @@ class DriveBase:
         self._live()
         return _s_db_stalled(self._id)
 
-    def use_gyro(self, enable=None, /):
-        if enable is None:
+    def use_gyro(self, use_gyro=_UNSET, *, wait=_UNSET, timeout=_UNSET):
+        """drivebase_use_gyro's arguments and refusals. A simulated base never holds a pose (imu=, compass= and pose= are
+        refused above), so use_gyro() reads False and use_gyro(True) ends as the board's does on a base with no pose."""
+        self._live()
+        kw = wait is not _UNSET or timeout is not _UNSET
+        if use_gyro is _UNSET:
+            if kw:
+                raise TypeError("use_gyro: wait= / timeout= need use_gyro=True")
             return False
-        if enable:
-            raise ValueError("use_gyro needs a Pose: the simulator has no Pose yet")
+        if not use_gyro and kw:
+            raise TypeError("use_gyro: wait= / timeout= need use_gyro=True")
+        if timeout is not _UNSET:
+            if wait is not _UNSET and not wait:
+                raise TypeError("use_gyro: timeout= needs wait=True")
+            if _int(timeout) < 0:
+                raise ValueError("timeout must be >= 0 ms")
+        if not use_gyro:
+            return None
+        raise ValueError("use_gyro needs a pose: DriveBase(..., imu=port) builds one, pose= takes yours")
 
     def settings(self, straight_speed=None, straight_acceleration=None, turn_rate=None, turn_acceleration=None):
         self._live()
@@ -862,7 +924,7 @@ class DriveBase:
         self._unit = unit
 
     def close(self):
-        _s_db_close(self._id)
+        _s_db_close(self._id, self.left._closed, self.right._closed)
         self._why = "drive base closed; create a new DriveBase"
         for m in (self.left, self.right):
             if m._base is self:
@@ -884,12 +946,69 @@ class DriveBase:
 _GAINS = (1, 4, 16, 60)
 
 
-def _cos(deg):
-    return _math.cos(deg * 0.017453292519943295)
+# The board's classifier, hal/hal_color.c (Pybricks' pbio/color.h), line for line: the table it is held to is
+# scripts/fixtures/color_match_board.json, printed by the real C (test_simulator.js colorMatch). The palette all ideal
+# (the default one: no grey but h 0 s 0, every colour s 100 v 100), the saturation heuristic: a saturated reading takes
+# the nearest hue however dark it is, a grey one the nearest value. Otherwise the squared distance in the bicone.
 
 
-def _sin(deg):
-    return _math.sin(deg * 0.017453292519943295)
+def _trig_1e4(f, deg):
+    x = f(deg * 0.017453292519943295) * 10000.0
+    return int(x + 0.5) if x >= 0 else -int(0.5 - x)   # lroundf
+
+
+def _color_ideal(c):
+    return (c.s == 0 and c.h == 0) or (c.s == 100 and c.v == 100)
+
+
+def _color_heuristic(m, k):
+    grey = k.s == 0 and k.h == 0
+    hue = abs(k.h - m.h)
+    if hue > 180:
+        hue = 360 - hue
+    value = abs(k.v - m.v)
+    if m.s <= 40 or m.v <= 1:
+        return value if grey else 1000 + hue
+    return 1000 + value if grey else hue
+
+
+def _color_bicone(a, b):
+    ra = max(a.v, 0) * a.s
+    rb = max(b.v, 0) * b.s
+    dz = (200 - b.s) * b.v - (200 - a.s) * a.v
+    dx = rb * _trig_1e4(_math.cos, b.h) - ra * _trig_1e4(_math.cos, a.h)
+    dy = rb * _trig_1e4(_math.sin, b.h) - ra * _trig_1e4(_math.sin, a.h)
+    dx = dx // 10000 if dx >= 0 else -(-dx // 10000)   # C's division, towards 0
+    dy = dy // 10000 if dy >= 0 else -(-dy // 10000)
+    return dx * dx + dy * dy + dz * dz
+
+
+def _color_match(m, candidates):
+    """evn_color_match_confidence: (the index of the candidate nearest the reading m or -1, the confidence)"""
+    n = len(candidates)
+    if n == 0:
+        return -1, 0.0
+    ideal = True
+    for k in candidates:
+        if not _color_ideal(k):
+            ideal = False
+            break
+    cost = _color_heuristic if ideal else _color_bicone
+    best = -1
+    first = second = 2147483647
+    for i in range(n):
+        d = cost(m, candidates[i])
+        if d < first:
+            second = first
+            first = d
+            best = i
+        elif d < second:
+            second = d
+    if n >= 2:
+        c = 1.0 - first / second if second > 0 else 0.0   # both 0: a duplicate palette entry, a tie
+    else:
+        c = 1.0 - first / (90.0 if ideal else 1.0e8)
+    return best, max(0.0, min(1.0, c))
 
 
 # The getters' numbers come back in these two arrays, written by the runtime into the wasm heap (Pyodide's buffer API),
@@ -987,34 +1106,15 @@ class ColorSensor:
         return Color(a[0], a[1], a[2])
 
     def _match(self):
-        # Pybricks' matcher: the distance between the two colours in the HSV cone (saturation shrinks to nothing
-        # at black, so a dark reading's noisy hue picks no colour)
-        c = self.hsv()
-        a = c.s * c.v / 10000.0
-        x, y, z = a * _cos(c.h), a * _sin(c.h), c.v / 100.0
-        best = None
-        bd = 1e9
-        second = 1e9
-        for k in self._detect:
-            ka = k.s * k.v / 10000.0
-            d = (x - ka * _cos(k.h)) ** 2 + (y - ka * _sin(k.h)) ** 2 + (z - k.v / 100.0) ** 2
-            if d < bd:
-                second = bd
-                best, bd = k, d
-            elif d < second:
-                second = d
-        return best, bd, second
+        # the calibrated reading, as hal_tcs34725_match: the classifier is above
+        i, conf = _color_match(self.hsv(), self._detect)
+        return (self._detect[i] if i >= 0 else None), conf
 
     def color(self):
         return self._match()[0]
 
     def color_match(self):
-        best, bd, second = self._match()
-        if best is None:
-            return (None, 0.0)
-        if len(self._detect) == 1:
-            return (best, max(0.0, 1.0 - bd / 0.5))
-        return (best, 1.0 - bd / second if second > 0 else 1.0)
+        return self._match()
 
     def detectable_colors(self, colors=None, /):
         if colors is None:
@@ -1716,14 +1816,16 @@ class PID:
             self._df = df
             self.d = d = self.kd * df
             step = self.ki * e * dtm / 1000.0
-            out = p + self.i + step + d
+            cand = self.i + step
+            il = self.integral_limit
+            if il is not None:
+                cand = max(-il, min(il, cand))
+            out = p + cand + d
             lim = self.limits
-            # clamping anti-windup: no integration while the output sits on a limit it pushes into
+            # the candidate bounded by integral_limit, then held while the candidate output sits beyond a limit in the
+            # step's direction (motion/user_ctrl.c, the board's order)
             if not (lim and ((out > lim[1] and step > 0) or (out < lim[0] and step < 0))):
-                self.i += step
-                il = self.integral_limit
-                if il is not None:
-                    self.i = max(-il, min(il, self.i))
+                self.i = cand
         self._last = me
         out = p + self.i + d
         lim = self.limits
@@ -1901,7 +2003,6 @@ _s_ta_open, _s_ta_get, _s_ta_events, _s_ta_data = _s.ta_open, _s.ta_get, _s.ta_e
 _s_ta_cfg, _s_ta_set, _s_ta_close = _s.ta_cfg, _s.ta_set, _s.ta_close
 _s_ad_open, _s_ad_cfg, _s_ad_get, _s_ad_read, _s_ad_set, _s_ad_close = _s.ad_open, _s.ad_cfg, _s.ad_get, _s.ad_read, _s.ad_set, _s.ad_close
 
-_UNSET = object()
 # hal/hal_servo.c's profiles: range (0: continuous), min_us, max_us, start, max_dps
 _SERVO_PROFILES = {
     "generic": (180, 500, 2500, 90.0, 500.0),
@@ -2371,6 +2472,7 @@ class ADC:
 _s_ua_open, _s_ua_init, _s_ua_close, _s_ua_fmt, _s_ua_write = _s.ua_open, _s.ua_init, _s.ua_close, _s.ua_fmt, _s.ua_write
 _s_ua_read, _s_ua_readline, _s_ua_any, _s_ua_txdone, _s_ua_flush = _s.ua_read, _s.ua_readline, _s.ua_any, _s.ua_txdone, _s.ua_flush
 _s_ua_break, _s_ua_flush_rx, _s_ua_overflow, _s_ua_repl = _s.ua_break, _s.ua_flush_rx, _s.ua_overflow, _s.ua_repl
+_s_ua_ring, _s_ua_ring_size = _s.ua_ring, _s.ua_ring_size
 
 _UART_PINS = ((0, 1), (8, 9))   # Serial1 = uart0 GP0 / GP1, Serial2 = uart1 GP8 / GP9 (hal_uart.c l.12-15)
 _UART_BUF = 256                 # py/stream.c DEFAULT_BUFFER_SIZE: read()'s chunk
@@ -2419,7 +2521,9 @@ def _rbuf(buf):
 
 def _uart_parse(f, t, baudrate, bits, parity, stop, timeout, timeout_char, invert, txbuf, rxbuf):
     """uart_parse: into f = [baud, bits, parity (0 none, 1 even, 2 odd), stop, invert] and t = [timeout, timeout_char],
-    which hold the current settings; every refusal raises before anything is applied."""
+    which hold the current settings; every refusal raises before anything is applied. Returns the receive ring asked
+    for, bytes; 0 = not given (evn_mp_uart_rxbuf_arg: rp2 treats a size <= 0 as not given)."""
+    ring = 0
     if baudrate is not _UNSET:
         b = _int(baudrate)
         if b < 300 or b > 3000000:
@@ -2454,11 +2558,14 @@ def _uart_parse(f, t, baudrate, bits, parity, stop, timeout, timeout_char, inver
         f[4] = i
     if txbuf is not _UNSET and _int(txbuf) > 1023:
         raise ValueError("txbuf too large: the transmit ring holds 1023 bytes")
-    if rxbuf is not _UNSET and _int(rxbuf) > 255:
-        raise ValueError("rxbuf too large: the receive ring holds 255 bytes")
+    if rxbuf is not _UNSET:
+        ring = _int(rxbuf)
+        if ring > 16384:
+            raise ValueError("rxbuf must be at most 16384 bytes")
     floor = 13000 // f[0] + 1   # hal_uart_char_ms: one 13-bit character + 1 ms at the (new) baud
     if t[1] < floor:
         t[1] = floor
+    return ring if ring > 0 else 0
 
 
 class UART:
@@ -2476,10 +2583,12 @@ class UART:
             raise ValueError("uart must be 1 (Serial1) or 2 (Serial2)")
         f = [115200, 8, 0, 1, 0]
         t = [0, 0]
-        _uart_parse(f, t, baudrate, bits, parity, stop, timeout, timeout_char, invert, txbuf, rxbuf)
+        ring = _uart_parse(f, t, baudrate, bits, parity, stop, timeout, timeout_char, invert, txbuf, rxbuf)
         self._id = n
         self._timeout, self._tchar = t
         _uchk(_s_ua_open(n, f[0], f[1], f[2], f[3], f[4]))
+        if ring:                # not given: the static 255 bytes, where close() and a Stop left every closed port
+            _s_ua_ring(n, ring)
         self._closed = False
 
     def _live(self):
@@ -2494,9 +2603,10 @@ class UART:
         if self._closed:
             return "UART(%d, closed)" % n
         b, bits, par, st, inv = self._fmt()
-        return ("UART(%d, baudrate=%d, bits=%d, parity=%s, stop=%d, tx=%d, rx=%d, txbuf=1023, rxbuf=255, timeout=%d, "
+        return ("UART(%d, baudrate=%d, bits=%d, parity=%s, stop=%d, tx=%d, rx=%d, txbuf=1023, rxbuf=%d, timeout=%d, "
                 "timeout_char=%d, invert=%s)" % (n, b, bits, ("None", "0", "1")[par if par <= 2 else 0], st,
-                                                 _UART_PINS[n - 1][0], _UART_PINS[n - 1][1], self._timeout, self._tchar,
+                                                 _UART_PINS[n - 1][0], _UART_PINS[n - 1][1], _s_ua_ring_size(n),
+                                                 self._timeout, self._tchar,
                                                  ("None", "INV_TX", "INV_RX", "INV_TX|INV_RX")[inv & 3]))
 
     def init(self, baudrate=_UNSET, bits=_UNSET, parity=_UNSET, stop=_UNSET, *, timeout=_UNSET, timeout_char=_UNSET,
@@ -2504,8 +2614,10 @@ class UART:
         self._live()
         f = self._fmt()
         t = [self._timeout, self._tchar]
-        _uart_parse(f, t, baudrate, bits, parity, stop, timeout, timeout_char, invert, txbuf, rxbuf)
+        ring = _uart_parse(f, t, baudrate, bits, parity, stop, timeout, timeout_char, invert, txbuf, rxbuf)
         _uchk(_s_ua_init(self._id, f[0], f[1], f[2], f[3], f[4]))
+        if ring:                # not given: the ring stays as it is
+            _s_ua_ring(self._id, ring)
         self._timeout, self._tchar = t
 
     def deinit(self):

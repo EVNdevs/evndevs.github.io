@@ -59,10 +59,18 @@
       "hint": "Line {line}: look at '{name}' here and where it first appears above."
     },
     {
+      "id": "no-module-simtrail",
+      "board": {
+        "type": "ImportError",
+        "pattern": "^no module named 'simtrail'$"
+      },
+      "hint": "Line {line}: simtrail is a simulator-only module, for the panel's pen and errors; only the simulator has it."
+    },
+    {
       "id": "no-module",
       "board": {
         "type": "ImportError",
-        "pattern": "^no module named '(?<name>[^']*)'$"
+        "pattern": "^no module named '(?<name>(?!simtrail')[^']*)'$"
       },
       "sim": [
         {

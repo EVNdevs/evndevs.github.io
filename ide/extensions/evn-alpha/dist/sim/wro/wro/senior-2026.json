@@ -1,0 +1,8753 @@
+{
+ "meta": {
+  "title": "WRO 2026 RoboMission Senior \"Mosaic Masters\" mat - traced geometry",
+  "frame": "x right from the mat left edge, y UP from the mat bottom edge, millimetres; start area at the lower left (robot put down facing +x, design \u00a74.1)",
+  "mat_size_mm": [
+   2362.0,
+   1143.0
+  ],
+  "source_pdf": "WRO-2026-GameMat-Senior-Printing-File.pdf (wro-association.org; EVN_WRO_MAT_SENIOR)",
+  "source_pdf_sha256": "2b4b288e9109cac83d269ba5a8dbe2e224bf2d2469cb59c3d227c03e24466f53",
+  "page_pt": [
+   6695.43,
+   3240.0
+  ],
+  "scale": "1 pt = 25.4/72 mm (page size equals the mat size, no bleed)",
+  "colour_note": "colour_srgb = mean sRGB (0-255) of a PyMuPDF render of the PDF at 2 px/mm, region eroded 2 mm; vector_fill_srgb = the design fill. A printed mat under real light will differ.",
+  "script": "trace_mat.py",
+  "drawings_total": 38245,
+  "cmyk_note": "fill_cmyk = the drawing's fill as the PDF states it (DeviceCMYK operands 0..1, read from the page's content stream; the file's output intent is U.S. Web Coated (SWOP) v2); drawing = its index in get_drawings() (the paint order). The schematic (src/sim/engine/wroSchematic.ts) paints these through pdf.js's formula.",
+  "printing_files_sha256": {
+   "junior_2026": "efa98dc76dddc594cedbcb719333a03d259878778714c54dac1a4e4a9d853d48",
+   "elementary_2026": "8d58381fdcd9bc1784ae893e5b133707ca81f19aff51e31ca41c02276466c4d9",
+   "senior_2026": "2b4b288e9109cac83d269ba5a8dbe2e224bf2d2469cb59c3d227c03e24466f53",
+   "junior_2025": "83d3130fbf51e0b5d0721608e140d8a6a886e67f659951223ddf3606b8a8c683"
+  },
+  "rules_pdf": "RoboMission Senior Game Rules 2026 (EVN_WRO_RULES_SENIOR); no page rendered",
+  "rules_pdf_sha256": "e57eb5f1550128c50bc68bc76dc0bffd2a642f351def283213554bca46652af3",
+  "general_rules_pdf": "RoboMission General Rules 2026 (EVN_WRO_RULES_GENERAL)",
+  "general_rules_pdf_sha256": "90a28d8bf77f628227e5f544ec57b5230d620f3ae581f092bed1fda23de9e795",
+  "rules_checks": [
+   {
+    "what": "mat width (mm)",
+    "source": "WRO-2026-RoboMission-General-Rules.pdf p. 10, 7.2: \"2362 mm x 1143 mm\"",
+    "stated": 2362.0,
+    "traced": 2362.0,
+    "tolerance": 0.5,
+    "ok": true
+   },
+   {
+    "what": "mat height (mm)",
+    "source": "WRO-2026-RoboMission-General-Rules.pdf p. 10, 7.2: \"2362 mm x 1143 mm\"",
+    "stated": 1143.0,
+    "traced": 1143.0,
+    "tolerance": 0.5,
+    "ok": true
+   },
+   {
+    "what": "start border width, edge 0 (mm)",
+    "source": "design \u00a74.1 / Elementary's derivation: the border 11.5 mm",
+    "stated": 11.5,
+    "traced": 11.5,
+    "tolerance": 0.05,
+    "ok": true
+   },
+   {
+    "what": "start border width, edge 1 (mm)",
+    "source": "design \u00a74.1 / Elementary's derivation: the border 11.5 mm",
+    "stated": 11.5,
+    "traced": 11.5,
+    "tolerance": 0.05,
+    "ok": true
+   },
+   {
+    "what": "start border width, edge 2 (mm)",
+    "source": "design \u00a74.1 / Elementary's derivation: the border 11.5 mm",
+    "stated": 11.5,
+    "traced": 11.5,
+    "tolerance": 0.05,
+    "ok": true
+   },
+   {
+    "what": "start border width, edge 3 (mm)",
+    "source": "design \u00a74.1 / Elementary's derivation: the border 11.5 mm",
+    "stated": 11.5,
+    "traced": 11.5,
+    "tolerance": 0.05,
+    "ok": true
+   },
+   {
+    "what": "start area side (mm)",
+    "source": "WRO-2026-RoboMission-General-Rules.pdf p. 6 / p. 10, 5.1 / 7.5: the robot \"250 mm x 250 mm x 250 mm\" fits the start area",
+    "stated": 250.0,
+    "traced": 250.0,
+    "tolerance": 0.05,
+    "ok": true
+   }
+  ],
+  "fill_collisions": [
+   {
+    "srgb": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "fills": [
+     [
+      0.965,
+      0.957,
+      0.945,
+      0.965
+     ],
+     [
+      0.976,
+      0.957,
+      0.929,
+      0.984
+     ],
+     [
+      0.949,
+      0.922,
+      0.886,
+      0.957
+     ]
+    ]
+   }
+  ],
+  "overpaint": {
+   "rule": "every later drawing / any image or shading (its extent: its clip, review r2 NEW-1) reaching > 0.5 mm both inside and outside a region carrying a `rule` is listed here with its reason, or the trace stops (review r1 S2; 10 px/mm local raster of the vector outlines)",
+   "candidates_inside": 2,
+   "candidates_tested": 3170,
+   "candidates_blank": 0,
+   "allowed": [
+    {
+     "region": "cement_target_green",
+     "paint": 37307,
+     "reason": "black line over the right edge (1.1 mm, y 621.5-771.5): the drawn rect is kept for the convex scorer, `visible` is exact (D8, KNOWN S3.greenUnderLine)"
+    },
+    {
+     "region": "parking_space",
+     "paint": 24559,
+     "reason": "a palm leaf on the brown (the rule: \"including the ... palm trees\"); the part past y 621.5 lies under the road #37302, painted after it"
+    },
+    {
+     "region": "parking_space",
+     "paint": 24560,
+     "reason": "a palm leaf on the brown (the rule: \"including the ... palm trees\"); the part past y 621.5 lies under the road #37302, painted after it"
+    },
+    {
+     "region": "parking_space",
+     "paint": 24561,
+     "reason": "a palm leaf on the brown (the rule: \"including the ... palm trees\"); the part past y 621.5 lies under the road #37302, painted after it"
+    },
+    {
+     "region": "parking_space",
+     "paint": 24599,
+     "reason": "a palm leaf on the brown (the rule: \"including the ... palm trees\"); the part past y 621.5 lies under the road #37302, painted after it"
+    }
+   ],
+   "after": []
+  },
+  "names": "region names = the J2b fixture's mat references (scripts/fixtures/games_paper/wro-2026-senior.json); barrier_l_k / barrier_mark_k: 1 lower left, 2 lower right, 3 upper left, 4 upper right; the mosaic cells (mosaic_cell_0..11) are the frame's openings (bake_frame.py, design \u00a74.6), not the mat's"
+ },
+ "regions": {
+  "start_area_frame": {
+   "type": "rect",
+   "rect": [
+    50.0,
+    50.0,
+    323.0,
+    323.0
+   ],
+   "size_mm": [
+    273.0,
+    273.0
+   ],
+   "colour_srgb": [
+    35,
+    63,
+    142
+   ],
+   "colour_std": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "vector_fill_srgb": [
+    36,
+    64,
+    143
+   ],
+   "source": "vector: drawing #37334 (re), blue border of the start square",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": [
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "notes": "outer edge of the blue border (border 11.5 mm wide)",
+   "drawing": 37334,
+   "fill_cmyk": [
+    1.0,
+    0.9,
+    0.1,
+    0.0
+   ]
+  },
+  "start_area": {
+   "type": "rect",
+   "rect": [
+    61.5,
+    61.5,
+    311.5,
+    311.5
+   ],
+   "size_mm": [
+    250.0,
+    250.0
+   ],
+   "colour_srgb": [
+    235,
+    223,
+    191
+   ],
+   "colour_std": [
+    57.8,
+    60.2,
+    98.2
+   ],
+   "vector_fill_srgb": [
+    255,
+    255,
+    255
+   ],
+   "source": "vector: drawing #37335 (re), white square inside the blue border",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": null,
+   "notes": "General Rules 7.8: the white area within a coloured border. Colour sample includes the printed WRO panel.",
+   "drawing": 37335,
+   "fill_cmyk": [
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "rule": {
+    "rules_pdf": "WRO-2026-RoboMission-Senior-Game-Rules.pdf",
+    "page": 9,
+    "text": "3.1 \"* The start area is the white are where the robot starts without the blue border.\""
+   }
+  },
+  "sponsor_area": {
+   "type": "rect",
+   "rect": [
+    490.0,
+    0.0,
+    710.0,
+    170.0
+   ],
+   "size_mm": [
+    220.0,
+    170.0
+   ],
+   "colour_srgb": [
+    242,
+    244,
+    245
+   ],
+   "colour_std": [
+    45.8,
+    37.8,
+    36.1
+   ],
+   "vector_fill_srgb": [
+    255,
+    255,
+    255
+   ],
+   "source": "vector: drawing #37217 (re), white panel with the logos at the bottom edge, next to the start area",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": null,
+   "notes": "the nearer of the two white 220 x 170 panels to the start area (gaps #37217 178.5 mm, #37336 1421.0 mm)",
+   "drawing": 37217,
+   "fill_cmyk": [
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "rule": {
+    "rules_pdf": "WRO-2026-RoboMission-Senior-Game-Rules.pdf",
+    "page": 8,
+    "text": "3.1 \"* The sponsor area is the white area with the logos next to the start area.\""
+   }
+  },
+  "parking_space": {
+   "type": "polygon",
+   "polygon": [
+    [
+     1779.75,
+     324.58
+    ],
+    [
+     1595.0,
+     324.85
+    ],
+    [
+     1595.0,
+     621.5
+    ],
+    [
+     1780.19,
+     621.5
+    ]
+   ],
+   "bbox": [
+    1595.0,
+    324.58,
+    1780.19,
+    621.5
+   ],
+   "colour_srgb": [
+    148,
+    148,
+    115
+   ],
+   "colour_std": [
+    50.9,
+    36.1,
+    49.9
+   ],
+   "vector_fill_srgb": [
+    181,
+    150,
+    107
+   ],
+   "source": "vector: drawing #15666 (path), less the paint drawn over its edges (the house, the road): convex cuts",
+   "uncertainty_mm": 0.05,
+   "notes": "\"the whole brown area including the cars, pool, palm trees, etc.\" - the cars etc. are drawn on top of it and inside it; the house to its left and the road above are painted over the quad edges and are not the brown area (review r1 B1): each cut at the cover rect inner edge; the strip a cut takes from visible brown (the house rects 0.26 mm staircase) = visible_cut.residual_mm, within the team 0.5 mm tolerance",
+   "drawing": 15666,
+   "fill_cmyk": [
+    0.206,
+    0.324,
+    0.581,
+    0.138
+   ],
+   "visible_cut": {
+    "drawn_polygon": [
+     [
+      1779.75,
+      324.58
+     ],
+     [
+      1587.74,
+      324.86
+     ],
+     [
+      1588.06,
+      622.62
+     ],
+     [
+      1780.19,
+      624.27
+     ]
+    ],
+    "cuts": [
+     {
+      "drawing": 17908,
+      "rect": [
+       1524.13,
+       322.57,
+       1594.74,
+       386.71
+      ],
+      "keep": "x >= 1594.74"
+     },
+     {
+      "drawing": 17867,
+      "rect": [
+       1522.59,
+       386.28,
+       1594.81,
+       516.67
+      ],
+      "keep": "x >= 1594.81"
+     },
+     {
+      "drawing": 37209,
+      "rect": [
+       1524.43,
+       513.34,
+       1595.0,
+       624.15
+      ],
+      "keep": "x >= 1595.00"
+     },
+     {
+      "drawing": 37302,
+      "rect": [
+       1457.9,
+       621.5,
+       1780.5,
+       771.5
+      ],
+      "keep": "y <= 621.50"
+     }
+    ],
+    "cover_edge_spread_mm": 0.26,
+    "residual_mm": 0.2,
+    "residual_note": "visible paint outside the cut, its widest strip on a 10 px/mm raster (+-0.1 mm)",
+    "area_drawn_mm2": 57377.6,
+    "area_visible_mm2": 54898.3
+   },
+   "rule": {
+    "rules_pdf": "WRO-2026-RoboMission-Senior-Game-Rules.pdf",
+    "page": 9,
+    "text": "3.1 \"* The parking space is the whole brown area including the cars, pool, palm trees, etc.\""
+   }
+  },
+  "rect_trowel_start": {
+   "type": "rect",
+   "rect": [
+    829.55,
+    50.0,
+    957.05,
+    113.8
+   ],
+   "size_mm": [
+    127.5,
+    63.8
+   ],
+   "colour_srgb": [
+    150,
+    150,
+    150
+   ],
+   "colour_std": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "vector_fill_srgb": [
+    150,
+    150,
+    150
+   ],
+   "source": "vector: drawing #37222 (re), grey start area of the rectangular trowel",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": [
+    -0.05,
+    0.0,
+    -0.05,
+    0.2
+   ],
+   "notes": "",
+   "drawing": 37222,
+   "fill_cmyk": [
+    0.438,
+    0.359,
+    0.363,
+    0.013
+   ],
+   "rule": {
+    "rules_pdf": "WRO-2026-RoboMission-Senior-Game-Rules.pdf",
+    "page": 4,
+    "text": "Tools: \"The positions are the grey areas on the bottom of the field.\""
+   }
+  },
+  "cement_bowl_start": {
+   "type": "rect",
+   "rect": [
+    1165.05,
+    65.95,
+    1196.95,
+    97.85
+   ],
+   "size_mm": [
+    31.9,
+    31.9
+   ],
+   "colour_srgb": [
+    150,
+    150,
+    150
+   ],
+   "colour_std": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "vector_fill_srgb": [
+    150,
+    150,
+    150
+   ],
+   "source": "vector: drawing #37226 (re), grey square in the brown frame #15254",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": [
+    -0.05,
+    0.05,
+    0.05,
+    0.15
+   ],
+   "notes": "",
+   "drawing": 37226,
+   "fill_cmyk": [
+    0.438,
+    0.359,
+    0.363,
+    0.013
+   ],
+   "rule": {
+    "rules_pdf": "WRO-2026-RoboMission-Senior-Game-Rules.pdf",
+    "page": 4,
+    "text": "Tools"
+   }
+  },
+  "masonry_trowel_start": {
+   "type": "rect",
+   "rect": [
+    1445.22,
+    42.05,
+    1531.62,
+    121.75
+   ],
+   "size_mm": [
+    86.4,
+    79.7
+   ],
+   "colour_srgb": [
+    153,
+    147,
+    141
+   ],
+   "colour_std": [
+    9.1,
+    8.9,
+    19.4
+   ],
+   "vector_fill_srgb": [
+    150,
+    150,
+    150
+   ],
+   "source": "vector: three grey rects #37225 / #37224 / #37223 stepped 47.8 / 63.8 / 79.7 mm; rect = their bounding box",
+   "uncertainty_mm": 0.05,
+   "notes": "",
+   "parts": [
+    [
+     1445.22,
+     58.0,
+     1474.02,
+     105.8
+    ],
+    [
+     1474.02,
+     50.0,
+     1502.82,
+     113.8
+    ],
+    [
+     1502.82,
+     42.05,
+     1531.62,
+     121.75
+    ]
+   ],
+   "drawings": [
+    37225,
+    37224,
+    37223
+   ],
+   "fill_cmyk": [
+    0.438,
+    0.359,
+    0.363,
+    0.013
+   ],
+   "rule": {
+    "rules_pdf": "WRO-2026-RoboMission-Senior-Game-Rules.pdf",
+    "page": 4,
+    "text": "Tools"
+   }
+  },
+  "tile_start_yellow_1": {
+   "type": "rect",
+   "rect": [
+    106.75,
+    409.8,
+    138.65,
+    441.7
+   ],
+   "size_mm": [
+    31.9,
+    31.9
+   ],
+   "colour_srgb": [
+    250,
+    239,
+    58
+   ],
+   "colour_std": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "vector_fill_srgb": [
+    250,
+    240,
+    59
+   ],
+   "source": "vector: drawing #37254 (re), yellow tile start square at the left end",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": [
+    0.25,
+    0.2,
+    -0.15,
+    -0.2
+   ],
+   "notes": "",
+   "drawing": 37254,
+   "fill_cmyk": [
+    0.032,
+    0.0,
+    0.867,
+    0.0
+   ],
+   "rule": {
+    "rules_pdf": "WRO-2026-RoboMission-Senior-Game-Rules.pdf",
+    "page": 5,
+    "text": "Mosaic tiles: \"The position on the game field is at the left end.\""
+   }
+  },
+  "tile_start_yellow_2": {
+   "type": "rect",
+   "rect": [
+    106.75,
+    473.6,
+    138.65,
+    505.5
+   ],
+   "size_mm": [
+    31.9,
+    31.9
+   ],
+   "colour_srgb": [
+    250,
+    239,
+    58
+   ],
+   "colour_std": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "vector_fill_srgb": [
+    250,
+    240,
+    59
+   ],
+   "source": "vector: drawing #37253 (re), yellow tile start square at the left end",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": [
+    0.25,
+    -0.1,
+    -0.15,
+    0.0
+   ],
+   "notes": "",
+   "drawing": 37253,
+   "fill_cmyk": [
+    0.032,
+    0.0,
+    0.867,
+    0.0
+   ],
+   "rule": {
+    "rules_pdf": "WRO-2026-RoboMission-Senior-Game-Rules.pdf",
+    "page": 5,
+    "text": "Mosaic tiles: \"The position on the game field is at the left end.\""
+   }
+  },
+  "tile_start_yellow_3": {
+   "type": "rect",
+   "rect": [
+    170.55,
+    409.8,
+    202.45,
+    441.7
+   ],
+   "size_mm": [
+    31.9,
+    31.9
+   ],
+   "colour_srgb": [
+    250,
+    239,
+    58
+   ],
+   "colour_std": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "vector_fill_srgb": [
+    250,
+    240,
+    59
+   ],
+   "source": "vector: drawing #37256 (re), yellow tile start square at the left end",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": [
+    -0.05,
+    0.2,
+    0.05,
+    -0.2
+   ],
+   "notes": "",
+   "drawing": 37256,
+   "fill_cmyk": [
+    0.032,
+    0.0,
+    0.867,
+    0.0
+   ],
+   "rule": {
+    "rules_pdf": "WRO-2026-RoboMission-Senior-Game-Rules.pdf",
+    "page": 5,
+    "text": "Mosaic tiles: \"The position on the game field is at the left end.\""
+   }
+  },
+  "tile_start_yellow_4": {
+   "type": "rect",
+   "rect": [
+    170.55,
+    473.6,
+    202.45,
+    505.5
+   ],
+   "size_mm": [
+    31.9,
+    31.9
+   ],
+   "colour_srgb": [
+    250,
+    239,
+    58
+   ],
+   "colour_std": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "vector_fill_srgb": [
+    250,
+    240,
+    59
+   ],
+   "source": "vector: drawing #37255 (re), yellow tile start square at the left end",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": [
+    -0.05,
+    -0.1,
+    0.05,
+    0.0
+   ],
+   "notes": "",
+   "drawing": 37255,
+   "fill_cmyk": [
+    0.032,
+    0.0,
+    0.867,
+    0.0
+   ],
+   "rule": {
+    "rules_pdf": "WRO-2026-RoboMission-Senior-Game-Rules.pdf",
+    "page": 5,
+    "text": "Mosaic tiles: \"The position on the game field is at the left end.\""
+   }
+  },
+  "tile_start_yellow_5": {
+   "type": "rect",
+   "rect": [
+    234.35,
+    409.8,
+    266.25,
+    441.7
+   ],
+   "size_mm": [
+    31.9,
+    31.9
+   ],
+   "colour_srgb": [
+    250,
+    239,
+    58
+   ],
+   "colour_std": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "vector_fill_srgb": [
+    250,
+    240,
+    59
+   ],
+   "source": "vector: drawing #37258 (re), yellow tile start square at the left end",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": [
+    0.15,
+    0.2,
+    -0.25,
+    -0.2
+   ],
+   "notes": "",
+   "drawing": 37258,
+   "fill_cmyk": [
+    0.032,
+    0.0,
+    0.867,
+    0.0
+   ],
+   "rule": {
+    "rules_pdf": "WRO-2026-RoboMission-Senior-Game-Rules.pdf",
+    "page": 5,
+    "text": "Mosaic tiles: \"The position on the game field is at the left end.\""
+   }
+  },
+  "tile_start_yellow_6": {
+   "type": "rect",
+   "rect": [
+    234.35,
+    473.6,
+    266.25,
+    505.5
+   ],
+   "size_mm": [
+    31.9,
+    31.9
+   ],
+   "colour_srgb": [
+    250,
+    239,
+    58
+   ],
+   "colour_std": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "vector_fill_srgb": [
+    250,
+    240,
+    59
+   ],
+   "source": "vector: drawing #37257 (re), yellow tile start square at the left end",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": [
+    0.15,
+    -0.1,
+    -0.25,
+    0.0
+   ],
+   "notes": "",
+   "drawing": 37257,
+   "fill_cmyk": [
+    0.032,
+    0.0,
+    0.867,
+    0.0
+   ],
+   "rule": {
+    "rules_pdf": "WRO-2026-RoboMission-Senior-Game-Rules.pdf",
+    "page": 5,
+    "text": "Mosaic tiles: \"The position on the game field is at the left end.\""
+   }
+  },
+  "tile_start_blue_1": {
+   "type": "rect",
+   "rect": [
+    106.75,
+    569.3,
+    138.65,
+    601.2
+   ],
+   "size_mm": [
+    31.9,
+    31.9
+   ],
+   "colour_srgb": [
+    37,
+    89,
+    168
+   ],
+   "colour_std": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "vector_fill_srgb": [
+    38,
+    89,
+    168
+   ],
+   "source": "vector: drawing #37260 (re), blue tile start square at the left end",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": [
+    0.25,
+    0.2,
+    -0.15,
+    -0.2
+   ],
+   "notes": "",
+   "drawing": 37260,
+   "fill_cmyk": [
+    0.907,
+    0.714,
+    0.0,
+    0.0
+   ],
+   "rule": {
+    "rules_pdf": "WRO-2026-RoboMission-Senior-Game-Rules.pdf",
+    "page": 5,
+    "text": "Mosaic tiles: \"The position on the game field is at the left end.\""
+   }
+  },
+  "tile_start_blue_2": {
+   "type": "rect",
+   "rect": [
+    106.75,
+    633.1,
+    138.65,
+    665.0
+   ],
+   "size_mm": [
+    31.9,
+    31.9
+   ],
+   "colour_srgb": [
+    37,
+    89,
+    168
+   ],
+   "colour_std": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "vector_fill_srgb": [
+    38,
+    89,
+    168
+   ],
+   "source": "vector: drawing #37259 (re), blue tile start square at the left end",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": [
+    0.25,
+    -0.1,
+    -0.15,
+    0.0
+   ],
+   "notes": "",
+   "drawing": 37259,
+   "fill_cmyk": [
+    0.907,
+    0.714,
+    0.0,
+    0.0
+   ],
+   "rule": {
+    "rules_pdf": "WRO-2026-RoboMission-Senior-Game-Rules.pdf",
+    "page": 5,
+    "text": "Mosaic tiles: \"The position on the game field is at the left end.\""
+   }
+  },
+  "tile_start_blue_3": {
+   "type": "rect",
+   "rect": [
+    170.55,
+    569.3,
+    202.45,
+    601.2
+   ],
+   "size_mm": [
+    31.9,
+    31.9
+   ],
+   "colour_srgb": [
+    37,
+    89,
+    168
+   ],
+   "colour_std": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "vector_fill_srgb": [
+    38,
+    89,
+    168
+   ],
+   "source": "vector: drawing #37262 (re), blue tile start square at the left end",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": [
+    -0.05,
+    0.2,
+    0.05,
+    -0.2
+   ],
+   "notes": "",
+   "drawing": 37262,
+   "fill_cmyk": [
+    0.907,
+    0.714,
+    0.0,
+    0.0
+   ],
+   "rule": {
+    "rules_pdf": "WRO-2026-RoboMission-Senior-Game-Rules.pdf",
+    "page": 5,
+    "text": "Mosaic tiles: \"The position on the game field is at the left end.\""
+   }
+  },
+  "tile_start_blue_4": {
+   "type": "rect",
+   "rect": [
+    170.55,
+    633.1,
+    202.45,
+    665.0
+   ],
+   "size_mm": [
+    31.9,
+    31.9
+   ],
+   "colour_srgb": [
+    37,
+    89,
+    168
+   ],
+   "colour_std": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "vector_fill_srgb": [
+    38,
+    89,
+    168
+   ],
+   "source": "vector: drawing #37261 (re), blue tile start square at the left end",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": [
+    -0.05,
+    -0.1,
+    0.05,
+    0.0
+   ],
+   "notes": "",
+   "drawing": 37261,
+   "fill_cmyk": [
+    0.907,
+    0.714,
+    0.0,
+    0.0
+   ],
+   "rule": {
+    "rules_pdf": "WRO-2026-RoboMission-Senior-Game-Rules.pdf",
+    "page": 5,
+    "text": "Mosaic tiles: \"The position on the game field is at the left end.\""
+   }
+  },
+  "tile_start_blue_5": {
+   "type": "rect",
+   "rect": [
+    234.35,
+    569.3,
+    266.25,
+    601.2
+   ],
+   "size_mm": [
+    31.9,
+    31.9
+   ],
+   "colour_srgb": [
+    37,
+    89,
+    168
+   ],
+   "colour_std": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "vector_fill_srgb": [
+    38,
+    89,
+    168
+   ],
+   "source": "vector: drawing #37264 (re), blue tile start square at the left end",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": [
+    0.15,
+    0.2,
+    -0.25,
+    -0.2
+   ],
+   "notes": "",
+   "drawing": 37264,
+   "fill_cmyk": [
+    0.907,
+    0.714,
+    0.0,
+    0.0
+   ],
+   "rule": {
+    "rules_pdf": "WRO-2026-RoboMission-Senior-Game-Rules.pdf",
+    "page": 5,
+    "text": "Mosaic tiles: \"The position on the game field is at the left end.\""
+   }
+  },
+  "tile_start_blue_6": {
+   "type": "rect",
+   "rect": [
+    234.35,
+    633.1,
+    266.25,
+    665.0
+   ],
+   "size_mm": [
+    31.9,
+    31.9
+   ],
+   "colour_srgb": [
+    37,
+    89,
+    168
+   ],
+   "colour_std": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "vector_fill_srgb": [
+    38,
+    89,
+    168
+   ],
+   "source": "vector: drawing #37263 (re), blue tile start square at the left end",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": [
+    0.15,
+    -0.1,
+    -0.25,
+    0.0
+   ],
+   "notes": "",
+   "drawing": 37263,
+   "fill_cmyk": [
+    0.907,
+    0.714,
+    0.0,
+    0.0
+   ],
+   "rule": {
+    "rules_pdf": "WRO-2026-RoboMission-Senior-Game-Rules.pdf",
+    "page": 5,
+    "text": "Mosaic tiles: \"The position on the game field is at the left end.\""
+   }
+  },
+  "tile_start_green_1": {
+   "type": "rect",
+   "rect": [
+    106.75,
+    728.8,
+    138.65,
+    760.7
+   ],
+   "size_mm": [
+    31.9,
+    31.9
+   ],
+   "colour_srgb": [
+    30,
+    120,
+    65
+   ],
+   "colour_std": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "vector_fill_srgb": [
+    31,
+    120,
+    66
+   ],
+   "source": "vector: drawing #37266 (re), green tile start square at the left end",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": [
+    0.25,
+    0.2,
+    -0.15,
+    -0.2
+   ],
+   "notes": "",
+   "drawing": 37266,
+   "fill_cmyk": [
+    0.849,
+    0.291,
+    0.947,
+    0.169
+   ],
+   "rule": {
+    "rules_pdf": "WRO-2026-RoboMission-Senior-Game-Rules.pdf",
+    "page": 5,
+    "text": "Mosaic tiles: \"The position on the game field is at the left end.\""
+   }
+  },
+  "tile_start_green_2": {
+   "type": "rect",
+   "rect": [
+    106.75,
+    792.6,
+    138.65,
+    824.5
+   ],
+   "size_mm": [
+    31.9,
+    31.9
+   ],
+   "colour_srgb": [
+    30,
+    120,
+    65
+   ],
+   "colour_std": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "vector_fill_srgb": [
+    31,
+    120,
+    66
+   ],
+   "source": "vector: drawing #37265 (re), green tile start square at the left end",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": [
+    -0.25,
+    -0.1,
+    -0.15,
+    0.0
+   ],
+   "notes": "",
+   "drawing": 37265,
+   "fill_cmyk": [
+    0.849,
+    0.291,
+    0.947,
+    0.169
+   ],
+   "rule": {
+    "rules_pdf": "WRO-2026-RoboMission-Senior-Game-Rules.pdf",
+    "page": 5,
+    "text": "Mosaic tiles: \"The position on the game field is at the left end.\""
+   }
+  },
+  "tile_start_green_3": {
+   "type": "rect",
+   "rect": [
+    170.55,
+    728.8,
+    202.45,
+    760.7
+   ],
+   "size_mm": [
+    31.9,
+    31.9
+   ],
+   "colour_srgb": [
+    30,
+    120,
+    65
+   ],
+   "colour_std": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "vector_fill_srgb": [
+    31,
+    120,
+    66
+   ],
+   "source": "vector: drawing #37268 (re), green tile start square at the left end",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": [
+    -0.05,
+    0.2,
+    0.05,
+    -0.2
+   ],
+   "notes": "",
+   "drawing": 37268,
+   "fill_cmyk": [
+    0.849,
+    0.291,
+    0.947,
+    0.169
+   ],
+   "rule": {
+    "rules_pdf": "WRO-2026-RoboMission-Senior-Game-Rules.pdf",
+    "page": 5,
+    "text": "Mosaic tiles: \"The position on the game field is at the left end.\""
+   }
+  },
+  "tile_start_green_4": {
+   "type": "rect",
+   "rect": [
+    170.55,
+    792.6,
+    202.45,
+    824.5
+   ],
+   "size_mm": [
+    31.9,
+    31.9
+   ],
+   "colour_srgb": [
+    30,
+    120,
+    65
+   ],
+   "colour_std": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "vector_fill_srgb": [
+    31,
+    120,
+    66
+   ],
+   "source": "vector: drawing #37267 (re), green tile start square at the left end",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": [
+    -0.05,
+    -0.1,
+    0.05,
+    0.0
+   ],
+   "notes": "",
+   "drawing": 37267,
+   "fill_cmyk": [
+    0.849,
+    0.291,
+    0.947,
+    0.169
+   ],
+   "rule": {
+    "rules_pdf": "WRO-2026-RoboMission-Senior-Game-Rules.pdf",
+    "page": 5,
+    "text": "Mosaic tiles: \"The position on the game field is at the left end.\""
+   }
+  },
+  "tile_start_green_5": {
+   "type": "rect",
+   "rect": [
+    234.35,
+    728.8,
+    266.25,
+    760.7
+   ],
+   "size_mm": [
+    31.9,
+    31.9
+   ],
+   "colour_srgb": [
+    30,
+    120,
+    65
+   ],
+   "colour_std": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "vector_fill_srgb": [
+    31,
+    120,
+    66
+   ],
+   "source": "vector: drawing #37270 (re), green tile start square at the left end",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": [
+    0.15,
+    0.2,
+    -0.25,
+    -0.2
+   ],
+   "notes": "",
+   "drawing": 37270,
+   "fill_cmyk": [
+    0.849,
+    0.291,
+    0.947,
+    0.169
+   ],
+   "rule": {
+    "rules_pdf": "WRO-2026-RoboMission-Senior-Game-Rules.pdf",
+    "page": 5,
+    "text": "Mosaic tiles: \"The position on the game field is at the left end.\""
+   }
+  },
+  "tile_start_green_6": {
+   "type": "rect",
+   "rect": [
+    234.35,
+    792.6,
+    266.25,
+    824.5
+   ],
+   "size_mm": [
+    31.9,
+    31.9
+   ],
+   "colour_srgb": [
+    30,
+    120,
+    65
+   ],
+   "colour_std": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "vector_fill_srgb": [
+    31,
+    120,
+    66
+   ],
+   "source": "vector: drawing #37269 (re), green tile start square at the left end",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": [
+    0.15,
+    -0.1,
+    -0.25,
+    0.0
+   ],
+   "notes": "",
+   "drawing": 37269,
+   "fill_cmyk": [
+    0.849,
+    0.291,
+    0.947,
+    0.169
+   ],
+   "rule": {
+    "rules_pdf": "WRO-2026-RoboMission-Senior-Game-Rules.pdf",
+    "page": 5,
+    "text": "Mosaic tiles: \"The position on the game field is at the left end.\""
+   }
+  },
+  "tile_start_white_1": {
+   "type": "rect",
+   "rect": [
+    106.75,
+    888.3,
+    138.65,
+    920.2
+   ],
+   "size_mm": [
+    31.9,
+    31.9
+   ],
+   "colour_srgb": [
+    255,
+    255,
+    255
+   ],
+   "colour_std": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "vector_fill_srgb": [
+    255,
+    255,
+    255
+   ],
+   "source": "vector: drawing #37272 (re), white tile start square at the left end",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": [
+    0.25,
+    0.2,
+    -0.15,
+    -0.2
+   ],
+   "notes": "",
+   "drawing": 37272,
+   "fill_cmyk": [
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "rule": {
+    "rules_pdf": "WRO-2026-RoboMission-Senior-Game-Rules.pdf",
+    "page": 5,
+    "text": "Mosaic tiles: \"The position on the game field is at the left end.\""
+   }
+  },
+  "tile_start_white_2": {
+   "type": "rect",
+   "rect": [
+    106.75,
+    952.1,
+    138.65,
+    984.0
+   ],
+   "size_mm": [
+    31.9,
+    31.9
+   ],
+   "colour_srgb": [
+    255,
+    255,
+    255
+   ],
+   "colour_std": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "vector_fill_srgb": [
+    255,
+    255,
+    255
+   ],
+   "source": "vector: drawing #37271 (re), white tile start square at the left end",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": [
+    0.25,
+    -0.1,
+    -0.15,
+    0.0
+   ],
+   "notes": "",
+   "drawing": 37271,
+   "fill_cmyk": [
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "rule": {
+    "rules_pdf": "WRO-2026-RoboMission-Senior-Game-Rules.pdf",
+    "page": 5,
+    "text": "Mosaic tiles: \"The position on the game field is at the left end.\""
+   }
+  },
+  "tile_start_white_3": {
+   "type": "rect",
+   "rect": [
+    170.55,
+    888.3,
+    202.45,
+    920.2
+   ],
+   "size_mm": [
+    31.9,
+    31.9
+   ],
+   "colour_srgb": [
+    255,
+    255,
+    255
+   ],
+   "colour_std": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "vector_fill_srgb": [
+    255,
+    255,
+    255
+   ],
+   "source": "vector: drawing #37274 (re), white tile start square at the left end",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": [
+    -0.05,
+    0.2,
+    0.05,
+    -0.2
+   ],
+   "notes": "",
+   "drawing": 37274,
+   "fill_cmyk": [
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "rule": {
+    "rules_pdf": "WRO-2026-RoboMission-Senior-Game-Rules.pdf",
+    "page": 5,
+    "text": "Mosaic tiles: \"The position on the game field is at the left end.\""
+   }
+  },
+  "tile_start_white_4": {
+   "type": "rect",
+   "rect": [
+    170.55,
+    952.1,
+    202.45,
+    984.0
+   ],
+   "size_mm": [
+    31.9,
+    31.9
+   ],
+   "colour_srgb": [
+    255,
+    255,
+    255
+   ],
+   "colour_std": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "vector_fill_srgb": [
+    255,
+    255,
+    255
+   ],
+   "source": "vector: drawing #37273 (re), white tile start square at the left end",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": [
+    -0.05,
+    -0.1,
+    0.05,
+    0.0
+   ],
+   "notes": "",
+   "drawing": 37273,
+   "fill_cmyk": [
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "rule": {
+    "rules_pdf": "WRO-2026-RoboMission-Senior-Game-Rules.pdf",
+    "page": 5,
+    "text": "Mosaic tiles: \"The position on the game field is at the left end.\""
+   }
+  },
+  "tile_start_white_5": {
+   "type": "rect",
+   "rect": [
+    234.35,
+    888.3,
+    266.25,
+    920.2
+   ],
+   "size_mm": [
+    31.9,
+    31.9
+   ],
+   "colour_srgb": [
+    255,
+    255,
+    255
+   ],
+   "colour_std": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "vector_fill_srgb": [
+    255,
+    255,
+    255
+   ],
+   "source": "vector: drawing #37276 (re), white tile start square at the left end",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": [
+    0.15,
+    0.2,
+    -0.25,
+    -0.2
+   ],
+   "notes": "",
+   "drawing": 37276,
+   "fill_cmyk": [
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "rule": {
+    "rules_pdf": "WRO-2026-RoboMission-Senior-Game-Rules.pdf",
+    "page": 5,
+    "text": "Mosaic tiles: \"The position on the game field is at the left end.\""
+   }
+  },
+  "tile_start_white_6": {
+   "type": "rect",
+   "rect": [
+    234.35,
+    952.1,
+    266.25,
+    984.0
+   ],
+   "size_mm": [
+    31.9,
+    31.9
+   ],
+   "colour_srgb": [
+    255,
+    255,
+    255
+   ],
+   "colour_std": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "vector_fill_srgb": [
+    255,
+    255,
+    255
+   ],
+   "source": "vector: drawing #37275 (re), white tile start square at the left end",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": [
+    0.15,
+    -0.1,
+    -0.25,
+    0.0
+   ],
+   "notes": "",
+   "drawing": 37275,
+   "fill_cmyk": [
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "rule": {
+    "rules_pdf": "WRO-2026-RoboMission-Senior-Game-Rules.pdf",
+    "page": 5,
+    "text": "Mosaic tiles: \"The position on the game field is at the left end.\""
+   }
+  },
+  "mosaic_marking": {
+   "type": "polygon",
+   "polygon": [
+    [
+     1281.0,
+     613.5
+    ],
+    [
+     1282.39,
+     613.62
+    ],
+    [
+     1283.7,
+     613.97
+    ],
+    [
+     1284.91,
+     614.52
+    ],
+    [
+     1286.34,
+     615.54
+    ],
+    [
+     1287.51,
+     616.85
+    ],
+    [
+     1288.19,
+     617.98
+    ],
+    [
+     1288.53,
+     618.8
+    ],
+    [
+     1288.79,
+     619.67
+    ],
+    [
+     1288.99,
+     621.03
+    ],
+    [
+     1289.0,
+     771.5
+    ],
+    [
+     1288.95,
+     772.43
+    ],
+    [
+     1288.79,
+     773.33
+    ],
+    [
+     1288.53,
+     774.2
+    ],
+    [
+     1288.19,
+     775.02
+    ],
+    [
+     1287.24,
+     776.5
+    ],
+    [
+     1286.0,
+     777.74
+    ],
+    [
+     1284.91,
+     778.48
+    ],
+    [
+     1283.7,
+     779.03
+    ],
+    [
+     1282.39,
+     779.38
+    ],
+    [
+     1281.0,
+     779.5
+    ],
+    [
+     1081.0,
+     779.5
+    ],
+    [
+     1080.07,
+     779.45
+    ],
+    [
+     1079.17,
+     779.29
+    ],
+    [
+     1078.3,
+     779.03
+    ],
+    [
+     1077.48,
+     778.69
+    ],
+    [
+     1076.0,
+     777.74
+    ],
+    [
+     1074.76,
+     776.5
+    ],
+    [
+     1074.02,
+     775.41
+    ],
+    [
+     1073.47,
+     774.2
+    ],
+    [
+     1073.12,
+     772.89
+    ],
+    [
+     1073.0,
+     771.5
+    ],
+    [
+     1073.0,
+     621.5
+    ],
+    [
+     1073.05,
+     620.57
+    ],
+    [
+     1073.21,
+     619.67
+    ],
+    [
+     1073.47,
+     618.8
+    ],
+    [
+     1073.81,
+     617.98
+    ],
+    [
+     1074.76,
+     616.5
+    ],
+    [
+     1076.0,
+     615.26
+    ],
+    [
+     1077.09,
+     614.52
+    ],
+    [
+     1078.3,
+     613.97
+    ],
+    [
+     1079.61,
+     613.62
+    ],
+    [
+     1081.0,
+     613.5
+    ],
+    [
+     1281.0,
+     613.5
+    ]
+   ],
+   "bbox": [
+    1073.0,
+    613.5,
+    1289.0,
+    779.5
+   ],
+   "centre": [
+    1181.0,
+    696.5
+   ],
+   "size_mm": [
+    216.0,
+    166.0
+   ],
+   "colour_srgb": [
+    255,
+    255,
+    255
+   ],
+   "colour_std": [
+    4.3,
+    4.3,
+    4.3
+   ],
+   "vector_fill_srgb": [
+    255,
+    255,
+    255
+   ],
+   "source": "vector: drawing #37251 (a rounded rectangle, 4 Bezier corners), flattened, DP 0.05 mm",
+   "uncertainty_mm": 0.05,
+   "notes": "where the mosaic frame is placed (design \u00a74.6); its 12 openings come from the frame's STL",
+   "drawing": 37251,
+   "fill_cmyk": [
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "rule": {
+    "rules_pdf": "WRO-2026-RoboMission-Senior-Game-Rules.pdf",
+    "page": 5,
+    "text": "Mosaic frame: \"The marking on the field shows the orientation of the frame.\""
+   }
+  },
+  "mosaic_notch": {
+   "type": "polygon",
+   "polygon": [
+    [
+     1206.0,
+     613.5
+    ],
+    [
+     1205.92,
+     614.16
+    ],
+    [
+     1205.56,
+     615.01
+    ],
+    [
+     1204.92,
+     615.83
+    ],
+    [
+     1204.04,
+     616.61
+    ],
+    [
+     1203.21,
+     617.18
+    ],
+    [
+     1201.91,
+     617.89
+    ],
+    [
+     1200.39,
+     618.55
+    ],
+    [
+     1198.68,
+     619.16
+    ],
+    [
+     1196.78,
+     619.71
+    ],
+    [
+     1194.71,
+     620.19
+    ],
+    [
+     1190.73,
+     620.87
+    ],
+    [
+     1185.71,
+     621.36
+    ],
+    [
+     1181.0,
+     621.5
+    ],
+    [
+     1176.29,
+     621.36
+    ],
+    [
+     1171.27,
+     620.87
+    ],
+    [
+     1167.29,
+     620.19
+    ],
+    [
+     1165.22,
+     619.71
+    ],
+    [
+     1163.32,
+     619.16
+    ],
+    [
+     1161.61,
+     618.55
+    ],
+    [
+     1160.09,
+     617.89
+    ],
+    [
+     1158.79,
+     617.18
+    ],
+    [
+     1157.96,
+     616.61
+    ],
+    [
+     1157.08,
+     615.83
+    ],
+    [
+     1156.44,
+     615.01
+    ],
+    [
+     1156.08,
+     614.16
+    ],
+    [
+     1156.0,
+     613.5
+    ]
+   ],
+   "bbox": [
+    1156.0,
+    613.5,
+    1206.0,
+    621.5
+   ],
+   "side": "bottom",
+   "vector_fill_srgb": [
+    204,
+    204,
+    204
+   ],
+   "source": "vector: drawing #37252 (two Bezier arcs), flattened; centred on the marking's bottom edge (asserted 0.05 mm)",
+   "uncertainty_mm": 0.05,
+   "notes": "the frame's orientation: its notch side down (y-min)",
+   "drawing": 37252,
+   "fill_cmyk": [
+    0.195,
+    0.15,
+    0.156,
+    0.0
+   ]
+  },
+  "cement_target_white": {
+   "type": "rect",
+   "rect": [
+    1023.0,
+    829.5,
+    1339.0,
+    929.5
+   ],
+   "size_mm": [
+    316.0,
+    100.0
+   ],
+   "colour_srgb": [
+    255,
+    255,
+    255
+   ],
+   "colour_std": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "vector_fill_srgb": [
+    255,
+    255,
+    255
+   ],
+   "source": "vector: drawing #37247 (re), white cement target area in the centre",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": null,
+   "notes": "white: no raster edge check (it borders the white roads)",
+   "drawing": 37247,
+   "fill_cmyk": [
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "colour": "white",
+   "rule": {
+    "rules_pdf": "WRO-2026-RoboMission-Senior-Game-Rules.pdf",
+    "page": 11,
+    "text": "3.3 \"Cement element is completely in corresponding-coloured cement target area\""
+   }
+  },
+  "cement_target_green": {
+   "type": "rect",
+   "rect": [
+    1339.0,
+    463.5,
+    1439.0,
+    929.5
+   ],
+   "size_mm": [
+    100.0,
+    466.0
+   ],
+   "colour_srgb": [
+    30,
+    120,
+    65
+   ],
+   "colour_std": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "vector_fill_srgb": [
+    31,
+    120,
+    66
+   ],
+   "source": "vector: drawing #37248 (re), green cement target area in the centre",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": [
+    0.0,
+    0.0,
+    -0.0,
+    0.0
+   ],
+   "notes": "drawn rect; black line #37307 covers its right edge over y 621.5-771.5 (1.1 mm): the visible area is `visible` (rect less the bite), concave - the scorer reads the drawn rect until the format takes a rect less a bite (D8, as D1 box_minus_notch)",
+   "drawing": 37248,
+   "fill_cmyk": [
+    0.849,
+    0.291,
+    0.947,
+    0.169
+   ],
+   "colour": "green",
+   "rule": {
+    "rules_pdf": "WRO-2026-RoboMission-Senior-Game-Rules.pdf",
+    "page": 11,
+    "text": "3.3 \"Cement element is completely in corresponding-coloured cement target area\""
+   },
+   "visible": {
+    "polygon": [
+     [
+      1339.0,
+      463.5
+     ],
+     [
+      1439.0,
+      463.5
+     ],
+     [
+      1439.0,
+      621.5
+     ],
+     [
+      1437.9,
+      621.5
+     ],
+     [
+      1437.9,
+      771.5
+     ],
+     [
+      1439.0,
+      771.5
+     ],
+     [
+      1439.0,
+      929.5
+     ],
+     [
+      1339.0,
+      929.5
+     ]
+    ],
+    "bite": [
+     1437.9,
+     621.5,
+     1439.0,
+     771.5
+    ],
+    "bite_mm": [
+     1.1,
+     150.0
+    ],
+    "cover_drawing": 37307
+   }
+  },
+  "cement_target_blue": {
+   "type": "rect",
+   "rect": [
+    923.0,
+    463.5,
+    1023.0,
+    929.5
+   ],
+   "size_mm": [
+    100.0,
+    466.0
+   ],
+   "colour_srgb": [
+    37,
+    89,
+    168
+   ],
+   "colour_std": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "vector_fill_srgb": [
+    38,
+    89,
+    168
+   ],
+   "source": "vector: drawing #37249 (re), blue cement target area in the centre",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": [
+    0.0,
+    0.0,
+    -0.0,
+    0.0
+   ],
+   "notes": "",
+   "drawing": 37249,
+   "fill_cmyk": [
+    0.907,
+    0.714,
+    0.0,
+    0.0
+   ],
+   "colour": "blue",
+   "rule": {
+    "rules_pdf": "WRO-2026-RoboMission-Senior-Game-Rules.pdf",
+    "page": 11,
+    "text": "3.3 \"Cement element is completely in corresponding-coloured cement target area\""
+   }
+  },
+  "cement_target_yellow": {
+   "type": "rect",
+   "rect": [
+    1023.0,
+    463.5,
+    1339.0,
+    563.5
+   ],
+   "size_mm": [
+    316.0,
+    100.0
+   ],
+   "colour_srgb": [
+    250,
+    239,
+    58
+   ],
+   "colour_std": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "vector_fill_srgb": [
+    250,
+    240,
+    59
+   ],
+   "source": "vector: drawing #37250 (re), yellow cement target area in the centre",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": [
+    -0.0,
+    0.0,
+    -0.0,
+    0.0
+   ],
+   "notes": "",
+   "drawing": 37250,
+   "fill_cmyk": [
+    0.032,
+    0.0,
+    0.867,
+    0.0
+   ],
+   "colour": "yellow",
+   "rule": {
+    "rules_pdf": "WRO-2026-RoboMission-Senior-Game-Rules.pdf",
+    "page": 11,
+    "text": "3.3 \"Cement element is completely in corresponding-coloured cement target area\""
+   }
+  },
+  "cement_storage_white": {
+   "type": "rect",
+   "rect": [
+    2162.0,
+    86.5,
+    2312.0,
+    306.5
+   ],
+   "size_mm": [
+    150.0,
+    220.0
+   ],
+   "colour_srgb": [
+    255,
+    255,
+    255
+   ],
+   "colour_std": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "vector_fill_srgb": [
+    255,
+    255,
+    255
+   ],
+   "source": "vector: drawing #37218 (re), white cement storage area at the right end",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": null,
+   "notes": "",
+   "drawing": 37218,
+   "fill_cmyk": [
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "colour": "white",
+   "rule": {
+    "rules_pdf": "WRO-2026-RoboMission-Senior-Game-Rules.pdf",
+    "page": 7,
+    "text": "\"All cement elements are randomly placed within the matching-coloured cement storage area.\""
+   }
+  },
+  "cement_storage_blue": {
+   "type": "rect",
+   "rect": [
+    2162.0,
+    336.5,
+    2312.0,
+    556.5
+   ],
+   "size_mm": [
+    150.0,
+    220.0
+   ],
+   "colour_srgb": [
+    37,
+    89,
+    168
+   ],
+   "colour_std": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "vector_fill_srgb": [
+    38,
+    89,
+    168
+   ],
+   "source": "vector: drawing #37219 (re), blue cement storage area at the right end",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": [
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "notes": "",
+   "drawing": 37219,
+   "fill_cmyk": [
+    0.907,
+    0.714,
+    0.0,
+    0.0
+   ],
+   "colour": "blue",
+   "rule": {
+    "rules_pdf": "WRO-2026-RoboMission-Senior-Game-Rules.pdf",
+    "page": 7,
+    "text": "\"All cement elements are randomly placed within the matching-coloured cement storage area.\""
+   }
+  },
+  "cement_storage_green": {
+   "type": "rect",
+   "rect": [
+    2162.0,
+    586.5,
+    2312.0,
+    806.5
+   ],
+   "size_mm": [
+    150.0,
+    220.0
+   ],
+   "colour_srgb": [
+    30,
+    120,
+    65
+   ],
+   "colour_std": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "vector_fill_srgb": [
+    31,
+    120,
+    66
+   ],
+   "source": "vector: drawing #37220 (re), green cement storage area at the right end",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": [
+    0.0,
+    -0.0,
+    0.0,
+    -0.0
+   ],
+   "notes": "",
+   "drawing": 37220,
+   "fill_cmyk": [
+    0.849,
+    0.291,
+    0.947,
+    0.169
+   ],
+   "colour": "green",
+   "rule": {
+    "rules_pdf": "WRO-2026-RoboMission-Senior-Game-Rules.pdf",
+    "page": 7,
+    "text": "\"All cement elements are randomly placed within the matching-coloured cement storage area.\""
+   }
+  },
+  "cement_storage_yellow": {
+   "type": "rect",
+   "rect": [
+    2162.0,
+    836.5,
+    2312.0,
+    1056.5
+   ],
+   "size_mm": [
+    150.0,
+    220.0
+   ],
+   "colour_srgb": [
+    250,
+    239,
+    58
+   ],
+   "colour_std": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "vector_fill_srgb": [
+    250,
+    240,
+    59
+   ],
+   "source": "vector: drawing #37221 (re), yellow cement storage area at the right end",
+   "uncertainty_mm": 0.05,
+   "raster_check_edge_offsets_mm": [
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "notes": "",
+   "drawing": 37221,
+   "fill_cmyk": [
+    0.032,
+    0.0,
+    0.867,
+    0.0
+   ],
+   "colour": "yellow",
+   "rule": {
+    "rules_pdf": "WRO-2026-RoboMission-Senior-Game-Rules.pdf",
+    "page": 7,
+    "text": "\"All cement elements are randomly placed within the matching-coloured cement storage area.\""
+   }
+  },
+  "barrier_l_1": {
+   "type": "polygon",
+   "polygon": [
+    [
+     837.55,
+     378.05
+    ],
+    [
+     980.95,
+     378.05
+    ],
+    [
+     980.95,
+     425.85
+    ],
+    [
+     885.35,
+     425.85
+    ],
+    [
+     885.35,
+     521.45
+    ],
+    [
+     837.55,
+     521.45
+    ]
+   ],
+   "bbox": [
+    837.55,
+    378.05,
+    980.95,
+    521.45
+   ],
+   "box_minus_notch": {
+    "box": [
+     837.55,
+     378.05,
+     980.95,
+     521.45
+    ],
+    "notch": [
+     885.35,
+     425.85,
+     980.95,
+     521.45
+    ]
+   },
+   "arms": [
+    [
+     837.55,
+     378.05,
+     885.35,
+     521.45
+    ],
+    [
+     837.55,
+     378.05,
+     980.95,
+     425.85
+    ]
+   ],
+   "colour_srgb": [
+    96,
+    100,
+    104
+   ],
+   "colour_std": [
+    67.9,
+    63.1,
+    58.2
+   ],
+   "vector_fill_srgb": [
+    150,
+    150,
+    150
+   ],
+   "source": "vector: grey rects #37227 / #37228 (an L, sharing a corner square); polygon = their union, asserted = the box minus the notch exactly",
+   "uncertainty_mm": 0.05,
+   "notes": "non-convex: the scorer tests it as box minus notch (design \u00a72.5 insideRectilinear)",
+   "drawings": [
+    37227,
+    37228
+   ],
+   "fill_cmyk": [
+    0.438,
+    0.359,
+    0.363,
+    0.013
+   ],
+   "rule": {
+    "rules_pdf": "WRO-2026-RoboMission-Senior-Game-Rules.pdf",
+    "page": 13,
+    "text": "3.4 \"moved if a part of the game object is touching the mat outside of the grey areas\""
+   }
+  },
+  "barrier_l_2": {
+   "type": "polygon",
+   "polygon": [
+    [
+     1381.05,
+     378.05
+    ],
+    [
+     1524.45,
+     378.05
+    ],
+    [
+     1524.45,
+     521.45
+    ],
+    [
+     1476.65,
+     521.45
+    ],
+    [
+     1476.65,
+     425.85
+    ],
+    [
+     1381.05,
+     425.85
+    ]
+   ],
+   "bbox": [
+    1381.05,
+    378.05,
+    1524.45,
+    521.45
+   ],
+   "box_minus_notch": {
+    "box": [
+     1381.05,
+     378.05,
+     1524.45,
+     521.45
+    ],
+    "notch": [
+     1381.05,
+     425.85,
+     1476.65,
+     521.45
+    ]
+   },
+   "arms": [
+    [
+     1476.65,
+     378.05,
+     1524.45,
+     521.45
+    ],
+    [
+     1381.05,
+     378.05,
+     1524.45,
+     425.85
+    ]
+   ],
+   "colour_srgb": [
+    169,
+    104,
+    107
+   ],
+   "colour_std": [
+    24.3,
+    57.3,
+    54.4
+   ],
+   "vector_fill_srgb": [
+    150,
+    150,
+    150
+   ],
+   "source": "vector: grey rects #37232 / #37233 (an L, sharing a corner square); polygon = their union, asserted = the box minus the notch exactly",
+   "uncertainty_mm": 0.05,
+   "notes": "non-convex: the scorer tests it as box minus notch (design \u00a72.5 insideRectilinear)",
+   "drawings": [
+    37232,
+    37233
+   ],
+   "fill_cmyk": [
+    0.438,
+    0.359,
+    0.363,
+    0.013
+   ],
+   "rule": {
+    "rules_pdf": "WRO-2026-RoboMission-Senior-Game-Rules.pdf",
+    "page": 13,
+    "text": "3.4 \"moved if a part of the game object is touching the mat outside of the grey areas\""
+   }
+  },
+  "barrier_l_3": {
+   "type": "polygon",
+   "polygon": [
+    [
+     837.55,
+     871.55
+    ],
+    [
+     885.35,
+     871.55
+    ],
+    [
+     885.35,
+     967.15
+    ],
+    [
+     980.95,
+     967.15
+    ],
+    [
+     980.95,
+     1014.95
+    ],
+    [
+     837.55,
+     1014.95
+    ]
+   ],
+   "bbox": [
+    837.55,
+    871.55,
+    980.95,
+    1014.95
+   ],
+   "box_minus_notch": {
+    "box": [
+     837.55,
+     871.55,
+     980.95,
+     1014.95
+    ],
+    "notch": [
+     885.35,
+     871.55,
+     980.95,
+     967.15
+    ]
+   },
+   "arms": [
+    [
+     837.55,
+     871.55,
+     885.35,
+     1014.95
+    ],
+    [
+     837.55,
+     967.15,
+     980.95,
+     1014.95
+    ]
+   ],
+   "colour_srgb": [
+    169,
+    104,
+    107
+   ],
+   "colour_std": [
+    24.3,
+    57.2,
+    54.3
+   ],
+   "vector_fill_srgb": [
+    150,
+    150,
+    150
+   ],
+   "source": "vector: grey rects #37237 / #37238 (an L, sharing a corner square); polygon = their union, asserted = the box minus the notch exactly",
+   "uncertainty_mm": 0.05,
+   "notes": "non-convex: the scorer tests it as box minus notch (design \u00a72.5 insideRectilinear)",
+   "drawings": [
+    37237,
+    37238
+   ],
+   "fill_cmyk": [
+    0.438,
+    0.359,
+    0.363,
+    0.013
+   ],
+   "rule": {
+    "rules_pdf": "WRO-2026-RoboMission-Senior-Game-Rules.pdf",
+    "page": 13,
+    "text": "3.4 \"moved if a part of the game object is touching the mat outside of the grey areas\""
+   }
+  },
+  "barrier_l_4": {
+   "type": "polygon",
+   "polygon": [
+    [
+     1381.05,
+     967.15
+    ],
+    [
+     1476.65,
+     967.15
+    ],
+    [
+     1476.65,
+     871.55
+    ],
+    [
+     1524.45,
+     871.55
+    ],
+    [
+     1524.45,
+     1014.95
+    ],
+    [
+     1381.05,
+     1014.95
+    ]
+   ],
+   "bbox": [
+    1381.05,
+    871.55,
+    1524.45,
+    1014.95
+   ],
+   "box_minus_notch": {
+    "box": [
+     1381.05,
+     871.55,
+     1524.45,
+     1014.95
+    ],
+    "notch": [
+     1381.05,
+     871.55,
+     1476.65,
+     967.15
+    ]
+   },
+   "arms": [
+    [
+     1476.65,
+     871.55,
+     1524.45,
+     1014.95
+    ],
+    [
+     1381.05,
+     967.15,
+     1524.45,
+     1014.95
+    ]
+   ],
+   "colour_srgb": [
+    96,
+    100,
+    104
+   ],
+   "colour_std": [
+    68.0,
+    63.1,
+    58.3
+   ],
+   "vector_fill_srgb": [
+    150,
+    150,
+    150
+   ],
+   "source": "vector: grey rects #37242 / #37243 (an L, sharing a corner square); polygon = their union, asserted = the box minus the notch exactly",
+   "uncertainty_mm": 0.05,
+   "notes": "non-convex: the scorer tests it as box minus notch (design \u00a72.5 insideRectilinear)",
+   "drawings": [
+    37242,
+    37243
+   ],
+   "fill_cmyk": [
+    0.438,
+    0.359,
+    0.363,
+    0.013
+   ],
+   "rule": {
+    "rules_pdf": "WRO-2026-RoboMission-Senior-Game-Rules.pdf",
+    "page": 13,
+    "text": "3.4 \"moved if a part of the game object is touching the mat outside of the grey areas\""
+   }
+  },
+  "barrier_mark_1": {
+   "type": "rect",
+   "rect": [
+    845.5,
+    386.0,
+    973.0,
+    513.5
+   ],
+   "size_mm": [
+    127.5,
+    127.5
+   ],
+   "colour_srgb": [
+    102,
+    118,
+    132
+   ],
+   "colour_std": [
+    72.4,
+    64.8,
+    62.9
+   ],
+   "vector_fill_srgb": [
+    10,
+    20,
+    31
+   ],
+   "source": "vector: black L mark #37229 / #37230 (arms 15.9 x 127.5) + #37231 (31.9 corner); rect = their bounding box",
+   "uncertainty_mm": 0.05,
+   "notes": "a placement reference (the barrier start: its frame), NOT an area: the L mark is `parts`; the bounding box covers the L notch, where a cement target corner lies (review r1 N3)",
+   "parts": [
+    [
+     845.5,
+     386.0,
+     861.4,
+     513.5
+    ],
+    [
+     845.5,
+     386.0,
+     973.0,
+     401.9
+    ],
+    [
+     845.5,
+     386.0,
+     877.4,
+     417.9
+    ]
+   ],
+   "colour": "black",
+   "drawings": [
+    37229,
+    37230,
+    37231
+   ],
+   "fill_cmyk": [
+    0.837,
+    0.714,
+    0.593,
+    0.767
+   ]
+  },
+  "barrier_mark_2": {
+   "type": "rect",
+   "rect": [
+    1389.0,
+    386.0,
+    1516.5,
+    513.5
+   ],
+   "size_mm": [
+    127.5,
+    127.5
+   ],
+   "colour_srgb": [
+    146,
+    103,
+    106
+   ],
+   "colour_std": [
+    74.5,
+    52.9,
+    57.4
+   ],
+   "vector_fill_srgb": [
+    201,
+    33,
+    38
+   ],
+   "source": "vector: red L mark #37234 / #37235 (arms 15.9 x 127.5) + #37236 (31.9 corner); rect = their bounding box",
+   "uncertainty_mm": 0.05,
+   "notes": "a placement reference (the barrier start: its frame), NOT an area: the L mark is `parts`; the bounding box covers the L notch, where a cement target corner lies (review r1 N3)",
+   "parts": [
+    [
+     1500.6,
+     386.0,
+     1516.5,
+     513.5
+    ],
+    [
+     1389.0,
+     386.0,
+     1516.5,
+     401.9
+    ],
+    [
+     1484.6,
+     386.0,
+     1516.5,
+     417.9
+    ]
+   ],
+   "colour": "red",
+   "drawings": [
+    37234,
+    37235,
+    37236
+   ],
+   "fill_cmyk": [
+    0.143,
+    1.0,
+    1.0,
+    0.049
+   ]
+  },
+  "barrier_mark_3": {
+   "type": "rect",
+   "rect": [
+    845.5,
+    879.5,
+    973.0,
+    1007.0
+   ],
+   "size_mm": [
+    127.5,
+    127.5
+   ],
+   "colour_srgb": [
+    158,
+    128,
+    142
+   ],
+   "colour_std": [
+    56.3,
+    63.5,
+    60.3
+   ],
+   "vector_fill_srgb": [
+    201,
+    33,
+    38
+   ],
+   "source": "vector: red L mark #37239 / #37240 (arms 15.9 x 127.5) + #37241 (31.9 corner); rect = their bounding box",
+   "uncertainty_mm": 0.05,
+   "notes": "a placement reference (the barrier start: its frame), NOT an area: the L mark is `parts`; the bounding box covers the L notch, where a cement target corner lies (review r1 N3)",
+   "parts": [
+    [
+     845.5,
+     879.5,
+     861.4,
+     1007.0
+    ],
+    [
+     845.5,
+     991.1,
+     973.0,
+     1007.0
+    ],
+    [
+     845.5,
+     975.1,
+     877.4,
+     1007.0
+    ]
+   ],
+   "colour": "red",
+   "drawings": [
+    37239,
+    37240,
+    37241
+   ],
+   "fill_cmyk": [
+    0.143,
+    1.0,
+    1.0,
+    0.049
+   ]
+  },
+  "barrier_mark_4": {
+   "type": "rect",
+   "rect": [
+    1389.0,
+    879.5,
+    1516.5,
+    1007.0
+   ],
+   "size_mm": [
+    127.5,
+    127.5
+   ],
+   "colour_srgb": [
+    82,
+    103,
+    101
+   ],
+   "colour_std": [
+    70.0,
+    61.1,
+    58.0
+   ],
+   "vector_fill_srgb": [
+    10,
+    20,
+    31
+   ],
+   "source": "vector: black L mark #37244 / #37245 (arms 15.9 x 127.5) + #37246 (31.9 corner); rect = their bounding box",
+   "uncertainty_mm": 0.05,
+   "notes": "a placement reference (the barrier start: its frame), NOT an area: the L mark is `parts`; the bounding box covers the L notch, where a cement target corner lies (review r1 N3)",
+   "parts": [
+    [
+     1500.6,
+     879.5,
+     1516.5,
+     1007.0
+    ],
+    [
+     1389.0,
+     991.1,
+     1516.5,
+     1007.0
+    ],
+    [
+     1484.6,
+     975.1,
+     1516.5,
+     1007.0
+    ]
+   ],
+   "colour": "black",
+   "drawings": [
+    37244,
+    37245,
+    37246
+   ],
+   "fill_cmyk": [
+    0.837,
+    0.714,
+    0.593,
+    0.767
+   ]
+  }
+ },
+ "lines": {
+  "line_37280": {
+   "kind": "straight",
+   "rect": [
+    323.0,
+    263.0,
+    1855.5,
+    283.0
+   ],
+   "centreline": [
+    [
+     323.0,
+     273.0
+    ],
+    [
+     1855.5,
+     273.0
+    ]
+   ],
+   "width_mm": 20.0,
+   "source": "vector: drawing #37280 (re), centreline = long-axis midline",
+   "uncertainty_mm": 0.05,
+   "drawing": 37280,
+   "fill_cmyk": [
+    0.837,
+    0.714,
+    0.593,
+    0.767
+   ],
+   "colour_srgb": [
+    10,
+    20,
+    30
+   ]
+  },
+  "line_37281": {
+   "kind": "straight",
+   "rect": [
+    1845.5,
+    186.5,
+    1865.5,
+    936.5
+   ],
+   "centreline": [
+    [
+     1855.5,
+     186.5
+    ],
+    [
+     1855.5,
+     936.5
+    ]
+   ],
+   "width_mm": 20.0,
+   "source": "vector: drawing #37281 (re), centreline = long-axis midline",
+   "uncertainty_mm": 0.05,
+   "drawing": 37281,
+   "fill_cmyk": [
+    0.837,
+    0.714,
+    0.593,
+    0.767
+   ],
+   "colour_srgb": [
+    10,
+    20,
+    30
+   ]
+  },
+  "line_37282": {
+   "kind": "straight",
+   "rect": [
+    1845.5,
+    936.5,
+    2162.0,
+    956.5
+   ],
+   "centreline": [
+    [
+     1845.5,
+     946.5
+    ],
+    [
+     2162.0,
+     946.5
+    ]
+   ],
+   "width_mm": 20.0,
+   "source": "vector: drawing #37282 (re), centreline = long-axis midline",
+   "uncertainty_mm": 0.05,
+   "drawing": 37282,
+   "fill_cmyk": [
+    0.837,
+    0.714,
+    0.593,
+    0.767
+   ],
+   "colour_srgb": [
+    10,
+    20,
+    30
+   ]
+  },
+  "line_37283": {
+   "kind": "straight",
+   "rect": [
+    2142.0,
+    871.5,
+    2162.0,
+    1021.5
+   ],
+   "centreline": [
+    [
+     2152.0,
+     871.5
+    ],
+    [
+     2152.0,
+     1021.5
+    ]
+   ],
+   "width_mm": 20.0,
+   "source": "vector: drawing #37283 (re), centreline = long-axis midline",
+   "uncertainty_mm": 0.05,
+   "drawing": 37283,
+   "fill_cmyk": [
+    0.837,
+    0.714,
+    0.593,
+    0.767
+   ],
+   "colour_srgb": [
+    10,
+    20,
+    30
+   ]
+  },
+  "line_37285": {
+   "kind": "straight",
+   "rect": [
+    1845.5,
+    686.5,
+    2162.0,
+    706.5
+   ],
+   "centreline": [
+    [
+     1845.5,
+     696.5
+    ],
+    [
+     2162.0,
+     696.5
+    ]
+   ],
+   "width_mm": 20.0,
+   "source": "vector: drawing #37285 (re), centreline = long-axis midline",
+   "uncertainty_mm": 0.05,
+   "drawing": 37285,
+   "fill_cmyk": [
+    0.837,
+    0.714,
+    0.593,
+    0.767
+   ],
+   "colour_srgb": [
+    10,
+    20,
+    30
+   ]
+  },
+  "line_37286": {
+   "kind": "straight",
+   "rect": [
+    2142.0,
+    621.5,
+    2162.0,
+    771.5
+   ],
+   "centreline": [
+    [
+     2152.0,
+     621.5
+    ],
+    [
+     2152.0,
+     771.5
+    ]
+   ],
+   "width_mm": 20.0,
+   "source": "vector: drawing #37286 (re), centreline = long-axis midline",
+   "uncertainty_mm": 0.05,
+   "drawing": 37286,
+   "fill_cmyk": [
+    0.837,
+    0.714,
+    0.593,
+    0.767
+   ],
+   "colour_srgb": [
+    10,
+    20,
+    30
+   ]
+  },
+  "line_37288": {
+   "kind": "straight",
+   "rect": [
+    1845.5,
+    436.5,
+    2162.0,
+    456.5
+   ],
+   "centreline": [
+    [
+     1845.5,
+     446.5
+    ],
+    [
+     2162.0,
+     446.5
+    ]
+   ],
+   "width_mm": 20.0,
+   "source": "vector: drawing #37288 (re), centreline = long-axis midline",
+   "uncertainty_mm": 0.05,
+   "drawing": 37288,
+   "fill_cmyk": [
+    0.837,
+    0.714,
+    0.593,
+    0.767
+   ],
+   "colour_srgb": [
+    10,
+    20,
+    30
+   ]
+  },
+  "line_37289": {
+   "kind": "straight",
+   "rect": [
+    2142.0,
+    371.5,
+    2162.0,
+    521.5
+   ],
+   "centreline": [
+    [
+     2152.0,
+     371.5
+    ],
+    [
+     2152.0,
+     521.5
+    ]
+   ],
+   "width_mm": 20.0,
+   "source": "vector: drawing #37289 (re), centreline = long-axis midline",
+   "uncertainty_mm": 0.05,
+   "drawing": 37289,
+   "fill_cmyk": [
+    0.837,
+    0.714,
+    0.593,
+    0.767
+   ],
+   "colour_srgb": [
+    10,
+    20,
+    30
+   ]
+  },
+  "line_37291": {
+   "kind": "straight",
+   "rect": [
+    1845.5,
+    186.5,
+    2162.0,
+    206.5
+   ],
+   "centreline": [
+    [
+     1845.5,
+     196.5
+    ],
+    [
+     2162.0,
+     196.5
+    ]
+   ],
+   "width_mm": 20.0,
+   "source": "vector: drawing #37291 (re), centreline = long-axis midline",
+   "uncertainty_mm": 0.05,
+   "drawing": 37291,
+   "fill_cmyk": [
+    0.837,
+    0.714,
+    0.593,
+    0.767
+   ],
+   "colour_srgb": [
+    10,
+    20,
+    30
+   ]
+  },
+  "line_37292": {
+   "kind": "straight",
+   "rect": [
+    2142.0,
+    121.5,
+    2162.0,
+    271.5
+   ],
+   "centreline": [
+    [
+     2152.0,
+     121.5
+    ],
+    [
+     2152.0,
+     271.5
+    ]
+   ],
+   "width_mm": 20.0,
+   "source": "vector: drawing #37292 (re), centreline = long-axis midline",
+   "uncertainty_mm": 0.05,
+   "drawing": 37292,
+   "fill_cmyk": [
+    0.837,
+    0.714,
+    0.593,
+    0.767
+   ],
+   "colour_srgb": [
+    10,
+    20,
+    30
+   ]
+  },
+  "line_37294": {
+   "kind": "straight",
+   "rect": [
+    1106.0,
+    443.5,
+    1256.0,
+    463.5
+   ],
+   "centreline": [
+    [
+     1106.0,
+     453.5
+    ],
+    [
+     1256.0,
+     453.5
+    ]
+   ],
+   "width_mm": 20.0,
+   "source": "vector: drawing #37294 (re), centreline = long-axis midline",
+   "uncertainty_mm": 0.05,
+   "drawing": 37294,
+   "fill_cmyk": [
+    0.837,
+    0.714,
+    0.593,
+    0.767
+   ],
+   "colour_srgb": [
+    10,
+    20,
+    30
+   ]
+  },
+  "line_37295": {
+   "kind": "straight",
+   "rect": [
+    1171.0,
+    283.0,
+    1191.0,
+    443.5
+   ],
+   "centreline": [
+    [
+     1181.0,
+     283.0
+    ],
+    [
+     1181.0,
+     443.5
+    ]
+   ],
+   "width_mm": 20.0,
+   "source": "vector: drawing #37295 (re), centreline = long-axis midline",
+   "uncertainty_mm": 0.05,
+   "drawing": 37295,
+   "fill_cmyk": [
+    0.837,
+    0.714,
+    0.593,
+    0.767
+   ],
+   "colour_srgb": [
+    10,
+    20,
+    30
+   ]
+  },
+  "line_37296": {
+   "kind": "straight",
+   "rect": [
+    818.3,
+    166.5,
+    968.3,
+    186.5
+   ],
+   "centreline": [
+    [
+     818.3,
+     176.5
+    ],
+    [
+     968.3,
+     176.5
+    ]
+   ],
+   "width_mm": 20.0,
+   "source": "vector: drawing #37296 (re), centreline = long-axis midline",
+   "uncertainty_mm": 0.05,
+   "drawing": 37296,
+   "fill_cmyk": [
+    0.837,
+    0.714,
+    0.593,
+    0.767
+   ],
+   "colour_srgb": [
+    10,
+    20,
+    30
+   ]
+  },
+  "line_37297": {
+   "kind": "straight",
+   "rect": [
+    1402.75,
+    166.5,
+    1552.75,
+    186.5
+   ],
+   "centreline": [
+    [
+     1402.75,
+     176.5
+    ],
+    [
+     1552.75,
+     176.5
+    ]
+   ],
+   "width_mm": 20.0,
+   "source": "vector: drawing #37297 (re), centreline = long-axis midline",
+   "uncertainty_mm": 0.05,
+   "drawing": 37297,
+   "fill_cmyk": [
+    0.837,
+    0.714,
+    0.593,
+    0.767
+   ],
+   "colour_srgb": [
+    10,
+    20,
+    30
+   ]
+  },
+  "line_37300": {
+   "kind": "straight",
+   "rect": [
+    883.3,
+    186.5,
+    903.3,
+    263.0
+   ],
+   "centreline": [
+    [
+     893.3,
+     186.5
+    ],
+    [
+     893.3,
+     263.0
+    ]
+   ],
+   "width_mm": 20.0,
+   "source": "vector: drawing #37300 (re), centreline = long-axis midline",
+   "uncertainty_mm": 0.05,
+   "drawing": 37300,
+   "fill_cmyk": [
+    0.837,
+    0.714,
+    0.593,
+    0.767
+   ],
+   "colour_srgb": [
+    10,
+    20,
+    30
+   ]
+  },
+  "line_37301": {
+   "kind": "straight",
+   "rect": [
+    1468.42,
+    186.16,
+    1488.42,
+    263.0
+   ],
+   "centreline": [
+    [
+     1478.42,
+     186.16
+    ],
+    [
+     1478.42,
+     263.0
+    ]
+   ],
+   "width_mm": 20.0,
+   "source": "vector: drawing #37301 (re), centreline = long-axis midline",
+   "uncertainty_mm": 0.05,
+   "drawing": 37301,
+   "fill_cmyk": [
+    0.837,
+    0.714,
+    0.593,
+    0.767
+   ],
+   "colour_srgb": [
+    10,
+    20,
+    30
+   ]
+  },
+  "line_37303": {
+   "kind": "straight",
+   "rect": [
+    1457.9,
+    686.5,
+    1845.5,
+    706.5
+   ],
+   "centreline": [
+    [
+     1457.9,
+     696.5
+    ],
+    [
+     1845.5,
+     696.5
+    ]
+   ],
+   "width_mm": 20.0,
+   "source": "vector: drawing #37303 (re), centreline = long-axis midline",
+   "uncertainty_mm": 0.05,
+   "drawing": 37303,
+   "fill_cmyk": [
+    0.837,
+    0.714,
+    0.593,
+    0.767
+   ],
+   "colour_srgb": [
+    10,
+    20,
+    30
+   ]
+  },
+  "line_37307": {
+   "kind": "straight",
+   "rect": [
+    1437.9,
+    621.5,
+    1457.9,
+    771.5
+   ],
+   "centreline": [
+    [
+     1447.9,
+     621.5
+    ],
+    [
+     1447.9,
+     771.5
+    ]
+   ],
+   "width_mm": 20.0,
+   "source": "vector: drawing #37307 (re), centreline = long-axis midline",
+   "uncertainty_mm": 0.05,
+   "drawing": 37307,
+   "fill_cmyk": [
+    0.837,
+    0.714,
+    0.593,
+    0.767
+   ],
+   "colour_srgb": [
+    10,
+    20,
+    30
+   ]
+  },
+  "line_37310": {
+   "kind": "straight",
+   "rect": [
+    496.5,
+    283.0,
+    516.5,
+    946.5
+   ],
+   "centreline": [
+    [
+     506.5,
+     283.0
+    ],
+    [
+     506.5,
+     946.5
+    ]
+   ],
+   "width_mm": 20.0,
+   "source": "vector: drawing #37310 (re), centreline = long-axis midline",
+   "uncertainty_mm": 0.05,
+   "drawing": 37310,
+   "fill_cmyk": [
+    0.837,
+    0.714,
+    0.593,
+    0.767
+   ],
+   "colour_srgb": [
+    10,
+    20,
+    30
+   ]
+  },
+  "line_37312": {
+   "kind": "straight",
+   "rect": [
+    516.5,
+    686.5,
+    903.3,
+    706.5
+   ],
+   "centreline": [
+    [
+     516.5,
+     696.5
+    ],
+    [
+     903.3,
+     696.5
+    ]
+   ],
+   "width_mm": 20.0,
+   "source": "vector: drawing #37312 (re), centreline = long-axis midline",
+   "uncertainty_mm": 0.05,
+   "drawing": 37312,
+   "fill_cmyk": [
+    0.837,
+    0.714,
+    0.593,
+    0.767
+   ],
+   "colour_srgb": [
+    10,
+    20,
+    30
+   ]
+  },
+  "line_37313": {
+   "kind": "straight",
+   "rect": [
+    903.3,
+    621.5,
+    923.3,
+    771.5
+   ],
+   "centreline": [
+    [
+     913.3,
+     621.5
+    ],
+    [
+     913.3,
+     771.5
+    ]
+   ],
+   "width_mm": 20.0,
+   "source": "vector: drawing #37313 (re), centreline = long-axis midline",
+   "uncertainty_mm": 0.05,
+   "drawing": 37313,
+   "fill_cmyk": [
+    0.837,
+    0.714,
+    0.593,
+    0.767
+   ],
+   "colour_srgb": [
+    10,
+    20,
+    30
+   ]
+  },
+  "line_37314": {
+   "kind": "straight",
+   "rect": [
+    298.15,
+    888.65,
+    318.15,
+    984.35
+   ],
+   "centreline": [
+    [
+     308.15,
+     888.65
+    ],
+    [
+     308.15,
+     984.35
+    ]
+   ],
+   "width_mm": 20.0,
+   "source": "vector: drawing #37314 (re), centreline = long-axis midline",
+   "uncertainty_mm": 0.05,
+   "drawing": 37314,
+   "fill_cmyk": [
+    0.837,
+    0.714,
+    0.593,
+    0.767
+   ],
+   "colour_srgb": [
+    10,
+    20,
+    30
+   ]
+  },
+  "line_37315": {
+   "kind": "straight",
+   "rect": [
+    298.15,
+    728.8,
+    318.15,
+    824.5
+   ],
+   "centreline": [
+    [
+     308.15,
+     728.8
+    ],
+    [
+     308.15,
+     824.5
+    ]
+   ],
+   "width_mm": 20.0,
+   "source": "vector: drawing #37315 (re), centreline = long-axis midline",
+   "uncertainty_mm": 0.05,
+   "drawing": 37315,
+   "fill_cmyk": [
+    0.837,
+    0.714,
+    0.593,
+    0.767
+   ],
+   "colour_srgb": [
+    10,
+    20,
+    30
+   ]
+  },
+  "line_37316": {
+   "kind": "straight",
+   "rect": [
+    298.15,
+    569.3,
+    318.15,
+    665.0
+   ],
+   "centreline": [
+    [
+     308.15,
+     569.3
+    ],
+    [
+     308.15,
+     665.0
+    ]
+   ],
+   "width_mm": 20.0,
+   "source": "vector: drawing #37316 (re), centreline = long-axis midline",
+   "uncertainty_mm": 0.05,
+   "drawing": 37316,
+   "fill_cmyk": [
+    0.837,
+    0.714,
+    0.593,
+    0.767
+   ],
+   "colour_srgb": [
+    10,
+    20,
+    30
+   ]
+  },
+  "line_37317": {
+   "kind": "straight",
+   "rect": [
+    298.15,
+    409.8,
+    318.15,
+    505.5
+   ],
+   "centreline": [
+    [
+     308.15,
+     409.8
+    ],
+    [
+     308.15,
+     505.5
+    ]
+   ],
+   "width_mm": 20.0,
+   "source": "vector: drawing #37317 (re), centreline = long-axis midline",
+   "uncertainty_mm": 0.05,
+   "drawing": 37317,
+   "fill_cmyk": [
+    0.837,
+    0.714,
+    0.593,
+    0.767
+   ],
+   "colour_srgb": [
+    10,
+    20,
+    30
+   ]
+  },
+  "line_37318": {
+   "kind": "straight",
+   "rect": [
+    318.15,
+    447.65,
+    496.5,
+    467.65
+   ],
+   "centreline": [
+    [
+     318.15,
+     457.65
+    ],
+    [
+     496.5,
+     457.65
+    ]
+   ],
+   "width_mm": 20.0,
+   "source": "vector: drawing #37318 (re), centreline = long-axis midline",
+   "uncertainty_mm": 0.05,
+   "drawing": 37318,
+   "fill_cmyk": [
+    0.837,
+    0.714,
+    0.593,
+    0.767
+   ],
+   "colour_srgb": [
+    10,
+    20,
+    30
+   ]
+  },
+  "line_37319": {
+   "kind": "straight",
+   "rect": [
+    318.15,
+    607.15,
+    496.5,
+    627.15
+   ],
+   "centreline": [
+    [
+     318.15,
+     617.15
+    ],
+    [
+     496.5,
+     617.15
+    ]
+   ],
+   "width_mm": 20.0,
+   "source": "vector: drawing #37319 (re), centreline = long-axis midline",
+   "uncertainty_mm": 0.05,
+   "drawing": 37319,
+   "fill_cmyk": [
+    0.837,
+    0.714,
+    0.593,
+    0.767
+   ],
+   "colour_srgb": [
+    10,
+    20,
+    30
+   ]
+  },
+  "line_37320": {
+   "kind": "straight",
+   "rect": [
+    318.15,
+    766.65,
+    496.5,
+    786.65
+   ],
+   "centreline": [
+    [
+     318.15,
+     776.65
+    ],
+    [
+     496.5,
+     776.65
+    ]
+   ],
+   "width_mm": 20.0,
+   "source": "vector: drawing #37320 (re), centreline = long-axis midline",
+   "uncertainty_mm": 0.05,
+   "drawing": 37320,
+   "fill_cmyk": [
+    0.837,
+    0.714,
+    0.593,
+    0.767
+   ],
+   "colour_srgb": [
+    10,
+    20,
+    30
+   ]
+  },
+  "line_37321": {
+   "kind": "straight",
+   "rect": [
+    318.15,
+    926.5,
+    496.5,
+    946.5
+   ],
+   "centreline": [
+    [
+     318.15,
+     936.5
+    ],
+    [
+     496.5,
+     936.5
+    ]
+   ],
+   "width_mm": 20.0,
+   "source": "vector: drawing #37321 (re), centreline = long-axis midline",
+   "uncertainty_mm": 0.05,
+   "drawing": 37321,
+   "fill_cmyk": [
+    0.837,
+    0.714,
+    0.593,
+    0.767
+   ],
+   "colour_srgb": [
+    10,
+    20,
+    30
+   ]
+  },
+  "line_37322": {
+   "kind": "straight",
+   "rect": [
+    1106.0,
+    166.5,
+    1256.0,
+    186.5
+   ],
+   "centreline": [
+    [
+     1106.0,
+     176.5
+    ],
+    [
+     1256.0,
+     176.5
+    ]
+   ],
+   "width_mm": 20.0,
+   "source": "vector: drawing #37322 (re), centreline = long-axis midline",
+   "uncertainty_mm": 0.05,
+   "drawing": 37322,
+   "fill_cmyk": [
+    0.837,
+    0.714,
+    0.593,
+    0.767
+   ],
+   "colour_srgb": [
+    10,
+    20,
+    30
+   ]
+  },
+  "line_37324": {
+   "kind": "straight",
+   "rect": [
+    1171.0,
+    186.5,
+    1191.0,
+    263.0
+   ],
+   "centreline": [
+    [
+     1181.0,
+     186.5
+    ],
+    [
+     1181.0,
+     263.0
+    ]
+   ],
+   "width_mm": 20.0,
+   "source": "vector: drawing #37324 (re), centreline = long-axis midline",
+   "uncertainty_mm": 0.05,
+   "drawing": 37324,
+   "fill_cmyk": [
+    0.837,
+    0.714,
+    0.593,
+    0.767
+   ],
+   "colour_srgb": [
+    10,
+    20,
+    30
+   ]
+  }
+ },
+ "line_junctions": [
+  {
+   "stem": "line_37280",
+   "end": 1,
+   "joins": "line_37281",
+   "at": [
+    1855.5,
+    273.0
+   ]
+  },
+  {
+   "stem": "line_37281",
+   "end": 1,
+   "joins": "line_37282",
+   "at": [
+    1855.5,
+    946.5
+   ]
+  },
+  {
+   "stem": "line_37285",
+   "end": 0,
+   "joins": "line_37303",
+   "at": [
+    1845.5,
+    696.5
+   ]
+  },
+  {
+   "stem": "line_37295",
+   "end": 0,
+   "joins": "line_37280",
+   "at": [
+    1181.0,
+    273.0
+   ]
+  },
+  {
+   "stem": "line_37295",
+   "end": 1,
+   "joins": "line_37294",
+   "at": [
+    1181.0,
+    453.5
+   ]
+  },
+  {
+   "stem": "line_37300",
+   "end": 0,
+   "joins": "line_37296",
+   "at": [
+    893.3,
+    176.5
+   ]
+  },
+  {
+   "stem": "line_37300",
+   "end": 1,
+   "joins": "line_37280",
+   "at": [
+    893.3,
+    273.0
+   ]
+  },
+  {
+   "stem": "line_37301",
+   "end": 0,
+   "joins": "line_37297",
+   "at": [
+    1478.42,
+    176.5
+   ]
+  },
+  {
+   "stem": "line_37301",
+   "end": 1,
+   "joins": "line_37280",
+   "at": [
+    1478.42,
+    273.0
+   ]
+  },
+  {
+   "stem": "line_37303",
+   "end": 0,
+   "joins": "line_37307",
+   "at": [
+    1447.9,
+    696.5
+   ]
+  },
+  {
+   "stem": "line_37303",
+   "end": 1,
+   "joins": "line_37281",
+   "at": [
+    1855.5,
+    696.5
+   ]
+  },
+  {
+   "stem": "line_37310",
+   "end": 0,
+   "joins": "line_37280",
+   "at": [
+    506.5,
+    273.0
+   ]
+  },
+  {
+   "stem": "line_37312",
+   "end": 0,
+   "joins": "line_37310",
+   "at": [
+    506.5,
+    696.5
+   ]
+  },
+  {
+   "stem": "line_37312",
+   "end": 1,
+   "joins": "line_37313",
+   "at": [
+    913.3,
+    696.5
+   ]
+  },
+  {
+   "stem": "line_37318",
+   "end": 0,
+   "joins": "line_37317",
+   "at": [
+    308.15,
+    457.65
+   ]
+  },
+  {
+   "stem": "line_37318",
+   "end": 1,
+   "joins": "line_37310",
+   "at": [
+    506.5,
+    457.65
+   ]
+  },
+  {
+   "stem": "line_37319",
+   "end": 0,
+   "joins": "line_37316",
+   "at": [
+    308.15,
+    617.15
+   ]
+  },
+  {
+   "stem": "line_37319",
+   "end": 1,
+   "joins": "line_37310",
+   "at": [
+    506.5,
+    617.15
+   ]
+  },
+  {
+   "stem": "line_37320",
+   "end": 0,
+   "joins": "line_37315",
+   "at": [
+    308.15,
+    776.65
+   ]
+  },
+  {
+   "stem": "line_37320",
+   "end": 1,
+   "joins": "line_37310",
+   "at": [
+    506.5,
+    776.65
+   ]
+  },
+  {
+   "stem": "line_37321",
+   "end": 0,
+   "joins": "line_37314",
+   "at": [
+    308.15,
+    936.5
+   ]
+  },
+  {
+   "stem": "line_37321",
+   "end": 1,
+   "joins": "line_37310",
+   "at": [
+    506.5,
+    936.5
+   ]
+  },
+  {
+   "stem": "line_37324",
+   "end": 0,
+   "joins": "line_37322",
+   "at": [
+    1181.0,
+    176.5
+   ]
+  },
+  {
+   "stem": "line_37324",
+   "end": 1,
+   "joins": "line_37280",
+   "at": [
+    1181.0,
+    273.0
+   ]
+  }
+ ],
+ "roads": {
+  "road_37277": {
+   "type": "rect",
+   "rect": [
+    1930.5,
+    871.5,
+    2162.0,
+    1021.5
+   ],
+   "source": "vector: drawing #37277 (re), white",
+   "drawing": 37277,
+   "fill_cmyk": [
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  "road_37278": {
+   "type": "rect",
+   "rect": [
+    1780.5,
+    121.5,
+    1930.5,
+    1021.5
+   ],
+   "source": "vector: drawing #37278 (re), white",
+   "drawing": 37278,
+   "fill_cmyk": [
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  "road_37279": {
+   "type": "rect",
+   "rect": [
+    323.0,
+    223.0,
+    1930.5,
+    323.0
+   ],
+   "source": "vector: drawing #37279 (re), white",
+   "drawing": 37279,
+   "fill_cmyk": [
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  "road_37284": {
+   "type": "rect",
+   "rect": [
+    1930.5,
+    621.5,
+    2162.0,
+    771.5
+   ],
+   "source": "vector: drawing #37284 (re), white",
+   "drawing": 37284,
+   "fill_cmyk": [
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  "road_37287": {
+   "type": "rect",
+   "rect": [
+    1930.5,
+    371.5,
+    2162.0,
+    521.5
+   ],
+   "source": "vector: drawing #37287 (re), white",
+   "drawing": 37287,
+   "fill_cmyk": [
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  "road_37290": {
+   "type": "rect",
+   "rect": [
+    1930.5,
+    121.5,
+    2162.0,
+    271.5
+   ],
+   "source": "vector: drawing #37290 (re), white",
+   "drawing": 37290,
+   "fill_cmyk": [
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  "road_37293": {
+   "type": "rect",
+   "rect": [
+    1106.0,
+    283.0,
+    1256.0,
+    443.5
+   ],
+   "source": "vector: drawing #37293 (re), white",
+   "drawing": 37293,
+   "fill_cmyk": [
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  "road_37298": {
+   "type": "rect",
+   "rect": [
+    818.3,
+    186.5,
+    968.3,
+    223.0
+   ],
+   "source": "vector: drawing #37298 (re), white",
+   "drawing": 37298,
+   "fill_cmyk": [
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  "road_37299": {
+   "type": "rect",
+   "rect": [
+    1402.75,
+    186.5,
+    1552.75,
+    223.0
+   ],
+   "source": "vector: drawing #37299 (re), white",
+   "drawing": 37299,
+   "fill_cmyk": [
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  "road_37302": {
+   "type": "rect",
+   "rect": [
+    1457.9,
+    621.5,
+    1780.5,
+    771.5
+   ],
+   "source": "vector: drawing #37302 (re), white",
+   "drawing": 37302,
+   "fill_cmyk": [
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  "road_37304": {
+   "type": "rect",
+   "rect": [
+    318.15,
+    888.65,
+    431.5,
+    984.35
+   ],
+   "source": "vector: drawing #37304 (re), white",
+   "drawing": 37304,
+   "fill_cmyk": [
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  "road_37305": {
+   "type": "rect",
+   "rect": [
+    318.15,
+    728.8,
+    431.5,
+    824.5
+   ],
+   "source": "vector: drawing #37305 (re), white",
+   "drawing": 37305,
+   "fill_cmyk": [
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  "road_37306": {
+   "type": "rect",
+   "rect": [
+    318.15,
+    569.3,
+    431.5,
+    665.0
+   ],
+   "source": "vector: drawing #37306 (re), white",
+   "drawing": 37306,
+   "fill_cmyk": [
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  "road_37308": {
+   "type": "rect",
+   "rect": [
+    318.15,
+    409.8,
+    431.5,
+    505.5
+   ],
+   "source": "vector: drawing #37308 (re), white",
+   "drawing": 37308,
+   "fill_cmyk": [
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  "road_37309": {
+   "type": "rect",
+   "rect": [
+    431.5,
+    323.0,
+    581.5,
+    984.35
+   ],
+   "source": "vector: drawing #37309 (re), white",
+   "drawing": 37309,
+   "fill_cmyk": [
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  "road_37311": {
+   "type": "rect",
+   "rect": [
+    581.5,
+    621.5,
+    903.3,
+    771.5
+   ],
+   "source": "vector: drawing #37311 (re), white",
+   "drawing": 37311,
+   "fill_cmyk": [
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  "road_37323": {
+   "type": "rect",
+   "rect": [
+    1106.0,
+    186.5,
+    1256.0,
+    223.0
+   ],
+   "source": "vector: drawing #37323 (re), white",
+   "drawing": 37323,
+   "fill_cmyk": [
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  }
+ },
+ "colours_misc": {
+  "white_road": {
+   "colour_srgb": [
+    255,
+    255,
+    255
+   ],
+   "colour_std": [
+    0.2,
+    0.1,
+    0.2
+   ]
+  },
+  "black_line": {
+   "colour_srgb": [
+    10,
+    20,
+    30
+   ],
+   "colour_std": [
+    0.9,
+    0.8,
+    0.8
+   ]
+  },
+  "reflectance_white_place": {
+   "at": [
+    1126.75,
+    243.0
+   ],
+   "source": "road #37279: its centre x, midway between its bottom edge and line #37280's"
+  },
+  "reflectance_black_place": {
+   "at": [
+    1089.25,
+    273.0
+   ],
+   "source": "line #37280's centre"
+  },
+  "mat_ground": {
+   "drawings": [
+    0,
+    1
+   ],
+   "fill_cmyk": [
+    [
+     0.284,
+     0.217,
+     0.221,
+     0.059
+    ],
+    [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   ],
+   "rects": [
+    [
+     6.74,
+     0.0,
+     2362.0,
+     1143.0
+    ],
+    [
+     0.0,
+     0.0,
+     561.05,
+     1143.0
+    ]
+   ],
+   "notes": "the base fills under everything, each its own rect (painted in drawing order)"
+  }
+ },
+ "groups": {
+  "start": [
+   "start_area",
+   "start_area_frame"
+  ],
+  "tile_starts_yellow": [
+   "tile_start_yellow_1",
+   "tile_start_yellow_2",
+   "tile_start_yellow_3",
+   "tile_start_yellow_4",
+   "tile_start_yellow_5",
+   "tile_start_yellow_6"
+  ],
+  "tile_starts_blue": [
+   "tile_start_blue_1",
+   "tile_start_blue_2",
+   "tile_start_blue_3",
+   "tile_start_blue_4",
+   "tile_start_blue_5",
+   "tile_start_blue_6"
+  ],
+  "tile_starts_green": [
+   "tile_start_green_1",
+   "tile_start_green_2",
+   "tile_start_green_3",
+   "tile_start_green_4",
+   "tile_start_green_5",
+   "tile_start_green_6"
+  ],
+  "tile_starts_white": [
+   "tile_start_white_1",
+   "tile_start_white_2",
+   "tile_start_white_3",
+   "tile_start_white_4",
+   "tile_start_white_5",
+   "tile_start_white_6"
+  ],
+  "cement": {
+   "yellow": "cement_target_yellow",
+   "blue": "cement_target_blue",
+   "green": "cement_target_green",
+   "white": "cement_target_white"
+  },
+  "barrier_areas": [
+   "barrier_l_1",
+   "barrier_l_2",
+   "barrier_l_3",
+   "barrier_l_4"
+  ],
+  "barrier_l_to_cement_target_min_gap_mm": 37.65,
+  "fixture_starts": {
+   "tile_yellow_1_start": "tile_start_yellow_1",
+   "tile_yellow_2_start": "tile_start_yellow_2",
+   "tile_yellow_3_start": "tile_start_yellow_3",
+   "tile_yellow_4_start": "tile_start_yellow_4",
+   "tile_yellow_5_start": "tile_start_yellow_5",
+   "tile_yellow_6_start": "tile_start_yellow_6",
+   "tile_blue_1_start": "tile_start_blue_1",
+   "tile_blue_2_start": "tile_start_blue_2",
+   "tile_blue_3_start": "tile_start_blue_3",
+   "tile_blue_4_start": "tile_start_blue_4",
+   "tile_blue_5_start": "tile_start_blue_5",
+   "tile_blue_6_start": "tile_start_blue_6",
+   "tile_green_1_start": "tile_start_green_1",
+   "tile_green_2_start": "tile_start_green_2",
+   "tile_green_3_start": "tile_start_green_3",
+   "tile_green_4_start": "tile_start_green_4",
+   "tile_green_5_start": "tile_start_green_5",
+   "tile_green_6_start": "tile_start_green_6",
+   "tile_white_1_start": "tile_start_white_1",
+   "tile_white_2_start": "tile_start_white_2",
+   "tile_white_3_start": "tile_start_white_3",
+   "tile_white_4_start": "tile_start_white_4",
+   "tile_white_5_start": "tile_start_white_5",
+   "tile_white_6_start": "tile_start_white_6",
+   "barrier_1_start": "barrier_mark_1",
+   "barrier_2_start": "barrier_mark_2",
+   "barrier_3_start": "barrier_mark_3",
+   "barrier_4_start": "barrier_mark_4"
+  },
+  "fixture_random_starts": {
+   "cement_yellow_1_start": "cement_storage_yellow",
+   "cement_yellow_2_start": "cement_storage_yellow",
+   "cement_yellow_3_start": "cement_storage_yellow",
+   "cement_yellow_4_start": "cement_storage_yellow",
+   "cement_yellow_5_start": "cement_storage_yellow",
+   "cement_yellow_6_start": "cement_storage_yellow",
+   "cement_yellow_7_start": "cement_storage_yellow",
+   "cement_yellow_8_start": "cement_storage_yellow",
+   "cement_yellow_9_start": "cement_storage_yellow",
+   "cement_yellow_10_start": "cement_storage_yellow",
+   "cement_blue_1_start": "cement_storage_blue",
+   "cement_blue_2_start": "cement_storage_blue",
+   "cement_blue_3_start": "cement_storage_blue",
+   "cement_blue_4_start": "cement_storage_blue",
+   "cement_blue_5_start": "cement_storage_blue",
+   "cement_blue_6_start": "cement_storage_blue",
+   "cement_blue_7_start": "cement_storage_blue",
+   "cement_blue_8_start": "cement_storage_blue",
+   "cement_blue_9_start": "cement_storage_blue",
+   "cement_blue_10_start": "cement_storage_blue",
+   "cement_green_1_start": "cement_storage_green",
+   "cement_green_2_start": "cement_storage_green",
+   "cement_green_3_start": "cement_storage_green",
+   "cement_green_4_start": "cement_storage_green",
+   "cement_green_5_start": "cement_storage_green",
+   "cement_green_6_start": "cement_storage_green",
+   "cement_green_7_start": "cement_storage_green",
+   "cement_green_8_start": "cement_storage_green",
+   "cement_green_9_start": "cement_storage_green",
+   "cement_green_10_start": "cement_storage_green",
+   "cement_white_1_start": "cement_storage_white",
+   "cement_white_2_start": "cement_storage_white",
+   "cement_white_3_start": "cement_storage_white",
+   "cement_white_4_start": "cement_storage_white",
+   "cement_white_5_start": "cement_storage_white",
+   "cement_white_6_start": "cement_storage_white",
+   "cement_white_7_start": "cement_storage_white",
+   "cement_white_8_start": "cement_storage_white",
+   "cement_white_9_start": "cement_storage_white",
+   "cement_white_10_start": "cement_storage_white"
+  }
+ },
+ "identity": {
+  "method": "Design \u00a73.1 6 / \u00a73.2: a point pair 1.5 mm either side of an edge of each region drawn by a rectangle (its middle first, then 1 mm steps along it, at least 3 mm from its ends; an edge on the mat's own border has no outside), each point where the topmost paint is a flat fill (the 2 px/mm render's 3 x 3 patch: standard deviation under 3/255 in every channel, in sRGB and in a DeviceCMYK render; that CMYK within 2/255 of a fill the content stream states), the inside the region's own fill, the outside another. A probe side passes when its colour is nearer its expected palette colour than half the distance from that colour to the nearest colour of another class (sRGB 0..255, Euclidean), and its nearest palette colour is of its own class; a pair's two sides are of different classes. Stated fills closer than merge_srgb under either conversion are one class (one colour to the eye). Checked here under MuPDF's ICC conversion (the file's SWOP v2 output intent; MuPDF renders the probes) and pdf.js's DeviceCMYK formula - the pdf.js side is formula-only: MuPDF's DeviceCMYK render of each probe put through pdf.js's formula, which shows the palette is separable under it, not that pdf.js renders the mat so. That proof is W1b's loader test on the real mat (design \u00a78, run whenever the mat is present), under pdf.js with its ICC path off (no wasm, no iccUrl: \u00a73.2).",
+  "flat_std_max": 3.0,
+  "offset_mm": 1.5,
+  "edge_end_margin_mm": 3.0,
+  "merge_srgb": 4.0,
+  "pdfjs_formula": "pdf.js src/core/colorspace.js DeviceCmykCS #toRgb (verified against pdfjs-dist 6.4.299 build/pdf.worker.mjs); trace_mat.py pdfjs_cmyk_to_rgb()",
+  "palette": [
+   {
+    "cmyk": [
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "klass": 0,
+    "srgb_mupdf_icc": [
+     255,
+     255,
+     255
+    ],
+    "srgb_pdfjs": [
+     255,
+     255,
+     255
+    ],
+    "margin_mupdf_icc": 69.58,
+    "margin_pdfjs": 66.51
+   },
+   {
+    "cmyk": [
+     0.005,
+     0.089,
+     0.915,
+     0.012
+    ],
+    "klass": 1,
+    "srgb_mupdf_icc": [
+     251,
+     220,
+     39
+    ],
+    "srgb_pdfjs": [
+     255,
+     218,
+     72
+    ],
+    "margin_mupdf_icc": 13.44,
+    "margin_pdfjs": 11.31
+   },
+   {
+    "cmyk": [
+     0.032,
+     0.0,
+     0.867,
+     0.0
+    ],
+    "klass": 2,
+    "srgb_mupdf_icc": [
+     250,
+     239,
+     58
+    ],
+    "srgb_pdfjs": [
+     255,
+     234,
+     88
+    ],
+    "margin_mupdf_icc": 13.44,
+    "margin_pdfjs": 11.31
+   },
+   {
+    "cmyk": [
+     0.213,
+     0.397,
+     0.543,
+     0.14
+    ],
+    "klass": 3,
+    "srgb_mupdf_icc": [
+     177,
+     138,
+     108
+    ],
+    "srgb_pdfjs": [
+     183,
+     140,
+     108
+    ],
+    "margin_mupdf_icc": 25.68,
+    "margin_pdfjs": 27.74
+   },
+   {
+    "cmyk": [
+     0.284,
+     0.217,
+     0.221,
+     0.059
+    ],
+    "klass": 4,
+    "srgb_mupdf_icc": [
+     173,
+     175,
+     176
+    ],
+    "srgb_pdfjs": [
+     172,
+     182,
+     181
+    ],
+    "margin_mupdf_icc": 21.18,
+    "margin_pdfjs": 22.69
+   },
+   {
+    "cmyk": [
+     0.284,
+     0.475,
+     0.654,
+     0.266
+    ],
+    "klass": 5,
+    "srgb_mupdf_icc": [
+     145,
+     109,
+     79
+    ],
+    "srgb_pdfjs": [
+     149,
+     109,
+     77
+    ],
+    "margin_mupdf_icc": 26.01,
+    "margin_pdfjs": 27.74
+   },
+   {
+    "cmyk": [
+     0.382,
+     0.293,
+     0.27,
+     0.114
+    ],
+    "klass": 6,
+    "srgb_mupdf_icc": [
+     146,
+     150,
+     155
+    ],
+    "srgb_pdfjs": [
+     142,
+     156,
+     159
+    ],
+    "margin_mupdf_icc": 3.2,
+    "margin_pdfjs": 3.2
+   },
+   {
+    "cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ],
+    "klass": 7,
+    "srgb_mupdf_icc": [
+     141,
+     144,
+     145
+    ],
+    "srgb_pdfjs": [
+     137,
+     149,
+     148
+    ],
+    "margin_mupdf_icc": 5.96,
+    "margin_pdfjs": 4.64
+   },
+   {
+    "cmyk": [
+     0.438,
+     0.359,
+     0.363,
+     0.013
+    ],
+    "klass": 8,
+    "srgb_mupdf_icc": [
+     150,
+     150,
+     150
+    ],
+    "srgb_pdfjs": [
+     143,
+     154,
+     153
+    ],
+    "margin_mupdf_icc": 3.2,
+    "margin_pdfjs": 3.2
+   },
+   {
+    "cmyk": [
+     0.443,
+     0.361,
+     0.353,
+     0.227
+    ],
+    "klass": 9,
+    "srgb_mupdf_icc": [
+     122,
+     123,
+     125
+    ],
+    "srgb_pdfjs": [
+     117,
+     126,
+     127
+    ],
+    "margin_mupdf_icc": 17.33,
+    "margin_pdfjs": 18.51
+   },
+   {
+    "cmyk": [
+     0.552,
+     0.135,
+     0.823,
+     0.245
+    ],
+    "klass": 10,
+    "srgb_mupdf_icc": [
+     100,
+     140,
+     73
+    ],
+    "srgb_pdfjs": [
+     96,
+     143,
+     74
+    ],
+    "margin_mupdf_icc": 27.35,
+    "margin_pdfjs": 28.81
+   },
+   {
+    "cmyk": [
+     0.561,
+     0.464,
+     0.455,
+     0.376
+    ],
+    "klass": 11,
+    "srgb_mupdf_icc": [
+     87,
+     90,
+     91
+    ],
+    "srgb_pdfjs": [
+     80,
+     90,
+     90
+    ],
+    "margin_mupdf_icc": 27.35,
+    "margin_pdfjs": 28.23
+   },
+   {
+    "cmyk": [
+     0.795,
+     0.578,
+     0.414,
+     0.544
+    ],
+    "klass": 12,
+    "srgb_mupdf_icc": [
+     35,
+     57,
+     72
+    ],
+    "srgb_pdfjs": [
+     31,
+     55,
+     69
+    ],
+    "margin_mupdf_icc": 30.65,
+    "margin_pdfjs": 25.74
+   },
+   {
+    "cmyk": [
+     0.837,
+     0.714,
+     0.593,
+     0.767
+    ],
+    "klass": 13,
+    "srgb_mupdf_icc": [
+     10,
+     20,
+     30
+    ],
+    "srgb_pdfjs": [
+     18,
+     24,
+     30
+    ],
+    "margin_mupdf_icc": 30.65,
+    "margin_pdfjs": 25.74
+   },
+   {
+    "cmyk": [
+     0.849,
+     0.291,
+     0.947,
+     0.169
+    ],
+    "klass": 14,
+    "srgb_mupdf_icc": [
+     30,
+     120,
+     65
+    ],
+    "srgb_pdfjs": [
+     43,
+     123,
+     63
+    ],
+    "margin_mupdf_icc": 31.79,
+    "margin_pdfjs": 28.23
+   },
+   {
+    "cmyk": [
+     0.907,
+     0.714,
+     0.0,
+     0.0
+    ],
+    "klass": 15,
+    "srgb_mupdf_icc": [
+     37,
+     89,
+     168
+    ],
+    "srgb_pdfjs": [
+     25,
+     85,
+     173
+    ],
+    "margin_mupdf_icc": 18.41,
+    "margin_pdfjs": 21.28
+   },
+   {
+    "cmyk": [
+     1.0,
+     0.9,
+     0.1,
+     0.0
+    ],
+    "klass": 16,
+    "srgb_mupdf_icc": [
+     35,
+     63,
+     142
+    ],
+    "srgb_pdfjs": [
+     14,
+     54,
+     146
+    ],
+    "margin_mupdf_icc": 18.41,
+    "margin_pdfjs": 21.28
+   }
+  ],
+  "worst_distance_over_margin": {
+   "mupdf_icc": 0.291,
+   "pdfjs": 0.442
+  },
+  "probes": [
+   {
+    "region": "start_area_frame",
+    "edge": "left",
+    "inside": [
+     51.5,
+     186.5
+    ],
+    "outside": [
+     48.5,
+     186.5
+    ],
+    "inside_cmyk": [
+     1.0,
+     0.9,
+     0.1,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.552,
+     0.135,
+     0.823,
+     0.245
+    ]
+   },
+   {
+    "region": "start_area_frame",
+    "edge": "right",
+    "inside": [
+     321.5,
+     186.5
+    ],
+    "outside": [
+     324.5,
+     186.5
+    ],
+    "inside_cmyk": [
+     1.0,
+     0.9,
+     0.1,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.552,
+     0.135,
+     0.823,
+     0.245
+    ]
+   },
+   {
+    "region": "start_area_frame",
+    "edge": "bottom",
+    "inside": [
+     186.5,
+     51.5
+    ],
+    "outside": [
+     186.5,
+     48.5
+    ],
+    "inside_cmyk": [
+     1.0,
+     0.9,
+     0.1,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.552,
+     0.135,
+     0.823,
+     0.245
+    ]
+   },
+   {
+    "region": "start_area_frame",
+    "edge": "top",
+    "inside": [
+     62.5,
+     321.5
+    ],
+    "outside": [
+     62.5,
+     324.5
+    ],
+    "inside_cmyk": [
+     1.0,
+     0.9,
+     0.1,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.005,
+     0.089,
+     0.915,
+     0.012
+    ]
+   },
+   {
+    "region": "start_area",
+    "edge": "left",
+    "inside": [
+     63.0,
+     186.5
+    ],
+    "outside": [
+     60.0,
+     186.5
+    ],
+    "inside_cmyk": [
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     1.0,
+     0.9,
+     0.1,
+     0.0
+    ]
+   },
+   {
+    "region": "start_area",
+    "edge": "right",
+    "inside": [
+     310.0,
+     186.5
+    ],
+    "outside": [
+     313.0,
+     186.5
+    ],
+    "inside_cmyk": [
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     1.0,
+     0.9,
+     0.1,
+     0.0
+    ]
+   },
+   {
+    "region": "start_area",
+    "edge": "bottom",
+    "inside": [
+     186.5,
+     63.0
+    ],
+    "outside": [
+     186.5,
+     60.0
+    ],
+    "inside_cmyk": [
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     1.0,
+     0.9,
+     0.1,
+     0.0
+    ]
+   },
+   {
+    "region": "start_area",
+    "edge": "top",
+    "inside": [
+     186.5,
+     310.0
+    ],
+    "outside": [
+     186.5,
+     313.0
+    ],
+    "inside_cmyk": [
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     1.0,
+     0.9,
+     0.1,
+     0.0
+    ]
+   },
+   {
+    "region": "sponsor_area",
+    "edge": "left",
+    "inside": [
+     491.5,
+     85.0
+    ],
+    "outside": [
+     488.5,
+     85.0
+    ],
+    "inside_cmyk": [
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.552,
+     0.135,
+     0.823,
+     0.245
+    ]
+   },
+   {
+    "region": "sponsor_area",
+    "edge": "right",
+    "inside": [
+     708.5,
+     85.0
+    ],
+    "outside": [
+     711.5,
+     85.0
+    ],
+    "inside_cmyk": [
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.552,
+     0.135,
+     0.823,
+     0.245
+    ]
+   },
+   {
+    "region": "sponsor_area",
+    "edge": "top",
+    "inside": [
+     600.0,
+     168.5
+    ],
+    "outside": [
+     600.0,
+     171.5
+    ],
+    "inside_cmyk": [
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.552,
+     0.135,
+     0.823,
+     0.245
+    ]
+   },
+   {
+    "region": "rect_trowel_start",
+    "edge": "left",
+    "inside": [
+     831.05,
+     80.9
+    ],
+    "outside": [
+     828.05,
+     80.9
+    ],
+    "inside_cmyk": [
+     0.438,
+     0.359,
+     0.363,
+     0.013
+    ],
+    "outside_cmyk": [
+     0.213,
+     0.397,
+     0.543,
+     0.14
+    ]
+   },
+   {
+    "region": "rect_trowel_start",
+    "edge": "right",
+    "inside": [
+     955.55,
+     81.9
+    ],
+    "outside": [
+     958.55,
+     81.9
+    ],
+    "inside_cmyk": [
+     0.438,
+     0.359,
+     0.363,
+     0.013
+    ],
+    "outside_cmyk": [
+     0.213,
+     0.397,
+     0.543,
+     0.14
+    ]
+   },
+   {
+    "region": "rect_trowel_start",
+    "edge": "bottom",
+    "inside": [
+     894.3,
+     51.5
+    ],
+    "outside": [
+     894.3,
+     48.5
+    ],
+    "inside_cmyk": [
+     0.438,
+     0.359,
+     0.363,
+     0.013
+    ],
+    "outside_cmyk": [
+     0.284,
+     0.475,
+     0.654,
+     0.266
+    ]
+   },
+   {
+    "region": "rect_trowel_start",
+    "edge": "top",
+    "inside": [
+     893.3,
+     112.3
+    ],
+    "outside": [
+     893.3,
+     115.3
+    ],
+    "inside_cmyk": [
+     0.438,
+     0.359,
+     0.363,
+     0.013
+    ],
+    "outside_cmyk": [
+     0.213,
+     0.397,
+     0.543,
+     0.14
+    ]
+   },
+   {
+    "region": "cement_bowl_start",
+    "edge": "left",
+    "inside": [
+     1166.55,
+     81.9
+    ],
+    "outside": [
+     1163.55,
+     81.9
+    ],
+    "inside_cmyk": [
+     0.438,
+     0.359,
+     0.363,
+     0.013
+    ],
+    "outside_cmyk": [
+     0.213,
+     0.397,
+     0.543,
+     0.14
+    ]
+   },
+   {
+    "region": "cement_bowl_start",
+    "edge": "bottom",
+    "inside": [
+     1181.0,
+     67.45
+    ],
+    "outside": [
+     1181.0,
+     64.45
+    ],
+    "inside_cmyk": [
+     0.438,
+     0.359,
+     0.363,
+     0.013
+    ],
+    "outside_cmyk": [
+     0.213,
+     0.397,
+     0.543,
+     0.14
+    ]
+   },
+   {
+    "region": "cement_bowl_start",
+    "edge": "top",
+    "inside": [
+     1181.0,
+     96.35
+    ],
+    "outside": [
+     1181.0,
+     99.35
+    ],
+    "inside_cmyk": [
+     0.438,
+     0.359,
+     0.363,
+     0.013
+    ],
+    "outside_cmyk": [
+     0.213,
+     0.397,
+     0.543,
+     0.14
+    ]
+   },
+   {
+    "region": "tile_start_yellow_1",
+    "edge": "left",
+    "inside": [
+     108.25,
+     425.75
+    ],
+    "outside": [
+     105.25,
+     425.75
+    ],
+    "inside_cmyk": [
+     0.032,
+     0.0,
+     0.867,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_yellow_1",
+    "edge": "right",
+    "inside": [
+     137.15,
+     425.75
+    ],
+    "outside": [
+     140.15,
+     425.75
+    ],
+    "inside_cmyk": [
+     0.032,
+     0.0,
+     0.867,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_yellow_1",
+    "edge": "bottom",
+    "inside": [
+     123.7,
+     411.3
+    ],
+    "outside": [
+     123.7,
+     408.3
+    ],
+    "inside_cmyk": [
+     0.032,
+     0.0,
+     0.867,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_yellow_1",
+    "edge": "top",
+    "inside": [
+     122.7,
+     440.2
+    ],
+    "outside": [
+     122.7,
+     443.2
+    ],
+    "inside_cmyk": [
+     0.032,
+     0.0,
+     0.867,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_yellow_2",
+    "edge": "left",
+    "inside": [
+     108.25,
+     489.55
+    ],
+    "outside": [
+     105.25,
+     489.55
+    ],
+    "inside_cmyk": [
+     0.032,
+     0.0,
+     0.867,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_yellow_2",
+    "edge": "right",
+    "inside": [
+     137.15,
+     489.55
+    ],
+    "outside": [
+     140.15,
+     489.55
+    ],
+    "inside_cmyk": [
+     0.032,
+     0.0,
+     0.867,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_yellow_2",
+    "edge": "bottom",
+    "inside": [
+     122.7,
+     475.1
+    ],
+    "outside": [
+     122.7,
+     472.1
+    ],
+    "inside_cmyk": [
+     0.032,
+     0.0,
+     0.867,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_yellow_2",
+    "edge": "top",
+    "inside": [
+     122.7,
+     504.0
+    ],
+    "outside": [
+     122.7,
+     507.0
+    ],
+    "inside_cmyk": [
+     0.032,
+     0.0,
+     0.867,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_yellow_3",
+    "edge": "left",
+    "inside": [
+     172.05,
+     425.75
+    ],
+    "outside": [
+     169.05,
+     425.75
+    ],
+    "inside_cmyk": [
+     0.032,
+     0.0,
+     0.867,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_yellow_3",
+    "edge": "right",
+    "inside": [
+     200.95,
+     425.75
+    ],
+    "outside": [
+     203.95,
+     425.75
+    ],
+    "inside_cmyk": [
+     0.032,
+     0.0,
+     0.867,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_yellow_3",
+    "edge": "bottom",
+    "inside": [
+     185.5,
+     411.3
+    ],
+    "outside": [
+     185.5,
+     408.3
+    ],
+    "inside_cmyk": [
+     0.032,
+     0.0,
+     0.867,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_yellow_3",
+    "edge": "top",
+    "inside": [
+     185.5,
+     440.2
+    ],
+    "outside": [
+     185.5,
+     443.2
+    ],
+    "inside_cmyk": [
+     0.032,
+     0.0,
+     0.867,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_yellow_4",
+    "edge": "left",
+    "inside": [
+     172.05,
+     489.55
+    ],
+    "outside": [
+     169.05,
+     489.55
+    ],
+    "inside_cmyk": [
+     0.032,
+     0.0,
+     0.867,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_yellow_4",
+    "edge": "right",
+    "inside": [
+     200.95,
+     491.55
+    ],
+    "outside": [
+     203.95,
+     491.55
+    ],
+    "inside_cmyk": [
+     0.032,
+     0.0,
+     0.867,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_yellow_4",
+    "edge": "bottom",
+    "inside": [
+     185.5,
+     475.1
+    ],
+    "outside": [
+     185.5,
+     472.1
+    ],
+    "inside_cmyk": [
+     0.032,
+     0.0,
+     0.867,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_yellow_4",
+    "edge": "top",
+    "inside": [
+     185.5,
+     504.0
+    ],
+    "outside": [
+     185.5,
+     507.0
+    ],
+    "inside_cmyk": [
+     0.032,
+     0.0,
+     0.867,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_yellow_5",
+    "edge": "left",
+    "inside": [
+     235.85,
+     425.75
+    ],
+    "outside": [
+     232.85,
+     425.75
+    ],
+    "inside_cmyk": [
+     0.032,
+     0.0,
+     0.867,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_yellow_5",
+    "edge": "right",
+    "inside": [
+     264.75,
+     425.75
+    ],
+    "outside": [
+     267.75,
+     425.75
+    ],
+    "inside_cmyk": [
+     0.032,
+     0.0,
+     0.867,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_yellow_5",
+    "edge": "bottom",
+    "inside": [
+     252.3,
+     411.3
+    ],
+    "outside": [
+     252.3,
+     408.3
+    ],
+    "inside_cmyk": [
+     0.032,
+     0.0,
+     0.867,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_yellow_5",
+    "edge": "top",
+    "inside": [
+     250.3,
+     440.2
+    ],
+    "outside": [
+     250.3,
+     443.2
+    ],
+    "inside_cmyk": [
+     0.032,
+     0.0,
+     0.867,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_yellow_6",
+    "edge": "left",
+    "inside": [
+     235.85,
+     489.55
+    ],
+    "outside": [
+     232.85,
+     489.55
+    ],
+    "inside_cmyk": [
+     0.032,
+     0.0,
+     0.867,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_yellow_6",
+    "edge": "right",
+    "inside": [
+     264.75,
+     489.55
+    ],
+    "outside": [
+     267.75,
+     489.55
+    ],
+    "inside_cmyk": [
+     0.032,
+     0.0,
+     0.867,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_yellow_6",
+    "edge": "bottom",
+    "inside": [
+     250.3,
+     475.1
+    ],
+    "outside": [
+     250.3,
+     472.1
+    ],
+    "inside_cmyk": [
+     0.032,
+     0.0,
+     0.867,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_yellow_6",
+    "edge": "top",
+    "inside": [
+     250.3,
+     504.0
+    ],
+    "outside": [
+     250.3,
+     507.0
+    ],
+    "inside_cmyk": [
+     0.032,
+     0.0,
+     0.867,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_blue_1",
+    "edge": "left",
+    "inside": [
+     108.25,
+     585.25
+    ],
+    "outside": [
+     105.25,
+     585.25
+    ],
+    "inside_cmyk": [
+     0.907,
+     0.714,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_blue_1",
+    "edge": "right",
+    "inside": [
+     137.15,
+     585.25
+    ],
+    "outside": [
+     140.15,
+     585.25
+    ],
+    "inside_cmyk": [
+     0.907,
+     0.714,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_blue_1",
+    "edge": "bottom",
+    "inside": [
+     122.7,
+     570.8
+    ],
+    "outside": [
+     122.7,
+     567.8
+    ],
+    "inside_cmyk": [
+     0.907,
+     0.714,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_blue_1",
+    "edge": "top",
+    "inside": [
+     122.7,
+     599.7
+    ],
+    "outside": [
+     122.7,
+     602.7
+    ],
+    "inside_cmyk": [
+     0.907,
+     0.714,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.443,
+     0.361,
+     0.353,
+     0.227
+    ]
+   },
+   {
+    "region": "tile_start_blue_2",
+    "edge": "left",
+    "inside": [
+     108.25,
+     649.05
+    ],
+    "outside": [
+     105.25,
+     649.05
+    ],
+    "inside_cmyk": [
+     0.907,
+     0.714,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_blue_2",
+    "edge": "right",
+    "inside": [
+     137.15,
+     649.05
+    ],
+    "outside": [
+     140.15,
+     649.05
+    ],
+    "inside_cmyk": [
+     0.907,
+     0.714,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_blue_2",
+    "edge": "bottom",
+    "inside": [
+     122.7,
+     634.6
+    ],
+    "outside": [
+     122.7,
+     631.6
+    ],
+    "inside_cmyk": [
+     0.907,
+     0.714,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_blue_2",
+    "edge": "top",
+    "inside": [
+     122.7,
+     663.5
+    ],
+    "outside": [
+     122.7,
+     666.5
+    ],
+    "inside_cmyk": [
+     0.907,
+     0.714,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_blue_3",
+    "edge": "left",
+    "inside": [
+     172.05,
+     585.25
+    ],
+    "outside": [
+     169.05,
+     585.25
+    ],
+    "inside_cmyk": [
+     0.907,
+     0.714,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_blue_3",
+    "edge": "right",
+    "inside": [
+     200.95,
+     586.25
+    ],
+    "outside": [
+     203.95,
+     586.25
+    ],
+    "inside_cmyk": [
+     0.907,
+     0.714,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_blue_3",
+    "edge": "bottom",
+    "inside": [
+     185.5,
+     570.8
+    ],
+    "outside": [
+     185.5,
+     567.8
+    ],
+    "inside_cmyk": [
+     0.907,
+     0.714,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_blue_3",
+    "edge": "top",
+    "inside": [
+     185.5,
+     599.7
+    ],
+    "outside": [
+     185.5,
+     602.7
+    ],
+    "inside_cmyk": [
+     0.907,
+     0.714,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_blue_4",
+    "edge": "left",
+    "inside": [
+     172.05,
+     649.05
+    ],
+    "outside": [
+     169.05,
+     649.05
+    ],
+    "inside_cmyk": [
+     0.907,
+     0.714,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_blue_4",
+    "edge": "right",
+    "inside": [
+     200.95,
+     649.05
+    ],
+    "outside": [
+     203.95,
+     649.05
+    ],
+    "inside_cmyk": [
+     0.907,
+     0.714,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_blue_4",
+    "edge": "bottom",
+    "inside": [
+     185.5,
+     634.6
+    ],
+    "outside": [
+     185.5,
+     631.6
+    ],
+    "inside_cmyk": [
+     0.907,
+     0.714,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_blue_4",
+    "edge": "top",
+    "inside": [
+     188.5,
+     663.5
+    ],
+    "outside": [
+     188.5,
+     666.5
+    ],
+    "inside_cmyk": [
+     0.907,
+     0.714,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_blue_5",
+    "edge": "left",
+    "inside": [
+     235.85,
+     585.25
+    ],
+    "outside": [
+     232.85,
+     585.25
+    ],
+    "inside_cmyk": [
+     0.907,
+     0.714,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_blue_5",
+    "edge": "right",
+    "inside": [
+     264.75,
+     585.25
+    ],
+    "outside": [
+     267.75,
+     585.25
+    ],
+    "inside_cmyk": [
+     0.907,
+     0.714,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_blue_5",
+    "edge": "bottom",
+    "inside": [
+     250.3,
+     570.8
+    ],
+    "outside": [
+     250.3,
+     567.8
+    ],
+    "inside_cmyk": [
+     0.907,
+     0.714,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_blue_5",
+    "edge": "top",
+    "inside": [
+     250.3,
+     599.7
+    ],
+    "outside": [
+     250.3,
+     602.7
+    ],
+    "inside_cmyk": [
+     0.907,
+     0.714,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_blue_6",
+    "edge": "left",
+    "inside": [
+     235.85,
+     649.05
+    ],
+    "outside": [
+     232.85,
+     649.05
+    ],
+    "inside_cmyk": [
+     0.907,
+     0.714,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_blue_6",
+    "edge": "right",
+    "inside": [
+     264.75,
+     649.05
+    ],
+    "outside": [
+     267.75,
+     649.05
+    ],
+    "inside_cmyk": [
+     0.907,
+     0.714,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_blue_6",
+    "edge": "bottom",
+    "inside": [
+     252.3,
+     634.6
+    ],
+    "outside": [
+     252.3,
+     631.6
+    ],
+    "inside_cmyk": [
+     0.907,
+     0.714,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_blue_6",
+    "edge": "top",
+    "inside": [
+     250.3,
+     663.5
+    ],
+    "outside": [
+     250.3,
+     666.5
+    ],
+    "inside_cmyk": [
+     0.907,
+     0.714,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_green_1",
+    "edge": "left",
+    "inside": [
+     108.25,
+     743.75
+    ],
+    "outside": [
+     105.25,
+     743.75
+    ],
+    "inside_cmyk": [
+     0.849,
+     0.291,
+     0.947,
+     0.169
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_green_1",
+    "edge": "right",
+    "inside": [
+     137.15,
+     744.75
+    ],
+    "outside": [
+     140.15,
+     744.75
+    ],
+    "inside_cmyk": [
+     0.849,
+     0.291,
+     0.947,
+     0.169
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_green_1",
+    "edge": "bottom",
+    "inside": [
+     122.7,
+     730.3
+    ],
+    "outside": [
+     122.7,
+     727.3
+    ],
+    "inside_cmyk": [
+     0.849,
+     0.291,
+     0.947,
+     0.169
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_green_1",
+    "edge": "top",
+    "inside": [
+     122.7,
+     759.2
+    ],
+    "outside": [
+     122.7,
+     762.2
+    ],
+    "inside_cmyk": [
+     0.849,
+     0.291,
+     0.947,
+     0.169
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_green_2",
+    "edge": "left",
+    "inside": [
+     108.25,
+     808.55
+    ],
+    "outside": [
+     105.25,
+     808.55
+    ],
+    "inside_cmyk": [
+     0.849,
+     0.291,
+     0.947,
+     0.169
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_green_2",
+    "edge": "right",
+    "inside": [
+     137.15,
+     808.55
+    ],
+    "outside": [
+     140.15,
+     808.55
+    ],
+    "inside_cmyk": [
+     0.849,
+     0.291,
+     0.947,
+     0.169
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_green_2",
+    "edge": "bottom",
+    "inside": [
+     122.7,
+     794.1
+    ],
+    "outside": [
+     122.7,
+     791.1
+    ],
+    "inside_cmyk": [
+     0.849,
+     0.291,
+     0.947,
+     0.169
+    ],
+    "outside_cmyk": [
+     0.443,
+     0.361,
+     0.353,
+     0.227
+    ]
+   },
+   {
+    "region": "tile_start_green_2",
+    "edge": "top",
+    "inside": [
+     122.7,
+     823.0
+    ],
+    "outside": [
+     122.7,
+     826.0
+    ],
+    "inside_cmyk": [
+     0.849,
+     0.291,
+     0.947,
+     0.169
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_green_3",
+    "edge": "left",
+    "inside": [
+     172.05,
+     744.75
+    ],
+    "outside": [
+     169.05,
+     744.75
+    ],
+    "inside_cmyk": [
+     0.849,
+     0.291,
+     0.947,
+     0.169
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_green_3",
+    "edge": "right",
+    "inside": [
+     200.95,
+     744.75
+    ],
+    "outside": [
+     203.95,
+     744.75
+    ],
+    "inside_cmyk": [
+     0.849,
+     0.291,
+     0.947,
+     0.169
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_green_3",
+    "edge": "bottom",
+    "inside": [
+     188.5,
+     730.3
+    ],
+    "outside": [
+     188.5,
+     727.3
+    ],
+    "inside_cmyk": [
+     0.849,
+     0.291,
+     0.947,
+     0.169
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_green_3",
+    "edge": "top",
+    "inside": [
+     185.5,
+     759.2
+    ],
+    "outside": [
+     185.5,
+     762.2
+    ],
+    "inside_cmyk": [
+     0.849,
+     0.291,
+     0.947,
+     0.169
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_green_4",
+    "edge": "left",
+    "inside": [
+     172.05,
+     808.55
+    ],
+    "outside": [
+     169.05,
+     808.55
+    ],
+    "inside_cmyk": [
+     0.849,
+     0.291,
+     0.947,
+     0.169
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_green_4",
+    "edge": "right",
+    "inside": [
+     200.95,
+     808.55
+    ],
+    "outside": [
+     203.95,
+     808.55
+    ],
+    "inside_cmyk": [
+     0.849,
+     0.291,
+     0.947,
+     0.169
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_green_4",
+    "edge": "bottom",
+    "inside": [
+     185.5,
+     794.1
+    ],
+    "outside": [
+     185.5,
+     791.1
+    ],
+    "inside_cmyk": [
+     0.849,
+     0.291,
+     0.947,
+     0.169
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_green_4",
+    "edge": "top",
+    "inside": [
+     185.5,
+     823.0
+    ],
+    "outside": [
+     185.5,
+     826.0
+    ],
+    "inside_cmyk": [
+     0.849,
+     0.291,
+     0.947,
+     0.169
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_green_5",
+    "edge": "left",
+    "inside": [
+     235.85,
+     744.75
+    ],
+    "outside": [
+     232.85,
+     744.75
+    ],
+    "inside_cmyk": [
+     0.849,
+     0.291,
+     0.947,
+     0.169
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_green_5",
+    "edge": "right",
+    "inside": [
+     264.75,
+     744.75
+    ],
+    "outside": [
+     267.75,
+     744.75
+    ],
+    "inside_cmyk": [
+     0.849,
+     0.291,
+     0.947,
+     0.169
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_green_5",
+    "edge": "bottom",
+    "inside": [
+     250.3,
+     730.3
+    ],
+    "outside": [
+     250.3,
+     727.3
+    ],
+    "inside_cmyk": [
+     0.849,
+     0.291,
+     0.947,
+     0.169
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_green_5",
+    "edge": "top",
+    "inside": [
+     250.3,
+     759.2
+    ],
+    "outside": [
+     250.3,
+     762.2
+    ],
+    "inside_cmyk": [
+     0.849,
+     0.291,
+     0.947,
+     0.169
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_green_6",
+    "edge": "left",
+    "inside": [
+     235.85,
+     808.55
+    ],
+    "outside": [
+     232.85,
+     808.55
+    ],
+    "inside_cmyk": [
+     0.849,
+     0.291,
+     0.947,
+     0.169
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_green_6",
+    "edge": "right",
+    "inside": [
+     264.75,
+     808.55
+    ],
+    "outside": [
+     267.75,
+     808.55
+    ],
+    "inside_cmyk": [
+     0.849,
+     0.291,
+     0.947,
+     0.169
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_green_6",
+    "edge": "bottom",
+    "inside": [
+     250.3,
+     794.1
+    ],
+    "outside": [
+     250.3,
+     791.1
+    ],
+    "inside_cmyk": [
+     0.849,
+     0.291,
+     0.947,
+     0.169
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_green_6",
+    "edge": "top",
+    "inside": [
+     250.3,
+     823.0
+    ],
+    "outside": [
+     250.3,
+     826.0
+    ],
+    "inside_cmyk": [
+     0.849,
+     0.291,
+     0.947,
+     0.169
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_white_1",
+    "edge": "left",
+    "inside": [
+     108.25,
+     904.25
+    ],
+    "outside": [
+     105.25,
+     904.25
+    ],
+    "inside_cmyk": [
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.443,
+     0.361,
+     0.353,
+     0.227
+    ]
+   },
+   {
+    "region": "tile_start_white_1",
+    "edge": "right",
+    "inside": [
+     137.15,
+     904.25
+    ],
+    "outside": [
+     140.15,
+     904.25
+    ],
+    "inside_cmyk": [
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_white_1",
+    "edge": "bottom",
+    "inside": [
+     122.7,
+     889.8
+    ],
+    "outside": [
+     122.7,
+     886.8
+    ],
+    "inside_cmyk": [
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_white_1",
+    "edge": "top",
+    "inside": [
+     122.7,
+     918.7
+    ],
+    "outside": [
+     122.7,
+     921.7
+    ],
+    "inside_cmyk": [
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_white_2",
+    "edge": "left",
+    "inside": [
+     108.25,
+     970.05
+    ],
+    "outside": [
+     105.25,
+     970.05
+    ],
+    "inside_cmyk": [
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_white_2",
+    "edge": "right",
+    "inside": [
+     137.15,
+     968.05
+    ],
+    "outside": [
+     140.15,
+     968.05
+    ],
+    "inside_cmyk": [
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_white_2",
+    "edge": "bottom",
+    "inside": [
+     122.7,
+     953.6
+    ],
+    "outside": [
+     122.7,
+     950.6
+    ],
+    "inside_cmyk": [
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_white_2",
+    "edge": "top",
+    "inside": [
+     122.7,
+     982.5
+    ],
+    "outside": [
+     122.7,
+     985.5
+    ],
+    "inside_cmyk": [
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_white_3",
+    "edge": "left",
+    "inside": [
+     172.05,
+     904.25
+    ],
+    "outside": [
+     169.05,
+     904.25
+    ],
+    "inside_cmyk": [
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_white_3",
+    "edge": "right",
+    "inside": [
+     200.95,
+     904.25
+    ],
+    "outside": [
+     203.95,
+     904.25
+    ],
+    "inside_cmyk": [
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_white_3",
+    "edge": "bottom",
+    "inside": [
+     185.5,
+     889.8
+    ],
+    "outside": [
+     185.5,
+     886.8
+    ],
+    "inside_cmyk": [
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_white_3",
+    "edge": "top",
+    "inside": [
+     185.5,
+     918.7
+    ],
+    "outside": [
+     185.5,
+     921.7
+    ],
+    "inside_cmyk": [
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_white_4",
+    "edge": "left",
+    "inside": [
+     172.05,
+     968.05
+    ],
+    "outside": [
+     169.05,
+     968.05
+    ],
+    "inside_cmyk": [
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_white_4",
+    "edge": "right",
+    "inside": [
+     200.95,
+     968.05
+    ],
+    "outside": [
+     203.95,
+     968.05
+    ],
+    "inside_cmyk": [
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_white_4",
+    "edge": "bottom",
+    "inside": [
+     185.5,
+     953.6
+    ],
+    "outside": [
+     185.5,
+     950.6
+    ],
+    "inside_cmyk": [
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_white_4",
+    "edge": "top",
+    "inside": [
+     185.5,
+     982.5
+    ],
+    "outside": [
+     185.5,
+     985.5
+    ],
+    "inside_cmyk": [
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_white_5",
+    "edge": "left",
+    "inside": [
+     235.85,
+     904.25
+    ],
+    "outside": [
+     232.85,
+     904.25
+    ],
+    "inside_cmyk": [
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_white_5",
+    "edge": "right",
+    "inside": [
+     264.75,
+     904.25
+    ],
+    "outside": [
+     267.75,
+     904.25
+    ],
+    "inside_cmyk": [
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_white_5",
+    "edge": "bottom",
+    "inside": [
+     250.3,
+     889.8
+    ],
+    "outside": [
+     250.3,
+     886.8
+    ],
+    "inside_cmyk": [
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_white_5",
+    "edge": "top",
+    "inside": [
+     250.3,
+     918.7
+    ],
+    "outside": [
+     250.3,
+     921.7
+    ],
+    "inside_cmyk": [
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_white_6",
+    "edge": "left",
+    "inside": [
+     235.85,
+     969.05
+    ],
+    "outside": [
+     232.85,
+     969.05
+    ],
+    "inside_cmyk": [
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.561,
+     0.464,
+     0.455,
+     0.376
+    ]
+   },
+   {
+    "region": "tile_start_white_6",
+    "edge": "right",
+    "inside": [
+     264.75,
+     968.05
+    ],
+    "outside": [
+     267.75,
+     968.05
+    ],
+    "inside_cmyk": [
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_white_6",
+    "edge": "bottom",
+    "inside": [
+     250.3,
+     953.6
+    ],
+    "outside": [
+     250.3,
+     950.6
+    ],
+    "inside_cmyk": [
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "tile_start_white_6",
+    "edge": "top",
+    "inside": [
+     250.3,
+     982.5
+    ],
+    "outside": [
+     250.3,
+     985.5
+    ],
+    "inside_cmyk": [
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.391,
+     0.307,
+     0.308,
+     0.142
+    ]
+   },
+   {
+    "region": "cement_target_white",
+    "edge": "left",
+    "inside": [
+     1024.5,
+     879.5
+    ],
+    "outside": [
+     1021.5,
+     879.5
+    ],
+    "inside_cmyk": [
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.907,
+     0.714,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "region": "cement_target_white",
+    "edge": "right",
+    "inside": [
+     1337.5,
+     879.5
+    ],
+    "outside": [
+     1340.5,
+     879.5
+    ],
+    "inside_cmyk": [
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.849,
+     0.291,
+     0.947,
+     0.169
+    ]
+   },
+   {
+    "region": "cement_target_white",
+    "edge": "bottom",
+    "inside": [
+     1181.0,
+     831.0
+    ],
+    "outside": [
+     1181.0,
+     828.0
+    ],
+    "inside_cmyk": [
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.284,
+     0.217,
+     0.221,
+     0.059
+    ]
+   },
+   {
+    "region": "cement_target_green",
+    "edge": "left",
+    "inside": [
+     1340.5,
+     696.5
+    ],
+    "outside": [
+     1337.5,
+     696.5
+    ],
+    "inside_cmyk": [
+     0.849,
+     0.291,
+     0.947,
+     0.169
+    ],
+    "outside_cmyk": [
+     0.284,
+     0.217,
+     0.221,
+     0.059
+    ]
+   },
+   {
+    "region": "cement_target_green",
+    "edge": "right",
+    "inside": [
+     1437.5,
+     772.5
+    ],
+    "outside": [
+     1440.5,
+     772.5
+    ],
+    "inside_cmyk": [
+     0.849,
+     0.291,
+     0.947,
+     0.169
+    ],
+    "outside_cmyk": [
+     0.795,
+     0.578,
+     0.414,
+     0.544
+    ]
+   },
+   {
+    "region": "cement_target_green",
+    "edge": "bottom",
+    "inside": [
+     1389.0,
+     465.0
+    ],
+    "outside": [
+     1389.0,
+     462.0
+    ],
+    "inside_cmyk": [
+     0.849,
+     0.291,
+     0.947,
+     0.169
+    ],
+    "outside_cmyk": [
+     0.795,
+     0.578,
+     0.414,
+     0.544
+    ]
+   },
+   {
+    "region": "cement_target_blue",
+    "edge": "left",
+    "inside": [
+     924.5,
+     696.5
+    ],
+    "outside": [
+     921.5,
+     696.5
+    ],
+    "inside_cmyk": [
+     0.907,
+     0.714,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.837,
+     0.714,
+     0.593,
+     0.767
+    ]
+   },
+   {
+    "region": "cement_target_blue",
+    "edge": "right",
+    "inside": [
+     1021.5,
+     696.5
+    ],
+    "outside": [
+     1024.5,
+     696.5
+    ],
+    "inside_cmyk": [
+     0.907,
+     0.714,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.284,
+     0.217,
+     0.221,
+     0.059
+    ]
+   },
+   {
+    "region": "cement_target_blue",
+    "edge": "bottom",
+    "inside": [
+     973.0,
+     465.0
+    ],
+    "outside": [
+     973.0,
+     462.0
+    ],
+    "inside_cmyk": [
+     0.907,
+     0.714,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.552,
+     0.135,
+     0.823,
+     0.245
+    ]
+   },
+   {
+    "region": "cement_target_yellow",
+    "edge": "left",
+    "inside": [
+     1024.5,
+     513.5
+    ],
+    "outside": [
+     1021.5,
+     513.5
+    ],
+    "inside_cmyk": [
+     0.032,
+     0.0,
+     0.867,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.907,
+     0.714,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "region": "cement_target_yellow",
+    "edge": "right",
+    "inside": [
+     1337.5,
+     513.5
+    ],
+    "outside": [
+     1340.5,
+     513.5
+    ],
+    "inside_cmyk": [
+     0.032,
+     0.0,
+     0.867,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.849,
+     0.291,
+     0.947,
+     0.169
+    ]
+   },
+   {
+    "region": "cement_target_yellow",
+    "edge": "bottom",
+    "inside": [
+     1181.0,
+     465.0
+    ],
+    "outside": [
+     1181.0,
+     462.0
+    ],
+    "inside_cmyk": [
+     0.032,
+     0.0,
+     0.867,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.837,
+     0.714,
+     0.593,
+     0.767
+    ]
+   },
+   {
+    "region": "cement_target_yellow",
+    "edge": "top",
+    "inside": [
+     1181.0,
+     562.0
+    ],
+    "outside": [
+     1181.0,
+     565.0
+    ],
+    "inside_cmyk": [
+     0.032,
+     0.0,
+     0.867,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.284,
+     0.217,
+     0.221,
+     0.059
+    ]
+   },
+   {
+    "region": "cement_storage_white",
+    "edge": "left",
+    "inside": [
+     2163.5,
+     196.5
+    ],
+    "outside": [
+     2160.5,
+     196.5
+    ],
+    "inside_cmyk": [
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.837,
+     0.714,
+     0.593,
+     0.767
+    ]
+   },
+   {
+    "region": "cement_storage_white",
+    "edge": "right",
+    "inside": [
+     2310.5,
+     196.5
+    ],
+    "outside": [
+     2313.5,
+     196.5
+    ],
+    "inside_cmyk": [
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.382,
+     0.293,
+     0.27,
+     0.114
+    ]
+   },
+   {
+    "region": "cement_storage_white",
+    "edge": "bottom",
+    "inside": [
+     2237.0,
+     88.0
+    ],
+    "outside": [
+     2237.0,
+     85.0
+    ],
+    "inside_cmyk": [
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.382,
+     0.293,
+     0.27,
+     0.114
+    ]
+   },
+   {
+    "region": "cement_storage_white",
+    "edge": "top",
+    "inside": [
+     2237.0,
+     305.0
+    ],
+    "outside": [
+     2237.0,
+     308.0
+    ],
+    "inside_cmyk": [
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.382,
+     0.293,
+     0.27,
+     0.114
+    ]
+   },
+   {
+    "region": "cement_storage_blue",
+    "edge": "left",
+    "inside": [
+     2163.5,
+     446.5
+    ],
+    "outside": [
+     2160.5,
+     446.5
+    ],
+    "inside_cmyk": [
+     0.907,
+     0.714,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.837,
+     0.714,
+     0.593,
+     0.767
+    ]
+   },
+   {
+    "region": "cement_storage_blue",
+    "edge": "right",
+    "inside": [
+     2310.5,
+     446.5
+    ],
+    "outside": [
+     2313.5,
+     446.5
+    ],
+    "inside_cmyk": [
+     0.907,
+     0.714,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.382,
+     0.293,
+     0.27,
+     0.114
+    ]
+   },
+   {
+    "region": "cement_storage_blue",
+    "edge": "bottom",
+    "inside": [
+     2237.0,
+     338.0
+    ],
+    "outside": [
+     2237.0,
+     335.0
+    ],
+    "inside_cmyk": [
+     0.907,
+     0.714,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.382,
+     0.293,
+     0.27,
+     0.114
+    ]
+   },
+   {
+    "region": "cement_storage_blue",
+    "edge": "top",
+    "inside": [
+     2237.0,
+     555.0
+    ],
+    "outside": [
+     2237.0,
+     558.0
+    ],
+    "inside_cmyk": [
+     0.907,
+     0.714,
+     0.0,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.382,
+     0.293,
+     0.27,
+     0.114
+    ]
+   },
+   {
+    "region": "cement_storage_green",
+    "edge": "left",
+    "inside": [
+     2163.5,
+     696.5
+    ],
+    "outside": [
+     2160.5,
+     696.5
+    ],
+    "inside_cmyk": [
+     0.849,
+     0.291,
+     0.947,
+     0.169
+    ],
+    "outside_cmyk": [
+     0.837,
+     0.714,
+     0.593,
+     0.767
+    ]
+   },
+   {
+    "region": "cement_storage_green",
+    "edge": "right",
+    "inside": [
+     2310.5,
+     696.5
+    ],
+    "outside": [
+     2313.5,
+     696.5
+    ],
+    "inside_cmyk": [
+     0.849,
+     0.291,
+     0.947,
+     0.169
+    ],
+    "outside_cmyk": [
+     0.382,
+     0.293,
+     0.27,
+     0.114
+    ]
+   },
+   {
+    "region": "cement_storage_green",
+    "edge": "bottom",
+    "inside": [
+     2237.0,
+     588.0
+    ],
+    "outside": [
+     2237.0,
+     585.0
+    ],
+    "inside_cmyk": [
+     0.849,
+     0.291,
+     0.947,
+     0.169
+    ],
+    "outside_cmyk": [
+     0.382,
+     0.293,
+     0.27,
+     0.114
+    ]
+   },
+   {
+    "region": "cement_storage_green",
+    "edge": "top",
+    "inside": [
+     2237.0,
+     805.0
+    ],
+    "outside": [
+     2237.0,
+     808.0
+    ],
+    "inside_cmyk": [
+     0.849,
+     0.291,
+     0.947,
+     0.169
+    ],
+    "outside_cmyk": [
+     0.382,
+     0.293,
+     0.27,
+     0.114
+    ]
+   },
+   {
+    "region": "cement_storage_yellow",
+    "edge": "left",
+    "inside": [
+     2163.5,
+     946.5
+    ],
+    "outside": [
+     2160.5,
+     946.5
+    ],
+    "inside_cmyk": [
+     0.032,
+     0.0,
+     0.867,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.837,
+     0.714,
+     0.593,
+     0.767
+    ]
+   },
+   {
+    "region": "cement_storage_yellow",
+    "edge": "right",
+    "inside": [
+     2310.5,
+     946.5
+    ],
+    "outside": [
+     2313.5,
+     946.5
+    ],
+    "inside_cmyk": [
+     0.032,
+     0.0,
+     0.867,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.382,
+     0.293,
+     0.27,
+     0.114
+    ]
+   },
+   {
+    "region": "cement_storage_yellow",
+    "edge": "bottom",
+    "inside": [
+     2237.0,
+     838.0
+    ],
+    "outside": [
+     2237.0,
+     835.0
+    ],
+    "inside_cmyk": [
+     0.032,
+     0.0,
+     0.867,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.382,
+     0.293,
+     0.27,
+     0.114
+    ]
+   },
+   {
+    "region": "cement_storage_yellow",
+    "edge": "top",
+    "inside": [
+     2237.0,
+     1055.0
+    ],
+    "outside": [
+     2237.0,
+     1058.0
+    ],
+    "inside_cmyk": [
+     0.032,
+     0.0,
+     0.867,
+     0.0
+    ],
+    "outside_cmyk": [
+     0.382,
+     0.293,
+     0.27,
+     0.114
+    ]
+   }
+  ]
+ }
+}

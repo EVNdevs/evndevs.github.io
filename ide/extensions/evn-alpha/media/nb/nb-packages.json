@@ -2,6 +2,7 @@
  "pyodide": "0.28.3",
  "roots": [
   "numpy",
+  "scipy",
   "matplotlib"
  ],
  "stdlib_extras": [
@@ -68,6 +69,14 @@
    "depends": [],
    "licence": "BSD-3-Clause",
    "bytes": 36920
+  },
+  "libopenblas": {
+   "file": "libopenblas-0.3.26.zip",
+   "sha256": "15c2c82b0fdfdde83a81190f35f5f4a0d15bf236a7e93944c433ae5ac6bf3ee5",
+   "imports": [],
+   "depends": [],
+   "licence": "BSD-3-Clause",
+   "bytes": 1916561
   },
   "libopenssl": {
    "file": "libopenssl-1.1.1w.zip",
@@ -192,6 +201,19 @@
    "depends": [],
    "licence": "MIT",
    "bytes": 509225
+  },
+  "scipy": {
+   "file": "scipy-1.14.1-cp313-cp313-pyodide_2025_0_wasm32.whl",
+   "sha256": "6c4277bb1902f2064f5f4bd0ffbea67cf9aaf89a3fdc49e9ac1e078d9b574ef0",
+   "imports": [
+    "scipy"
+   ],
+   "depends": [
+    "numpy",
+    "libopenblas"
+   ],
+   "licence": "BSD-3-Clause",
+   "bytes": 13258838
   },
   "six": {
    "file": "six-1.17.0-py2.py3-none-any.whl",

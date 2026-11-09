@@ -37,7 +37,7 @@ A `Pose(...)` your `main.py` makes again on the same sources takes the last run'
 
 ## If the program misbehaves
 
-- Hold the **user button for 2 s** while it runs. The board restarts (motors coast) and waits for the button again.
+- Hold the **user button for 2 s** while it runs. The board restarts (motors coast) and waits for the button again. A program that uses the button as an input (`evn.set_stop_button(None)`) turns this off while it runs: then use one of the next two, or Ctrl-C. If that program also catches every error (a bare `except:` in its loop), Ctrl-C does not end it either: switch the board off and on with the button held.
 - Hold the **user button while switching on**: `main.py` is skipped once. Useful with `autostart`.
 - **EVN: Stop all motors** stops it from VS Code.
 - The *Board* view's console row says when the board runs its own program. Its stop button, **Stop the board's program and connect**, ends it and hands the board back to you. Nothing else the extension does interrupts it.

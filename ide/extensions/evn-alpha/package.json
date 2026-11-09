@@ -2,7 +2,7 @@
   "name": "evn-alpha-micropython",
   "displayName": "EVN ALPHA MicroPython",
   "description": "Early-access tooling for the EVN ALPHA robotics controller: flash the MicroPython firmware, run programs, open the REPL, autocomplete for the evn motor API, and a Blockly block editor that generates MicroPython.",
-  "version": "0.2.74",
+  "version": "0.2.75",
   "publisher": "evn-alpha",
   "license": "MIT",
   "preview": true,
@@ -635,7 +635,7 @@
       },
       {
         "command": "evn.nb.installPackages",
-        "title": "Install notebook packages (NumPy and Matplotlib)",
+        "title": "Install notebook packages (NumPy, SciPy and Matplotlib)",
         "category": "EVN",
         "icon": "$(cloud-download)"
       },
@@ -690,6 +690,16 @@
       {
         "command": "evn.challenge.openSubmission",
         "title": "Open a challenge submission",
+        "category": "EVN"
+      },
+      {
+        "command": "evn.addOfflineLessons",
+        "title": "Add offline lessons",
+        "category": "EVN"
+      },
+      {
+        "command": "evn.openOfflineLessons",
+        "title": "Open offline lessons",
         "category": "EVN"
       },
       {
@@ -802,6 +812,14 @@
         }
       ],
       "commandPalette": [
+        {
+          "command": "evn.addOfflineLessons",
+          "when": "evn.offlineOn"
+        },
+        {
+          "command": "evn.openOfflineLessons",
+          "when": "evn.offlineOn"
+        },
         {
           "command": "evn.nb.restartKernel",
           "when": "notebookType == jupyter-notebook"

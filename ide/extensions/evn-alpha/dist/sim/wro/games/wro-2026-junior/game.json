@@ -1,0 +1,147 @@
+{
+  "format": "evn-game/1",
+  "meta": {
+    "id": "wro-2026-junior",
+    "league": "wro-robomission",
+    "season": 2026,
+    "category": "junior",
+    "title": "Heritage Heroes",
+    "maxScore": 230,
+    "sources": [
+      { "doc": "WRO 2026 RoboMission Junior Game Rules", "where": "SIMULATOR_WRO_DESIGN.md §1 (the rules' sha256)" },
+      { "doc": "WRO 2026 General Rules", "where": "SIMULATOR_WRO_DESIGN.md §1" }
+    ],
+    "engine": { "kernel": "staticField", "physics": "bespoke", "engineModel": "jolt-1" },
+    "readings": { "OQ66": "SIMULATOR_WRO_DESIGN.md §10", "OQ66-touching": "SIMULATOR_WRO_ES_DESIGN.md §12, D232: the contact patch with !held (ruled (b), 2026-11-03); (touchesMat(o) | onMat(o)) decides no score, it keeps the card's word", "OQ73": "SIMULATOR_ENGINE_DESIGN.md §8; (cn) (2) default taken: Elementary's 'upright' on the lines OQ 66 (b) moved; the yellow line stays on P3 (ES D232)" },
+    "design": "SIMULATOR_ENGINE_DESIGN.md §4.1 (J2a): wroScore.ts's LINES, MISSIONS and switch as data; scored identically on the bespoke and flags producers (proof 1, scripts/test_games.js); 3.1-3.5 read touching on the contact patch since OQ 66 (b) (JT rows, GJtouch)"
+  },
+  "units": { "length": "mm", "mass": "g", "angle": "deg", "time": "s" },
+  "field": {
+    "table": { "size": [2362, 1143], "walls": { "h": 50, "t": 20 } },
+    "mat": { "geometry": "../../wro/junior-2026.json", "sha256": "ee26b7ccb9064972ffbe1a0d4713d22fb713df99b5f772ceda2418b5183cdcc9" },
+    "areas": {
+      "visitor_target": { "byColour": { "green": "mat:excavation_site_incl_lines", "red": "mat:museum_incl_lines", "black": "mat:visitor_target_black_area", "blue": "mat:visitor_target_blue_area" } },
+      "red_target": { "set": ["mat:red_target_upper", "mat:red_target_lower"] },
+      "yellow_target": { "set": ["mat:yellow_target_upper", "mat:yellow_target_lower"] },
+      "exhibition": { "byColour": { "red": "mat:exhibition_red", "green": "mat:exhibition_green", "black": "mat:exhibition_black", "blue": "mat:exhibition_blue", "yellow": "mat:exhibition_yellow" } },
+      "cobblestone": { "ref": "mat:cobblestone_area" },
+      "grey": { "set": ["mat:barrier_red_grey_area", "mat:barrier_white_grey_area", "mat:parrot_area"], "apart": true }
+    }
+  },
+  "materials": {},
+  "models": { "file": "../../wro/junior-2026-props.json", "sha256": "ff2a9ece5fa7ab771b1baf90eaee3293aeb36d719a8a092028245b032ca6d247" },
+  "fixtures": [],
+  "joints": [],
+  "objects": [
+    { "id": "visitor_red", "model": "visitor_red", "tags": { "kind": "visitor", "colour": "red" }, "start": { "region": "visitor_start_red" } },
+    { "id": "visitor_green", "model": "visitor_green", "tags": { "kind": "visitor", "colour": "green" }, "start": { "region": "visitor_start_green" } },
+    { "id": "visitor_blue", "model": "visitor_blue", "tags": { "kind": "visitor", "colour": "blue" }, "start": { "region": "visitor_start_blue" } },
+    { "id": "visitor_black", "model": "visitor_black", "tags": { "kind": "visitor", "colour": "black" }, "start": { "region": "visitor_start_black" } },
+    { "id": "red_tower_upper", "model": "red_tower", "tags": { "kind": "red_tower" }, "start": { "region": "red_tower_start_upper" } },
+    { "id": "red_tower_lower", "model": "red_tower", "tags": { "kind": "red_tower" }, "start": { "region": "red_tower_start_lower" } },
+    { "id": "yellow_top_left", "model": "yellow_tower_top", "tags": { "kind": "yellow_tower_top" }, "start": { "region": "yellow_tower_top_start_left" } },
+    { "id": "yellow_top_right", "model": "yellow_tower_top", "tags": { "kind": "yellow_tower_top" }, "start": { "region": "yellow_tower_top_start_right" } },
+    { "id": "yellow_base_upper", "model": "yellow_tower_base", "tags": { "kind": "yellow_tower_base" }, "start": { "region": "yellow_tower_base_square_upper" } },
+    { "id": "yellow_base_lower", "model": "yellow_tower_base", "tags": { "kind": "yellow_tower_base" }, "start": { "region": "yellow_tower_base_square_lower" } },
+    { "id": "artefact_1", "model": "$artefacts", "tags": { "kind": "artefact" }, "start": { "slot": "artefact_slots[0]" } },
+    { "id": "artefact_2", "model": "$artefacts", "tags": { "kind": "artefact" }, "start": { "slot": "artefact_slots[1]" } },
+    { "id": "artefact_3", "model": "$artefacts", "tags": { "kind": "artefact" }, "start": { "slot": "artefact_slots[2]" } },
+    { "id": "artefact_4", "model": "$artefacts", "tags": { "kind": "artefact" }, "start": { "slot": "artefact_slots[3]" } },
+    { "id": "dirt_0", "model": "dirt", "tags": { "kind": "dirt" }, "start": { "draw": "dirt" } },
+    { "id": "dirt_1", "model": "dirt", "tags": { "kind": "dirt" }, "start": { "draw": "dirt" } },
+    { "id": "dirt_2", "model": "dirt", "tags": { "kind": "dirt" }, "start": { "draw": "dirt" } },
+    { "id": "dirt_3", "model": "dirt", "tags": { "kind": "dirt" }, "start": { "draw": "dirt" } },
+    { "id": "dirt_4", "model": "dirt", "tags": { "kind": "dirt" }, "start": { "draw": "dirt" } },
+    { "id": "dirt_5", "model": "dirt", "tags": { "kind": "dirt" }, "start": { "draw": "dirt" } },
+    { "id": "dirt_6", "model": "dirt", "tags": { "kind": "dirt" }, "start": { "draw": "dirt" } },
+    { "id": "dirt_7", "model": "dirt", "tags": { "kind": "dirt" }, "start": { "draw": "dirt" } },
+    { "id": "dirt_8", "model": "dirt", "tags": { "kind": "dirt" }, "start": { "draw": "dirt" } },
+    { "id": "dirt_9", "model": "dirt", "tags": { "kind": "dirt" }, "start": { "draw": "dirt" } },
+    { "id": "barrier_red", "model": "barrier_red", "tags": { "kind": "barrier" }, "start": { "region": "barrier_red_grey_area" }, "moved": { "outsideAreas": "@grey", "source": "contact" } },
+    { "id": "barrier_white", "model": "barrier_white", "tags": { "kind": "barrier" }, "start": { "region": "barrier_white_grey_area" }, "moved": { "outsideAreas": "@grey", "source": "contact" } },
+    { "id": "parrot", "model": "parrot", "tags": { "kind": "parrot" }, "start": { "region": "parrot_area" }, "moved": { "outsideAreas": "@grey", "source": "contact" } }
+  ],
+  "slots": {
+    "artefact_slots": [
+      { "region": "artefact_start_1" }, { "region": "artefact_start_2" }, { "region": "artefact_start_3" }, { "region": "artefact_start_4" }
+    ]
+  },
+  "random": [
+    { "id": "artefacts", "type": "assign", "items": ["artefact_blue", "artefact_red", "artefact_green", "artefact_black", "artefact_yellow"], "into": "artefact_slots", "leftOut": "remove", "tag": "RULE", "ref": "Junior 2.4" },
+    { "id": "dirt", "type": "poseIn", "objects": "kind:dirt", "area": "mat:dirt_randomisation_area", "inset": 1, "noOverlap": true, "stack": false, "tag": "RULE", "ref": "Junior 2.5" }
+  ],
+  "robot": {
+    "start": { "area": "mat:start_area", "mode": "completely", "using": "plan", "ref": "GR 10.2" },
+    "checks": [
+      { "id": "size", "maxMm": [250, 250, 250], "tag": "RULE", "ref": "GR 5.1" },
+      { "id": "mass", "maxG": 1500, "tag": "RULE", "ref": "GR 5.2.1" },
+      { "id": "motors", "max": 5, "countServos": true, "tag": "RULE", "ref": "GR 5.2.8" },
+      { "id": "camera", "allowed": true, "tag": "RULE", "ref": "GR 5.2.7" }
+    ]
+  },
+  "run": {
+    "clock": { "start": "runMark", "limitS": 120 },
+    "end": [
+      { "id": "time", "ref": "GR 10.7.1" },
+      { "id": "stop", "when": "stopAsked & robotStill()", "ref": "GR 10.7.5" },
+      { "id": "programEnd", "when": "programEnded & robotStill()" },
+      { "id": "placed", "event": "handPlacement", "ref": "GR 10.7.2" }
+    ],
+    "still": { "dps": 1, "mms": 1, "s": 0.5, "tag": "READING" },
+    "time": { "record": "floorSeconds", "ifNoTask": 120, "ref": "GR 10.8, 10.12" },
+    "settle": { "mms": 1, "dps": 1, "s": 0.25, "maxS": 2, "tag": "MODEL" }
+  },
+  "rules": {
+    "defaults": {
+      "tol": { "value": 0.5, "tag": "READING", "ref": "OQ 66 (n), (p): the 0.5 mm in the team's favour, per edge, mitred" },
+      "restMm": { "value": 1.0, "tag": "MODEL", "ref": "games.ts REST_MM; W3a rules S5" },
+      "contactMm": { "value": 0.2, "tag": "MODEL", "ref": "SIMULATOR_ENGINE_DESIGN.md §3.5 P4" },
+      "supportDeg": { "value": 60, "tag": "MODEL", "ref": "SIMULATOR_ENGINE_DESIGN.md §3.5 P4" },
+      "uprightVisitorDeg": { "value": 0.8, "tag": "READING", "ref": "ES D232 (D65's form): asin(restMm / D), D 71.3 mm (the 63.8 x 31.8 base); OQ 73 (cn) (2) default" },
+      "uprightArtefactDeg": { "value": 1.27, "tag": "READING", "ref": "ES D232 (D65's form): asin(restMm / D), D 45.0 mm (the 31.8 mm base); OQ 73 (cn) (2) default" },
+      "uprightRedDeg": { "value": 0.85, "tag": "READING", "ref": "ES D232 (D65's form): asin(restMm / D), D 67.6 mm (the 47.8 mm base); the red line, named by the orchestrator beside OQ 73 (cn) (2)" }
+    },
+    "named": {},
+    "missions": [
+      { "id": "3.1", "label": "Show the visitors around", "max": 40, "task": true },
+      { "id": "3.2", "label": "Rebuild the towers", "max": 80, "task": true },
+      { "id": "3.3", "label": "Bring the artefacts in the museum", "max": 60, "task": true },
+      { "id": "3.4", "label": "Clear the cobblestone of dirt", "max": 20, "task": true },
+      { "id": "3.5", "label": "Bonus points", "max": 30, "task": false }
+    ],
+    "lines": [
+      { "id": "visitors", "mission": "3.1", "per": "o in kind:visitor", "let": { "own": "@visitor_target[o.colour]" },
+        "tiers": [
+          { "points": 10, "label": "Visitor completely in its colour's area and upright", "when": "(touchesMat(o) | onMat(o)) & !held(o) & in(o, own, completely, contact) & upright(o, uprightVisitorDeg)" },
+          { "points": 5, "label": "Visitor partly in its colour's area, or not upright", "when": "(touchesMat(o) | onMat(o)) & !held(o) & ((in(o, own, completely, contact) & !upright(o, uprightVisitorDeg)) | in(o, own, partly, contact))" }
+        ],
+        "else": [ { "reason": "wrong colour", "when": "in(o, @visitor_target - own, meets, contact)" } ] },
+      { "id": "red", "mission": "3.2",
+        "match": {
+          "roles": { "o": "kind:red_tower", "a": "@red_target" },
+          "score": "if((touchesMat(o) | onMat(o)) & !held(o) & in(o, a, meets, contact) & upright(o, uprightRedDeg), if(in(o, a, completely, contact), 15, if(in(o, a, partly, contact), 10, 0)), 0)",
+          "labels": { "15": "Red tower completely in a red target and upright", "10": "Red tower partly in a red target and upright" } } },
+      { "id": "yellow", "mission": "3.2",
+        "match": {
+          "roles": { "t": "kind:yellow_tower_top", "b": "kind:yellow_tower_base" },
+          "score": "if(!onMat(t) & restsOn(t, b) & onMat(b) & in(t.origin, b.pad) & upright(t) & in(b, @yellow_target, meets) & upright(b), if(in(b, @yellow_target, completely), 25, if(in(b, @yellow_target, partly), 15, 0)), 0)",
+          "targetReason": "onMat(b) & in(b, @yellow_target, meets) & upright(b) & (in(b, @yellow_target, completely) | in(b, @yellow_target, partly))",
+          "labels": { "25": "Yellow top correctly on a base, the base completely in a yellow target", "15": "Yellow top correctly on a base, the base partly in a yellow target" } },
+        "else": [
+          { "reason": "wrong base", "when": "!onMat(t) & restsOn(t, kind:visitor | kind:red_tower | kind:yellow_tower_top | kind:artefact | kind:dirt | kind:barrier | kind:parrot)" },
+          { "reason": "wrong base", "when": "!onMat(t) & any(x in kind:yellow_tower_base: restsOn(t, x) & any(u in kind:yellow_tower_top: u.index < t.index & !onMat(u) & restsOn(u, x) & onMat(x) & in(u.origin, x.pad) & upright(u)))" }
+        ] },
+      { "id": "artefacts", "mission": "3.3", "per": "o in kind:artefact", "let": { "own": "@exhibition[o.colour]" },
+        "tiers": [
+          { "points": 15, "label": "Artefact completely in its colour's exhibition spot and upright", "when": "(touchesMat(o) | onMat(o)) & !held(o) & in(o, own, completely, contact) & upright(o, uprightArtefactDeg)" },
+          { "points": 5, "label": "Artefact partly in its colour's exhibition spot, or not upright", "when": "(touchesMat(o) | onMat(o)) & !held(o) & ((in(o, own, completely, contact) & !upright(o, uprightArtefactDeg)) | in(o, own, partly, contact))" }
+        ],
+        "else": [ { "reason": "wrong colour", "when": "in(o, @exhibition - own, meets, contact)" } ] },
+      { "id": "dirt", "mission": "3.4", "per": "o in kind:dirt",
+        "tiers": [ { "points": 2, "label": "Dirt particle not touching the cobblestone area", "when": "!((touchesMat(o) | onMat(o)) & in(o, @cobblestone, meets, contact))" } ] },
+      { "id": "barriers", "mission": "3.5", "per": "o in kind:barrier | kind:parrot",
+        "tiers": [ { "points": 10, "label": "Barrier or parrot not moved or damaged", "when": "!damaged(o) & !moved(o)" } ] }
+    ]
+  },
+  "examples": []
+}

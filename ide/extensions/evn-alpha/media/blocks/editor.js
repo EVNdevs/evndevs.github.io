@@ -96,6 +96,7 @@
         if (workspace) { workspace.setTheme(themes[scheme]); }
         const btn = document.getElementById('btnTheme');
         btn.title = 'Colour scheme: ' + (mode === 'auto' ? 'follows VS Code (' + scheme + ')' : mode) + '. Click to change.';
+        btn.setAttribute('aria-label', btn.title);
         btn.querySelector('.ico-auto').style.display = mode === 'auto' ? '' : 'none';
         btn.querySelector('.ico-light').style.display = mode === 'light' ? '' : 'none';
         btn.querySelector('.ico-dark').style.display = mode === 'dark' ? '' : 'none';
@@ -115,8 +116,24 @@
                                   // (src/blocksEditor.ts, "who holds the blocks text"), so it never runs an older program
     let pendingText = null;       // a document that arrived before the workspace existed
 
+    /* Blockly 13's keyboard route is on by default (its ShortcutRegistry; A11Y_DESIGN §4.7). One of its keys is VS Code's
+     * too: "show tooltip" is Ctrl+J (Cmd+J on a Mac), the workbench's Toggle Panel, and the webview hands its key presses
+     * to the workbench (VSC-32), so one press did both. It moves to Alt+J, which VS Code does not take
+     * (test_blocks_a11y.js lists both sets and fails on a clash). */
+    function keepVsCodeKeys() {
+        const R = Blockly.ShortcutRegistry.registry;
+        const name = Blockly.ShortcutItems.names.SHOW_TOOLTIP;
+        const J = Blockly.utils.KeyCodes.J;
+        for (const k of R.getKeyCodesByShortcutName(name)) {
+            if (/(^|\+)(Control|Meta)\+/.test(k) && k.endsWith('+' + J)) { R.removeKeyMapping(k, name, true); }
+        }
+        const altJ = R.createSerializedKey(J, [Blockly.utils.KeyCodes.ALT]);
+        if (R.getKeyCodesByShortcutName(name).indexOf(altJ) < 0) { R.addKeyMapping(altJ, name, true); }
+    }
+
     function inject() {
         Blockly.Scrollbar.scrollbarThickness = 9;
+        keepVsCodeKeys();
         workspace = Blockly.inject('blocklyDiv', {
             toolbox: evnBlocks.TOOLBOX,
             media: cfg.mediaUri,
@@ -312,6 +329,14 @@
         codePill.style.display = codeShown ? 'none' : '';
         codePane.style.width = codeWidth === null ? '' : clampWidth(codeWidth) + 'px';
         if (workspace) { Blockly.svgResize(workspace); }
+        if (codeShown) {
+            // the separator's value is the pane's width in px (A11Y_DESIGN §4.7), so a screen reader says what an arrow did
+            const now = Math.round(codePane.getBoundingClientRect().width);
+            splitter.setAttribute('aria-valuemin', String(CODE_MIN));
+            splitter.setAttribute('aria-valuemax', String(Math.max(CODE_MIN, Math.round(main.clientWidth * CODE_MAX_FRACTION))));
+            splitter.setAttribute('aria-valuenow', String(now));
+            splitter.setAttribute('aria-valuetext', 'Python pane ' + now + ' pixels wide');
+        }
     }
     function rememberWidth() {
         if (vscode.setState) { vscode.setState(Object.assign({}, vscode.getState() || {}, { codeWidth: codeWidth })); }
@@ -352,6 +377,28 @@
     splitter.addEventListener('pointerup', endDrag);
     splitter.addEventListener('pointercancel', endDrag);
     splitter.addEventListener('dblclick', function () { codeWidth = null; applyCodePane(); rememberWidth(); });
+    /* the keyboard route (WCAG 2.5.7, A11Y_DESIGN §4.7): with focus on the separator, Left / Right move it 16 px (the pane
+     * grows / shrinks), Home / End give the pane its narrowest / widest. Only these four keys, and only unmodified: every
+     * other key - F5, Ctrl+F5 above all, VS Code's (VSC-32) - is left alone, so the workbench still gets it. This is the
+     * page's only keydown listener (test_blocks_editor.js VSC-32, test_blocks_a11y.js). */
+    const SPLIT_STEP = 16;
+    splitter.addEventListener('keydown', function (ev) {
+        if (ev.ctrlKey || ev.metaKey || ev.altKey || ev.shiftKey) { return; }
+        const now = codePane.getBoundingClientRect().width;
+        const max = main.clientWidth * CODE_MAX_FRACTION;
+        let w;
+        switch (ev.key) {
+            case 'ArrowLeft': w = now + SPLIT_STEP; break;
+            case 'ArrowRight': w = now - SPLIT_STEP; break;
+            case 'Home': w = CODE_MIN; break;
+            case 'End': w = max; break;
+            default: return;
+        }
+        ev.preventDefault();
+        codeWidth = clampWidth(w);
+        applyCodePane();
+        rememberWidth();
+    });
     applyCodePane();
 
     document.getElementById('btnTheme').addEventListener('click', function () {

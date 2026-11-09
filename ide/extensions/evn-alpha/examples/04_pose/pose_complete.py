@@ -104,6 +104,12 @@ wheel, track = pose.settings()
 print("geometry: wheel %.1f mm, track %.1f mm" % (wheel, track))
 pose.settings(wheel_diameter=wheel, axle_track=track)   # the same numbers, but it still re-seeds the wheel estimates (it forgets what it learned)
 
+# --- the filter's noise figures -------------------------------------------------------------------
+# noise() -> (gyro_noise deg/s, compass_noise deg, accel_noise, lateral_noise mm/s^2, gyro_bias_walk,
+# accel_bias_walk); settings(gyro_noise=...) and the rest change one live (not stored). The defaults
+# suit most robots; a noisier gyro or compass than the defaults assume is the reason to raise one.
+print("noise figures:", pose.noise())
+
 # --- one Pose per robot ---------------------------------------------------------------------------
 # A second Pose on other sources raises OSError while this one is open (one on the same sources takes
 # it over, and this one then raises 'replaced'); close() hands the estimator back (the base keeps

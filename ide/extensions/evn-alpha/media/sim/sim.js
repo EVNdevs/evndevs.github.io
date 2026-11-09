@@ -50,7 +50,7 @@
     /** the last snapshot the worker posted, never written here (a drag writes `snap`'s pose): what a restart starts from
      *  (design §6 the restart path, W3b) */
     let posted;
-    /** the last snapshot that carried a rigid course's state bytes (hazards.engine: every 4th frame, runtime.ts BYTES_EVERY;
+    /** the last snapshot that carried a rigid course's state bytes (hazards.engine: every bytesEvery(n)-th frame, runtime.ts - every 4th up to 40 objects, every 12th on Senior's 75 bodies;
      *  §1.7 2's cost rule, J3c-2): a restart starts from it when the last posted has none; dropped at a course switch */
     let postedBytes;
     let geom;
@@ -125,11 +125,42 @@
     /** a copy of the bytes for one message (a worker restarted later needs them again) */
     const joltFor = (j) => ({ jolt: { glue: j.glue, wasm: j.wasm.slice(0) } });
 
+    /* ---- a WRO course's package (D230, owner 2026-11-05 "Load on first use"): its files (cfg.wroPackages: game.json,
+     * the mat, the models...) fetched from cfg.wroUrl the first time the course is picked, kept, and posted with that
+     * course's `init` / `course` only - no worker is sent a course's files before the course is picked. The worker
+     * sha256-checks each file against its pin (wroStore.ts) and refuses a mismatch by name. Each URL carries the file's
+     * pin (cfg.wroPins: ?<sha256 16>), so no cache serves another release's copy (review lazy r1 A S1); a text the
+     * worker refused is dropped (wroRefused), so the next pick fetches it again. */
+    const wroTexts = new Map();
+    function wroFor(id) {
+        const rels = (cfg.wroPackages || {})[id];
+        if (!rels) { return Promise.resolve({}); }
+        const get = (rel) => {
+            if (!wroTexts.has(rel)) {
+                const pin = String((cfg.wroPins || {})[rel] || '').slice(0, 16);
+                const p = fetch(cfg.wroUrl + rel + (pin ? `?${pin}` : '')).then((r) => { if (!r.ok) { throw new Error(`${rel}: ${r.status}`); } return r.text(); });
+                p.catch(() => { wroTexts.delete(rel); });
+                wroTexts.set(rel, p);
+            }
+            return wroTexts.get(rel);
+        };
+        return Promise.all(rels.map(get)).then((texts) => ({ wroPkg: { files: Object.fromEntries(rels.map((r, i) => [r, texts[i]])) } }));
+    }
+    /** a worker's error naming a package file it refused (wroStore.ts WroPackageError): that text is not kept */
+    function wroRefused(message) {
+        const m = /package file (\S+): /.exec(String(message || ''));
+        if (m) { wroTexts.delete(m[1]); }
+    }
+
     function start(state) {
         ready = false;
+        // the course this start is for, read once (review lazy r1 A B2): a course picked while its files load goes as a
+        // `course` message after this init, never as this init's id with another course's files
+        const id = courseId;
         starting = (async () => {
             const a = await loadAssets();
-            const jolt = needsEngine(courseId) ? joltFor(await loadJoltBytes()) : {};
+            const jolt = needsEngine(id) ? joltFor(await loadJoltBytes()) : {};
+            const wro = await wroFor(id);
             const shared = typeof SharedArrayBuffer !== 'undefined' && self.crossOriginIsolated;
             ctl = shared ? new Int32Array(new SharedArrayBuffer(32)) : undefined;
             if (ctl) { new Float64Array(ctl.buffer, 16, 1)[0] = speed; }
@@ -141,7 +172,7 @@
             // a restart state with a field (a WRO table): the referee settings too, applied before the restore, so the
             // settings sent at `ready` lay nothing again (W3b, §6); without one (RCJ) the init is as before
             worker.postMessage({ type: 'init', pyodide: { asm: p.asm, wasm: p.wasm.slice(0), stdlib: p.stdlib.slice(0), lock: p.lock }, evn: a.evn, boot: a.boot,
-                version: cfg.version, hw, course: courseId, map: mapOf(courseId), ctl: ctl ? ctl.buffer : undefined, state, files, written, speed, camRun, ...wroFields().fields, ...(state && state.field ? { referee: refSet } : {}), ...jolt });
+                version: cfg.version, hw, course: id, map: mapOf(id), ctl: ctl ? ctl.buffer : undefined, state, files, written, speed, camRun, ...wroFields().fields, ...(state && state.field ? { referee: refSet } : {}), ...jolt, ...wro });
             while (outbox.length) { worker.postMessage(outbox.shift()); }
         })().catch((e) => { showNote(`The simulator could not start: ${e && e.message || e}`, true); setStatus('err', 'not started'); });
     }
@@ -163,24 +194,31 @@
                 live = !!m.live;
                 $('#loading').hidden = true;
                 setStatus('', 'idle');
-                if (m.snap) { onSnap(m.snap); }
+                if (m.snap) {
+                    // a Run waiting on this start reads from what the board restored, which may be older than `snap` (restartFrame)
+                    if ([...pending.values()].some((p) => p.run)) { plotZero(m.snap); } else { plotCarry(m.snap); }
+                    onSnap(m.snap);
+                }
                 toWorker({ type: 'referee', op: 'settings', settings: refSet });
+                trailResync();
                 vscode.postMessage({ type: 'ready', shared: !!m.sab, live });
                 camHw();
                 return;
-            case 'geom': geom = m.geom; trail.length = 0; if (!userView) { fit(); } if (v3) { v3.setGeom(geom); } camGeom(); draw(); return;
-            case 'wro-schematic': if (wro) { wro.link.schematic(m.rgb, cfg.wro.size[0], cfg.wro.size[1], canvas2d); } return;
+            case 'geom': geom = m.geom; trail.length = 0; toolsNewCourse(geom.id); if (!userView) { fit(); } if (v3) { v3.setGeom(geom); } camGeom(); draw(); return;
+            case 'wro-schematic': if (wros) { wros.schematic(m.mat, m.rgb, canvas2d); } return;
             case 'cam': onCam(m); return;
-            case 'busy': running = m.id; setStatus('run', 'running a program'); return;
-            case 'out': vscode.postMessage({ type: 'out', id: m.id, text: m.text }); return;
+            case 'busy': running = m.id; if (pending.get(m.id)?.behind) { plotRun(); } setStatus('run', 'running a program'); return;
+            case 'out': if (plot.on) { plotOut(m.text); } vscode.postMessage({ type: 'out', id: m.id, text: m.text }); return;
             case 'interrupting': clearTimeout(stopWatch); return;
             case 'written':
                 // a program's files: kept for a worker started again, and to the Board view (SimWorld.programFiles)
                 for (const [n, b] of Object.entries(m.files || {})) { written[n] = b; }
                 vscode.postMessage({ type: 'written', files: m.files || {} });
                 return;
+            case 'trail': onTrail(m); return;
             case 'done':
                 if (running === m.id) { running = undefined; clearTimeout(stopWatch); }
+                if (pending.get(m.id)?.run) { trailRunEnd(m.id); }
                 pending.delete(m.id);
                 if (!pending.size) { setStatus('', 'idle'); }
                 if (m.snap) { onSnap(m.snap); }
@@ -191,6 +229,7 @@
             // the referee's 4.2.8 restart at a lack of progress: the extension restarts the board, main.py with it
             case 'referee-restart': vscode.postMessage({ type: 'referee-restart' }); return;
             case 'error':
+                wroRefused(m.message);
                 showNote(`Simulator: ${m.message}`, true);
                 vscode.postMessage({ type: 'error', id: m.id, message: m.message });
                 return;
@@ -239,8 +278,9 @@
     }
 
     /** the frame a restart starts from (SIMULATOR_ENGINE_DESIGN.md §1.7 2's cost rule; J3c-2): the last one posted, or -
-     *  when it has no state bytes and an earlier one of this course had (a rigid course's bytes ride every 4th frame) - that
-     *  earlier one, whole (its pose, angles and field with its bytes: at most three frames, ~0.1 s, older) */
+     *  when it has no state bytes and an earlier one of this course had (a rigid course's bytes ride every bytesEvery(n)-th frame, runtime.ts) - that
+     *  earlier one, whole (its pose, angles and field with its bytes: at most bytesEvery(n) - 1 frames older - three, ~0.1 s,
+     *  up to 40 objects; eleven, ~0.37 s, on Senior's 75 bodies) */
     function restartFrame(last, withBytes) {
         if (!last || (last.hazards && last.hazards.engine) || !withBytes) { return last; }
         return withBytes;
@@ -276,7 +316,9 @@
         const m = ev.data;
         switch (m.type) {
             case 'exec':
-                pending.set(m.id, { source: m.source, run: m.run });
+                // a Run behind a course that has not landed starts in the plot at its `busy`, when the frames are the new course's
+                pending.set(m.id, { source: m.source, run: m.run, behind: !!m.run && courseLanding() });
+                if (m.run && !pending.get(m.id).behind) { plotRun(); }
                 setStatus('run', 'running a program');
                 // the Run mark (§6: simPanel.ts marks the program's Run) goes to the worker as the extension gave it
                 toWorker({ type: 'exec', id: m.id, source: m.source, ...(m.run ? { run: m.run } : {}) });
@@ -294,7 +336,7 @@
                 for (const n of m.changed || []) { delete written[n]; }
                 toWorker({ type: 'files', files, changed: m.changed || [] });
                 return;
-            case 'hw': hw = m.hw; buildConfig(); clearErr(); toWorker({ type: 'hardware', hw }); trail.length = 0; if (v3) { v3.setHw(hw, body3()); } camHw(); return;
+            case 'hw': hw = m.hw; plotHw(); buildConfig(); clearErr(); toWorker({ type: 'hardware', hw }); trail.length = 0; if (v3) { v3.setHw(hw, body3()); } camHw(); return;
             case 'cam-server': onCamServer(m); return;
             case 'hw-error': $('#cfgErr').textContent = m.message; return;
             case 'course': setCourse(m.course, false); return;
@@ -312,8 +354,8 @@
             case 'map-imported': loadDraft(m.map, true); return;
             case 'map-victims': draft.objects = m.objects; if (!draft.objects.length) { delete draft.objects; } selObj = undefined; edited(); return;
             // the WRO mat (§3.2): a file picked (or the stored one) to render and identify; a pick cancelled or failed
-            case 'wro-mat-bytes': void wroLoad(m.bytes, !!m.stored, typeof m.sha256 === 'string' ? m.sha256 : undefined); return;
-            case 'wro-mat-error': if (m.message) { showNote(`WRO mat: ${m.message}`, true); } wroHeader(); return;
+            case 'wro-mat-bytes': void wroLoad(m.bytes, !!m.stored, typeof m.sha256 === 'string' ? m.sha256 : undefined, m.mat); return;
+            case 'wro-mat-error': if (m.message) { showNote(`WRO mat${wroOther(m.mat)}: ${m.message}`, true); } wroHeader(); return;
         }
     });
 
@@ -385,6 +427,10 @@
             el('td', {}, String(r.points)),
             el('td', {}, chal.purpose === 'student' ? el('button', { class: 'btn', type: 'button', title: 'Put the robot at this run\'s start, to run your program from there and watch', onclick: () => { if (pending.size) { showNote('The robot can be moved when no program is running.'); return; } place(r.start); } }, 'Try') : ''));
         $('#chRows').append(tr);
+        // why a run ended in an error, as text under its own row: the tooltip alone reaches neither a keyboard nor a
+        // screen reader (A11Y_DESIGN W6); the row spans the table, as the words do not fit the Result column
+        const why = r.error && r.error.trim().split('\n').pop();
+        if (why) { $('#chRows').append(el('tr', { class: 'why' }, el('td', { colspan: '7' }, why))); }
     }
     async function chRunJob(m) {
         if (chal.busy) { vscode.postMessage({ type: 'challenge-error', id: m.id, message: 'a challenge is already running in the Simulator panel' }); return; }
@@ -505,7 +551,7 @@
         $('#stopBtn').disabled = !pending.size;
         wroHeader();
         // no program runs: a stored mat held for the run goes on the floor now (wroMat.js idle)
-        if (!pending.size && wro && wro.mat.waiting && !wro.mat.busy) { void wroIdle(); }
+        wroWaiting();
     }
     function setConn(text) { $('#conn').textContent = text || ''; }
     /** the licence chip (src/sim/simPanel.ts licenceChip): the trial's days left; empty with a licence */
@@ -560,7 +606,12 @@
         setCourse(id, true);
     }
 
+    /** a course picked that the worker has not answered yet: its files on their way (`held`) or the worker still taking it.
+     *  True for too long only moves a Run's start in the plot to its `busy`, which is right all the same */
+    const courseLanding = () => held.length > 0 || (!!geom && geom.id !== courseId);
+
     function setCourse(id, tell) {
+        const before = courseId;
         courseId = id;
         postedBytes = undefined;
         courseOptions();
@@ -571,14 +622,34 @@
             // the engine's files first (once; J4): the course goes with them, and every later message after it
             const slot = { m: msg, transfer: wf.transfer, ready: false };
             held.push(slot);
-            loadJoltBytes().then(joltFor, (e) => { showNote(`The physics engine could not load: ${e && e.message || e}`, true); return {}; }).then((jolt) => {
-                slot.m = { ...msg, ...jolt }; slot.ready = true;
+            // a course whose files cannot be had is not sent: the page and the host go back to the course before it (the
+            // worker never left it), the note naming the file (review lazy r1 A N1)
+            const wro = wroFor(id).catch((e) => { showNote(`The WRO course's files could not load (${e && e.message || e}): back on the course before`, true); return null; });
+            loadJoltBytes().then(joltFor, (e) => { showNote(`The physics engine could not load: ${e && e.message || e}`, true); return {}; }).then(async (jolt) => {
+                const w = await wro;
+                if (w === null) {
+                    held.splice(held.indexOf(slot), 1);
+                    flushHeld();
+                    // back on the course the worker never left: no message to it; the host told whoever started the switch
+                    // (its stored id too: review lazy r1 verify N-a)
+                    if (courseId === id && before !== id) {
+                        courseId = before;
+                        courseOptions();
+                        vscode.postMessage({ type: 'course', course: before });
+                        if (wros) { wros.select(before); }
+                        wroHeader();
+                        challengeHeader();
+                    }
+                    return;
+                }
+                slot.m = { ...msg, ...jolt, ...w }; slot.ready = true;
                 flushHeld();
             });
         } else {
             toWorker(msg, wf.transfer);
         }
         if (tell) { vscode.postMessage({ type: 'course', course: id }); }
+        if (wros) { wros.select(id); }
         wroHeader();
         challengeHeader();
     }
@@ -615,9 +686,12 @@
         snap = s;
         const last = trail[trail.length - 1];
         const p = s.pose;
-        if (!last || Math.hypot(p.x - last[0], p.y - last[1]) > 3) { trail.push([p.x, p.y]); if (trail.length > 4000) { trail.shift(); } }
+        // a point's third value: the pen came up before it, nothing joins it to the point before
+        if (tools.penNow && (!last || Math.hypot(p.x - last[0], p.y - last[1]) > 3)) { trail.push(tools.gap ? [p.x, p.y, true] : [p.x, p.y]); tools.gap = false; if (trail.length > 4000) { trail.shift(); } }
         if (follow) { view.cx = s.pose.x; view.cy = s.pose.y; }
         hud();
+        toolsShow();
+        if (plot.on) { plotSnap(s); }
         draw();
         const now = performance.now();
         if (now - lastTele > 100) { lastTele = now; vscode.postMessage({ type: 'tele', snap: s, led }); }
@@ -724,11 +798,25 @@
         const next = rf && typeof rf.nextSeed === 'number' ? rf.nextSeed : typeof refSet.wroSeed === 'number' ? refSet.wroSeed : laid;
         setText(c, laid === undefined ? `seed ${next === undefined ? 1 : next}` : `seed ${laid}${next !== undefined && next !== laid ? ` (next seed ${next})` : ''}`);
     }
+    /** the card's hover notes for the course's mat (cfg.wroMats' `card`: course.ts WRO_MATS; SIMULATOR_WRO_ES_DESIGN.md
+     *  §8.2 EL): its score, its missions, what the physics engine does not model there and the referee toggle's rules
+     *  (review el r1 S2). Junior's equal the texts
+     *  the card is built with below, so its card is unchanged */
+    function wroCardNotes() {
+        const m = (cfg.wroMats || []).find((w) => w.courses.includes(courseId));
+        if (!m || !m.card) { return; }
+        const set = (e, t) => { if (e && e.title !== t) { e.title = t; } };
+        set($('#wScore') && $('#wScore').parentElement, m.card.score);
+        set($('#wLines'), m.card.lines);
+        set($('#wroCard .log'), m.card.engine);
+        set($('#wOn') && $('#wOn').parentElement, m.card.toggle);
+    }
     function wroCard(rf) {
         const card = $('#wroCard');
         const on = gameCourse();
         for (const id of ['wroRand', 'wroEnd', 'wroSeed']) { const b = $('#' + id); if (b) { b.hidden = !on; } }
         if (!card || (card.hidden = !on)) { return; }
+        wroCardNotes();
         wroSeedChip(rf);
         $('#wOn').checked = !!refSet.on;
         card.classList.toggle('off', !rf);
@@ -907,77 +995,99 @@
     function camGeom() {
         if (!cams.worker) { return; }
         // the WRO floor's texture first (render3d.js Scene3D.setFloor), then the course
+        const wro = wroCur();
         if (wro) { const f = wro.link.current(); cams.worker.postMessage({ op: 'floor', floor: f ? f.texture : null }); }
         if (geom) { cams.worker.postMessage({ op: 'geom', geom }); }
     }
 
     /* ---- the WRO mat (docs/SIMULATOR_WRO_DESIGN.md §3.2; media/sim/wroMat.js) ----
-     * Load WRO mat... (the extension's file picker) and Forget, on the WRO course only, refused while a program runs;
-     * the stored mat rendered again when the panel first shows that course. The floor's copies - the simulation worker's
-     * raster, the 3D view's and the cameras' texture, the 2D image - follow the loader through its FloorLink. */
+     * Load WRO mat... (the extension's file picker) and Forget, on a WRO course only, refused while a program runs;
+     * the stored mat rendered again when the panel first shows that course. One loader and FloorLink per mat
+     * (cfg.wroMats; SIMULATOR_WRO_ES_DESIGN.md §2.1, EN4 part 2: Junior's two ids share Junior's): the floor's copies - the
+     * simulation worker's raster, the 3D view's and the cameras' texture, the 2D image - follow the current course's.
+     * Every message to and from the host and the simulation worker names its mat (`mat`, `wroMat`). */
     function canvas2d(w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
-    const wro = window.EVNWroMat && cfg.wro ? (() => {
+    const wros = window.EVNWroMat && cfg.wroMats ? new window.EVNWroMat.WroCourses(cfg.wroMats, (w, others, active, othersBusy) => {
         const mat = new window.EVNWroMat.WroMat({
-            wro: cfg.wro, urls: { pdf: cfg.pdfUrl, worker: cfg.pdfWorkerUrl, nonce }, canvas2d,
+            wro: w, others, othersBusy, urls: { pdf: cfg.pdfUrl, worker: cfg.pdfWorkerUrl, nonce }, canvas2d,
             // the engine's own scale check (dist/sim/wroscale.js) on the raster, before any copy of the floor changes
-            checkRaster: window.EVNWroScale ? (r) => window.EVNWroScale.scaleEnds(r, cfg.wro.size[0], cfg.wro.size[1], cfg.wro.scaleBoxes) : undefined,
+            checkRaster: window.EVNWroScale ? (r) => window.EVNWroScale.scaleEnds(r, w.size[0], w.size[1], w.scaleBoxes) : undefined,
             running: () => pending.size > 0,
             host: {
-                keep: (sha256) => vscode.postMessage({ type: 'wro-mat-keep', sha256 }),
-                refused: (sha256) => vscode.postMessage({ type: 'wro-mat-refused', sha256 }),
-                forget: () => vscode.postMessage({ type: 'wro-mat-forget' }),
+                keep: (sha256) => vscode.postMessage({ type: 'wro-mat-keep', mat: w.key, sha256 }),
+                refused: (sha256) => vscode.postMessage({ type: 'wro-mat-refused', mat: w.key, sha256 }),
+                forget: () => vscode.postMessage({ type: 'wro-mat-forget', mat: w.key }),
             },
             onChange: () => link.changed(),
         });
         const link = new window.EVNWroMat.FloorLink(mat, {
-            post: (m, transfer) => toWorker(m, transfer), view3d: () => (v3 && v3.ok !== false ? v3 : null), camWorker: () => cams.worker, redraw: () => draw(),
+            post: (m, transfer) => toWorker({ ...m, mat: w.key }, transfer), view3d: () => (v3 && v3.ok !== false ? v3 : null), camWorker: () => cams.worker,
+            redraw: () => draw(), active,
         });
-        return { mat, link, hello: false };
-    })() : undefined;
-    function wroFields() { return wro && courseId === cfg.wro.course ? wro.link.fields() : { fields: {}, transfer: [] }; }
+        return { mat, link };
+    }) : undefined;
+    // the starting course's mat, without touching the 3D view or the cameras (not made yet): their floor comes with the schematic
+    if (wros) { wros.cur = wros.of(courseId); }
+    /** the current course's mat entry ({ cfg, mat, link, hello }) or undefined */
+    function wroCur() { return wros ? wros.of(courseId) : undefined; }
+    function wroFields() { return wros ? wros.fields(courseId) : { fields: {}, transfer: [] }; }
+    /** a note's prefix for a mat not the current course's (review en4_p2 r1 N1 / N2): " (WRO Junior 2026)"; '' for the current */
+    function wroOther(key) {
+        const e = wros && wros.entries.get(key || 'junior-2026'), cur = wroCur();
+        return e && e !== cur ? ` (${e.cfg.short})` : '';
+    }
+    /** every mat whose stored render waits (a program ran, or another mat rendered) once nothing renders or runs */
+    function wroWaiting() { if (!pending.size && wros && !wros.busy) { for (const e of wros.entries.values()) { if (e.mat.waiting) { void wroIdle(e); return; } } } }
     /** a load's outcome in the note and the header. The loader forgets a stored mat only when the file is not the mat
      *  (identity, size, pages); any other refusal keeps it and says so; one held for a run waits for wroIdle */
-    function wroShow(r) {
-        if (r) { showNote(r.ok ? r.message : `WRO mat: ${r.message}`, !r.ok && !r.held); }
+    function wroShow(r, e) {
+        const pre = e ? wroOther(e.cfg.key) : '';
+        if (r) { showNote(r.ok ? `${r.message}${pre}` : `WRO mat${pre}: ${r.message}`, !r.ok && !r.held); }
         wroHeader();
+        wroWaiting();
     }
-    async function wroLoad(bytes, stored, sha256) {
+    async function wroLoad(bytes, stored, sha256, key) {
+        const wro = wros && wros.entries.get(key || 'junior-2026');
         if (!wro) { return; }
         const b = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
         showNote(stored ? 'Rendering the mat (the one you loaded before)...' : 'Rendering the mat...', true);
         // the load first (it is busy from its first line), then the header: Load and Forget disabled while it renders
         const p = wro.mat.load(b, { stored, picked: sha256 });
         wroHeader();
-        wroShow(await p);
+        wroShow(await p, wro);
     }
     /** the stored mat held for a run (or not started for one) once no program runs */
-    async function wroIdle() {
+    async function wroIdle(wro) {
         const p = wro.mat.idle();
         wroHeader();
-        wroShow(await p);
+        wroShow(await p, wro);
     }
     /** the header's mat controls: on the WRO course only; disabled while a program runs or a mat renders */
     function wroHeader() {
-        const on = !!wro && courseId === cfg.wro.course;
+        const wro = wroCur(), on = !!wro;
         const load = $('#wroLoad'), chip = $('#wroChip'), forget = $('#wroForget');
         if (!load) { return; }
         const st = on ? wro.mat.state : null;
         load.hidden = !on || !!st; chip.hidden = !st; forget.hidden = !st;
-        const busy = pending.size > 0 || (on && wro.mat.busy);
+        const busy = pending.size > 0 || (on && wros.busy);
         load.disabled = busy; forget.disabled = busy;
         if (st) {
-            chip.textContent = st.note ? 'Mat: WRO Junior 2026 (not the traced file)' : 'Mat: WRO Junior 2026';
+            chip.textContent = st.note ? `Mat: ${wro.cfg.short} (not the traced file)` : `Mat: ${wro.cfg.short}`;
             chip.title = st.note || 'The WRO mat you loaded is on the floor: the sensors read its print.';
         }
         // the stored mat, rendered again the first time the panel shows this course (§3.2)
-        if (on && !wro.hello) { wro.hello = true; vscode.postMessage({ type: 'wro-mat-hello' }); }
+        if (on) { load.title = `Load WRO's printing file of the ${wro.cfg.name.replace(/^WRO /, '')} mat (the PDF you downloaded from wro-association.org): the sensors then read its print. It stays on this computer, kept for the next time.`; }
+        if (on && !wro.hello) { wro.hello = true; vscode.postMessage({ type: 'wro-mat-hello', mat: wro.cfg.key }); }
     }
     function wroPick() {
         if (pending.size) { showNote('A mat can be loaded when no program is running.'); return; }
-        if (wro && wro.mat.busy) { showNote('A mat is being rendered: load another when it is done.'); return; }
-        vscode.postMessage({ type: 'wro-mat-pick' });
+        const wro = wroCur();
+        if (!wro) { return; }
+        if (wros.busy) { showNote('A mat is being rendered: load another when it is done.'); return; }
+        vscode.postMessage({ type: 'wro-mat-pick', mat: wro.cfg.key });
     }
     function wroForget() {
+        const wro = wroCur();
         if (!wro) { return; }
         const r = wro.mat.forget();
         showNote(r.message);
@@ -986,6 +1096,7 @@
     /** the 2D view's WRO floor: the mat's (or the schematic's) image over the mat's rect, through the smallest level of
      *  its mipmaps at least as wide as it is drawn */
     function wroFloor2d() {
+        const wro = wroCur();
         const f = geom && geom.floor && wro ? wro.link.current() : null;
         if (!f) { return; }
         const [x0, y0, x1, y1] = geom.floor;
@@ -1127,7 +1238,8 @@
             }
         };
         const w3 = W3();
-        const key = [W, H, ...world, overs.join(' '), w3 ? w3.seesaws.map((q) => seesawTilt(q.tile)).join(' ') : '', wro ? wro.link.ver : 0];
+        const wroC = wroCur();
+        const key = [W, H, ...world, overs.join(' '), w3 ? w3.seesaws.map((q) => seesawTilt(q.tile)).join(' ') : '', wroC ? `${wroC.cfg.key} ${wroC.link.ver}` : 0];
         if (sameKey(floor.key, key)) {
             ctx.drawImage(floor.canvas, 0, 0);
             ctx.setTransform(...world);
@@ -1170,19 +1282,23 @@
         }
         floor.last = key;
         // (a frame that drew the floor is in the world transform still: the same calls as before the cache)
+        // EN2: the decals over the floor (kept out of the floor's cache: they change with the seed), under every body
+        decals2d();
         debris3d();
         if (geom.start) { startMark(geom.start); }
+        gridDraw();
         // the trail
         if (trail.length > 1) {
             ctx.strokeStyle = 'rgba(42,120,214,0.75)';
             ctx.lineWidth = Math.max(1.5, 2 / view.k / dpr);
             ctx.beginPath();
-            trail.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
+            trail.forEach(([x, y, gap], i) => (i && !gap ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
             ctx.stroke();
         }
         if (snap) { beams(snap); robot(snap.pose, snap); }
         hazards3d(true);
         if (overs.length) { ctx.globalAlpha = 0.45; layer(true); ctx.globalAlpha = 1; }
+        toolsDraw();
     }
 
     /* ---- the 3D elements, seen from above ------------------------------------------------------------------ */
@@ -1287,6 +1403,12 @@
         }
     }
 
+    /** EN2 (ES §4.4, D176): a WRO package's decals (the Senior pattern paper), flat on the floor under every body - the
+     *  geometry's, which carries them with its seed (a new seed's paper comes with its field's geometry) */
+    function decals2d() {
+        for (const d of (geom && geom.decals) || []) { ctx.fillStyle = `rgb(${d.rgb[0]},${d.rgb[1]},${d.rgb[2]})`; poly(d.poly); ctx.fill(); }
+    }
+
     /** bumps and debris (under the robot), obstacles and pillars (`tall`: drawn over it, they stand above it) */
     function hazards3d(tall) {
         if (!tall) { bumps3d(); debris3d(); return; }
@@ -1307,27 +1429,17 @@
             poly(pts); ctx.fill(); ctx.stroke();
             if (b.kind === 'obstacle') { label(`${Math.round(b.h)}`, x, y, '#ffffff', 10); }
         });
+        // EN1 (G§2.7): the fixtures (a WRO package's, the Senior frame), static: each piece's base and top outlines filled in its
+        // colour, lowest pieces first, no stroke (the pieces abut: their seams are no edge of the frame)
+        (w.fixtures || []).forEach((fx) => {
+            const a = fx.at[2] * Math.PI / 180, c = Math.cos(a), sn = Math.sin(a);
+            const place = (P) => P.map(([u, v]) => [fx.at[0] + u * c - v * sn, fx.at[1] + u * sn + v * c]);
+            ctx.fillStyle = `rgb(${fx.colour[0]},${fx.colour[1]},${fx.colour[2]})`;
+            fx.pieces.slice().sort((p1, p2) => p1.z[1] - p2.z[1]).forEach((p) => { poly(place(p.base)); ctx.fill(); poly(place(p.top)); ctx.fill(); });
+        });
         // the WRO game objects (W2a, games.ts): each part's outline filled in its top colour, lowest parts first, where the
         // snapshot says the object is (docs/SIMULATOR_WRO_DESIGN.md §4.4; the 3D view's boxes and meshes come later)
-        if (w.games) {
-            const gz = hz && hz.games && hz.games.length === w.games.length ? hz.games : null;
-            w.games.forEach((g, i) => {
-                const q = gz ? gz[i] : null, x = q ? q.x : g.at[0], y = q ? q.y : g.at[1], a = (q ? q.a : g.at[2]) * Math.PI / 180;
-                const c = Math.cos(a), sn = Math.sin(a), place = (P) => P.map(([u, v]) => [x + u * c - v * sn, y + u * sn + v * c]);
-                ctx.lineWidth = Math.max(1, 1 / view.k / dpr);
-                ctx.strokeStyle = 'rgba(0,0,0,0.55)';
-                // an engine body's frame (a rigid course, §2.7: x, y, z, q): each part's world vertices to the plan, hulled
-                const tilted = q ? gamePlan(g.parts, q) : null;
-                if (tilted) {
-                    tilted.forEach((t) => { ctx.fillStyle = `rgb(${t.fill[0]},${t.fill[1]},${t.fill[2]})`; poly(t.pts); ctx.fill(); ctx.stroke(); });
-                    return;
-                }
-                g.parts.slice().sort((p1, p2) => p1.z[1] - p2.z[1]).forEach((pt) => {
-                    ctx.fillStyle = `rgb(${pt.top[0]},${pt.top[1]},${pt.top[2]})`;
-                    poly(place(pt.outline)); ctx.fill(); ctx.stroke();
-                });
-            });
-        }
+        if (w.games) { gamesPlan2d(w.games, hz); }
         // the loose balls (bodies.ts): a shaded disc each, where the snapshot says it is
         (w.balls || []).forEach((bl, k) => {
             const at = (hz && hz.balls && hz.balls.length === w.balls.length && hz.balls[k]) || [bl.x, bl.y, bl.z];
@@ -1338,11 +1450,47 @@
         });
     }
 
+    /** the WRO game objects in the 2D view (hazards3d; SP-c review spc r1 S1: a named function, so a row drives it on a
+     *  recording canvas): each block where the snapshot hz says it is - a frame with q drawn by gamePlan, else each
+     *  part placed at x, y, a by gameFlat, lowest parts first, filled in its top colour */
+    function gamesPlan2d(games, hz) {
+        const gz = hz && hz.games && hz.games.length === games.length ? hz.games : null;
+        games.forEach((g, i) => {
+            const q = gz ? gz[i] : null, x = q ? q.x : g.at[0], y = q ? q.y : g.at[1], a = (q ? q.a : g.at[2]) * Math.PI / 180;
+            const c = Math.cos(a), sn = Math.sin(a), place = (P) => P.map(([u, v]) => [x + u * c - v * sn, y + u * sn + v * c]);
+            ctx.lineWidth = Math.max(1, 1 / view.k / dpr);
+            ctx.strokeStyle = 'rgba(0,0,0,0.55)';
+            // an engine body's frame (a rigid course, §2.7: x, y, z, q): each part's world vertices to the plan, hulled
+            const tilted = q ? gamePlan(g.parts, q) : null;
+            if (tilted) {
+                tilted.forEach((t) => { ctx.fillStyle = `rgb(${t.fill[0]},${t.fill[1]},${t.fill[2]})`; planShape(t); ctx.fill(); ctx.stroke(); });
+                return;
+            }
+            g.parts.slice().sort((p1, p2) => p1.z[1] - p2.z[1]).forEach((pt) => {
+                ctx.fillStyle = `rgb(${pt.top[0]},${pt.top[1]},${pt.top[2]})`;
+                planShape(gameFlat(pt, place)); ctx.fill(); ctx.stroke();
+            });
+        });
+    }
+    /** a game part's plan shape where its block lies (`place`: model-frame points to the plan, from x, y, a) - SP-c (S-C8,
+     *  ES D207): a sphere part (gameMesh.ts gamesGeom3d's `sphere` [cx, cy, cz, r]) its disc, radius r round its placed
+     *  centre, not its envelope's 16-gon; every other part its outline placed, as before */
+    function gameFlat(pt, place) {
+        if (pt.sphere) { const c = place([[pt.sphere[0], pt.sphere[1]]])[0]; return { disc: [c[0], c[1], pt.sphere[3]] }; }
+        return { pts: place(pt.outline) };
+    }
+    /** a plan shape's path (gameFlat's / gamePlan's): a disc's circle, else its polygon (poly) */
+    function planShape(t) {
+        if (t.disc) { ctx.beginPath(); ctx.arc(t.disc[0], t.disc[1], t.disc[2], 0, 2 * Math.PI); ctx.closePath(); return; }
+        poly(t.pts);
+    }
+
     /** the 2D plan of a game object whose snapshot frame carries `q` (SIMULATOR_ENGINE_DESIGN.md §2.7; J3c-2): each part's
      *  prism vertices (its outline at its z band, in the model frame) turned by q about the frame's origin (x, y, z) and
      *  projected to the plan, the convex hull filled in the part's top colour, the parts sorted by their highest world z
      *  (lowest first). null for a frame without a usable q (four finite numbers, not all zero) or without a finite x, y,
-     *  z: today's drawing from x, y, a then runs, unchanged */
+     *  z: today's drawing from x, y, a then runs, unchanged. A sphere part (SP-c, ES D207) is its disc: its centre turned
+     *  by q to the plan, radius r (a ball's plan is a disc at any attitude), its top the centre's world z + r */
     function gamePlan(parts, f) {
         const t = f && f.q;
         if (!t || t.length !== 4 || !Number.isFinite(f.x) || !Number.isFinite(f.y) || !Number.isFinite(f.z)) { return null; }
@@ -1353,6 +1501,10 @@
             s * (qx * qy + w * qz), 1 - s * (qx * qx + qz * qz), s * (qy * qz - w * qx),
             s * (qx * qz - w * qy), s * (qy * qz + w * qx), 1 - s * (qx * qx + qy * qy)];
         const out = parts.map((pt) => {
+            if (pt.sphere) {
+                const [u, v, h, r] = pt.sphere;
+                return { fill: pt.top, disc: [f.x + R[0] * u + R[1] * v + R[2] * h, f.y + R[3] * u + R[4] * v + R[5] * h, r], top: f.z + R[6] * u + R[7] * v + R[8] * h + r };
+            }
             const P = [];
             let top = -Infinity;
             for (const [u, v] of pt.outline) {
@@ -1538,6 +1690,14 @@
             ctx.fillText(String(c.port), 8, -8);
             ctx.restore();
         }
+        // selected: the arrow keys move it (the tools pane's Select robot, or a click on it)
+        if (tools.selected) {
+            ctx.strokeStyle = '#2a78d6';
+            ctx.lineWidth = Math.max(1.5, 2 / view.k / dpr);
+            ctx.setLineDash([12, 8]);
+            ctx.strokeRect(rear - 8, -half - 8, front - rear + 16, 2 * half + 16);
+            ctx.setLineDash([]);
+        }
         // the rotate handle
         if (!pending.size) {
             ctx.fillStyle = 'rgba(168,151,123,0.9)';
@@ -1589,16 +1749,23 @@
             drag = { mode: 'pan', x: e.offsetX, y: e.offsetY, cx: view.cx, cy: view.cy };
             return;
         }
+        if (tools.pick) { pickPoint(x, y); return; }
         if (snap && !pending.size) {
             const p = snap.pose, h = p.heading * Math.PI / 180;
             const lx = (x - p.x) * Math.cos(h) + (y - p.y) * Math.sin(h);
             const ly = -(x - p.x) * Math.sin(h) + (y - p.y) * Math.cos(h);
             const { front, rear, half } = robotShape();
-            if (Math.hypot(lx - (front + 22), ly) < 14 / Math.min(1, view.k)) { drag = { mode: 'rotate', pose: { ...p } }; return; }
-            if (lx >= rear && lx <= front && Math.abs(ly) <= half + 12) { drag = { mode: 'move', dx: x - p.x, dy: y - p.y, pose: { ...p } }; return; }
+            if (Math.hypot(lx - (front + 22), ly) < 14 / Math.min(1, view.k)) { drag = { mode: 'rotate', pose: { ...p }, clicked: true, px: e.offsetX, py: e.offsetY }; return; }
+            if (lx >= rear && lx <= front && Math.abs(ly) <= half + 12) { drag = { mode: 'move', dx: x - p.x, dy: y - p.y, pose: { ...p }, clicked: true, px: e.offsetX, py: e.offsetY }; return; }
         }
         drag = { mode: 'pan', x: e.offsetX, y: e.offsetY, cx: view.cx, cy: view.cy };
     });
+    /** is the press on the robot still a click? A hand's wobble under CLICK_PX stays one, and past it the press is a
+     *  drag for good, even when it comes back: only a drag puts the robot down */
+    function stillClick(e) {
+        if (drag.clicked) { drag.clicked = Math.hypot(e.offsetX - drag.px, e.offsetY - drag.py) < clickPx(e); }
+        return drag.clicked;
+    }
     canvas.addEventListener('pointermove', (e) => {
         const x = wx(e.offsetX), y = wy(e.offsetY);
         if (builder()) {
@@ -1635,6 +1802,8 @@
             // a program started mid-drag: the robot is not moved, and the last snapshot is not written over (§6)
             drag = undefined; draw();
             showNote('The robot can be moved when no program is running.');
+        } else if (stillClick(e)) {
+            // not a drag yet: the robot stays where it stands
         } else if (drag.mode === 'move') {
             drag.pose.x = x - drag.dx; drag.pose.y = y - drag.dy;
             // a new object: the worker's snapshot (`posted`, a restart's state) is never written
@@ -1689,8 +1858,10 @@
             const o = draft.objects[drag.i];
             // it lies on what is under it, at the level it was at where there is one (under a bridge: the floor tile)
             if (o.x !== drag.from.x || o.y !== drag.from.y) { o.z = Math.abs(supportZ(o.x, o.y, true) - (o.z || 0)) < 21 ? supportZ(o.x, o.y, true) : supportZ(o.x, o.y); edited(); }
-        } else if (drag && drag.mode === 'pan' && drag.place && Math.hypot(e.offsetX - drag.x, e.offsetY - drag.y) < 5 && (pick || pickObj)) {
+        } else if (drag && drag.mode === 'pan' && drag.place && Math.hypot(e.offsetX - drag.x, e.offsetY - drag.y) < clickPx(e) && (pick || pickObj)) {
             if (pick) { placeTile(pick, drag.place.col, drag.place.row, pickRot); } else { placeObject(pickObj, drag.place.x, drag.place.y, drag.place.low); }
+        } else if (drag && drag.clicked) { selectRobot(true);   // a click, no move: the arrow keys take it from here
+        } else if (drag && drag.mode === 'pan' && tools.selected && !builder() && Math.hypot(e.offsetX - drag.x, e.offsetY - drag.y) < clickPx(e)) { selectRobot(false);   // a click on the floor lets go
         } else if (drag && drag.mode !== 'pan') { place(drag.pose); }
         drag = undefined;
     });
@@ -1707,6 +1878,7 @@
         if (i >= 0) { sel = i; selObj = undefined; selZone = false; rotateTile(i, 1); }
     });
     window.addEventListener('keydown', (e) => {
+        if (robotKey(e)) { e.preventDefault(); return; }
         if (!builder() || /^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName)) { return; }
         // review r2 S3: with the tile editor open the keys are the editor's (Delete / Backspace take off its selected
         // piece), never the placed map tile behind it (`sel` stays set while "Edit tile" is open)
@@ -1742,6 +1914,1004 @@
         draw();
     }, { passive: false });
     new ResizeObserver(resize).observe(canvas);
+
+    /* ---- the trail and measuring tools (docs/curriculum/README.md §9 TRAIL; docs/SIMULATOR.md "The tools pane") ----
+     * The route that needs no mouse: every tool here works from the keyboard and states its values as text. What is said
+     * goes to #trSay (role=status), outside the pane, so an arrow key's move is announced with the pane shut. */
+    const tools = { selected: false, typed: false, pen: true, penNow: true, gap: false, reading: undefined, text: '', print: false, target: undefined,
+        grid: 0,            // the grid overlay's spacing in mm, 0 off
+        ruler: undefined,   // [a, b], each [x, y]
+        prot: undefined,    // [vertex, arm 1, arm 2]
+        marks: [],          // the markers dropped: [x, y] each, in order
+        pick: undefined };  // the tool taking clicks on the floor: { tool, i }, the point `i` of it next
+    /** the measuring tools: their points' labels and ids, and each tool's line of text */
+    const TOOLS = {
+        ruler: { id: 'trR', points: ['A', 'B'], text: ([a, b]) => {
+            const d = Math.hypot(b[0] - a[0], b[1] - a[1]);
+            return `Ruler: ${fmt(d, 1)} mm from (${fmt(a[0], 0)}, ${fmt(a[1], 0)}) to (${fmt(b[0], 0)}, ${fmt(b[1], 0)}), bearing ${fmt(wrap180(Math.atan2(b[1] - a[1], b[0] - a[0]) * 180 / Math.PI), 1)}°.`;
+        } },
+        prot: { id: 'trP', points: ['Vertex', 'Arm 1', 'Arm 2'], text: ([v, a, b]) => {
+            const d = wrap180((Math.atan2(b[1] - v[1], b[0] - v[0]) - Math.atan2(a[1] - v[1], a[0] - v[0])) * 180 / Math.PI);
+            return `Protractor: ${fmt(Math.abs(d), 1)}° at (${fmt(v[0], 0)}, ${fmt(v[1], 0)}), from arm 1 (${fmt(a[0], 0)}, ${fmt(a[1], 0)}) ${d >= 0 ? 'to the left' : 'to the right'} to arm 2 (${fmt(b[0], 0)}, ${fmt(b[1], 0)}).`;
+        } },
+    };
+    const POSE_FIELDS = ['trX', 'trY', 'trH'];
+    /** a press that moves less than this (CSS px) is a click; a finger rolls further than a mouse in a tap, and on RCJ or WRO
+     *  a tap taken for a put-down costs the game. TAP_PX is a choice, not measured: no touch device has run this */
+    const CLICK_PX = 5, TAP_PX = 12;
+    const clickPx = (e) => (e.pointerType === 'touch' ? TAP_PX : CLICK_PX);
+    /** enough for a class's stops; a list a screen reader can still walk */
+    const MAX_MARKS = 50;
+    const toolsOpen = () => document.body.classList.contains('tools');
+    /** a heading as the panel states it: above -180, up to 180 */
+    function wrap180(d) { const a = ((d % 360) + 360) % 360; return a > 180 ? a - 360 : a; }
+    /** a pose as the panel says it (A11Y_DESIGN §5 W3's words) */
+    const whole = (v) => fmt(Math.round(v) + 0, 0);     // + 0: never "-0"
+    const poseText = (p) => `x ${whole(p.x)} mm, y ${whole(p.y)} mm, heading ${whole(wrap180(p.heading))}°`;
+    /** into the live region: the same words twice are said twice */
+    function say(text) { const e = $('#trSay'); if (e) { e.textContent = ''; e.textContent = text; } }
+    /** why the robot cannot stand at (x, y), or '': the course's bounds */
+    function offCourse(x, y) {
+        if (!geom || !geom.bounds) { return 'The course is still loading.'; }
+        const [x0, y0, x1, y1] = geom.bounds;
+        return x < x0 || x > x1 || y < y0 || y > y1 ? `That is off the course: x runs ${fmt(x0, 0)} to ${fmt(x1, 0)} mm, y ${fmt(y0, 0)} to ${fmt(y1, 0)} mm.` : '';
+    }
+    /** the robot put down at `pose` by the typed fields, a nudge or an arrow key: place()'s path, as a drag's (so a run on
+     *  a WRO table ends the same way), the refusals said. True when it moved */
+    function putRobot(pose) {
+        const refuse = (why) => { say(why); return false; };
+        if (!snap) { return refuse('The simulator is still starting.'); }
+        if (pending.size) { const why = 'The robot can be moved when no program is running.'; showNote(why); return refuse(why); }
+        if (!Number.isFinite(pose.x) || !Number.isFinite(pose.y) || !Number.isFinite(pose.heading)) { return refuse('Type a number in each of x, y and heading.'); }
+        const off = offCourse(pose.x, pose.y);
+        if (off) { return refuse(off); }
+        // a new object: the worker's snapshot (`posted`, a restart's state) is never written
+        const p = { ...snap.pose, x: pose.x, y: pose.y, heading: wrap180(pose.heading) };
+        snap = { ...snap, pose: p };
+        place(p);
+        tools.typed = false;
+        say(`Robot at ${poseText(p)}.`);
+        toolsShow();
+        draw();
+        return true;
+    }
+    /** a nudge: mm along the floor's x and y, degrees of heading (+ is to the left), from where the robot is */
+    function nudge(dx, dy, dh) {
+        if (!snap) { say('The simulator is still starting.'); return; }
+        const p = snap.pose;
+        putRobot({ x: p.x + dx, y: p.y + dy, heading: p.heading + dh });
+    }
+    /** the typed start pose: an empty field is no number, never a 0 */
+    function placeTyped() {
+        const v = POSE_FIELDS.map((id) => { const t = $('#' + id).value.trim(); return t === '' ? NaN : Number(t); });
+        putRobot({ x: v[0], y: v[1], heading: v[2] });
+    }
+    function selectRobot(on) {
+        tools.selected = on;
+        const b = $('#trSel');
+        if (b) { b.setAttribute('aria-pressed', String(on)); b.classList.toggle('on', on); }
+        $('#trCue').hidden = !on;
+        say(on ? 'Robot selected: arrow keys move it 10 mm, Shift with left or right turns it 5°, Escape or a click on the floor lets go.' : 'Robot not selected.');
+        draw();
+    }
+    /** what an arrow key would throw away, in words, or '': a put-down starts a new RCJ game (`Referee.placed`) and ends a
+     *  WRO run that is on (`beforePlace`). A key can be a slip, so it never does that; a drag, a typed pose and the
+     *  buttons are meant, and still do. A game not yet started has nothing to lose: the keys set its start */
+    function atStake() {
+        const rf = snap && snap.referee;
+        if (!rf) { return ''; }
+        if (rf.kind === 'wro') { return rf.run === 'on' ? 'A WRO run is on, and an arrow key would end it. To end it, drag the robot or type its pose.' : ''; }
+        return rf.on && (rf.started || rf.ended) ? 'An RCJ game is on the card, and an arrow key would wipe it. For a new game, use Back to start, drag the robot or type its pose.' : '';
+    }
+    /** the arrow keys while the robot is selected: true when the key was taken */
+    function robotKey(e) {
+        if (e.ctrlKey || e.metaKey || e.altKey) { return false; }
+        if (tools.pick && e.key === 'Escape' && !builder()) { tools.pick = undefined; say('Stopped picking points.'); return true; }
+        if (tools.selected && e.key === 'Escape' && !builder()) { selectRobot(false); return true; }   // from a field too: the cue promises it
+        if (!tools.selected || builder() || /^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName)) { return false; }
+        if (e.key === 'm' || e.key === 'M') { dropAtRobot(); return true; }
+        const k = { ArrowLeft: [-10, 0, 5], ArrowRight: [10, 0, -5], ArrowUp: [0, 10, 0], ArrowDown: [0, -10, 0] }[e.key];
+        if (!k) { return false; }
+        const stake = atStake();
+        if (stake) { say(stake); showNote(stake); return true; }
+        if (e.shiftKey) { if (k[2]) { nudge(0, 0, k[2]); } } else { nudge(k[0], k[1], 0); }
+        return true;
+    }
+    /** the worker's `trail`: the pen (a program's too) and the errors, at each change and before a run's done */
+    function onTrail(m) {
+        // a pen that went down starts a new piece of the trail: nothing joins it to where the pen came up
+        if (m.reading.pen && !tools.penNow) { tools.gap = true; }
+        tools.penNow = m.reading.pen; tools.reading = m.reading; tools.text = m.text;
+        const b = $('#trPen');
+        if (b) { b.setAttribute('aria-pressed', String(tools.penNow)); b.textContent = tools.penNow ? 'Pen is down' : 'Pen is up'; }
+        setText($('#trErr'), m.text);
+    }
+    function togglePen() {
+        tools.pen = !tools.penNow;
+        toWorker({ type: 'trail', op: 'pen', down: tools.pen });
+        say(tools.pen ? 'Pen down.' : 'Pen up.');
+    }
+    /** the typed target; all empty clears it, a heading may be left out */
+    function setTarget() {
+        const v = ['trTx', 'trTy', 'trTh'].map((id) => $('#' + id).value.trim());
+        if (!v[0] && !v[1] && !v[2]) { tools.target = undefined; toWorker({ type: 'trail', op: 'target' }); say('No target: errors are from the start.'); return; }
+        const [x, y, heading] = v.map((t) => (t === '' ? NaN : Number(t)));
+        if (!Number.isFinite(x) || !Number.isFinite(y) || (v[2] && !Number.isFinite(heading))) { say('Type a number in target x and y (the heading may be left empty).'); return; }
+        tools.target = { x, y, ...(v[2] ? { heading } : {}) };
+        toWorker({ type: 'trail', op: 'target', target: tools.target });
+        say(`Target x ${fmt(x, 0)} mm, y ${fmt(y, 0)} mm${v[2] ? `, heading ${fmt(heading, 0)}°` : ''}.`);
+    }
+    /** the path as text (A11Y_DESIGN §5 W2): x_mm,y_mm, a blank line where the pen came up */
+    function trailCsv() {
+        return 'x_mm,y_mm\n' + trail.map(([x, y, gap]) => `${gap ? '\n' : ''}${x.toFixed(1)},${y.toFixed(1)}`).join('\n') + '\n';
+    }
+    /** a Run's end: the line said, and printed when asked for (off by default: a program's output stays the board's) */
+    function trailRunEnd(id) {
+        if (!tools.text) { return; }
+        say(tools.text);
+        if (tools.print) { vscode.postMessage({ type: 'out', id, text: `${tools.text}\n` }); }
+    }
+    /** a worker started again (no shared memory, Stop) has the panel's settings back; none changed, nothing is sent */
+    function trailResync() {
+        if (!tools.pen) { toWorker({ type: 'trail', op: 'pen', down: false }); }
+        if (tools.target) { toWorker({ type: 'trail', op: 'target', target: tools.target }); }
+    }
+    function setGrid() {
+        tools.grid = $('#trGrid').checked ? Number($('#trGridMm').value) : 0;
+        say(tools.grid ? `Grid on: a line every ${tools.grid} mm, labelled in mm.` : 'Grid off.');
+        draw();
+    }
+    /** a tool's typed points, or the reason they cannot be used */
+    function toolPoints(name) {
+        const t = TOOLS[name];
+        const pts = t.points.map((_, i) => ['x', 'y'].map((c) => { const v = $(`#${t.id}${i}${c}`).value.trim(); return v === '' ? NaN : Number(v); }));
+        return pts.every((p) => p.every((v) => Number.isFinite(v) && Math.abs(v) <= 1e6)) ? pts : undefined;
+    }
+    /** what the typed points measure: drawn, shown and said */
+    function measure(name) {
+        const t = TOOLS[name], pts = toolPoints(name);
+        if (!pts) { say(`Type a number, at most a million mm, in every field of the ${name === 'prot' ? 'protractor' : 'ruler'}.`); return; }
+        tools[name] = pts;
+        const text = t.text(pts);
+        setText($(`#${t.id}Out`), text);
+        say(text);
+        draw();
+    }
+    function clearTool(name) {
+        const t = TOOLS[name];
+        tools[name] = undefined;
+        if (tools.pick && tools.pick.tool === name) { tools.pick = undefined; }
+        t.points.forEach((_, i) => { $(`#${t.id}${i}x`).value = ''; $(`#${t.id}${i}y`).value = ''; });
+        setText($(`#${t.id}Out`), '');
+        say(`${name === 'prot' ? 'Protractor' : 'Ruler'} cleared.`);
+        draw();
+    }
+    /** the first point of a tool at the robot (a protractor's first arm along its heading, 200 mm out) */
+    function toolAtRobot(name) {
+        if (!snap) { return; }
+        const t = TOOLS[name], p = snap.pose, h = p.heading * Math.PI / 180, r1 = (v) => String(Math.round(v * 10) / 10);
+        const set = (i, x, y) => { $(`#${t.id}${i}x`).value = r1(x); $(`#${t.id}${i}y`).value = r1(y); };
+        set(0, p.x, p.y);
+        if (name === 'prot') { set(1, p.x + 200 * Math.cos(h), p.y + 200 * Math.sin(h)); }
+        say(`${t.points[0]} at the robot: x ${fmt(p.x, 0)} mm, y ${fmt(p.y, 0)} mm.`);
+    }
+    /** a marker as text: where it is, how far from the one before it, and from the robot */
+    function markText(i) {
+        const [x, y] = tools.marks[i], before = tools.marks[i - 1], p = snap && snap.pose;
+        return `x ${fmt(x, 0)} mm, y ${fmt(y, 0)} mm` + (before ? `; ${fmt(Math.hypot(x - before[0], y - before[1]), 1)} mm from marker ${i}` : '') + (p ? `; ${fmt(Math.hypot(x - p.x, y - p.y), 1)} mm from the robot` : '');
+    }
+    /** the list, built at a change; marksText keeps its words up as the robot moves, its buttons untouched: a snapshot
+     *  must not take the focus off a Remove */
+    function marksShow() {
+        const list = $('#trMarks');
+        if (!list) { return; }
+        const gone = (i) => {
+            tools.marks.splice(i, 1);
+            marksShow();
+            // the keyboard stays in the list: on the marker now at this number, or the last, or Drop at robot
+            const left = list.querySelectorAll('button');
+            (left[Math.min(i, left.length - 1)] || $('#trMRobot')).focus();
+            say(`Marker ${i + 1} removed: ${tools.marks.length} left.`);
+            draw();
+        };
+        list.textContent = '';
+        tools.marks.forEach((_, i) => {
+            list.append(el('li', {}, el('span', {}, markText(i)), ' ',
+                el('button', { class: 'btn', type: 'button', 'aria-label': `Remove marker ${i + 1}`, title: `Remove marker ${i + 1}`, onclick: () => gone(i) }, '×')));
+        });
+    }
+    function marksText() { [...$('#trMarks').querySelectorAll('li > span')].forEach((e, i) => setText(e, markText(i))); }
+    /** a marker at (x, y): numbered, drawn and listed; nothing on the course senses it */
+    function dropMark(x, y) {
+        if (!Number.isFinite(x) || !Number.isFinite(y)) { say('Type a number in marker x and y.'); return; }
+        if (tools.marks.length >= MAX_MARKS) { say(`There are ${MAX_MARKS} markers: remove one first.`); return; }
+        tools.marks.push([x, y]);
+        marksShow();
+        say(`Marker ${tools.marks.length} at x ${fmt(x, 0)} mm, y ${fmt(y, 0)} mm.`);
+        draw();
+    }
+    function dropTyped() {
+        const v = ['trMx', 'trMy'].map((id) => { const t = $('#' + id).value.trim(); return t === '' ? NaN : Number(t); });
+        dropMark(v[0], v[1]);
+    }
+    function dropAtRobot() { if (snap) { dropMark(snap.pose.x, snap.pose.y); } else { say('The simulator is still starting.'); } }
+    function clearMarks() { tools.marks.length = 0; marksShow(); say('Markers cleared.'); draw(); }
+    /** a new course: its markers go with the old one (a WRO field laid again keeps them: the same floor) */
+    function toolsNewCourse(id) { if (id !== tools.course) { tools.course = id; if (tools.marks.length) { clearMarks(); } } }
+    /** clicks on the floor fill a tool's points, in order, then it measures (the fields stay the route without a mouse) */
+    function startPick(name) {
+        tools.pick = { tool: name, i: 0 };
+        say(name === 'marks' ? 'Click the floor for each marker. Escape stops.' : `Click the floor for ${TOOLS[name].points[0]}. Escape stops.`);
+    }
+    function pickPoint(x, y) {
+        if (tools.pick.tool === 'marks') { dropMark(Math.round(x), Math.round(y)); return; }
+        const k = tools.pick, t = TOOLS[k.tool], r1 = (v) => String(Math.round(v));
+        $(`#${t.id}${k.i}x`).value = r1(x); $(`#${t.id}${k.i}y`).value = r1(y);
+        k.i++;
+        if (k.i < t.points.length) { say(`Click the floor for ${t.points[k.i]}.`); return; }
+        tools.pick = undefined;
+        measure(k.tool);
+    }
+    const worldText = (text, x, y) => {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.scale(1, -1);
+        ctx.font = `${12 / view.k}px sans-serif`;
+        ctx.fillText(text, 0, 0);
+        ctx.restore();
+    };
+    /** the grid overlay, under the trail: a line every tools.grid mm on the course's bounds, labelled on the x and y axes */
+    function gridDraw() {
+        if (!tools.grid || !geom || !geom.bounds) { return; }
+        const [x0, y0, x1, y1] = geom.bounds, g = tools.grid;
+        ctx.strokeStyle = 'rgba(42,120,214,0.3)';
+        ctx.lineWidth = 1 / view.k / dpr;
+        ctx.beginPath();
+        for (let x = Math.ceil(x0 / g) * g; x <= x1; x += g) { ctx.moveTo(x, y0); ctx.lineTo(x, y1); }
+        for (let y = Math.ceil(y0 / g) * g; y <= y1; y += g) { ctx.moveTo(x0, y); ctx.lineTo(x1, y); }
+        ctx.stroke();
+        ctx.fillStyle = '#2a78d6';
+        const label = Math.max(g, Math.ceil(60 / view.k / g) * g);    // never closer than 60 px
+        for (let x = Math.ceil(x0 / label) * label; x <= x1; x += label) { worldText(String(x), x, y0); }
+        for (let y = Math.ceil(y0 / label) * label; y <= y1; y += label) { worldText(String(y), x0, y); }
+    }
+    /** a tool's lines, over the course */
+    function toolsDraw() {
+        ctx.strokeStyle = ctx.fillStyle = '#c2410c';
+        ctx.lineWidth = Math.max(1.5, 2 / view.k / dpr);
+        const line = (a, b) => { ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); };
+        const r = tools.ruler, q = tools.prot, w = 10 / view.k / dpr;
+        tools.marks.forEach(([x, y], i) => { line([x - w, y - w], [x + w, y + w]); line([x - w, y + w], [x + w, y - w]); worldText(String(i + 1), x + w, y + w); });
+        if (r) {
+            const len = Math.hypot(r[1][0] - r[0][0], r[1][1] - r[0][1]);
+            line(r[0], r[1]);
+            // a tick every 100 mm, across the line (at most 200 of them)
+            if (len > 0) {
+                const ux = (r[1][0] - r[0][0]) / len, uy = (r[1][1] - r[0][1]) / len, step = Math.max(100, len / 200);
+                for (let d = 0; d <= len; d += step) { const x = r[0][0] + ux * d, y = r[0][1] + uy * d; line([x - uy * w, y + ux * w], [x + uy * w, y - ux * w]); }
+            }
+            worldText(`${fmt(len, 1)} mm`, (r[0][0] + r[1][0]) / 2, (r[0][1] + r[1][1]) / 2);
+        }
+        if (q) {
+            line(q[0], q[1]); line(q[0], q[2]);
+            const a0 = Math.atan2(q[1][1] - q[0][1], q[1][0] - q[0][0]), a1 = Math.atan2(q[2][1] - q[0][1], q[2][0] - q[0][0]);
+            const d = wrap180((a1 - a0) * 180 / Math.PI), rr = 40 / view.k / dpr;
+            ctx.beginPath(); ctx.arc(q[0][0], q[0][1], rr, a0, a0 + d * Math.PI / 180, d < 0); ctx.stroke();
+            worldText(`${fmt(Math.abs(d), 1)}°`, q[0][0] + rr * 1.2 * Math.cos(a0 + d * Math.PI / 360), q[0][1] + rr * 1.2 * Math.sin(a0 + d * Math.PI / 360));
+        }
+    }
+    /** the pane's text: the robot's pose, and the fields unless they are being typed in */
+    function toolsShow() {
+        if (!toolsOpen() || !snap) { return; }
+        const p = snap.pose;
+        setText($('#trPose'), poseText(p));
+        if (tools.marks.length) { marksText(); }
+        // typed values wait to be used, focus or not: Tab to Put robot here must not find them overwritten
+        if (!tools.typed) {
+            [p.x, p.y, wrap180(p.heading)].forEach((v, i) => { const f = $('#' + POSE_FIELDS[i]); const t = String(Math.round(v * 10) / 10); if (f.value !== t) { f.value = t; } });
+        }
+    }
+    function toolsPaneDom() {
+        const field = (id, label, unit) => [el('label', { for: id }, label), el('div', {}, el('input', { type: 'number', id, step: 'any', oninput: () => { tools.typed = true; }, onkeydown: (e) => { if (e.key === 'Enter') { e.preventDefault(); placeTyped(); } } }), ` ${unit}`)];
+        const nb = (id, text, label, ...d) => el('button', { class: 'btn', type: 'button', id, 'aria-label': label, title: label, onclick: () => nudge(...d) }, text);
+        return el('div', { id: 'toolsPane', class: 'pane' },
+            el('h2', {}, 'Robot'),
+            el('p', { class: 'sub' }, 'Now: ', el('span', { id: 'trPose' }, '-')),
+            el('div', { class: 'grid' }, ...field('trX', 'Start x', 'mm'), ...field('trY', 'Start y', 'mm'), ...field('trH', 'Start heading', '° (0 faces +x, + is to the left)')),
+            el('div', { class: 'actions' },
+                el('button', { class: 'btn primary', type: 'button', id: 'trPlace', title: 'Put the robot down at the typed pose (Enter in a field does the same)', onclick: placeTyped }, 'Put robot here'),
+                el('button', { class: 'btn', type: 'button', id: 'trSel', 'aria-pressed': 'false', title: 'Select the robot: the arrow keys move it 10 mm, Shift with left or right turns it 5°, Escape or a click on the floor lets go. A click on the robot selects it too.', onclick: () => selectRobot(!tools.selected) }, 'Select robot')),
+            el('div', { class: 'actions', role: 'group', 'aria-label': 'Nudge the robot' },
+                nb('trXm', 'x −10', 'Move the robot 10 mm to the left (x minus 10)', -10, 0, 0), nb('trXp', 'x +10', 'Move the robot 10 mm to the right (x plus 10)', 10, 0, 0),
+                nb('trYm', 'y −10', 'Move the robot 10 mm down the view (y minus 10)', 0, -10, 0), nb('trYp', 'y +10', 'Move the robot 10 mm up the view (y plus 10)', 0, 10, 0),
+                nb('trHp', 'left 5°', 'Turn the robot 5° to the left (heading plus 5)', 0, 0, 5), nb('trHm', 'right 5°', 'Turn the robot 5° to the right (heading minus 5)', 0, 0, -5)),
+            el('h2', {}, 'Pen and errors'),
+            el('div', { class: 'actions' },
+                el('button', { class: 'btn', type: 'button', id: 'trPen', 'aria-pressed': 'true', title: 'Put the pen at the middle of the axle up or down: a program can too (simtrail.pen_up(), simtrail.pen_down())', onclick: togglePen }, 'Pen is down'),
+                el('button', { class: 'btn', type: 'button', id: 'trCsv', title: 'Copy the path drawn as x_mm,y_mm lines', onclick: () => { vscode.postMessage({ type: 'copy', text: trailCsv(), what: 'the path as CSV' }); say(`${trail.length} points copied.`); } }, 'Copy path as CSV')),
+            el('div', { class: 'grid' }, ...['trTx:Target x:mm', 'trTy:Target y:mm', 'trTh:Target heading:°'].map((t) => t.split(':')).flatMap(([id, label, unit]) => [el('label', { for: id }, label), el('div', {}, el('input', { type: 'number', id, step: 'any', onkeydown: (e) => { if (e.key === 'Enter') { e.preventDefault(); setTarget(); } } }), ` ${unit}`)])),
+            el('div', { class: 'actions' }, el('button', { class: 'btn', type: 'button', id: 'trTarget', title: 'The end-point and heading errors measure from this target: all empty, from the run\'s start', onclick: setTarget }, 'Set target')),
+            el('p', { class: 'sub', id: 'trErr' }, 'Run a program: the errors show here.'),
+            el('label', { class: 'inline' }, el('input', { type: 'checkbox', id: 'trPrint', onchange: (e) => { tools.print = e.target.checked; } }), 'Print these to the output when a run ends'),
+            el('h2', {}, 'Measure'),
+            el('p', { class: 'sub' }, 'Drawn on the 2D view; the numbers here hold in 3D too.'),
+            el('div', { class: 'actions' },
+                el('label', { class: 'inline' }, el('input', { type: 'checkbox', id: 'trGrid', onchange: setGrid }), 'Grid every'),
+                el('select', { id: 'trGridMm', 'aria-label': 'Grid spacing', onchange: setGrid }, ...[50, 100, 300, 500].map((v) => { const o = el('option', { value: String(v) }, `${v} mm`); if (v === 100) { o.selected = true; } return o; }))),
+            ...['ruler', 'prot'].map((name) => {
+                const t = TOOLS[name], word = name === 'prot' ? 'Protractor' : 'Ruler';
+                const enter = (e) => { if (e.key === 'Enter') { e.preventDefault(); measure(name); } };
+                return el('div', { role: 'group', 'aria-label': word, style: 'display:flex;flex-direction:column;gap:6px' },
+                    el('b', {}, word),
+                    el('div', { class: 'grid' }, ...t.points.flatMap((label, i) => [el('span', {}, label),
+                        el('div', {}, ...['x', 'y'].flatMap((c) => [el('input', { type: 'number', id: `${t.id}${i}${c}`, step: 'any', style: 'width:5.5em', 'aria-label': `${word} ${label} ${c} in mm`, onkeydown: enter }), ' '])), ])),
+                    el('div', { class: 'actions' },
+                        el('button', { class: 'btn', type: 'button', id: `${t.id}Go`, title: 'Measure between the typed points (Enter in a field does the same)', onclick: () => measure(name) }, 'Measure'),
+                        el('button', { class: 'btn', type: 'button', id: `${t.id}Robot`, title: name === 'prot' ? 'The vertex at the robot, arm 1 along its heading' : 'Point A at the robot', onclick: () => toolAtRobot(name) }, 'From robot'),
+                        el('button', { class: 'btn', type: 'button', id: `${t.id}Pick`, title: `Click the floor for each point in turn (Escape stops)`, onclick: () => startPick(name) }, 'Pick on floor'),
+                        el('button', { class: 'btn', type: 'button', id: `${t.id}Clear`, onclick: () => clearTool(name) }, 'Clear')),
+                    el('p', { class: 'sub', id: `${t.id}Out` }));
+            }),
+            el('div', { role: 'group', 'aria-label': 'Markers', style: 'display:flex;flex-direction:column;gap:6px' },
+                el('b', {}, 'Markers'),
+                el('div', { class: 'grid' }, ...['x', 'y'].flatMap((c) => [el('label', { for: `trM${c}` }, `Marker ${c}`), el('div', {}, el('input', { type: 'number', id: `trM${c}`, step: 'any', onkeydown: (e) => { if (e.key === 'Enter') { e.preventDefault(); dropTyped(); } } }), ' mm')])),
+                el('div', { class: 'actions' },
+                    el('button', { class: 'btn', type: 'button', id: 'trMRobot', title: 'Drop a marker at the middle of the axle (M, while the robot is selected)', onclick: dropAtRobot }, 'Drop at robot'),
+                    el('button', { class: 'btn', type: 'button', id: 'trMGo', title: 'Drop a marker at the typed x and y (Enter in a field does the same)', onclick: () => dropTyped() }, 'Drop here'),
+                    el('button', { class: 'btn', type: 'button', id: 'trMPick', title: 'Each click on the floor drops a marker (Escape stops)', onclick: () => startPick('marks') }, 'Pick on floor'),
+                    el('button', { class: 'btn', type: 'button', id: 'trMClear', onclick: clearMarks }, 'Clear')),
+                el('ol', { id: 'trMarks', style: 'margin:0;padding-left:1.6em' })),
+        );
+    }
+
+    /* ---- the live plot (docs/curriculum/README.md §9 PLOT; docs/SIMULATOR.md "The plot") -------------------------------
+     * Plots what a program could print, and nothing else: a channel is either a printed `name=value` or a getter of the
+     * robot's own objects, named as Copy setup code names them, its value worked out as that getter's (the sign of a
+     * mirrored motor, whole degrees). The snapshot's truth is never read here: not the pose, the course's progress, the
+     * hazards, the referee, a motor's volts or a servo's shaft (Servo.angle() is the tracked position, not the shaft). So
+     * no run needs a special case to keep the true state out (README §9 GT), and nothing goes to the worker. A scored
+     * run (Run challenge) runs in workers of its own, which post nothing here: while one is on, the panel's own world is
+     * not that run, so nothing is taken at all.
+     * Cost: shut, one test of plot.on per snapshot and per output, no store, nothing kept (the worker is untouched, so a
+     * tick pays nothing, open or shut). Open: every channel is a ring of PLOT_MAX samples, at most PLOT_PRINTED printed
+     * names. A Run is not a tick: it takes each motor's angle and the IMU's heading as the program's zeros, and clears, shut
+     * or open, so the pane never shows an older Run as current. */
+    const PLOT_MAX = 6000;          // samples kept per channel: 200 s of snapshots at 30 a second
+    const PLOT_PRINTED = 32;        // printed names kept
+    const PLOT_TRACES = 6;          // traces at once: one line style and marker each, no two alike
+    const PLOT_LINE = 512;          // the longest printed line read
+    const PLOT_EVERY_MS = 100;      // the drawing's rate, whatever the snapshots' rate
+    const PLOT_PAGE = 50;           // a table's rows at a time: a list a screen reader can walk
+    const PLOT_TICKS = 12;          // the most ticks an axis rules: a count, so no pair of numbers can keep its loop going
+    const PLOT_SAME = 1e-12;        // values closer than this share of their size are ruled as one value (a filter's 23 and 22.999999999999996)
+    /** a trace's look: told apart by its line and its marker (and its direct label), the colour only as well (README §9 PLOT);
+     *  every ink at least 3:1 on --surface in both themes (a row measures it) */
+    const PLOT_STYLES = [
+        { words: 'solid line, circles', dash: [], mark: 'circle', ink: '#0072b2' },
+        { words: 'dashed line, squares', dash: [9, 4], mark: 'square', ink: '#d55e00' },
+        { words: 'dotted line, triangles', dash: [2, 3], mark: 'triangle', ink: '#009e73' },
+        { words: 'dash-dot line, crosses', dash: [10, 3, 2, 3], mark: 'cross', ink: '#c0689a' },
+        { words: 'long-dashed line, diamonds', dash: [16, 5], mark: 'diamond', ink: '#a87f00' },
+        { words: 'sparse-dotted line, plus signs', dash: [2, 8], mark: 'plus', ink: '#6c71c4' },
+    ];
+    /** a printed name and its value, anywhere in a line, Python's words for no number and for a bool included. A pair
+     *  stands alone: `a=b`, `x==3` and `?id=7&y=2` are no pairs. */
+    const PLOT_PAIR = /(?:^|[\s,;])([A-Za-z_][A-Za-z0-9_]{0,31})\s*=\s*([+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?|None|nan|-?inf|True|False)(?=$|[\s,;])/g;
+    const plot = {
+        on: false,          // the pane is open: only then is anything taken
+        paused: false,
+        scored: false,      // a Run challenge was on at the last look
+        chans: new Map(),   // label -> channel, live first, then printed in the order they came
+        key: '',            // the snapshot's shape the live channels were built from
+        t0: undefined,      // the world's clock at the plot's zero
+        tLast: undefined,   // the last frame taken: a `done` repeats a frame
+        x: 0,               // seconds since t0 of the last frame
+        a0: [],             // each motor's angle at the Run's start: Motor() reads 0 there, as reset_angle(0) (evn.py Motor.__init__)
+        h0: 0,              // the IMU's heading at the Run's start: imu.heading() reads from where IMU() opened
+        lines: 0,           // printed lines with a pair, since the last clear
+        carry: '',          // the start of a printed line whose end has not come
+        skip: false,        // the rest of a line past PLOT_LINE is being passed over
+        axis: '@auto',      // what the x axis is: @auto, @time, @line, or a printed channel's label (no name holds an @)
+        own: false,         // each trace on its own scale
+        dropped: 0,         // samples pushed out of a full ring
+        refused: 0,         // printed values under names past PLOT_PRINTED
+        drawn: 0,           // when it was last drawn
+        cur: [undefined, undefined],    // cursors A and B: the { t, ln } of the row each is on
+        view: undefined,    // what was last shown: the cursors' rows
+        geo: undefined,     // where it was drawn: { L, pw, x0, x1 }
+        table: false,       // the table is showing
+        page: undefined,    // the table's first row; undefined: it follows the latest rows
+        tab: undefined,     // what the table's page was built for: its rows stay while that holds
+        missed: false,      // the last Run came with the pane shut: nothing before the pane opened is here
+        held: [],           // the x of each Run that came while paused with samples here: those up to it are an earlier Run's
+        late: false,        // the last Run came while paused: its start was not taken
+    };
+    const plotOpen = () => document.body.classList.contains('plot');
+    /** a number as words read it: three decimals, under 1 three figures (0.00012 stays 0.00012), never "-0" */
+    const plotNum = (v) => (Number.isFinite(v) ? String(Number(Math.abs(v) < 1 ? v.toPrecision(3) : v.toFixed(3)) + 0) : '');
+    /** a number in the CSV: in full, what the program printed */
+    const plotFull = (v) => (Number.isFinite(v) ? String(v + 0) : '');
+    const plotTicked = () => [...plot.chans.values()].filter((c) => c.style !== undefined);
+    /** a channel and its ring: x seconds since the plot's zero, ln its printed line (0: a frame's, -1: the line breaks here) */
+    function plotChannel(label, unit, read) {
+        return { label, unit, read, x: new Float64Array(PLOT_MAX), y: new Float64Array(PLOT_MAX), ln: new Int32Array(PLOT_MAX), head: 0, n: 0, cut: false, style: undefined };
+    }
+    function plotRing(c, x, y, ln) {
+        let i;
+        if (c.n < PLOT_MAX) { i = (c.head + c.n) % PLOT_MAX; c.n++; } else { i = c.head; c.head = (c.head + 1) % PLOT_MAX; plot.dropped++; }
+        c.x[i] = x; c.y[i] = y; c.ln[i] = ln;
+    }
+    function plotPush(c, x, y, ln) {
+        if (c.cut) { c.cut = false; plotRing(c, x, NaN, -1); }
+        plotRing(c, x, y, ln);
+    }
+    /** what was not taken leaves a gap: nothing joins the samples on either side of it */
+    function plotBreak() { for (const c of plot.chans.values()) { if (c.n) { c.cut = true; } } }
+    /** the robot's getters, as the program of Copy setup code reads them (evn.py Motor.angle(), speed(); colorChip.ts
+     *  normalized(), to within a count; DistanceSensor.distance(); IMU.heading(); battery.voltage()). Two keep a zero of
+     *  the program's, which the world does not: the angle and the heading, from the Run. The rest are the frame's own. */
+    function plotDefs(s) {
+        const db = hw.driveBase, defs = [];
+        const mech = new Map((hw.mechanisms || []).filter((m) => m.motor).map((m) => [m.motor, `${m.type}${m.motor}`]));
+        s.motors.forEach((m, i) => {
+            const left = m.port === db.leftPort, right = m.port === db.rightPort;
+            const name = left ? 'left' : right ? 'right' : mech.get(m.port) || `motor${m.port}`;     // G7's motor4 = Motor(4)
+            const sign = (left && db.leftMirrored) || (right && db.rightMirrored) ? -1 : 1;
+            defs.push([`${name}.angle()`, 'deg', (f) => Math.round((f.motors[i].angle - (plot.a0[i] || 0)) * sign)], [`${name}.speed()`, 'deg/s', (f) => Math.round(f.motors[i].speed * sign)]);
+        });
+        s.sensors.forEach((c, i) => { for (let k = 0; k < 4; k++) { defs.push([`sensor${c.port}.normalized()[${k}]`, '%', (f) => f.sensors[i].value[k]]); } });
+        s.distance.forEach((d, i) => { defs.push([`distance${d.port}.distance()`, 'mm', (f) => { const r = f.distance[i].range; return r === null || r === undefined ? NaN : Math.trunc(r); }]); });
+        if (s.imu) { defs.push(['imu.heading()', 'deg', (f) => f.imu.heading - plot.h0]); }
+        defs.push(['battery.voltage()', 'mV', (f) => f.packMv]);
+        return defs;
+    }
+    /** the live channels for this robot: a new robot starts them empty, a tick staying on a name that stays */
+    function plotBuild(s, key) {
+        plot.key = key;
+        const old = plot.chans;
+        plot.chans = new Map();
+        for (const [label, unit, read] of plotDefs(s)) {
+            const c = plotChannel(label, unit, read);
+            if (old.has(label)) { c.style = old.get(label).style; }
+            plot.chans.set(label, c);
+        }
+        for (const [label, c] of old) { if (!c.read) { plot.chans.set(label, c); } }
+        plotList();
+    }
+    const plotKey = (s) => [s.motors, s.sensors, s.distance].map((l) => l.map((d) => d.port).join()).join('/') + (s.imu ? '/imu' : '');
+    /** whether anything is taken now: never in a Run challenge, whose robot is not the panel's */
+    function plotTakes() {
+        const scored = chal.busy;
+        if (scored !== plot.scored) { plot.scored = scored; plotBreak(); plotShow(); }
+        return !scored && !plot.paused;
+    }
+    function plotDue() {
+        const now = performance.now();
+        if (now - plot.drawn >= PLOT_EVERY_MS) { plot.drawn = now; plotShow(); }
+    }
+    function plotSnap(s) {
+        if (!plotTakes()) { return; }
+        const key = plotKey(s);
+        if (key !== plot.key) { plotBuild(s, key); }
+        if (s.t === plot.tLast) { return; }
+        if (plot.t0 === undefined) { plot.t0 = s.t; }
+        // the world's clock went back (a new board): the plot's runs on from where it was
+        if (s.t < plot.tLast) { plot.t0 = s.t - plot.x; plotBreak(); }
+        plot.tLast = s.t;
+        plot.x = s.t - plot.t0;
+        for (const c of plot.chans.values()) { if (c.read) { plotPush(c, plot.x, c.read(s), 0); } }
+        plotDue();
+    }
+    /** one printed line: its `name=value` pairs are one sample each, stamped with the last frame's time (`print` has no
+     *  clock of its own, so a line is placed to a frame, 33 ms of the wall), numbered with the line */
+    function plotLine(line) {
+        if (line.length > PLOT_LINE || line.indexOf('=') < 0) { return; }
+        let ln = 0;
+        for (const [, name, text] of line.matchAll(PLOT_PAIR)) {
+            let c = plot.chans.get(name);
+            if (!c) {
+                if ([...plot.chans.values()].filter((k) => !k.read).length >= PLOT_PRINTED) { plot.refused++; continue; }
+                c = plotChannel(name, '', undefined);
+                plot.chans.set(name, c);
+                // the quick look: what is printed is plotted, the time column excepted
+                if (name !== 't') { plotTick(c, true, true); }
+                plotList();
+            }
+            if (!ln) { ln = ++plot.lines; }
+            plotPush(c, plot.x, text === 'True' ? 1 : text === 'False' ? 0 : Number(text), ln);
+        }
+    }
+    function plotOut(text) {
+        if (!plotTakes()) { return; }
+        const s = plot.carry + text;
+        let at = 0, nl;
+        while ((nl = s.indexOf('\n', at)) >= 0) {
+            if (plot.skip) { plot.skip = false; } else { plotLine(s.slice(at, nl)); }
+            at = nl + 1;
+        }
+        plot.carry = s.slice(at);
+        if (plot.carry.length > PLOT_LINE) { plot.carry = ''; plot.skip = true; }
+        plotDue();
+    }
+    /** everything taken goes; the printed names with no tick go with it, so one run's names do not fill the list for the next */
+    function plotClear() {
+        for (const [label, c] of plot.chans) {
+            if (!c.read && c.style === undefined) { plot.chans.delete(label); continue; }
+            c.head = 0; c.n = 0; c.cut = false;
+        }
+        plot.t0 = undefined; plot.tLast = undefined; plot.x = 0;
+        plot.lines = 0; plot.carry = ''; plot.skip = false; plot.dropped = 0; plot.refused = 0;
+        plot.cur = [undefined, undefined]; plot.page = undefined;
+        plot.missed = false; plot.held = []; plot.late = false;
+        plotList();
+        plotShow();
+    }
+    /** the zeros of the program's getters, from frame s; no frame: none. They stand until the next Run: a restart carries
+     *  the shafts over (workerCore.ts restore) and Apply leaves them (World.configure), so neither moves a motor's zero */
+    function plotZero(s) {
+        plot.a0 = s ? s.motors.map((m) => m.angle) : [];
+        plot.h0 = s && s.imu ? s.imu.heading : 0;
+    }
+    /** a restart with no Run: the new board's IMU starts again at 0 (restore carries no heading), so the zero moves with it
+     *  and imu.heading() carries on from the last frame, as the shafts do; s: the new board's first frame */
+    function plotCarry(s) {
+        if (snap && snap.imu && s.imu) { plot.h0 += s.imu.heading - snap.imu.heading; }
+    }
+    /** a Run: the plot starts from it, shut or open, unless paused (what is on screen is being read, and the pane says
+     *  whose it is). Per Run, not per tick: shut, this still keeps nothing. */
+    function plotRun() {
+        plotZero(snap);
+        if (!plot.paused) { plotClear(); plot.missed = !plot.on; return; }
+        plot.late = true;
+        if (!plot.held.includes(plot.x) && [...plot.chans.values()].some((c) => c.n > 0)) { plot.held.push(plot.x); }
+        plotShow();
+    }
+    /** the pane opened, or the robot changed with it open */
+    function plotOpened() {
+        if (snap) { const key = plotKey(snap); if (key !== plot.key) { plotBuild(snap, key); } }
+        plotBreak();
+        plotList();
+        plotShow();
+    }
+    /** a new robot (Apply, the host's): its channels are built again */
+    function plotHw() { plot.key = ''; if (plot.on) { plotOpened(); } }
+    /** a tick on or off: a free style on, at most PLOT_TRACES; false when refused */
+    function plotTick(c, on, quiet) {
+        if (!on) { c.style = undefined; return true; }
+        const used = new Set(plotTicked().map((k) => k.style));
+        const free = PLOT_STYLES.findIndex((_, i) => !used.has(i));
+        if (free < 0) { if (!quiet) { say(`${PLOT_TRACES} traces at most: untick one first.`); } return false; }
+        c.style = free;
+        return true;
+    }
+    /** the channel lists, in two groups: built again only when a channel comes or goes */
+    function plotList() {
+        const box = $('#plChans');
+        if (!box) { return; }
+        // a Run and a new name build the list again: the keyboard stays on its box
+        const had = [...plot.chans.values()].find((c) => c.box && c.box === document.activeElement);
+        const row = (c) => {
+            const b = el('input', { type: 'checkbox', onchange: (e) => {
+                const on = e.target.checked, ok = plotTick(c, on);
+                e.target.checked = on && ok;
+                if (ok) { say(on ? `${c.label}: ${PLOT_STYLES[c.style].words}.` : `${c.label} off the plot.`); }
+                plotShow();
+            } });
+            b.checked = c.style !== undefined;
+            c.box = b;
+            return el('label', { class: 'inline' }, b, c.label, c.unit ? ` (${c.unit})` : '');
+        };
+        const all = [...plot.chans.values()], live = all.filter((c) => c.read), said = all.filter((c) => !c.read);
+        box.replaceChildren(
+            el('fieldset', { class: 'plGroup' }, el('legend', {}, 'The robot, as the setup code reads it'), ...(live.length ? live.map(row) : ['No frame from the simulator yet.'])),
+            el('fieldset', { class: 'plGroup' }, el('legend', {}, 'Printed name=value lines'), ...(said.length ? said.map(row) : ['None yet: print("error=%d" % e) makes a channel called error.'])));
+        if (had) { had.box.focus(); }
+        plotAxes();
+    }
+    /** the x axis's choices: a printed channel can be one (a log's t, or speed against distance) */
+    function plotAxes() {
+        const s = $('#plAxis');
+        const names = [...plot.chans.values()].filter((c) => !c.read).map((c) => c.label);
+        const want = [['@auto', 'Automatic'], ['@time', 'Time (s)'], ['@line', 'Printed line number'], ...names.map((n) => [n, `Printed ${n}`])];
+        if (s.options.length !== want.length || want.some(([v], i) => s.options[i].value !== v)) {
+            s.replaceChildren(...want.map(([v, t]) => el('option', { value: v }, t)));
+        }
+        if (!want.some(([v]) => v === plot.axis)) { plot.axis = '@auto'; }
+        s.value = plot.axis;
+    }
+    /** the rows of `cols`, one for each frame and each printed line, oldest first: { t, ln, cut, v, x }; v[i] is undefined
+     *  where col i has no sample here, NaN where its sample is no number (None); cut: nothing joins this row to the one before */
+    function plotRows(cols) {
+        const at = cols.map(() => 0), rows = [];
+        let cut = false;
+        for (;;) {
+            let t = Infinity, ln = Infinity;
+            cols.forEach((c, i) => {
+                while (at[i] < c.n && c.ln[(c.head + at[i]) % PLOT_MAX] < 0) { at[i]++; cut = true; }
+                if (at[i] >= c.n) { return; }
+                const k = (c.head + at[i]) % PLOT_MAX;
+                if (c.x[k] < t || (c.x[k] === t && c.ln[k] < ln)) { t = c.x[k]; ln = c.ln[k]; }
+            });
+            if (t === Infinity) { return rows; }
+            const v = cols.map((c, i) => {
+                if (at[i] >= c.n) { return undefined; }
+                const k = (c.head + at[i]) % PLOT_MAX;
+                if (c.x[k] !== t || c.ln[k] !== ln) { return undefined; }
+                at[i]++;
+                return c.y[k];
+            });
+            rows.push({ t, ln, cut, v, x: t });
+            cut = false;
+        }
+    }
+    /** what the plot shows now. Automatic is time, except for printed lines that came in one burst (a log printed after its
+     *  run has no time of its own): those go against their `t` if they print one, else against their line number */
+    function plotView() {
+        const cols = plotTicked();
+        const rows = plotRows(cols);
+        let axis = plot.axis;
+        if (axis === '@auto') {
+            const burst = rows.length > 1 && rows[rows.length - 1].t - rows[0].t < rows.length * 0.001;
+            axis = cols.length && cols.every((c) => !c.read) && burst ? (plot.chans.has('t') ? 't' : '@line') : '@time';
+        }
+        if (axis === '@time') { return { name: 'Time (s)', at: (x) => `${plotNum(x)} s`, cols, rows, left: [] }; }
+        // against a printed value only a printed line has an x
+        const drawn = cols.filter((c) => !c.read), left = cols.filter((c) => c.read);
+        const by = axis === '@line' ? undefined : plot.chans.get(axis);
+        const bi = by ? (drawn.includes(by) ? drawn.indexOf(by) : drawn.length) : -1;
+        const kept = [];
+        for (const r of plotRows(by && bi === drawn.length ? [...drawn, by] : drawn)) {
+            const x = by ? r.v[bi] : r.ln;
+            if (Number.isFinite(x)) { r.x = x; r.v = r.v.slice(0, drawn.length); kept.push(r); }
+        }
+        return { name: by ? `Printed ${axis}` : 'Printed line number', at: (x) => `${by ? axis : 'line'} ${plotNum(x)}`, cols: drawn, rows: kept, left, by };
+    }
+    /** the step a ruled axis takes: 1, 2 or 5 of a power of ten, about `n` steps across */
+    function plotStep(span, n) {
+        const raw = span / n, p = 10 ** Math.floor(Math.log10(raw)), m = raw / p;
+        return (m <= 1 ? 1 : m <= 2 ? 2 : m <= 5 ? 5 : 10) * p;
+    }
+    /** the room one value needs either side: 0 where a and b are two values on a ruled axis. Values closer than PLOT_SAME
+     *  are one value here (the words and the CSV still give them), so a step is always many times a double's own step */
+    function plotFlat(a, b) {
+        const m = Math.max(Math.abs(a), Math.abs(b));
+        return b - a > m * PLOT_SAME ? 0 : Math.max(1, m / 1000);
+    }
+    /** a tick's words: the step's own decimals, so 1000.0002 stays apart from 1000.0004; as a power from 1e7, and where
+     *  the step is past the 100 decimals toFixed holds */
+    function plotWord(v, step) {
+        const places = Math.min(100, Math.max(0, -Math.floor(Math.log10(step))));
+        return Math.abs(v) >= 1e7 || (v !== 0 && step < 1e-100) ? v.toExponential(Math.min(20, Math.ceil(Math.log10(Math.abs(v) / step)))).replace('+', '') : String(Number(v.toFixed(places)) + 0);
+    }
+    /** an axis's ticks from lo to hi: { ticks: [value, words][], base }: counted, never stepped by adding, and PLOT_TICKS at
+     *  most whatever the numbers are; none where the span is past what a number holds (the words still state the values).
+     *  Where any word is too wide (`fits`, measured), the first tick is the base, said once, and the ticks count from it */
+    function plotTicks(lo, hi, fits) {
+        const step = plotStep(hi - lo, 5), first = Math.ceil(lo / step), ticks = [];
+        if (!(step > 0) || !Number.isFinite(step) || !Number.isFinite(first)) { return { ticks }; }
+        for (let k = 0; k < PLOT_TICKS; k++) {
+            const v = (first + k) * step;
+            if (v > hi) { break; }
+            ticks.push([v, plotWord(v, step)]);
+        }
+        if (ticks.every(([, w]) => fits(w))) { return { ticks }; }
+        return { base: ticks[0][1], ticks: ticks.map(([v], k) => [v, plotWord(k * step, step)]) };
+    }
+    function plotMark(g, kind, x, y) {
+        const r = 3.5;
+        g.setLineDash([]);
+        g.beginPath();
+        if (kind === 'circle') { g.arc(x, y, r, 0, 2 * Math.PI); } else if (kind === 'square') { g.rect(x - r, y - r, 2 * r, 2 * r); } else if (kind === 'triangle') {
+            g.moveTo(x, y - r - 1); g.lineTo(x + r + 1, y + r); g.lineTo(x - r - 1, y + r); g.closePath();
+        } else if (kind === 'cross') { g.moveTo(x - r, y - r); g.lineTo(x + r, y + r); g.moveTo(x + r, y - r); g.lineTo(x - r, y + r); } else if (kind === 'diamond') {
+            g.moveTo(x, y - r - 1); g.lineTo(x + r + 1, y); g.lineTo(x, y + r + 1); g.lineTo(x - r - 1, y); g.closePath();
+        } else { g.moveTo(x - r - 1, y); g.lineTo(x + r + 1, y); g.moveTo(x, y - r - 1); g.lineTo(x, y + r + 1); }
+        g.stroke();
+    }
+    /** each trace's lowest and highest value, and the lot's */
+    function plotRanges(view) {
+        const each = view.cols.map(() => [Infinity, -Infinity]);
+        for (const r of view.rows) { r.v.forEach((v, i) => { if (Number.isFinite(v)) { if (v < each[i][0]) { each[i][0] = v; } if (v > each[i][1]) { each[i][1] = v; } } }); }
+        return { each, lo: Math.min(...each.map((e) => e[0])), hi: Math.max(...each.map((e) => e[1])) };
+    }
+    function plotDraw(view, rng) {
+        const cv = $('#plCanvas');
+        const dpr = window.devicePixelRatio || 1, W = cv.clientWidth || 430, H = cv.clientHeight || 250;
+        if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
+        const g = cv.getContext('2d'), css = getComputedStyle(document.body);
+        const ink = css.getPropertyValue('--text').trim() || '#808080', rule = css.getPropertyValue('--border-strong').trim() || '#808080';
+        const words = css.getPropertyValue('--ink').trim() || ink;
+        g.setTransform(dpr, 0, 0, dpr, 0, 0);
+        g.clearRect(0, 0, W, H);
+        g.font = '11px sans-serif';
+        g.lineWidth = 1;
+        g.fillStyle = ink; g.strokeStyle = rule;
+        const L = 52, R = 10, T = 10, B = 34, pw = W - L - R, ph = H - T - B;
+        plot.geo = undefined;
+        if (!view.rows.length) { g.textAlign = 'center'; g.fillText(!view.cols.length ? 'Tick a channel to plot it' : plot.missed ? 'The last Run went with this pane shut' : 'Waiting for samples', L + pw / 2, T + ph / 2); return; }
+        let x0 = Infinity, x1 = -Infinity;
+        for (const r of view.rows) { if (r.x < x0) { x0 = r.x; } if (r.x > x1) { x1 = r.x; } }
+        x1 += plotFlat(x0, x1);
+        const pad = (a, b) => { const w = plotFlat(a, b); return w ? [a - w, b + w] : [a - (b - a) * 0.05, b + (b - a) * 0.05]; };
+        const [y0, y1] = Number.isFinite(rng.lo) ? pad(rng.lo, rng.hi) : [0, 1];
+        const px = (x) => L + (x - x0) / (x1 - x0) * pw;
+        const yFor = (i) => {
+            const [a, b] = plot.own && Number.isFinite(rng.each[i][0]) ? pad(rng.each[i][0], rng.each[i][1]) : [y0, y1];
+            return (y) => T + ph - (y - a) / (b - a) * ph;
+        };
+        // the axes: on their own scales the y axis is each trace's lowest to highest, which the key states
+        g.setLineDash([]);
+        g.beginPath(); g.rect(L, T, pw, ph); g.stroke();
+        g.textAlign = 'center';
+        // ticks are at least pw / 5 apart, and the y axis's end at L - 4: each word measured against its room
+        const wide = (w) => g.measureText(w).width;
+        const xs = plotTicks(x0, x1, (w) => wide(w) <= pw / 5 - 4);
+        for (const [x, tick] of xs.ticks) { g.fillText(tick, Math.min(px(x), W - wide(tick) / 2), T + ph + 13); g.beginPath(); g.moveTo(px(x), T + ph); g.lineTo(px(x), T + ph + 3); g.stroke(); }
+        g.fillText(view.name, L + pw / 2, H - 6);
+        g.textAlign = 'right';
+        if (xs.base) { g.fillText(`x: ${xs.base} + tick`, L + pw, H - 6); }
+        if (plot.own) {
+            g.fillText('highest', L - 4, T + 10); g.fillText('lowest', L - 4, T + ph);
+        } else {
+            const yp = yFor(0);
+            const ys = plotTicks(y0, y1, (w) => wide(w) <= L - 4);
+            for (const [y, tick] of ys.ticks) { g.fillText(tick, L - 4, yp(y) + 4); g.beginPath(); g.moveTo(L, yp(y)); g.lineTo(L + pw, yp(y)); g.stroke(); }
+            if (ys.base) { g.textAlign = 'left'; g.fillText(`y: ${ys.base} + tick`, L, T - 1); g.textAlign = 'right'; }
+        }
+        const ends = [];
+        view.cols.forEach((c, i) => {
+            const st = PLOT_STYLES[c.style], yp = yFor(i);
+            g.strokeStyle = st.ink; g.fillStyle = st.ink; g.lineWidth = 1.5;
+            g.setLineDash(st.dash);
+            g.beginPath();
+            // at most two points to a pixel column, its lowest and highest: a spike stays, however many samples there are
+            let col, lo, hi, pen = false, end;
+            const flush = () => {
+                if (col === undefined) { return; }
+                if (pen) { g.lineTo(col, lo); } else { g.moveTo(col, lo); pen = true; }
+                if (hi !== lo) { g.lineTo(col, hi); }
+                col = undefined;
+            };
+            for (const r of view.rows) {
+                const v = r.v[i];
+                if (r.cut) { flush(); pen = false; }
+                if (v === undefined) { continue; }
+                if (!Number.isFinite(v)) { flush(); pen = false; continue; }    // None: a gap in the line
+                const X = Math.round(px(r.x)), Y = yp(v);
+                if (X !== col) { flush(); col = X; lo = Y; hi = Y; } else { if (Y < lo) { lo = Y; } if (Y > hi) { hi = Y; } }
+                end = [px(r.x), Y];
+            }
+            flush();
+            g.stroke();
+            // a marker every so often, from the trace's own samples, staggered so that two lying together both show
+            let next = L + i * 9;
+            for (const r of view.rows) {
+                const v = r.v[i];
+                if (!Number.isFinite(v)) { continue; }
+                const X = px(r.x);
+                if (X >= next) { plotMark(g, st.mark, X, yp(v)); next = X + 54; }
+            }
+            if (end) { plotMark(g, st.mark, end[0], end[1]); ends.push({ label: c.label, y: end[1], ink: st.ink, mark: st.mark }); }
+        });
+        // the cursors: a line each, named, A solid and B dashed
+        plot.geo = { L, pw, x0, x1 };
+        g.strokeStyle = ink; g.fillStyle = ink; g.lineWidth = 1; g.textAlign = 'center';
+        plot.cur.forEach((c, i) => {
+            if (!c) { return; }
+            const X = px(view.rows[plotFind(view.rows, c)].x);
+            g.setLineDash(i ? [5, 3] : []);
+            g.beginPath(); g.moveTo(X, T); g.lineTo(X, T + ph); g.stroke();
+            g.fillText('AB'[i], X, T + 9);
+        });
+        // the direct labels: at each trace's end, moved apart so that none lies on another, from the top and then from the
+        // bottom, so that none runs past the plot
+        g.textAlign = 'right';
+        ends.sort((a, b) => a.y - b.y);
+        let low = T + 10, high = T + ph - 2;
+        for (const e of ends) { e.at = Math.max(low, Math.min(e.y - 5, high)); low = e.at + 12; }
+        for (const e of ends.slice().reverse()) { e.at = Math.min(e.at, high); high = e.at - 12; }
+        // each beside its trace's marker, for the ink alone is under 4.5:1 (1.4.3): the words in --ink, on a halo of the
+        // plot's own ground, so that a label stays readable where a trace runs under it
+        const ground = css.getPropertyValue('--surface').trim() || '#ffffff';
+        for (const e of ends) {
+            g.lineWidth = 1.5; g.strokeStyle = e.ink;
+            plotMark(g, e.mark, L + pw - 8, e.at - 4);
+            g.lineWidth = 3; g.strokeStyle = ground;
+            g.strokeText(e.label, L + pw - 16, e.at);
+            g.fillStyle = words; g.fillText(e.label, L + pw - 16, e.at);
+        }
+    }
+    /** the row at or after `at`, the last if there is none: rows run in order of { t, ln }, whatever the x axis */
+    function plotFind(rows, at) {
+        let lo = 0, hi = rows.length - 1;
+        while (lo < hi) {
+            const m = (lo + hi) >> 1, r = rows[m];
+            if (r.t < at.t || (r.t === at.t && r.ln < at.ln)) { lo = m + 1; } else { hi = m; }
+        }
+        return lo;
+    }
+    /** a value of column i with its unit, as a cursor states it */
+    function plotValue(c, v) {
+        if (v === undefined) { return 'no sample here'; }
+        return Number.isFinite(v) ? `${plotNum(v)}${c.unit ? ` ${c.unit}` : ''}` : 'no reading';
+    }
+    /** a cursor's words: where it is and every trace's value there */
+    function plotAt(view, name, r) { return `${name} at ${view.at(r.x)}: ${view.cols.map((c, i) => `${c.label} ${plotValue(c, r.v[i])}`).join(', ')}.`; }
+    /** the cursors' lines of text and their sliders, for what is shown */
+    function plotCursors(view) {
+        const rows = view.rows, on = plot.cur.map((c) => (c && rows.length ? rows[plotFind(rows, c)] : undefined));
+        const lines = on.map((r, i) => (r ? plotAt(view, 'AB'[i], r) : '')).filter(Boolean);
+        if (on[0] && on[1]) {
+            const [a, b] = on;
+            const dv = view.cols.map((c, i) => (Number.isFinite(a.v[i]) && Number.isFinite(b.v[i]) ? `${c.label} ${plotNum(b.v[i] - a.v[i])}${c.unit ? ` ${c.unit}` : ''}` : `${c.label} no difference`));
+            lines.push(`B less A: ${view.at(b.x - a.x)}, ${dv.join(', ')}.`);
+        }
+        setText($('#plRead'), lines.join('\n'));
+        ['#plA', '#plB'].forEach((id, i) => {
+            const s = $(id);
+            plotOff(s, !rows.length);
+            s.max = String(Math.max(0, rows.length - 1));
+            if (on[i]) { s.value = String(plotFind(rows, plot.cur[i])); s.setAttribute('aria-valuetext', plotAt(view, 'AB'[i], on[i])); } else { s.value = '0'; s.setAttribute('aria-valuetext', 'not placed'); }
+        });
+    }
+    /** cursor i on row k of what is shown: drawn, stated and said */
+    function plotPlace(i, k) {
+        const view = plot.view, r = view && view.rows[k];
+        if (!r) { say('There is nothing to read yet.'); return; }
+        plot.cur[i] = { t: r.t, ln: r.ln };
+        plotShow();
+        say(plotAt(view, 'AB'[i], r));
+    }
+    /** the row nearest x on the axis shown */
+    function plotNear(x) {
+        let best = -1, gap = Infinity;
+        plot.view.rows.forEach((r, k) => { const d = Math.abs(r.x - x); if (d < gap) { gap = d; best = k; } });
+        return best;
+    }
+    function plotGo(i) {
+        const t = $(i ? '#plBt' : '#plAt').value.trim(), x = t === '' ? NaN : Number(t);
+        if (!Number.isFinite(x)) { say('Type a number on the x axis.'); return; }
+        plotPlace(i, plotNear(x));
+    }
+    /** a click on the plot puts A there, with Shift B */
+    function plotClick(e) {
+        const q = plot.geo;
+        if (!q || !plot.view.rows.length) { return; }
+        plotPlace(e.shiftKey ? 1 : 0, plotNear(q.x0 + (e.offsetX - q.L) / q.pw * (q.x1 - q.x0)));
+    }
+    function plotCursorsOff() { plot.cur = [undefined, undefined]; plotShow(); say('Cursors off.'); }
+    /** the table: what the plot shows, PLOT_PAGE rows at a time; a cell's '-' is no sample in that row, 'none' a reading of no number */
+    function plotTable(view) {
+        const n = view.rows.length, last = Math.max(0, Math.ceil(n / PLOT_PAGE) - 1) * PLOT_PAGE;
+        const from = plot.page === undefined || plot.page >= last ? last : plot.page;
+        const shown = view.rows.slice(from, from + PLOT_PAGE), body = $('#plTable').tBodies[0];
+        // a page stands while it is the same page, a row that comes is added: a screen reader's place stays under a run's redraws
+        const page = [view.name, ...view.cols.map((c) => c.label), from, shown.length ? `${shown[0].t},${shown[0].ln}` : ''].join('|');
+        if (page !== plot.tab) {
+            plot.tab = page;
+            const head = el('tr', {}, el('th', { scope: 'col' }, view.name), ...view.cols.map((c) => el('th', { scope: 'col' }, c.unit ? `${c.label} (${c.unit})` : c.label)));
+            $('#plTable').tHead.replaceChildren(head);
+            body.replaceChildren();
+        }
+        for (const r of shown.slice(body.rows.length)) {
+            body.append(el('tr', {}, el('th', { scope: 'row' }, plotNum(r.x)), ...r.v.map((v) => el('td', {}, v === undefined ? '-' : Number.isFinite(v) ? plotNum(v) : 'none'))));
+        }
+        setText($('#plPage'), n ? `Rows ${from + 1} to ${Math.min(n, from + PLOT_PAGE)} of ${n}.` : 'No rows yet.');
+        plotOff($('#plPrev'), from === 0);
+        plotOff($('#plNext'), from >= last);
+        return from;
+    }
+    /** off, and still where the keyboard is: `disabled` under the focus would drop a keyboard's place in the pane */
+    function plotOff(e, off) { e.setAttribute('aria-disabled', String(off)); }
+    /** a page back or on; on past the last, the table follows the latest rows again */
+    function plotTurn(by) {
+        const view = plot.view, last = Math.max(0, Math.ceil(view.rows.length / PLOT_PAGE) - 1) * PLOT_PAGE;
+        const from = (plot.page === undefined ? last : Math.min(plot.page, last)) + by * PLOT_PAGE;
+        plot.page = from >= last ? undefined : Math.max(0, from);
+        plotTable(view);
+        say($('#plPage').textContent);
+    }
+    function plotTableToggle() {
+        plot.table = !plot.table;
+        const b = $('#plTableBtn');
+        b.setAttribute('aria-expanded', String(plot.table));
+        b.classList.toggle('on', plot.table);
+        $('#plTableBox').hidden = !plot.table;
+        plot.tab = undefined;
+        if (plot.table) { plotShow(); } else { $('#plTable').tBodies[0].replaceChildren(); }
+        say(plot.table ? $('#plPage').textContent : 'Table shut.');
+    }
+    /** the samples as CSV: the ticked channels, and what they are plotted against, whatever the page; time_s as the data
+     *  logger's, the printed line when there is one, values in full, no sample or no number an empty cell; a printed
+     *  `time_s`, `line` or `run` is headed as printed, so that no two columns share a name; samples that cross a Run (one came
+     *  while paused) carry a `run` column, 1 the oldest, for each Run reads from its own zeros */
+    function plotCsv() {
+        const view = plotView(), cols = plotTicked();
+        if (view.by && !cols.includes(view.by)) { cols.push(view.by); }
+        const lines = cols.some((c) => !c.read);
+        const runs = plot.held.length ? (r) => [String(1 + plot.held.filter((x) => r.t > x).length)] : () => [];
+        const body = plotRows(cols).map((r) => [plotNum(r.t), ...runs(r), ...(lines ? [r.ln > 0 ? String(r.ln) : ''] : []), ...r.v.map((v) => (v === undefined ? '' : plotFull(v)))].join(','));
+        const head = (c) => (c.unit ? `${c.label} (${c.unit})` : c.label === 'time_s' || c.label === 'line' || c.label === 'run' ? `printed ${c.label}` : c.label);
+        return body.length ? [['time_s', ...(plot.held.length ? ['run'] : []), ...(lines ? ['line'] : []), ...cols.map(head)].join(','), ...body, ''].join('\n') : '';
+    }
+    function plotExport(type, words) {
+        const text = plotCsv();
+        if (!text) { say('Nothing to export: tick a channel, and take some samples.'); return; }
+        vscode.postMessage({ type, text, what: 'the plot as CSV' });
+        say(plot.held.length ? `${words} These samples cross a Run: the run column marks whose each row is, each Run from its own zeros.` : words);
+    }
+    /** the plot's drawing and its words: the words say all that the picture does */
+    function plotShow() {
+        if (!plot.on) { return; }
+        const view = plotView(), rng = plotRanges(view);
+        plot.view = view;
+        plotDraw(view, rng);
+        plotCursors(view);
+        if (plot.table) { plotTable(view); }
+        // its items stay, and only the words that changed are written: a screen reader's place stays under a run's redraws
+        const key = $('#plKey');
+        while (key.children.length > view.cols.length) { key.lastChild.remove(); }
+        view.cols.forEach((c, i) => {
+            const [lo, hi] = rng.each[i], u = c.unit ? ` ${c.unit}` : '';
+            let now = '';
+            for (let k = view.rows.length - 1; k >= 0 && !now; k--) { const v = view.rows[k].v[i]; if (Number.isFinite(v)) { now = plotNum(v); } }
+            setText(key.children[i] || key.appendChild(el('li')), `${c.label}: ${PLOT_STYLES[c.style].words}${Number.isFinite(lo) ? `, from ${plotNum(lo)} to ${plotNum(hi)}${u}, now ${now}${u}` : ', no samples'}`);
+        });
+        const chans = [...plot.chans.values()], samples = chans.reduce((a, c) => a + c.n, 0), bytes = chans.reduce((a, c) => a + c.x.byteLength + c.y.byteLength + c.ln.byteLength, 0);
+        const parts = [plot.scored ? 'A scored run is on: it runs apart from this panel, and nothing is taken until it ends.' : plot.paused ? 'Paused: nothing is taken, the run goes on.' : 'Taking samples.',
+            ...(plot.missed ? [`The last Run went with this pane shut, and nothing is kept while it is shut: ${view.rows.length ? 'these samples start from when it opened' : 'press Run with it open'}.`] : []),
+            ...(plot.held.length ? ['Some or all of these samples are from before the last Run, which came while paused.'] : []),
+            ...(plot.late && !plot.paused ? ['The last Run\'s start is missing: it came while paused, and nothing was taken until the resume.'] : []),
+            `${view.rows.length} ${view.rows.length === 1 ? 'row' : 'rows'} against ${view.name.toLowerCase()}.`,
+            ...(view.left.length ? [`Not on this axis, having no printed line: ${view.left.map((c) => c.label).join(', ')}.`] : []),
+            ...(plot.dropped ? [`Each channel keeps its last ${PLOT_MAX} samples: ${plot.dropped} older ones have gone.`] : []),
+            ...(plot.refused ? [`${PLOT_PRINTED} printed names at most: ${plot.refused} values under other names were left out.`] : []),
+            `Kept: ${samples} samples of ${chans.length} channels in ${Math.round(bytes / 1024)} kB.`];
+        setText($('#plInfo'), parts.join(' '));
+        $('#plCanvas').setAttribute('aria-label', view.cols.length ? `Plot against ${view.name.toLowerCase()} of ${view.cols.map((c) => c.label).join(', ')}: the list below it gives each trace in words.` : 'Plot: no channel ticked.');
+    }
+    function plotPause() {
+        plot.paused = !plot.paused;
+        const b = $('#plPause');
+        b.textContent = plot.paused ? 'Resume' : 'Pause';
+        b.setAttribute('aria-pressed', String(plot.paused));
+        if (!plot.paused) { plotBreak(); }
+        say(plot.paused ? 'Plot paused: nothing is taken until you resume, and the run goes on.' : 'Plot running.');
+        plotShow();
+    }
+    function plotPaneDom() {
+        return el('div', { id: 'plotPane', class: 'pane' },
+            el('h2', {}, 'Plot'),
+            el('p', { class: 'sub' }, 'What a program could print, against time. Open this before you press Run: nothing is kept while it is shut, and a Run starts it again, shut or open. To compare two Runs, print both from one program, or Copy CSV after each.'),
+            el('p', { class: 'sub', id: 'plLimits' }, 'The robot\'s channels are the setup code\'s objects, unchanged, from the Run. After reset_angle(), a calibration, a Motor made later or a second one on its port, or another gear, unit or axis they differ: for an exact value, print it.'),
+            el('canvas', { id: 'plCanvas', role: 'img', 'aria-label': 'Plot: no channel ticked.', onclick: plotClick }),
+            el('ul', { id: 'plKey', class: 'plKey' }),
+            ...['A', 'B'].map((n, i) => el('div', { class: 'plCursor' },
+                el('label', { class: 'inline' }, `Cursor ${n} `, el('input', { type: 'range', id: `pl${n}`, min: '0', max: '0', step: '1', value: '0', 'aria-disabled': 'true', 'aria-valuetext': 'not placed', oninput: (e) => plotPlace(i, Number(e.target.value)),
+                    // at 0 already, these move nothing and so send no input: an unplaced cursor goes on row 0 by them all the same
+                    onkeydown: (e) => { if (!plot.cur[i] && ['Home', 'ArrowLeft', 'ArrowDown', 'PageDown'].includes(e.key)) { e.preventDefault(); plotPlace(i, 0); } } })),
+                el('label', { class: 'inline' }, 'at ', el('input', { type: 'number', step: 'any', id: `pl${n}t`, 'aria-label': `Cursor ${n} at this x`, onkeydown: (e) => { if (e.key === 'Enter') { e.preventDefault(); plotGo(i); } } })),
+                el('button', { class: 'btn', type: 'button', id: `pl${n}Go`, title: `Put cursor ${n} on the sample nearest this x (Enter in the field does the same)`, onclick: () => plotGo(i) }, 'Go'))),
+            el('p', { class: 'sub', id: 'plRead' }),
+            el('div', { class: 'actions' },
+                el('button', { class: 'btn', type: 'button', id: 'plPause', 'aria-pressed': 'false', title: 'Stop taking samples, to read what is there; the run goes on', onclick: plotPause }, 'Pause'),
+                el('button', { class: 'btn', type: 'button', id: 'plClear', title: 'Throw away the samples taken so far', onclick: () => { plotClear(); say('Plot cleared.'); } }, 'Clear'),
+                el('button', { class: 'btn', type: 'button', id: 'plCurOff', title: 'Take both cursors off the plot', onclick: plotCursorsOff }, 'Cursors off')),
+            el('label', { class: 'inline' }, 'Against ', el('select', { id: 'plAxis', onchange: (e) => { plot.axis = e.target.value; plotShow(); } })),
+            el('label', { class: 'inline' }, el('input', { type: 'checkbox', id: 'plOwn', onchange: (e) => { plot.own = e.target.checked; plotShow(); } }), 'Each trace on its own scale'),
+            el('p', { class: 'sub', id: 'plInfo' }, '-'),
+            el('div', { class: 'actions' },
+                el('button', { class: 'btn', type: 'button', id: 'plTableBtn', 'aria-expanded': 'false', 'aria-controls': 'plTableBox', title: 'The samples as a table: what the plot shows, as text', onclick: plotTableToggle }, 'Table'),
+                el('button', { class: 'btn', type: 'button', id: 'plCopy', title: 'Copy the ticked channels as CSV', onclick: () => plotExport('copy', 'The plot is on the clipboard as CSV.') }, 'Copy CSV'),
+                el('button', { class: 'btn', type: 'button', id: 'plSave', title: 'Save the ticked channels to a CSV file', onclick: () => plotExport('plot-save', 'Save CSV: pick a file in the dialog.') }, 'Save CSV')),
+            el('div', { id: 'plTableBox', hidden: '' },
+                el('table', { id: 'plTable', class: 'plTable' }, el('caption', {}, 'The plot\'s samples, oldest first, to three decimals, or three figures under 1: the CSV has them in full. A dash: no sample in this row. None: no reading.'), el('thead'), el('tbody')),
+                el('p', { class: 'sub', id: 'plPage' }, 'No rows yet.'),
+                el('div', { class: 'actions' },
+                    el('button', { class: 'btn', type: 'button', id: 'plPrev', onclick: () => plotTurn(-1) }, 'Earlier rows'),
+                    el('button', { class: 'btn', type: 'button', id: 'plNext', onclick: () => plotTurn(1) }, 'Later rows'))),
+            el('div', { id: 'plChans' }));
+    }
 
     /* ---- the configurator ---------------------------------------------------------------------------------- */
     function numIn(value, attrs) { return el('input', { type: 'number', value: String(value), step: 'any', ...attrs }); }
@@ -2086,6 +3256,7 @@
             cameras: readCams(),
         };
         hw = next;
+        plotHw();
         return next;
     }
 
@@ -2988,6 +4159,14 @@
     function setPane(name) {
         document.body.classList.toggle('config', name === 'config');
         document.body.classList.toggle('builder', name === 'builder');
+        document.body.classList.toggle('tools', name === 'tools');
+        document.body.classList.toggle('plot', name === 'plot');
+        $('#plotBtn').classList.toggle('on', name === 'plot');
+        $('#plotBtn').setAttribute('aria-expanded', String(name === 'plot'));
+        if (name === 'plot' && !plot.on) { plot.on = true; plotOpened(); } else if (name !== 'plot' && plot.on) { plot.on = false; plotBreak(); }
+        $('#toolsBtn').classList.toggle('on', name === 'tools');
+        $('#toolsBtn').setAttribute('aria-expanded', String(name === 'tools'));
+        if (name === 'tools') { toolsShow(); } else { tools.pick = undefined; }
         $('#cfgBtn').classList.toggle('on', name === 'config');
         $('#mapBtn').classList.toggle('on', name === 'builder');
         if (name === 'builder') {
@@ -3374,6 +4553,8 @@
                 el('button', { class: 'btn', id: 'btnBtn', title: 'The board\'s user button (hold to press): evn.button.pressed()', onpointerdown: () => pressButton(true), onpointerup: () => pressButton(false), onpointerleave: () => pressButton(false) }, 'Button'),
                 el('button', { class: 'btn', id: 'newBtn', title: 'A first line follower for this robot, in your projects folder: run it with Ctrl+F5', onclick: () => vscode.postMessage({ type: 'new-program' }) }, 'New program'),
                 el('button', { class: 'btn stop', id: 'stopBtn', title: 'Stop the program (Ctrl-C): every motor coasts', disabled: '', onclick: () => vscode.postMessage({ type: 'stop' }) }, 'Stop'),
+                el('button', { class: 'btn', id: 'toolsBtn', 'aria-expanded': 'false', 'aria-controls': 'toolsPane', title: 'Type the robot\'s start pose, nudge it, the pen and the errors, the grid, ruler, protractor and markers, by keyboard: the values as text', onclick: () => setPane(toolsOpen() ? '' : 'tools') }, 'Tools'),
+                el('button', { class: 'btn', id: 'plotBtn', 'aria-expanded': 'false', 'aria-controls': 'plotPane', title: 'Plot any motor, sensor or printed name=value channel against time', onclick: () => setPane(plotOpen() ? '' : 'plot') }, 'Plot'),
                 el('button', { class: 'btn', id: 'mapBtn', title: 'Build a course of Rescue Line tiles', onclick: () => setPane(builder() ? '' : 'builder') }, 'Map builder'),
                 el('button', { class: 'btn', id: 'cfgBtn', title: 'The simulated robot\'s hardware', onclick: () => setPane(document.body.classList.contains('config') ? '' : 'config') }, 'Configure robot'),
             ),
@@ -3424,10 +4605,12 @@
                                 el('label', { title: 'The WRO referee scores the run (General Rules 10; Junior rules 3): turned on, the field is laid from the seed and the robot put at the start' }, el('input', { type: 'checkbox', id: 'wOn', checked: '', onchange: wroRefToggle }), ' referee'),
                                 el('span', { class: 'log', title: 'The game objects are bodies of the physics engine (Jolt Physics; docs/SIMULATOR.md "WRO RoboMission"): they are pushed, gripped, stacked and tipped over, and the sensors read them where they lie; a real table may differ' }, 'physics engine'))),
                     ),
-                    el('div', { class: 'hint run-only only2d' }, 'Drag the robot to move it, its handle to turn it (Shift: 15° steps). Drag the floor to pan, scroll to zoom.'),
+                    el('div', { class: 'hint run-only only2d' }, 'Drag the robot to move it, its handle to turn it (Shift: 15° steps), or use Tools by keyboard. Drag the floor to pan, scroll to zoom.'),
                     el('div', { class: 'hint run-only only3d-view' }, 'Drag to turn the view, Shift+drag (or a right drag) to move it, scroll to zoom. Follow follows the robot. The robot is moved in the 2D view.'),
                     el('div', { class: 'hint build-only' }, 'Click to place the picked tile, drag a tile to move it, R or a right click turns it, Delete removes it. Drag the floor to pan, scroll to zoom.'),
                     el('div', { class: 'note card', id: 'note', hidden: '' }),
+                    el('div', { class: 'cue card run-only', id: 'trCue', hidden: '' }, 'Robot selected: the arrow keys move it. Escape lets go', el('span', { class: 'only2d' }, ', or click the floor'), '.'),
+                    el('div', { class: 'sr', id: 'trSay', role: 'status', 'aria-live': 'polite' }),
                     el('div', { class: 'campv card', id: 'camPv', hidden: '' }, el('canvas', { id: 'camPvC', width: '320', height: '240', 'aria-label': 'The first camera\'s newest frame' }), el('div', { class: 'camst', id: 'camSt' })),
                     el('div', { class: 'loading', id: 'loading' }, 'Starting the simulated board (Python)…'),
                 ),
@@ -3445,6 +4628,8 @@
                         el('p', { class: 'sub' }, 'Applying a change restarts the simulated board: a running program stops and the robot goes back to where it is, with its motors coasting.'),
                     ),
                     mapPaneDom(),
+                    toolsPaneDom(),
+                    plotPaneDom(),
                 ),
             ),
         );
