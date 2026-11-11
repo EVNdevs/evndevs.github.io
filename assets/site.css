@@ -374,6 +374,25 @@ a.shot:hover { text-decoration: none; border-color: var(--accent); }
   opacity: 0; transition: opacity .3s ease; pointer-events: none;
 }
 .stage-load.on { opacity: 1; }
+/* a hovered part's name beside the cursor (hero3d.js showTip): over the chapters' words, never in the pointer's way */
+.stage-tip {
+  position: fixed; z-index: 3; left: 0; top: 0; padding: 4px 9px; border-radius: 6px; background: rgba(12, 15, 18, .88);
+  border: 1px solid var(--st-line); color: var(--st-ink); font-size: 12.5px; line-height: 1.3; letter-spacing: .02em;
+  white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity .15s ease;
+}
+.stage-tip.on { opacity: 1; }
+/* the robot scene's run button (hero3d.js placeRun): over its blocks board's corner, a play that turns into a pause */
+.stage-run {
+  position: fixed; z-index: 3; left: 0; top: 0; width: 38px; height: 38px; padding: 0; display: grid; place-items: center;
+  border-radius: 50%; border: 1px solid rgba(201, 185, 156, .55); background: rgba(12, 15, 18, .85); color: var(--st-accent);
+  cursor: pointer; transition: background .15s ease, border-color .15s ease;
+}
+.stage-run[hidden] { display: none; }
+.stage-run:hover { background: rgba(40, 36, 28, .95); border-color: var(--st-accent); }
+.stage-run:focus-visible { outline: 2px solid var(--st-accent); outline-offset: 3px; }
+.stage-run svg { width: 18px; height: 18px; fill: currentColor; }
+.stage-run .i-pause, .stage-run[aria-pressed="true"] .i-play { display: none; }
+.stage-run[aria-pressed="true"] .i-pause { display: inline; }
 .stage-load-bar { width: 64px; height: 3px; border-radius: 2px; background: rgba(255, 255, 255, .14); overflow: hidden; }
 .stage-load-bar i { display: block; height: 100%; width: calc(var(--load, 0) * 100%); background: var(--st-accent); }
 .stage-load.indet .stage-load-bar i { width: 30%; animation: stage-load 1.2s ease-in-out infinite; }
@@ -632,16 +651,17 @@ a.shot:hover { text-decoration: none; border-color: var(--accent); }
 }
 .credit .who { margin: 8px 0 0; font-size: 25px; font-weight: 600; color: var(--heading); line-height: 1.2; }
 .credit .person + .person { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); }
-.credit .person .credit-link + .credit-link { margin-left: 12px; }
+.credit-links { display: flex; flex-wrap: wrap; gap: 0 14px; }
 .credit .what { margin: 10px 0 0; font-size: 15px; color: var(--muted); }
 .credit-link {
   display: inline-block; margin-top: 12px; font-size: 14.5px; font-weight: 500;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
-.stats { list-style: none; margin: 22px 0 0; padding: 18px 0 0; border-top: 1px solid var(--line-strong); }
-.stats li { display: flex; align-items: baseline; gap: 10px; margin: 8px 0; }
-.stats strong { color: var(--heading); font-size: 19px; font-weight: 600; flex: 0 0 auto; }
-.stats span { color: var(--muted); font-size: 14.5px; }
+.stats { width: 100%; margin: 22px 0 0; border-collapse: collapse; border-top: 1px solid var(--line-strong); }
+.stats tbody tr:first-child > * { padding-top: 18px; }
+.stats th, .stats td { padding: 4px 0; vertical-align: baseline; }
+.stats th { padding-right: 14px; text-align: right; white-space: nowrap; color: var(--heading); font-size: 19px; font-weight: 600; width: 1%; }
+.stats td { text-align: left; color: var(--muted); font-size: 14.5px; }
 
 /* ---- Home: document list -------------------------------------------------------------------------- */
 .doc-list { display: grid; gap: 0; border-top: 1px solid var(--line); }
@@ -951,7 +971,7 @@ a.shot:hover { text-decoration: none; border-color: var(--accent); }
   .doc-body a { color: #000; text-decoration: underline; }
   .doc-body a[href^="http"]::after { content: " (" attr(href) ")"; font-size: 9pt; color: #555; }
   /* the home page's stage on paper: no visual, nothing hidden by the reveal, dark text on white (review site76_r3 B3) */
-  .stage-visual, .stage-cue, .stage::after, .led-nav { display: none !important; }
+  .stage-visual, .stage-cue, .stage::after, .led-nav, .stage-tip, .stage-run { display: none !important; }
   .stage, .stage .chapter-card { background: #fff !important; color: #000; box-shadow: none; border-color: #ccc; }
   .stage .chapter, .stage .stage-hero { min-height: 0; padding: 12pt 0; }
   .js-reveal .chapter-card, .chapter-card { opacity: 1 !important; transform: none !important; transition: none !important; }

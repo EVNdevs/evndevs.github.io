@@ -492,6 +492,29 @@ function itemKey(name) {
   return null;
 }
 const HOVER_GLOW = new THREE.Color(0x4a3c24);
+/* what a hovered item is called and where its documentation is (owner, 2026-11-11: "a compact description box that
+   follows the cursor ... just name the item ... Clicking it should also bring the user to it's documentation in the API
+   page"): matched on the item's node names (the scenes' part names: product_renders/scenes.py), else the scene's own
+   (SCENE_NAMES: a scene that is one item). The routes are site.js's, #/<route>/<heading slug> */
+const ITEM_NAMES = [
+  [/_95658$/, 'EV3 Large Motor', 'api-robot/motor'],
+  [/_99455$/, 'EV3 Medium Motor', 'api-robot/motor'],
+  [/_53787$/, 'NXT Motor', 'api-robot/motor'],
+  [/_pololu_25d$/, 'Pololu 25D Gearmotor', 'api-robot/motor'],
+  [/_peri_colour_sensor$/, 'EVN Colour Sensor', 'api-sensors/colorsensor--colour-sensor-tcs34725'],
+  [/_peri_distance_sensor$/, 'EVN Distance Sensor', 'api-sensors/distancesensor--time-of-flight-distance-sensor-vl53l0x'],
+  [/_peri_gesture_sensor$/, 'EVN Gesture Sensor', 'api-sensors/gesturesensor--gesture-proximity-and-colour-sensor-apds-9960'],
+  [/_peri_oled_display$/, 'EVN OLED Display', 'api-displays/display--12864-oled-ssd1306--ssd1315']
+];
+const SCENE_NAMES = {
+  robot: ['Drive base', 'api-robot/drivebase--two-motors-as-a-robot'],
+  code: ['Blocks editor', 'blocks/'],
+  simulator: ['Robot simulator', 'simulator/']
+};
+function itemName(nodes, key) {
+  for (const [re, name, doc] of ITEM_NAMES) { if (nodes.some((n) => re.test(n.name))) { return { name, doc }; } }
+  return SCENE_NAMES[key] ? { name: SCENE_NAMES[key][0], doc: SCENE_NAMES[key][1] } : null;
+}
 /* the colour sensor's lamp (its "PERI lit led" material) three times as bright as the pipeline's (owner, 2026-11-11:
    "color sensor led is too dim") */
 const LAMP_GAIN = 3;
@@ -539,7 +562,7 @@ function sceneItems(group, key, model, boardRoot) {
       const plug = nodes.find((n) => /_plug_motor_m\d+$/.test(n.name));
       if (plug) { dir = faceAxis(model, centreIn(group, plug)); }
     }
-    return { key: k, nodes, dir, hover: true };
+    return Object.assign({ key: k, nodes, dir, hover: true }, itemName(nodes, key));
   });
   if (rest.length) { items.push({ key: 'rest', nodes: rest, dir: cfg.mode === 'behind' ? front.clone().negate() : up, hover: false }); }
   for (const it of items) {
@@ -618,6 +641,491 @@ function motorSpin(it) {
   const p = pivotOf(motor.parent, [motor]);
   it.nodes[it.nodes.indexOf(motor)] = p;
   it.spin = { pivot: p, axis: new THREE.Vector3(0, 1, 0), kind: 'twitch' };
+}
+
+/* ---- the motors scene's chalkboard (owner, 2026-11-11: "a chalkboard in the background, very dimly lit, with a floating
+   chalk writing out the adrc and LESO equations. Writing does not need to meet contrast guidelines, just a little wink to
+   those who look closer. Ends when everything is written, resets when the scene is entirely off the screen") ----------
+   The firmware's own ADRC (motion/user_ctrl.c, ADRC(b0, wc, order=2)): the plant ÿ = f + b0·u; the third-order LESO's
+   estimates z1 (position), z2 (rate), z3 (the total disturbance), its gains from wo (the textbook continuous form: every
+   observer pole at -wo; the firmware places the same poles in discrete time); the control law u = (kp(r - z1) - kd·z2 -
+   z3) / b0 with kp = wc², kd = 2wc. A dark slate board behind the scene, faced to the motors pose's camera, out of the
+   camera's framing and the words' check; the equations revealed line by line on the clock with a chalk stick floating at
+   the writing, CHALK.seconds in all (under WCAG 2.2.2's 5 s for motion that starts on its own), while the scene is in;
+   written, it stays; with the scene wholly out of view it is wiped for next time. Decorative, like the whole layer. */
+const CHALK = {
+  scene: 'motors',
+  seconds: 4.6,
+  lines: [
+    ['ADRC', 0.62],
+    ['ÿ = f + b_0 u', 1],
+    ['LESO', 0.62],
+    ['ż_1 = z_2 + β_1 (y − z_1)', 1],
+    ['ż_2 = z_3 + b_0 u + β_2 (y − z_1)', 1],
+    ['ż_3 = β_3 (y − z_1)', 1],
+    ['β_1 = 3ω_o ,  β_2 = 3ω_o^2 ,  β_3 = ω_o^3', 1],
+    ['u = ( ω_c^2 (r − z_1) − 2ω_c z_2 − z_3 ) / b_0', 1],
+    /* a second column, above the right-hand motor (owner, 2026-11-11: "Any other relevant formula for motors?" - "Ok do
+       1"): the motor model calibrate() measures (docs/API_ROBOT.md: b0, tau, v_break, v_f), the b0 of the plant above */
+    ['MOTOR', 0.62, 2],
+    ['ω~ = b_0 (u − V_f sgn ω) − ω/τ', 0.74, 2],
+    ['ω = 0  while  |u| < V_{break}', 0.74, 2],
+    ['ω_{max} = b_0 τ (V − V_f)', 0.74, 2]
+  ]
+};
+/* a line of the markup (x_1 or x_{max} a subscript, x^2 a superscript, x~ a dot over x: a time derivative, drawn here, as a
+   combining dot lands wherever a fallback font puts it) drawn from (x, y), or only measured (draw false) */
+function chalkLine(ctx, text, x, y, size, draw) {
+  let cx = x;
+  for (let i = 0; i < text.length; i++) {
+    let ch = text[i], dy = 0, k = 1;
+    if ((ch === '_' || ch === '^') && i + 1 < text.length) {
+      dy = ch === '_' ? size * 0.28 : -size * 0.42; k = 0.62;
+      if (text[i + 1] === '{') { const e = text.indexOf('}', i + 2); ch = text.slice(i + 2, e); i = e; } else { ch = text[++i]; }
+    }
+    ctx.font = `italic 400 ${Math.round(size * k)}px Jost, "Segoe UI", "Helvetica Neue", sans-serif`;
+    const w = ctx.measureText(ch).width;
+    if (draw) { ctx.fillText(ch, cx, y + dy); }
+    if (text[i + 1] === '~') {
+      i++;
+      if (draw) { ctx.beginPath(); ctx.arc(cx + w * 0.58, y - size * 0.72, size * 0.065, 0, 2 * Math.PI); ctx.fill(); }
+    }
+    cx += w + (k < 1 ? size * 0.04 : 0);
+  }
+  return cx - x;
+}
+function buildChalkboard(pose, box) {
+  const W = 1024, H = 576, sz = 40;
+  const mk = () => { const c = document.createElement('canvas'); c.width = W; c.height = H; return c; };
+  const bg = mk(), ink = mk(), out = mk();
+  /* the board: slate, a little uneven, its edges fading into the stage's dark (a board in a dim room, not a panel) */
+  const b = bg.getContext('2d');
+  b.fillStyle = '#1a221e';
+  b.fillRect(0, 0, W, H);
+  for (let i = 0; i < 18; i++) {
+    const x = (i * 211) % W, y = (i * 137) % H, r = 120 + (i * 53) % 160;
+    const g = b.createRadialGradient(x, y, 0, x, y, r);
+    g.addColorStop(0, 'rgba(120, 140, 130, 0.035)');
+    g.addColorStop(1, 'rgba(120, 140, 130, 0)');
+    b.fillStyle = g;
+    b.fillRect(0, 0, W, H);
+  }
+  b.save();
+  b.globalCompositeOperation = 'destination-in';
+  b.translate(W / 2, H / 2);
+  b.scale(1, H / W);
+  const fade = b.createRadialGradient(0, 0, W * 0.2, 0, 0, W * 0.5);
+  fade.addColorStop(0, 'rgba(0,0,0,1)');
+  fade.addColorStop(1, 'rgba(0,0,0,0)');
+  b.fillStyle = fade;
+  b.fillRect(-W, -W, 2 * W, 2 * W);
+  b.restore();
+  /* the writing, whole, in a chalky hand: soft edges, then grain taken out of it */
+  const c = ink.getContext('2d');
+  c.fillStyle = 'rgba(226, 232, 226, 0.62)';
+  c.shadowColor = 'rgba(226, 232, 226, 0.35)';
+  c.shadowBlur = 2;
+  c.textBaseline = 'alphabetic';
+  const lines = [];
+  const ys = { 1: 70, 2: 70 }, xs = { 1: [118, 146], 2: [596, 614] };     // two columns: the ADRC's, the motor's
+  for (const [text, k, col0] of CHALK.lines) {
+    const col = col0 || 1, head = k < 0.7;
+    const s = sz * k, x0 = xs[col][head ? 0 : 1];
+    ys[col] += head ? s * 1.15 + (ys[col] > 70 ? sz * 0.75 : 0) : s * 1.42 * (k < 1 ? 1.25 : 1);   // a heading: room above it
+    const y = ys[col];
+    const w = chalkLine(c, text, x0, y, s, true);
+    lines.push({ x0, w, top: y - s * 1.05, h: s * 1.55, mid: y - s * 0.32 });
+  }
+  c.shadowBlur = 0;
+  c.globalCompositeOperation = 'destination-out';
+  let seed = 7;
+  const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+  for (let i = 0; i < 26000; i++) { c.fillStyle = `rgba(0,0,0,${0.25 + rnd() * 0.6})`; c.fillRect(rnd() * W, rnd() * H, 1 + rnd() * 1.6, 1 + rnd() * 1.2); }
+  c.globalCompositeOperation = 'source-over';
+  const total = lines.reduce((a, l) => a + l.w, 0) + 60 * (lines.length - 1);   // a line's width, and a gap to the next
+  const o = out.getContext('2d');
+  const tex = new THREE.CanvasTexture(out);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.generateMipmaps = false;                              // redrawn every frame while writing: no mipmaps to rebuild
+  tex.minFilter = THREE.LinearFilter;
+  /* placed behind the scene, faced to the motors pose's camera (the board turns by Euler XYZ (rx, ry); the camera looks
+     along -Z from a little above): in the board group's frame */
+  const qi = new THREE.Quaternion().setFromEuler(new THREE.Euler(pose.rx, pose.ry, 0, 'XYZ')).invert();
+  const toCam = new THREE.Vector3(0, 0.06, 1).normalize().applyQuaternion(qi);
+  const up = new THREE.Vector3(0, 1, 0).applyQuaternion(qi);
+  const sph = box.getBoundingSphere(new THREE.Sphere());
+  const pw = sph.radius * 2.1, ph = pw * H / W;
+  const mat = new THREE.MeshBasicMaterial({ map: tex, color: 0xa9aeab, transparent: true, opacity: 0, depthWrite: false });
+  const plane = new THREE.Mesh(new THREE.PlaneGeometry(pw, ph), mat);
+  const g = new THREE.Group();
+  /* behind the scene and raised by half its radius: the open space in the motors pose's view is above the motors, so the
+     writing (and the chalk at it) shows there rather than behind them */
+  g.position.copy(sph.center).addScaledVector(toCam, -sph.radius * 1.15).addScaledVector(up, sph.radius * 0.38);
+  g.quaternion.setFromRotationMatrix(new THREE.Matrix4().lookAt(toCam, new THREE.Vector3(0, 0, 0), up));
+  g.add(plane);
+  const chalkMat = new THREE.MeshStandardMaterial({ color: 0xd9ddd8, roughness: 0.95, transparent: true, opacity: 0 });
+  const stick = new THREE.Mesh(new THREE.CylinderGeometry(pw * 0.009, pw * 0.009, pw * 0.075, 12), chalkMat);
+  stick.rotation.z = -0.9;
+  g.add(stick);
+  g.visible = false;
+  let t = -1, drawn = -1;
+  function paint(p) {                                       // p: how far along the writing, in canvas px
+    o.clearRect(0, 0, W, H);
+    o.drawImage(bg, 0, 0);
+    let left = p, at = null;
+    for (let i = 0; i < lines.length; i++) {
+      const l = lines[i];
+      const w = Math.max(0, Math.min(l.w, left));
+      if (w > 0) { o.drawImage(ink, l.x0, l.top, w, l.h, l.x0, l.top, w, l.h); }
+      if (left <= l.w) { at = { x: l.x0 + Math.max(0, left), y: l.mid }; break; }
+      left -= l.w;
+      if (left < 60 && i + 1 < lines.length) {            // between two lines: on the way to the next one's start
+        const n = lines[i + 1], f = left / 60;
+        at = { x: lerp(l.x0 + l.w, n.x0, f), y: lerp(l.mid, n.mid, f) };
+        break;
+      }
+      left -= 60;
+    }
+    tex.needsUpdate = true;
+    return at;
+  }
+  paint(0);
+  const ch = {
+    group: g, total, lines,
+    state: 'wiped',
+    /* the scene's share in view (ins): the board fades with it; the writing runs while it is mostly in */
+    step(dt, ins, now) {
+      g.visible = ins > 0.001;
+      mat.opacity = Math.min(1, ins) * 0.95;
+      if (ins <= 0.001) {                                   // wholly out of view: wiped for next time
+        if (t !== -1) { t = -1; drawn = -1; paint(0); ch.state = 'wiped'; chalkMat.opacity = 0; }
+        return false;
+      }
+      if (t < 0) { t = 0; }                                 // from the scene's first coming in (most of it lands in the hold)
+      const before = t;
+      t = Math.min(CHALK.seconds + 0.5, t + dt / 1000);
+      const p = Math.min(1, t / CHALK.seconds) * total;
+      if (p !== drawn) {
+        drawn = p;
+        const at = paint(p);
+        if (at) { stick.position.set((at.x / W - 0.5) * pw + pw * 0.02, (0.5 - at.y / H) * ph + pw * 0.026 + Math.sin(now / 90) * pw * 0.003, pw * 0.03); }
+      }
+      chalkMat.opacity = Math.min(1, ins) * (t < CHALK.seconds ? 1 : Math.max(0, 1 - (t - CHALK.seconds) / 0.5));
+      ch.state = t < CHALK.seconds ? 'writing' : 'written';
+      return t !== before && t < CHALK.seconds + 0.5;
+    }
+  };
+  return ch;
+}
+
+/* ---- the robot chapter's line follower (owner, 2026-11-11: "For the wro robot ... making it look like it's following a
+   line. The robots body will stay mostly stationary, twitching left and right while the light line moves under it. How
+   much it twitches will depend on the sharpness of the bend in the line under it"; then: "It will not auto start. Above
+   the robot in the background like the blackboard, we will have an EVNblocks snippet of a pid line follower. The user
+   will click the play button to start it and it turns into a pause button to stop it. The robot does not actually have to
+   follow the code, just something possible will do. No color sensors so we'll need to draw some sort of lighting around
+   the line as if the color sensor LEDs are pointing at it ... Preferably the wheels spin. Procedurally generate the line
+   so that it runs forever, turning often and varied enough to keep it interesting. The evn is the back of the robot, the
+   color sensors lights should appear as if the color sensors are in front of the medium motors") -------------------------
+   The line (followLine): an endless chain of pieces from a seeded generator - straights, arcs of 70-300 mm radius through
+   30-150 degrees, zigzags of two to four short arcs, a sharp quarter turn of 42-60 mm radius - each turn mostly the other
+   way from the last, the curvature ramped over 14 mm between pieces, no straight run longer than 150 mm (owner: "Bound
+   maximum straight line length to keep it interesting"), sampled every 2 mm (mm, the floor's own frame).
+   The robot (FOLLOW, followStep): a two-wheel robot driven as data/line_follower/line_follower.evnblocks drives it - 150 mm/s,
+   its turn from a PID on the two sensors' reading of the line (the line's offset from between them, saturating at their
+   spacing, read every 10 ms in 5 % steps), the motors' lag 50 ms - simulated on the line; scripts/test_site.js
+   runs this code for 600 s on three seeds: it never loses the line, twitches more the sharper the bend, and sits centred
+   on an even bend. Shown, the robot does not travel: the view follows it (its axle's middle) and its heading smoothed
+   over 60 ms plus that smoothing's own slow lag (0.35 s), so the turns are the line swinging round under it, a steady
+   bend leaves the body straight (owner: "robot does not look centered in steady state": the 60 ms smoothing alone left
+   it turned on an even bend, about 2.6 degrees, and the line 2.8 mm to one side without the integral), and the body
+   twitches by what is left - its corrections, the larger the sharper the bend. The wheels roll by the
+   distance each one covers. Two pools of warm light on the floor, one each side of the line in front of the medium
+   motors where the sensors would be, lit while it runs. The blocks board: the snippet (data/line_follower/render_blocks.js)
+   with no panel of its own, behind the robot as the chalkboard is behind the motors; its run button is a real button (site.css
+   .stage-run) placed over the panel's corner. Decorative like the layer, but the button is a control: "Run the line
+   follower" / "Pause the line follower", aria-pressed. It never starts on its own, and pauses when the scene leaves. */
+const FOLLOW = {
+  scene: 'robot',
+  board: 'assets/images/blocks-line-follower.webp',
+  v: 150, spacing: 30, kp: 4.5, ki: 6, kd: 0.08, lag: 0.05, wmax: 6, loop: 0.01, q: 20, smooth: 0.06, settle: 0.35, h: 0.004,
+  maxStraight: 150, lineW: 20, matR: 210, seed: 20261111
+};
+function followLine(seed) {
+  let s0 = (seed >>> 0) % 2147483647 || 1;
+  const rnd = () => { s0 = (s0 * 16807) % 2147483647; return s0 / 2147483647; };
+  const segs = [];
+  let lastSign = 1, tail = 0;                                  // tail: the straight the line ends in so far (mm)
+  /* a straight piece, never making a straight run longer than FOLLOW.maxStraight (owner, 2026-11-11: "Bound maximum
+     straight line length to keep it interesting") */
+  const straight = (len) => { const l = Math.min(len, FOLLOW.maxStraight - tail); if (l > 1) { segs.push({ len: l, k: 0 }); tail += l; } };
+  const bend = (len, k) => { segs.push({ len, k }); tail = 0; };
+  function more() {
+    const t = rnd();
+    if (t < 0.22) { straight(40 + rnd() * 80); return; }
+    const sign = rnd() < 0.7 ? -lastSign : lastSign;
+    lastSign = sign;
+    if (t < 0.62) {                                             // an arc
+      const R = 70 + rnd() * 230, ang = (30 + rnd() * 120) * Math.PI / 180;
+      bend(R * ang, sign / R);
+    } else if (t < 0.85) {                                      // a zigzag
+      const n = 2 + Math.floor(rnd() * 3), R = 55 + rnd() * 60, ang = (40 + rnd() * 35) * Math.PI / 180;
+      for (let i = 0; i < n; i++) { bend(R * ang, (i % 2 ? -sign : sign) / R); }
+      lastSign = n % 2 ? sign : -sign;
+    } else {                                                    // a sharp corner
+      const R = 42 + rnd() * 18;
+      bend(R * Math.PI / 2, sign / R);
+    }
+    straight(20 + rnd() * 50);
+  }
+  const DS = 2, RAMP = 14;
+  const L = { pts: [], DS };
+  let x = 0, y = 0, th = 0, segI = 0, segS = 0, kPrev = 0;
+  while (segs.length < 4) { more(); }                          // a capped straight can add nothing: more until there is line
+  L.step = function () {
+    while (segS >= segs[segI].len) {
+      segS -= segs[segI].len; kPrev = segs[segI].k; segI++;
+      while (segI >= segs.length - 2) { more(); }
+      if (segI > 64) { segs.splice(0, 32); segI -= 32; }          // the pieces long passed
+    }
+    const sg = segs[segI];
+    const k = segS < RAMP ? kPrev + (sg.k - kPrev) * (segS / RAMP) : sg.k;
+    th += k * DS; x += Math.cos(th) * DS; y += Math.sin(th) * DS; segS += DS;
+    L.pts.push({ x, y, th, k });
+  };
+  return L;
+}
+/* the robot on the line: its axle's middle (x, y), heading th; the sensors ds mm in front of the axle. Returns the state;
+   `step` advances it by sec seconds and gives each wheel's rolled distance (mm) */
+function followSim(seed, ds, track) {
+  const F = FOLLOW, L = followLine(seed);
+  for (let i = 0; i < 300; i++) { L.step(); }
+  const p0 = L.pts[100];
+  const st = { L, x: p0.x - Math.cos(p0.th) * ds, y: p0.y - Math.sin(p0.th) * ds, th: p0.th, thS: p0.th, lean: 0, thD: p0.th,
+               hint: 100, rPrev: 0, iSum: 0, w: 0, cmd: 0, tc: 0, e: 0, rollL: 0, rollR: 0 };
+  st.step = function (sec) {
+    let left = sec;
+    while (left > 1e-9) {
+      const h = Math.min(F.h, left);
+      left -= h;
+      while (L.pts.length < st.hint + 700) { L.step(); }
+      if (st.hint > 1200) { L.pts.splice(0, 600); st.hint -= 600; }   // the line long passed
+      const sx = st.x + Math.cos(st.th) * ds, sy = st.y + Math.sin(st.th) * ds;
+      let best = st.hint, bd = Infinity;
+      for (let i = Math.max(0, st.hint - 40); i < st.hint + 80; i++) {
+        const q = L.pts[i], d = (q.x - sx) * (q.x - sx) + (q.y - sy) * (q.y - sy);
+        if (d < bd) { bd = d; best = i; }
+      }
+      st.hint = best;
+      const q = L.pts[best];
+      st.e = -(sx - q.x) * Math.sin(q.th) + (sy - q.y) * Math.cos(q.th);       // the sensors left of the line: +
+      st.tc += h;
+      if (st.tc >= F.loop) {                                     // the program's loop: a reading, the turn held till the next
+        st.tc -= F.loop;
+        const r = Math.round(Math.max(-1, Math.min(1, st.e / (F.spacing / 2))) * F.q) / F.q;
+        /* the integral keeps the line between the sensors on an even bend (a P and D alone ride it off to one side) */
+        st.iSum = Math.max(-0.6, Math.min(0.6, st.iSum + r * F.loop));
+        st.cmd = -(F.kp * r + F.ki * st.iSum + F.kd * (r - st.rPrev) / F.loop);
+        st.rPrev = r;
+      }
+      st.w += (st.cmd - st.w) * Math.min(1, h / F.lag);
+      st.w = Math.max(-F.wmax, Math.min(F.wmax, st.w));
+      st.th += st.w * h;
+      st.x += Math.cos(st.th) * F.v * h; st.y += Math.sin(st.th) * F.v * h;
+      st.thS += (st.th - st.thS) * Math.min(1, h / F.smooth);
+      /* what the view shows of the heading: the quick part (the corrections), less its own slow mean, so a steady bend
+         settles the body straight (owner, 2026-11-11: "robot does not look centered in steady state") */
+      st.lean += ((st.th - st.thS) - st.lean) * Math.min(1, h / F.settle);
+      st.thD = st.thS + st.lean;
+      st.rollL += (F.v - st.w * track / 2) * h; st.rollR += (F.v + st.w * track / 2) * h;
+    }
+  };
+  return st;
+}
+const FLOOR_VS = `varying vec2 vF; void main() { vF = vec2(position.x, -position.z); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`;
+/* the robot's floor and line (still), its sensors' light (moving with it), its wheels, its blocks board; in the board group's
+   frame. model: the board's model (the robot twitches with it); group: the robot scene; mmU: model units per mm */
+function buildFollower(model, group, pose, ownBox, mmU) {
+  const F = FOLLOW, up = new THREE.Vector3(0, 1, 0);
+  model.updateMatrixWorld(true);
+  const inv = new THREE.Matrix4().copy(model.matrixWorld).invert();
+  const wheels = [0, 1].map((i) => group.getObjectByName('lego_drive_base_0_wheel_' + i)).filter(Boolean);
+  if (wheels.length !== 2) { return null; }
+  const ws = wheels.map((w) => {
+    const c = w.getWorldPosition(new THREE.Vector3()).applyMatrix4(inv);
+    const box = new THREE.Box3().setFromObject(w).applyMatrix4(inv);
+    const z = new THREE.Vector3(0, 0, 1).transformDirection(w.matrixWorld).transformDirection(inv);
+    return { w, c, r: (box.max.y - box.min.y) / 2, z, q0: w.quaternion.clone() };
+  });
+  const M = ws[0].c.clone().add(ws[1].c).multiplyScalar(0.5);
+  const axle = ws[1].c.clone().sub(ws[0].c).setY(0);
+  const track = axle.length() / mmU;
+  axle.normalize();
+  const f = new THREE.Vector3().crossVectors(up, axle).normalize();
+  if (f.dot(M.clone().setY(0)) < 0) { f.negate(); }               // forward: away from the board (the EVN is the robot's back)
+  const left = f.clone().applyAxisAngle(up, Math.PI / 2);
+  const floorY = Math.min(ws[0].c.y - ws[0].r, ws[1].c.y - ws[1].r);
+  const rw = (ws[0].r + ws[1].r) / 2 / mmU;
+  /* the sensors: in front of the medium motors (they lie along the axle between the wheels), a wheel radius ahead of it */
+  const ds = rw;
+  for (const w of ws) {
+    w.side = Math.sign(w.c.clone().sub(M).dot(left));               // +1: the robot's left wheel
+    w.roll = Math.sign(new THREE.Vector3().crossVectors(up, f).dot(w.z)) || 1;   // its turn about its own z that rolls it forward
+  }
+  /* the robot's footprint on the floor (its shadow on the mat), in floor mm */
+  const fp = { u0: Infinity, u1: -Infinity, w0: Infinity, w1: -Infinity };
+  for (const x of [ownBox.min.x, ownBox.max.x]) for (const z of [ownBox.min.z, ownBox.max.z]) {
+    const d = new THREE.Vector3(x, 0, z).sub(M).setY(0);
+    const u = d.dot(f) / mmU, w = d.dot(left) / mmU;
+    fp.u0 = Math.min(fp.u0, u); fp.u1 = Math.max(fp.u1, u); fp.w0 = Math.min(fp.w0, w); fp.w1 = Math.max(fp.w1, w);
+  }
+  /* the floor's frame: origin under the axle's middle, x forward, z = -left, in mm */
+  const floorM = new THREE.Matrix4().makeBasis(f, up, f.clone().cross(up)).scale(new THREE.Vector3(mmU, mmU, mmU))
+    .setPosition(new THREE.Vector3(M.x, floorY, M.z));
+  const mkFloor = () => { const o = new THREE.Object3D(); o.matrixAutoUpdate = false; o.matrix.copy(floorM); o.visible = false; return o; };
+  const still = mkFloor(), moving = mkFloor();
+  const R = F.matR;
+  /* the mat: dark, a faint 50 mm grid fixed to the floor (so a straight still shows the floor going by), the robot's soft
+     shadow, faded out towards its rim */
+  const matU = { uOff: { value: new THREE.Vector2() }, uAng: { value: 0 }, uA: { value: 0 }, uR: { value: R },
+                 uFp: { value: new THREE.Vector4((fp.u0 + fp.u1) / 2, (fp.w0 + fp.w1) / 2, (fp.u1 - fp.u0) / 2, (fp.w1 - fp.w0) / 2) } };
+  const mat = new THREE.Mesh(new THREE.PlaneGeometry(2 * R, 2 * R).rotateX(-Math.PI / 2).translate(0, 0.3, 0), new THREE.ShaderMaterial({
+    uniforms: matU, transparent: true, depthWrite: false,
+    vertexShader: FLOOR_VS,
+    fragmentShader: `uniform vec2 uOff; uniform float uAng, uA, uR; uniform vec4 uFp; varying vec2 vF;
+      void main() {
+        float c = cos(uAng), s = sin(uAng);
+        vec2 wp = uOff + vec2(c * vF.x - s * vF.y, s * vF.x + c * vF.y);
+        vec2 g = abs(fract(wp / 50.0 + 0.5) - 0.5) * 50.0;
+        float grid = 1.0 - smoothstep(0.4, 1.4, min(g.x, g.y));
+        vec2 q = (vF - uFp.xy) / (uFp.zw * 1.15);
+        float shade = 1.0 - 0.55 * (1.0 - smoothstep(0.55, 1.25, length(q)));
+        vec3 col = (vec3(0.0075, 0.0085, 0.0095) + grid * 0.006) * shade;
+        float a = uA * (1.0 - smoothstep(uR * 0.3, uR, length(vF)));
+        gl_FragColor = vec4(col, a);
+        #include <colorspace_fragment>
+      }`
+  }));
+  mat.renderOrder = 1;
+  still.add(mat);
+  /* the line: a ribbon along the path near the robot, rebuilt each frame it moves */
+  const NMAX = 900;
+  const lpos = new Float32Array(NMAX * 2 * 3), lidx = [];
+  for (let i = 0; i < NMAX - 1; i++) { const a = 2 * i; lidx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); }
+  const lgeo = new THREE.BufferGeometry();
+  lgeo.setAttribute('position', new THREE.BufferAttribute(lpos, 3).setUsage(THREE.DynamicDrawUsage));
+  lgeo.setIndex(lidx);
+  const lineU = { uA: { value: 0 }, uR: { value: R } };
+  const line = new THREE.Mesh(lgeo, new THREE.ShaderMaterial({
+    uniforms: lineU, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1,
+    vertexShader: FLOOR_VS,
+    fragmentShader: `uniform float uA, uR; varying vec2 vF;
+      void main() { gl_FragColor = vec4(vec3(0.42, 0.40, 0.36), uA * (1.0 - smoothstep(uR * 0.3, uR * 0.95, length(vF))));
+        #include <colorspace_fragment>
+      }`
+  }));
+  line.frustumCulled = false;
+  line.renderOrder = 2;
+  still.add(line);
+  /* the sensors' light: two warm pools, one each side of the line, a wheel radius in front of the axle */
+  const poolU = { uA: { value: 0 } };
+  const poolMat = new THREE.ShaderMaterial({
+    uniforms: poolU, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2,
+    vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+    fragmentShader: `uniform float uA; varying vec2 vUv;
+      void main() { float d = length(vUv - 0.5) * 2.0; float k = exp(-d * d * 4.0) * (1.0 - smoothstep(0.8, 1.0, d));
+        gl_FragColor = vec4(vec3(1.0, 0.86, 0.66) * k * uA * 0.5, 1.0); }`
+  });
+  for (const sd of [-1, 1]) {
+    const p = new THREE.Mesh(new THREE.PlaneGeometry(76, 76).rotateX(-Math.PI / 2), poolMat);   // the light spills past the front beam
+    p.position.set(ds, 0.9, -sd * F.spacing / 2);
+    p.renderOrder = 3;
+    moving.add(p);
+  }
+  /* the blocks board: the snippet, on no panel, behind the robot, faced to the robot pose's camera (as the chalkboard) */
+  const W = 1024, Hc = 760, cv = document.createElement('canvas');
+  cv.width = W; cv.height = Hc;
+  const cx = cv.getContext('2d');
+  const btex = new THREE.CanvasTexture(cv);
+  btex.colorSpace = THREE.SRGBColorSpace;
+  const RUN_AT = { x: 52, y: 44 };                                 // the run button's centre on the panel (canvas px)
+  function paintBoard(img) {
+    /* no panel (owner, 2026-11-11: "Remove the black background on the evnblocks, make it transparent"): the blocks and
+       their file's name float on the stage's dark */
+    cx.clearRect(0, 0, W, Hc);
+    cx.fillStyle = 'rgba(214, 218, 222, 0.75)';
+    cx.font = '500 26px Jost, "Segoe UI", sans-serif';
+    cx.textBaseline = 'middle';
+    cx.fillText('line_follower.evnblocks', 124, RUN_AT.y);
+    if (img) {
+      const iw = W - 80, ih = iw * img.height / img.width;
+      cx.drawImage(img, 40, 104, iw, Math.min(ih, Hc - 130));
+    }
+    btex.needsUpdate = true;
+  }
+  paintBoard(null);
+  const im = new Image();
+  im.onload = () => paintBoard(im);
+  im.src = new URL(F.board, document.baseURI).href;
+  const qi = new THREE.Quaternion().setFromEuler(new THREE.Euler(pose.rx, pose.ry, 0, 'XYZ')).invert();
+  const toCam = new THREE.Vector3(0, 0.06, 1).normalize().applyQuaternion(qi);
+  const camUp = new THREE.Vector3(0, 1, 0).applyQuaternion(qi);
+  const sph = ownBox.getBoundingSphere(new THREE.Sphere());
+  const pw = sph.radius * 1.5, ph = pw * Hc / W;
+  const bmat = new THREE.MeshBasicMaterial({ map: btex, color: 0x9a9d9f, transparent: true, opacity: 0, depthWrite: false });
+  const board = new THREE.Group();
+  board.position.copy(sph.center).addScaledVector(toCam, -sph.radius * 1.2).addScaledVector(camUp, sph.radius * 0.78);
+  board.quaternion.setFromRotationMatrix(new THREE.Matrix4().lookAt(toCam, new THREE.Vector3(0, 0, 0), camUp));
+  board.add(new THREE.Mesh(new THREE.PlaneGeometry(pw, ph), bmat));
+  board.visible = false;
+  const runAt = new THREE.Vector3((RUN_AT.x / W - 0.5) * pw, (0.5 - RUN_AT.y / Hc) * ph, 0);
+  /* the run */
+  const sim = followSim(F.seed, ds, track);
+  const fo = {
+    still, moving, board, runAt, playing: false, light: 0, psi: 0, pivot: M, up, ds, track, rw,
+    /* a frame: the scene's share in view; true while something moves */
+    step(dt, ins) {
+      const on = ins > 0.001;
+      still.visible = moving.visible = board.visible = on;
+      if (ins < 0.6 && fo.playing) { fo.playing = false; }          // the scene leaving: paused
+      let anim = false;
+      if (fo.playing) { sim.step(Math.min(0.1, dt / 1000)); anim = true; }
+      const lt = fo.playing ? 1 : 0;
+      if (fo.light !== lt) { fo.light = lt > fo.light ? Math.min(1, fo.light + dt / 250) : Math.max(0, fo.light - dt / 400); anim = true; }
+      const a = Math.min(1, ins);
+      matU.uA.value = a; lineU.uA.value = a; poolU.uA.value = fo.light * a;
+      bmat.opacity = a * 0.72;
+      fo.psi = sim.th - sim.thD;
+      for (const w of ws) {
+        const roll = (w.side > 0 ? sim.rollL : sim.rollR) / rw;
+        w.w.quaternion.copy(w.q0).multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), w.roll * roll));
+      }
+      if (on) { draw(); }
+      return anim;
+    }
+  };
+  let drawnAt = null;
+  function draw() {
+    const key = sim.x + ',' + sim.y + ',' + sim.thD;
+    if (key === drawnAt) { return; }
+    drawnAt = key;
+    const c = Math.cos(sim.thD), s = Math.sin(sim.thD), P = sim.L.pts, hw = F.lineW / 2;
+    const span = Math.ceil(1.6 * R / sim.L.DS);
+    const i0 = Math.max(0, sim.hint - span), i1 = Math.min(P.length - 1, i0 + NMAX - 1);
+    let n = 0;
+    for (let i = i0; i <= i1; i++, n++) {
+      const p = P[i];
+      const dx = p.x - sim.x, dy = p.y - sim.y;
+      const u = dx * c + dy * s, w = -dx * s + dy * c;
+      const nu = -Math.sin(p.th - sim.thD), nw = Math.cos(p.th - sim.thD);   // the line's left, in the floor's frame
+      lpos.set([u + nu * hw, 0.6, -(w + nw * hw), u - nu * hw, 0.6, -(w - nw * hw)], n * 6);
+    }
+    lgeo.setDrawRange(0, Math.max(0, n - 1) * 6);
+    lgeo.attributes.position.needsUpdate = true;
+    matU.uOff.value.set(((sim.x % 500) + 500) % 500, ((sim.y % 500) + 500) % 500);
+    matU.uAng.value = sim.thD;
+  }
+  return fo;
 }
 
 function shown(o) { for (let p = o; p; p = p.parent) { if (!p.visible) { return false; } } return true; }
@@ -791,6 +1299,9 @@ export async function start(stage, opts) {
   });
   for (const p of asm.parts) { for (const m of p.mats) { if (byMat.has(m)) { byMat.get(m).part = p; } } }
   const scenes = {};                               // key -> { group, box, pts, own, items }
+  let chalk = null;
+  let follower = null;                             // the robot scene's line follower (buildFollower), once that scene is in
+  const twQ = new THREE.Vector3();                                // the motors scene's chalkboard (buildChalkboard), once that scene is in
 
   const stackedMq = window.matchMedia(STACKED);
   const motionMq = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -989,6 +1500,14 @@ export async function start(stage, opts) {
     fitWide(new THREE.Vector3((cur.b0x + cur.b1x) / 2, (cur.b0y + cur.b1y) / 2, (cur.b0z + cur.b1z) / 2).applyMatrix4(boardRoot.matrixWorld));
     /* a drag's turn, after the camera's fit: the board turns in place, the framing holds */
     if (userYaw || userPitch) { boardRoot.rotation.x += userPitch; boardRoot.rotation.y += userYaw; boardRoot.updateMatrixWorld(true); }
+    /* the line follower's twitch: the board with every scene turned about the robot's axle (a two-wheel robot turns there),
+       the floor and the line staying put; nothing while the robot scene is out */
+    if (follower) {
+      const fsc = scenes[FOLLOW.scene], a = follower.psi * (fsc ? Math.min(1, fsc.ins) : 0);
+      model.quaternion.setFromAxisAngle(follower.up, a);
+      model.position.copy(follower.pivot).sub(twQ.copy(follower.pivot).applyQuaternion(model.quaternion));
+      model.updateMatrixWorld(true);
+    }
     setAssembly(asm, asmDone ? Infinity : asmT, shadow);
     setBoardFade(cur.bf > 0.999 ? 1 : cur.bf < 0.001 ? 0 : cur.bf);
     /* a replay waiting to start fades the whole board out with the items (review site76_r7 S2: it vanished in a frame and
@@ -1005,6 +1524,7 @@ export async function start(stage, opts) {
       const s = pose.scene && scenes[pose.scene];
       if (!s) { return; }
       const ins = clamp01(1 - 2 * Math.abs(cur.p - idx)) * gate;
+      s.ins = ins;
       s.group.visible = ins > 0;
       const usbScene = !!(SCENE_MOTION[pose.scene] && SCENE_MOTION[pose.scene].usb);
       const n = s.items.filter((it) => it.key !== 'rest').length;
@@ -1060,7 +1580,7 @@ export async function start(stage, opts) {
   /* any scroll, key or pointer press finishes the entrance at once */
   const onSkip = () => { if (!asmDone) { skip = true; loop(); } };
   /* a scroll ends a hover: the item would stay lit and lifted while the scroll takes it out (review site76_r6 N1) */
-  const onScroll = () => { onSkip(); if (hovered) { hovered.hovT = 0; hovered = null; } if (visible) { loop(); } };
+  const onScroll = () => { onSkip(); if (hovered) { hovered.hovT = 0; hovered = null; showTip(); } if (visible) { loop(); } };
   const onVis = () => { if (!document.hidden) { loop(); } };
   const onMotion = () => { if (motionMq.matches) { stop('reduced-motion'); } };
   const onLost = (e) => { e.preventDefault(); stop('lost'); };
@@ -1069,6 +1589,64 @@ export async function start(stage, opts) {
   const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(), wb = new THREE.Box3();
   let pointer = null, hoverQueued = false, hovered = null;
   const canHover = window.matchMedia('(any-hover: hover)').matches;
+  /* the hovered item's name beside the cursor (ITEM_NAMES); decorative like the layer (aria-hidden): each chapter's own
+     words and links name the same parts and documents. On the stage, over the chapters' words (site.css .stage-tip) */
+  const tipEl = document.createElement('div');
+  tipEl.className = 'stage-tip';
+  tipEl.setAttribute('aria-hidden', 'true');
+  stage.appendChild(tipEl);
+  /* the line follower's run button (FOLLOW): over its blocks board's corner while the robot scene is in */
+  const runEl = document.createElement('button');
+  runEl.type = 'button';
+  runEl.className = 'stage-run';
+  runEl.hidden = true;
+  runEl.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path class="i-play" d="M8 5.5v13l10.5-6.5z"/>'
+    + '<path class="i-pause" d="M7 5h3.6v14H7zM13.4 5H17v14h-3.6z"/></svg>';
+  /* in the tab order right after the robot chapter's own words (the Razer's review of fd0838a3d: appended to the stage,
+     Tab reached it only after chapter 05's link, which scrolled 04 away and hid it); fixed, so where it sits in the
+     page does not move it (the chapter is no containing block: no transform or filter on it) */
+  const runHome = stage.querySelectorAll('article.chapter')[POSES.findIndex((q) => q.scene === FOLLOW.scene) - 1];
+  (runHome || stage).appendChild(runEl);
+  function runState() {
+    const on = !!(follower && follower.playing);
+    runEl.setAttribute('aria-pressed', on ? 'true' : 'false');
+    runEl.setAttribute('aria-label', on ? 'Pause the line follower' : 'Run the line follower');
+    stage.setAttribute('data-3d-follow', on ? 'running' : 'paused');
+  }
+  runState();
+  runEl.addEventListener('click', () => {
+    if (!follower) { return; }
+    follower.playing = !follower.playing;
+    runState();
+    loop();
+  });
+  const runV = new THREE.Vector3(), header = document.querySelector('.site-header');
+  function placeRun() {
+    const fsc = follower && scenes[FOLLOW.scene];
+    const show = !!(fsc && fsc.group.visible && fsc.ins >= 0.6 && asmDone && !replay && gate === 1);
+    if (follower && follower.playing !== (runEl.getAttribute('aria-pressed') === 'true')) { runState(); }   // paused by the scene leaving
+    if (!show) { if (!runEl.hidden) { runEl.hidden = true; } return; }
+    follower.board.updateMatrixWorld(true);
+    runV.copy(follower.runAt).applyMatrix4(follower.board.matrixWorld).project(camera);
+    const r = canvas.getBoundingClientRect();
+    /* never under the site's header (a short window puts the board's corner there): held just below it */
+    const hb = header ? header.getBoundingClientRect().bottom + 28 : 0;
+    runEl.style.transform = `translate(${Math.round(r.left + (runV.x + 1) / 2 * r.width)}px, ${Math.round(Math.max(hb, r.top + (1 - runV.y) / 2 * r.height))}px) translate(-50%, -50%)`;
+    if (runEl.hidden) { runEl.hidden = false; }
+  }
+  function showTip() {
+    const it = hovered && hovered.name && pointer && !pointer.words && !dragMoved ? hovered : null;
+    if (!it) { tipEl.classList.remove('on'); stage.removeAttribute('data-3d-tip'); return; }
+    if (tipEl.textContent !== it.name) { tipEl.textContent = it.name; }
+    /* below right of the cursor, turned to its other side at the window's right or bottom edge */
+    const w = tipEl.offsetWidth, h = tipEl.offsetHeight;
+    let x = pointer.x + 14, y = pointer.y + 18;
+    if (x + w > window.innerWidth - 8) { x = pointer.x - 10 - w; }
+    if (y + h > window.innerHeight - 8) { y = pointer.y - 10 - h; }
+    tipEl.style.transform = `translate(${Math.round(x)}px, ${Math.round(y)}px)`;
+    tipEl.classList.add('on');
+    stage.setAttribute('data-3d-tip', it.name);
+  }
   const onPointer = (e) => {
     if (e.pointerType === 'touch') { return; }
     pointer = { x: e.clientX, y: e.clientY, words: onWords(e.target) };
@@ -1078,7 +1656,6 @@ export async function start(stage, opts) {
     hoverQueued = false;
     if (gaveUp || !pointer || !asmDone || !judged || drag) { return; }
     const r = canvas.getBoundingClientRect();
-    stage.style.cursor = !pointer.words && onModel(pointer.x, pointer.y) ? 'grab' : '';
     let best = null, bestD = Infinity;
     if (pointer.x >= r.left && pointer.x <= r.right && pointer.y >= r.top && pointer.y <= r.bottom) {
       ndc.set((pointer.x - r.left) / r.width * 2 - 1, -((pointer.y - r.top) / r.height) * 2 + 1);
@@ -1092,11 +1669,20 @@ export async function start(stage, opts) {
           if (hit && hit.distance < bestD) { bestD = hit.distance; best = it; }
         }
       }
+      /* the board in front of a part hides it: no name, and a click replays the entrance (the Razer's review: in 04 a click
+         on the EVN board opened the drive base's page, the robot behind it) */
+      if (best && boardFade > 0.5) {
+        const bh = ray.intersectObject(boardNode, true)[0];
+        if (bh && bh.distance < bestD) { best = null; }
+      }
     }
-    if (best === hovered) { return; }
+    /* a named item opens its documentation on a click (onClick): the link's cursor; the rest of the model turns on a drag */
+    stage.style.cursor = pointer.words ? '' : best && best.doc ? 'pointer' : onModel(pointer.x, pointer.y) ? 'grab' : '';
+    if (best === hovered) { showTip(); return; }
     if (hovered) { hovered.hovT = 0; }
     hovered = best;
     if (best) { best.hovT = 1; if (best.spin) { best.spin0 = performance.now(); } }
+    showTip();
     loop();
   }
   /* the board's or a shown scene's box under a point (cheap: boxes, not triangles) */
@@ -1121,32 +1707,42 @@ export async function start(stage, opts) {
     e.preventDefault();                                   // no text selection while the board turns
     drag = { x: e.clientX, y: e.clientY, yaw: userYaw, pitch: userPitch };
     dragMoved = false;
+    /* the hovered item stays until the drag moves: a press and release on it is a click, which opens its documentation */
     stage.style.cursor = 'grabbing';
-    if (hovered) { hovered.hovT = 0; hovered = null; }
   };
   const onDragMove = (e) => {
     if (!drag) { return; }
     const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
-    if (Math.abs(dx) + Math.abs(dy) > 4) { dragMoved = true; }
+    if (!dragMoved && Math.abs(dx) + Math.abs(dy) > 4) { dragMoved = true; if (hovered) { hovered.hovT = 0; hovered = null; } showTip(); }
     userYaw = drag.yaw + dx * DRAG_RAD;
     userPitch = Math.max(-DRAG_PITCH, Math.min(DRAG_PITCH, drag.pitch + dy * DRAG_RAD));
     loop();
   };
   /* a drag that moved: the click its release fires (straight after, however long the button was held) is not a click */
   const onDragEnd = () => { if (drag) { drag = null; if (dragMoved) { dragEnded = performance.now(); } dragMoved = false; stage.style.cursor = ''; loop(); } };
-  /* a click on the board (not on a link or a control over it) replays the entrance; a drag's own click does not */
+  /* a click on a named item opens its documentation (ctrl, cmd or shift: in a new tab, as a link would); a click on the
+     board (not on a link or a control over it) replays the entrance; a drag's own click does neither */
   const onClick = (e) => {
     if (dragEnded && performance.now() - dragEnded < 300) { dragEnded = 0; return; }
-    if (gaveUp || !asmDone || replay || boardFade < 0.5 || !judged) { return; }
+    if (gaveUp || !asmDone || replay || !judged) { return; }
     if (e.target && e.target.closest && e.target.closest(INTERACTIVE)) { return; }
     const r = canvas.getBoundingClientRect();
     if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) { return; }
+    if (hovered && hovered.doc && !onWords(e.target)) {
+      const url = new URL('.', document.baseURI).href + '#/' + hovered.doc;
+      if (e.ctrlKey || e.metaKey || e.shiftKey) { window.open(url, '_blank', 'noopener'); return; }
+      hovered.hovT = 0; hovered = null; showTip();
+      location.href = url;
+      return;
+    }
+    if (boardFade < 0.5) { return; }                                 // the simulator's laptop alone: no board to replay
     ndc.set((e.clientX - r.left) / r.width * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
     ray.setFromCamera(ndc, camera);
     if (!ray.intersectObject(boardNode, true).length) { return; }
     replay = true;
     gateT = 0;
     if (hovered) { hovered.hovT = 0; hovered = null; }
+    showTip();
     loop();
   };
   function listenSkip() {
@@ -1212,6 +1808,8 @@ export async function start(stage, opts) {
     renderer.forceContextLoss();
     canvas.remove();
     loadEl.remove();
+    tipEl.remove();
+    runEl.remove();
     if (stage.isConnected) {
       stage.setAttribute('data-3d', 'fallback');
       stage.setAttribute('data-3d-why', reason);
@@ -1261,8 +1859,20 @@ export async function start(stage, opts) {
         if (it.spin && it.spin0) { if (time - it.spin0 < SPIN_MS[it.spin.kind] + 40) { anim = true; } else { it.spin0 = 0; } }
       }
     }
+    /* the chalkboard writes on the clock while its scene is in, and is wiped once the scene is wholly out of view */
+    if (chalk) {
+      const cs = scenes[CHALK.scene];
+      if (chalk.step(dt, cs && cs.group.visible ? cs.ins : 0, time)) { anim = true; }
+      if (stage.getAttribute('data-3d-chalk') !== chalk.state) { stage.setAttribute('data-3d-chalk', chalk.state); }
+    }
+    /* the line follower runs while its button says so and its scene is in */
+    if (follower) {
+      const fsc = scenes[FOLLOW.scene];
+      if (follower.step(dt, fsc && fsc.group.visible ? fsc.ins : 0)) { anim = true; }
+    }
     apply();
     draw();
+    placeRun();
     const at = String(Math.round(cur.p));
     if (stage.getAttribute('data-3d-at') !== at) { stage.setAttribute('data-3d-at', at); }   // the pose in view: site.css fades a phone's canvas past the first screen
     /* the story's eased position, for the LED indicator (site.js ledNav): its gold crossfades over the scenes' own change
@@ -1383,7 +1993,20 @@ export async function start(stage, opts) {
            put together, before any item is moved */
         const ownBox = localBox(boardRoot, [group]), ownPts = outline(boardRoot, [group]);
         const items = sceneItems(group, keyName, model, boardRoot);
-        scenes[keyName] = { group, ownBox, ownPts, box: ownBox.clone().union(boardBox), pts: boardPts.concat(ownPts), items };
+        scenes[keyName] = { group, ownBox, ownPts, box: ownBox.clone().union(boardBox), pts: boardPts.concat(ownPts), items, ins: 0 };
+        /* the motors scene's chalkboard: after the scene's outline and items, so it is in neither (the camera's framing,
+           the words' check, the hover) */
+        if (keyName === CHALK.scene) {
+          try { await document.fonts.ready; } catch (e) { /* the fallback font, then */ }
+          if (gaveUp) { return; }
+          chalk = buildChalkboard(pose, ownBox);
+          model.add(chalk.group);
+        }
+        /* the robot scene's line follower: its floor and board still, its sensors' light turning with the robot */
+        if (keyName === FOLLOW.scene) {
+          follower = buildFollower(model, group, pose, ownBox, 4.2 / ((models && models.long_mm) || 104));
+          if (follower) { boardRoot.add(follower.still, follower.board); model.add(follower.moving); }
+        }
         /* what each item is (its key, node count, direction, and a motor's hub turn or twitch): for the captures */
         stage.setAttribute('data-3d-items-' + keyName, items.map((it) => `${it.key}:${it.nodes.length}:${['x', 'y', 'z'].map((a) => Math.round(it.dir[a])).join('')}${it.spin ? ':' + it.spin.kind : ''}`).join(' '));
         group.visible = false;
@@ -1415,5 +2038,9 @@ export async function start(stage, opts) {
   stage.setAttribute('data-3d', 'ready');
   stage.setAttribute('data-3d-model', models && models.board ? 'model' : 'placeholder');
   loop();
-  return { stop };
+  /* progress: where the scroll puts the story now (a pose index, between two while a scene changes), from the page's
+     layout alone - site.js's LED indicator reads it every scroll frame (the eased position lags a jump and freezes while
+     the layer is out of view: owner, 2026-11-11, "When scrolling quickly, the rgbled shows 2 LEDs lit, with an earlier
+     led stuck") */
+  return { stop, progress };
 }

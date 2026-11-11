@@ -1008,6 +1008,16 @@
       li.style.top = LED_AT[i] + '%';
       var a = el('a', 'led');
       a.href = '#/for/' + s[0];
+      /* the pixel of the section the address already names: the address does not change, so no route runs - take the
+         page to the section's start here (owner, 2026-11-11: "clicking rgbled does not land me at the start of the
+         section": a second click, from inside the section, did nothing) */
+      a.addEventListener('click', function (e) {
+        if (location.hash !== a.getAttribute('href')) { return; }
+        if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) { return; }   // a new tab or window: the browser's
+        e.preventDefault();
+        scrollToId(s[0]);
+        focusSection(s[0]);
+      });
       a.appendChild(el('span', 'led-label', s[1]));
       li.appendChild(a);
       ol.appendChild(li);
@@ -1031,12 +1041,15 @@
       });
       var nows = links.map(function (a, i) { return Math.max(0, come[i] - (come[i + 1] || 0)); });
       var ons = links.map(function (a, i) { return come[i + 1] || 0; });
-      /* with the 3D layer running, the first screen's and the chapters' pixels follow its eased position (data-3d-p: whole at
-         a chapter, between two while its scene changes), so the gold crossfades over the scene's own change (review
-         site76_r8 S1); the sections after the stage keep the measure above */
-      var stage = document.querySelector('.stage'), np = 1 + CHAPTERS.length;
-      if (stage && stage.getAttribute('data-3d') === 'ready' && stage.hasAttribute('data-3d-p')) {
-        var p = Number(stage.getAttribute('data-3d-p')), after = come[np] || 0;
+      /* with the 3D layer running, the first screen's and the chapters' pixels follow the story's position as the scroll
+         puts it now (hero3d.js progress(): whole at a chapter, between two while its scene changes, the scenes' own
+         mapping), so the gold crossfades where the scenes change (review site76_r8 S1). Computed from the layout alone
+         at every frame, never from the layer's eased position, which lags a jump and stops while the layer is out of
+         view: a fast scroll past the stage left two pixels lit, an earlier one stuck (owner, 2026-11-11). The sections
+         after the stage keep the measure above */
+      var np = 1 + CHAPTERS.length;
+      if (stageHandle && stageHandle.progress) {
+        var p = stageHandle.progress(), after = come[np] || 0;
         for (var k = 0; k < np && k < links.length; k++) {
           nows[k] = Math.max(0, 1 - Math.abs(p - k)) * (k === np - 1 ? 1 - after : 1);
           ons[k] = k === np - 1 ? after : Math.min(1, Math.max(0, p - k));
@@ -1264,24 +1277,36 @@
     var credit = el('div', 'credit');                 // not an <aside>: a complementary landmark inside <main> fails axe
     credit.appendChild(el('span', 'kicker', 'Created by'));
     [['Kenneth Chow', 'Strategic Lead and mentor. Founded the Centre of Robotics Excellence in 2014.',
-      [['linkedin.com/in/kc-robotics', 'https://www.linkedin.com/in/kc-robotics/']]],
+      [['linkedin.com/in/kc-robotics', 'https://www.linkedin.com/in/kc-robotics/'], ['github.com/kenchow96', 'https://github.com/kenchow96']]],
      ['Heng Teng Yi', 'Technical Lead and mentee. Author and maintainer of the EVN Arduino library.',
       [['linkedin.com/in/heng-teng-yi', 'https://www.linkedin.com/in/heng-teng-yi/'], ['github.com/HTY2003', 'https://github.com/HTY2003']]]]
       .forEach(function (person) {
         var pb = el('div', 'person');
         pb.appendChild(el('p', 'who', person[0]));
         pb.appendChild(el('p', 'what', person[1]));
-        person[2].forEach(function (l) { pb.appendChild(linkTo(el('a', 'credit-link', l[0]), l[1])); });
+        /* the links in a wrapping row spaced by its gap: a margin on the second indented it where it wrapped under the
+           first (owner, 2026-11-11: "His GitHub link has a weird space in front of it") */
+        var row = el('div', 'credit-links');
+        person[2].forEach(function (l) { row.appendChild(linkTo(el('a', 'credit-link', l[0]), l[1])); });
+        pb.appendChild(row);
         credit.appendChild(pb);
       });
-    var stats = el('ul', 'stats');
-    [['2014', 'the Centre of Robotics Excellence founded'], ['2018', 'the first EVN ALPHA'], ['71', 'Kickstarter backers'], ['S$13,053', 'pledged, of a S$8,888 goal']]
+    /* the milestones: a two-column table, the year or figure right-aligned, the milestone left-aligned on its baseline
+       (owner, 2026-11-11: "2018 is not when the evn was created, it was 2023. Formatting is also a mess. Use 2 columns,
+       right align the years, left align the milestone") */
+    var stats = el('table', 'stats');
+    stats.appendChild(el('caption', 'visually-hidden', 'EVN in figures'));
+    var sb = el('tbody');
+    [['2014', 'the Centre of Robotics Excellence founded'], ['2023', 'EVN created'], ['71', 'Kickstarter backers'], ['S$13,053', 'pledged, of a S$8,888 goal']]
       .forEach(function (s) {
-        var li = el('li');
-        li.appendChild(el('strong', null, s[0]));
-        li.appendChild(el('span', null, s[1]));
-        stats.appendChild(li);
+        var tr = el('tr');
+        var th = el('th', null, s[0]);
+        th.setAttribute('scope', 'row');
+        tr.appendChild(th);
+        tr.appendChild(el('td', null, s[1]));
+        sb.appendChild(tr);
       });
+    stats.appendChild(sb);
     credit.appendChild(stats);
     sg.appendChild(credit);
     st.body.appendChild(sg);
