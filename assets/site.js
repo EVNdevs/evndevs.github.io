@@ -6,7 +6,9 @@
        #/<guide>/<slug> (the guides split from Getting started: programs, board-view, data-logger, main-py,
        bluetooth, commands, board, troubleshooting; #/getting-started/<slug> of the one-page era is forwarded
        by assets/getting-started-moved.json)
-       #/changelog  #/downloads  and the home page.
+       #/changelog  and the site's own pages (PAGES): #/start (Get started), #/documentation (Docs, every document
+       by task), #/downloads (the Downloads page); and the home page (#/, and #/for/<audience> scrolled to that
+       audience's section), whose feature cards are assets/features.json.
    The API reference is an index (docs/API.md, route `api`) and five parts (docs/API_<PART>.md, route
    `api-<part>`). A link of the one-page era, #/api/<slug> for a heading that now lives in a part, is
    forwarded to its part by assets/api-moved.json (old slug -> "<route>/<new slug>", written when the
@@ -16,7 +18,7 @@
 (function () {
   'use strict';
 
-  /* The "Use it in the browser" card on the home page. Set to false until /ide/ is published. */
+  /* The "Use it in the browser" card on the Downloads page. Set to false until /ide/ is published. */
   var SHOW_IDE = true;
 
   /* The documents, by the route name the extension uses. `order` drives the previous/next links. */
@@ -152,7 +154,8 @@
     return m ? m.getAttribute('content') || '' : '';
   })();
 
-  /* "#/api/motor" -> { doc: 'api', slug: 'motor' }; anything unknown is the home page. */
+  /* "#/api/motor" -> { doc: 'api', slug: 'motor' }; "#/start/vs-code" -> { doc: 'start', slug: 'vs-code' } (a page of
+     PAGES); "#/for/teachers" -> { doc: 'home', slug: 'teachers' }; anything unknown is the home page. */
   function parseRoute() {
     var h = location.hash.replace(/^#\/?/, '');
     if (PAGE && location.hash.charAt(1) !== '/') { h = PAGE + '/' + location.hash.slice(1); }
@@ -160,7 +163,8 @@
     var m = /^([a-z\-]+)\/?(.*)$/.exec(h);
     if (!m) { return { doc: 'home', slug: '' }; }
     var doc = m[1], slug = slugify(decodeURIComponent(m[2] || ''));
-    if (doc === 'downloads') { return { doc: 'home', slug: 'downloads' }; }
+    if (doc === 'for') { return { doc: 'home', slug: slug }; }
+    if (PAGES[doc]) { return { doc: doc, slug: slug }; }
     if (!DOCS[doc]) { return { doc: 'home', slug: '' }; }
     return { doc: doc, slug: slug };
   }
@@ -223,10 +227,10 @@
     });
   }
 
-  /* doc: a route of DOCS, 'downloads' (the home page's Downloads section) or 'home'. No nav entry is the home
-     page, so on it nothing is lit. */
+  /* doc: a route of DOCS, a page of PAGES or 'home'. No nav entry is the home page, so on it nothing is lit; every
+     document lights "Docs" (the one entry point to them). */
   function markCurrentNav(doc) {
-    if (DOCS[doc] && DOCS[doc].part) { doc = DOCS[doc].part; }      // a part of the API reference lights "API"
+    if (DOCS[doc]) { doc = 'documentation'; }
     var links = nav.querySelectorAll('a[data-doc]');
     for (var i = 0; i < links.length; i++) {
       var on = links[i].getAttribute('data-doc') === doc;
@@ -519,7 +523,8 @@
     };
     update();
   }
-  function stopSpy() { reading = null; if (spy) { spy(); spy = null; } }
+  /* every render that replaces <main> calls this: the scroll-spy's teardown, and the home page's 3D layer stopped */
+  function stopSpy() { reading = null; if (spy) { spy(); spy = null; } stopStage(); if (ledTeardown) { ledTeardown(); } if (stillTeardown) { stillTeardown(); } }
 
   function highlight(toc, id) {
     for (var i = 0; i < toc.items.length; i++) {
@@ -587,7 +592,10 @@
       var article = el('article', 'doc');
 
       var head = el('div', 'doc-head');
-      var crumb = el('p', 'crumb', 'Documentation');
+      var crumb = el('p', 'crumb');
+      var docsLink = el('a', null, 'Docs');                // the one index of the documents (#/documentation)
+      docsLink.href = '#/documentation';
+      crumb.appendChild(docsLink);
       if (info.part) {                                  // a part of the API reference: the way back to its index
         crumb.appendChild(document.createTextNode(' / '));
         var up = el('a', null, DOCS[info.part].title);
@@ -658,36 +666,9 @@
     return a;
   }
 
-  /* ---- the home page ------------------------------------------------------------------------------ */
+  /* ---- the sensors and displays (the Docs page lists them) ------------------------------------------ */
 
-  /* The cards under the hero: kicker, title, text, the section it opens, and a screenshot (path relative
-     to the site root, its size and alt text) or null. "Read more" opens the section the card is about. */
-  var FEATURES = [
-    ['Blocks', 'Blocks that write Python',
-     'Snap blocks together for the motors, the robot, the sensors and the displays, and see the MicroPython ' +
-     'they make beside them. When you are ready, export the program and carry on in Python.',
-     '#/blocks/', null],
-    ['Python', 'Python that knows the robot',
-     'The editor completes every motor, sensor and drive-base command as you type, with its units and its ' +
-     'help text, so you rarely need to look anything up.',
-     '#/api/', null],
-    ['Live', 'Your robot, live in the editor',
-     'Motor angles and speeds, the battery, every sensor plugged in, a chart of any numeric reading, and a prompt ' +
-     'that runs a line of Python on the board, over USB or Bluetooth.',
-     '#/getting-started/3b-the-live-console-the-command-line-and-the-console-view',
-     ['assets/images/home-board-console.jpg', 292, 833,
-      'The EVN ALPHA Board panel: the board live, its firmware and battery, the sensors on its I2C ports, and below ' +
-      'it the console with a chart of the distance sensor and a prompt for Python.']],
-    ['Data', 'Record and chart what the robot did',
-     'Log motor angles, sensor readings and the battery while a program runs, then zoom through the ' +
-     'charts and the statistics, or open the file in a spreadsheet.',
-     '#/getting-started/3c-recording-data-the-data-logger',
-     ['assets/images/home-data-viewer.jpg', 1400, 900,
-      'The data logger in VS Code: charts of a motor’s angle and speed, an IMU heading and the battery ' +
-      'voltage over seven seconds, with a table of statistics under them.']]
-  ];
-
-  /* The peripherals on the home page, in plain words, each linked to its section of the API reference:
+  /* The peripherals on the Docs page, in plain words, each linked to its section of the API reference:
      [name, what it is for, class, route, heading slug]. tools/host_tests/test_site_pages.py checks that every
      slug is a heading of its document and that every class of the API index's tables is here. The BME280 keeps
      the name of its API page ("environment sensor"). Servos and LED strips plug into the servo ports and the
@@ -740,114 +721,747 @@
     return '#/api/';
   }
 
-  function renderHome(slug) {
-    document.title = slug === 'downloads' ? SITE + ' · Downloads' : SITE;
-    markCurrentNav(slug === 'downloads' ? 'downloads' : 'home');
-    var built = current && current.doc === 'home' && document.getElementById('downloads');
-    current = { doc: 'home', slug: slug || '' };
-    if (built) {                                     /* already on the home page: only move */
-      if (slug === 'downloads') { built.scrollIntoView(); window.scrollBy(0, -8); }
-      else { window.scrollTo(0, 0); }
-      return;
+  /* ---- the site's own pages: home, Get started, Docs, Downloads ------------------------------------- */
+
+  /* The pages that are not a document of DOCS. Each is a route (#/<route>) and, like a document, a page of its own at
+     /<route>/: scripts/publish_public.py site_routes() reads the `page: true` rows here. */
+  var PAGES = {
+    'start':         { page: true, title: 'Get started' },
+    'documentation': { page: true, title: 'Docs' },
+    'downloads':     { page: true, title: 'Downloads' }
+  };
+
+  /* The home page's feature cards come from assets/features.json (its header says what each status means and the one
+     edit that flips the next release's cards to "Available now"). A card is "Available now" when its feature is
+     released: status "available", or status "release" with a `release` the file's `released` has reached. */
+  var FEATURES_URL = 'assets/features.json';
+  var featuresP = null;
+  function readFeatures() {
+    if (!featuresP) {
+      featuresP = fetch(FEATURES_URL, { cache: 'no-cache' }).then(function (r) {
+        if (!r.ok) { throw new Error(r.status + ' ' + r.statusText); }
+        return r.json();
+      });
+      featuresP.catch(function () { featuresP = null; });     // a later visit of the home page tries again
     }
+    return featuresP;
+  }
+  /* "0.2.76" >= "0.2.75": dotted numbers compared part by part */
+  function versionAtLeast(have, want) {
+    var a = String(have || '').split('.'), b = String(want || '').split('.');
+    for (var i = 0; i < Math.max(a.length, b.length); i++) {
+      var x = parseInt(a[i] || '0', 10), y = parseInt(b[i] || '0', 10);
+      if (x !== y) { return x > y; }
+    }
+    return true;
+  }
+  function featureStatus(f, released) {
+    if (f.status === 'available') { return 'now'; }
+    if (f.status === 'release' && f.release && versionAtLeast(released, f.release)) { return 'now'; }
+    return 'soon';
+  }
+  var BADGE = { now: 'Available now', soon: 'Coming soon' };
+  function external(href) { return /^https?:/i.test(href) || /^ide\//.test(href); }
+  function linkTo(a, href) {
+    a.href = href;
+    if (external(href)) { a.target = '_blank'; a.rel = 'noopener'; }
+    return a;
+  }
+
+  /* One card: a picture where the repository has one, the status badge, a short headline (a link when the feature is
+     available and has a page) and one sentence. The headline's link covers the whole card (.fcard-link::after), so the
+     card is one Tab stop and its name is the headline. */
+  function featureCard(f, released) {
+    var st = featureStatus(f, released);
+    var card = el('article', 'fcard fcard-' + st);
+    card.setAttribute('data-feature', f.id);
+    if (f.image) {
+      var img = el('img', 'fcard-img');
+      img.src = f.image.src;
+      img.width = f.image.width;
+      img.height = f.image.height;
+      img.loading = 'lazy';
+      img.alt = f.image.alt;
+      card.appendChild(img);
+    }
+    var h = el('h3');
+    if (f.link && st === 'now') {
+      h.appendChild(linkTo(el('a', 'fcard-link', f.title), f.link));
+    } else {
+      h.textContent = f.title;
+    }
+    card.appendChild(h);
+    card.appendChild(el('p', 'badge badge-' + st, BADGE[st]));
+    card.appendChild(el('p', 'fcard-text', f.text));
+    return card;
+  }
+
+  function renderAudiences(box, data) {
+    box.textContent = '';
+    (data.audiences || []).forEach(function (au) {
+      var s = el('section', 'aud');
+      s.id = au.id;
+      s.setAttribute('aria-labelledby', au.id + '-h');
+      var w = el('div', 'wrap');
+      var head = el('div', 'aud-head');
+      var h = el('h2', null, au.title);
+      h.id = au.id + '-h';
+      head.appendChild(h);
+      head.appendChild(el('p', 'aud-line', au.line));
+      w.appendChild(head);
+      var grid = el('div', 'fgrid');
+      (data.features || []).filter(function (f) { return f.audience === au.id; })
+        .forEach(function (f) { grid.appendChild(featureCard(f, data.released)); });
+      w.appendChild(grid);
+      s.appendChild(w);
+      box.appendChild(s);
+    });
+  }
+
+  /* A link to a section (#/for/teachers, #/start/board): the focus moves to the section and its heading is said, as
+     a route change moves it to <main> and says the page (route() below). A section not built yet (the home page's cards
+     still loading) takes the focus when it arrives (pendingFocus). */
+  var pendingFocus = null;
+  function focusSection(id) {
+    var t = document.getElementById(id);
+    if (!t) { return false; }
+    if (!t.hasAttribute('tabindex')) { t.setAttribute('tabindex', '-1'); }
+    try { t.focus({ preventScroll: true }); } catch (e) { t.focus(); }
+    var h = t.querySelector('h2, h3');
+    announce(h ? h.textContent : document.title);
+    return true;
+  }
+
+  function scrollToId(id) {
+    var t = id ? document.getElementById(id) : null;
+    if (t) { t.scrollIntoView(); } else { window.scrollTo(0, 0); }
+  }
+
+  /* A page of the site's own: the crumb, its heading and one line under it. */
+  function pageHead(title, line) {
+    var s = el('section', 'page-head');
+    var w = el('div', 'wrap');
+    var crumb = el('p', 'crumb');
+    var home = el('a', null, 'Home');
+    home.href = '#/';
+    crumb.appendChild(home);
+    crumb.appendChild(document.createTextNode(' / ' + title));
+    w.appendChild(crumb);
+    w.appendChild(el('h1', null, title));
+    if (line) { w.appendChild(el('p', 'lead', line)); }
+    s.appendChild(w);
+    return { node: s, body: w };
+  }
+
+  /* ---- the stage's words and data -------------------------------------------------------------------- */
+
+  /* The photoreal renders (the marketing pipeline's own Cycles stills, docs/session/2026-11-10_site76/data/render_stills.py,
+     each from the view of hero3d.js's pose for it, on a transparent ground: stage_still_webp.py). The first screen's board is
+     what every visitor sees first, the 3D board fading in over it where it runs; each chapter shows its scene beside its card
+     (above it in the stacked layout) with or without WebGL, the 3D layer taking its place at the same angle where it runs
+     (hero3d.js marks the chapter has-3d once its scene is in). The owner, 2026-11-10: "The home page looks to be missing the
+     renders". */
+  var STAGE_STILL = { src: 'assets/images/stage-board.webp', width: 1280, height: 913 };
+  var CHAPTER_STILLS = {
+    motors: { src: 'assets/images/chapter-motors.webp', width: 1600, height: 1200, pending: true,
+      alt: 'The EVN ALPHA board with LEGO MINDSTORMS EV3 and NXT motors and a small gearmotor plugged into its four motor ports.' },
+    sensors: { src: 'assets/images/chapter-sensors.webp', width: 1600, height: 1200, pending: true,
+      alt: 'The EVN ALPHA board with a colour sensor, a distance sensor, a gesture sensor and a compass cabled to its sensor ports.' },
+    code: { src: 'assets/images/chapter-displays.webp', width: 1600, height: 1200, pending: true,
+      alt: 'The EVN ALPHA board driving an OLED display showing the EVN logo, an LED matrix and a 7-segment display reading 2023.' },
+    simulator: { src: 'assets/images/chapter-robot.webp', width: 1600, height: 1200, pending: true,
+      alt: 'A two-wheeled competition robot built around the EVN ALPHA board.' }
+  };
+
+  /* The scroll story: [id, kicker, headline, sentence, [link label, href] or null, a small note or none]. Facts from the board's page
+     (docs/BOARD.md), the CHANGELOG and the simulator's page; hero3d.js has one pose per chapter. */
+  var CHAPTERS = [
+    ['motors', 'Motors', 'Plug in the motors you already have.',
+     'Four motor ports that work with LEGO MINDSTORMS EV3 and NXT motors, and the board calibrates each one itself.',
+     ['Calibrating your robot', '#/calibration/']],
+    ['sensors', 'Sensors', 'Sixteen sensor ports. Found by name.',
+     'Plug in a sensor or a display and it shows up by name, with four servo ports and two serial ports beside them.',
+     ['Sensors and displays', '#/documentation/sensors']],
+    ['code', 'Code', 'Blocks or Python, live on the robot.',
+     'Snap blocks together or type Python with autocomplete, in VS Code or the browser, and watch the robot as it runs.',
+     ['Get started', '#/start']],
+    ['simulator', 'Simulator', 'Practise without a field.',
+     'Run your program on the WRO RoboMission tables and RoboCup Junior Rescue Line fields, with a referee that scores the run.',
+     ['The robot simulator', '#/simulator/'],
+     'EVN is not affiliated with or endorsed by the World Robot Olympiad Association or the RoboCup Federation.']
+  ];
+
+  /* The team's record, from edu.coresg.tech (its home page and its trophy room, read 2026-11-10; the counts are the
+     site's own, "as of Sep 2026"): docs/session/2026-11-10_site76/data/sources.md quotes each line. */
+  var PROOF_NUMBERS = [['200+', 'awards won by the Centre’s teams'], ['30+', 'of them international'],
+                       ['19+', 'countries with EVN']];
+  var PROOF_RESULTS = [
+    ['WRO International Final 2025, RoboMission Senior', '4th, Gold: Singapore’s best result yet'],
+    ['RoboCup Asia Pacific 2022, RCJ Rescue Line U19', '1st and 2nd'],
+    ['RoboCup Singapore Open 2026, RCJ Rescue Line U19', '1st']
+  ];
+
+  /* The 3D layer (assets/hero3d.js) loads only where it helps: after the page has loaded and gone idle, with
+     IntersectionObserver and WebGL, never under prefers-reduced-motion or Save-Data. It finds the model in
+     assets/3d/models.json. Whatever stops it, the photo stays and data-3d on the stage says why. */
+  function startStage(stage) {
+    if (!('IntersectionObserver' in window) || !window.matchMedia) { return; }
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { stage.setAttribute('data-3d', 'still-reduced-motion'); return; }
+    var c = navigator.connection;
+    if (c && c.saveData) { stage.setAttribute('data-3d', 'still-save-data'); return; }
+    var gl = null;
+    try { var probe = document.createElement('canvas'); gl = probe.getContext('webgl2') || probe.getContext('webgl'); } catch (e) { gl = null; }
+    if (!gl) { stage.setAttribute('data-3d', 'still-no-webgl'); return; }
+    var lose = gl.getExtension('WEBGL_lose_context');
+    if (lose) { lose.loseContext(); }
+    function go() {
+      if (!stage.isConnected) { return; }
+      stage.setAttribute('data-3d', 'loading');
+      fetch('assets/3d/models.json', { cache: 'no-cache' }).then(function (r) { return r.ok ? r.json() : {}; })
+        .catch(function () { return {}; })
+        .then(function (models) {
+          return import(new URL('assets/hero3d.js', document.baseURI).href).then(function (m) {
+            /* ?evn3d=keep (screen captures on a software renderer only): keep the layer even if its first frames are slow */
+            if (!stage.isConnected) { return; }
+            return m.start(stage, { models: models, keepSlow: /[?&]evn3d=keep\b/.test(location.search) }).then(function (h) {
+              if (stage.isConnected) { stageHandle = h; } else { h.stop('left'); }
+            });
+          });
+        })
+        .catch(function () { stage.setAttribute('data-3d', 'fallback'); stage.setAttribute('data-3d-why', 'load'); });
+    }
+    /* and only once the stage is on screen: a visitor who lands at #/for/<x>, far below it, downloads nothing until they
+       scroll up to it */
+    var idle = window.requestIdleCallback || function (f) { setTimeout(f, 200); };
+    function whenSeen() {
+      var seen = new IntersectionObserver(function (es) {
+        if (!stage.isConnected) { seen.disconnect(); return; }
+        if (es[0].isIntersecting) { seen.disconnect(); idle(go); }
+      });
+      seen.observe(stage);
+    }
+    if (document.readyState === 'complete') { whenSeen(); } else { window.addEventListener('load', whenSeen, { once: true }); }
+  }
+  /* the running layer (hero3d.js start()'s handle): stopped, and its GPU memory freed, whenever <main> is replaced */
+  var stageHandle = null;
+  function stopStage() { if (stageHandle) { stageHandle.stop('left'); stageHandle = null; } }
+
+  /* ---- the page indicator: the EVN RGB LED, its eight WS2812B pixels one per section of the home page ----------
+     assets/images/rgb-led-strip.png is the marketing pipeline's own render of the module as it ships (in its printed mount,
+     with its headers and the plugged cable, from the docs photo's view: docs/session/2026-11-10_site76/data/
+     render_led_strip.py), turned so pixel 0 (the IN end) is at the top; LED_AT is each pixel's centre in that picture,
+     measured on the lit render. Every pixel is a link to its section, named beside it on hover and focus; the section in
+     view lit EVN gold, the ones before it dim white, the rest dark (owner, 2026-11-10: "the current page be evn gold
+     (bright), and previous pages as a single color (dim, maybe white)"; site.css "the page indicator"). */
+  var LED_AT = [25.44, 33.86, 42.37, 50.84, 59.32, 67.83, 76.23, 84.81];   // % from the top; every pixel at 55.75 % across
+  var LED_SECTIONS = [['stage-top', 'EVN ALPHA'], ['chapter-motors', 'Motors'], ['chapter-sensors', 'Sensors'],
+                      ['chapter-code', 'Code'], ['chapter-simulator', 'Simulator'], ['proof', 'The team behind EVN'],
+                      ['audiences', 'Who it is for'], ['story', 'The story']];
+  var ledTeardown = null;
+  function ledNav() {
+    var nav = el('nav', 'led-nav');
+    nav.setAttribute('aria-label', 'Sections of this page');
+    var img = el('img', 'led-strip');
+    img.src = 'assets/images/rgb-led-strip.png';
+    img.width = 138;
+    img.height = 640;
+    img.alt = '';
+    img.loading = 'lazy';                                // hidden under 1340 px: a phone never fetches it
+    nav.appendChild(img);
+    var ol = el('ol');
+    var links = LED_SECTIONS.map(function (s, i) {
+      var li = el('li');
+      li.style.top = LED_AT[i] + '%';
+      var a = el('a', 'led');
+      a.href = '#/for/' + s[0];
+      a.appendChild(el('span', 'led-label', s[1]));
+      li.appendChild(a);
+      ol.appendChild(li);
+      return a;
+    });
+    nav.appendChild(ol);
+    var ticking = false;
+    function update() {
+      ticking = false;
+      var at = -1, line = window.innerHeight * 0.45;
+      LED_SECTIONS.forEach(function (s, i) {
+        var t = document.getElementById(s[0]);
+        if (t && t.getBoundingClientRect().top <= line) { at = i; }
+      });
+      links.forEach(function (a, i) {
+        a.parentNode.className = i < at ? 'on' : i === at ? 'on now' : '';
+        if (i === at) { a.setAttribute('aria-current', 'location'); } else { a.removeAttribute('aria-current'); }
+      });
+    }
+    function onScroll() { if (!ticking) { ticking = true; requestAnimationFrame(update); } }
+    if (ledTeardown) { ledTeardown(); }
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll, { passive: true });
+    ledTeardown = function () { window.removeEventListener('scroll', onScroll); window.removeEventListener('resize', onScroll); ledTeardown = null; };
+    requestAnimationFrame(update);
+    return nav;
+  }
+
+  /* ---- the home page: what EVN does, by audience ---- */
+
+  var AUDIENCE_NAV = [['students', 'Students'], ['teachers', 'Teachers'], ['school-leaders', 'School leaders'],
+                      ['competition', 'Competition teams'], ['higher-learning', 'Higher learning'], ['parents', 'Parents']];
+
+  function renderHome(slug) {
+    document.title = SITE;
+    markCurrentNav('home');
+    /* built: the home page is in <main> and its cards are there or on their way; after a failed load it is built again */
+    var built = current && current.doc === 'home' && document.getElementById('audiences')
+      && !document.querySelector('#audiences .notice-failed');
+    current = { doc: 'home', slug: slug || '' };
+    if (built) { scrollToId(slug); return; }               /* already on the home page: only move */
     stopSpy();
     main.textContent = '';
 
-    /* --- hero --- */
-    var hero = el('section', 'hero');
-    var hw = el('div', 'wrap');
-    var grid = el('div', 'hero-grid');
+    /* --- the stage: the first screen and the scroll story, over the board (3D where it helps, a photo otherwise) ---
+       Everything said here is HTML; the visual behind it is decorative (aria-hidden). site.js startStage() decides
+       whether assets/hero3d.js loads; without it the photo stays. */
+    var stage = el('section', 'stage');
+    stage.setAttribute('aria-label', 'EVN ALPHA');
+    stage.setAttribute('data-3d', 'still');
+    var vis = el('div', 'stage-visual');
+    vis.setAttribute('aria-hidden', 'true');
+    var still = el('img', 'stage-still');
+    stage.style.setProperty('--still-r', (STAGE_STILL.height / STAGE_STILL.width).toFixed(4));
+    still.src = STAGE_STILL.src;
+    still.width = STAGE_STILL.width;
+    still.height = STAGE_STILL.height;
+    still.alt = '';
+    still.decoding = 'async';
+    vis.appendChild(still);
+    stage.appendChild(vis);
 
-    var left = el('div');
-    var eyebrow = el('p', 'eyebrow', 'Early access · user testing · ');   // the space before the link (site review N1)
+    var hero = el('div', 'hero stage-hero');
+    hero.id = 'stage-top';
+    var hw = el('div', 'wrap');
+    var left = el('div', 'stage-copy');
+    var eyebrow = el('p', 'eyebrow', 'Early\u00a0access\u00a0· user\u00a0testing\u00a0· ');   // wraps only after a dot; the space before the link (site review N1)
     eyebrow.appendChild(reportLink('report-link'));        // where a tester reports (SITE-09)
     left.appendChild(eyebrow);
-    var markRow = el('div', 'hero-mark');
-    var glyph = el('span', 'glyph');
-    glyph.setAttribute('aria-hidden', 'true');
-    glyph.appendChild(frag(document.querySelector('.brand .mark svg').outerHTML));
-    markRow.appendChild(glyph);
-    var titleBox = el('div');
-    var h1 = el('h1', null, 'EVN ALPHA');
+    var h1 = el('h1', 'stage-title', 'EVN ALPHA');
     h1.appendChild(el('span', 'sub', 'MicroPython'));
-    titleBox.appendChild(h1);
-    markRow.appendChild(titleBox);
-    left.appendChild(markRow);
-
-    /* One sentence of value, three proof points, the software itself beside them, and two ways to
-       start. "Download the extension" stays on #/downloads, where the install steps are: it is never rewritten
-       to the bare .vsix. */
+    left.appendChild(h1);
+    left.appendChild(el('p', 'stage-display', 'The natural evolution of the robot kit.'));
     left.appendChild(el('p', 'pitch',
       'Program your EVN ALPHA robot in blocks or Python, from VS Code or your browser.'));
-    var proof = el('ul', 'proof');
-    ['Blocks that write real MicroPython, side by side with the code.',
-     'Your robot live in the editor: motors, battery, sensors and a Python prompt.',
-     'Plug in a sensor or a display and the board finds it by name.'].forEach(function (t) {
-      proof.appendChild(el('li', null, t));
-    });
-    left.appendChild(proof);
-
     var actions = el('div', 'actions');
-    var b1 = el('a', 'btn btn-primary', 'Get started');
-    b1.href = '#/getting-started';
-    actions.appendChild(b1);
-    if (SHOW_IDE) {
-      var bIde = el('a', 'btn btn-ghost', 'Try it in your browser');
-      bIde.href = 'ide/';
-      bIde.target = '_blank';
-      bIde.rel = 'noopener';
-      actions.appendChild(bIde);
-    }
-    var b2 = el('a', 'btn btn-ghost', 'Download the extension');
-    b2.href = '#/downloads';
-    actions.appendChild(b2);
+    var bIde = el('a', 'btn btn-primary', 'Try it in your browser');
+    linkTo(bIde, 'ide/');
+    actions.appendChild(bIde);
+    var bCode = el('a', 'btn btn-ghost', 'Install it in VS Code');
+    bCode.href = '#/start/vs-code';
+    actions.appendChild(bCode);
+    var bSchool = el('a', 'btn btn-ghost', 'EVN for schools');
+    bSchool.href = '#/for/school-leaders';
+    actions.appendChild(bSchool);
     left.appendChild(actions);
     left.appendChild(el('p', 'meta',
       'Free and MIT licensed. Works with VS Code 1.106 or newer on Windows, macOS and Linux.'));
-    grid.appendChild(left);
-
-    var fig = el('figure', 'hero-photo hero-shot');
-    var img = el('img');
-    img.src = 'docs/images/blocks-editor.png';           // published with the documents (npm run docs:shots)
-    img.width = 1044;
-    img.height = 833;
-    img.alt = 'The EVN ALPHA block editor in VS Code: a program of motor blocks on the left, the categories ' +
-              '(Motors, Robot, Sensing, Timing, Board) beside it, and the MicroPython the blocks make on the right.';
-    fig.appendChild(img);
-    fig.appendChild(el('figcaption', null,
-      'The block editor: your blocks on the left, the Python they make on the right. Run on board sends it to the robot.'));
-    grid.appendChild(fig);
-
-    hw.appendChild(grid);
-    hero.appendChild(hw);
-    main.appendChild(hero);
-
-    /* --- what it gives you --- */
-    var f = section('What the extension gives you');
-    var cards = el('div', 'cards');
-    FEATURES.forEach(function (c) {
-      var a = el('a', 'card');
-      a.href = c[3];
-      if (c[4]) {
-        var shot = el('img', 'card-shot');
-        shot.src = c[4][0];
-        shot.width = c[4][1];
-        shot.height = c[4][2];
-        shot.loading = 'lazy';
-        shot.alt = c[4][3];
-        a.appendChild(shot);
-      }
-      a.appendChild(el('span', 'kicker', c[0]));
-      a.appendChild(el('h3', null, c[1]));
-      a.appendChild(el('p', null, c[2]));
-      a.appendChild(el('span', 'more', 'Read more →'));
-      cards.appendChild(a);
+    hw.appendChild(left);
+    /* who it is for: one link to each audience's section */
+    var jump = el('nav', 'aud-nav');
+    jump.setAttribute('aria-label', 'Who EVN is for');
+    jump.appendChild(el('span', 'aud-lead', 'Made for'));   // a quiet line, not a second row of buttons
+    var ul = el('ul');
+    AUDIENCE_NAV.forEach(function (x) {
+      var li = el('li');
+      var a = el('a', null, x[1]);
+      a.href = '#/for/' + x[0];
+      li.appendChild(a);
+      ul.appendChild(li);
     });
-    f.body.appendChild(cards);
-    main.appendChild(f.node);
+    jump.appendChild(ul);
+    hw.appendChild(jump);
+    var cue = el('p', 'stage-cue', 'Scroll to see the board');
+    cue.setAttribute('aria-hidden', 'true');
+    hw.appendChild(cue);
+    hero.appendChild(hw);
+    stage.appendChild(hero);
 
+    /* the four chapters the board turns through as they scroll past */
+    CHAPTERS.forEach(function (c, n) {
+      var ch = el('article', 'chapter');
+      ch.id = 'chapter-' + c[0];
+      ch.setAttribute('aria-labelledby', ch.id + '-h');
+      var cw = el('div', 'wrap');
+      var card = el('div', 'chapter-card');
+      card.appendChild(el('p', 'chapter-n', '0' + (n + 1) + ' · ' + c[1]));
+      var h = el('h2', null, c[2]);
+      h.id = ch.id + '-h';
+      card.appendChild(h);
+      card.appendChild(el('p', 'chapter-text', c[3]));
+      if (c[4]) { card.appendChild(linkTo(el('a', 'chapter-link', c[4][0]), c[4][1])); }
+      if (c[5]) { card.appendChild(el('p', 'chapter-note', c[5])); }
+      cw.appendChild(card);
+      var still = CHAPTER_STILLS[c[0]];
+      if (still && !still.pending) {                       // pending: its render is not in the repository yet
+        var fig = el('figure', 'chapter-fig');
+        var im = el('img');
+        im.src = still.src;
+        im.width = still.width;
+        im.height = still.height;
+        im.alt = still.alt;
+        im.loading = 'lazy';
+        im.decoding = 'async';
+        fig.appendChild(im);
+        cw.appendChild(fig);
+        ch.classList.add('has-fig');                       // site.css: the layout with a render
+      }
+      ch.appendChild(cw);
+      stage.appendChild(ch);
+    });
+    main.appendChild(stage);
+    /* the chapters rise in as they arrive; only with IntersectionObserver (else no class, so nothing is hidden) */
+    if ('IntersectionObserver' in window) {
+      document.documentElement.classList.add('js-reveal');
+      var rio = new IntersectionObserver(function (es) {
+        es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('in'); rio.unobserve(e.target); } });
+      }, { rootMargin: '0px 0px -15% 0px' });
+      stage.querySelectorAll('.chapter').forEach(function (ch) { rio.observe(ch); });
+    }
+
+    /* --- the proof: the record of the team behind EVN (edu.coresg.tech) --- */
+    var proof = el('section', 'proof');
+    proof.id = 'proof';
+    proof.setAttribute('aria-labelledby', 'proof-h');
+    var pw = el('div', 'wrap');
+    var ph = el('h2', null, 'From the team behind EVN');
+    ph.id = 'proof-h';
+    pw.appendChild(ph);
+    pw.appendChild(el('p', 'proof-line',
+      'EVN comes from the Centre of Robotics Excellence in Singapore, whose teams have won at WRO and RoboCup.'));
+    var nums = el('ul', 'proof-nums');
+    PROOF_NUMBERS.forEach(function (s) {
+      var li = el('li');
+      li.appendChild(el('strong', null, s[0]));
+      li.appendChild(el('span', null, s[1]));
+      nums.appendChild(li);
+    });
+    pw.appendChild(nums);
+    var wins = el('ul', 'proof-wins');
+    wins.setAttribute('aria-label', 'Some results');
+    PROOF_RESULTS.forEach(function (r) {
+      var li = el('li');
+      li.appendChild(el('strong', null, r[0]));
+      li.appendChild(el('span', null, r[1]));
+      wins.appendChild(li);
+    });
+    pw.appendChild(wins);
+    var trophy = el('p', 'proof-more');
+    trophy.appendChild(linkTo(el('a', null, 'Every result, in the trophy room'), 'https://edu.coresg.tech/trophy-room/'));
+    pw.appendChild(trophy);
+    proof.appendChild(pw);
+    main.appendChild(proof);
+    /* --- one section per audience, its cards from assets/features.json --- */
+    var box = el('div', 'audiences');
+    box.id = 'audiences';
+    var w0 = el('div', 'wrap');
+    var loading = el('p', 'notice');
+    loading.appendChild(el('span', 'spinner'));
+    loading.appendChild(document.createTextNode('Loading the features…'));
+    w0.appendChild(loading);
+    box.appendChild(w0);
+    main.appendChild(box);
+    /* the cards arrive after the page: a click on an audience link meanwhile (#/for/<x>) keeps this page, so the
+       guard is "still this home page", and the scroll and the focus go where the visitor is now (current.slug) */
+    readFeatures().then(function (data) {
+      if (current.doc !== 'home' || !box.isConnected) { return; }
+      renderAudiences(box, data);
+      if (current.slug) { scrollToId(current.slug); }
+      /* only if the focus is still where the route change put it: a visitor who has moved on (the search) keeps it */
+      if (pendingFocus && current.slug === pendingFocus && (document.activeElement === main || document.activeElement === document.body)) {
+        focusSection(pendingFocus);
+      }
+      pendingFocus = null;
+    }).catch(function (e) {
+      if (current.doc !== 'home' || !box.isConnected) { return; }
+      w0.textContent = '';
+      var p = el('p', 'notice notice-failed', 'The feature list could not be loaded (' + e.message + '). ');
+      var a = el('a', null, 'Every document is on the Docs page.');
+      a.href = '#/documentation';
+      p.appendChild(a);
+      w0.appendChild(p);
+    });
+
+    /* --- the story and its credit (every public page credits EVN's two creators) --- */
+    var st = section('The story');
+    st.node.id = 'story';
+    var sg = el('div', 'story-grid');
+    var prose = el('div', 'story-prose');
+    prose.appendChild(el('p', null,
+      'LEGO® MINDSTORMS® was discontinued in 2022. The material for learning with it thinned ' +
+      'out, and serious robotics hardware stayed expensive. EVN is the answer to that: an affordable, ' +
+      'open platform — the natural evolution of LEGO MINDSTORMS, and a basecamp for students who ' +
+      'want to get serious about robotics.'));
+    prose.appendChild(el('p', null,
+      'The board exists because of its backers: the Kickstarter campaign “EVN: The Natural Evolution ' +
+      'of the LEGO® MINDSTORMS® System” was funded by 71 backers. Without them EVN would not exist.'));
+    var ks = el('a', 'btn btn-ghost', 'The story on Kickstarter');
+    linkTo(ks, 'https://www.kickstarter.com/projects/thenaturalevolution/evn-the-natural-evolution-of-the-lego-mindstorms-system');
+    var kw = el('div', 'actions');
+    kw.appendChild(ks);
+    prose.appendChild(kw);
+    sg.appendChild(prose);
+
+    var credit = el('div', 'credit');                 // not an <aside>: a complementary landmark inside <main> fails axe
+    credit.appendChild(el('span', 'kicker', 'Created by'));
+    [['Kenneth Chow', 'Strategic Lead and mentor. Founded the Centre of Robotics Excellence in 2014.',
+      [['linkedin.com/in/kc-robotics', 'https://www.linkedin.com/in/kc-robotics/']]],
+     ['Heng Teng Yi', 'Technical Lead and mentee. Author and maintainer of the EVN Arduino library.',
+      [['linkedin.com/in/heng-teng-yi', 'https://www.linkedin.com/in/heng-teng-yi/'], ['github.com/HTY2003', 'https://github.com/HTY2003']]]]
+      .forEach(function (person) {
+        var pb = el('div', 'person');
+        pb.appendChild(el('p', 'who', person[0]));
+        pb.appendChild(el('p', 'what', person[1]));
+        person[2].forEach(function (l) { pb.appendChild(linkTo(el('a', 'credit-link', l[0]), l[1])); });
+        credit.appendChild(pb);
+      });
+    var stats = el('ul', 'stats');
+    [['2014', 'the Centre of Robotics Excellence founded'], ['2018', 'the first EVN ALPHA'], ['71', 'Kickstarter backers'], ['S$13,053', 'pledged, of a S$8,888 goal']]
+      .forEach(function (s) {
+        var li = el('li');
+        li.appendChild(el('strong', null, s[0]));
+        li.appendChild(el('span', null, s[1]));
+        stats.appendChild(li);
+      });
+    credit.appendChild(stats);
+    sg.appendChild(credit);
+    st.body.appendChild(sg);
+    main.appendChild(st.node);
+
+    main.appendChild(ledNav());
+    followStill(stage);
+    scrollToId(slug);
+    startStage(stage);
+  }
+
+  /* The stacked layout (1100 px and under: site.css, hero3d.js STACKED): the board, full size, above the first screen's
+     words. Where the words run past the stage (a phone: about 550 px of them under a 300 px board), the board scrolls up
+     with them by as much as they overflow, so no word ever passes under it (data/shots.js "the board covers no word"),
+     and comes back down over the first chapter's approach. hero3d.js fits the 3D board into the still's box as it moves. */
+  var stillTeardown = null;
+  function followStill(stage) {
+    if (stillTeardown) { stillTeardown(); }
+    var still = stage.querySelector('.stage-still'), hero = stage.querySelector('.stage-hero'), vis = stage.querySelector('.stage-visual');
+    /* a browser without matchMedia (jsdom, an old one) keeps the wide layout's still where site.css puts it */
+    var mq = window.matchMedia ? window.matchMedia('(max-width: 1100px)') : { matches: false }, ticking = false;
+    function place() {
+      ticking = false;
+      if (!mq.matches || !still || !hero || !vis) { stage.style.removeProperty('--still-y'); return; }
+      var s = Math.max(0, -stage.getBoundingClientRect().top), over = Math.max(0, hero.offsetHeight - vis.clientHeight);
+      var back = vis.clientHeight * 0.4;
+      var y = s <= hero.offsetHeight ? Math.min(s, over) : over * Math.max(0, 1 - (s - hero.offsetHeight) / back);
+      stage.style.setProperty('--still-y', (-Math.round(y)) + 'px');
+    }
+    function onScroll() { if (!ticking) { ticking = true; requestAnimationFrame(place); } }
+    place();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll, { passive: true });
+    stillTeardown = function () { window.removeEventListener('scroll', onScroll); window.removeEventListener('resize', onScroll); stillTeardown = null; };
+  }
+
+  /* ---- Get started: three paths, a few numbered steps each, the guides for the detail ---- */
+
+  /* [id, heading, one line, steps, the guides]; a step is text, or [text, link label, href] */
+  var PATHS = [
+    ['browser', 'In the browser', 'Nothing to install: Chrome or Edge, and a USB cable.', [
+      ['Open the browser IDE in Chrome or Edge.', 'Open the browser IDE', 'ide/'],
+      ['The board needs the MicroPython firmware on it: a browser cannot put it there.', 'Putting the firmware on',
+       '#/getting-started/4-put-the-firmware-on-the-board'],
+      'Plug the board in with the USB cable and switch it on, press Choose the board port, pick An EVN ALPHA on USB, then Connect.',
+      'Open an example under Examples, put the wheels off the ground and press Run.'],
+     [['Programs: run, stop, ports and units', '#/programs/']]],
+    ['vs-code', 'In VS Code', 'The extension, with the firmware inside it.', [
+      ['Install VS Code 1.106 or newer.', 'code.visualstudio.com', 'https://code.visualstudio.com/'],
+      ['Download the extension and install it: Extensions view, the … menu, Install from VSIX.', 'Downloads', '#/downloads'],
+      'Run EVN: Install mpremote once.',
+      'Plug the board in, switch it on and run EVN: Flash MicroPython firmware.',
+      'Open motor_minimal under Examples, plug a motor into port 1 and press Ctrl+F5.'],
+     [['Getting started, step by step', '#/getting-started'], ['Troubleshooting', '#/troubleshooting']]],
+    ['board', 'With a board', 'Switching the EVN ALPHA on, and its first set-up.', [
+      'Insert the two 18650 cells in the order the card shows, minding the + and - marks.',
+      'Press ON/OFF: the red LED lights while the board is on.',
+      'Connect the USB-C cable to your computer: the green LED lights.',
+      ['Calibrate the motors, the IMU and the sensors from the Board view.', 'Calibrating your robot', '#/calibration/']],
+     [['Switch the board on', '#/getting-started/2-switch-the-board-on'], ['The board: buttons, lights and pins', '#/board/']]]
+  ];
+
+  function renderStart(slug) {
+    var head = pageHead('Get started', 'Pick one way in. Each takes a few minutes.');
+    main.appendChild(head.node);
+    var s = el('section', 'section paths-section');
+    var w = el('div', 'wrap');
+    var grid = el('div', 'paths');
+    PATHS.forEach(function (p) {
+      var box = el('section', 'path');
+      box.id = p[0];
+      box.setAttribute('aria-labelledby', p[0] + '-h');
+      var h = el('h2', null, p[1]);
+      h.id = p[0] + '-h';
+      box.appendChild(h);
+      box.appendChild(el('p', 'path-line', p[2]));
+      var ol = el('ol', 'steps');
+      p[3].forEach(function (step) {
+        var li = el('li');
+        if (typeof step === 'string') { li.textContent = step; } else {
+          li.appendChild(document.createTextNode(step[0] + ' '));
+          li.appendChild(linkTo(el('a', null, step[1]), step[2]));
+        }
+        ol.appendChild(li);
+      });
+      box.appendChild(ol);
+      var more = el('p', 'path-more', 'More: ');
+      p[4].forEach(function (g, n) {
+        if (n) { more.appendChild(document.createTextNode(' · ')); }
+        more.appendChild(linkTo(el('a', null, g[0]), g[1]));
+      });
+      box.appendChild(more);
+      grid.appendChild(box);
+    });
+    w.appendChild(grid);
+    var sim = el('p', 'path-note', 'No board yet? ');
+    sim.appendChild(linkTo(el('a', null, 'Run your program in the simulator'), '#/simulator/'));
+    sim.appendChild(document.createTextNode('.'));
+    w.appendChild(sim);
+    s.appendChild(w);
+    main.appendChild(s);
+    scrollToId(slug);
+  }
+
+  /* ---- Docs: one index of the documents, grouped by what you want to do ---- */
+
+  /* [id, heading, entries]; an entry is [route] (the document, its DOCS title), [route, heading slug, label] or
+     [https URL, label]. scripts/test_site.js checks that every route of DOCS is here. */
+  var DOC_GROUPS = [
+    ['start-here', 'Start here', [['getting-started'], ['troubleshooting'], ['known-limitations']]],
+    ['program', 'Program the robot', [['programs'], ['blocks'], ['api'], ['api-robot'], ['api-system'], ['repl'], ['main-py']]],
+    ['simulator', 'Use the simulator', [['simulator'], ['simulator', 'challenges', 'Challenges'],
+      ['simulator', 'wro-robomission', 'WRO RoboMission'], ['simulator', 'the-referee', 'The RoboCup Junior referee'],
+      ['simulator', 'configuring-the-robot', 'Configuring the robot']]],
+    ['data', 'See and record data', [['board-view'], ['data-logger'], ['notebook']]],
+    ['teachers', 'For teachers', [['https://learn.coresg.tech/preview/', 'The lessons: a free preview'],
+      ['simulator', 'running-a-challenge', 'Running a challenge'], ['simulator', 'licence', 'The simulator licence']]],
+    ['boards', 'The board', [['board'], ['calibration'], ['bluetooth'], ['api-sensors'], ['api-displays'], ['api-extended']]],
+    ['updates', 'Updates and changes', [['commands'], ['changelog'], ['changelog-full']]]
+  ];
+
+  function docEntryLink(e) {
+    var a = el('a', 'doc-row');
+    var label, href;
+    if (/^https?:/.test(e[0])) { href = e[0]; label = e[1]; }
+    else if (e.length > 1) { href = '#/' + e[0] + '/' + e[1]; label = e[2]; }
+    else { href = '#/' + e[0] + (SECTIONED[e[0]] ? '/' : ''); label = DOCS[e[0]].title; }
+    linkTo(a, href);
+    var t = el('span', 't');
+    t.appendChild(el('strong', null, label));
+    if (e.length === 1 && DOCS[e[0]].blurb) { t.appendChild(el('span', null, DOCS[e[0]].blurb)); }
+    a.appendChild(t);
+    var go = el('span', 'go', '→');
+    go.setAttribute('aria-hidden', 'true');
+    a.appendChild(go);
+    return a;
+  }
+
+  function periphList(rows, label) {
+    var ul = el('ul', 'periph-list');
+    ul.setAttribute('aria-label', label);
+    rows.forEach(function (r) {
+      var li = el('li');
+      var a = el('a');
+      a.href = '#/' + r[3] + '/' + r[4];
+      a.appendChild(el('strong', null, r[0]));
+      a.appendChild(el('span', null, r[1]));
+      a.appendChild(el('code', null, r[2]));
+      li.appendChild(a);
+      ul.appendChild(li);
+    });
+    return ul;
+  }
+
+  function renderDocsIndex(slug) {
+    var head = pageHead('Docs', 'Every guide and reference page, by what you want to do.');
+    main.appendChild(head.node);
+    var s = el('section', 'section docs-index');
+    var w = el('div', 'wrap');
+    var toc = el('nav', 'aud-nav');
+    toc.setAttribute('aria-label', 'Groups on this page');
+    var tul = el('ul');
+    DOC_GROUPS.concat([['sensors', 'Sensors and displays']]).forEach(function (g) {
+      var li = el('li');
+      var a = el('a', null, g[1]);
+      a.href = '#/documentation/' + g[0];
+      li.appendChild(a);
+      tul.appendChild(li);
+    });
+    toc.appendChild(tul);
+    w.appendChild(toc);
+    var cols = el('div', 'doc-groups');
+    DOC_GROUPS.forEach(function (g) {
+      var box = el('section', 'doc-group');
+      box.id = g[0];
+      box.setAttribute('aria-labelledby', g[0] + '-h');
+      var h = el('h2', null, g[1]);
+      h.id = g[0] + '-h';
+      box.appendChild(h);
+      var list = el('div', 'doc-list');
+      g[2].forEach(function (e) { list.appendChild(docEntryLink(e)); });
+      box.appendChild(list);
+      cols.appendChild(box);
+    });
+    w.appendChild(cols);
+
+    /* the sensors and displays, in plain words, each linked to its section of the API reference (SITE-19) */
+    var ps = el('section', 'doc-group doc-group-wide');
+    ps.id = 'sensors';
+    ps.setAttribute('aria-labelledby', 'sensors-h');
+    var ph = el('h2', null, 'Sensors and displays');
+    ph.id = 'sensors-h';
+    ps.appendChild(ph);
+    ps.appendChild(el('p', 'gallery-intro',
+      'Plug a sensor or a display into any of the sixteen sensor ports and the board finds it by itself: it shows up by name in the Board ' +
+      'panel. Servos and LED strips plug into the servo ports and the Bluetooth module into a serial port.'));
+    var gal = el('div', 'gallery');
+    GALLERY.forEach(function (g) {
+      var figure = el('a', 'shot');
+      figure.href = sectionOf(g[4]);
+      var im = el('img');
+      im.src = 'assets/images/' + g[0];
+      im.width = 480;
+      im.height = 360;
+      im.loading = 'lazy';
+      im.alt = g[3];
+      figure.appendChild(im);
+      var cap = el('span', 'cap');
+      cap.appendChild(el('strong', null, g[1]));
+      cap.appendChild(document.createTextNode(g[2]));
+      figure.appendChild(cap);
+      gal.appendChild(figure);
+    });
+    ps.appendChild(gal);
+    ps.appendChild(el('h3', 'periph-h', 'Every EVN module'));
+    ps.appendChild(periphList(PERIPHERALS, 'Every EVN module'));
+    ps.appendChild(el('h3', 'periph-h', 'Kit you may already own'));
+    ps.appendChild(el('p', 'gallery-intro',
+      'These work the same way, though EVN does not sell them (the extended peripherals).'));
+    ps.appendChild(periphList(EXTENDED, 'Kit you may already own'));
+    w.appendChild(ps);
+    s.appendChild(w);
+    main.appendChild(s);
+    scrollToId(slug);
+  }
+
+  /* ---- Downloads: the extension and the firmware from latest.json ---- */
+
+  function renderDownloads(slug) {
+    var head = pageHead('Downloads', 'The VS Code extension carries the firmware and flashes it for you.');
+    main.appendChild(head.node);
     /* --- downloads --- */
-    var d = section('Downloads');
+    var d = section('The files');
     d.node.id = 'downloads';
     var dlBox = el('div');
     var loading = el('p', 'notice');
@@ -883,8 +1497,6 @@
       note.appendChild(older);
       note.appendChild(document.createTextNode('.'));
       dlBox.appendChild(note);
-
-      if (ext.version) { b2.textContent = 'Download the extension ' + ext.version; }   // the link stays on the install steps
     }).catch(function (e) {
       dlBox.textContent = '';
       var p = el('p', 'notice', 'The download list (latest.json) could not be read (' + e.message +
@@ -910,167 +1522,27 @@
         'The same editor, the same blocks and the same board panel, running as a web page. It talks to ' +
         'the board over Web Serial, so it needs a Chromium browser (Chrome or Edge) and a USB cable.'));
       var go = el('a', 'btn btn-primary', 'Open the browser IDE');
-      go.href = 'ide/';
-      go.target = '_blank';
-      go.rel = 'noopener';
+      linkTo(go, 'ide/');
       card.appendChild(txt);
       card.appendChild(go);
       i.body.appendChild(card);
       main.appendChild(i.node);
     }
+    scrollToId(slug);
+  }
 
-    /* --- the board --- */
-    var hb = section('The EVN ALPHA controller');
-    var bfig = el('figure', 'hero-photo board-photo');
-    var bimg = el('img');
-    bimg.src = 'assets/images/evn-alpha-board.jpg';
-    bimg.width = 1600;
-    bimg.height = 800;
-    bimg.loading = 'lazy';
-    bimg.alt = 'Two EVN ALPHA controllers on a white desk: the front one shows its four RJ12 motor ports ' +
-               'in a LEGO-compatible white housing, the one behind it shows the green circuit board through ' +
-               'its clear cover.';
-    bfig.appendChild(bimg);
-    bfig.appendChild(el('figcaption', null,
-      'Four ports for LEGO MINDSTORMS EV3 and NXT motors, four servo ports, sixteen sensor ports, two serial ' +
-      'ports, and rechargeable 18650 cells charged over USB-C.'));
-    hb.body.appendChild(bfig);
-    main.appendChild(hb.node);
+  var PAGE_RENDER = { start: renderStart, documentation: renderDocsIndex, downloads: renderDownloads };
 
-    /* --- the peripherals: plain names, what each is for, every one linked to its section --- */
-    var p = section('Plug-and-play sensors and displays');
-    p.body.appendChild(el('p', 'gallery-intro',
-      'Plug a sensor or a display into any of the sixteen sensor ports and the board finds it by itself: it shows up by name in the Board ' +
-      'panel, has blocks of its own and a section in the API reference. Servos and LED strips plug into the four ' +
-      'servo ports and the Bluetooth module into a serial port; you name their port in the program, as nothing is ' +
-      'read back from them. Each one below opens its section.'));
-    var gal = el('div', 'gallery');
-    GALLERY.forEach(function (g) {
-      var figure = el('a', 'shot');
-      figure.href = sectionOf(g[4]);
-      var im = el('img');
-      im.src = 'assets/images/' + g[0];
-      im.width = 480;
-      im.height = 360;
-      im.loading = 'lazy';
-      im.alt = g[3];
-      figure.appendChild(im);
-      var cap = el('span', 'cap');
-      cap.appendChild(el('strong', null, g[1]));
-      cap.appendChild(document.createTextNode(g[2]));
-      figure.appendChild(cap);
-      gal.appendChild(figure);
-    });
-    p.body.appendChild(gal);
-    function periphList(rows, label) {
-      var ul = el('ul', 'periph-list');
-      ul.setAttribute('aria-label', label);
-      rows.forEach(function (r) {
-        var li = el('li');
-        var a = el('a');
-        a.href = '#/' + r[3] + '/' + r[4];
-        a.appendChild(el('strong', null, r[0]));
-        a.appendChild(el('span', null, r[1]));
-        a.appendChild(el('code', null, r[2]));
-        li.appendChild(a);
-        ul.appendChild(li);
-      });
-      return ul;
-    }
-    p.body.appendChild(el('h3', 'periph-h', 'Every EVN module'));
-    p.body.appendChild(periphList(PERIPHERALS, 'Every EVN module'));
-    p.body.appendChild(el('h3', 'periph-h', 'Kit you may already own'));
-    p.body.appendChild(el('p', 'gallery-intro',
-      'These work the same way, though EVN does not sell them (the extended peripherals).'));
-    p.body.appendChild(periphList(EXTENDED, 'Kit you may already own'));
-    main.appendChild(p.node);
-
-    /* --- the story --- */
-    var st = section('The story');
-    var sg = el('div', 'story-grid');
-
-    var prose = el('div', 'story-prose');
-    prose.appendChild(el('p', null,
-      'LEGO® MINDSTORMS® was discontinued in 2022. The material for learning with it thinned ' +
-      'out, and serious robotics hardware stayed expensive. EVN is the answer to that: an affordable, ' +
-      'open platform — the natural evolution of LEGO MINDSTORMS, and a basecamp for students who ' +
-      'want to get serious about robotics.'));
-    prose.appendChild(el('p', null,
-      'EVN is a joint project of Kenneth Chow and Heng Teng Yi, mentor and mentee, in Singapore: ' +
-      'Kenneth as the Strategic Lead, Teng Yi as the Technical Lead. Kenneth founded the Centre of ' +
-      'Robotics Excellence in 2014; the EVN ALPHA was first developed there at the end of 2018. Teng Yi ' +
-      'came to it with four years of international competitive robotics behind him, including wins in ' +
-      'five RoboCup sub-leagues, and wrote and maintains the EVN Arduino library.'));
-    prose.appendChild(el('p', null,
-      'The board exists because of its backers. The Kickstarter campaign “EVN: The Natural Evolution ' +
-      'of the LEGO® MINDSTORMS® System” ran from 22 December 2023 to 20 February 2024 and ' +
-      'was funded by 71 backers pledging S$13,053 against a S$8,888 goal. Without them EVN would not exist.'));
-    var ks = el('a', 'btn btn-primary', 'The story on Kickstarter');
-    ks.href = 'https://www.kickstarter.com/projects/thenaturalevolution/evn-the-natural-evolution-of-the-lego-mindstorms-system';
-    ks.target = '_blank';
-    ks.rel = 'noopener';
-    var kw = el('div', 'actions');
-    kw.appendChild(ks);
-    prose.appendChild(kw);
-    sg.appendChild(prose);
-
-    var credit = el('div', 'credit');                 // not an <aside>: a complementary landmark inside <main> fails axe
-    credit.appendChild(el('span', 'kicker', 'Created by'));
-    [['Kenneth Chow', 'Strategic Lead and mentor. Founded the Centre of Robotics Excellence in 2014.',
-      [['linkedin.com/in/kc-robotics', 'https://www.linkedin.com/in/kc-robotics/']]],
-     ['Heng Teng Yi', 'Technical Lead and mentee. Author and maintainer of the EVN Arduino library.',
-      [['linkedin.com/in/heng-teng-yi', 'https://www.linkedin.com/in/heng-teng-yi/'], ['github.com/HTY2003', 'https://github.com/HTY2003']]]]
-      .forEach(function (person) {
-        var box = el('div', 'person');
-        box.appendChild(el('p', 'who', person[0]));
-        box.appendChild(el('p', 'what', person[1]));
-        person[2].forEach(function (l) {
-          var a = el('a', 'credit-link', l[0]);
-          a.href = l[1];
-          a.target = '_blank';
-          a.rel = 'noopener';
-          box.appendChild(a);
-        });
-        credit.appendChild(box);
-      });
-    var stats = el('ul', 'stats');
-    [['2014', 'the Centre of Robotics Excellence founded'], ['2018', 'the first EVN ALPHA'], ['71', 'Kickstarter backers'], ['S$13,053', 'pledged, of a S$8,888 goal']]
-      .forEach(function (s) {
-        var li = el('li');
-        li.appendChild(el('strong', null, s[0]));
-        li.appendChild(el('span', null, s[1]));
-        stats.appendChild(li);
-      });
-    credit.appendChild(stats);
-    sg.appendChild(credit);
-
-    st.body.appendChild(sg);
-    main.appendChild(st.node);
-
-    /* --- documentation --- */
-    var docs = section('Documentation');
-    var list = el('div', 'doc-list');
-    ORDER.filter(function (name) { return !DOCS[name].part; }).forEach(function (name, n) {
-      var a = el('a', 'doc-row');
-      a.href = '#/' + name + (SECTIONED[name] ? '/' : '');
-      a.appendChild(el('span', 'n', '0' + (n + 1)));
-      var t = el('span', 't');
-      t.appendChild(el('strong', null, DOCS[name].title));
-      t.appendChild(el('span', null, DOCS[name].blurb));
-      a.appendChild(t);
-      var go2 = el('span', 'go', '→');
-      go2.setAttribute('aria-hidden', 'true');
-      a.appendChild(go2);
-      list.appendChild(a);
-    });
-    docs.body.appendChild(list);
-    main.appendChild(docs.node);
-
-    if (slug === 'downloads') {
-      var anchor = document.getElementById('downloads');
-      if (anchor) { anchor.scrollIntoView(); window.scrollBy(0, -8); return; }
-    }
-    window.scrollTo(0, 0);
+  function renderPage(r) {
+    var info = PAGES[r.doc];
+    document.title = SITE + ' · ' + info.title;
+    markCurrentNav(r.doc);
+    var same = current && current.doc === r.doc;
+    current = r;
+    if (same) { scrollToId(r.slug); return; }
+    stopSpy();
+    main.textContent = '';
+    PAGE_RENDER[r.doc](r.slug);
   }
 
   function section(title) {
@@ -1327,7 +1799,8 @@
   }
 
   /* for scripts/test_site.js (jsdom): the functions it checks, nothing the page needs */
-  window.EVNSite = { DOCS: DOCS, ORDER: ORDER, slugify: slugify, suggestUrl: suggestUrl, suggestLink: suggestLink, pageUrl: pageUrl,
+  window.EVNSite = { DOCS: DOCS, ORDER: ORDER, PAGES: PAGES, DOC_GROUPS: DOC_GROUPS, PATHS: PATHS,
+                     featureStatus: featureStatus, versionAtLeast: versionAtLeast, slugify: slugify, suggestUrl: suggestUrl, suggestLink: suggestLink, pageUrl: pageUrl,
                      REPORT_URL: REPORT_URL, renderMarkdown: renderMarkdown,
                      assignIds: assignIds, renderCallouts: renderCallouts, prepareTables: prepareTables,
                      addCopyButtons: addCopyButtons, markScrollers: markScrollers, indexDoc: indexDoc,
@@ -1356,9 +1829,13 @@
 
   function route() {
     var r = parseRoute();
-    if (r.doc === 'home') { renderHome(r.slug); } else { renderDoc(r); }
+    if (r.doc === 'home') { renderHome(r.slug); } else if (PAGES[r.doc]) { renderPage(r); } else { renderDoc(r); }
     if (firstRoute) { firstRoute = false; return; }   // a page load announces itself
-    var info = r.doc === 'home' ? { title: SITE } : (DOCS[r.doc] || { title: SITE });
+    if ((r.doc === 'home' || PAGES[r.doc]) && r.slug) {   // a section of the home page or of a page: its heading
+      if (focusSection(r.slug)) { return; }
+      if (r.doc === 'home') { pendingFocus = r.slug; }
+    }
+    var info = r.doc === 'home' ? { title: SITE } : (PAGES[r.doc] || DOCS[r.doc] || { title: SITE });
     announce(info.title);
     try { main.focus({ preventScroll: true }); } catch (e) { main.focus(); }
   }

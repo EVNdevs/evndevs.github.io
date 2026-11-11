@@ -168,6 +168,15 @@ also said through a live region, so a screen reader announces it (the panel's ro
   The list states where each one is, how far from the one before and from the robot, with a Remove button for each;
   **Clear** takes them all. They stay across runs, go with the course, and nothing on the course senses them (up to 50).
 
+**Say the robot's position** (the command *EVN: Say the robot's position*, Ctrl+Alt+P or on a Mac Cmd+Alt+P while the
+Simulator panel is active) says the robot's pose through the same live region, in either view: `Robot at x 612 mm, y
+448 mm, heading 2°.` On a challenge course with named items (the ones **Show names** labels) it adds the nearest one,
+measured from the middle of the axle to the item's middle (an area's centre; a ball where it is now), and its side: `...; nearest: the blue zone,
+40 mm ahead.` Ahead and behind are within 45° of the heading and of its back; otherwise to the left or to the right.
+It is the pose the panel draws, so it tells a learner who cannot see the screen what a sighted one sees; it is said in
+the panel only and never reaches a program, which still cannot read the true pose in a scored run. A panel behind
+another tab comes to the front first.
+
 A program reads the same through `simtrail`, a simulator-only module (the board has no pen and no true pose, so `evn`
 stays the board's API, and `import simtrail` fails on the board):
 
@@ -668,10 +677,14 @@ scored and the robot is never put back) and on again (a new game from where the 
   (figure 3: turned round, or reversing on past the whole tile before) are called; a back-up within the tile or
   back over the joint it has just crossed or the one ahead of it (heading on along the course), a back-up from short
   of a joint it never crossed (the small backward settle at the end of a straight among them), a turn on the spot
-  (which also leaves a back-up's call standing), crossing a line square or passing beside it are not. One known
-  exception, not the rules' (`docs/TODO.md`): a robot left facing back along the course, by a turn on the spot or
-  driving on tail first, with its sensors 20-50 mm past a joint of its own line that way, is called though it has
-  stopped there. Nothing else is automatic: stopping, circling or wandering off
+  (which also leaves a back-up's call standing), crossing a line square or passing beside it are not. Moving forward,
+  the robot must also have been carried at least 5 mm along that line, on it, since its sensors came onto that side of
+  the point. That means crossing it (driving over it, or a turn that swings them over it) or coming up beside it, and
+  a back-up can take that distance away but never add it. A robot that turns round, or drives on tail first, and stops
+  near a joint is not called, and neither is one that stops on a wrong line it has only turned onto. Driving back onto
+  the tile before after turning round is called, after 5 mm when the turn or a back-up left the sensors deep past the
+  joint, within 60 mm of it. A robot coming back into its own tile over the joint ahead of it is not called either.
+  Nothing else is automatic: stopping, circling or wandering off
   the course are not against the rules. For unattended runs the engine's `autoCaptain`
   setting (off) calls the team captain's 5.5.1a, logged as the captain's, when the robot's centre is over `offTiles`
   (300 mm) off the tiles, over `lostOff` (400 mm) from the line, or after `autoCaptainS` (30 s) without 10 mm of
@@ -729,33 +742,76 @@ scored and the robot is never put back) and on again (a new game from where the 
   drives nothing and does not count) - except right after a lack of progress, the team's 4.2.8 procedure. The referee is the simulator's reading of the draft rules; a real referee decides what "following the line"
   is.
 
+## Lesson checks
+
+A lesson can say whether your program does what its page asks: a **check**. The page names it, and a line at the top of your
+program picks it (one of its first ten lines):
+
+```python
+# check: PRG.FUNC.define-vs-call
+```
+
+Press **Check** in the panel's header, or run **EVN: Check this program**. With no `# check:` line it asks for the check's
+name. The check runs your program on its own, in worlds of its own (a fresh robot each time, on the course the check names;
+a check on *your* robot uses the one in **Configure robot**): the field in the panel and the program on the board are left
+alone, and a check never runs at the same time as a challenge. A check that asks you to predict shows its question and a box
+first: type your number, then press **Run check**. Your words never leave the box; what is kept, in your progress on this
+computer, is that you predicted, when, your number (when the box held one: `1440`, `1,440`, `12,5` and `1440 degrees` are
+numbers, `about 1440` is words) and whether it was within the check's tolerance of what the run gave. The box keeps your text for **Run check again**,
+and a box you did not change since the last press is no new prediction; **Close** empties it.
+
+The check card then shows one line for the whole check, *PASS 3 of 3 checks: ...* or *FAIL 2 of 3 checks: ...: what was
+wrong*, a line for each thing it checked (*Part 1:*, *Part 2:* when it ran your program more than once), a hint when one
+failed, and the *PREDICTED* line (*PREDICTED in words: not scored* for words, *the run gave nothing to compare* when the
+run had no such value; a turn or a distance is compared by its size, so -1440 matches four clockwise turns). A screen reader reads the first line out, and it is written to the *EVN ALPHA log*; from
+the command it is also a notification. A FAIL shows what your program did, and what was wanted only where the page asks for
+that motion. **Run check again** checks the program as it is now. A program that never stops fails at the check's time
+limit, and the card says so. When the check cannot run at all, the card says why in words: *This check is not in your
+version of the extension. Update the extension, or ask your teacher.* when your version has no check of that name. A check
+is practice: only the prediction is recorded yet, and nothing it says is a mark. Checks ship for some lessons (G5.2's, O2's sessions 1 to 12 and G6.1's); more come with later versions.
+
 ## Challenges
 
 A challenge is a course with a task, scored by the simulator: get the robot from the blue start box into the green goal,
-around red obstacles, as fast and as reliably as you can. Choose one in the **Course** list:
+around red obstacles or through a maze, as fast and as reliably as you can. Choose one in the **Course** list:
 
 | Level | Course | What it asks | Starts vary by | Par |
 | :--- | :--- | :--- | :--- | :--- |
 | 1 | *Obstacle course · Level 1: Around the block* (2000 x 1000 mm) | round the block in the middle, into the goal on the far side | ±10 mm, ±1° | 6 s |
 | 2 | *Obstacle course · Level 2: Slalom* (2400 x 1200 mm) | over the first barrier, under the second, into the far corner | ±20 mm, ±2° | 10 s |
 | 3 | *Obstacle course · Level 3: The gauntlet* (2400 x 1200 mm) | through a 400 mm gap, round a pillar, up into a bay through its 320 mm opening | ±30 mm, ±4° | 8 s |
+| 1 | *Maze runner · Level 1: One corridor* (5 x 3 cells of 400 mm) | one winding corridor from the blue cell to the green cell | ±15 mm, ±3° | 30 s |
+| 2 | *Maze runner · Level 2: A dead end* (5 x 4 cells) | one branch, one dead end | ±20 mm, ±3° | 45 s |
+| 3 | *Maze runner · Level 3: The island* (6 x 5 cells) | the green cell opens off an island: a right hand on the wall comes back to the blue cell | ±20 mm, ±4° | 70 s |
 
-The walls are 100 mm high and the obstacles 150 mm, so the distance sensor sees both; the colour sensors read the start
-box as blue and the goal as green. On a challenge course the robot works as on any other: run your program with
+The obstacle course's walls are 100 mm high and its obstacles 150 mm, so the distance sensor sees both; Maze runner's walls
+are 100 mm high and 20 mm thick, 380 mm clear between them, for the class robot with a side sensor on I2C 7, 40 mm right of centre (*left* −40 in Configure robot). The colour
+sensors read the start box as blue and the goal as green. On a challenge course the robot works as on any other: run your program with
 Ctrl+F5 and watch it, as often as you like.
 
 ### Running a challenge
 
 1. Open the program in the editor (one file: the challenge runs it on a fresh board, without the files you uploaded).
 2. Set **Runs** in the panel's header: how many times the program runs, 1 to 20 (5 to start with; the
-   `evn.challenge.runs` setting keeps it).
+   `evn.challenge.runs` setting keeps it). A level that fixes its runs (the obstacle course's levels: 5) sets the box to
+   that number and greys it out: the level always runs that many, a submission holds that many, and a pass needs them.
 3. Press **Run challenge**. The first run starts from the course's start; every other run from a start moved and turned
    a little, at random, as a robot put down by hand is. The runs are fast: simulated time is not paced to the clock.
    A run that drives into the goal takes a few seconds of your computer's time, most of it starting Python; one that
    calls the board in a tight loop until the time limit can take a minute.
 4. The results card lists every run: where it started, how it ended (*goal*, *out of time*, *stopped short*, *error*),
    its time, how many times the robot touched a wall or an obstacle, and its points. **Try** puts the robot at that
-   run's start, so you can run your program from there with Ctrl+F5 and see what went wrong.
+   run's start, so you can run your program from there with Ctrl+F5 and see what went wrong. A level with a pass rule
+   adds one line, which a screen reader also reads out: *PASS level 1: score 92.1, at the goal 5 of 5*, *FAIL ...*, or
+   *NOT YET ...: this level needs 5 runs* when the rule holds on fewer runs than the level needs.
+   **Read aloud** on the card reads it with a voice built into your computer (never a voice on a server): the title,
+   the line, each run as *Run: 2; Start: ...; Result: goal; ...*, then the summary, without the buttons, outlining each
+   part as it is said. Press it again, or Escape, to stop; Close, a new run and hiding the panel stop it too. On a
+   computer with no built-in voice for English the button says *No voice on this device*, a line under it names the
+   device's own routes, and the button tries again when pressed. The lesson check's card has the same button.
+5. A PASS is kept in your progress (*My progress*, on this computer): the level, when you first and last passed it, and
+   your best score with its runs. **Practice** runs your program again from the same starts: its line says *PRACTICE*, and
+   a practice run is never saved as a submission and never recorded. A FAIL or a NOT YET records nothing.
 
 A run ends as soon as the whole robot is inside the goal (your program is stopped there with a `KeyboardInterrupt`),
 when the program ends, at the level's time limit (60 s; Level 3, 90 s), or with an error. A program that catches the
@@ -784,7 +840,8 @@ it, the level, the runs and their starts, every result. It asks once for your **
 `.evnsub` file in *EVN Projects/Submissions*. Hand that file in. Only your teacher and EVN can open it, and your
 teacher re-runs it: a file changed after it was saved, or made some other way than by Save submission, does not
 verify. It also holds your simulator licence's id, when you entered a key. The command palette has it too: **EVN: Save a
-challenge submission**.
+challenge submission**. Your progress notes that you saved one, by the file's fingerprint (its hash) and its place in your
+projects folder, with your name taken out of the file name: the file itself stays where you saved it.
 
 ### For teachers
 
@@ -1579,16 +1636,79 @@ departure: bytes still queued for sending when Run is pressed (within a full rin
 the panel restarts (a program stuck in pure Python on a page without shared memory) keeps the ports from its last
 snapshot, with two losses the board does not have: bytes still queued for sending are dropped (on the board they
 leave), and bytes the program read since that snapshot (at most 33 ms of wall time before the restart) are read
-again. **No link yet:** what a program writes goes nowhere and nothing arrives (the bridge to a process on the PC,
-an SBC, comes next: `SIMULATOR_SBC_DESIGN.md`); `repl(True)` is kept and returned but carries nothing until then.
+again.
+
+**The serial bridge (a Raspberry Pi on Serial1, played by a program on your PC).** In Configure robot -> Serial bridge,
+tick Serial1 and / or Serial2 and Apply (desktop VS Code only: a browser page cannot open a port). Each ticked header
+is a TCP port on 127.0.0.1 - Serial1 on the camera stream's port + 1 (47801), Serial2 on + 2 (47802); the panel shows
+the port, and `~/.evn/sim-endpoints.json` lists them under `"serial"` - that a Python program opens with pyserial:
+
+```python
+import serial
+link = serial.serial_for_url("socket://127.0.0.1:47801", timeout=0.1)   # on a Pi: serial.Serial("/dev/serial0", 115200)
+link.write(b"D 250 -12.5\n")
+reply = link.readline()
+```
+
+- What the board's `UART.write()` puts on the wire reaches your program as its stop bits end, at the baud the board's
+  `UART()` set (pyserial's `socket://` ignores its own settings), and what your program writes reaches `evn.UART` back to
+  back at that baud. A header that is not ticked is a header with nothing on it: its bytes go nowhere.
+- Bytes are timed by the simulation's clock and your program by the wall clock, so keep **Speed at 1x**: at 0.25x your
+  program is four times faster relative to the robot than it would be on a robot. While a program runs and your program
+  is connected, the panel measures how fast the robot runs against the wall clock and says so when it stays outside
+  0.9-1.1x for 2 s (a slow PC can hold the robot below 1x even at Speed 1x); the factor is in Configure's Serial bridge line.
+- One program at a time per header (a second connection is closed). If the first has stopped while it was sending far
+  faster than the wire, the second is let in once the extension sees that the first has gone; after a flood of more
+  than a megabyte it cannot see that until the board has read that much, so the second is closed meanwhile: run it
+  again later. A connection whose first bytes are a web request (a
+  page aiming `fetch()` at the port) is closed before anything reaches the board; a first `G`, `P` (any HTTP verb's
+  first letters) is held about 2 ms to tell.
+- **Read faster than the board writes.** The extension holds at most 4 KB for a program that reads too slowly and drops
+  the newest bytes past that (counted in the panel), as a Pi's tty does, but your operating system's own socket buffers
+  sit in front of it and are far larger: on Linux they held about 3.8 MB before anything was dropped (5.7 minutes of a
+  115 200-baud wire), so a slow reader sees old bytes, not dropped ones (Windows and macOS not measured yet).
+  Towards the board the extension takes at most 4 KB ahead of the wire and then stops reading your socket, but a writer
+  much faster than the wire still fills the operating system's buffers: pace your writes to the baud.
+- `sendbreak()` reaches your program as one `0x00` byte (what a Pi's raw tty reads for a break). A TX inverted with
+  `invert=UART.INV_TX` forwards nothing (a PC that does not invert reads noise): the panel says so.
+- Your program connecting late misses what was sent before, as on a wire; a program that ends and reconnects keeps the
+  board side as it was. Bytes it sent beyond the 4 KB in flight when it stops are dropped, as its tty would have held
+  its writer there.
+- In a window without JS Promise Integration (the panel's log says which) bytes from your PC reach a running program
+  only once it ends; most VS Code windows have it.
+- `UART.repl(True)` carries the program's side of the REPL over the header, as on the board: what the program prints,
+  and the traceback it ends with, go out on the header's TX at the wire's rate with each `\n` as `\r\n` (a long `print()`
+  waits while the port's 1023-byte ring is full), and a `0x03` (Ctrl-C) your PC sends stops the program: every motor
+  coasts and it raises `KeyboardInterrupt`, within about 1.5 ms of the byte at 115 200 baud. The board reads at most 64 of the header's
+  bytes a millisecond into its input; the simulator does the same, so a program that also reads that port gets what the
+  board's would. Your PC cannot type at the REPL's prompt: between runs the REPL takes the bytes and does nothing with
+  them, a running program's `input()` does not read them, and the prompt and its echo are not sent. A loop that makes no
+  board call (pure Python) takes the `0x03` at its next board call, or Stop.
+- Not yet: the run record does not keep what your program sent, so a run with the bridge is not replayable; the helper
+  `evnsim.serial()` (a true byte count and a write paced to the wire) is to come.
 
 A colour sensor, distance sensor, IMU, touch array or ADC opened on a port the configurator has none on raises the
 firmware's error (`OSError: no MPU-6500 on port 3 (I2C 0x68)`, `OSError: no MPR121 on port 9 (I2C 0x5a)`,
 `OSError: no ADS1115 on port 9 (I2C 0x48)`). Hardware the simulator does not have is there by name, and says so when a
 program opens it: `Compass(3)` raises `OSError: no compass on port 3: the simulated robot has a drive base, colour and
-distance sensors, an IMU, servos, touch arrays and ADCs (the hardware configurator)`. So do the other I2C devices, `Bluetooth`,
-`Pose`, `DataLog` and `ADRC` in this version; a `DriveBase` drives on its encoders (its `imu=`, `compass=` and `pose=`
+distance sensors, an IMU, servos, touch arrays and ADCs (the hardware configurator)`. So do the other I2C devices, `Bluetooth`
+and `Pose` in this version; a `DriveBase` drives on its encoders (its `imu=`, `compass=` and `pose=`
 are not simulated yet: read an `IMU()` for the heading).
+
+**`evn.DataLog`** is the board's record core: `hal/hal_datalog_core.inc` (the sizing, "only new readings", the fold, the
+halving, the rows), compiled to WebAssembly (`src/sim/engine/datalog.ts`; `docs/curriculum/SIMAPI_DESIGN.md` §3c, SA-3),
+sampling after every world tick a `Motor`'s `angle` / `speed` / `load` / `stalled`, `evn.battery` and `evn.button`, and
+the program's `log()` rows; `save()` writes the board's CSV to `/data` (the simulator's `/flash/data`), and a recording
+log is stopped and autosaved at the soft reset. A sensor channel (an IMU, a colour or distance sensor, a touch array, an
+ADC) raises `OSError` in this version. Until a PC builds the module with the pinned wasi-sdk 34, the extension carries
+none and `DataLog()` raises `OSError`.
+
+**`evn.ADRC` and `evn.PID`** are the board's own: the firmware's `motion/user_ctrl.c`, compiled to WebAssembly and run by
+the simulator (`src/sim/engine/ctrl.ts`; `docs/curriculum/SIMAPI_DESIGN.md` SA-1, SA-2), with the board's arguments,
+errors, read-only attributes and `settings()`. Their arithmetic is single precision as on the board, so their outputs are
+float32 values (`print()` shows them with a double's digits, as every float in the simulator). A measured `dt` is the
+simulated clock's. A `PID` has the board's attributes only (`p`, `i`, `d`, `output`, `error`, `saturated`, `restarted`):
+its gains and settings are read with `settings()`, as on the board.
 
 `pose.noise()` and `pose.settings()`'s noise keywords come with the real `Pose`, the curriculum's SIMAPI item.
 **`robot.use_gyro()`** takes the board's arguments (`wait=`, `timeout=`) with

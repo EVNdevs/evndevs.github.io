@@ -210,12 +210,14 @@ main:focus { outline: none; }
 .hero-grid { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, .95fr); gap: 48px; align-items: center; }
 @media (max-width: 980px) { .hero-grid { grid-template-columns: minmax(0, 1fr); gap: 34px; } }
 .eyebrow {
-  display: inline-flex; align-items: center; gap: 8px;
+  /* inline-block, not flex: a narrow screen wraps its words and its link as one line of text (as flex items they
+     wrapped as two columns: owner, 2026-11-10, "Text spacing in the pill for early access is also broken") */
+  display: inline-block; max-width: 100%; line-height: 1.6;
   font-size: 12px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase;
   color: var(--accent-ink); border: 1px solid var(--accent); border-radius: 999px; padding: 4px 14px;
   background: var(--page);
 }
-.eyebrow .report-link { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+.eyebrow .report-link { color: inherit; text-decoration: underline; text-underline-offset: 3px; white-space: nowrap; }
 .hero-mark { display: flex; align-items: center; gap: 18px; margin: 22px 0 0; }
 .hero-mark .glyph {
   width: 74px; height: 74px; flex: 0 0 74px; border-radius: 15px; background: var(--accent);
@@ -267,7 +269,7 @@ a.card:hover { text-decoration: none; border-color: var(--accent); box-shadow: v
 .card .more { align-self: flex-start; margin-top: auto; padding-top: 16px; font-size: 14.5px; font-weight: 500; color: var(--accent-ink); }
 a.card:hover .more { text-decoration: underline; text-underline-offset: 3px; }
 
-.dl-grid { display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+.dl-grid { display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); }
 .dl-card {
   border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--surface);
   padding: 24px; display: flex; flex-direction: column;
@@ -282,6 +284,7 @@ a.card:hover .more { text-decoration: underline; text-underline-offset: 3px; }
 .dl-card p { color: var(--muted); font-size: 15px; margin: 10px 0 0; }
 .dl-card .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: auto; padding-top: 18px; }
 .dl-note { margin-top: 18px; font-size: 14.5px; color: var(--muted); }
+.dl-note a { text-decoration: underline; text-underline-offset: 3px; }   /* a link in text is told apart by more than colour (axe link-in-text-block) */
 .ide-card {
   border: 1px solid var(--accent); border-radius: var(--radius-lg);
   background: linear-gradient(120deg, rgba(168, 151, 123, .16), rgba(168, 151, 123, .03));
@@ -316,6 +319,241 @@ a.shot:hover { text-decoration: none; border-color: var(--accent); }
 .periph-list span { color: var(--muted); font-size: 14px; line-height: 1.45; }
 .periph-list code { align-self: flex-start; margin-top: 4px; font-size: 12.5px; color: var(--accent-ink); }
 .board-photo { max-width: 760px; }
+
+/* ---- Home: the stage - the first screen and the scroll story over the board ---------------------------------
+   Always dark (a stage, in both schemes), with its own tokens. The visual is sticky under the header while the hero
+   and the four chapters scroll over it (its negative bottom margin lets them start at its top). Without the 3D layer
+   the photo stays; with it the canvas fades in over the photo (data-3d="ready", set by hero3d.js). */
+.stage {
+  --st-bg: #0c0f12; --st-ink: #f4f5f6; --st-muted: #b7bcc2; --st-accent: #c9b99c; --st-line: rgba(255, 255, 255, .12);
+  --st-h: calc(100vh - var(--header-h));
+  position: relative; background: var(--st-bg); color: var(--st-ink); isolation: isolate;
+}
+@supports (height: 100svh) { .stage { --st-h: calc(100svh - var(--header-h)); } }
+.stage-visual {
+  position: sticky; top: var(--header-h); height: var(--st-h); margin-bottom: calc(-1 * var(--st-h));
+  overflow: hidden; z-index: 0; pointer-events: none;
+  background: radial-gradient(70% 60% at 68% 45%, rgba(168, 151, 123, .20), transparent 70%),
+              radial-gradient(40% 40% at 20% 90%, rgba(168, 151, 123, .08), transparent 70%), var(--st-bg);
+}
+.stage-still {
+  /* the 3D board's own first frame on a transparent ground (docs/session/2026-11-10_site76/data/stage_still.js), where
+     hero3d.js fits the board: right of the copy column, clear of the LED indicator (owner, 2026-11-10: "The oval shaped
+     photo is really gaudy": no photo, no mask) */
+  position: absolute; right: -15px; top: 46.5%; width: min(43.5vw, 716px); max-width: none; height: auto; transform: translateY(-50%);
+  transition: opacity .8s ease;
+}
+@media (min-width: 1340px) { .stage-still { right: 51px; } }       /* the board 141 px in (the indicator: 28 + 64.7 + 48 px), its shadow and margin past it */
+.stage-canvas { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; transition: opacity 1s ease; }
+.stage[data-3d="ready"] .stage-canvas { opacity: 1; }
+.stage[data-3d="ready"] .stage-still { opacity: 0; }
+.stage .stage-hero { position: relative; z-index: 1; min-height: var(--st-h); display: flex; align-items: center; padding: 48px 0 40px; overflow: visible; }
+.stage-hero::before { display: none; }
+.stage-hero .wrap { width: 100%; }
+.stage-copy { max-width: 600px; }
+.stage .eyebrow { background: transparent; color: var(--st-accent); border-color: rgba(201, 185, 156, .55); }
+.stage-title {
+  margin: 26px 0 0; font-size: clamp(52px, 9vw, 116px); font-weight: 700; line-height: .95; letter-spacing: -.025em;
+  color: var(--st-ink);
+}
+.stage-title .sub {
+  display: block; margin-top: 14px; font-size: clamp(12px, 1.6vw, 15px); font-weight: 500; letter-spacing: .32em;
+  text-transform: uppercase; color: var(--st-accent);
+}
+.stage-display { margin: 26px 0 0; font-size: clamp(24px, 3.4vw, 38px); line-height: 1.15; font-weight: 500; color: var(--st-ink); max-width: 18ch; }
+.stage .pitch, .stage .hero p.pitch { margin: 18px 0 0; color: var(--st-muted); font-size: clamp(17px, 1.8vw, 19px); max-width: 44ch; }
+.stage .actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 30px; }
+.stage .btn-primary { background: var(--st-accent); border-color: var(--st-accent); color: #0c0f12; }
+.stage .btn-primary:hover { background: #ddd0b8; border-color: #ddd0b8; color: #0c0f12; }
+.stage .btn-ghost { color: var(--st-ink); border-color: rgba(255, 255, 255, .34); background: rgba(12, 15, 18, .35); }
+.stage .btn-ghost:hover { background: rgba(255, 255, 255, .08); color: var(--st-ink); border-color: var(--st-accent); }
+.stage .meta { margin-top: 16px; font-size: 14.5px; color: var(--st-muted); }
+.stage :focus-visible { outline-color: var(--st-accent); }
+/* who it is for: one quiet line under the calls to action, not a second row of buttons */
+.stage .aud-nav { margin-top: 30px; display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 14px; font-size: 15px; }
+.stage .aud-lead { color: var(--st-muted); font-size: 12.5px; font-weight: 600; letter-spacing: .2em; text-transform: uppercase; }
+.stage .aud-nav ul { gap: 0; }
+.stage .aud-nav li + li::before { content: "\00b7"; color: var(--st-muted); padding: 0 9px; }
+.stage .aud-nav a {
+  display: inline-block; min-height: 24px; padding: 2px 0; border: 0; border-radius: 0; background: none; color: var(--st-ink);
+  font-size: 15px; text-decoration: underline; text-decoration-color: rgba(255, 255, 255, .28); text-underline-offset: 5px;
+}
+.stage .aud-nav a:hover { background: none; color: var(--st-accent); text-decoration-color: var(--st-accent); }
+.stage:not([data-3d="ready"]) .stage-cue { display: none; }   /* nothing turns without the 3D layer */
+.stage-cue { margin: 34px 0 0; font-size: 12px; letter-spacing: .22em; text-transform: uppercase; color: var(--st-muted); }
+.stage-cue::after { content: ""; display: block; width: 1px; height: 42px; margin-top: 12px; background: linear-gradient(var(--st-accent), transparent); }
+.chapter { position: relative; z-index: 1; min-height: var(--st-h); display: flex; align-items: center; padding: 10vh 0; }
+.chapter:last-of-type { min-height: calc(var(--st-h) * .8); }
+/* the stage ends in a fade to the page, not a hard edge */
+.stage::after { content: ""; position: relative; z-index: 1; display: block; height: 120px; background: linear-gradient(var(--st-bg), var(--surface)); }
+.chapter .wrap { width: 100%; }
+/* each chapter's photoreal render beside its card (site.js CHAPTER_STILLS), shown with or without the 3D layer; where the
+   3D layer runs and that chapter's scene is in (hero3d.js: .has-3d), the live scene takes its place, fitted to the same box */
+@media (min-width: 1101px) {
+  .chapter.has-fig .wrap { display: grid; grid-template-columns: minmax(0, 470px) minmax(0, 1fr); gap: 40px; align-items: center; }
+}
+.chapter-fig { margin: 0; transition: opacity .6s ease; }
+.chapter-fig img { display: block; width: 100%; max-width: none; height: auto; }
+.stage[data-3d="ready"] .chapter.has-3d .chapter-fig { opacity: 0; }
+.chapter-card {
+  max-width: 470px; padding: 26px 28px 28px; border-radius: var(--radius-lg);
+  /* .88: the card alone guarantees its text's contrast whatever the canvas shows behind it (over white: --st-muted 7.6:1,
+     --st-accent 7.5:1; scripts/test_site.js computes it) */
+  background: rgba(12, 15, 18, .88); border: 1px solid var(--st-line); box-shadow: 0 30px 80px rgba(0, 0, 0, .35);
+}
+@supports (backdrop-filter: blur(4px)) { .chapter-card { backdrop-filter: blur(14px) saturate(140%); } }
+.chapter-n { margin: 0; font-size: 12.5px; font-weight: 600; letter-spacing: .2em; text-transform: uppercase; color: var(--st-accent); }
+.chapter h2 { margin: 12px 0 0; font-size: clamp(28px, 3.6vw, 44px); line-height: 1.08; letter-spacing: -.015em; color: var(--st-ink); }
+.chapter-text { margin: 14px 0 0; color: var(--st-muted); font-size: 17px; line-height: 1.6; }
+.chapter-link { display: inline-block; margin-top: 16px; color: var(--st-accent); font-weight: 500; text-decoration: underline; text-underline-offset: 4px; }
+.chapter-link:hover { color: #ddd0b8; }
+.chapter-note { margin: 14px 0 0; font-size: 13px; color: var(--st-muted); }
+/* the chapters rise into place as they arrive (with motion only; without it they are simply there) */
+@media (prefers-reduced-motion: no-preference) {
+  .js-reveal .chapter-card { opacity: 0; transform: translateY(28px); transition: opacity .7s ease, transform .7s ease; }
+  .js-reveal .chapter.in .chapter-card { opacity: 1; transform: none; }
+}
+/* the stacked layout (phones and tablets, 1100 px and under; hero3d.js STACKED is the same query): the board at the top,
+   as much space above it as below (--g), the words right under it, never over it (owner, 2026-11-10: "evn sits a bit
+   high (less padding on top than bottom)"); hero3d.js fits the 3D board into the still's own box */
+@media (max-width: 1100px) {
+  .stage { --g: clamp(16px, 4vh, 40px); --still-w: min(71vw, 560px); }
+  .stage-still { right: 50%; top: var(--g); width: var(--still-w); transform: translate(50%, var(--still-y, 0px)); }   /* site.js followStill */
+  .stage .stage-hero { align-items: flex-start; padding-top: calc(var(--g) * 2 + var(--still-w) * var(--still-r, .75));   /* --still-r: site.js, the still's height / width */ padding-bottom: 28px; }
+  .stage .stage-hero .eyebrow { margin-top: 0; }                               /* the gap under the board is --g alone */
+  .stage .stage-copy { max-width: 640px; }
+  .stage .chapter { align-items: flex-end; padding: 46vh 0 5vh; }                 /* a chapter without a render: the 3D above it */
+  .stage .chapter.has-fig { align-items: center; padding: 6vh 0; }
+  .chapter.has-fig .wrap { display: flex; flex-direction: column; }
+  .chapter-fig { order: -1; width: min(100%, 560px); margin: 0 auto 18px; }
+  .chapter-card { max-width: 640px; }
+}
+@media (max-width: 760px) {
+  .stage { --still-w: min(78vw, 324px); }
+  .stage .eyebrow { letter-spacing: .1em; border-radius: 14px; text-wrap: balance; }
+}
+
+/* ---- Home: the page indicator, the EVN RGB LED (site.js ledNav) ------------------------------------------------
+   Fixed at the right edge where the content column leaves room (1340 px and wider); each pixel a link, lit with its
+   own colour up to the section in view. */
+.led-nav { display: none; }
+@media (min-width: 1340px) {
+  .led-nav { display: block; position: fixed; right: 28px; top: 50%; transform: translateY(-50%); z-index: 20;
+             width: 64.7px; height: 300px; }      /* the pixels 25 px apart: WCAG 2.2 target spacing for the 16 px dots */
+}
+/* its cable, as it ships: the three wires of the render's plug (yellow data, red power, black ground: the image's columns
+   41-51, 61-70 and 79-89 of 138) carried on up to the top of the window, each lit from the left as in the render */
+.led-nav::before {
+  content: ""; position: absolute; left: 0; bottom: calc(100% - 3px); width: 100%; height: 100vh; pointer-events: none;
+  background:
+    linear-gradient(90deg, #e2cb5c, #b39c22 40%, #8f7c00 75%, #6d5c00) 19.2px 0 / 4.8px 100% no-repeat,
+    linear-gradient(90deg, #a8382a, #84140a 40%, #700100 75%, #520000) 28.7px 0 / 4.5px 100% no-repeat,
+    linear-gradient(90deg, #4a4343, #1c1918 40%, #050505 75%, #000) 37.1px 0 / 4.8px 100% no-repeat;
+  filter: drop-shadow(0 6px 14px rgba(0, 0, 0, .35));
+}
+.led-strip { display: block; width: 100%; height: 100%; max-width: none; filter: drop-shadow(0 6px 14px rgba(0, 0, 0, .35)); }
+.led-nav ol { list-style: none; margin: 0; padding: 0; position: absolute; inset: 0; }
+.led-nav li { position: absolute; left: 55.75%; width: 0; height: 0; }
+.led { position: absolute; left: -8px; top: -8px; width: 16px; height: 16px; border-radius: 50%;
+       background: transparent; transition: background-color .35s ease, box-shadow .35s ease; }
+.led-nav li.on .led { background: rgba(244, 246, 248, .82); box-shadow: 0 0 4px 1px rgba(255, 255, 255, .5), 0 0 12px 3px rgba(255, 255, 255, .16); }
+.led-nav li.now .led { background: #ffd47e; box-shadow: 0 0 5px 2px #e8b65a, 0 0 22px 8px rgba(222, 170, 70, .78); }
+/* each pixel's section, named beside the strip on hover and focus (the link's text: its accessible name either way) */
+.led-label {
+  position: absolute; right: calc(100% + 40px); top: 50%; transform: translate(6px, -50%); white-space: nowrap;
+  padding: 5px 11px; border-radius: 999px; font-size: 13px; font-weight: 500; line-height: 1.3; letter-spacing: .01em;
+  color: #f4f5f6; background: rgba(12, 15, 18, .92); border: 1px solid rgba(255, 255, 255, .16);
+  opacity: 0; pointer-events: none; transition: opacity .2s ease, transform .2s ease;
+}
+.led:hover .led-label, .led:focus-visible .led-label { opacity: 1; transform: translate(0, -50%); }
+.led:hover { box-shadow: 0 0 0 2px #ffffff, 0 0 10px 3px rgba(255, 255, 255, .5); }
+.led:focus-visible { outline: 3px solid #ffffff; outline-offset: 2px; box-shadow: 0 0 0 5px #0c0f12; }
+@media (prefers-reduced-motion: reduce) { .led, .led-label { transition: none; } }
+
+/* ---- Home: the proof band -------------------------------------------------------------------------------------- */
+.proof { padding: 64px 0 56px; background: var(--surface); border-bottom: 1px solid var(--line); }
+.proof h2 { margin: 0; font-size: clamp(26px, 3.4vw, 38px); }
+.proof-line { margin: 10px 0 0; color: var(--muted); font-size: 17px; max-width: 60ch; }
+.proof-nums { list-style: none; margin: 30px 0 0; padding: 0; display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr)); }
+.proof-nums li { border-top: 2px solid var(--accent); padding-top: 12px; }
+.proof-nums strong { display: block; font-size: clamp(44px, 6vw, 68px); line-height: 1; font-weight: 700; color: var(--heading); letter-spacing: -.02em; }
+.proof-nums span { display: block; margin-top: 8px; color: var(--muted); font-size: 15.5px; }
+.proof-wins { list-style: none; margin: 32px 0 0; padding: 0; display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); }
+.proof-wins li { background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 14px 18px; }
+.proof-wins strong { display: block; color: var(--heading); font-size: 15.5px; }
+.proof-wins span { color: var(--accent-deep); font-size: 15px; font-weight: 500; }
+.proof-more { margin: 18px 0 0; font-size: 15px; }
+.proof-more a { color: var(--accent-deep); text-decoration: underline; text-underline-offset: 3px; }   /* on --surface: accentDeep, as the other links there (SITE-26) */
+
+/* ---- Home: who it is for, and the feature cards (assets/features.json) ----------------------------- */
+.aud-nav { margin: 30px 0 0; }
+.aud-nav ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.aud-nav a {
+  display: inline-flex; align-items: center; min-height: 40px; padding: 6px 16px; border-radius: 999px;
+  border: 1px solid var(--line-strong); background: var(--page); color: var(--heading); font-size: 15px; font-weight: 500;
+}
+.aud-nav a:hover { text-decoration: none; border-color: var(--accent); background: var(--surface); }
+.aud { padding: 34px 0; border-top: 1px solid var(--line); }
+/* a section a link moved the focus to (tabindex=-1): the heading is said, no ring round the whole section */
+.aud:focus, .path:focus, .doc-group:focus { outline: none; }
+.aud-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 18px; margin: 0 0 18px; }
+.aud-head h2 { margin: 0; font-size: clamp(22px, 3vw, 28px); }
+.aud-line { margin: 0; color: var(--muted); font-size: 16px; }
+.fgrid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+.fcard {
+  position: relative; display: flex; flex-direction: column; background: var(--surface-2);
+  border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 18px 20px 20px; overflow: hidden;
+  transition: border-color .18s ease, box-shadow .18s ease;
+}
+.fcard-soon { background: var(--surface); border-style: dashed; border-color: var(--line-strong); }
+.fcard:has(.fcard-link):hover { border-color: var(--accent); box-shadow: var(--shadow-lift); }
+.fcard:focus-within { outline: 2px solid var(--accent-ink); outline-offset: 2px; }
+.fcard-img {
+  order: -2; width: calc(100% + 40px); max-width: none; margin: -18px -20px 14px; height: auto; aspect-ratio: 16 / 9;
+  object-fit: cover; object-position: top; display: block; border-bottom: 1px solid var(--line); background: var(--surface);
+}
+.fcard h3 { margin: 8px 0 6px; font-size: 18px; line-height: 1.3; }
+.fcard-link { color: var(--heading); }
+.fcard-link:hover { color: var(--heading); text-decoration: underline; }
+.fcard-link:focus-visible { outline: none; }
+.fcard-link::after { content: ""; position: absolute; inset: 0; }   /* the whole card follows the headline's link */
+.fcard-text { margin: 0; color: var(--muted); font-size: 15px; line-height: 1.55; }
+/* the status, above the headline (order) though after it in the text, so a screen reader hears the name first */
+.badge {
+  order: -1; align-self: flex-start; margin: 0; padding: 2px 10px; border-radius: 999px;
+  font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; line-height: 1.6;
+}
+.badge-now { background: var(--accent-ink); color: var(--on-accent); }
+.badge-soon { background: transparent; color: var(--heading); border: 1px dashed var(--muted); }
+.audiences > .wrap { padding-top: 24px; padding-bottom: 24px; }
+
+/* ---- The site's own pages: Get started, Docs, Downloads ---------------------------------------------- */
+.page-head { padding: 40px 0 6px; }
+.page-head h1 { margin: 6px 0 0; font-size: clamp(30px, 5vw, 42px); }
+.page-head .lead { margin: 10px 0 0; font-size: clamp(17px, 2.2vw, 19px); color: var(--text); max-width: 60ch; }
+.page-head .crumb { margin: 0; font-size: 14px; color: var(--muted); }
+.paths { display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr)); align-items: start; }
+.path {
+  border: 1px solid var(--line); border-top: 3px solid var(--accent); border-radius: var(--radius-lg);
+  background: var(--surface-2); padding: 20px 22px 18px;
+}
+.path h2 { margin: 0; padding: 0; border: 0; font-size: 21px; color: var(--heading); letter-spacing: 0; text-transform: none; }
+.path-line { margin: 4px 0 0; color: var(--muted); font-size: 15px; }
+.steps { margin: 14px 0 0; padding-left: 1.4em; font-size: 15.5px; }
+.steps li { margin: 8px 0; padding-left: 2px; }
+.steps li::marker { color: var(--accent-ink); font-weight: 600; }
+.steps a, .path-more a, .path-note a { text-decoration: underline; text-underline-offset: 3px; }
+.path-more { margin: 14px 0 0; padding-top: 12px; border-top: 1px solid var(--line); font-size: 14.5px; color: var(--muted); }
+.path-note { margin: 22px 0 0; font-size: 16px; }
+.docs-index .aud-nav { margin: 0 0 26px; }
+.doc-groups { display: grid; gap: 10px 34px; grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr)); align-items: start; }
+.doc-group { margin: 0 0 22px; }
+.doc-group h2 { font-size: 19px; margin: 0 0 4px; padding: 0; border: 0; color: var(--heading); letter-spacing: 0; text-transform: none; }
+.doc-group .doc-row { padding: 12px 4px; gap: 12px; }
+.doc-group .doc-row .t strong { font-size: 16.5px; }
+.doc-group .doc-row .t span { display: block; font-size: 14.5px; }
+.doc-group-wide { margin-top: 18px; padding-top: 22px; border-top: 1px solid var(--line); }
+.doc-group-wide .gallery-intro { margin: 6px 0 18px; }
 
 /* ---- Home: the story ------------------------------------------------------------------------------- */
 .story-grid { display: grid; gap: 34px; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); align-items: start; }
@@ -649,4 +887,12 @@ a.shot:hover { text-decoration: none; border-color: var(--accent); }
   .doc-body pre, .doc-body table, .doc-body blockquote { page-break-inside: avoid; border: 1px solid #ccc; }
   .doc-body a { color: #000; text-decoration: underline; }
   .doc-body a[href^="http"]::after { content: " (" attr(href) ")"; font-size: 9pt; color: #555; }
+  /* the home page's stage on paper: no visual, nothing hidden by the reveal, dark text on white (review site76_r3 B3) */
+  .stage-visual, .stage-cue, .stage::after, .led-nav { display: none !important; }
+  .stage, .stage .chapter-card { background: #fff !important; color: #000; box-shadow: none; border-color: #ccc; }
+  .stage .chapter, .stage .stage-hero { min-height: 0; padding: 12pt 0; }
+  .js-reveal .chapter-card, .chapter-card { opacity: 1 !important; transform: none !important; transition: none !important; }
+  .stage-title, .stage-display, .stage .chapter h2, .stage .pitch, .stage .meta, .chapter-text, .chapter-n, .chapter-note,
+  .stage .eyebrow, .chapter-link, .stage .aud-nav a, .stage .aud-lead, .stage-title .sub { color: #000 !important; }
+  .stage .aud-nav a { background: #fff !important; border-color: #999 !important; }
 }

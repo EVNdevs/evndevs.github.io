@@ -26,10 +26,14 @@
                              commands, board, troubleshooting)
       /#/changelog           docs/WHATS_NEW.md from the top (What's new)
       /#/changelog-full      docs/CHANGELOG.md from the top (the full changelog)
-      /#/downloads           the home page scrolled to its Downloads section
-      /                      the home page (hero, the three documents, downloads from latest.json)
+      /#/downloads           the Downloads page (the extension and the firmware from latest.json)
+      /#/start/<slug>        the Get started page (three paths: browser, vs-code, board), scrolled to <slug>
+      /#/documentation/<slug>  the Docs page: every document grouped by task, and the sensors and displays
+      /#/for/<audience>      the home page scrolled to that audience's section (students, teachers, ...)
+      /                      the home page: the summary, three ways in, the features by audience
+                             (assets/features.json, its statuses and the edit that flips a release's cards)
   A page of its own per route: scripts/publish_public.py also writes <route>/index.html (getting-started/,
-  calibration/, api/, api-<part>/, blocks/, repl/, known-limitations/, changelog/, changelog-full/, downloads/), this file with <base href="../">, its own title,
+  calibration/, api/, api-<part>/, blocks/, repl/, known-limitations/, changelog/, changelog-full/, start/, documentation/, downloads/), this file with <base href="../">, its own title,
   description, canonical and og: tags, <meta name="evn-route"> and the document's outline; site.js renders that
   route there. With sitemap.xml, robots.txt and 404.html (a path /<route>/<slug> forwards to /#/<route>/<slug>).
   The #/ routes above are unchanged.
@@ -63,6 +67,9 @@
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="preload" href="assets/fonts/jost-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="assets/site.css">
+<!-- the home page's 3D layer (assets/hero3d.js, loaded by site.js only where it helps): three.js r163, pinned -->
+<script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.163.0/build/three.module.min.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.163.0/examples/jsm/" } }</script>
 <link id="hl-light" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11.9.0/styles/github.min.css">
 <link id="hl-dark" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11.9.0/styles/github-dark.min.css" media="not all">
 <script>
@@ -90,15 +97,13 @@
       </span>
     </a>
     <nav class="site-nav" id="nav" aria-label="Documentation">
-      <!-- No entry is the home page (the brand is), so nothing is lit there; "Downloads" is lit only on
-           #/downloads. What's new is in the footer and beside each download. -->
-      <a href="#/getting-started" data-doc="getting-started">Getting started</a>
-      <a href="#/calibration/" data-doc="calibration">Calibration</a>
-      <a href="#/api/" data-doc="api">API</a>
-      <a href="#/blocks/" data-doc="blocks">Blocks</a>
+      <!-- No entry is the home page (the brand is), so nothing is lit there; "Docs" is lit on every document
+           (its one entry point, #/documentation). What's new is in the footer and beside each download. -->
+      <a href="#/start" data-doc="start">Get started</a>
+      <a href="#/documentation" data-doc="documentation">Docs</a>
       <a href="examples/">Examples</a>
-      <a href="ide/" target="_blank" rel="noopener">Browser IDE</a>
       <a href="#/downloads" data-doc="downloads">Downloads</a>
+      <a href="ide/" target="_blank" rel="noopener">Browser IDE</a>
       <a href="#/getting-started/7-reporting-problems">Help</a>
       <a href="https://github.com/EVNdevs/evndevs.github.io" target="_blank" rel="noopener">GitHub</a>
     </nav>
@@ -146,7 +151,9 @@
     <div class="f-col">
       <h2>Documentation</h2>
       <ul>
-        <li><a href="#/getting-started">Getting started</a></li>
+        <li><a href="#/start">Get started</a></li>
+        <li><a href="#/documentation">All the docs</a></li>
+        <li><a href="#/getting-started">Getting started, step by step</a></li>
         <li><a href="#/calibration/">Calibrating your robot</a></li>
         <li><a href="#/api/">API reference</a></li>
         <li><a href="#/blocks/">Blocks reference</a></li>

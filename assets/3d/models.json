@@ -1,0 +1,42 @@
+{
+  "_header": [
+    "The home page's 3D models (assets/hero3d.js). `board`: a glTF binary of the EVN ALPHA, +Y up, its motor ports facing +Z,",
+    "scaled to fit and centred; null: hero3d.js builds a placeholder from boxes (and shows no scenes). `long_mm`: the model's",
+    "long side in mm. `explode`: a node's offset in mm along the board's up in the exploded view (the board's entrance), the",
+    "marketing renders' own (product_renders/blender_scene.py EXPLODE_MM). `scenes`: the chapters' scenes, in the board's frame,",
+    "without the board (hero3d.js POSES names them): motors = scenes.SCENES motors, sensors = peri_sensors, displays =",
+    "peri_displays, robot = drive_base.",
+    "All are the marketing repository's Blender scenes (kenchow96/EVN-Marketing product_renders: blender_scene.Product and",
+    "set_scene, every cable at its routed length) at their full geometry, exported by docs/session/2026-11-10_site76/data/blender_to_glb.py (bpy 5.2.1) and",
+    "compressed with glTF Transform 4.1.1 (optimize, then meshopt with a scene-wide quantization volume; simplification only within 0.05 %; the commands",
+    "is in that session's data/sources.md). Budget (scripts/test_site.js): each file at most 6 MB, all of them at most 14 MB",
+    "(about 7 MB gzipped, as GitHub Pages serves them); the board first, each scene only as its chapter comes near.",
+    "`environment`: the marketing renders' studio HDRI (product_renders' studio_small_09, cut to 512 x 256 by that session's data/hdri_to_web.py), turned by `turn_deg` about +Y, loaded once the board is up. `phone_scenes`: the scenes loaded at 760 px and under (the others' chapters show the board alone)."
+  ],
+  "board": "assets/3d/evn-alpha-board.glb",
+  "long_mm": 104,
+  "explode": {
+    "grp_bolts": 78,
+    "grp_shield": 50,
+    "grp_pcb": 0,
+    "grp_synth": 0,
+    "grp_holder": -22,
+    "grp_cells": -42,
+    "grp_base": -68,
+    "grp_cover": -100
+  },
+  "scenes": {
+    "motors": "assets/3d/scene_motors.glb",
+    "sensors": "assets/3d/scene_peri_sensors.glb",
+    "displays": "assets/3d/scene_peri_displays.glb",
+    "robot": "assets/3d/scene_drive_base.glb"
+  },
+  "environment": {
+    "hdr": "assets/3d/studio-small-09.hdr",
+    "turn_deg": 160
+  },
+  "phone_scenes": [
+    "motors",
+    "robot"
+  ]
+}

@@ -4,6 +4,23 @@ The main changes of each release, in a few lines. The [full changelog](../CHANGE
 the tools and the measurements behind each release. What is not tested yet is on
 [Known limitations and help us test](KNOWN_LIMITATIONS.md).
 
+## Unreleased
+
+- **Eight new challenges in the simulator.** Maze runner and Maze mapper, Precision stop, Slalom gates and Ball chaser,
+  scored; the obstacle course now always 5 runs, with PASS, FAIL or NOT YET on the card; three more (a two-line loop, a
+  balancing robot and a disturbance gauntlet) to practise on ([Simulator](SIMULATOR.md)).
+- **Check this program.** A `# check:` line at the top of a program and the **Check** button tell you, line by line,
+  whether it does what the lesson asks; the first checks are on G5.1, G5.2 and G6.1 ([Simulator](SIMULATOR.md#lesson-checks)).
+- **The board's own `ADRC`, `PID` and `DataLog` in the simulator**, compiled from the firmware's code, and the
+  **serial bridge**: Serial1 and Serial2 connected to a program on your PC, `UART.repl(True)` included ([Simulator](SIMULATOR.md)).
+- **Accessibility:** *Say the robot's position* (Ctrl+Alt+P), **Read aloud** on the challenge and check cards, and the
+  Simulator panel's contrast and labels pass. The blocks editor by keyboard, with spoken block names, came in 0.2.75.
+- **Models in the 3D view:** the EVN board, its sensors, LEGO wheels and EV3 / NXT motors in place of boxes.
+- **Bluetooth module:** `Bluetooth(n)` with nothing plugged into that serial header now raises
+  `OSError("no Bluetooth module on serial port n")` instead of opening a port that goes nowhere. Holding the module's
+  button while you switch on should now program it from `boot.py` as documented: after switching on, the board waits
+  for the module to start (about 2 s). Still to be confirmed on a board.
+
 ## 0.2.75 (2026-11-08)
 
 - **Calibrate with the wheels on.** `calibrate()` now keeps a steady load in the record and warns, and refuses only when

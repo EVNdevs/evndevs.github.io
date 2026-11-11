@@ -251,6 +251,17 @@ beside them, each copied verbatim from the upstream file named:
 | compiler-rt (Emscripten's runtime builtins) | Apache License 2.0 with LLVM Exceptions | `LICENSE-compiler-rt.txt` | Emscripten 6.0.13 `system/lib/compiler-rt/LICENSE.TXT` |
 | musl libc (Emscripten's C library) | MIT | `COPYRIGHT-musl.txt` | Emscripten 6.0.13 `system/lib/libc/musl/COPYRIGHT` |
 
+## musl's expf (the simulator's controller module)
+
+The simulator's `evn.ADRC` and `evn.PID` run the firmware's own controller code compiled to WebAssembly
+(`src/sim/engine/ctrlWasm.ts`, built by `tools/simwasm/ctrl/build.py` in the firmware repository;
+`docs/curriculum/SIMAPI_DESIGN.md` SA-1, SA-2). The module
+links musl 1.2.5's single-precision `expf` and its table (`src/math/expf.c`, `exp2f_data.c`, `__math_oflowf.c`,
+`__math_uflowf.c`, `__math_xflowf.c`; Copyright (c) 2017-2018, Arm Limited; MIT), vendored unchanged in
+`tools/simwasm/libm/musl/` (its `README.md` names the release and its hash). The module ships inside the simulator's
+script, in the extension and in the browser IDE, which also ship Pyodide's files; musl's licence text ships beside
+those as `media/pyodide/COPYRIGHT-musl.txt` (the same file as `licenses/COPYRIGHT-musl.txt`, musl's `COPYRIGHT`).
+
 ## pdf.js (the simulator's renderer of a WRO mat)
 
 The simulator renders the WRO mat a user loads (their own copy of WRO's printing file; "WRO RoboMission geometry"
@@ -269,6 +280,62 @@ Lofgren; the licence text is in `assets/rcj/tiles/NOTICE.md`). `assets/rcj/field
 official Rescue Line fields the RCJ Rescue Committee publishes
 (<https://rescue.rcj.cloud/events/2026/RoboCup2026/line/practice>), bundled with the EVN owner's permission
 (`assets/rcj/fields-2026/NOTICE.md`). `assets/rcj/tiles.json` is EVN's tracing of the tile images.
+
+## LDraw parts (the simulator's wheels and drive motors)
+
+`media/sim/models/wheel_32020.js` and `media/sim/models/motor_99455.js`, `motor_95658.js` and `motor_53787.js`, the wheel
+and the EV3 Medium, EV3 Large and NXT drive motors the simulator's 3D view draws, are converted from parts of the LDraw
+parts library (<https://www.ldraw.org>): 32020c01 (Wheel Rim 18 x 37 with 6 Pegholes and Long Axle Bush with Rubber
+Black Tyre 20/ 64 x 37 S, with its sub-parts 32019 (the tyre) and 32020 (the rim)), 99455 (Electric Mindstorms EV3
+Medium Motor), 95658 (Electric Mindstorms EV3 Large Motor) and 53787 (Electric Mindstorms NXT Motor), and the primitives
+they use. Licence: Creative Commons Attribution 4.0 International (CC BY 4.0,
+<https://creativecommons.org/licenses/by/4.0/>). Five of the 223 library files (`parts/53787.dat`, `54714.dat`, `54715.dat`
+and `54716.dat`, in the NXT motor, and `54725.dat`, in the NXT and EV3 Large motors) say instead "Licensed under CC BY 2.0
+and CC BY 4.0": by the library's `CAreadme.txt`, a change their `!HISTORY` lines date before 2023-03-05 is under CC BY 2.0
+(<https://creativecommons.org/licenses/by/2.0/>) and a later one under CC BY 4.0. Authors and contributors, as the files'
+`Author` and `!HISTORY` lines name them (`[name]` an LDraw.org user, `{name}` a name given in full):
+
+- Alex Taylor [anathema]
+- Chris Dee [cwdee]
+- Donald Sutter [technog]
+- Franklin W. Cain [fwcain]
+- Gerald Lasser [GeraldLasser]
+- J.C. Tchang [tchang]
+- James Jessiman
+- Kevin Clague [kclague]
+- Magnus Forsberg [MagFors]
+- Marc Klein [marckl]
+- Mark Kennedy [mkennedy]
+- Massimo Maso [Sirio]
+- Max Martin Richter [MMR1988]
+- Max Murtazin [SwampKryakwa]
+- Michael Heidemann [mikeheide]
+- Niels Karsdorp [nielsk]
+- Orion Pobursky [OrionP]
+- Paul Easter [pneaster]
+- Philippe Hurbain [Philo]
+- Santeri Piippo [arezey]
+- Steffen [Steffen]
+- Steve Bliss [sbliss]
+- Tim Gould [timgould]
+- Tore Eriksson [Tore_Eriksson]
+- Willy Tschager [Holly-Wood]
+- [BrickCaster]
+- [PTadmin]
+- [WilliamH]
+- [bbroich]
+- [benedettelli]
+- [guyvivan]
+- [hafhead]
+- [kuramapika1]
+- {LEGO MINDSTORMS Team}
+
+Changed by EVN: the parts' triangles are joined, reduced in number (COLLAPSE decimation) and recoloured to flat
+colours (from the library's `LDConfig.ldr`: the rim Light Bluish Grey, the tyre Rubber Black, the motors as the parts and
+the EV3 motors' white / the NXT's grey), and each model is turned and placed for the simulator's robot, the wheel scaled
+to the configured wheel. These models are under the licences above (CC BY 4.0, and for those five files CC BY 2.0 as
+well), not under this extension's MIT licence. LEGO and Mindstorms are
+trademarks of the LEGO Group, which does not sponsor, authorise or endorse this project.
 
 ## WRO RoboMission geometry (the simulator's WRO course)
 

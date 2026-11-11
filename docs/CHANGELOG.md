@@ -1,5 +1,127 @@
 # Changelog
 
+## Unreleased
+
+### Simulator
+- **`evn.ADRC`, `evn.PID` and `evn.DataLog` run the board's own code.** The simulator now runs the firmware's controller
+  code and the data logger's record code, compiled to WebAssembly: `ADRC` and `DataLog`, which raised `OSError` in the
+  simulator before, now work, and `ADRC`, `PID` and `DataLog` take the board's arguments, give the board's errors and settings and compute what the board computes.
+  `ADRC` and `PID` work in single precision as on the board, so their outputs are float32 values. A `PID` has only the
+  board's attributes (`p`, `i`, `d`, `output`, `error`, `saturated`, `restarted`); its gains are read with `settings()`.
+  `DataLog` samples a `Motor`'s `angle`, `speed`, `load` and `stalled`, `evn.battery`, `evn.button` and your own `log()`
+  rows after every simulated tick, and `save()` writes the board's CSV to `/data`; a log still recording is stopped and
+  saved when the program ends. A sensor channel (an IMU, a colour or distance sensor, a touch array, an ADC) still raises
+  `OSError` in the simulator.
+- **The serial bridge.** Serial1 and Serial2 can be connected to a program on your PC (Configure robot ->
+  Serial bridge): a TCP port on 127.0.0.1 that pyserial opens as `serial.serial_for_url("socket://127.0.0.1:47801")`,
+  timed by the simulated wire, with the board's baud. The PC side of the camera lessons can now drive the robot.
+- **`UART.repl(True)` works over the serial bridge.** What the program prints, and its traceback, go out on
+  the header as on the board (`\r\n` line ends, at the wire's rate), and a Ctrl-C (`0x03`) from the PC stops the program
+  with every motor coasting.
+- **Each sensor has a noise stream of its own.** A colour sensor, a distance sensor, the IMU, each encoder and
+  the debris now draw their noise from their own generator, seeded from the run (a practice Run draws its noise as run 1
+  of seed 0, so the same program from Back to start reads close to the same values on every Run), so adding a sensor no
+  longer changes another's readings. Every noisy reading differs from before, and a submission sealed before this
+  version re-runs NOT VERIFIED.
+- **An arm or a claw now loads its motor.** A motor turning the class robot's arm or claw carries the part's inertia and
+  its weight (the default 30 g, 110 mm arm on an EV3 Medium about 1.85 times the motor's own inertia), so it speeds up,
+  stops and holds as a loaded motor does. The lesson pages' figures were measured again on it.
+- **Models in the 3D view.** A **Models** button (3D view only, on by default) draws the EVN board, the colour and distance
+  sensors, the IMU, LEGO wheels sized to your configured diameter and turning with the motors, and the EV3 Medium, EV3 Large
+  and NXT drive motors, in place of plain boxes; off draws the view as before. The wheels and motors are converted from the
+  LDraw parts library (CC BY 4.0; THIRD_PARTY_NOTICES.md).
+- **The RCJ referee no longer calls a lack of progress on a robot left facing back near a joint of its line.** A robot
+  that turns round, or drives on tail first, and stops near a joint is not called, nor one that stops on a wrong line it
+  has only turned onto: moving forward, the robot must also have been carried at least 5 mm along that line, on it, and a
+  back-up can take that distance away but never add it.
+- **A program that prints in a loop no longer runs a challenge out of memory.** Only the end of a run's output is kept as
+  it prints (the card and a submission keep its last 4,000 characters, as before).
+- **Fixes.** The Board view's motors (`m1` to `m4`) still work after a Stop that restarts the simulation (they raised
+  `NameError`); a program started while a course was still loading no longer runs twice after a restart.
+
+### Course and challenges
+- **Maze runner, a new challenge.** Three levels from the G3.3 module in the **Course** list, each scored, sealed
+  and re-tested as the obstacle course is: one winding corridor, a dead end, and an island that a right hand on the wall
+  never reaches. A plain scene joins them, *Ten-cell corridor*, the G8.3.2 corridor on real walls.
+- **Maze mapper, a new challenge.** Three levels from the G8.3 module, a new 6 x 6 maze every run and always 10 runs:
+  find the green exit cell on the edge and stop on it; explore a perfect maze, write `map.txt` with the motors stopped and
+  come home to the start cell by a shortest path; reach the green centre of a maze with loops, map it and come home by a
+  cheap route (1 a cell, 1.5 a quarter turn).
+- **Precision stop (G7.1), Slalom gates (G8.1) and Ball chaser (G10.1), new challenges.** Precision stop: stop the front
+  bumper 100 mm from the far wall from twenty starts, then from a moving start through a speed trap, then from starts
+  turned up to 6 degrees (that level is practice until the distance sensor's doubled noise comes). Slalom gates: five
+  gates in order and the finish line, then faster, then five gates placed at random for each run and written to
+  `gates.json` before it. Ball chaser: touch the orange ball, then the orange ball among a red, a yellow and a brown ball
+  and an orange cube;
+  two bench levels of the same task write the ball's position to the flash for a stand-in camera.
+- **Three more challenges, from G10.3, G9.4 and G11.4.** G10.3's: stay between two black lines, 300 mm
+  apart, for two laps of a 6 m loop. Balancer: a balancing robot (a rig of its own, not the class robot) released upright at the Run.
+  Disturbance gauntlet: hold a flywheel at 300 deg/s through three step loads with your own controller over `dc()`, hold
+  an arm level through a payload, and one tuning across twenty drawn plants. G10.3's and the Balancer are not scored
+  yet; the gauntlet's first level is scored and has a pass rule, its other two are practice.
+- **A level can fix its number of runs, and the card says whether the runs pass.** The obstacle course's levels are at
+  version 2: the same courses and scoring, now always 5 runs (the Runs box shows 5 and is greyed out), a submission holds
+  5, and the card's line reads PASS, FAIL or NOT YET for the level, read out by a screen reader too. Submissions saved
+  with version 1 still open and verify as before.
+- **Your progress keeps your passes.** A PASS is kept in *My progress* on this computer: the level, when you first and
+  last passed it, and your best score with its runs. **Practice** on the card runs your program again from the same
+  starts and is never saved or recorded. Saving a submission notes its fingerprint and its place in your projects folder,
+  with your name taken out of the file name. A progress file that has grown very large drops the one record it cannot
+  keep, and says so, instead of becoming unreadable.
+- **Course files can do more.** A level can hide its draws (a maze, a ball's place, the gates) until the run, draw mazes,
+  two-line tracks and balls, put a fixed rig (a balancing robot, a flywheel or arm bench) in place of the robot, add step loads to
+  a shaft, read each motor's energy over a run, compare two programs run by run, give an obstacle or the walls a colour of
+  their own, and leave the start box unpainted.
+
+### Lessons
+- **Check this program.** A lesson can now say whether your program does what its page asks: put its `# check: <name>`
+  line at the top of your program and press **Check** in the Simulator panel (or run **EVN: Check this program**). The check
+  runs your program in worlds of its own, leaving the field and the board alone, and its card shows PASS or FAIL line by
+  line with a hint; a check that asks you to predict takes your number first and records whether it was within the
+  tolerance. A check is practice: nothing it says is a mark. The first checks are on G5.1.3, G5.1.6, G5.1.7, G5.2.2,
+  G6.1.2 and G6.1.3.
+- **The pages say what is now on screen.** The teacher pages of G5.1, G5.2 and O2's first sessions no longer say they
+  wait on the checks or the Tools pane: they name the check by its screen and its `# check:` line, and the Tools pane's
+  closing error, heading error, ruler, protractor and markers. O2.2, O2.5 and O2.6 print the same check lines.
+- **Figures measured again.** The lesson pages' simulated figures were measured again on this version's
+  simulator (the sensors' own noise streams, the arm and claw inertia), and the obstacle course's pages at its fixed
+  5 runs. The G8.3 pages use the maze's 280 mm cells.
+
+### Accessibility
+- **The blocks editor by keyboard, with spoken block names** (in the VS Code extension and the browser IDE). This came in
+  0.2.75 and was missing from its notes: blocks can be placed, moved, copied and pasted from the keyboard with Blockly's
+  own keys, each block in the toolbox has a spoken name, a block's tip is Alt+J (off Ctrl+J, VS Code's Toggle Panel), the
+  splitter is resized with the arrow keys, and the status line is read out. Automated checks only so far.
+- **Say the robot's position** (the command *EVN: Say the robot's position*, Ctrl+Alt+P, on a Mac Cmd+Alt+P, with the
+  Simulator panel active): a screen reader says the robot's x, y and heading and, on a challenge course, the nearest
+  named item and its side. It is said in the panel only and never reaches your program.
+- **Read aloud on the challenge and check cards.** The card's title, its PASS / FAIL line, each run and the summary are
+  read with a voice built into your computer (never a voice on a server), each part outlined as it is said; Escape stops.
+- **The Simulator panel's accessibility pass.** Chip text and the overlays reach the contrast target in both schemes,
+  every toggle says whether it is on (and shows it with a bar, not only a colour), the course, 3D and camera views are
+  named images to a screen reader, and a pane opens at its top.
+- **An accessibility statement for schools.** The school trust pack's accessibility section now lists what is live (with
+  the release it came in, and whether a person or only automated checks have tested it), what is planned and the known
+  gaps; it is written from one status table, so it cannot claim a part that has not shipped.
+
+### Tools / IDE
+- **Offline lessons on a Windows lab: EVN: Enrol this computer for offline lessons.** An administrator (elevated) enrols a PC once;
+  the folder it uses is locked to administrators and the system, and the lesson viewer on that PC reads its packs there.
+- **Lesson pictures carry the licence mark.** A licensed school's lesson images are served in a version marked for its
+  licence (invisible: at least 41 dB from the original); an image a page offers as a download is never marked.
+
+### Firmware
+- **`evn.Bluetooth`: an empty serial header now says so.** `Bluetooth(n)` with nothing plugged into that header used to
+  open with no error and a dead port. It now raises `OSError("no Bluetooth module on serial port n")` (with `wait=False`,
+  `state()` reads `'absent'`); a module in data mode opens as before.
+- **`evn.Bluetooth`: switching on with the module's button held should now program it from `boot.py`.** After the board
+  is switched on, `boot.py` keeps asking the module until the board has been up about 2 s, since the module is likely still
+  starting; after a watchdog reboot, a reset or at the REPL it asks once, as before. The cost: after switching on,
+  `boot.py`'s `Bluetooth(n)` waits until about 2 s of uptime. Both fixes are checked against a simulated module, not yet
+  on a board.
+- **The data logger's record code moved into a file of its own** (`hal/hal_datalog_core.inc`), shared with the
+  simulator's WebAssembly build of `DataLog`. No change in behaviour is intended.
+
 ## 0.2.75 (2026-11-08)
 - **Simulator challenges: reading `simtrail`'s errors no longer costs the run.** A read in a scored run is still refused, now
   with a named error, `simtrail.ReadRefused` (a `RuntimeError`): the program stops at that line and the run goes on as if
@@ -11,14 +133,17 @@
   `full_speed()` and 100 % now follow `settings(max_voltage=)` and a `full_speed(deg_s)` scales with the supply, as on the
   board; `max_voltage=0` reads 1 mV. `calibrate()` raises a speed limit under the motor's no-load speed to it, and `settings()`
   and `speed_unit()` refuse a replaced or closed Motor, as on the board.
-- **Simulator: the RCJ referee no longer calls a lack of progress on a robot that stops or backs up on its own tile, facing
-  on along the course.** A straight that
+- **Simulator: the RCJ referee no longer calls a lack of progress on a robot that stops, backs up or turns round on its
+  own tile.** A straight that
   ended 20-50 mm short of a tile's joint settled backward by a fraction of a millimetre, and the referee read that as
   backing onto a line out of sequence (5.5.1c): about one stopping place in ten lost the attempt and the robot was put
   back. A back-up now counts only over a joint the line sensors really crossed, and never over the tile's own joint ahead;
   a real reverse past the tile before is still called, at any speed, at that tile's joint rather than as the reverse
-  begins. Still open: a robot facing back along the course (turned round, or driving on tail first) can be called where
-  it stops near a joint of its own line.
+  begins. The referee also no longer calls a robot where it stops near a joint after turning round or driving on tail
+  first; before, about one stop in ten after a turn round was put back. Nor does it call a robot facing on along the
+  course on the small forward settle after a back-up near a junction's branch, or as it drives on from there. Turned
+  round and driven back onto the tile before is still called, and now also when a back-up first took the sensors past
+  the joint. A robot that turns onto a line out of sequence and stops there is called only once it moves along that line.
 - **`calibrate()` keeps a motor's load (ledger MC-59, the owner's ruling).** A wheel, an arm or a gear train may stay on the
   shaft: `calibrate()` keeps the record and warns (`WARNING: Motor(n): ...`, `evn.calibration(port)["warning"]`), and raises
   only when no controller could run on what it measured: no breakaway (0.80 duty, the high pulse, the ramp's top), no three
