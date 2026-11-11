@@ -532,7 +532,7 @@ export async function start(stage, opts) {
     apply();
     draw();
     const at = String(Math.round(cur.p));
-    if (stage.getAttribute('data-3d-at') !== at) { stage.setAttribute('data-3d-at', at); }   // the pose in view (unused by site.css until the chapters' renders land)
+    if (stage.getAttribute('data-3d-at') !== at) { stage.setAttribute('data-3d-at', at); }   // the pose in view: site.css fades a phone's canvas past the first screen
     if (!t0) { t0 = time; }
     if (!judged) {                                       // the entrance's frames: the speed test, 30 frames or 3 s
       if (last) { frames.push(time - last); }

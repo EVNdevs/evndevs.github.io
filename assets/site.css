@@ -430,6 +430,9 @@ a.shot:hover { text-decoration: none; border-color: var(--accent); }
 }
 @media (max-width: 760px) {
   .stage { --still-w: min(78vw, 324px); }
+  /* a phone's 3D layer is the first screen's only (models.json phone_scenes: none): past it the canvas fades and each
+     chapter shows its photoreal render (test_site.js keeps this rule out while any chapter's render is pending) */
+  .stage[data-3d-at]:not([data-3d-at="0"]) .stage-canvas { opacity: 0; }
   .stage .eyebrow { letter-spacing: .1em; border-radius: 14px; text-wrap: balance; }
 }
 

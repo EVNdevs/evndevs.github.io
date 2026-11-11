@@ -863,13 +863,13 @@
      renders". */
   var STAGE_STILL = { src: 'assets/images/stage-board.webp', width: 1280, height: 913 };
   var CHAPTER_STILLS = {
-    motors: { src: 'assets/images/chapter-motors.webp', width: 1600, height: 1200, pending: true,
+    motors: { src: 'assets/images/chapter-motors.webp', width: 1280, height: 892,
       alt: 'The EVN ALPHA board with LEGO MINDSTORMS EV3 and NXT motors and a small gearmotor plugged into its four motor ports.' },
-    sensors: { src: 'assets/images/chapter-sensors.webp', width: 1600, height: 1200, pending: true,
+    sensors: { src: 'assets/images/chapter-sensors.webp', width: 1251, height: 1115,
       alt: 'The EVN ALPHA board with a colour sensor, a distance sensor, a gesture sensor and a compass cabled to its sensor ports.' },
-    code: { src: 'assets/images/chapter-displays.webp', width: 1600, height: 1200, pending: true,
+    code: { src: 'assets/images/chapter-displays.webp', width: 1266, height: 898,
       alt: 'The EVN ALPHA board driving an OLED display showing the EVN logo, an LED matrix and a 7-segment display reading 2023.' },
-    simulator: { src: 'assets/images/chapter-robot.webp', width: 1600, height: 1200, pending: true,
+    simulator: { src: 'assets/images/chapter-robot.webp', width: 1224, height: 804,
       alt: 'A two-wheeled competition robot built around the EVN ALPHA board.' }
   };
 
