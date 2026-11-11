@@ -10,25 +10,38 @@
    three.js r163 from cdn.jsdelivr.net, pinned (index.html's import map: "three" and "three/addons/"). Size: the core
    about 680 KB (about 170 KB compressed), RoundedBoxGeometry and RoomEnvironment about 8 KB; GLTFLoader (108 KB) and the
    meshopt decoder (about 20 KB) only when a model file is named in assets/3d/models.json; RGBELoader (12 KB) and the
-   studio HDRI (models.json `environment`: the marketing renders' own room, 400 KB) once the board is up; the bloom passes
+   studio HDRI (models.json `environment`: the marketing renders' own room, 400 KB) beside the board; the bloom passes
    (about 30 KB) only on a wide screen whose speed test came in under 25 ms a frame.
 
-   The look: lit by the renders' studio HDRI turned as they turn it (RoomEnvironment until it has loaded), tone-mapped
-   ACES at 0.85; bloom (UnrealBloomPass, threshold 0.92) catches only what emits: the OLED and the LED matrix lit in the
-   displays scene, the colour sensor's white LEDs. If the frame watch finds the scenes slow, the bloom goes first.
+   The look: lit by the renders' studio HDRI turned as they turn it (RoomEnvironment only if it does not load), tone-mapped
+   ACES at 0.85; bloom (UnrealBloomPass, threshold 0.92) catches only what emits: the board's red power LED, the colour
+   sensor's white LEDs. The clear lid is drawn as glass (glassLid): reflections added over what is behind it, nearly clear
+   face-on, its edges catching the light. If the frame watch finds the scenes slow, the bloom goes first.
 
-   The models (assets/3d/models.json): `board`, the marketing repository's Blender model of the board (+Y up, the motor
-   ports facing +Z, each part group a node "grp_<group>" that `explode` moves: the board assembles itself as it arrives);
-   `scenes`, one per chapter, the marketing scenes built around that same board and exported without it (its motors,
-   peripherals, cables, the sample robot's chassis), loaded one after another once the board is up, each placed in the
-   board's frame; with `board` null a placeholder is built here from boxes and there are no scenes.
+   The models (assets/3d/models.json): `board`, the marketing repository's Blender model of the board (+Y up, each part
+   group a node "grp_<group>"); `scenes`, one per chapter, the marketing scenes built around that same board and exported
+   without it (its motors, peripherals, cables, the sample robot), loaded one after another once the board is up, each
+   placed in the board's frame; with `board` null a placeholder is built here from boxes and there are no scenes.
+
+   The entrance (owner, 2026-11-11: "assemble the evn like a user would"): nothing starts until the board and the HDRI are
+   both in; then the photo fades out fast, the canvas fades in as the bottom shell drops in, and the board is put
+   together on a clock (ASSEMBLY: the shell, the populated PCB, the lid, the four screws turning in one after another, the
+   two cells from below, the battery cover from the side, then the red power LED comes on), 4.6 s in all - under the 5 s
+   WCAG 2.2.2 allows moving content that starts on its own - and any scroll, key or pointer press finishes it at once.
+   Every animation runs on the clock, never on a frame count, so a slow renderer jumps rather than stalls.
 
    The scroll story: the stage's progress (0 at its top, 1 when its last chapter has scrolled past) picks a pose between
-   keyframes, one per chapter; the camera frames that pose's scene (its bounding box with the board's), the scene rises in
-   as its chapter arrives and sinks away after, and the board eases towards the pose. Nothing moves on its own (WCAG
-   2.2.2): after the entrance the loop renders only while the board is still easing to a scroll position, then idles. The
-   entrance's frames are the speed test: a median over 45 ms and the layer removes itself, leaving the photo. Leaving the
-   page, a lost WebGL context or reduced motion switched on stop it, and stop() frees the GPU.
+   keyframes, one per chapter; the camera frames that pose's scene (its outline with the board's) and the board eases
+   towards the pose. Each scene is a set of items (sceneItems: a motor with its cable and plugs, a sensor with its cable),
+   each plugged in along its own direction as its chapter arrives (a LEGO motor's out of its jack, horizontally; the
+   gearmotor and the sensors onto their header pins from above; the robot from above; a laptop from behind) and pulled
+   out the same way after: in a transition the first half takes the current chapter's items out, the bare board stands at
+   the midpoint, the second half plugs the next chapter's in. Something that lights (the colour sensor) lights only once
+   it is plugged in. With a mouse, an item under the pointer is lit and lifted a little and a motor turns its hub.
+   Nothing moves on its own (WCAG 2.2.2): after the entrance the loop renders only while something eases to a scroll
+   position or a hover, then idles. The entrance's frames are the speed test: a median over 45 ms and the layer removes
+   itself, leaving the photo. Leaving the page, a lost WebGL context or reduced motion switched on stop it, and stop()
+   frees the GPU.
    ------------------------------------------------------------------------------------------------ */
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
@@ -37,25 +50,54 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 const ACCENT = 0xa8977b;
 const ENV_INTENSITY = 0.6;                                          // the environment's reflections (models.json environment.intensity overrides)
 
-/* one pose per stop of the story: the board's rotation (rx, ry), the scene shown (a key of models.json `scenes`, or null:
-   the board alone), how tightly the camera frames it (zoom: above 1 smaller), and the exploded view's amount (lift: 0
-   assembled, 1 the marketing renders' full exploded view). Wide (over 1100 px): the scene's outline fills the free area
-   right of the words and left of the LED indicator at zoom 1 (fitWide). In the stacked layout (1100 px and under, the
-   same breakpoint as site.css: phones and tablets) it fills the still's own box on the first screen and the space above
-   each chapter's card after (measure) */
+/* one pose per stop of the story (the first screen, then one per `article.chapter` of the stage, in order): the board's
+   rotation (rx, ry), the scene shown (a key of models.json `scenes`, or null: the board alone; a key models.json does not
+   name yet shows the board alone too), whether the board is shown (board: false, the laptop alone: the board fades out
+   across the transition to it), and how tightly the camera frames it (zoom, default 1: above 1 smaller). Wide (over
+   1100 px): the scene's outline fills its photoreal render's box (fitWide); in the stacked layout (1100 px and under, the
+   same breakpoint as site.css: phones and tablets) the same, the still's own box on the first screen (measure) */
 const POSES = [
-  { rx: 0.42, ry: -0.62, scene: null, zoom: 1.0, lift: 0.0 },              // the first screen: the board
-  { rx: 0.5, ry: -0.95, scene: 'motors', zoom: 1.0, lift: 0.0 },           // 01 motors: EV3, NXT and a gearmotor, cabled
-  { rx: 0.55, ry: 0.15, scene: 'sensors', zoom: 1.0, lift: 0.0 },          // 02 sensors: four sensors on I2C ports
-  { rx: 0.5, ry: 0.25, scene: 'displays', zoom: 1.0, lift: 0.0 },          // 03 code: the displays lit
-  { rx: 0.48, ry: -2.25, scene: 'robot', zoom: 1.0, lift: 0.0 }            // 04 the simulator: the sample robot
+  { rx: 0.42, ry: -0.62, scene: null },                      // the first screen: the board
+  { rx: 0.5, ry: -0.95, scene: 'motors' },                   // motors: EV3, NXT and a gearmotor, cabled
+  { rx: 0.55, ry: 0.15, scene: 'sensors' },                  // sensors: four sensors on I2C ports
+  { rx: 0.395, ry: -0.875, scene: 'code' },                  // code: a laptop with a USB-C cable to the board (models.json scenes.code, coming)
+  { rx: 0.48, ry: -2.25, scene: 'robot' },                   // the WRO drive base
+  { rx: 0.255, ry: -0.525, scene: 'simulator', board: false } // the simulator: the laptop alone
 ];
 const STACKED = '(max-width: 1100px)';
 const PHONE = '(max-width: 760px)';                                  // phones: models.json phone_scenes only
-const ENTRANCE = { ry: -0.9, lift: 0.7, zoom: 0.35 };                // added to the first pose and eased away at the start
+
+/* the entrance, in seconds from its first frame: each step's start (t) and length (d); the screws and the cells one after
+   another (gap); each part comes from `from` board lengths away along its own direction (the board's frame, +Y up).
+   4.54 s in all (WCAG 2.2.2: under 5 s) */
+const ASSEMBLY = {
+  base: { t: 0.0, d: 0.6, from: 0.9 },                       // the bottom shell, from above
+  pcb: { t: 0.72, d: 0.6, from: 0.9 },                       // the populated PCB with the battery holder, from above
+  shield: { t: 1.44, d: 0.56, from: 0.9 },                   // the clear lid, from above
+  bolts: { t: 2.12, d: 0.5, gap: 0.16, from: 0.6, turns: 3 }, // the four screws, from above, turning in
+  cells: { t: 3.22, d: 0.4, gap: 0.22, from: 0.6 },          // the two cells, from below
+  cover: { t: 3.96, d: 0.42, from: 0.8 },                    // the battery cover, from the side along the long axis
+  led: { t: 4.42, d: 0.12 }                                  // the red power LED comes on
+};
+const ASSEMBLY_END = ASSEMBLY.led.t + ASSEMBLY.led.d;
+const ENTRANCE_TURN = 0.3;                                   // the board turns this far into its first pose as it assembles
+
+/* how each scene's items plug in: 'plugs' (a LEGO motor out of its jack, horizontally; an item with a header connector
+   from above), 'above', 'behind' (from the board's back, as a whole); `from`: the travel, in board lengths */
+const SCENE_MOTION = {
+  motors: { mode: 'plugs', from: 0.55 },
+  sensors: { mode: 'above', from: 0.45 },
+  robot: { mode: 'above', whole: true, from: 0.7 },
+  code: { mode: 'behind', whole: true, from: 0.8 },
+  simulator: { mode: 'behind', whole: true, from: 0.8 },
+  displays: { mode: 'above', from: 0.45 }
+};
+const STAGGER = 0.3;                                         // the items' insertions spread over this much of the half-transition
 
 function lerp(a, b, t) { return a + (b - a) * t; }
 function ease(t) { return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
+function easeOut(t) { return 1 - Math.pow(1 - t, 3); }
+function clamp01(t) { return Math.min(1, Math.max(0, t)); }
 
 /* ---- the placeholder board -------------------------------------------------------------------------------- */
 function placeholderBoard() {
@@ -162,35 +204,34 @@ function gltfLoader() {
 }
 
 /* the board: its glTF scene scaled to the placeholder's 4.2 units of length and centred; `frame` is that transform, which
-   every chapter scene takes too (they are in the board's own frame) */
+   every chapter scene takes too (they are in the board's own frame); `L`, `center` and `half` the board's size in that
+   frame (the glTF's own units) */
 async function loadModel(models) {
   if (!models || !models.board) { return placeholderBoard(); }
   const loader = await gltfLoader();
   const gltf = await loader.loadAsync(new URL(models.board, document.baseURI).href);
   const g = new THREE.Group();
   const scene = gltf.scene;
+  const lid = scene.getObjectByName('grp_shield');
+  if (lid) { lid.traverse((o) => { for (const m of [].concat(o.material || [])) { if (m.transmission > 0) { glassLid(m); } } }); }
   softenEnv(scene);
   const box = new THREE.Box3().setFromObject(scene);
   const size = box.getSize(new THREE.Vector3());
   const L = Math.max(size.x, size.z);
   const k = 4.2 / L;
-  const c = box.getCenter(new THREE.Vector3()).multiplyScalar(k);
-  g.userData.frame = { k, offset: new THREE.Vector3(-c.x, -c.y, -c.z) };
+  const c = box.getCenter(new THREE.Vector3());
+  g.userData.frame = { k, offset: c.clone().multiplyScalar(-k) };
+  g.userData.L = L;
+  g.userData.center = c;
+  g.userData.half = size.clone().multiplyScalar(0.5);
   scene.scale.setScalar(k);
   scene.position.copy(g.userData.frame.offset);
   g.add(scene);
-  /* the exploded view: each named node moves along the model's up (+Y of its parent, the glTF scene) by its mm */
-  const perMm = L / (models.long_mm || 104);
-  g.userData.explode = Object.keys(models.explode || {}).map((name) => {
-    const n = scene.getObjectByName(name);
-    return n ? { n, base: n.position.y, dy: models.explode[name] * perMm } : null;
-  }).filter(Boolean);
   return g;
 }
 
-/* a transmissive
-   material (the clear shield) drawn as plain transparency: three's transmission samples a blurred, lower-resolution copy of
-   what is behind it, which washed out the board under the lid and hid its silkscreen, and costs a render pass */
+/* a transmissive material (the scenes' clear LEGO parts) drawn as plain transparency: three's transmission samples a
+   blurred, lower-resolution copy of what is behind it, which washes out what is under it, and costs a render pass */
 function softenEnv(root) {
   root.traverse((o) => {
     for (const m of [].concat(o.material || [])) {
@@ -205,6 +246,285 @@ function softenEnv(root) {
     }
   });
 }
+/* the board's clear lid as glass (owner, 2026-11-11: "evn alpha top shell is too frosted still, compare with blender
+   render"): no diffuse colour (plain transparency's white at 0.16 was the haze), its reflections added over what is behind
+   it (premultiplied blending without the multiply: ONE, ONE_MINUS_SRC_ALPHA), and an alpha that is all but clear face-on
+   and rises towards grazing angles, so the lid's edges and curves catch the light and darken a little as glass does.
+   `userData.fade` fades the whole lid with the board (a pose with board: false) */
+const GLASS_FACE = 0.04, GLASS_EDGE = '0.7';
+function glassLid(m) {
+  m.transmission = 0;
+  m.transparent = true;
+  m.premultipliedAlpha = true;
+  m.depthWrite = false;
+  m.color.setRGB(0, 0, 0);
+  m.roughness = 0.03;
+  m.metalness = 0;
+  m.clearcoat = 0.5;
+  m.clearcoatRoughness = 0.03;
+  m.opacity = GLASS_FACE;
+  const fade = { value: 1 };
+  m.userData.fade = fade;
+  m.onBeforeCompile = (sh) => {
+    sh.uniforms.uFade = fade;
+    sh.fragmentShader = 'uniform float uFade;\n' + sh.fragmentShader
+      .replace('#include <opaque_fragment>', [
+        'float evnRim = pow( 1.0 - saturate( abs( dot( geometryViewDir, normal ) ) ), 2.0 );',
+        'diffuseColor.a = mix( diffuseColor.a, ' + GLASS_EDGE + ', evnRim ) * uFade;',
+        'outgoingLight *= uFade;',
+        '#include <opaque_fragment>'].join('\n'))
+      .replace('#include <premultiplied_alpha_fragment>', '');
+  };
+  m.customProgramCacheKey = () => 'evn-glass-lid';
+  m.needsUpdate = true;
+}
+
+/* a vector of `from`'s frame in `to`'s frame (a direction and length, not a point) */
+function vecIn(from, to, v) {
+  from.updateMatrixWorld(true);
+  to.updateMatrixWorld(true);
+  const a = to.worldToLocal(from.localToWorld(new THREE.Vector3(0, 0, 0)));
+  return to.worldToLocal(from.localToWorld(v.clone())).sub(a);
+}
+/* the centre of an object's meshes in `frame`'s own frame */
+function centreIn(frame, obj) { return localBox(frame, [obj]).getCenter(new THREE.Vector3()); }
+/* the board's face a point lies off: the horizontal axis (x or z) on which it is furthest out for the board's size */
+function faceAxis(model, p) {
+  const c = model.userData.center, h = model.userData.half;
+  const dx = (p.x - c.x) / Math.max(1e-6, h.x), dz = (p.z - c.z) / Math.max(1e-6, h.z);
+  return Math.abs(dx) >= Math.abs(dz) ? new THREE.Vector3(Math.sign(dx) || 1, 0, 0) : new THREE.Vector3(0, 0, Math.sign(dz) || 1);
+}
+/* moves `kids` (children of `parent`) under a new group at their centre: the pivot a screw turns about, or a cell's own
+   group */
+function pivotOf(parent, kids) {
+  const p = new THREE.Group();
+  const c = new THREE.Box3();
+  for (const o of kids) { c.union(localBox(parent, [o])); }
+  p.position.copy(c.getCenter(new THREE.Vector3()));
+  parent.add(p);
+  p.updateMatrixWorld(true);
+  for (const o of kids) { p.attach(o); }
+  return p;
+}
+
+/* ---- the entrance: the board put together (owner, 2026-11-11) -------------------------------------------------
+   Each part: the node moved, its place (base), where it comes from (off, in its parent's frame: the board's frame, +Y up)
+   and its step. The screws each get a pivot at their centre, to turn about their own vertical axis as they go down; the
+   eight cell meshes are grouped into the two cells by where they lie. The red LED: LED3_C2286 (LCSC C2286, a red 0603) */
+function buildAssembly(model) {
+  const A = { parts: [], led: null };
+  const scene = model.children[0];
+  if (!scene || !model.userData.L) { return A; }
+  const L = model.userData.L;
+  const up = new THREE.Vector3(0, 1, 0);
+  const add = (obj, step, dir, extra) => {
+    if (!obj) { return; }
+    A.parts.push(Object.assign({ obj, base: obj.position.clone(), off: vecIn(scene, obj.parent, dir.clone().multiplyScalar(step.from * L)),
+                                 t: step.t, d: step.d }, extra || {}));
+  };
+  const by = (n) => scene.getObjectByName(n);
+  add(by('grp_base'), ASSEMBLY.base, up);
+  for (const n of ['grp_pcb', 'grp_synth', 'grp_holder']) { add(by(n), ASSEMBLY.pcb, up); }
+  add(by('grp_shield'), ASSEMBLY.shield, up);
+  const bolts = by('grp_bolts');
+  if (bolts) {
+    const pv = bolts.children.slice().map((b) => pivotOf(bolts, [b]));
+    pv.sort((a, b) => (a.position.z - b.position.z) || (a.position.x - b.position.x));
+    /* one after another round the board: the two at one end, then the two at the other, crossing over */
+    const order = pv.length === 4 ? [pv[0], pv[3], pv[1], pv[2]] : pv;
+    order.forEach((p, i) => add(p, Object.assign({}, ASSEMBLY.bolts, { t: ASSEMBLY.bolts.t + i * ASSEMBLY.bolts.gap }), up,
+                               { turns: ASSEMBLY.bolts.turns }));
+  }
+  const cells = by('grp_cells');
+  if (cells && cells.children.length) {
+    const kids = cells.children.slice(), cs = kids.map((o) => centreIn(cells, o));
+    const spread = ['x', 'y', 'z'].map((a) => Math.max(...cs.map((c) => c[a])) - Math.min(...cs.map((c) => c[a])));
+    const ax = ['x', 'y', 'z'][spread.indexOf(Math.max(...spread))];
+    const mid = (Math.max(...cs.map((c) => c[ax])) + Math.min(...cs.map((c) => c[ax]))) / 2;
+    const two = [kids.filter((o, i) => cs[i][ax] < mid), kids.filter((o, i) => cs[i][ax] >= mid)].filter((s) => s.length);
+    two.forEach((s, i) => add(pivotOf(cells, s), Object.assign({}, ASSEMBLY.cells, { t: ASSEMBLY.cells.t + i * ASSEMBLY.cells.gap }),
+                             new THREE.Vector3(0, -1, 0)));
+  }
+  const h = model.userData.half;
+  add(by('grp_cover'), ASSEMBLY.cover, h.x >= h.z ? new THREE.Vector3(1, 0, 0) : new THREE.Vector3(0, 0, 1));
+  /* the LED: its lens (the model's placeholder green) made its own red material, dark until the board is on, and a small
+     red light just above it */
+  const led = by('LED3_C2286');
+  if (led) {
+    const lens = [];
+    led.traverse((o) => {
+      if (!o.isMesh) { return; }
+      o.material = [].concat(o.material).map((m) => {
+        if (!(m.color && m.color.g > 0.8 && m.color.r < 0.2 && m.color.b < 0.2)) { return m; }
+        const c = m.clone();
+        c.color.setHex(0x3a0a06);
+        c.emissive.setHex(0xff2008);
+        c.emissiveIntensity = 0;
+        lens.push(c);
+        return c;
+      });
+      if (o.material.length === 1) { o.material = o.material[0]; }
+    });
+    const light = new THREE.PointLight(0xff2a14, 0, 1.6, 2);
+    light.position.copy(centreIn(model, led)).add(new THREE.Vector3(0, 0.06, 0));
+    model.add(light);
+    A.led = { lens, light };
+  }
+  return A;
+}
+const LED_LIGHT = 0.15;                                      // the LED's light, candela in the board group's units
+/* the board as it is t seconds into the entrance (Infinity: put together) */
+function setAssembly(A, t, shadow) {
+  for (const p of A.parts) {
+    const s = (t - p.t) / p.d;
+    p.obj.visible = s > 0;
+    const e = easeOut(clamp01(s));
+    p.obj.position.copy(p.base).addScaledVector(p.off, 1 - e);
+    if (p.turns) { p.obj.rotation.y = -p.turns * 2 * Math.PI * (1 - e); }
+  }
+  if (shadow) { shadow.userData.asm = A.parts.length ? easeOut(clamp01(t / ASSEMBLY.base.d)) : 1; }
+  if (A.led) {
+    const on = clamp01((t - ASSEMBLY.led.t) / ASSEMBLY.led.d);
+    for (const m of A.led.lens) { m.color.setHex(0x3a0a06).lerp(new THREE.Color(0xff4a30), on); m.emissiveIntensity = 6 * on; }
+    A.led.on = on;
+  }
+}
+
+/* ---- a chapter scene's items (owner, 2026-11-11: "have the wires start out of their ports so that they appear to be
+   inserting as the user scrolls") ---------------------------------------------------------------------------------
+   The scene GLBs name their nodes per item: lego_<scene>_<K>_<part> the motor or sensor K; lego_<scene>_cable_motor_m<N>,
+   _plug_motor_m<N> (board end), _plug_motor_m<N>_motor (motor end) and _hdr_motor_m<N>_* (a header connector) motor
+   port N, item N - 1; lego_peri_sensors_pc-i2c<P>_* a sensor's cable, the P's in ascending order matching the K's. A scene
+   whose motion is `whole` is one item; whatever matches no item moves with the whole scene (`rest`). Each item moves along
+   its own direction (in the scene's frame, the board's, +Y up): a LEGO motor horizontally out of the face its board-end
+   plug sits on, an item with a header connector and every sensor from above, a laptop from the board's back */
+function itemKey(name) {
+  let m = /^lego_[a-z_]+?_(\d+)_/.exec(name);
+  if (m) { return 'k' + Number(m[1]); }
+  m = /_motor_m(\d+)/.exec(name);
+  if (m) { return 'k' + (Number(m[1]) - 1); }
+  m = /pc-i2c(\d+)_/.exec(name);
+  if (m) { return 'p' + Number(m[1]); }
+  return null;
+}
+const HOVER_GLOW = new THREE.Color(0x4a3c24);
+function sceneItems(group, key, model, boardRoot) {
+  const cfg = SCENE_MOTION[key] || { mode: 'above', from: 0.5 };
+  const L = model.userData.L || 1;
+  const up = new THREE.Vector3(0, 1, 0);
+  /* the board's back: away from its motor jacks (the RJ12 sockets' side) */
+  const board = model.children[0], jacks = [];
+  if (board && model.userData.center) { board.traverse((o) => { if (/rj12/i.test(o.name)) { jacks.push(o); } }); }
+  /* measured from the jacks' geometry whether or not the board is shown (localBox counts only shown meshes: with the board
+     hidden, as in the simulator's pose, a laptop scene loading then slid in from an arbitrary side; review site76_r6 S3) */
+  const jb = new THREE.Box3(), inv = new THREE.Matrix4();
+  board.updateMatrixWorld(true);
+  inv.copy(board.matrixWorld).invert();
+  for (const j of jacks) {
+    j.traverse((m) => {
+      if (!m.isMesh || !m.geometry) { return; }
+      if (!m.geometry.boundingBox) { m.geometry.computeBoundingBox(); }
+      jb.union(m.geometry.boundingBox.clone().applyMatrix4(new THREE.Matrix4().multiplyMatrices(inv, m.matrixWorld)));
+    });
+  }
+  const front = jacks.length ? faceAxis(model, jb.getCenter(new THREE.Vector3())) : new THREE.Vector3(0, 0, 1);
+  const groups = new Map(), rest = [];
+  const has = (o) => { let f = false; o.traverse((c) => { if (c !== o && itemKey(c.name)) { f = true; } }); return f; };
+  (function walk(o) {
+    for (const c of o.children) {
+      const k = cfg.whole ? 'k0' : itemKey(c.name);
+      if (k) { if (!groups.has(k)) { groups.set(k, []); } groups.get(k).push(c); } else if (has(c)) { walk(c); } else { rest.push(c); }
+    }
+  })(group);
+  /* the cables' ports in ascending order, matched to the sensors in ascending order */
+  const ks = [...groups.keys()].filter((k) => k[0] === 'k').map((k) => Number(k.slice(1))).sort((a, b) => a - b);
+  const ps = [...groups.keys()].filter((k) => k[0] === 'p').map((k) => Number(k.slice(1))).sort((a, b) => a - b);
+  ps.forEach((p, i) => {
+    const to = 'k' + (ks[i] !== undefined ? ks[i] : 1000 + p);
+    if (!groups.has(to)) { groups.set(to, []); }
+    groups.get(to).push(...groups.get('p' + p));
+    groups.delete('p' + p);
+  });
+  const items = [...groups.entries()].sort((a, b) => Number(a[0].slice(1)) - Number(b[0].slice(1))).map(([k, nodes]) => {
+    let dir = up;
+    if (cfg.mode === 'behind') { dir = front.clone().negate(); }
+    if (cfg.mode === 'plugs' && !nodes.some((n) => /_hdr_/.test(n.name))) {
+      const plug = nodes.find((n) => /_plug_motor_m\d+$/.test(n.name));
+      if (plug) { dir = faceAxis(model, centreIn(group, plug)); }
+    }
+    return { key: k, nodes, dir, hover: true };
+  });
+  if (rest.length) { items.push({ key: 'rest', nodes: rest, dir: cfg.mode === 'behind' ? front.clone().negate() : up, hover: false }); }
+  for (const it of items) {
+    it.dist = cfg.from * L;
+    it.pts = outline(group, it.nodes);
+    it.box = new THREE.Box3().setFromPoints(it.pts.length ? it.pts : [new THREE.Vector3()]);
+    it.prog = 1; it.hov = 0; it.hovT = 0; it.spin0 = 0; it.offG = new THREE.Vector3();
+    it.mats = []; it.lit = [];
+    /* each item its own materials, so one lights alone; what emits (the colour sensor's LEDs) dark until it is plugged in */
+    for (const n of it.nodes) {
+      n.traverse((o) => {
+        if (!o.isMesh) { return; }
+        const ms = [].concat(o.material).map((m) => m.clone());
+        o.material = ms.length === 1 ? ms[0] : ms;
+        for (const m of ms) {
+          if (!m.emissive) { continue; }
+          if (m.emissive.r + m.emissive.g + m.emissive.b > 0 && m.emissiveIntensity > 0) { it.lit.push({ m, ei: m.emissiveIntensity }); } else { it.mats.push(m); }
+        }
+      });
+    }
+    if (it.hover) { motorSpin(it); }
+    /* each node's travel and hover lift in its parent's frame */
+    it.recs = it.nodes.map((n) => ({ n, base: n.position.clone(), d: vecIn(group, n.parent, it.dir.clone().multiplyScalar(it.dist)),
+                                     lift: vecIn(group, n.parent, up.clone().multiplyScalar(0.025 * L)) }));
+  }
+  return items;
+}
+/* a motor under the pointer turns its output: the EV3 motors' red hub and the NXT motor's orange hub are their own
+   primitives (their own meshes once loaded), round in two of their box's sides: each turns about the third, through its
+   centre. The gearmotor's "shaft" primitive turns about its long side, on the line through its gearbox's centre. A motor
+   with neither twitches about the vertical instead */
+function motorSpin(it) {
+  const motor = it.nodes.find((n) => /^lego_motors_\d+_/.test(n.name));
+  if (!motor) { return; }
+  const box = (o) => { if (!o.geometry.boundingBox) { o.geometry.computeBoundingBox(); } return o.geometry.boundingBox; };
+  const matName = (o) => [].concat(o.material).map((m) => m.name || '').join(' ');
+  let hub = null, axis = 0, centre = null, can = null;
+  motor.traverse((o) => { if (o.isMesh && o.geometry && /gearbox|motor can/i.test(matName(o))) { can = can || o; } });
+  motor.traverse((o) => {
+    if (hub || !o.isMesh || !o.geometry) { return; }
+    const nm = matName(o), round = /LEGO 4 Red|LEGO 25 Orange/.test(nm), shaft = /\bshaft\b/i.test(nm);
+    if (!round && !shaft) { return; }
+    const s = box(o).getSize(new THREE.Vector3()), d = [s.x, s.y, s.z];
+    if (round) {
+      /* the two sides most nearly equal are the hub's diameter; the axis is the other */
+      const pairs = [[0, 1, 2], [0, 2, 1], [1, 2, 0]].map(([i, j, k]) => ({ k, r: Math.min(d[i], d[j]) / Math.max(d[i], d[j], 1e-9) }));
+      const best = pairs.sort((x, y) => y.r - x.r)[0];
+      if (best.r < 0.9) { return; }
+      axis = best.k;
+      centre = box(o).getCenter(new THREE.Vector3());
+    } else {
+      axis = d.indexOf(Math.max(...d));
+      centre = box(o).getCenter(new THREE.Vector3());
+      if (can) { const cc = box(can).getCenter(new THREE.Vector3()); for (const a of [0, 1, 2]) { if (a !== axis) { centre.setComponent(a, cc.getComponent(a)); } } }
+    }
+    hub = o;
+  });
+  if (hub) {
+    const c = centre.applyMatrix4(hub.matrix);
+    const p = new THREE.Group();
+    p.position.copy(c);
+    hub.parent.add(p);
+    hub.position.sub(c);
+    p.add(hub);
+    it.spin = { pivot: p, axis: new THREE.Vector3().setComponent(axis, 1).applyQuaternion(hub.quaternion), kind: 'hub' };
+    return;
+  }
+  const p = pivotOf(motor.parent, [motor]);
+  it.nodes[it.nodes.indexOf(motor)] = p;
+  it.spin = { pivot: p, axis: new THREE.Vector3(0, 1, 0), kind: 'twitch' };
+}
+
 function shown(o) { for (let p = o; p; p = p.parent) { if (!p.visible) { return false; } } return true; }
 /* the outline of the shown meshes for the camera fit, in the board group's own frame: the vertices furthest along 96
    directions spread over the sphere (a box's corners overshoot a flat or spread-out scene by its empty corners); each
@@ -264,8 +584,7 @@ export async function start(stage, opts) {
 
   const scene = new THREE.Scene();
   const pmrem = new THREE.PMREMGenerator(renderer);
-  let envTarget = pmrem.fromScene(new RoomEnvironment(renderer), 0.04);
-  scene.environment = envTarget.texture;
+  let envTarget = null;
   /* reflections at 0.6 (the marketing renders' look, the owner: "renders too bright"). Since r163 a material lit by
      scene.environment takes scene.environmentIntensity on every draw, not its own envMapIntensity, so it is set here */
   scene.environmentIntensity = ENV_INTENSITY;
@@ -281,28 +600,59 @@ export async function start(stage, opts) {
   scene.add(rim);
 
   const models = opts && opts.models ? opts.models : null;
+  /* the marketing renders' studio HDRI, turned as they turn it (models.json environment.turn_deg), fetched beside the
+     board: nothing is drawn until both are in (owner, 2026-11-11: "lighting shows up awkwardly when first loaded ...
+     ensure model loads first?"); the generic room only if it does not load */
+  async function loadEnvironment() {
+    const env = models && models.environment;
+    if (!env || !env.hdr) { return false; }
+    try {
+      const { RGBELoader } = await import('three/addons/loaders/RGBELoader.js');
+      const tex = await new RGBELoader().loadAsync(new URL(env.hdr, document.baseURI).href);
+      tex.mapping = THREE.EquirectangularReflectionMapping;
+      const pm = pmrem.fromEquirectangular(tex);
+      tex.dispose();
+      envTarget = pm;
+      scene.environment = pm.texture;
+      scene.environmentRotation.set(0, THREE.MathUtils.degToRad(env.turn_deg || 0), 0);
+      scene.environmentIntensity = env.intensity ?? ENV_INTENSITY;
+      stage.setAttribute('data-3d-env', 'hdri');
+      return true;
+    } catch (e) { return false; }
+  }
+  const envP = loadEnvironment();
   const boardRoot = new THREE.Group();
   let model;
   try { model = await loadModel(models); } catch (e) {        // no board: free the context now, the photo stays
+    await envP;
+    if (envTarget) { envTarget.dispose(); }
     pmrem.dispose(); renderer.dispose(); renderer.forceContextLoss();
     throw e;
   }
+  if (!(await envP)) {
+    envTarget = pmrem.fromScene(new RoomEnvironment(renderer), 0.04);
+    scene.environment = envTarget.texture;
+  }
   boardRoot.add(model);
   boardRoot.updateMatrixWorld(true);
-  /* the shadow at the model's foot; the placeholder's cover lifts along the board's own up, in its parent's frame */
+  /* the shadow at the model's foot */
   const shadow = shadowPlane();
   shadow.position.y = new THREE.Box3().setFromObject(model).min.y + 0.01;
+  shadow.userData.asm = 1;
   boardRoot.add(shadow);
-  const cover = model.userData.cover;
-  if (cover && cover.parent) {
-    const pa = cover.parent;
-    cover.userData.base = cover.position.clone();
-    cover.userData.up = pa.worldToLocal(new THREE.Vector3(0, 1, 0)).sub(pa.worldToLocal(new THREE.Vector3(0, 0, 0)));
-  }
   scene.add(boardRoot);
   const boardBox = localBox(boardRoot, [model]);
   const boardPts = outline(boardRoot, [model]);
-  const scenes = {};                               // key -> { group, box, w }
+  /* the board's own parts (without the scenes added to `model` later): faded out for a pose with board: false */
+  const asm = buildAssembly(model);
+  const boardNode = models && models.board ? model.children[0] : model;
+  const boardMats = [];
+  boardNode.traverse((o) => {
+    for (const m of [].concat(o.material || [])) {
+      if (!boardMats.some((b) => b.m === m)) { boardMats.push({ m, op: m.opacity, tr: m.transparent }); }
+    }
+  });
+  const scenes = {};                               // key -> { group, box, pts, own, items }
 
   const stackedMq = window.matchMedia(STACKED);
   const motionMq = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -318,10 +668,11 @@ export async function start(stage, opts) {
     if (composer) { composer.setSize(Math.max(1, Math.round(r.width)), Math.max(1, Math.round(r.height))); }
     loop();
   }
-  /* a pose's framing: the centre and radius of its scene's box with the board's (the board alone until it has loaded) */
+  /* a pose's framing: the centre and radius of its scene's box with the board's (the board alone until it has loaded; the
+     scene alone, or the empty board's place, for a pose with board: false) */
   function framing(pose) {
     const s = pose.scene && scenes[pose.scene];
-    const box = s ? s.box : boardBox;
+    const box = s ? (pose.board === false ? s.ownBox : s.box) : boardBox;
     const sphere = box.getBoundingSphere(new THREE.Sphere());
     return { c: sphere.center, r: sphere.radius, box };
   }
@@ -348,14 +699,14 @@ export async function start(stage, opts) {
         /* no render (yet): stacked, the space above the card where it sits with its chapter centred */
         const k = c.querySelector('.chapter-card'), st0 = stage.querySelector('.stage-still').getBoundingClientRect();
         const g = Math.max(12, st0.top - h.top), side = Math.max(12, Math.min(st0.left - h.left, 24));
-        const top = h.height / 2 - c.offsetHeight / 2 + (k.getBoundingClientRect().top - c.getBoundingClientRect().top);
+        const top = h.height / 2 - c.offsetHeight / 2 + (k ? k.getBoundingClientRect().top - c.getBoundingClientRect().top : 0);
         return { qL: side, qT: g, qR: h.width - side, qB: Math.max(g + 80, top - g) };
       }
       if (!im && c) {
         /* no render (yet), wide: between the card and the LED indicator (or the window's edge), 48 px clear all round */
         const k = c.querySelector('.chapter-card'), led = document.querySelector('.led-nav');
         const lr = led && getComputedStyle(led).display !== 'none' ? led.getBoundingClientRect() : null;
-        return { qL: k.getBoundingClientRect().right - h.left + 48, qT: 48, qR: (lr ? lr.left - h.left : h.width) - 48, qB: h.height - 48 };
+        return { qL: (k ? k.getBoundingClientRect().right - h.left : h.width / 2) + 48, qT: 48, qR: (lr ? lr.left - h.left : h.width) - 48, qB: h.height - 48 };
       }
       if (!im) { return stillBox(); }
       /* where the figure sits when its chapter is centred on the visual: the pose's own place in the story (progress) */
@@ -392,8 +743,9 @@ export async function start(stage, opts) {
     const t = ease(p - i);
     const a = POSES[i], b = POSES[i + 1];
     const fa = framing(a), fb = framing(b);
-    const o = { rx: lerp(a.rx, b.rx, t), ry: lerp(a.ry, b.ry, t), zoom: lerp(a.zoom, b.zoom, t),
-                lift: lerp(a.lift, b.lift, t), cx: lerp(fa.c.x, fb.c.x, t), cy: lerp(fa.c.y, fb.c.y, t),
+    const o = { rx: lerp(a.rx, b.rx, t), ry: lerp(a.ry, b.ry, t), zoom: lerp(a.zoom || 1, b.zoom || 1, t),
+                bf: lerp(a.board === false ? 0 : 1, b.board === false ? 0 : 1, t),
+                cx: lerp(fa.c.x, fb.c.x, t), cy: lerp(fa.c.y, fb.c.y, t),
                 cz: lerp(fa.c.z, fb.c.z, t), rad: lerp(fa.r, fb.r, t), p };
     for (const ax of ['x', 'y', 'z']) {
       o['b0' + ax] = lerp(fa.box.min[ax], fb.box.min[ax], t);
@@ -428,7 +780,7 @@ export async function start(stage, opts) {
     }
     return hi;
   }
-  function posePts(pose) { const s = pose.scene && scenes[pose.scene]; return s ? s.pts : boardPts; }
+  function posePts(pose) { const s = pose.scene && scenes[pose.scene]; return s ? (pose.board === false ? s.ownPts : s.pts) : boardPts; }
   function fitWide(C) {
     const r = host.getBoundingClientRect();
     const W = Math.max(1, r.width), H = Math.max(1, r.height);
@@ -444,25 +796,65 @@ export async function start(stage, opts) {
     const px = (cx / tanW + 1) / 2 * W, py = (1 - cy / tanH) / 2 * H;
     camera.setViewOffset(W, H, px - (cur.qL + cur.qR) / 2, py - (cur.qT + cur.qB) / 2, W, H);
   }
+  /* the board faded for a pose with board: false (its materials made transparent only while it fades), its lid through
+     the glass's own fade, its LED's light and its shadow with it */
+  let boardFade = 1;
+  function setBoardFade(b) {
+    if (b === boardFade) { return; }
+    const was = boardFade;
+    boardFade = b;
+    boardNode.visible = b > 0.001;
+    for (const r of boardMats) {
+      if (r.m.userData.fade) { r.m.userData.fade.value = b; continue; }
+      const tr = b < 1 ? true : r.tr;
+      if (r.m.transparent !== tr) { r.m.transparent = tr; r.m.needsUpdate = true; }
+      r.m.opacity = b < 1 ? r.op * b : r.op;
+    }
+    if (was === 1 || b === 1) { loop(); }
+  }
+  let asmT = 0, asmDone = false;
   function apply() {
-    boardRoot.rotation.set(cur.rx, cur.ry, 0);
+    /* the entrance turns the board the last ENTRANCE_TURN into its first pose as it is put together */
+    boardRoot.rotation.set(cur.rx, cur.ry - (asmDone ? 0 : ENTRANCE_TURN * (1 - easeOut(clamp01(asmT / ASSEMBLY_END)))), 0);
     boardRoot.updateMatrixWorld(true);
     /* the camera: the scene's outline fitted into the pose's free area (fitWide, wide and stacked alike) */
     fitWide(new THREE.Vector3((cur.b0x + cur.b1x) / 2, (cur.b0y + cur.b1y) / 2, (cur.b0z + cur.b1z) / 2).applyMatrix4(boardRoot.matrixWorld));
-    if (cover && cover.userData.up) { cover.position.copy(cover.userData.base).addScaledVector(cover.userData.up, cur.lift * 0.9); }
-    for (const e of model.userData.explode || []) { e.n.position.y = e.base + e.dy * cur.lift; }
-    /* each scene: present around its own pose (weight 1), rising in from below as it arrives and sinking away after */
+    setAssembly(asm, asmDone ? Infinity : asmT, shadow);
+    setBoardFade(cur.bf > 0.999 ? 1 : cur.bf < 0.001 ? 0 : cur.bf);
+    shadow.material.opacity = shadow.userData.asm * boardFade;
+    if (asm.led) { asm.led.light.intensity = LED_LIGHT * asm.led.on * boardFade; }
+    /* each scene's items: plugged in over the second half of the way to their pose, pulled out over the first half of the
+       way on, one after another (the last in the first out); the bare board at each midpoint */
     POSES.forEach((pose, idx) => {
       const s = pose.scene && scenes[pose.scene];
       if (!s) { return; }
-      const w = Math.max(0, 1 - Math.abs(cur.p - idx));
-      s.group.visible = w > 0.02;
-      s.group.position.y = s.baseY - (1 - ease(w)) * 1.6;
+      const ins = clamp01(1 - 2 * Math.abs(cur.p - idx));
+      s.group.visible = ins > 0;
+      const n = s.items.filter((it) => it.key !== 'rest').length;
+      let j = 0;
+      for (const it of s.items) {
+        const pr = it.key === 'rest' || n < 2 ? ins : clamp01((ins - (j++) * STAGGER / (n - 1)) / (1 - STAGGER));
+        it.prog = pr;
+        const off = 1 - ease(pr);
+        it.offG.copy(it.dir).multiplyScalar(it.dist * off);
+        for (const r of it.recs) {
+          r.n.position.copy(r.base).addScaledVector(r.d, off).addScaledVector(r.lift, ease(it.hov));
+          r.n.visible = pr > 0;
+        }
+        for (const l of it.lit) { l.m.emissiveIntensity = pr >= 1 ? l.ei : 0; }   // lit only once it is plugged in
+        for (const m of it.mats) { m.emissive.copy(HOVER_GLOW).multiplyScalar(it.hov); }
+        if (it.spin) {
+          const u = it.spin0 ? clamp01((performance.now() - it.spin0) / SPIN_MS[it.spin.kind]) : 1;
+          const a = it.spin.kind === 'hub' ? 4 * Math.PI * ease(u) : 0.14 * Math.sin(u * Math.PI * 4) * (1 - u);
+          it.spin.pivot.quaternion.setFromAxisAngle(it.spin.axis, a);
+        }
+      }
     });
   }
+  const SPIN_MS = { hub: 1400, twitch: 700 };
 
   host.appendChild(canvas);
-  let visible = true, running = false, frames = [], last = 0, gaveUp = false, judged = false, t0 = 0;
+  let visible = true, running = false, frames = [], last = 0, gaveUp = false, judged = false, t0 = 0, asm0 = 0, skip = false;
   const recent = [];                                     // the latest frame times while the board moves (the scenes' cost)
   const keepSlow = !!(opts && opts.keepSlow);
   /* leaving the page removes the stage: the observer reports it, whether or not the loop is running */
@@ -472,12 +864,52 @@ export async function start(stage, opts) {
     if (visible) { loop(); }
   });
   io.observe(stage);
-  const onScroll = () => { if (visible) { loop(); } };
+  /* any scroll, key or pointer press finishes the entrance at once */
+  const onSkip = () => { if (!asmDone) { skip = true; loop(); } };
+  /* a scroll ends a hover: the item would stay lit and lifted while the scroll takes it out (review site76_r6 N1) */
+  const onScroll = () => { onSkip(); if (hovered) { hovered.hovT = 0; hovered = null; } if (visible) { loop(); } };
   const onVis = () => { if (!document.hidden) { loop(); } };
   const onMotion = () => { if (motionMq.matches) { stop('reduced-motion'); } };
   const onLost = (e) => { e.preventDefault(); stop('lost'); };
+  /* hover (a mouse or a pen, never touch): the chapters' words sit over the canvas, so the pointer is followed on the
+     window and the ray cast at the canvas's own rectangle; checked once a frame at most, rendering only on a change */
+  const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(), wb = new THREE.Box3();
+  let pointer = null, hoverQueued = false, hovered = null;
+  const canHover = window.matchMedia('(any-hover: hover)').matches;
+  const onPointer = (e) => {
+    if (e.pointerType === 'touch') { return; }
+    pointer = { x: e.clientX, y: e.clientY };
+    if (!hoverQueued) { hoverQueued = true; requestAnimationFrame(hoverCheck); }
+  };
+  function hoverCheck() {
+    hoverQueued = false;
+    if (gaveUp || !pointer || !asmDone || !judged) { return; }
+    const r = canvas.getBoundingClientRect();
+    let best = null, bestD = Infinity;
+    if (pointer.x >= r.left && pointer.x <= r.right && pointer.y >= r.top && pointer.y <= r.bottom) {
+      ndc.set((pointer.x - r.left) / r.width * 2 - 1, -((pointer.y - r.top) / r.height) * 2 + 1);
+      ray.setFromCamera(ndc, camera);
+      for (const s of Object.values(scenes)) {
+        if (!s.group.visible) { continue; }
+        for (const it of s.items) {
+          if (!it.hover || it.prog < 1) { continue; }
+          if (!ray.ray.intersectsBox(wb.copy(it.box).applyMatrix4(s.group.matrixWorld))) { continue; }
+          const hit = ray.intersectObjects(it.nodes, true)[0];
+          if (hit && hit.distance < bestD) { bestD = hit.distance; best = it; }
+        }
+      }
+    }
+    if (best === hovered) { return; }
+    if (hovered) { hovered.hovT = 0; }
+    hovered = best;
+    if (best) { best.hovT = 1; if (best.spin) { best.spin0 = performance.now(); } }
+    loop();
+  }
   window.addEventListener('resize', resize, { passive: true });
   window.addEventListener('scroll', onScroll, { passive: true });
+  window.addEventListener('keydown', onSkip);
+  window.addEventListener('pointerdown', onSkip, { passive: true });
+  if (canHover) { window.addEventListener('pointermove', onPointer, { passive: true }); }
   document.addEventListener('visibilitychange', onVis);
   if (motionMq.addEventListener) { motionMq.addEventListener('change', onMotion); }
   if (stackedMq.addEventListener) { stackedMq.addEventListener('change', resize); }
@@ -489,6 +921,10 @@ export async function start(stage, opts) {
   }
 
   window.__evn3dLive = (window.__evn3dLive || 0) + 1;          // live layers (one at most; data/shots.js checks)
+  function unlistenSkip() {
+    window.removeEventListener('keydown', onSkip);
+    window.removeEventListener('pointerdown', onSkip);
+  }
   function stop(reason) {
     if (gaveUp) { return; }
     gaveUp = true;
@@ -496,6 +932,8 @@ export async function start(stage, opts) {
     io.disconnect();
     window.removeEventListener('resize', resize);
     window.removeEventListener('scroll', onScroll);
+    unlistenSkip();
+    window.removeEventListener('pointermove', onPointer);
     document.removeEventListener('visibilitychange', onVis);
     if (motionMq.removeEventListener) { motionMq.removeEventListener('change', onMotion); }
     if (stackedMq.removeEventListener) { stackedMq.removeEventListener('change', resize); }
@@ -508,7 +946,7 @@ export async function start(stage, opts) {
       }
     });
     if (composer) { disableBloom(); }
-    envTarget.dispose();
+    if (envTarget) { envTarget.dispose(); }
     pmrem.dispose();
     renderer.dispose();
     renderer.forceContextLoss();
@@ -518,16 +956,33 @@ export async function start(stage, opts) {
       stage.setAttribute('data-3d-why', reason);
     }
   }
-  const KEYS = ['rx', 'ry', 'zoom', 'lift', 'cx', 'cy', 'cz', 'rad', 'p', 'b0x', 'b0y', 'b0z', 'b1x', 'b1y', 'b1z', 'qL', 'qT', 'qR', 'qB'];
+  const KEYS = ['rx', 'ry', 'zoom', 'bf', 'cx', 'cy', 'cz', 'rad', 'p', 'b0x', 'b0y', 'b0z', 'b1x', 'b1y', 'b1z', 'qL', 'qT', 'qR', 'qB'];
+  const FOLLOW_MS = 200;                                 // the board eases to the scroll position with this time constant
+  const HOVER_MS = 180;
   function frame(time) {
     if (gaveUp) { return; }
     if (!visible || document.hidden) { running = false; return; }
+    if (!asm0) { asm0 = time; }
+    if (!asmDone) {
+      asmT = skip ? ASSEMBLY_END : (time - asm0) / 1000;
+      if (asmT >= ASSEMBLY_END) { asmDone = true; unlistenSkip(); stage.setAttribute('data-3d-assembled', skip ? 'skipped' : 'played'); }
+    }
+    /* every motion on the clock: a slow renderer jumps further each frame rather than taking longer */
+    const dt = last ? Math.min(1000, time - last) : 16;
+    const kf = 1 - Math.exp(-dt / FOLLOW_MS);
     const tg = target();
     let moving = false;
     for (const k of KEYS) {
       const dv = tg[k] - cur[k];
-      if (Math.abs(dv) > (k[0] === 'q' ? 0.25 : 1e-4 * (k === 'rad' || k[0] === 'c' || k[0] === 'b' ? Math.max(1, cur.rad) : 1))) { moving = true; }
-      cur[k] += dv * 0.08;
+      if (Math.abs(dv) > (k[0] === 'q' ? 0.25 : 1e-4 * (k === 'rad' || k[0] === 'c' || k[0] === 'b' ? Math.max(1, cur.rad) : 1))) { moving = true; cur[k] += dv * kf; } else { cur[k] = tg[k]; }
+    }
+    /* hover: each item eases to lit and lifted or back; a motor's turn runs its course */
+    let anim = false;
+    for (const s of Object.values(scenes)) {
+      for (const it of s.items) {
+        if (it.hov !== it.hovT) { it.hov = it.hovT > it.hov ? Math.min(it.hovT, it.hov + dt / HOVER_MS) : Math.max(it.hovT, it.hov - dt / HOVER_MS); anim = true; }
+        if (it.spin && it.spin0) { if (time - it.spin0 < SPIN_MS[it.spin.kind] + 40) { anim = true; } else { it.spin0 = 0; } }
+      }
     }
     apply();
     draw();
@@ -535,14 +990,13 @@ export async function start(stage, opts) {
     if (stage.getAttribute('data-3d-at') !== at) { stage.setAttribute('data-3d-at', at); }   // the pose in view: site.css fades a phone's canvas past the first screen
     if (!t0) { t0 = time; }
     if (!judged) {                                       // the entrance's frames: the speed test, 30 frames or 3 s
-      if (last) { frames.push(time - last); }
+      if (last && (asmDone || asmT >= ASSEMBLY.pcb.t)) { frames.push(time - last); }    // once the PCB, the bulk of the board, is drawn
       if (frames.length === 30 || (frames.length >= 5 && time - t0 > 3000)) {
         judged = true;
         const s = frames.slice().sort((x, y) => x - y);
-        const med = s[Math.floor(s.length / 2)];
+        const med = s[Math.floor(s.length / 2)];         // the median frame
         stage.setAttribute('data-3d-frame-ms', String(Math.round(med)));
         if (med > 45 && !keepSlow) { stop('slow'); return; }
-        loadEnvironment();
         if (med < 25 && !stackedMq.matches) { enableBloom(); }
       }
     } else if (last && moving) {                         // and again while the scenes move: 20 frames, a median over 60 ms
@@ -556,45 +1010,29 @@ export async function start(stage, opts) {
     }
     if (judged) { nearScenes(); }
     last = time;
-    if (moving || !judged) { requestAnimationFrame(frame); } else { running = false; last = 0; markRect(); }
+    if (moving || anim || !judged || !asmDone) { requestAnimationFrame(frame); } else { running = false; last = 0; markRect(); }
   }
   function loop() { if (!running && !gaveUp) { running = true; last = 0; requestAnimationFrame(frame); } }
   /* where the shown model is on screen once it has settled (CSS px): data/shots.js checks it never covers the words */
   function markRect() {
-    /* the shown models' outlines (the board's, and each shown scene's with the board), not their boxes: a box's empty
-       corners reach over words the models never touch */
-    /* each shown scene where it is now (rising in or sinking away), the board where it is */
-    const sets = [[boardPts, boardRoot]].concat(Object.values(scenes).filter((s) => s.group.visible).map((s) => [s.own, s.group]));
+    /* the shown models' outlines (the board's, and each shown item's where its scroll puts it - never its hover lift),
+       not their boxes: a box's empty corners reach over words the models never touch */
+    const sets = boardFade > 0 ? [[boardPts, boardRoot, null]] : [];
+    for (const s of Object.values(scenes)) {
+      if (!s.group.visible) { continue; }
+      for (const it of s.items) { if (it.prog > 0) { sets.push([it.pts, s.group, it.offG]); } }
+    }
     let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
     const r = host.getBoundingClientRect();
     const v = new THREE.Vector3();
-    for (const [pts, frame] of sets) for (const q of pts) {
-      v.copy(q).applyMatrix4(frame.matrixWorld).project(camera);
+    for (const [pts, frame, off] of sets) for (const q of pts) {
+      v.copy(q);
+      if (off) { v.add(off); }
+      v.applyMatrix4(frame.matrixWorld).project(camera);
       const sx = r.left + (v.x + 1) / 2 * r.width, sy = r.top + (1 - v.y) / 2 * r.height;
       x0 = Math.min(x0, sx); y0 = Math.min(y0, sy); x1 = Math.max(x1, sx); y1 = Math.max(y1, sy);
     }
-    stage.setAttribute('data-3d-rect', [x0, y0, x1, y1].map(Math.round).join(','));
-  }
-  /* the marketing renders' studio HDRI, turned as they turn it (models.json environment.turn_deg), in place of the
-     generic room once it has loaded */
-  async function loadEnvironment() {
-    const env = models && models.environment;
-    if (!env || !env.hdr) { return; }
-    try {
-      const { RGBELoader } = await import('three/addons/loaders/RGBELoader.js');
-      const tex = await new RGBELoader().loadAsync(new URL(env.hdr, document.baseURI).href);
-      if (gaveUp) { tex.dispose(); return; }
-      tex.mapping = THREE.EquirectangularReflectionMapping;
-      const pm = pmrem.fromEquirectangular(tex);
-      tex.dispose();
-      envTarget.dispose();
-      envTarget = pm;
-      scene.environment = pm.texture;
-      scene.environmentRotation.set(0, THREE.MathUtils.degToRad(env.turn_deg || 0), 0);
-      scene.environmentIntensity = env.intensity ?? ENV_INTENSITY;
-      stage.setAttribute('data-3d-env', 'hdri');
-      loop();
-    } catch (e) { /* the room stays */ }
+    if (sets.length) { stage.setAttribute('data-3d-rect', [x0, y0, x1, y1].map(Math.round).join(',')); } else { stage.setAttribute('data-3d-rect', ''); }
   }
   async function enableBloom() {
     if (composer || bloomFailed) { return; }
@@ -629,7 +1067,8 @@ export async function start(stage, opts) {
     stage.setAttribute('data-3d-bloom', 'off');
   }
   /* a chapter's scene is fetched once the board has passed its speed test and the story is within one chapter of it
-     (a visitor who never scrolls downloads none), one at a time */
+     (a visitor who never scrolls downloads none), one at a time; a pose whose scene models.json does not name shows the
+     board alone */
   let fetching = false, nLoaded = 0;
   function nearScenes() {
     if (fetching || !models || !models.scenes || !model.userData.frame) { return; }
@@ -652,8 +1091,15 @@ export async function start(stage, opts) {
         group.scale.setScalar(fr.k);
         group.position.copy(fr.offset);
         model.add(group);
-        const box = localBox(boardRoot, [model.children[0], group]);   // the board's glTF scene and this one
-        scenes[keyName] = { group, box, pts: outline(boardRoot, [model.children[0], group]), own: outline(group, [group]), baseY: group.position.y };
+        group.updateMatrixWorld(true);
+        /* its outline and box in the board group's frame (alone, and with the board's), and its items, all as it stands
+           put together, before any item is moved */
+        const ownBox = localBox(boardRoot, [group]), ownPts = outline(boardRoot, [group]);
+        const items = sceneItems(group, keyName, model, boardRoot);
+        scenes[keyName] = { group, ownBox, ownPts, box: ownBox.clone().union(boardBox), pts: boardPts.concat(ownPts), items };
+        /* what each item is (its key, node count, direction, and a motor's hub turn or twitch): for the captures */
+        stage.setAttribute('data-3d-items-' + keyName, items.map((it) => `${it.key}:${it.nodes.length}:${['x', 'y', 'z'].map((a) => Math.round(it.dir[a])).join('')}${it.spin ? ':' + it.spin.kind : ''}`).join(' '));
+        group.visible = false;
         const chEl = stage.querySelectorAll('article.chapter')[POSES.indexOf(pose) - 1];
         if (chEl) { chEl.classList.add('has-3d'); }                      // site.css: its render gives the live scene its place
         nLoaded++;
@@ -662,12 +1108,16 @@ export async function start(stage, opts) {
     }
   }
 
-  /* the first frame drawn before the canvas is shown, so the photo never gives way to an empty canvas */
+  /* the first frames drawn before the canvas is shown, so the photo never gives way to an empty canvas: the board put
+     together (every shader compiled, every buffer uploaded), then as the entrance starts (nothing yet: the bottom shell
+     drops in as the canvas fades in) */
   resize();
   Object.assign(cur, target());
-  cur.ry += ENTRANCE.ry;
-  cur.lift += ENTRANCE.lift;
-  cur.zoom += ENTRANCE.zoom;
+  asmDone = true;
+  apply();
+  draw();
+  asmDone = false;
+  asmT = 0;
   apply();
   draw();
   stage.setAttribute('data-3d', 'ready');

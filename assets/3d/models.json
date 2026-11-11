@@ -2,10 +2,10 @@
   "_header": [
     "The home page's 3D models (assets/hero3d.js). `board`: a glTF binary of the EVN ALPHA, +Y up, its motor ports facing +Z,",
     "scaled to fit and centred; null: hero3d.js builds a placeholder from boxes (and shows no scenes). `long_mm`: the model's",
-    "long side in mm. `explode`: a node's offset in mm along the board's up in the exploded view (the board's entrance), the",
+    "long side in mm. `explode`: a node's offset in mm in the marketing renders' exploded view (kept for reference: since 2026-11-11 the entrance is hero3d.js ASSEMBLY, the board put together part by part), the",
     "marketing renders' own (product_renders/blender_scene.py EXPLODE_MM). `scenes`: the chapters' scenes, in the board's frame,",
-    "without the board (hero3d.js POSES names them): motors = scenes.SCENES motors, sensors = peri_sensors, displays =",
-    "peri_displays, robot = drive_base.",
+    "without the board (hero3d.js POSES names them): motors = scenes.SCENES motors, sensors = peri_sensors (the OLED in place of the compass), code = laptop (on USB-C,",
+    "the blocks editor on its screen), robot = drive_base, simulator = the laptop alone (the simulator on its screen; data/displays_show.py site_scenes).",
     "All are the marketing repository's Blender scenes (kenchow96/EVN-Marketing product_renders: blender_scene.Product and",
     "set_scene, every cable at its routed length) at their full geometry, exported by docs/session/2026-11-10_site76/data/blender_to_glb.py (bpy 5.2.1) and",
     "compressed with glTF Transform 4.1.1 (optimize, then meshopt with a scene-wide quantization volume; simplification only within 0.05 %; the commands",
@@ -28,8 +28,9 @@
   "scenes": {
     "motors": "assets/3d/scene_motors.glb",
     "sensors": "assets/3d/scene_peri_sensors.glb",
-    "displays": "assets/3d/scene_peri_displays.glb",
-    "robot": "assets/3d/scene_drive_base.glb"
+    "code": "assets/3d/scene_laptop.glb",
+    "robot": "assets/3d/scene_drive_base.glb",
+    "simulator": "assets/3d/scene_site_sim.glb"
   },
   "environment": {
     "hdr": "assets/3d/studio-small-09.hdr",

@@ -329,6 +329,10 @@ a.shot:hover { text-decoration: none; border-color: var(--accent); }
   --st-h: calc(100vh - var(--header-h));
   position: relative; background: var(--st-bg); color: var(--st-ink); isolation: isolate;
 }
+/* the sticky visual's negative margin let it run a whole stage height past the stage's end, over the sections after it
+   (owner, 2026-11-11: "the team behind evn section does not show up on desktop", "students header not showing up"):
+   clipped at the stage's edge (clip, not hidden: hidden would make the stage a scroll container and stop the sticking) */
+@supports (overflow: clip) { .stage { overflow: clip; } }
 @supports (height: 100svh) { .stage { --st-h: calc(100svh - var(--header-h)); } }
 .stage-visual {
   position: sticky; top: var(--header-h); height: var(--st-h); margin-bottom: calc(-1 * var(--st-h));
@@ -341,10 +345,24 @@ a.shot:hover { text-decoration: none; border-color: var(--accent); }
      hero3d.js fits the board: right of the copy column, clear of the LED indicator (owner, 2026-11-10: "The oval shaped
      photo is really gaudy": no photo, no mask) */
   position: absolute; right: -15px; top: 46.5%; width: min(43.5vw, 716px); max-width: none; height: auto; transform: translateY(-50%);
-  transition: opacity .8s ease;
+  transition: opacity .3s ease;            /* out fast once the 3D board and its light are in (owner, 2026-11-11) */
 }
-@media (min-width: 1340px) { .stage-still { right: 51px; } }       /* the board 141 px in (the indicator: 28 + 64.7 + 48 px), its shadow and margin past it */
-.stage-canvas { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; transition: opacity 1s ease; }
+@media (min-width: 1280px) { .stage-still { right: 96px; width: min(41vw, 680px); } }   /* clear of the LED indicator (owner, 2026-11-11: "the evn is still slightly too close to the rgbled") */
+/* a short window (a laptop at 125-225 % scaling: 1280-1440 x 700-820 px): the first screen tightened so its words, to the
+   scroll cue, stay above the fold (owner, 2026-11-11: "scroll to see the board appears under the fold for me") */
+@media (min-width: 1101px) and (max-height: 860px) {
+  .stage .stage-hero { padding: 22px 0 18px; }
+  .stage-title { margin-top: 16px; font-size: clamp(52px, 11vh, 116px); }
+  .stage-display { margin-top: 16px; }
+  .stage .pitch, .stage .hero p.pitch { margin-top: 12px; }
+  .stage .actions { margin-top: 20px; }
+  .stage .meta { margin-top: 10px; }
+  .stage .aud-nav { margin-top: 18px; }
+  .stage-cue { margin-top: 18px; }
+  .stage-cue::after { height: 22px; margin-top: 8px; }
+}
+/* the canvas fades in as the board's bottom shell drops in (hero3d.js ASSEMBLY.base: 0.6 s) */
+.stage-canvas { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; transition: opacity .6s ease; }
 .stage[data-3d="ready"] .stage-canvas { opacity: 1; }
 .stage[data-3d="ready"] .stage-still { opacity: 0; }
 .stage .stage-hero { position: relative; z-index: 1; min-height: var(--st-h); display: flex; align-items: center; padding: 48px 0 40px; overflow: visible; }
@@ -437,17 +455,22 @@ a.shot:hover { text-decoration: none; border-color: var(--accent); }
 }
 
 /* ---- Home: the page indicator, the EVN RGB LED (site.js ledNav) ------------------------------------------------
-   Fixed at the right edge where the content column leaves room (1340 px and wider); each pixel a link, lit with its
-   own colour up to the section in view. */
+   Fixed at the right edge where the content column leaves room (1280 px and wider: 1280 is a 2880 px laptop at 225 %,
+   owner, 2026-11-11: "on my px13 (2880 x 1800) screen, the rgbled does not show up at all"); each pixel a link. */
 .led-nav { display: none; }
-@media (min-width: 1340px) {
-  .led-nav { display: block; position: fixed; right: 28px; top: 50%; transform: translateY(-50%); z-index: 20;
+@media (min-width: 1280px) {
+  .led-nav { display: block; position: fixed; right: 10px; top: 50%; transform: translateY(-50%); z-index: 20;
              width: 64.7px; height: 300px; }      /* the pixels 25 px apart: WCAG 2.2 target spacing for the 16 px dots */
 }
+@media (min-width: 1340px) { .led-nav { right: 28px; } }
 /* its cable, as it ships: the three wires of the render's plug (yellow data, red power, black ground: the image's columns
    41-51, 61-70 and 79-89 of 138) carried on up to the top of the window, each lit from the left as in the render */
 .led-nav::before {
-  content: ""; position: absolute; left: 0; bottom: calc(100% - 3px); width: 100%; height: 100vh; pointer-events: none;
+  /* from the header's foot down to the plug (the nav's top is 50vh - 150px): never above the header, even when the page
+     is pulled past its top (owner, 2026-11-11: "when over scrolling past the top of the page, the rgbled wires show up
+     above the header bar") */
+  content: ""; position: absolute; left: 0; bottom: calc(100% - 3px); width: 100%; height: calc(50vh - 150px - var(--header-h) + 3px);
+  pointer-events: none;
   background:
     linear-gradient(90deg, #e2cb5c, #b39c22 40%, #8f7c00 75%, #6d5c00) 19.2px 0 / 4.8px 100% no-repeat,
     linear-gradient(90deg, #a8382a, #84140a 40%, #700100 75%, #520000) 28.7px 0 / 4.5px 100% no-repeat,
@@ -472,21 +495,6 @@ a.shot:hover { text-decoration: none; border-color: var(--accent); }
 .led:hover { box-shadow: 0 0 0 2px #ffffff, 0 0 10px 3px rgba(255, 255, 255, .5); }
 .led:focus-visible { outline: 3px solid #ffffff; outline-offset: 2px; box-shadow: 0 0 0 5px #0c0f12; }
 @media (prefers-reduced-motion: reduce) { .led, .led-label { transition: none; } }
-
-/* ---- Home: the proof band -------------------------------------------------------------------------------------- */
-.proof { padding: 64px 0 56px; background: var(--surface); border-bottom: 1px solid var(--line); }
-.proof h2 { margin: 0; font-size: clamp(26px, 3.4vw, 38px); }
-.proof-line { margin: 10px 0 0; color: var(--muted); font-size: 17px; max-width: 60ch; }
-.proof-nums { list-style: none; margin: 30px 0 0; padding: 0; display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr)); }
-.proof-nums li { border-top: 2px solid var(--accent); padding-top: 12px; }
-.proof-nums strong { display: block; font-size: clamp(44px, 6vw, 68px); line-height: 1; font-weight: 700; color: var(--heading); letter-spacing: -.02em; }
-.proof-nums span { display: block; margin-top: 8px; color: var(--muted); font-size: 15.5px; }
-.proof-wins { list-style: none; margin: 32px 0 0; padding: 0; display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); }
-.proof-wins li { background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 14px 18px; }
-.proof-wins strong { display: block; color: var(--heading); font-size: 15.5px; }
-.proof-wins span { color: var(--accent-deep); font-size: 15px; font-weight: 500; }
-.proof-more { margin: 18px 0 0; font-size: 15px; }
-.proof-more a { color: var(--accent-deep); text-decoration: underline; text-underline-offset: 3px; }   /* on --surface: accentDeep, as the other links there (SITE-26) */
 
 /* ---- Home: who it is for, and the feature cards (assets/features.json) ----------------------------- */
 .aud-nav { margin: 30px 0 0; }

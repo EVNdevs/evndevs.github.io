@@ -760,7 +760,7 @@
     if (f.status === 'release' && f.release && versionAtLeast(released, f.release)) { return 'now'; }
     return 'soon';
   }
-  var BADGE = { now: 'Available now', soon: 'Coming soon' };
+  var BADGE = { soon: 'Coming soon' };      // the owner, 2026-11-11: "just note those that are coming soon"
   function external(href) { return /^https?:/i.test(href) || /^ide\//.test(href); }
   function linkTo(a, href) {
     a.href = href;
@@ -791,7 +791,7 @@
       h.textContent = f.title;
     }
     card.appendChild(h);
-    card.appendChild(el('p', 'badge badge-' + st, BADGE[st]));
+    if (BADGE[st]) { card.appendChild(el('p', 'badge badge-' + st, BADGE[st])); }
     card.appendChild(el('p', 'fcard-text', f.text));
     return card;
   }
@@ -865,12 +865,14 @@
   var CHAPTER_STILLS = {
     motors: { src: 'assets/images/chapter-motors.webp', width: 1280, height: 892,
       alt: 'The EVN ALPHA board with LEGO MINDSTORMS EV3 and NXT motors and a small gearmotor plugged into its four motor ports.' },
-    sensors: { src: 'assets/images/chapter-sensors.webp', width: 1251, height: 1115,
-      alt: 'The EVN ALPHA board with a colour sensor, a distance sensor, a gesture sensor and a compass cabled to its sensor ports.' },
-    code: { src: 'assets/images/chapter-displays.webp', width: 1266, height: 898,
-      alt: 'The EVN ALPHA board driving an OLED display showing the EVN logo, an LED matrix and a 7-segment display reading 2023.' },
-    simulator: { src: 'assets/images/chapter-robot.webp', width: 1224, height: 804,
-      alt: 'A two-wheeled competition robot built around the EVN ALPHA board.' }
+    sensors: { src: 'assets/images/chapter-sensors.webp', width: 1281, height: 1054,
+      alt: 'The EVN ALPHA board with a colour sensor, a distance sensor, a gesture sensor and an OLED display showing the EVN logo, cabled to its ports.' },
+    code: { src: 'assets/images/chapter-code.webp', width: 1275, height: 845,
+      alt: 'The EVN ALPHA board on a USB-C cable to a laptop showing the EVN blocks editor with its Python panel.' },
+    technic: { src: 'assets/images/chapter-robot.webp', width: 1224, height: 804,
+      alt: 'A two-wheeled competition robot built from LEGO Technic parts around the EVN ALPHA board.' },
+    simulator: { src: 'assets/images/chapter-sim.webp', width: 1279, height: 1073,
+      alt: 'A laptop running the EVN robot simulator on a WRO RoboMission table.' }
   };
 
   /* The scroll story: [id, kicker, headline, sentence, [link label, href] or null, a small note or none]. Facts from the board's page
@@ -879,27 +881,25 @@
     ['motors', 'Motors', 'Plug in the motors you already have.',
      'Four motor ports that work with LEGO MINDSTORMS EV3 and NXT motors, and the board calibrates each one itself.',
      ['Calibrating your robot', '#/calibration/']],
-    ['sensors', 'Sensors', 'Sixteen sensor ports. Found by name.',
+    ['sensors', 'Sensors and displays', 'Sixteen peripheral ports. Found by name.',
      'Plug in a sensor or a display and it shows up by name, with four servo ports and two serial ports beside them.',
      ['Sensors and displays', '#/documentation/sensors']],
     ['code', 'Code', 'Blocks or Python, live on the robot.',
      'Snap blocks together or type Python with autocomplete, in VS Code or the browser, and watch the robot as it runs.',
      ['Get started', '#/start']],
+    /* the owner, 2026-11-11: "04 should be about lego technic compatibility/competition readiness. model is the wro
+       drivebase. this is where we state that evn robots have won national championships at WRO and RoboCup and awards
+       at the Regional and International level, linking the trophy room" */
+    ['technic', 'LEGO Technic', 'Built on LEGO Technic. Proven in competition.',
+     'It mounts with Technic pins and beams. EVN robots have won national championships at WRO and RoboCup, and awards at regional and international level.',
+     ['Every result, in the trophy room', 'https://edu.coresg.tech/trophy-room/'],
+     'LEGO and LEGO Technic are trademarks of the LEGO Group, which does not sponsor or endorse EVN.'],
     ['simulator', 'Simulator', 'Practise without a field.',
      'Run your program on the WRO RoboMission tables and RoboCup Junior Rescue Line fields, with a referee that scores the run.',
      ['The robot simulator', '#/simulator/'],
      'EVN is not affiliated with or endorsed by the World Robot Olympiad Association or the RoboCup Federation.']
   ];
 
-  /* The team's record, from edu.coresg.tech (its home page and its trophy room, read 2026-11-10; the counts are the
-     site's own, "as of Sep 2026"): docs/session/2026-11-10_site76/data/sources.md quotes each line. */
-  var PROOF_NUMBERS = [['200+', 'awards won by the Centre’s teams'], ['30+', 'of them international'],
-                       ['19+', 'countries with EVN']];
-  var PROOF_RESULTS = [
-    ['WRO International Final 2025, RoboMission Senior', '4th, Gold: Singapore’s best result yet'],
-    ['RoboCup Asia Pacific 2022, RCJ Rescue Line U19', '1st and 2nd'],
-    ['RoboCup Singapore Open 2026, RCJ Rescue Line U19', '1st']
-  ];
 
   /* The 3D layer (assets/hero3d.js) loads only where it helps: after the page has loaded and gone idle, with
      IntersectionObserver and WebGL, never under prefers-reduced-motion or Save-Data. It finds the model in
@@ -954,8 +954,8 @@
      view lit EVN gold, the ones before it dim white, the rest dark (owner, 2026-11-10: "the current page be evn gold
      (bright), and previous pages as a single color (dim, maybe white)"; site.css "the page indicator"). */
   var LED_AT = [25.44, 33.86, 42.37, 50.84, 59.32, 67.83, 76.23, 84.81];   // % from the top; every pixel at 55.75 % across
-  var LED_SECTIONS = [['stage-top', 'EVN ALPHA'], ['chapter-motors', 'Motors'], ['chapter-sensors', 'Sensors'],
-                      ['chapter-code', 'Code'], ['chapter-simulator', 'Simulator'], ['proof', 'The team behind EVN'],
+  var LED_SECTIONS = [['stage-top', 'EVN ALPHA'], ['chapter-motors', 'Motors'], ['chapter-sensors', 'Sensors and displays'],
+                      ['chapter-code', 'Code'], ['chapter-technic', 'LEGO Technic'], ['chapter-simulator', 'Simulator'],
                       ['audiences', 'Who it is for'], ['story', 'The story']];
   var ledTeardown = null;
   function ledNav() {
@@ -1125,38 +1125,6 @@
       stage.querySelectorAll('.chapter').forEach(function (ch) { rio.observe(ch); });
     }
 
-    /* --- the proof: the record of the team behind EVN (edu.coresg.tech) --- */
-    var proof = el('section', 'proof');
-    proof.id = 'proof';
-    proof.setAttribute('aria-labelledby', 'proof-h');
-    var pw = el('div', 'wrap');
-    var ph = el('h2', null, 'From the team behind EVN');
-    ph.id = 'proof-h';
-    pw.appendChild(ph);
-    pw.appendChild(el('p', 'proof-line',
-      'EVN comes from the Centre of Robotics Excellence in Singapore, whose teams have won at WRO and RoboCup.'));
-    var nums = el('ul', 'proof-nums');
-    PROOF_NUMBERS.forEach(function (s) {
-      var li = el('li');
-      li.appendChild(el('strong', null, s[0]));
-      li.appendChild(el('span', null, s[1]));
-      nums.appendChild(li);
-    });
-    pw.appendChild(nums);
-    var wins = el('ul', 'proof-wins');
-    wins.setAttribute('aria-label', 'Some results');
-    PROOF_RESULTS.forEach(function (r) {
-      var li = el('li');
-      li.appendChild(el('strong', null, r[0]));
-      li.appendChild(el('span', null, r[1]));
-      wins.appendChild(li);
-    });
-    pw.appendChild(wins);
-    var trophy = el('p', 'proof-more');
-    trophy.appendChild(linkTo(el('a', null, 'Every result, in the trophy room'), 'https://edu.coresg.tech/trophy-room/'));
-    pw.appendChild(trophy);
-    proof.appendChild(pw);
-    main.appendChild(proof);
     /* --- one section per audience, its cards from assets/features.json --- */
     var box = el('div', 'audiences');
     box.id = 'audiences';
