@@ -66,14 +66,18 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta property="og:image:alt" content="The EVN ALPHA robotics controller beside the words: The natural evolution of the robot kit.">
 <!-- what the site is, for search engines (schema.org): only what the pages themselves state - the extension's MIT licence and
-     the systems VS Code runs on (the home page), its two creators and the Centre of Robotics Excellence (the footer) -->
+     the systems VS Code runs on (the home page), the controller's ports and motors (chapters 01-02), its two creators and
+     the Centre of Robotics Excellence (the footer); no price -->
 <script type="application/ld+json">{"@context": "https://schema.org", "@graph": [
   {"@type": "SoftwareApplication", "name": "EVN ALPHA MicroPython", "url": "https://evn.coresg.tech/",
-   "description": "MicroPython for the EVN ALPHA robotics controller, with a VS Code extension: program your robot in blocks or Python, from VS Code or your browser.",
+   "description": "The EVN ALPHA's VS Code extension and MicroPython firmware: program the robot in blocks or MicroPython, from VS Code or the browser, or run it in a robot simulator.",
    "applicationCategory": "EducationalApplication", "operatingSystem": "Windows, macOS, Linux", "license": "https://opensource.org/licenses/MIT",
    "image": "https://evn.coresg.tech/assets/og.png",
    "author": [{"@type": "Person", "name": "Kenneth Chow"}, {"@type": "Person", "name": "Heng Teng Yi"}],
    "publisher": {"@id": "https://edu.coresg.tech/#organization"}},
+  {"@type": "Product", "name": "EVN ALPHA", "url": "https://evn.coresg.tech/", "image": "https://evn.coresg.tech/assets/og.png",
+   "description": "A robotics controller for schools that runs LEGO MINDSTORMS EV3 and NXT motors and mounts on LEGO Technic: four motor ports, 16 I2C peripheral ports, four servo ports and two serial ports.",
+   "category": "Educational robotics controller", "brand": {"@type": "Brand", "name": "EVN"}, "manufacturer": {"@id": "https://edu.coresg.tech/#organization"}},
   {"@type": "Organization", "@id": "https://edu.coresg.tech/#organization", "name": "Centre of Robotics Excellence",
    "url": "https://edu.coresg.tech/", "address": {"@type": "PostalAddress", "addressCountry": "SG"}}]}</script>
 <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
@@ -133,12 +137,13 @@
   </div>
 </header>
 
-<main id="main" tabindex="-1">
+<main id="main" tabindex="-1" data-prerendered="doc">
   <div class="wrap" style="padding-top:48px;padding-bottom:48px">
-    <p class="notice"><span class="spinner" aria-hidden="true"></span>Loading&#8230;</p>
-    <article class="doc prerender">
+        <article class="doc prerender">
     <h1>Standard peripherals: displays, lights, servo and Bluetooth</h1>
-    <p>The EVN displays, lights, servos and Bluetooth module in MicroPython: OLED, LED matrix, seven-segment, RGB LEDs, servo, HC-05.</p>
+    <p>Part 3 of the EVN ALPHA MicroPython API reference, which has the units, the port numbers and the differences from Pybricks. Previous: Standard peripherals: sensors · Next: Extended peripherals: HiTechnic, HuskyLens, VL53L1X and TCS3430.</p>
+    </article>
+    <noscript><nav class="doc prerender doc-outline" aria-label="Contents">
     <h2>Contents</h2>
     <ul>
       <li><a href="#/api-displays/display--12864-oled-ssd1306--ssd1315">Display — 128×64 OLED (SSD1306 / SSD1315)</a></li>
@@ -148,7 +153,7 @@
       <li><a href="#/api-displays/servo--hobby-servo-geekservo-270--continuous-rotation">Servo — hobby servo (Geekservo 270° / continuous-rotation)</a></li>
       <li><a href="#/api-displays/bluetooth--bluetooth-module-hc-05">Bluetooth — Bluetooth module (HC-05)</a></li>
     </ul>
-    </article>
+    </nav></noscript>
     <noscript>
       <p class="notice">This page renders the Markdown documentation in the browser, so it needs JavaScript.
       The documents are readable as they are on GitHub:

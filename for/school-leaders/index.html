@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<base href="../../">
+<meta name="evn-route" content="for/school-leaders">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EVN ALPHA for schools: a robotics controller from Singapore</title>
+<meta name="description" content="A robotics controller for schools from Singapore's Centre of Robotics Excellence: keys for a whole school, learner data kept on the device, blocks placed by keyboard.">
+<!--
+  The documentation site: static files, no build step. It is published at the root of the public repo
+  (github.com/EVNdevs/evndevs.github.io, the organisation's GitHub Pages root, which the custom domain
+  evn.coresg.tech points at) and served by GitHub Pages; it fetches the Markdown documents next to it
+  (docs/API.md and its parts docs/API_*.md, docs/BLOCKS.md, docs/CALIBRATION.md, docs/GETTING_STARTED.md
+  and its guides docs/PROGRAMS.md ... docs/TROUBLESHOOTING.md, docs/CHANGELOG.md) and renders them in the browser.
+
+  The URL contract with the VS Code extension (docs/PUBLISHING.md in the extension source):
+      /#/api/<slug>          docs/API.md (the API reference's index) scrolled to the heading whose slug is
+                             <slug>; a slug of the one-page reference that now lives in a part is forwarded
+                             to that part (assets/api-moved.json)
+      /#/api-<part>/<slug>   docs/API_<PART>.md, same rule (api-robot, api-sensors, api-displays,
+                             api-extended, api-system)
+      /#/blocks/<slug>       docs/BLOCKS.md, same rule
+      /#/calibration/<slug>  docs/CALIBRATION.md, same rule
+      /#/getting-started/<slug>  docs/GETTING_STARTED.md, same rule; a slug of the one-page Getting started
+                             is forwarded to its guide (assets/getting-started-moved.json)
+      /#/<guide>/<slug>      the guides, same rule (programs, board-view, data-logger, main-py, bluetooth,
+                             commands, board, troubleshooting)
+      /#/changelog           docs/WHATS_NEW.md from the top (What's new)
+      /#/changelog-full      docs/CHANGELOG.md from the top (the full changelog)
+      /#/downloads           the Downloads page (the extension and the firmware from latest.json)
+      /#/start/<slug>        the Get started page (three paths: browser, vs-code, board), scrolled to <slug>
+      /#/documentation/<slug>  the Docs page: every document grouped by task, and the sensors and displays
+      /#/for/<audience>      the home page scrolled to that audience's section (students, teachers, ...)
+      /                      the home page: the summary, three ways in, the features by audience
+                             (assets/features.json, its statuses and the edit that flips a release's cards)
+  A page of its own per route: scripts/publish_public.py also writes <route>/index.html (getting-started/,
+  calibration/, api/, api-<part>/, blocks/, repl/, known-limitations/, changelog/, changelog-full/, start/, documentation/, downloads/), this file with <base href="../">, its own title,
+  description, canonical and og: tags, <meta name="evn-route"> and the document's outline; site.js renders that
+  route there. With sitemap.xml, robots.txt and 404.html (a path /<route>/<slug> forwards to /#/<route>/<slug>).
+  The #/ routes above are unchanged.
+  An empty or unknown route renders the home page and an unknown slug renders its document from the
+  top: never a 404. The slug rule is GitHub's: lowercase, whitespace runs to "-", every other character
+  but letters, digits, "-" and "_" dropped. Heading ids are assigned here after rendering with exactly
+  that rule, so the extension's guess (slugify in src/docsLinks.ts) and the site agree whatever the
+  Markdown library does.
+
+  Paths are relative to this page on purpose: the site works at https://evndevs.github.io/<repo>/ and
+  at a custom domain alike. Everything but marked / DOMPurify / highlight.js (cdn.jsdelivr.net) is
+  served from here, including the Jost typeface (assets/fonts/, SIL OFL, see LICENSE-Jost.txt).
+
+  The look follows the Centre of Robotics Excellence site, edu.coresg.tech: Jost, the warm taupe
+  #a8977b, near-black headings and a near-black footer. assets/site.css holds it all.
+-->
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="canonical" href="https://evn.coresg.tech/for/school-leaders/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="EVN ALPHA MicroPython">
+<meta property="og:title" content="EVN ALPHA for schools: a robotics controller from Singapore">
+<meta property="og:description" content="A robotics controller for schools from Singapore's Centre of Robotics Excellence: keys for a whole school, learner data kept on the device, blocks placed by keyboard.">
+<meta property="og:url" content="https://evn.coresg.tech/for/school-leaders/">
+<meta property="og:image" content="https://evn.coresg.tech/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta property="og:image:alt" content="The EVN ALPHA robotics controller beside the words: The natural evolution of the robot kit.">
+<!-- what the site is, for search engines (schema.org): only what the pages themselves state - the extension's MIT licence and
+     the systems VS Code runs on (the home page), the controller's ports and motors (chapters 01-02), its two creators and
+     the Centre of Robotics Excellence (the footer); no price -->
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [
+  {"@type": "SoftwareApplication", "name": "EVN ALPHA MicroPython", "url": "https://evn.coresg.tech/",
+   "description": "The EVN ALPHA's VS Code extension and MicroPython firmware: program the robot in blocks or MicroPython, from VS Code or the browser, or run it in a robot simulator.",
+   "applicationCategory": "EducationalApplication", "operatingSystem": "Windows, macOS, Linux", "license": "https://opensource.org/licenses/MIT",
+   "image": "https://evn.coresg.tech/assets/og.png",
+   "author": [{"@type": "Person", "name": "Kenneth Chow"}, {"@type": "Person", "name": "Heng Teng Yi"}],
+   "publisher": {"@id": "https://edu.coresg.tech/#organization"}},
+  {"@type": "Product", "name": "EVN ALPHA", "url": "https://evn.coresg.tech/", "image": "https://evn.coresg.tech/assets/og.png",
+   "description": "A robotics controller for schools that runs LEGO MINDSTORMS EV3 and NXT motors and mounts on LEGO Technic: four motor ports, 16 I2C peripheral ports, four servo ports and two serial ports.",
+   "category": "Educational robotics controller", "brand": {"@type": "Brand", "name": "EVN"}, "manufacturer": {"@id": "https://edu.coresg.tech/#organization"}},
+  {"@type": "Organization", "@id": "https://edu.coresg.tech/#organization", "name": "Centre of Robotics Excellence",
+   "url": "https://edu.coresg.tech/", "address": {"@type": "PostalAddress", "addressCountry": "SG"}}]}</script>
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#111518" media="(prefers-color-scheme: dark)">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="preload" href="assets/fonts/jost-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="assets/site.css">
+<!-- the home page's 3D layer (assets/hero3d.js, loaded by site.js only where it helps): three.js r163, pinned -->
+<script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.163.0/build/three.module.min.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.163.0/examples/jsm/" } }</script>
+<link id="hl-light" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11.9.0/styles/github.min.css">
+<link id="hl-dark" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11.9.0/styles/github-dark.min.css" media="not all">
+<script>
+  /* The stored colour scheme, before the first paint, so the page never flashes the other one. */
+  (function () {
+    try {
+      var t = localStorage.getItem('evn-theme');
+      if (t === 'light' || t === 'dark') { document.documentElement.setAttribute('data-theme', t); }
+    } catch (e) { /* private window, blocked storage: the media query decides */ }
+  })();
+</script>
+</head>
+<body>
+<a class="skip" href="for/school-leaders/#main">Skip to the content</a>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="#/" aria-label="EVN ALPHA MicroPython, home">
+      <span class="mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M17.48 5.66Q17.48 4.56 17.41 4.15Q17.35 3.73 17.22 3.49Q17.08 3.25 16.82 3.08Q16.56 2.91 15.84 2.72V2H21.13V2.72Q20.47 2.89 20.2 3.04Q19.93 3.19 19.76 3.42Q19.59 3.66 19.5 4.12Q19.41 4.59 19.41 5.66V22H14.74L8.47 11.23Q7.18 9.02 6.51 7.6H6.37Q6.52 10.75 6.52 14.25V18.34Q6.52 19.52 6.63 20.03Q6.74 20.53 7.07 20.8Q7.4 21.06 8.23 21.28V22H2.87V21.28Q3.78 21.05 4.09 20.76Q4.4 20.48 4.49 19.95Q4.59 19.42 4.59 18.34V5.66Q4.59 4.65 4.51 4.19Q4.44 3.73 4.27 3.47Q4.1 3.22 3.82 3.06Q3.55 2.91 2.87 2.72V2H9.66L14.77 10.85Q15.21 11.61 16 13.09Q16.79 14.57 17.41 15.89H17.64Q17.48 12.39 17.48 8.24ZM17.79 20.71V19.23L8.54 3.29H6.21V4.14L15.82 20.71Z"/></svg>
+      </span>
+      <span class="words">
+        <span class="word-1">EVN ALPHA</span>
+        <span class="word-2">MicroPython</span>
+      </span>
+    </a>
+    <nav class="site-nav" id="nav" aria-label="Documentation">
+      <!-- No entry is the home page (the brand is), so nothing is lit there; "Docs" is lit on every document
+           (its one entry point, #/documentation). What's new is in the footer and beside each download. -->
+      <a href="#/start" data-doc="start">Get started</a>
+      <a href="#/documentation" data-doc="documentation">Docs</a>
+      <a href="examples/">Examples</a>
+      <a href="#/downloads" data-doc="downloads">Downloads</a>
+      <a href="ide/" target="_blank" rel="noopener">Browser IDE</a>
+      <a href="#/getting-started/7-reporting-problems">Help</a>
+      <a href="https://github.com/EVNdevs/evndevs.github.io" target="_blank" rel="noopener">GitHub</a>
+    </nav>
+    <div class="header-tools">
+      <button class="icon-btn" id="theme-btn" type="button" aria-label="Switch between the light and the dark colour scheme">
+        <svg class="theme-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+        <svg class="theme-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M4.2 4.2l1.6 1.6M18.2 18.2l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.2 19.8l1.6-1.6M18.2 5.8l1.6-1.6"/></svg>
+      </button>
+      <button class="icon-btn" id="menu-btn" type="button" aria-label="Menu" aria-expanded="false" aria-controls="nav">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 6.5h17M3.5 12h17M3.5 17.5h17"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main id="main" tabindex="-1" data-prerendered="audience">
+<section class="aud-page" id="school-leaders"><div class="wrap"><div class="page-head"><p class="crumb">EVN ALPHA</p><h1>For school leaders</h1><p class="lead">Keys for a whole school, learner data kept on the learner's own device, and blocks a learner can place from the keyboard.</p></div><div class="actions"><a class="btn btn-primary" href="ide/" target="_blank" rel="noopener">Try it in your browser</a><a class="btn btn-ghost" href="./#/start/vs-code">Install it in VS Code</a><a class="btn btn-ghost" href="./">Everything EVN does</a></div><h2 class="aud-cards-h">What it does</h2><div class="fgrid"><article class="fcard fcard-now" data-feature="school-keys"><h3>Keys for a whole school</h3><p class="fcard-text">A school's keys come as a mail-merge file the school fills from its own class list and sends from its own email.</p></article><article class="fcard fcard-now" data-feature="data-on-device"><h3>Learner data on the device</h3><p class="fcard-text">Progress and programs are kept on the learner's own computer, with a backup and an export.</p></article><article class="fcard fcard-now" data-feature="offline-lab"><h3>Offline lessons on a lab</h3><p class="fcard-text">An administrator enrols a Windows lab PC once, and its lesson viewer reads the lesson packs there.</p></article><article class="fcard fcard-now" data-feature="a11y-blocks"><h3><a class="fcard-link" href="#/blocks/">Blocks by keyboard</a></h3><p class="fcard-text">Blocks are placed, moved, copied and pasted from the keyboard, and each block in the toolbox has a spoken name.</p></article><article class="fcard fcard-now" data-feature="a11y-simulator"><h3>A simulator a screen reader speaks</h3><p class="fcard-text">Say the robot's position, and Read aloud on the challenge and check cards with a voice built into the computer.</p></article><article class="fcard fcard-soon" data-feature="school-pack"><h3>Price sheet and school pack</h3><p class="badge badge-soon">Coming soon</p><p class="fcard-text">The price sheet, a one-page data-protection note and an accessibility statement for schools.</p></article></div><p class="aud-others">Also for: <a href="for/students/">Students</a> · <a href="for/teachers/">Teachers</a> · <a href="for/competition/">Competition teams</a> · <a href="for/higher-learning/">Institutes of higher learning</a> · <a href="for/parents/">Parents</a></p></div></section>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="f-brand">
+      <span class="f-logo"><img src="assets/core-logo.webp" alt="" width="48" height="48"></span>
+      <span>
+        <strong>EVN ALPHA</strong>
+        <span>A Centre of Robotics Excellence project.<br>Singapore.</span>
+        <span class="f-credit">EVN was created by
+          <a href="https://www.linkedin.com/in/kc-robotics/" target="_blank" rel="noopener">Kenneth Chow</a> and
+          <a href="https://www.linkedin.com/in/heng-teng-yi/" target="_blank" rel="noopener">Heng Teng Yi</a> &middot;
+          <a href="https://www.kickstarter.com/projects/thenaturalevolution/evn-the-natural-evolution-of-the-lego-mindstorms-system" target="_blank" rel="noopener">The story on Kickstarter</a>
+        </span>
+      </span>
+    </div>
+    <div class="f-col">
+      <h2>Documentation</h2>
+      <ul>
+        <li><a href="#/start">Get started</a></li>
+        <li><a href="#/documentation">All the docs</a></li>
+        <li><a href="#/getting-started">Getting started, step by step</a></li>
+        <li><a href="#/calibration/">Calibrating your robot</a></li>
+        <li><a href="#/api/">API reference</a></li>
+        <li><a href="#/blocks/">Blocks reference</a></li>
+        <li><a href="#/repl">Using the REPL</a></li>
+        <li><a href="#/known-limitations">Known limitations</a></li>
+        <!-- SITE-09: reports go to the site repository's issues, through its report-a-problem form (site.js REPORT_URL) -->
+        <li><a href="https://github.com/EVNdevs/evndevs.github.io/issues/new?template=report-a-problem.yml" target="_blank" rel="noopener">Report a problem</a></li>
+        <li><a href="#/changelog">What's new</a></li>
+      </ul>
+    </div>
+    <div class="f-col">
+      <h2>Downloads</h2>
+      <ul>
+        <li><a href="#/downloads">VS Code extension</a></li>
+        <li><a href="#/downloads">Firmware (UF2)</a></li>
+        <li><a href="examples/">Example programs</a></li>
+      </ul>
+    </div>
+    <div class="f-col">
+      <h2>EVN</h2>
+      <ul>
+        <li><a href="https://coresg.tech/evn" target="_blank" rel="noopener">The EVN ALPHA controller</a></li>
+        <li><a href="https://github.com/EVNdevs" target="_blank" rel="noopener">GitHub organisation</a></li>
+        <li><a href="https://github.com/EVNdevs/EVN-arduino" target="_blank" rel="noopener">Arduino library</a></li>
+        <li><a href="https://edu.coresg.tech/" target="_blank" rel="noopener">Centre of Robotics Excellence</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="f-legal">
+    MIT licensed. LEGO&reg;, Technic&trade; and MINDSTORMS&reg; are trademarks of the LEGO Group, which does
+    not sponsor, authorise or endorse this project.
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11.9.0/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11.9.0/languages/python.min.js"></script>
+<script src="assets/site.js"></script>
+</body>
+</html>

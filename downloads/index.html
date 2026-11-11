@@ -66,14 +66,18 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta property="og:image:alt" content="The EVN ALPHA robotics controller beside the words: The natural evolution of the robot kit.">
 <!-- what the site is, for search engines (schema.org): only what the pages themselves state - the extension's MIT licence and
-     the systems VS Code runs on (the home page), its two creators and the Centre of Robotics Excellence (the footer) -->
+     the systems VS Code runs on (the home page), the controller's ports and motors (chapters 01-02), its two creators and
+     the Centre of Robotics Excellence (the footer); no price -->
 <script type="application/ld+json">{"@context": "https://schema.org", "@graph": [
   {"@type": "SoftwareApplication", "name": "EVN ALPHA MicroPython", "url": "https://evn.coresg.tech/",
-   "description": "MicroPython for the EVN ALPHA robotics controller, with a VS Code extension: program your robot in blocks or Python, from VS Code or your browser.",
+   "description": "The EVN ALPHA's VS Code extension and MicroPython firmware: program the robot in blocks or MicroPython, from VS Code or the browser, or run it in a robot simulator.",
    "applicationCategory": "EducationalApplication", "operatingSystem": "Windows, macOS, Linux", "license": "https://opensource.org/licenses/MIT",
    "image": "https://evn.coresg.tech/assets/og.png",
    "author": [{"@type": "Person", "name": "Kenneth Chow"}, {"@type": "Person", "name": "Heng Teng Yi"}],
    "publisher": {"@id": "https://edu.coresg.tech/#organization"}},
+  {"@type": "Product", "name": "EVN ALPHA", "url": "https://evn.coresg.tech/", "image": "https://evn.coresg.tech/assets/og.png",
+   "description": "A robotics controller for schools that runs LEGO MINDSTORMS EV3 and NXT motors and mounts on LEGO Technic: four motor ports, 16 I2C peripheral ports, four servo ports and two serial ports.",
+   "category": "Educational robotics controller", "brand": {"@type": "Brand", "name": "EVN"}, "manufacturer": {"@id": "https://edu.coresg.tech/#organization"}},
   {"@type": "Organization", "@id": "https://edu.coresg.tech/#organization", "name": "Centre of Robotics Excellence",
    "url": "https://edu.coresg.tech/", "address": {"@type": "PostalAddress", "addressCountry": "SG"}}]}</script>
 <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
@@ -133,23 +137,8 @@
   </div>
 </header>
 
-<main id="main" tabindex="-1">
-  <div class="wrap" style="padding-top:48px;padding-bottom:48px">
-    <p class="notice"><span class="spinner" aria-hidden="true"></span>Loading&#8230;</p>
-    <article class="doc prerender">
-    <h1>Downloads</h1>
-    <p>Download the EVN ALPHA VS Code extension (.vsix) and the MicroPython firmware (.uf2), with the install steps.</p>
-    </article>
-    <noscript>
-      <p class="notice">This page renders the Markdown documentation in the browser, so it needs JavaScript.
-      The documents are readable as they are on GitHub:
-      <a href="https://github.com/EVNdevs/evndevs.github.io/blob/main/docs/GETTING_STARTED.md">getting started</a>,
-      <a href="https://github.com/EVNdevs/evndevs.github.io/blob/main/docs/CALIBRATION.md">calibrating your robot</a>,
-      <a href="https://github.com/EVNdevs/evndevs.github.io/blob/main/docs/API.md">API reference</a>,
-      <a href="https://github.com/EVNdevs/evndevs.github.io/blob/main/docs/BLOCKS.md">blocks reference</a>,
-      <a href="https://github.com/EVNdevs/evndevs.github.io/blob/main/docs/CHANGELOG.md">changelog</a>.</p>
-    </noscript>
-  </div>
+<main id="main" tabindex="-1" data-prerendered="page">
+<section class="page-head"><div class="wrap"><p class="crumb"><a href="#/">Home</a> / Downloads</p><h1>Downloads</h1><p class="lead">The VS Code extension carries the firmware and flashes it for you.</p></div></section><section class="section" id="downloads"><div class="wrap"><h2>The files</h2><div><div class="dl-grid"><div class="dl-card"><h3>VS Code extension<span class="ver">v0.2.76</span></h3><p>The tooling: the block editor, the Python autocomplete, the Board panel and the live console. It carries the firmware below and flashes it for you.</p><div class="actions"><a class="btn btn-primary" href="https://evn.coresg.tech/vsix/evn-alpha-micropython-0.2.76.vsix">Download the VSIX</a><a class="btn btn-ghost" href="#/changelog">Release notes</a></div></div><div class="dl-card"><h3>MicroPython firmware<span class="ver">v0.2.76</span></h3><p>Only needed without the extension: with the board switched on, hold BOOTSEL, press and release RESET, let go of BOOTSEL, and copy the UF2 onto the drive that appears.</p><div class="actions"><a class="btn btn-primary" href="https://evn.coresg.tech/firmware/EVN_ALPHA_MicroPython.uf2">Download the UF2</a><a class="btn btn-ghost" href="https://github.com/EVNdevs/evndevs.github.io/blob/main/firmware/BUILD.txt">Build record</a></div></div></div><p class="dl-note">To install the VSIX: VS Code → Extensions view → the <code>…</code> menu → <strong>Install from VSIX…</strong> → pick the file. Then run <code>EVN: Install mpremote</code> once. <a href="vsix/">Older versions of the extension</a>.</p></div></div></section><section class="section"><div class="wrap"><h2>Use it in the browser</h2><div class="ide-card"><div class="txt"><h3>No install: the EVN IDE in your browser</h3><p>The same editor, the same blocks and the same board panel, running as a web page. It talks to the board over Web Serial, so it needs a Chromium browser (Chrome or Edge) and a USB cable.</p></div><a class="btn btn-primary" href="ide/" target="_blank" rel="noopener">Open the browser IDE</a></div></div></section>
 </main>
 
 <footer class="site-footer">

@@ -66,14 +66,18 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta property="og:image:alt" content="The EVN ALPHA robotics controller beside the words: The natural evolution of the robot kit.">
 <!-- what the site is, for search engines (schema.org): only what the pages themselves state - the extension's MIT licence and
-     the systems VS Code runs on (the home page), its two creators and the Centre of Robotics Excellence (the footer) -->
+     the systems VS Code runs on (the home page), the controller's ports and motors (chapters 01-02), its two creators and
+     the Centre of Robotics Excellence (the footer); no price -->
 <script type="application/ld+json">{"@context": "https://schema.org", "@graph": [
   {"@type": "SoftwareApplication", "name": "EVN ALPHA MicroPython", "url": "https://evn.coresg.tech/",
-   "description": "MicroPython for the EVN ALPHA robotics controller, with a VS Code extension: program your robot in blocks or Python, from VS Code or your browser.",
+   "description": "The EVN ALPHA's VS Code extension and MicroPython firmware: program the robot in blocks or MicroPython, from VS Code or the browser, or run it in a robot simulator.",
    "applicationCategory": "EducationalApplication", "operatingSystem": "Windows, macOS, Linux", "license": "https://opensource.org/licenses/MIT",
    "image": "https://evn.coresg.tech/assets/og.png",
    "author": [{"@type": "Person", "name": "Kenneth Chow"}, {"@type": "Person", "name": "Heng Teng Yi"}],
    "publisher": {"@id": "https://edu.coresg.tech/#organization"}},
+  {"@type": "Product", "name": "EVN ALPHA", "url": "https://evn.coresg.tech/", "image": "https://evn.coresg.tech/assets/og.png",
+   "description": "A robotics controller for schools that runs LEGO MINDSTORMS EV3 and NXT motors and mounts on LEGO Technic: four motor ports, 16 I2C peripheral ports, four servo ports and two serial ports.",
+   "category": "Educational robotics controller", "brand": {"@type": "Brand", "name": "EVN"}, "manufacturer": {"@id": "https://edu.coresg.tech/#organization"}},
   {"@type": "Organization", "@id": "https://edu.coresg.tech/#organization", "name": "Centre of Robotics Excellence",
    "url": "https://edu.coresg.tech/", "address": {"@type": "PostalAddress", "addressCountry": "SG"}}]}</script>
 <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
@@ -133,12 +137,13 @@
   </div>
 </header>
 
-<main id="main" tabindex="-1">
+<main id="main" tabindex="-1" data-prerendered="doc">
   <div class="wrap" style="padding-top:48px;padding-bottom:48px">
-    <p class="notice"><span class="spinner" aria-hidden="true"></span>Loading&#8230;</p>
-    <article class="doc prerender">
+        <article class="doc prerender">
     <h1>Calibrating your robot</h1>
-    <p>Calibrate the EVN ALPHA's motors, IMU, compass and colour sensors from the Board view, from Python or from blocks.</p>
+    <p>Four parts of an EVN ALPHA robot are worth calibrating: each motor, the IMU (gyro and accelerometer), the compass and the colour sensors (ColorSensor, GestureSensor, and the extended TCS3430 and HiTechnicColorSensor). The extended VL53L1X distance sensor has its own offset calibration too. Each calibration takes a few seconds to a minute. The board stores it for that port, and every program uses it from then on, from any computer, after every reboot. You calibrate once, and again only when something on the robot changes.</p>
+    </article>
+    <noscript><nav class="doc prerender doc-outline" aria-label="Contents">
     <h2>Contents</h2>
     <ul>
       <li><a href="#/calibration/what-is-calibrated-the-calibration-page">What is calibrated: the calibration page</a></li>
@@ -151,7 +156,7 @@
       <li><a href="#/calibration/checking-and-clearing-calibrations">Checking and clearing calibrations</a></li>
       <li><a href="#/calibration/when-something-goes-wrong">When something goes wrong</a></li>
     </ul>
-    </article>
+    </nav></noscript>
     <noscript>
       <p class="notice">This page renders the Markdown documentation in the browser, so it needs JavaScript.
       The documents are readable as they are on GitHub:

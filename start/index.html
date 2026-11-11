@@ -66,14 +66,18 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta property="og:image:alt" content="The EVN ALPHA robotics controller beside the words: The natural evolution of the robot kit.">
 <!-- what the site is, for search engines (schema.org): only what the pages themselves state - the extension's MIT licence and
-     the systems VS Code runs on (the home page), its two creators and the Centre of Robotics Excellence (the footer) -->
+     the systems VS Code runs on (the home page), the controller's ports and motors (chapters 01-02), its two creators and
+     the Centre of Robotics Excellence (the footer); no price -->
 <script type="application/ld+json">{"@context": "https://schema.org", "@graph": [
   {"@type": "SoftwareApplication", "name": "EVN ALPHA MicroPython", "url": "https://evn.coresg.tech/",
-   "description": "MicroPython for the EVN ALPHA robotics controller, with a VS Code extension: program your robot in blocks or Python, from VS Code or your browser.",
+   "description": "The EVN ALPHA's VS Code extension and MicroPython firmware: program the robot in blocks or MicroPython, from VS Code or the browser, or run it in a robot simulator.",
    "applicationCategory": "EducationalApplication", "operatingSystem": "Windows, macOS, Linux", "license": "https://opensource.org/licenses/MIT",
    "image": "https://evn.coresg.tech/assets/og.png",
    "author": [{"@type": "Person", "name": "Kenneth Chow"}, {"@type": "Person", "name": "Heng Teng Yi"}],
    "publisher": {"@id": "https://edu.coresg.tech/#organization"}},
+  {"@type": "Product", "name": "EVN ALPHA", "url": "https://evn.coresg.tech/", "image": "https://evn.coresg.tech/assets/og.png",
+   "description": "A robotics controller for schools that runs LEGO MINDSTORMS EV3 and NXT motors and mounts on LEGO Technic: four motor ports, 16 I2C peripheral ports, four servo ports and two serial ports.",
+   "category": "Educational robotics controller", "brand": {"@type": "Brand", "name": "EVN"}, "manufacturer": {"@id": "https://edu.coresg.tech/#organization"}},
   {"@type": "Organization", "@id": "https://edu.coresg.tech/#organization", "name": "Centre of Robotics Excellence",
    "url": "https://edu.coresg.tech/", "address": {"@type": "PostalAddress", "addressCountry": "SG"}}]}</script>
 <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
@@ -133,23 +137,8 @@
   </div>
 </header>
 
-<main id="main" tabindex="-1">
-  <div class="wrap" style="padding-top:48px;padding-bottom:48px">
-    <p class="notice"><span class="spinner" aria-hidden="true"></span>Loading&#8230;</p>
-    <article class="doc prerender">
-    <h1>Get started</h1>
-    <p>Get started with EVN ALPHA in three ways: in the browser IDE, in VS Code, or with the board itself, a few numbered steps each.</p>
-    </article>
-    <noscript>
-      <p class="notice">This page renders the Markdown documentation in the browser, so it needs JavaScript.
-      The documents are readable as they are on GitHub:
-      <a href="https://github.com/EVNdevs/evndevs.github.io/blob/main/docs/GETTING_STARTED.md">getting started</a>,
-      <a href="https://github.com/EVNdevs/evndevs.github.io/blob/main/docs/CALIBRATION.md">calibrating your robot</a>,
-      <a href="https://github.com/EVNdevs/evndevs.github.io/blob/main/docs/API.md">API reference</a>,
-      <a href="https://github.com/EVNdevs/evndevs.github.io/blob/main/docs/BLOCKS.md">blocks reference</a>,
-      <a href="https://github.com/EVNdevs/evndevs.github.io/blob/main/docs/CHANGELOG.md">changelog</a>.</p>
-    </noscript>
-  </div>
+<main id="main" tabindex="-1" data-prerendered="page">
+<section class="page-head"><div class="wrap"><p class="crumb"><a href="#/">Home</a> / Get started</p><h1>Get started</h1><p class="lead">Pick one way in. Each takes a few minutes.</p></div></section><section class="section paths-section"><div class="wrap"><div class="paths"><section class="path" id="browser" aria-labelledby="browser-h"><h2 id="browser-h">In the browser</h2><p class="path-line">Nothing to install: Chrome or Edge, and a USB cable.</p><ol class="steps"><li>Open the browser IDE in Chrome or Edge. <a href="ide/" target="_blank" rel="noopener">Open the browser IDE</a></li><li>The board needs the MicroPython firmware on it: a browser cannot put it there. <a href="#/getting-started/4-put-the-firmware-on-the-board">Putting the firmware on</a></li><li>Plug the board in with the USB cable and switch it on, press Choose the board port, pick An EVN ALPHA on USB, then Connect.</li><li>Open an example under Examples, put the wheels off the ground and press Run.</li></ol><p class="path-more">More: <a href="#/programs/">Programs: run, stop, ports and units</a></p></section><section class="path" id="vs-code" aria-labelledby="vs-code-h"><h2 id="vs-code-h">In VS Code</h2><p class="path-line">The extension, with the firmware inside it.</p><ol class="steps"><li>Install VS Code 1.106 or newer. <a href="https://code.visualstudio.com/" target="_blank" rel="noopener">code.visualstudio.com</a></li><li>Download the extension and install it: Extensions view, the … menu, Install from VSIX. <a href="#/downloads">Downloads</a></li><li>Run EVN: Install mpremote once.</li><li>Plug the board in, switch it on and run EVN: Flash MicroPython firmware.</li><li>Open motor_minimal under Examples, plug a motor into port 1 and press Ctrl+F5.</li></ol><p class="path-more">More: <a href="#/getting-started">Getting started, step by step</a> · <a href="#/troubleshooting">Troubleshooting</a></p></section><section class="path" id="board" aria-labelledby="board-h"><h2 id="board-h">With a board</h2><p class="path-line">Switching the EVN ALPHA on, and its first set-up.</p><ol class="steps"><li>Insert the two 18650 cells in the order the card shows, minding the + and - marks.</li><li>Press ON/OFF: the red LED lights while the board is on.</li><li>Connect the USB-C cable to your computer: the green LED lights.</li><li>Calibrate the motors, the IMU and the sensors from the Board view. <a href="#/calibration/">Calibrating your robot</a></li></ol><p class="path-more">More: <a href="#/getting-started/2-switch-the-board-on">Switch the board on</a> · <a href="#/board/">The board: buttons, lights and pins</a></p></section></div><p class="path-note">No board yet? <a href="#/simulator/">Run your program in the simulator</a>.</p></div></section>
 </main>
 
 <footer class="site-footer">

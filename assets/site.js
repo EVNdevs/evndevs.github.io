@@ -157,6 +157,9 @@
   /* "#/api/motor" -> { doc: 'api', slug: 'motor' }; "#/start/vs-code" -> { doc: 'start', slug: 'vs-code' } (a page of
      PAGES); "#/for/teachers" -> { doc: 'home', slug: 'teachers' }; anything unknown is the home page. */
   function parseRoute() {
+    /* an audience's own page (/for/<audience>/, publish_public.py writes it; owner, 2026-11-11, "SEO?"): its static page
+       names the route for/<audience>; "#/for/<audience>" stays the home page's section */
+    if (PAGE.indexOf('for/') === 0 && location.hash.charAt(1) !== '/') { return { doc: 'audience', slug: PAGE.slice(4) }; }
     var h = location.hash.replace(/^#\/?/, '');
     if (PAGE && location.hash.charAt(1) !== '/') { h = PAGE + '/' + location.hash.slice(1); }
     if (!h) { return { doc: 'home', slug: '' }; }
@@ -577,14 +580,20 @@
     if (sameDoc) { scrollToSlug(route.slug, route.doc); return; }
 
     stopSpy();
-    main.textContent = '';
-    var wrap = el('div', 'wrap');
-    wrap.style.paddingTop = '48px';
-    var loading = el('p', 'notice');
-    loading.appendChild(el('span', 'spinner'));
-    loading.appendChild(document.createTextNode('Loading ' + info.title + '…'));
-    wrap.appendChild(loading);
-    main.appendChild(wrap);
+    /* the document's page as publish_public.py prerendered it (its title and opening paragraph, the document's own words)
+       stays until the document is drawn: the first paint's words never change (review site76_r8b B1) */
+    var preDoc = main.getAttribute('data-prerendered') === 'doc' && main.querySelector('article.doc.prerender');
+    main.removeAttribute('data-prerendered');
+    if (!preDoc) {
+      main.textContent = '';
+      var wrap = el('div', 'wrap');
+      wrap.style.paddingTop = '48px';
+      var loading = el('p', 'notice');
+      loading.appendChild(el('span', 'spinner'));
+      loading.appendChild(document.createTextNode('Loading ' + info.title + '…'));
+      wrap.appendChild(loading);
+      main.appendChild(wrap);
+    }
 
     fetchText(info.file).then(function (md) {
       if (current !== route) { return; }
@@ -808,6 +817,11 @@
       h.id = au.id + '-h';
       head.appendChild(h);
       head.appendChild(el('p', 'aud-line', au.line));
+      if (au.page) {
+        var more = el('a', 'aud-more', 'The page for ' + au.title.charAt(0).toLowerCase() + au.title.slice(1));
+        more.href = 'for/' + au.id + '/';
+        head.appendChild(more);
+      }
       w.appendChild(head);
       var grid = el('div', 'fgrid');
       (data.features || []).filter(function (f) { return f.audience === au.id; })
@@ -830,6 +844,26 @@
     var h = t.querySelector('h2, h3');
     announce(h ? h.textContent : document.title);
     return true;
+  }
+
+  /* where the focus is inside `root`, to put it back on the same element once `root`'s content is rebuilt (the prerendered
+     cards replaced by the same cards: an element with an id, or a link by its address and text; review site76_r8b S3) */
+  function focusKey(root) {
+    var a = document.activeElement;
+    if (!a || a === document.body || !root.contains(a)) { return null; }
+    var sec = a.parentNode && a.parentNode.closest ? a.parentNode.closest('[id]') : null;
+    return { id: a.id || null, href: a.getAttribute ? a.getAttribute('href') : null, text: a.textContent, sec: sec ? sec.id : null };
+  }
+  function refocus(k) {
+    if (!k) { return; }
+    var t = k.id ? document.getElementById(k.id) : null;
+    if (!t && k.href) {
+      var scope = (k.sec && document.getElementById(k.sec)) || main;
+      t = [].filter.call(scope.querySelectorAll('a[href]'), function (x) { return x.getAttribute('href') === k.href && x.textContent === k.text; })[0] || null;
+    }
+    if (!t) { return; }
+    if (!/^(A|BUTTON|INPUT|SELECT|TEXTAREA)$/.test(t.tagName) && !t.hasAttribute('tabindex')) { t.setAttribute('tabindex', '-1'); }
+    try { t.focus({ preventScroll: true }); } catch (e) { t.focus(); }
   }
 
   function scrollToId(id) {
@@ -871,8 +905,8 @@
       alt: 'The EVN ALPHA board on a USB-C cable to a laptop showing the EVN blocks editor with its Python panel.' },
     technic: { src: 'assets/images/chapter-robot.webp', width: 1224, height: 804,
       alt: 'A two-wheeled competition robot built from LEGO Technic parts around the EVN ALPHA board.' },
-    simulator: { src: 'assets/images/chapter-sim.webp', width: 1279, height: 1073,
-      alt: 'A laptop running the EVN robot simulator on a WRO RoboMission table.' }
+    simulator: { src: 'assets/images/chapter-sim.webp', width: 1280, height: 1075,
+      alt: 'A laptop running the EVN robot simulator: a robot following the line of the Oval course.' }
   };
 
   /* The scroll story: [id, kicker, headline, sentence, [link label, href] or null, a small note or none]. Facts from the board's page
@@ -981,16 +1015,39 @@
     });
     nav.appendChild(ol);
     var ticking = false;
+    /* each pixel lit by how far its section has come in: across a section's top crossing the line at 45 % of the window,
+       over 20 % of a section either side (the scene's own change, hero3d.js HOLD), its pixel's gold rises while the one
+       before it falls (owner, 2026-11-11: "current rgb led fades out while the next one fades in during scene
+       transitions?") and that one turns the dim white of a section passed; aria-current on the most lit */
     function update() {
       ticking = false;
-      var at = -1, line = window.innerHeight * 0.45;
-      LED_SECTIONS.forEach(function (s, i) {
-        var t = document.getElementById(s[0]);
-        if (t && t.getBoundingClientRect().top <= line) { at = i; }
+      var line = window.innerHeight * 0.45;
+      var tops = LED_SECTIONS.map(function (s) { var t = document.getElementById(s[0]); return t ? t.getBoundingClientRect().top : Infinity; });
+      var come = tops.map(function (top, i) {
+        if (!isFinite(top)) { return 0; }
+        if (i === 0) { return 1; }
+        var span = 0.2 * Math.max(200, Math.min(window.innerHeight, isFinite(tops[i - 1]) ? top - tops[i - 1] : window.innerHeight));
+        return Math.min(1, Math.max(0, (line - top + span) / (2 * span)));
       });
+      var nows = links.map(function (a, i) { return Math.max(0, come[i] - (come[i + 1] || 0)); });
+      var ons = links.map(function (a, i) { return come[i + 1] || 0; });
+      /* with the 3D layer running, the first screen's and the chapters' pixels follow its eased position (data-3d-p: whole at
+         a chapter, between two while its scene changes), so the gold crossfades over the scene's own change (review
+         site76_r8 S1); the sections after the stage keep the measure above */
+      var stage = document.querySelector('.stage'), np = 1 + CHAPTERS.length;
+      if (stage && stage.getAttribute('data-3d') === 'ready' && stage.hasAttribute('data-3d-p')) {
+        var p = Number(stage.getAttribute('data-3d-p')), after = come[np] || 0;
+        for (var k = 0; k < np && k < links.length; k++) {
+          nows[k] = Math.max(0, 1 - Math.abs(p - k)) * (k === np - 1 ? 1 - after : 1);
+          ons[k] = k === np - 1 ? after : Math.min(1, Math.max(0, p - k));
+        }
+      }
+      var best = nows.indexOf(Math.max.apply(null, nows));
       links.forEach(function (a, i) {
-        a.parentNode.className = i < at ? 'on' : i === at ? 'on now' : '';
-        if (i === at) { a.setAttribute('aria-current', 'location'); } else { a.removeAttribute('aria-current'); }
+        a.style.setProperty('--now', nows[i].toFixed(3));
+        a.style.setProperty('--on', ons[i].toFixed(3));
+        a.parentNode.className = i === best ? 'on now' : i < best ? 'on' : '';
+        if (i === best) { a.setAttribute('aria-current', 'location'); } else { a.removeAttribute('aria-current'); }
       });
     }
     function onScroll() { if (!ticking) { ticking = true; requestAnimationFrame(update); } }
@@ -1009,9 +1066,10 @@
     window.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('resize', onScroll, { passive: true });
     document.addEventListener('focusin', onFocus);
+    document.addEventListener('evn3dprogress', onScroll);
     ledTeardown = function () {
       window.removeEventListener('scroll', onScroll); window.removeEventListener('resize', onScroll);
-      document.removeEventListener('focusin', onFocus); ledTeardown = null;
+      document.removeEventListener('focusin', onFocus); document.removeEventListener('evn3dprogress', onScroll); ledTeardown = null;
     };
     requestAnimationFrame(update);
     return nav;
@@ -1031,6 +1089,10 @@
     current = { doc: 'home', slug: slug || '' };
     if (built) { scrollToId(slug); return; }               /* already on the home page: only move */
     stopSpy();
+    /* the page as publish_public.py prerendered it (scripts/prerender.js): its cards stay in place while features.json
+       loads, so the first paint never changes words (the cards site.js builds are the same) */
+    var preAud = main.getAttribute('data-prerendered') === 'home' ? main.querySelector('#audiences') : null;
+    main.removeAttribute('data-prerendered');
     main.textContent = '';
 
     /* --- the stage: the first screen and the scroll story, over the board (3D where it helps, a photo otherwise) ---
@@ -1149,12 +1211,20 @@
     loading.appendChild(document.createTextNode('Loading the features…'));
     w0.appendChild(loading);
     box.appendChild(w0);
+    if (preAud && preAud.querySelector('section.aud')) {
+      w0.textContent = '';
+      [].slice.call(preAud.children).forEach(function (c) { if (c.matches && c.matches('section.aud')) { box.appendChild(c); } });
+    }
     main.appendChild(box);
     /* the cards arrive after the page: a click on an audience link meanwhile (#/for/<x>) keeps this page, so the
        guard is "still this home page", and the scroll and the focus go where the visitor is now (current.slug) */
     readFeatures().then(function (data) {
       if (current.doc !== 'home' || !box.isConnected) { return; }
+      /* a section of the prerendered cards that had the focus (an audience link taken before the cards came) hands it
+         to the same section rebuilt */
+      var held = focusKey(box);
       renderAudiences(box, data);
+      refocus(held);
       if (current.slug) { scrollToId(current.slug); }
       /* only if the focus is still where the route change put it: a visitor who has moved on (the search) keeps it */
       if (pendingFocus && current.slug === pendingFocus && (document.activeElement === main || document.activeElement === document.body)) {
@@ -1447,10 +1517,15 @@
     var d = section('The files');
     d.node.id = 'downloads';
     var dlBox = el('div');
-    var loading = el('p', 'notice');
-    loading.appendChild(el('span', 'spinner'));
-    loading.appendChild(document.createTextNode('Reading latest.json…'));
-    dlBox.appendChild(loading);
+    var preDl = prePage && prePage.querySelector('#downloads .dl-grid');
+    if (preDl) {                                                 // the prerendered files and note until latest.json is read
+      [].slice.call(preDl.parentNode.childNodes).forEach(function (c) { dlBox.appendChild(c); });
+    } else {
+      var loading = el('p', 'notice');
+      loading.appendChild(el('span', 'spinner'));
+      loading.appendChild(document.createTextNode('Reading latest.json…'));
+      dlBox.appendChild(loading);
+    }
     d.body.appendChild(dlBox);
     main.appendChild(d.node);
 
@@ -1516,6 +1591,71 @@
 
   var PAGE_RENDER = { start: renderStart, documentation: renderDocsIndex, downloads: renderDownloads };
 
+  /* An audience's own page (/for/<audience>/): its heading, its lead, the calls to action, its cards from features.json
+     and the other audiences' pages. The prerendered page (scripts/prerender.js) stays until the cards are in, then is
+     replaced by the same words */
+  function renderAudience(id) {
+    current = { doc: 'audience', slug: id };
+    markCurrentNav('home');
+    stopSpy();
+    readFeatures().then(function (data) {
+      if (current.doc !== 'audience' || current.slug !== id) { return; }
+      var au = (data.audiences || []).filter(function (a) { return a.id === id && a.page; })[0];
+      if (!au) { location.replace('./#/for/' + id); return; }
+      document.title = au.page.title;
+      var held = focusKey(main);
+      main.removeAttribute('data-prerendered');
+      main.textContent = '';
+      var s = el('section', 'aud-page');
+      s.id = au.id;
+      var w = el('div', 'wrap');
+      var ph = el('div', 'page-head');
+      ph.appendChild(el('p', 'crumb', 'EVN ALPHA'));
+      ph.appendChild(el('h1', null, 'For ' + au.title.charAt(0).toLowerCase() + au.title.slice(1)));
+      ph.appendChild(el('p', 'lead', au.page.lead));
+      w.appendChild(ph);
+      var acts = el('div', 'actions');
+      var b1 = el('a', 'btn btn-primary', 'Try it in your browser');
+      linkTo(b1, 'ide/');
+      acts.appendChild(b1);
+      var b2 = el('a', 'btn btn-ghost', 'Install it in VS Code');
+      b2.href = './#/start/vs-code';
+      acts.appendChild(b2);
+      var b3 = el('a', 'btn btn-ghost', 'Everything EVN does');
+      b3.href = './';
+      acts.appendChild(b3);
+      w.appendChild(acts);
+      w.appendChild(el('h2', 'aud-cards-h', 'What it does'));      // the cards' h3s under an h2 (review site76_r8b S3)
+      var grid = el('div', 'fgrid');
+      (data.features || []).filter(function (f) { return f.audience === au.id; })
+        .forEach(function (f) { grid.appendChild(featureCard(f, data.released)); });
+      w.appendChild(grid);
+      var others = el('p', 'aud-others');
+      others.appendChild(document.createTextNode('Also for: '));
+      (data.audiences || []).filter(function (a) { return a.id !== id && a.page; }).forEach(function (a, i) {
+        if (i) { others.appendChild(document.createTextNode(' · ')); }
+        var l = el('a', null, a.title);
+        l.href = 'for/' + a.id + '/';
+        others.appendChild(l);
+      });
+      w.appendChild(others);
+      s.appendChild(w);
+      main.appendChild(s);
+      refocus(held);
+    }).catch(function (e) {
+      if (current.doc !== 'audience') { return; }
+      main.textContent = '';
+      var wr = el('div', 'wrap');
+      var p = el('p', 'notice notice-failed', 'This page could not be loaded (' + e.message + '). ');
+      var a = el('a', null, 'The home page has every audience.');
+      a.href = './';
+      p.appendChild(a);
+      wr.appendChild(p);
+      main.appendChild(wr);
+    });
+  }
+
+  var prePage = null;
   function renderPage(r) {
     var info = PAGES[r.doc];
     document.title = SITE + ' · ' + info.title;
@@ -1524,8 +1664,16 @@
     current = r;
     if (same) { scrollToId(r.slug); return; }
     stopSpy();
+    /* a prerendered page's own parts some page keeps until its data is in (Downloads' files until latest.json is read) */
+    prePage = null;
+    if (main.getAttribute('data-prerendered') === 'page') {
+      prePage = document.createElement('div');
+      while (main.firstChild) { prePage.appendChild(main.firstChild); }
+      main.removeAttribute('data-prerendered');
+    }
     main.textContent = '';
     PAGE_RENDER[r.doc](r.slug);
+    prePage = null;
   }
 
   function section(title) {
@@ -1812,13 +1960,13 @@
 
   function route() {
     var r = parseRoute();
-    if (r.doc === 'home') { renderHome(r.slug); } else if (PAGES[r.doc]) { renderPage(r); } else { renderDoc(r); }
+    if (r.doc === 'home') { renderHome(r.slug); } else if (r.doc === 'audience') { renderAudience(r.slug); } else if (PAGES[r.doc]) { renderPage(r); } else { renderDoc(r); }
     if (firstRoute) { firstRoute = false; return; }   // a page load announces itself
     if ((r.doc === 'home' || PAGES[r.doc]) && r.slug) {   // a section of the home page or of a page: its heading
       if (focusSection(r.slug)) { return; }
       if (r.doc === 'home') { pendingFocus = r.slug; }
     }
-    var info = r.doc === 'home' ? { title: SITE } : (PAGES[r.doc] || DOCS[r.doc] || { title: SITE });
+    var info = r.doc === 'home' || r.doc === 'audience' ? { title: document.title } : (PAGES[r.doc] || DOCS[r.doc] || { title: SITE });
     announce(info.title);
     try { main.focus({ preventScroll: true }); } catch (e) { main.focus(); }
   }

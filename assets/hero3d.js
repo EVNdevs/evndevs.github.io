@@ -88,8 +88,8 @@ const SCENE_MOTION = {
   motors: { mode: 'plugs', from: 0.55 },
   sensors: { mode: 'above', from: 0.45 },
   robot: { mode: 'above', whole: true, from: 0.7 },
-  code: { mode: 'behind', whole: true, from: 0.8, usb: true },   // usb: plugged in, it lights the board's green LED
-  simulator: { mode: 'behind', whole: true, from: 0.8 },
+  code: { mode: 'behind', whole: true, from: 0.8, usb: true, screenOn: true },   // usb: plugged in, it lights the board's green LED
+  simulator: { mode: 'behind', whole: true, from: 0.8, screenOn: true },          // screenOn: a laptop's screen is never dark
   displays: { mode: 'above', from: 0.45 }
 };
 const STAGGER = 0.3;                                         // the items' insertions spread over this much of the half-transition
@@ -492,6 +492,9 @@ function itemKey(name) {
   return null;
 }
 const HOVER_GLOW = new THREE.Color(0x4a3c24);
+/* the colour sensor's lamp (its "PERI lit led" material) three times as bright as the pipeline's (owner, 2026-11-11:
+   "color sensor led is too dim") */
+const LAMP_GAIN = 3;
 function sceneItems(group, key, model, boardRoot) {
   const cfg = SCENE_MOTION[key] || { mode: 'above', from: 0.5 };
   const L = model.userData.L || 1;
@@ -557,7 +560,11 @@ function sceneItems(group, key, model, boardRoot) {
         for (const m of ms) {
           it.fm.push({ m, op: m.opacity, tr: m.transparent });
           if (!m.emissive) { continue; }
-          if (m.emissive.r + m.emissive.g + m.emissive.b > 0 && m.emissiveIntensity > 0) { it.lit.push({ m, ei: m.emissiveIntensity, c0: m.color.clone() }); } else { it.mats.push(m); }
+          /* a laptop's screen runs on the laptop: lit the whole time it is in view (owner, 2026-11-11: "laptop screens
+             should be always on, not showing black most of the time") - neither gated nor tinted by the hover */
+          if (m.emissive.r + m.emissive.g + m.emissive.b > 0 && m.emissiveIntensity > 0) {
+            if (!cfg.screenOn) { it.lit.push({ m, ei: m.emissiveIntensity * (/lit led/i.test(m.name) ? LAMP_GAIN : 1), c0: m.color.clone() }); }
+          } else { it.mats.push(m); }
         }
       });
     }
@@ -847,7 +854,11 @@ export async function start(stage, opts) {
   /* the story's position: pose k exactly where chapter k sits centred on the visual (pose 0 at the stage's top), held
      there for HOLD of the way to each neighbour (a chapter being read shows its own scene alone, settled), linear between;
      past the last chapter, the last pose */
-  const HOLD = 0.15;
+  /* (owner, 2026-11-11: "dead zone with no animation should be longer. Equivalently, transitions in and out should be
+     shorter (I believe this is also why the oled is only displaying the n logo very briefly)"): 0.3, was 0.15 - each
+     scene stands still over 60 % of the way between two chapters' centres and changes over the middle 40 % (out over 20 %,
+     in over 20 %), where it had stood 30 % and changed over 70 % */
+  const HOLD = 0.3;
   let pastLast = 0;
   function progress() {
     const r = stage.getBoundingClientRect(), h = host.getBoundingClientRect();
@@ -1254,6 +1265,10 @@ export async function start(stage, opts) {
     draw();
     const at = String(Math.round(cur.p));
     if (stage.getAttribute('data-3d-at') !== at) { stage.setAttribute('data-3d-at', at); }   // the pose in view: site.css fades a phone's canvas past the first screen
+    /* the story's eased position, for the LED indicator (site.js ledNav): its gold crossfades over the scenes' own change
+       (review site76_r8 S1: measured on its own it ran about 77 px of scroll ahead of them) */
+    const pp = cur.p.toFixed(3);
+    if (stage.getAttribute('data-3d-p') !== pp) { stage.setAttribute('data-3d-p', pp); document.dispatchEvent(new Event('evn3dprogress')); }
     if (!t0) { t0 = time; }
     if (!judged) {                                       // the entrance's frames: the speed test, 30 frames or 3 s
       if (last && (asmDone || asmT >= ASSEMBLY.pcb.t)) { frames.push(time - last); }    // once the PCB, the bulk of the board, is drawn

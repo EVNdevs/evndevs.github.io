@@ -427,6 +427,10 @@ a.shot:hover { text-decoration: none; border-color: var(--accent); }
 }
 .chapter-fig { margin: 0; transition: opacity .6s ease; }
 .chapter-fig img { display: block; width: 100%; max-width: none; height: auto; }
+/* each chapter's render (and so its 3D scene, which hero3d.js fits into the render's box) drawn 12 % larger (owner,
+   2026-11-11: "models can be slightly larger? Feels a little sparse"); its transparent margins take the growth.
+   Phones keep the render's own size */
+@media (min-width: 761px) { .chapter-fig img { transform: scale(1.12); } }
 .stage[data-3d="ready"] .chapter.has-3d .chapter-fig { opacity: 0; }
 .chapter-card {
   max-width: 470px; padding: 26px 28px 28px; border-radius: var(--radius-lg);
@@ -507,10 +511,12 @@ a.shot:hover { text-decoration: none; border-color: var(--accent); }
 .led-strip { display: block; width: 100%; height: 100%; max-width: none; filter: drop-shadow(0 6px 14px rgba(0, 0, 0, .35)); }
 .led-nav ol { list-style: none; margin: 0; padding: 0; position: absolute; inset: 0; }
 .led-nav li { position: absolute; left: 55.75%; width: 0; height: 0; }
-.led { position: absolute; left: -8px; top: -8px; width: 16px; height: 16px; border-radius: 50%;
-       background: transparent; transition: background-color .35s ease, box-shadow .35s ease; }
-.led-nav li.on .led { background: rgba(244, 246, 248, .82); box-shadow: 0 0 4px 1px rgba(255, 255, 255, .5), 0 0 12px 3px rgba(255, 255, 255, .16); }
-.led-nav li.now .led { background: #ffd47e; box-shadow: 0 0 5px 2px #e8b65a, 0 0 22px 8px rgba(222, 170, 70, .78); }
+.led { position: absolute; left: -8px; top: -8px; width: 16px; height: 16px; border-radius: 50%; background: transparent; }
+/* two layers per pixel, their opacities set by the scroll (site.js ledNav update: --on, a section passed, dim white;
+   --now, the section in view, EVN gold), so the gold crossfades from one pixel to the next as the scene changes */
+.led::before, .led::after { content: ""; position: absolute; inset: 0; border-radius: 50%; pointer-events: none; }
+.led::before { background: rgba(244, 246, 248, .82); box-shadow: 0 0 4px 1px rgba(255, 255, 255, .5), 0 0 12px 3px rgba(255, 255, 255, .16); opacity: var(--on, 0); }
+.led::after { background: #ffd47e; box-shadow: 0 0 5px 2px #e8b65a, 0 0 22px 8px rgba(222, 170, 70, .78); opacity: var(--now, 0); }
 /* each pixel's section, named beside the strip on hover and focus (the link's text: its accessible name either way) */
 .led-label {
   position: absolute; right: calc(100% + 40px); top: 50%; transform: translate(6px, -50%); white-space: nowrap;
@@ -551,6 +557,11 @@ a.shot:hover { text-decoration: none; border-color: var(--accent); }
 .aud-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 18px; margin: 0 0 18px; }
 .aud-head h2 { margin: 0; font-size: clamp(22px, 3vw, 28px); }
 .aud-line { margin: 0; color: var(--muted); font-size: 16px; }
+.aud-more { font-size: 15px; }
+/* an audience's own page (site.js renderAudience: /for/<audience>/) */
+.aud-page .actions { margin: 20px 0 28px; }
+.aud-cards-h { margin: 0 0 16px; font-size: clamp(20px, 2.6vw, 24px); }
+.aud-others { margin: 30px 0 48px; color: var(--muted); }
 .fgrid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
 .fcard {
   position: relative; display: flex; flex-direction: column; background: var(--surface-2);
