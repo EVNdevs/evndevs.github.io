@@ -7,6 +7,7 @@ else of the firmware's API is present by name and says plainly that the simulate
 """
 import _evnsim as _s
 import math as _math
+import struct as _struct
 from array import array as _array
 
 _UNSET = object()   # "not given", where the binding's MP_OBJ_NULL tells an absent argument from None
@@ -31,6 +32,13 @@ _s_cs_ranges, _s_cs_wait, _s_cs_bind = _s.cs_ranges, _s.cs_wait, _s.cs_bind
 _s_cs_raw, _s_cs_norm, _s_cs_pct, _s_cs_rgb, _s_cs_hsv = _s.cs_raw, _s.cs_norm, _s.cs_pct, _s.cs_rgb, _s.cs_hsv
 _s_ds_get, _s_ds_open, _s_ds_raw, _s_ds_set = _s.ds_get, _s.ds_open, _s.ds_raw, _s.ds_set
 _s_imu_open, _s_imu_rate, _s_imu_state = _s.imu_open, _s.imu_rate, _s.imu_state
+_s_adrc_new, _s_adrc_status, _s_adrc_free, _s_adrc_live = _s.adrc_new, _s.adrc_status, _s.adrc_free, _s.adrc_live
+_s_adrc_limits, _s_adrc_dt_max, _s_adrc_set, _s_adrc_reset = _s.adrc_limits, _s.adrc_dt_max, _s.adrc_set, _s.adrc_reset
+_s_adrc_update, _s_adrc_out, _s_adrc_f, _s_adrc_b = _s.adrc_update, _s.adrc_out, _s.adrc_f, _s.adrc_b
+_s_pid_new, _s_pid_status, _s_pid_free, _s_pid_live = _s.pid_new, _s.pid_status, _s.pid_free, _s.pid_live
+_s_pid_gains, _s_pid_filter, _s_pid_limits, _s_pid_ilimit = _s.pid_gains, _s.pid_filter, _s.pid_limits, _s.pid_ilimit
+_s_pid_dt_max, _s_pid_reset, _s_pid_update, _s_pid_out = _s.pid_dt_max, _s.pid_reset, _s.pid_update, _s.pid_out
+_s_pid_f, _s_pid_b = _s.pid_f, _s.pid_b
 
 version = _s_version()
 
@@ -150,10 +158,6 @@ class StopWatch:
 def stop_all():
     """Coast every motor."""
     _s_stop_all()
-
-
-def _program_end():
-    pass
 
 
 # ---------------------------------------------------------------- colours
@@ -690,8 +694,9 @@ class DriveBase:
         self._unit = speed_unit
         self._why = None
         self.pose = None
-        self._id = _s_db_new(left_motor.port, right_motor.port, left_motor._sign * left_motor._ratio,
-                             right_motor._sign * right_motor._ratio, wheel_diameter, axle_track)
+        # _chk: a body rig course refuses a drive base (the runtime's ERR, raised here: lane lb4bw review w1 r1 S6)
+        self._id = _chk(_s_db_new(left_motor.port, right_motor.port, left_motor._sign * left_motor._ratio,
+                                  right_motor._sign * right_motor._ratio, wheel_diameter, axle_track))
         # the older bases of these two Motor objects close, as drivebase_close: a closed Motor's port is left alone, both
         # links go. By the Motor, not the port: a new Motor on a closed wheel's port leaves that base as it is. The same
         # instant as db_new's charge, which is the call's
@@ -1688,155 +1693,324 @@ class IMU:
         self.close()
 
 
-# ---------------------------------------------------------------- PID (motion/user_ctrl.c's maths)
+# ---------------------------------------------------------------- ADRC and PID (motion/user_ctrl.c in WebAssembly)
 
-class PID:
-    """motion/user_ctrl.c's maths, as stubs/evn.pyi describes them."""
+# micropython/modules/evn_ctrl.c's message table: one per evn_uctrl_status_t code, in the enum's order (index 0 = OK is
+# never raised; tools/host_tests/test_simapi_adrc.py holds it to the C file and motion/user_ctrl.h)
+_CTRL_MSG = (
+    "ok",
+    "kp must be a number",
+    "ki must be a number",
+    "kd must be a number",
+    "b0 must be a number",
+    "wc must be a number",
+    "wo must be a number",
+    "filter must be a number",
+    "dt_max must be a number",
+    "limits must be numbers",
+    "integral_limit must be a number",
+    "b0 must not be 0",
+    "wc must be positive",
+    "wo must be positive",
+    "filter must be 0 or positive",
+    "dt_max must be positive",
+    "integral_limit must be positive",
+    "limits must be positive",
+    "limits: (low, high) with low < high",
+    "order must be 1 or 2",
+    "setpoint must be a number",
+    "measurement must be a number",
+    "dt must be a positive number of ms",
+    "dt exceeds dt_max",
+    "updates further apart than dt_max: raise dt_max",
+)
+_CTRL_E_LIMIT_NAN = 9
+_CTRL_E_ILIMIT_NAN = 10
+_CTRL_E_LIMITS_ORDER = 18
+_CTRL_REFUSED, _CTRL_FULL = -1, -2      # tools/simwasm/ctrl/exports.c adrc_new / pid_new
+# exports.c adrc_f / adrc_b's indexes
+_AF_B0, _AF_WC, _AF_WO, _AF_LO, _AF_HI, _AF_DT_MAX = 0, 1, 2, 3, 4, 5
+_AF_ESTIMATE, _AF_RATE, _AF_DISTURBANCE, _AF_OUTPUT, _AF_ERROR = 6, 7, 8, 9, 10
+_AB_ORDER, _AB_LIM_MODE, _AB_SATURATED, _AB_RESTARTED = 0, 1, 2, 3
+# exports.c pid_f / pid_b's indexes (SA-2)
+_PF_KP, _PF_KI, _PF_KD, _PF_FILTER, _PF_LO, _PF_HI, _PF_ILIM, _PF_DT_MAX = 0, 1, 2, 3, 4, 5, 6, 7
+_PF_P, _PF_I, _PF_D, _PF_OUTPUT, _PF_ERROR = 8, 9, 10, 11, 12
+_PB_LIM_MODE, _PB_ILIM_ON, _PB_SATURATED, _PB_RESTARTED = 0, 1, 2, 3
 
-    def __init__(self, kp, ki=0, kd=0, *, filter=20, limits=None, integral_limit=None, dt_max=200):
-        self.kp = self.ki = self.kd = 0.0
-        self.filter = 20.0
-        self.limits = None
-        self.integral_limit = None
-        self.dt_max = 200.0
-        self._set(kp, ki, kd, filter, limits, integral_limit, dt_max)
-        self.reset()
 
-    @staticmethod
-    def _fin(v, what):
-        if type(v) is bool or not isinstance(v, (int, float)) or v != v or v in (float("inf"), float("-inf")):
-            raise ValueError("%s must be a number" % what)
-        return float(v)
+def _f32(bits):
+    """a float32 the module returned, from its bits (ctrl.ts); exact in a Python float, -0.0 kept"""
+    return _struct.unpack("<f", _struct.pack("<I", bits))[0]
 
-    def _set(self, kp, ki, kd, filter, limits, integral_limit, dt_max):
-        # in this order, stopping at the first invalid one
-        if kp is not None:
-            self.kp = self._fin(kp, "kp")
-        if ki is not None:
-            self.ki = self._fin(ki, "ki")
-        if kd is not None:
-            self.kd = self._fin(kd, "kd")
-        if filter is not None:
-            if self._fin(filter, "filter") < 0:
-                raise ValueError("filter must be positive or 0")
-            self.filter = float(filter)
-        if limits is False:
-            self.limits = None
-        elif limits is not None:
-            if isinstance(limits, (tuple, list)):
-                if len(limits) != 2:
-                    raise ValueError("limits must be a number or (low, high)")
-                lo, hi = self._fin(limits[0], "limits"), self._fin(limits[1], "limits")
-                if lo >= hi:
-                    raise ValueError("limits must have low < high")
-                self.limits = (lo, hi)
-            else:
-                x = self._fin(limits, "limits")
-                if x <= 0:
-                    raise ValueError("limits must be positive")
-                self.limits = (-x, x)
-        if integral_limit is False:
-            self.integral_limit = None
-        elif integral_limit is not None:
-            if self._fin(integral_limit, "integral_limit") <= 0:
-                raise ValueError("integral_limit must be positive")
-            self.integral_limit = float(integral_limit)
-        if dt_max is not None:
-            if self._fin(dt_max, "dt_max") <= 0:
-                raise ValueError("dt_max must be positive")
-            self.dt_max = float(dt_max)
 
-    def settings(self, kp=None, ki=None, kd=None, *, filter=None, limits=None, integral_limit=None, dt_max=None):
-        if kp is None and ki is None and kd is None and filter is None and limits is None and integral_limit is None \
-                and dt_max is None:
-            return (self.kp, self.ki, self.kd, self.filter, self.limits, self.integral_limit, self.dt_max)
-        self._set(kp, ki, kd, filter, limits, integral_limit, dt_max)
+def _ctrl_check(st):
+    if st:
+        raise ValueError(_CTRL_MSG[st])
 
-    def reset(self):
-        self.p = self.i = self.d = 0.0
-        self.output = 0.0
-        self.error = 0.0
-        self.saturated = False
-        self.restarted = False
-        self._last = None
-        self._t = None
-        self._df = 0.0
-        self._slow = False
+
+def _ctrl_limits(o):
+    """evn_ctrl.c ctrl_limits_shape: None / False -> OFF (0); a number -> SYM (1, the magnitude: C makes (-a, a));
+    a 2-sequence -> PAIR (2); True is not a number"""
+    if o is None or o is False:
+        return 0, 0.0, 0.0
+    if o is True:
+        _ctrl_check(_CTRL_E_LIMIT_NAN)
+    if isinstance(o, (int, float)):
+        return 1, _flt(o), 0.0
+    if not isinstance(o, (tuple, list)):
+        raise TypeError("object '%s' isn't a tuple or list" % type(o).__name__)
+    if len(o) != 2:
+        _ctrl_check(_CTRL_E_LIMITS_ORDER)
+    return 2, _flt(o[0]), _flt(o[1])
+
+
+class ADRC:
+    """evn.ADRC (stubs/evn.pyi; docs/MICROPYTHON_API.md section 6b): the firmware's own motion/user_ctrl.c, compiled to
+    WebAssembly (src/sim/engine/ctrl.ts; docs/curriculum/SIMAPI_DESIGN.md SA-1; OD-16). This class is
+    micropython/modules/evn_ctrl.c's part, step for step: the arguments' shapes and conversions, the clock read once an
+    update, the messages. The maths and the state are the module's; nothing here computes. Every float the module
+    returns crosses as its float32 bits (_f32): Pyodide gives a whole-valued JS number to Python as an int and -0 as 0,
+    the board a float (review r1 S1). An ADRC cannot be copied (its state is one slot of the module, review r1 S2)."""
+
+    __slots__ = ("_k",)
+
+    def __init__(self, b0, wc, *, order=1, wo=None, limits=None, dt_max=_UNSET):
+        old = getattr(self, "_k", None)        # __init__ called again (review r1 S2, r2): the new slot is made and
+        self._k = old                          # checked first; only then is the old one freed, so a refused call
+        order = _int(order)                    # MP_ARG_INT: converted while the arguments are parsed
+        if not -2147483648 <= order <= 2147483647:
+            raise OverflowError("overflow converting long int to machine word")
+        b0 = _flt(b0)
+        wc = _flt(wc)
+        wo_given = wo is not None
+        wo = _flt(wo) if wo_given else 0.0
+        k = _s_adrc_new(order, b0, wc, 1 if wo_given else 0, wo)
+        if k == _CTRL_FULL:
+            raise MemoryError("the simulator holds at most 1024 ADRC objects at once")
+        if k == _CTRL_REFUSED:
+            _ctrl_check(_s_adrc_status())
+        try:
+            mode, la, lb = _ctrl_limits(limits)
+            _ctrl_check(_s_adrc_limits(k, mode, la, lb))
+            if dt_max is not _UNSET:
+                _ctrl_check(_s_adrc_dt_max(k, _flt(dt_max)))
+        except BaseException:
+            _s_adrc_free(k)
+            raise
+        self._k = k                            # leaves the object as it was
+        if old is not None:
+            _s_adrc_free(old)
+
+    def __copy__(self):
+        raise TypeError("an ADRC can't be copied: make a new one")
+
+    def __deepcopy__(self, memo):
+        raise TypeError("an ADRC can't be copied: make a new one")
+
+    def __reduce_ex__(self, protocol):
+        raise TypeError("an ADRC can't be copied: make a new one")
+
+    def __del__(self):
+        k = self._k
+        if k is not None:
+            self._k = None
+            try:
+                _s_adrc_free(k)
+            except Exception:
+                pass
 
     def update(self, setpoint, measurement, dt=None):
-        # a float or an int that is finite (x - x == 0: not inf, not nan; a bool is neither type) passes as _fin passes
-        # it; anything else takes _fin's checks, in the same order. The state is read into locals once; the sums are
-        # the same sums in the same order (ledger HT-67)
-        t = type(setpoint)
-        if (t is float or t is int) and setpoint - setpoint == 0:
-            sp = float(setpoint)
-        else:
-            sp = self._fin(setpoint, "setpoint")
-        t = type(measurement)
-        if (t is float or t is int) and measurement - measurement == 0:
-            me = float(measurement)
-        else:
-            me = self._fin(measurement, "measurement")
-        dt_max = self.dt_max
-        if dt is not None:
-            if type(dt) is bool or not isinstance(dt, (int, float)) or dt != dt or dt <= 0:
-                raise ValueError("dt must be a positive number of ms")
-            if dt > dt_max:
-                raise ValueError("dt exceeds dt_max")
-        now = _s_now_us()
-        if dt is None:
-            t0 = self._t
-            dtm = None if t0 is None else (now - t0) / 1000.0
-        else:
-            dtm = float(dt)
-        e = sp - me
-        restart = dt is None and dtm is not None and dtm > dt_max
-        if restart and self._slow:
-            # two measured pauses past dt_max in a row: the loop itself is slower (it re-seeds and starts the next one)
-            self._t = now
-            self._last = me
-            self._df = 0.0
-            raise ValueError("updates further apart than dt_max: raise dt_max")
-        self._slow = restart
-        self._t = now
-        self.error = e
-        self.p = p = self.kp * e
-        self.restarted = restart
-        last = self._last
-        if last is None or dtm is None or restart:
-            # the first update seeds; a pause longer than dt_max restarts (the integral kept, the derivative re-seeded)
-            self.d = d = 0.0
-            self._df = 0.0
-        else:
-            raw = -(me - last) / (dtm / 1000.0)
-            f = self.filter
-            a = dtm / (f + dtm) if f > 0 else 1.0
-            df = self._df
-            df += a * (raw - df)
-            self._df = df
-            self.d = d = self.kd * df
-            step = self.ki * e * dtm / 1000.0
-            cand = self.i + step
-            il = self.integral_limit
-            if il is not None:
-                cand = max(-il, min(il, cand))
-            out = p + cand + d
-            lim = self.limits
-            # the candidate bounded by integral_limit, then held while the candidate output sits beyond a limit in the
-            # step's direction (motion/user_ctrl.c, the board's order)
-            if not (lim and ((out > lim[1] and step > 0) or (out < lim[0] and step < 0))):
-                self.i = cand
-        self._last = me
-        out = p + self.i + d
-        lim = self.limits
-        sat = False
-        if lim:
-            if out >= lim[1] or out <= lim[0]:
-                sat = True
-            out = max(lim[0], min(lim[1], out))
-        self.saturated = sat
-        self.output = out
-        return out
+        r = _flt(setpoint)
+        y = _flt(measurement)
+        given = dt is not None
+        dt_ms = _flt(dt) if given else 0.0
+        _ctrl_check(_s_adrc_update(self._k, r, y, 1 if given else 0, dt_ms, _s_now_us()))
+        return _f32(_s_adrc_out())
+
+    def reset(self):
+        _s_adrc_reset(self._k)
+
+    def settings(self, b0=_UNSET, wc=_UNSET, wo=_UNSET, *, limits=_UNSET, dt_max=_UNSET):
+        """settings() -> (b0, wc, wo, order, limits, dt_max); with arguments, changes only what is given (None =
+        keep, limits=False removes them), in that order, stopping at the first invalid one"""
+        k = self._k
+        if b0 is _UNSET and wc is _UNSET and wo is _UNSET and limits is _UNSET and dt_max is _UNSET:
+            lim = None if not _s_adrc_b(k, _AB_LIM_MODE) else (_f32(_s_adrc_f(k, _AF_LO)), _f32(_s_adrc_f(k, _AF_HI)))
+            return (_f32(_s_adrc_f(k, _AF_B0)), _f32(_s_adrc_f(k, _AF_WC)), _f32(_s_adrc_f(k, _AF_WO)),
+                    int(_s_adrc_b(k, _AB_ORDER)), lim, _f32(_s_adrc_f(k, _AF_DT_MAX)))
+        mask = 0
+        g = [0.0, 0.0, 0.0]
+        for i, v in enumerate((b0, wc, wo)):
+            if v is not _UNSET and v is not None:
+                mask |= 1 << i
+                g[i] = _flt(v)
+        _ctrl_check(_s_adrc_set(k, mask, g[0], g[1], g[2]))
+        if limits is not _UNSET and limits is not None:
+            mode, la, lb = _ctrl_limits(limits)
+            _ctrl_check(_s_adrc_limits(k, mode, la, lb))
+        if dt_max is not _UNSET and dt_max is not None:
+            _ctrl_check(_s_adrc_dt_max(k, _flt(dt_max)))
+
+    @property
+    def estimate(self):
+        return _f32(_s_adrc_f(self._k, _AF_ESTIMATE))
+
+    @property
+    def rate(self):
+        return _f32(_s_adrc_f(self._k, _AF_RATE))
+
+    @property
+    def disturbance(self):
+        return _f32(_s_adrc_f(self._k, _AF_DISTURBANCE))
+
+    @property
+    def output(self):
+        return _f32(_s_adrc_f(self._k, _AF_OUTPUT))
+
+    @property
+    def error(self):
+        return _f32(_s_adrc_f(self._k, _AF_ERROR))
+
+    @property
+    def saturated(self):
+        return bool(_s_adrc_b(self._k, _AB_SATURATED))
+
+    @property
+    def restarted(self):
+        return bool(_s_adrc_b(self._k, _AB_RESTARTED))
+
+
+class PID:
+    """evn.PID (stubs/evn.pyi; docs/MICROPYTHON_API.md section 6b): the firmware's own motion/user_ctrl.c, compiled to
+    WebAssembly with the ADRC (src/sim/engine/ctrl.ts; docs/curriculum/SIMAPI_DESIGN.md SA-2; OD-16: "evn.PID's maths
+    is hidden too where it can be"). This class is micropython/modules/evn_ctrl.c's PID part, step for step: the
+    arguments' shapes and conversions (pid_make_new's order: kp, ki, kd, then filter, limits, integral_limit, dt_max),
+    the clock read once an update, the messages. The maths and the state are the module's; nothing here computes.
+    Results cross as float32 bits (_f32), and a PID cannot be copied, as the ADRC's (review r1 S1, S2)."""
+
+    __slots__ = ("_k",)
+
+    def __init__(self, kp, ki=_UNSET, kd=_UNSET, *, filter=_UNSET, limits=None, integral_limit=None, dt_max=_UNSET):
+        old = getattr(self, "_k", None)        # __init__ called again: the new slot is made and checked first, then
+        self._k = old                          # the old one freed (the ADRC's rule, review r2)
+        kp = _flt(kp)
+        ki = _flt(ki) if ki is not _UNSET else 0.0
+        kd = _flt(kd) if kd is not _UNSET else 0.0
+        k = _s_pid_new(kp, ki, kd)
+        if k == _CTRL_FULL:
+            raise MemoryError("the simulator holds at most 1024 PID objects at once")
+        if k == _CTRL_REFUSED:
+            _ctrl_check(_s_pid_status())
+        try:
+            if filter is not _UNSET:
+                _ctrl_check(_s_pid_filter(k, _flt(filter)))
+            mode, la, lb = _ctrl_limits(limits)
+            _ctrl_check(_s_pid_limits(k, mode, la, lb))
+            _pid_ilimit(k, integral_limit)
+            if dt_max is not _UNSET:
+                _ctrl_check(_s_pid_dt_max(k, _flt(dt_max)))
+        except BaseException:
+            _s_pid_free(k)
+            raise
+        self._k = k
+        if old is not None:
+            _s_pid_free(old)
+
+    def __copy__(self):
+        raise TypeError("a PID can't be copied: make a new one")
+
+    def __deepcopy__(self, memo):
+        raise TypeError("a PID can't be copied: make a new one")
+
+    def __reduce_ex__(self, protocol):
+        raise TypeError("a PID can't be copied: make a new one")
+
+    def __del__(self):
+        k = self._k
+        if k is not None:
+            self._k = None
+            try:
+                _s_pid_free(k)
+            except Exception:
+                pass
+
+    def update(self, setpoint, measurement, dt=None):
+        r = _flt(setpoint)
+        y = _flt(measurement)
+        given = dt is not None
+        dt_ms = _flt(dt) if given else 0.0
+        _ctrl_check(_s_pid_update(self._k, r, y, 1 if given else 0, dt_ms, _s_now_us()))
+        return _f32(_s_pid_out())
+
+    def reset(self):
+        _s_pid_reset(self._k)
+
+    def settings(self, kp=_UNSET, ki=_UNSET, kd=_UNSET, *, filter=_UNSET, limits=_UNSET, integral_limit=_UNSET,
+                 dt_max=_UNSET):
+        """settings() -> (kp, ki, kd, filter, limits, integral_limit, dt_max); with arguments, changes only what is
+        given (None = keep; limits=False / integral_limit=False remove them), in that order, stopping at the first
+        invalid one; the state is kept"""
+        k = self._k
+        if kp is _UNSET and ki is _UNSET and kd is _UNSET and filter is _UNSET and limits is _UNSET \
+                and integral_limit is _UNSET and dt_max is _UNSET:
+            lim = None if not _s_pid_b(k, _PB_LIM_MODE) else (_f32(_s_pid_f(k, _PF_LO)), _f32(_s_pid_f(k, _PF_HI)))
+            il = _f32(_s_pid_f(k, _PF_ILIM)) if _s_pid_b(k, _PB_ILIM_ON) else None
+            return (_f32(_s_pid_f(k, _PF_KP)), _f32(_s_pid_f(k, _PF_KI)), _f32(_s_pid_f(k, _PF_KD)),
+                    _f32(_s_pid_f(k, _PF_FILTER)), lim, il, _f32(_s_pid_f(k, _PF_DT_MAX)))
+        mask = 0
+        g = [0.0, 0.0, 0.0]
+        for i, v in enumerate((kp, ki, kd)):
+            if v is not _UNSET and v is not None:
+                mask |= 1 << i
+                g[i] = _flt(v)
+        _ctrl_check(_s_pid_gains(k, mask, g[0], g[1], g[2]))
+        if filter is not _UNSET and filter is not None:
+            _ctrl_check(_s_pid_filter(k, _flt(filter)))
+        if limits is not _UNSET and limits is not None:
+            mode, la, lb = _ctrl_limits(limits)
+            _ctrl_check(_s_pid_limits(k, mode, la, lb))
+        if integral_limit is not _UNSET and integral_limit is not None:
+            _pid_ilimit(k, integral_limit)
+        if dt_max is not _UNSET and dt_max is not None:
+            _ctrl_check(_s_pid_dt_max(k, _flt(dt_max)))
+
+    @property
+    def p(self):
+        return _f32(_s_pid_f(self._k, _PF_P))
+
+    @property
+    def i(self):
+        return _f32(_s_pid_f(self._k, _PF_I))
+
+    @property
+    def d(self):
+        return _f32(_s_pid_f(self._k, _PF_D))
+
+    @property
+    def output(self):
+        return _f32(_s_pid_f(self._k, _PF_OUTPUT))
+
+    @property
+    def error(self):
+        return _f32(_s_pid_f(self._k, _PF_ERROR))
+
+    @property
+    def saturated(self):
+        return bool(_s_pid_b(self._k, _PB_SATURATED))
+
+    @property
+    def restarted(self):
+        return bool(_s_pid_b(self._k, _PB_RESTARTED))
+
+
+def _pid_ilimit(k, o):
+    """evn_ctrl.c pid_set_ilimit: None / False -> off; True is not a number; a number -> on"""
+    if o is True:
+        _ctrl_check(_CTRL_E_ILIMIT_NAN)
+    if o is None or o is False:
+        _ctrl_check(_s_pid_ilimit(k, 0, 0.0))
+    else:
+        _ctrl_check(_s_pid_ilimit(k, 1, _flt(o)))
 
 
 # ---------------------------------------------------------------- the board
@@ -1961,6 +2135,469 @@ def bootloader():
     raise OSError("the simulator has no bootloader")
 
 
+# ---------------------------------------------------------------- the data logger (SIMAPI SA-3)
+
+# evn.DataLog: micropython/modules/evn_datalog.c's part - the argument shapes, the messages, the file's text - over the
+# firmware's record core (hal/hal_datalog_core.inc: the tables, the sizing, "only new readings", the fold, the halving,
+# the rows) in WebAssembly (src/sim/engine/datalog.ts; docs/curriculum/SIMAPI_DESIGN.md §3c). The sources are the
+# world's, written into the module's feed after every world tick: a Motor, evn.battery, evn.button and log()'s rows.
+# The sensors are SA-3b's (add() refuses them). Until a PC builds the module with the pinned wasi-sdk 34
+# (datalogWasm.ts holds none), DataLog() raises OSError, as the absent name did.
+_s_dl_ok, _s_dl_alloc, _s_dl_open, _s_dl_add, _s_dl_src = _s.dl_ok, _s.dl_alloc, _s.dl_open, _s.dl_add, _s.dl_src
+_s_dl_start, _s_dl_secs, _s_dl_stop, _s_dl_free, _s_dl_forget = _s.dl_start, _s.dl_secs, _s.dl_stop, _s.dl_free, _s.dl_forget
+_s_dl_running, _s_dl_row, _s_dl_l, _s_dl_c, _s_dl_rate = _s.dl_running, _s.dl_row, _s.dl_l, _s.dl_c, _s.dl_rate
+_s_dl_recs, _s_dl_table, _s_dl_head, _s_m_driving = _s.dl_recs, _s.dl_table, _s.dl_head, _s.m_driving
+_s_dl_live = _s.dl_live
+
+# hal_datalog.h evn_datalog_kind_t; tools/simwasm/datalog/exports.c's getter indexes (LF_*, CF_*)
+_DL_MOTOR, _DL_BATTERY, _DL_BUTTON, _DL_USER = 0, 1, 2, 11
+_DL_FED = (_DL_MOTOR, _DL_BATTERY, _DL_BUTTON)          # the sources the simulator feeds (SA-3)
+_LF_RUNNING, _LF_START_US, _LF_STOP_US, _LF_POLLS, _LF_COST_MAX, _LF_COST_TOTAL = 0, 4, 5, 6, 7, 8
+_CF_KIND, _CF_PORT, _CF_QUANTITY, _CF_PARTS, _CF_CFG_PERIOD = 0, 1, 2, 3, 4
+_CF_HALVINGS, _CF_N, _CF_DROPPED, _CF_TAKEN, _CF_SAME = 9, 11, 13, 14, 15
+_DL_F_TEXT, _DL_F_INT = 1, 2
+_DL_FOLDER = "/data"
+_dl_tables = None    # [(kind name, ((quantity, parts, unit, flags, part names), ...)), ...]: hal_datalog_quantities
+_dl_active = None    # MP_STATE_PORT(evn_datalog_active): the recording log (and a stopped one still owed its autosave)
+
+
+def _dl_table():
+    global _dl_tables
+    if _dl_tables is None:
+        _dl_tables = tuple((str(k[0]), tuple((str(q[0]), int(q[1]), str(q[2]), int(q[3]), str(q[4])) for q in k[1]))
+                           for k in _s_dl_table().to_py())
+    return _dl_tables
+
+
+def _dl_kind_of(o):
+    """evn_datalog.c kind_of(): the source's kind, or None"""
+    if o is battery:
+        return _DL_BATTERY
+    if o is button:
+        return _DL_BUTTON
+    for cls, kind in ((Motor, 0), (ColorSensor, 3), (DistanceSensor, 4), (IMU, 8), (TouchArray, 9), (ADC, 10)):
+        if isinstance(o, cls):
+            return kind
+    return None
+
+
+def _f32v(v):
+    """C's (float) of a double: round to float32, an overflow to an infinity (struct would raise)"""
+    return _array("f", (v,))[0]
+
+
+def _dl_driving():
+    """the flash guard: a motor drives (hal_flash_writes_allowed(), boot.py _driving)"""
+    return any(_s_m_driving(p) for p in range(1, 5))
+
+
+def _dl_rest():
+    """a coast just issued is given 5 ms to land (evn_datalog.c: 5000 us of polls); True when no motor drives"""
+    for _ in range(5):
+        if not _dl_driving():
+            return True
+        _s_wait(1)
+    return not _dl_driving()
+
+
+def _dl_g(v, digits):
+    """MicroPython's %.<digits>g of a float32 value"""
+    return "%.*g" % (digits, v)
+
+
+class DataLog:
+    """The data logger recorded on the board (docs/MICROPYTHON_API.md DataLog): the firmware's record core."""
+
+    def __init__(self, *headers, name="log", timestamp=True, extension="csv", append=False, size=32768,
+                 autosave=True, on_full="halve"):
+        if not _s_dl_ok():
+            raise OSError("the simulated robot has no data logger yet (DataLog runs the firmware's record core: its "
+                          "module is built on a PC, docs/curriculum/SIMAPI_DESIGN.md SA-3)")
+        size = _int(size)
+        if len(headers) > 8:
+            raise ValueError("at most 8 headers")
+        if not all(isinstance(h, str) for h in headers):
+            raise TypeError("headers must be strings")
+        if not isinstance(name, str) or not isinstance(extension, str):
+            raise TypeError("name and extension must be strings")
+        if size < 1024 or size > 1000000:
+            raise ValueError("size must be 1024..1000000 bytes")
+        if not isinstance(on_full, str):
+            raise TypeError("can't convert '%s' object to str implicitly" % type(on_full).__name__)
+        if on_full not in ("halve", "drop"):
+            raise ValueError("on_full must be 'halve' or 'drop'")
+        self._k = None                  # the module's block (evn_datalog.c self->mem), at the first start
+        self._l = False                 # a logger laid out in it (self->l)
+        self._size = size
+        self._cfgs = []                 # [kind, port, quantity, parts, arg, period_us, rate hint]
+        self._sources = []
+        self._headers = tuple(headers)
+        self._name, self._extension = name, extension
+        self._timestamp, self._append, self._autosave = bool(timestamp), bool(append), bool(autosave)
+        self._on_full = 0 if on_full == "halve" else 1
+        self._user = -1
+        self._saved = False
+        self._closed = False
+        if headers:                     # the program's own rows: one channel, its parts the headers
+            self._cfgs.append([_DL_USER, 0, 0, len(headers), 0, 0, 100.0])
+            self._user = 0
+
+    def __repr__(self):
+        n = len(self._cfgs)
+        state = "closed" if self._closed else "recording" if self._recording() else "idle"
+        return "DataLog(%s, %u channel%s, %s)" % (self._name, n, "" if n == 1 else "s", state)
+
+    def __del__(self):
+        try:
+            if self._k is not None:
+                _s_dl_free(self._k)
+                self._k = None
+        except Exception:               # noqa: BLE001 - the interpreter is going: nothing to free
+            pass
+
+    def __copy__(self):
+        raise TypeError("can't copy a DataLog")
+
+    def __deepcopy__(self, memo):
+        raise TypeError("can't copy a DataLog")
+
+    def __reduce_ex__(self, protocol):
+        raise TypeError("can't pickle a DataLog")
+
+    def _open(self):
+        if self._closed:
+            raise ValueError("DataLog is closed")
+
+    def _recording(self):
+        return self._l and bool(_s_dl_l(self._k, _LF_RUNNING))
+
+    def add(self, source, quantity, rate=0, *, input=None):
+        self._open()
+        if self._recording():
+            raise RuntimeError("stop() the DataLog before adding a channel")
+        if len(self._cfgs) >= 16:
+            raise ValueError("at most 16 channels")
+        kind = _dl_kind_of(source)
+        if kind is None:
+            raise TypeError("source must be a Motor, evn.battery, evn.button or a sensor object")
+        if not isinstance(quantity, str):
+            raise TypeError("quantity must be a string (a method name: 'angle', 'heading', ...)")
+        kname, qs = _dl_table()[kind]
+        q = next((i for i, e in enumerate(qs) if e[0] == quantity), -1)
+        if q < 0:
+            raise ValueError("%s has no loggable '%s' (see DataLog.quantities)" % (kname, quantity))
+        r = _f32v(_flt(rate))
+        if r != r or r in (float("inf"), float("-inf")):
+            raise ValueError("rate must be a finite number")
+        if r < 0:
+            raise ValueError("rate must be >= 0 (0 = every new reading)")
+        # (uint32_t) of the float, which saturates on the board (__aeabi_f2uiz) where a tiny rate's period passes 2^32
+        period = (1000 if r >= 1000 else min(int(_f32v(_f32v(1.0e6 / r) + 0.5)), 0xFFFFFFFF)) if r > 0 else 0
+        port = 0
+        if kind == _DL_MOTOR:
+            source._live()              # evn_mp_motor_from_obj: a closed Motor raises
+            port = source.port - 1
+        elif kind not in _DL_FED:
+            raise OSError("DataLog: logging a %s is not simulated yet (a Motor, evn.battery, evn.button and log() "
+                          "rows are: docs/curriculum/SIMAPI_DESIGN.md SA-3b)" % kname)
+        if input is not None:
+            raise ValueError("input= is for an ADC")
+        self._cfgs.append([kind, port, q, 0, 0, period, 0.0])
+        self._sources.append(source)
+        return len(self._cfgs) - 1
+
+    @staticmethod
+    def quantities(source):
+        kind = _dl_kind_of(source)
+        if kind is None:
+            raise TypeError("source must be a Motor, evn.battery, evn.button or a sensor object")
+        return tuple(e[0] for e in _dl_table()[kind][1])
+
+    def start(self):
+        global _dl_active
+        self._open()
+        if self._recording():
+            return None
+        if not self._cfgs:
+            raise ValueError("nothing to log: add() a channel or give DataLog() headers")
+        if _s_dl_running():
+            raise RuntimeError("another DataLog is recording (one at a time: stop() it first)")
+        other = _dl_active
+        if other is not None and other is not self:
+            other._autosave_if_due()    # a stopped log still owed its autosave: written now, not lost
+            _dl_active = None
+        if self._k is None:
+            k = _s_dl_alloc(self._size)
+            if k < 0:
+                raise MemoryError("memory allocation failed, allocating %u bytes" % (_s_dl_head() + self._size))
+            self._k = k
+        frames = []                     # a motor's frame (positive_direction, gears, reset_angle) as it is now
+        si = 0
+        for c in self._cfgs:
+            if c[0] == _DL_USER:
+                frames.append((0, 1.0, 1.0, 0.0))
+                continue
+            src = self._sources[si]
+            si += 1
+            if c[0] == _DL_MOTOR:
+                src._live()
+                frames.append((src.port, float(src._sign), float(src._ratio), float(src._off)))
+            else:
+                frames.append((0, 1.0, 1.0, 0.0))
+        if not _s_dl_open(self._k):
+            raise RuntimeError("DataLog: could not lay the buffer out")
+        for i, c in enumerate(self._cfgs):
+            hz = {_DL_MOTOR: 1000, _DL_BATTERY: 25, _DL_BUTTON: 1000}.get(c[0], 100)   # hal_datalog_source_hz
+            if not _s_dl_add(self._k, c[0], c[1], c[2], c[3], c[4], c[5], c[6], hz):
+                raise ValueError("channel %d cannot be logged (is its device still open?)" % i)
+            f = frames[i]
+            _s_dl_src(i, c[0], c[2], f[0], f[1], f[2], f[3])
+        if not _s_dl_start(self._k, self._on_full, len(self._cfgs)):
+            raise ValueError("size is too small for these channels (each needs room for 8 samples)")
+        self._l = True
+        self._saved = False
+        _dl_active = self
+        return _f32(_s_dl_secs())
+
+    def _stop_quiet(self):
+        global _dl_active
+        if self._l:
+            _s_dl_stop(self._k)
+        if _dl_active is self and not (self._autosave and not self._saved and self._l):
+            _dl_active = None
+
+    def stop(self):
+        self._open()
+        self._stop_quiet()
+
+    def running(self):
+        return not self._closed and self._recording()
+
+    def close(self):
+        if not self._closed:
+            self._stop_quiet()
+            if self._k is not None:
+                _s_dl_free(self._k)
+            self._k = None
+            self._l = False
+            self._closed = True
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        if not self._closed:
+            self._stop_quiet()
+            self._autosave_if_due()
+        self.close()
+
+    def log(self, *values):
+        self._open()
+        if len(values) > 8:
+            raise TypeError("function expected at most 9 arguments, got %d" % (len(values) + 1))
+        if self._user < 0:
+            raise ValueError("DataLog() was made without headers: log() has no columns")
+        parts = self._cfgs[self._user][3]
+        if len(values) != parts:
+            raise ValueError("log() takes %d values (the headers)" % parts)
+        row = []
+        for v in values:
+            if v is None:
+                row.append(float("nan"))
+            elif v is True or v is False:
+                row.append(1.0 if v else 0.0)
+            elif isinstance(v, int):
+                row.append(_f32v(float(v)))
+            else:
+                row.append(_f32v(_flt(v)))
+        if not self._recording():
+            if self._l:
+                raise RuntimeError("the DataLog is stopped: start() again for a new recording")
+            self.start()                # Pybricks: a log() needs no start()
+        _s_dl_row(self._k, self._user, len(row), *row)
+
+    def info(self):
+        self._open()
+        d = {"running": self._recording(), "size": self._size, "saved": self._saved}
+        chans = []
+        if self._l:
+            k = self._k
+            L = lambda w: _s_dl_l(k, w)
+            start = L(_LF_START_US)
+            end = (_s_now_us() & 0xFFFFFFFF) if L(_LF_RUNNING) else L(_LF_STOP_US)
+            d["seconds"] = _f32v(_f32v((end - start) & 0xFFFFFFFF) / 1.0e6)
+            polls = L(_LF_POLLS)
+            d["polls"] = polls
+            d["cost_us"] = L(_LF_COST_MAX)
+            d["cost_mean_us"] = _f32v(_f32v(L(_LF_COST_TOTAL)) / _f32v(polls)) if polls else 0.0
+            for i in range(len(self._cfgs)):
+                C = lambda w: _s_dl_c(k, i, w)
+                kind = C(_CF_KIND)
+                kname, qs = _dl_table()[kind]
+                q = qs[C(_CF_QUANTITY)]
+                port = C(_CF_PORT)
+                chans.append({"device": kname, "port": port + 1 if kind == _DL_MOTOR else port if port else None,
+                              "quantity": q[0], "unit": q[2], "rate": _f32(_s_dl_rate(k, i)),
+                              "halvings": C(_CF_HALVINGS), "samples": C(_CF_N), "taken": C(_CF_TAKEN),
+                              "same": C(_CF_SAME), "dropped": C(_CF_DROPPED)})
+        d["channels"] = chans
+        return d
+
+    def save(self, path=None):
+        import os as _os
+        self._open()
+        if not self._l:
+            raise ValueError("nothing recorded yet")
+        if self._recording():
+            raise RuntimeError("stop() the DataLog before saving it")
+        if not _dl_rest():
+            raise _MpErrno(16, "EBUSY")
+        if path is not None:
+            if not isinstance(path, str):
+                raise TypeError("can't convert '%s' object to str implicitly" % type(path).__name__)
+            target = path
+        else:
+            _dl_folder()
+            stem = "%s/%s" % (_DL_FOLDER, self._name)    # no clock in the simulator: evn.clock() is 0, no date
+            target = "%s.%s" % (stem, self._extension)
+            if not self._append:        # a name not taken yet, so a run never overwrites the last one
+                k = 1
+                while k < 1000 and _os.path.exists(target):
+                    target = "%s_%d.%s" % (stem, k, self._extension)
+                    k += 1
+        header = not self._append or not _os.path.exists(target)
+        text = self._csv(header)
+        with open(target, "a" if self._append else "w") as f:
+            f.write(text)
+        self._saved = True
+        return target
+
+    def _csv(self, header):
+        """evn_datalog.c datalog_save's text: the header lines, then one line per record and part"""
+        k = self._k
+        out = []
+        n = len(self._cfgs)
+        chans = []
+        for i in range(n):
+            C = lambda w, i=i: _s_dl_c(k, i, w)
+            kind, parts = C(_CF_KIND), C(_CF_PARTS)
+            kname, qs = _dl_table()[kind]
+            chans.append((kind, kname, qs[C(_CF_QUANTITY)], C(_CF_PORT), parts, C(_CF_CFG_PERIOD), C(_CF_HALVINGS),
+                          C(_CF_N), C(_CF_TAKEN), i))
+        if header:
+            out.append("# EVN ALPHA data log\n")
+            out.append("# board: EVN ALPHA, firmware %s (the simulator)\n" % version)
+            out.append("# mode: recorded on the board by evn.DataLog (%u kB of RAM; a full channel halves its rate)\n"
+                       % (self._size // 1024))
+            for kind, kname, q, port, parts, period, halv, nrec, taken, i in chans:
+                if kind == _DL_USER:
+                    out.append("# channel: log | %d columns | %u rows\n" % (parts, nrec))
+                    continue
+                s = "# channel: %s" % kname
+                if kind == _DL_MOTOR:
+                    s += " %d" % (port + 1)
+                elif port:
+                    s += " %d" % port
+                s += " | %s | %s | " % (q[0], q[2])
+                s += "every new reading" if period == 0 else "%s Hz" % _dl_g(_f32v(1.0e6 / _f32v(period)), 6)
+                if halv:
+                    s += " (halved %d time%s: %s Hz)" % (halv, "" if halv == 1 else "s", _dl_g(_f32(_s_dl_rate(k, i)), 6))
+                s += " | %u rows of %u samples\n" % (nrec, taken)
+                out.append(s)
+            out.append("time_s,device,port,quantity,value,unit,note\n")
+        for kind, kname, q, port, parts, period, halv, nrec, taken, i in chans:
+            dev = "log" if kind == _DL_USER else kname
+            portno = port + 1 if kind == _DL_MOTOR else port
+            pnames = q[4].split(",") if kind != _DL_USER and q[4] else []
+            flags = 0 if kind == _DL_USER else q[3]
+            words = _s_dl_recs(k, i).to_py()
+            rw = 1 + parts
+            t64 = prev = 0
+            for r in range(nrec):
+                t = words[r * rw]
+                t64 = t if r == 0 else t64 + ((t - prev) & 0xFFFFFFFF)   # unwrapped: records are in time order
+                prev = t
+                stamp = "%u.%06u" % divmod(t64, 1000000)
+                for j in range(parts):
+                    if kind == _DL_USER:
+                        label = _dl_csv_text(self._headers[j] if j < len(self._headers) else "value")
+                    elif parts > 1:
+                        label = "%s.%s" % (q[0], pnames[j] if j < len(pnames) else "?")
+                    else:
+                        label = q[0]
+                    out.append("%s,%s,%s,%s,%s,%s,\n" % (stamp, dev, portno if portno else "", label,
+                                                         _dl_value(_f32(words[r * rw + 1 + j]), flags),
+                                                         "" if kind == _DL_USER else q[2]))
+        return "".join(out)
+
+    def _autosave_if_due(self):
+        """Save if the log saves by itself and has not been (evn_datalog.c autosave_if_due); never raises."""
+        if not (self._autosave and not self._saved and self._l and not self._closed):
+            return
+        if not _dl_rest():
+            print("DataLog: not saved (a motor is still driving; stop it and call save())")
+            return
+        try:
+            print("DataLog saved: %s" % self.save())
+        except Exception as e:          # noqa: BLE001 - reported, as the board prints its exception
+            print("DataLog: not saved (%s: %s)" % (type(e).__name__, e))
+
+
+def _dl_value(v, flags):
+    """evn_datalog.c print_value() for a CSV cell: empty for NaN / infinite, an integer for an integer quantity, an
+    integral value as one, else %.7g (a text quantity has no source in SA-3)"""
+    if v != v or v in (float("inf"), float("-inf")):
+        return ""
+    if flags & _DL_F_INT:
+        return "%d" % _dl_lroundf(v)
+    if abs(v) < 1.0e6 and v == int(v):
+        return "%d" % int(v)
+    return _dl_g(v, 7)
+
+
+def _dl_lroundf(v):
+    """C's lroundf: halves away from zero"""
+    return int(v + 0.5) if v >= 0 else -int(-v + 0.5)
+
+
+def _dl_csv_text(s):
+    """a text cell of the CSV: quoted when it holds a comma, a quote or a line break (RFC 4180)"""
+    if not any(c in s for c in ',"\r\n'):
+        return s
+    return '"' + s.replace('"', '""') + '"'
+
+
+def _dl_folder():
+    """the board's /data: on the simulator's flash (/flash/data), and reachable as /data, as the board's absolute path"""
+    import os as _os
+    try:
+        _os.makedirs("/flash/data", exist_ok=True)
+        if not _os.path.lexists("/data"):
+            _os.symlink("/flash/data", "/data")
+    except OSError:
+        pass
+
+
+def _program_end():
+    """evn_mp_datalog_program_end: the recording log stopped and autosaved once the motors coast (boot.py reset() calls
+    it before the soft reset's sweep; the board at main.py's end, the editor's Run end and a soft reboot)"""
+    global _dl_active
+    o = _dl_active
+    try:
+        _s_dl_forget()
+    except Exception:                   # noqa: BLE001 - no module: nothing records
+        return
+    if o is None:
+        return
+    o._stop_quiet()
+    o._autosave_if_due()
+    if o._k is not None:
+        _s_dl_free(o._k)
+    o._k = None
+    o._l = False
+    _dl_active = None
+
+
 # ---------------------------------------------------------------- what the simulated robot does not have (yet)
 
 def _absent(name, what):
@@ -1987,8 +2624,6 @@ HuskyLens = _absent("HuskyLens", "HuskyLens")
 VL53L1X = _absent("VL53L1X", "VL53L1X distance sensor")
 TCS3430 = _absent("TCS3430", "TCS3430 colour sensor")
 Pose = _absent("Pose", "Pose estimator (not simulated yet)")
-DataLog = _absent("DataLog", "data logger")
-ADRC = _absent("ADRC", "ADRC controller")
 Flash = _absent("Flash", "flash block device (its files are the Simulator panel's)")
 Icon = _absent("Icon", "matrix LED icon set (no matrix LED)")
 

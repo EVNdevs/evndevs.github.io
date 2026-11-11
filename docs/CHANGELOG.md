@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.2.76 (2026-11-11)
 
 ### Simulator
 - **`evn.ADRC`, `evn.PID` and `evn.DataLog` run the board's own code.** The simulator now runs the firmware's controller
@@ -121,6 +121,11 @@
   on a board.
 - **The data logger's record code moved into a file of its own** (`hal/hal_datalog_core.inc`), shared with the
   simulator's WebAssembly build of `DataLog`. No change in behaviour is intended.
+- **Known in this release:** on the EVN ALPHA 1.3 bench board, the EV3 Medium motor's steady-state speed error is
+  about 2.6 deg/s on average where 0.2.75 had about 0.9 (8 alternating runs an image, every 0.2.76 run 2.0-3.4); on the
+  other bench board the same motor is within its run-to-run noise (0.11 -> 0.52 deg/s). The same source with the
+  memory layout unlocked matches 0.2.75 (1.29 vs 1.24 deg/s), so it comes from where the code is placed, not from a
+  change to the motor control; accepted by the owner 2026-11-11 (docs/gates/0.2.76.md).
 
 ## 0.2.75 (2026-11-08)
 - **Simulator challenges: reading `simtrail`'s errors no longer costs the run.** A read in a scored run is still refused, now

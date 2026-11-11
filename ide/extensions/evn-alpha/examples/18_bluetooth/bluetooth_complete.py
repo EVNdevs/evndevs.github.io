@@ -25,8 +25,11 @@ from evn import Bluetooth, StopWatch, wait
 # --- the constructor ---------------------------------------------------------------------------
 try:
     bt = Bluetooth(2)                    # serial port 1 or 2, 230400 baud; waits up to 3 s
-except OSError as e:                     # "serial port 2 is already open": boot.py's Bluetooth holds it
+except OSError as e:                     # nothing on the header, or boot.py's Bluetooth holds the port
     print("Bluetooth(2):", e)
+    if "no Bluetooth module" in str(e):  # no answer and nothing driving the header's receive line
+        print("Nothing answers on serial port 2: plug the Bluetooth module in there (or use the port it is on).")
+        raise SystemExit
     print("Another object already uses the module - usually boot.py's `bt = evn.Bluetooth(2); bt.repl(True)`,")
     print("written by the Board view's broadcast button. Take that line out of boot.py and reset the board,")
     print("then run this again.")

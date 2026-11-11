@@ -1,7 +1,7 @@
 {
  "format": 1,
- "version": "0.2.75+205660d38995",
- "extension": "0.2.75",
+ "version": "0.2.76+b70dd6247d35",
+ "extension": "0.2.76",
  "workbench": {
   "version": "1.143.0",
   "commit": "2d0b7506a36c1d6db9a466440131a8e01eab2289"
@@ -17,11 +17,15 @@
   },
   "README.txt": {
    "size": 965,
-   "sha256": "0a52c964460789ab60c631d90e67a6275cd075ed1e1dc776fed13fba89cff09f"
+   "sha256": "93d92ef5679420672f598d09c452b92a42a1d58f8dbac27274eba227cece21aa"
   },
   "extensions/evn-alpha/LICENSE": {
    "size": 1114,
    "sha256": "5d5a02840ed4f48c321ff708931bf515e3126764fc67176f05f3fdc1b54c89e1"
+  },
+  "extensions/evn-alpha/THIRD_PARTY_NOTICES.md": {
+   "size": 32771,
+   "sha256": "1fdd73ac03c5814df8f76dc05a6c6048ab4059f87fd3421caa3e0288356c0cae"
   },
   "extensions/evn-alpha/dist/nb/kernel.node.js": {
    "size": 117161,
@@ -31,17 +35,21 @@
    "size": 67508,
    "sha256": "2763d30e0e4f4d99631d897c97c946b8f454f73ca1259ae98a47ab70bc2480ca"
   },
+  "extensions/evn-alpha/dist/perf/perfpage.js": {
+   "size": 248639,
+   "sha256": "6a3d956a5c7a93b34d6eb51489a2620dd4c3c5026995a8b4f8f7129715022ec0"
+  },
   "extensions/evn-alpha/dist/sim/LICENSE-pdfjs.txt": {
    "size": 10174,
    "sha256": "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594"
   },
   "extensions/evn-alpha/dist/sim/camworker.js": {
-   "size": 33574,
-   "sha256": "88050447caae8cf5736ed40c7895737f0caae34925605b8ffcd8c3a0033ee84f"
+   "size": 37531,
+   "sha256": "26ae3b3bf328fbb7d877eb9203b930e1bd1066521bdd2ccdfb9b78ce8620282c"
   },
   "extensions/evn-alpha/dist/sim/challengeworker.js": {
-   "size": 667524,
-   "sha256": "ddb4046d513497a7020386b9cc3682940370daec4a5c469ae842d6b8d80d3c78"
+   "size": 931698,
+   "sha256": "5c356aa8703c82c0939a410f7b742a7d8f862e4a448a5cebafc2a53c2dbf1bda"
   },
   "extensions/evn-alpha/dist/sim/pdf.js": {
    "size": 443347,
@@ -51,9 +59,13 @@
    "size": 1238115,
    "sha256": "dd86a00ab6617c3cdbff5ac94bae29f03a45ae3d36661f4b72c32a41d67bc047"
   },
+  "extensions/evn-alpha/dist/sim/reader.js": {
+   "size": 5181,
+   "sha256": "948ba13e30c33c23a94be404dc7657ad2050c56596edd654c8cbd5d91b624768"
+  },
   "extensions/evn-alpha/dist/sim/worker.js": {
-   "size": 664918,
-   "sha256": "074729ec945014aa7f7be80e65530113081049194b24d20b19929fdc92c57cfe"
+   "size": 957007,
+   "sha256": "2be122ed59e801ec77983d9420d852b211580ccd8b89e21b4b2c51bcf60ed631"
   },
   "extensions/evn-alpha/dist/sim/wro/games/wro-2026-elementary/game.json": {
    "size": 12602,
@@ -108,8 +120,8 @@
    "sha256": "b1bc440c448eddb7916866bb65f369947fdd6723187f09a10cd30c80ae117b42"
   },
   "extensions/evn-alpha/dist/web/extension.js": {
-   "size": 1419903,
-   "sha256": "d77365b2daefc6880570f58ad8f681d69a42b4918eabcf046772cd31a750fdee",
+   "size": 1649466,
+   "sha256": "d193790533566233cab6f38fb380f26d4a675b70cad3d212a9cfc961be04e270",
    "precache": true
   },
   "extensions/evn-alpha/docs/ACCESSIBILITY.md": {
@@ -121,8 +133,8 @@
    "sha256": "40d2685c4aed3856f6e483fa574d3595c4147db6c81c15803d5af59b1b0e58b6"
   },
   "extensions/evn-alpha/docs/API_DISPLAYS.md": {
-   "size": 46756,
-   "sha256": "93ad548b531d737d988c4c1fbf5554689fc960dd097d87e213c487a3dfcf8b69"
+   "size": 47390,
+   "sha256": "4f9cc0e688e442c95abfe1d1189ddb575eb26a655ea50cd1e3e3f2b90663e2f6"
   },
   "extensions/evn-alpha/docs/API_EXTENDED.md": {
    "size": 46825,
@@ -161,8 +173,8 @@
    "sha256": "5101923f4ff577c02dca16754252838ad585c22d5fe8202e15c0aa10a0b48d6e"
   },
   "extensions/evn-alpha/docs/COMMANDS.md": {
-   "size": 8856,
-   "sha256": "23e232a2aa4c24651ca9b40f4b4023785605af6fafb31f8e4fb7edffe41b3058"
+   "size": 9455,
+   "sha256": "c9cc5c49ca762b56c1adcd7949d6995f80262238093a3bf07228cddb2d217e92"
   },
   "extensions/evn-alpha/docs/DATA_LOGGER.md": {
    "size": 7667,
@@ -193,16 +205,16 @@
    "sha256": "0f364d4ed758499fb9985d790327f6ae8a2c65fe01b4c202052498cfac4d91bc"
   },
   "extensions/evn-alpha/docs/SIMULATOR.md": {
-   "size": 163599,
-   "sha256": "105b34385fa9733c286c1d11920d139c5db699731b4edccd1b87f69044717b1d"
+   "size": 175494,
+   "sha256": "3e687314a2af9508bdbef525807d4d4193ba922835b1f2551c733aa2b562c3ca"
   },
   "extensions/evn-alpha/docs/TROUBLESHOOTING.md": {
    "size": 11450,
    "sha256": "4a8b15dddf8bb2d088590e5a7df807408079d8364c1f02170786f05f01204867"
   },
   "extensions/evn-alpha/docs/WHATS_NEW.md": {
-   "size": 19157,
-   "sha256": "56a2d83c01eb5febfc27e4a428eba5af25336e2b17590436f9a1d117dcb9bfba"
+   "size": 20765,
+   "sha256": "911b8ecd7df56bfd0d9061f6a51ef8176cb6c9885cda6bdecb22044dc25fe7ce"
   },
   "extensions/evn-alpha/docs/images/blocks-editor.png": {
    "size": 86834,
@@ -745,8 +757,8 @@
    "sha256": "19d2297421a5bf646a79b5ffb3ad2870fed4c6143fad394f7e653de9f13695ae"
   },
   "extensions/evn-alpha/examples/18_bluetooth/bluetooth_complete.py": {
-   "size": 5839,
-   "sha256": "9051db050bd41ac05638ca781ea4690aa888f049111f94ded0473af60bc33a33"
+   "size": 6076,
+   "sha256": "8b2723c888310c84fbd52a1481ac8004c8c2562baca293c125bfd66de37fd4cc"
   },
   "extensions/evn-alpha/examples/18_bluetooth/bluetooth_minimal.evnblocks": {
    "size": 7680,
@@ -925,8 +937,8 @@
    "sha256": "f198bd465fbd534afd7fe3e060a4a47b5be4cb80febf9287860b97a9d3491580"
   },
   "extensions/evn-alpha/firmware/BUILD.txt": {
-   "size": 1600,
-   "sha256": "10bdf4203ec66abd6de0b7f059b6e0cb8ed1f91bf71e7c280c955b7c4a0795b3",
+   "size": 1571,
+   "sha256": "08333db035b6d7fa13b4a073aeffde58984e8fc51d2b8eacd03cf74519697a09",
    "precache": true
   },
   "extensions/evn-alpha/media/blockly/LICENSE": {
@@ -1122,6 +1134,10 @@
   "extensions/evn-alpha/media/nb/nb-packages.json": {
    "size": 6248,
    "sha256": "ddb14dcb676a8761adf4f3eb66a109a363081c42ae26f0f22f8c1656c2f848ee"
+  },
+  "extensions/evn-alpha/media/perf/index.html": {
+   "size": 3693,
+   "sha256": "4ed61adfdd09069522eed08b98d08ff61b24a5ecbfc5afa3f2f1eb21df146a57"
   },
   "extensions/evn-alpha/media/pyodide/COPYRIGHT-musl.txt": {
    "size": 6397,
@@ -1496,28 +1512,64 @@
    "sha256": "2e6becfeeef5f09a227310d0eedb9be5c93868694a97af4683296ecb64a3af27"
   },
   "extensions/evn-alpha/media/sim/boot.py": {
-   "size": 42035,
-   "sha256": "c2f38ac47cbeb6790357656921d42b6656c895f9333950690eabefaa4123e3ec"
+   "size": 44549,
+   "sha256": "4dddb14f60cabce48a4a3c0ae7b24bd999c765a758957cdd380078c702f819a9"
+  },
+  "extensions/evn-alpha/media/sim/card.js": {
+   "size": 32216,
+   "sha256": "0d37bb589006996cd175052428e20801e040531a2a96924a9c2e6c71cb4689a6"
   },
   "extensions/evn-alpha/media/sim/evn.py": {
-   "size": 105079,
-   "sha256": "8adc46d31de1d4c570c23ae96b4ed464f2274b5b23d9e37e543949480800ba90"
+   "size": 133090,
+   "sha256": "1e0147500e6de1f336a970e7b746de78ac2e33ecc7063617d731235046a4479b"
+  },
+  "extensions/evn-alpha/media/sim/models/colour_sensor.js": {
+   "size": 39869,
+   "sha256": "ddf1989b1d0ae34da3497d2c78098a0adff14636029c934df0423c0e6a4a2d2e"
+  },
+  "extensions/evn-alpha/media/sim/models/distance_sensor.js": {
+   "size": 38584,
+   "sha256": "ee2e5cf054baaef8f774c48213ff3bdd092344da10d82bbf0e8090dc352c8a60"
+  },
+  "extensions/evn-alpha/media/sim/models/evn_alpha.js": {
+   "size": 286488,
+   "sha256": "6affdfa48218ac4d45340e41b1bf7de39470eb28df7ff80d5e75a844a30b9a2c"
+  },
+  "extensions/evn-alpha/media/sim/models/imu_sensor.js": {
+   "size": 39419,
+   "sha256": "49829750954425bf5640b0a08e754309f03e59c847062a5f20bc106ec9a86ddb"
+  },
+  "extensions/evn-alpha/media/sim/models/motor_53787.js": {
+   "size": 41356,
+   "sha256": "ccefef359a2ed56078fcefac0757cb8291ddc2c3342f6a257fe276be26042a40"
+  },
+  "extensions/evn-alpha/media/sim/models/motor_95658.js": {
+   "size": 40037,
+   "sha256": "3934c869ca9a3e7cfb4fff60a00f85321d197a00e230df3d76cc5c9c704805f0"
+  },
+  "extensions/evn-alpha/media/sim/models/motor_99455.js": {
+   "size": 40106,
+   "sha256": "141c342e95be07e12379a3bb8744a0c03fa023b364e4a838381dfe6b58cbee43"
+  },
+  "extensions/evn-alpha/media/sim/models/wheel_32020.js": {
+   "size": 76167,
+   "sha256": "0b78b6293317f0d2c17feecef87cbf37d66c65ce249c5812cd4e181908493036"
   },
   "extensions/evn-alpha/media/sim/render3d.js": {
-   "size": 74979,
-   "sha256": "b63a028ef91967505e74003cdc22577bc20f0214eea891a561c48f2dfdce54a9"
+   "size": 87378,
+   "sha256": "76771ae76ebb47ca85f7345a5e9afb11ae5b72730e15fdca7bfa03a7efe40166"
   },
   "extensions/evn-alpha/media/sim/sim.css": {
-   "size": 11123,
-   "sha256": "c26b1b141cf6b1aaa641963212c4c2d62e42457cae1d690d3ed21bfe7e993f18"
+   "size": 13074,
+   "sha256": "deddbb37efd79fc9a110b0c34989c766cbf09bf20b75580588bacf77c69a1dce"
   },
   "extensions/evn-alpha/media/sim/sim.js": {
-   "size": 328680,
-   "sha256": "d4b80916a58b99e5ba5d222c90d8409ba9cde98e70b2608221fabe2584985e5e"
+   "size": 350215,
+   "sha256": "d17d61ddc4369c146d6034feb6fe0248b128a28ad1601002547f0e5bff2a3344"
   },
   "extensions/evn-alpha/media/sim/view3d.js": {
-   "size": 8964,
-   "sha256": "c47c18f6300e11b9b05e8028878ed003950c85bd43a487d4389b58681e5182f9"
+   "size": 9621,
+   "sha256": "c44d6d2029cf071d747b3967bb933cfb6c794df999e7d27867a41fc746bbd43e"
   },
   "extensions/evn-alpha/media/sim/wroMat.js": {
    "size": 46209,
@@ -1561,8 +1613,8 @@
    "sha256": "c90a34b1d7a01490be30c5adce6468ebb01082c5fb3a613734fe8da804dbf1f8"
   },
   "extensions/evn-alpha/package.json": {
-   "size": 73919,
-   "sha256": "bfe31485916493918a56e9526371cb3739365c7fab3930fcadebcc0b11ddffc0",
+   "size": 74741,
+   "sha256": "a745592c0c5d5a33d88ebc9dc98388665f4d23311285306adb4db37650b6fc42",
    "precache": true
   },
   "extensions/evn-alpha/package.nls.json": {
@@ -1570,13 +1622,18 @@
    "sha256": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356",
    "precache": true
   },
+  "extensions/evn-alpha/sealed/checks.sealed": {
+   "size": 3782,
+   "sha256": "e3fa719178746a1ff4a36a89bd180dcb9b4a4418ce34362252b2139d19eb826a",
+   "precache": true
+  },
   "extensions/evn-alpha/snippets/python.json": {
    "size": 24172,
    "sha256": "72babea89604da941609dacafe927bfea20fc28c734905656895a60e57bdd54a"
   },
   "extensions/evn-alpha/stubs/evn.pyi": {
-   "size": 310776,
-   "sha256": "82bf7d84d0383e105320dca9febb4cb16138a0bf14853bcfc88ec0a387c9fa3f"
+   "size": 311760,
+   "sha256": "107faaa1fca6af600a7abf24050c672b4cd4252cb0d0a5a1ef141b084f21a0fb"
   },
   "extensions/evn-alpha/stubs/simtrail.pyi": {
    "size": 1487,
@@ -1584,7 +1641,7 @@
   },
   "index.html": {
    "size": 17384,
-   "sha256": "dd7a5b4dfff9639cd98fc6576cf75f92b2dce360f3860ed7c5dc597245fdff93"
+   "sha256": "79e2c79e3f57fa06d582062b826aab1c25426a3c8cecd71be8285e9004842182"
   },
   "vscode/LICENSE": {
    "size": 13380,

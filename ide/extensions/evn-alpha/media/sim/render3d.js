@@ -1,7 +1,8 @@
 /* The 3D scene of the Simulator panel, without the page: the course and the robot as the world has them, drawn with
  * WebGL into whatever context it is given - the 3D view's (media/sim/view3d.js, the DOM shell: its canvas, its orbit
  * camera, the theme's background) and each virtual camera's (src/sim/camWorker.ts, an OffscreenCanvas in a Web Worker,
- * docs/SIMULATOR_SBC_DESIGN.md §2.4: one scene builder, so a camera sees exactly what the 3D view shows).
+ * docs/SIMULATOR_SBC_DESIGN.md §2.4: one scene builder, so a camera sees exactly what the 3D view shows - but for the
+ * robot's models, below: a camera draws the robot drawing's boxes where the 3D view draws the models, SIMULATOR_MODELS_DESIGN.md M5).
  *
  * Nothing here touches document, window or the page's style: 2D canvases (the paint textures) come from the
  * `canvas2d(w, h)` the caller gives (document.createElement('canvas') in the page, OffscreenCanvas in a worker), and
@@ -41,6 +42,13 @@
  * its outline, so no stud is dropped for where the eye is (1739231b's eye cull dropped visible studs; review studlod r1
  * B1). Without `cull` (a test's stand-in) the pass is exactly the one before them. Nothing per frame allocates: the stud
  * meshes are built in setGeom.
+ *
+ * The EVN board and the standard peripherals' models (docs/SIMULATOR_MODELS_DESIGN.md M5): option `models` (the 3D view's;
+ * the camera worker never sets it, so no camera draws or loads one) and setModels(self.EVNModels) - the committed meshes
+ * of media/sim/models/*.js (tools/sim/models/convert_models.py), one static mesh per part and colour with each triangle's
+ * face normal, built once. With `models` on, `showModels` (the 3D view's Models button, default on) and a part loaded,
+ * robot() draws the board's model in place of the deck's board and battery boxes, each colour and distance sensor's module
+ * in place of its orange box, the IMU's module in place of its green one (M4's places), the LDraw wheel in place of each tyre's cylinder, turning with its motor, and each drive motor's LDraw model in place of its hub stub (M10); otherwise it draws exactly what it drew before. Looks only: the world is unchanged.
  *
  * Units: mm, the world frame x right / y up (seen from above), z up.
  */
@@ -88,6 +96,10 @@
         return n > 0 && Number.isFinite(n);
     }
     /** the rotation part of a matrix, for the normals (the scales here are positive; good enough for shading) */
+    // the drive motors' models by the hardware's motor name (design M10): [the part, a half turn on the right (a part that is not
+    // symmetric across its axle's mid-plane, mounted as the owner's WRO robot does: the Medium's outboard face its origin)]
+    const MOTOR_PARTS = { 'EV3 Medium': ['motor_99455', true], 'EV3 Large': ['motor_95658', false], 'NXT': ['motor_53787', false] };
+    const MOTOR_GAP = 2.4;   // mm between a motor and the tyre's inboard face (the WRO robot's 2.36: wrobot_evn.ldr)
     function rot3(m) { return [m[0], m[1], m[2], m[4], m[5], m[6], m[8], m[9], m[10]]; }
 
     const VS = `
@@ -332,6 +344,47 @@ void main() {
         return Math.abs(e[0] - s[0]) <= PIECE_EPS && Math.abs(e[1] - s[1]) <= PIECE_EPS;
     }
 
+    /** the crease angle of a model's shading: a corner's normal is the area-weighted sum of the faces at its vertex that lie
+     *  within this of its own face (a curved surface - the cells, the jacks' rounded edges - shades smooth; an edge sharper
+     *  than this - a box's corner - stays crisp). 40 deg: a cylinder decimated to 9 or more sides shades round. */
+    const CREASE_DEG = 40;
+    /** a model of media/sim/models/*.js ({ groups: [{ color, n, pos, idx, alpha? }], quant, bbox }) as [[triangles (x y z nx
+     *  ny nz u v), [r, g, b], alpha], ...] - positions int16 x quant (mm), indices uint16, both little-endian base64; each
+     *  corner's normal smoothed over its vertex's faces within CREASE_DEG of its own (the faces of one colour group share
+     *  their vertices). Throws on a malformed model (setModels skips it). */
+    function modelGroups(m) {
+        const bytes = (b64) => { const s = atob(b64), u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) { u[i] = s.charCodeAt(i); } return new DataView(u.buffer); };
+        const q = m.quant;
+        if (!(q > 0) || !Array.isArray(m.groups) || !Array.isArray(m.bbox) || m.bbox.length !== 6) { throw new Error('not a model'); }
+        return m.groups.map((g) => {
+            const P = bytes(g.pos), I = bytes(g.idx), nv = P.byteLength / 6, ni = I.byteLength / 2;
+            const alpha = g.alpha === undefined ? 1 : g.alpha;
+            if (nv !== g.n || ni % 3 || !/^#[0-9a-f]{6}$/i.test(g.color) || !(alpha > 0 && alpha <= 1)) { throw new Error('a malformed group'); }
+            const out = new Array(ni * 8);
+            const v = (k) => { if (k >= nv) { throw new Error('an index out of range'); } return [P.getInt16(6 * k, true) * q, P.getInt16(6 * k + 2, true) * q, P.getInt16(6 * k + 4, true) * q]; };
+            const nt = ni / 3, idx = new Array(ni), fa = new Array(nt), fu = new Array(nt), at = Array.from({ length: nv }, () => []);
+            for (let i = 0; i < ni; i++) { idx[i] = I.getUint16(2 * i, true); }
+            const V = Array.from({ length: nv }, (_, k) => v(k));
+            for (let t = 0; t < nt; t++) {
+                const a = v(idx[3 * t]), b = V[idx[3 * t + 1]], c = V[idx[3 * t + 2]];
+                fa[t] = cross(sub(b, a), sub(c, a));          // twice the area along the normal: an area-weighted sum
+                fu[t] = norm(fa[t]);
+                for (let j = 0; j < 3; j++) { at[idx[3 * t + j]].push(t); }
+            }
+            const cosC = Math.cos(CREASE_DEG * Math.PI / 180);
+            for (let t = 0; t < nt; t++) {
+                for (let j = 0; j < 3; j++) {
+                    const k = idx[3 * t + j], p = V[k], n = [0, 0, 0];
+                    for (const f of at[k]) { if (dot(fu[f], fu[t]) >= cosC) { n[0] += fa[f][0]; n[1] += fa[f][1]; n[2] += fa[f][2]; } }
+                    const u = Math.hypot(n[0], n[1], n[2]) > 0 ? norm(n) : fu[t];
+                    const o = (3 * t + j) * 8;
+                    out[o] = p[0]; out[o + 1] = p[1]; out[o + 2] = p[2]; out[o + 3] = u[0]; out[o + 4] = u[1]; out[o + 5] = u[2]; out[o + 6] = 0; out[o + 7] = 0;
+                }
+            }
+            return [out, hex(g.color), alpha];
+        });
+    }
+
     class Scene3D {
         /** gl: a WebGL 1 or 2 context; opts.canvas2d(w, h): a canvas with a 2D context (the paint); opts.mip, opts.showCams */
         constructor(gl, opts = {}) {
@@ -401,7 +454,31 @@ void main() {
             this.loc2 = null;
             this.locMain = null;
             this.light = new Float32Array(norm([0.35, -0.45, 1]));
+            // the models (the header): on only where opts.models is (the 3D view); each part's [Mesh, colour] list and bbox
+            this.useModels = !!opts.models;
+            this.showModels = true;
+            this.models = new Map();
+            // a frame's translucent model groups (the board's clear shield), drawn after everything opaque (frame())
+            this.later = [];
         }
+
+        /** the committed models (self.EVNModels: { part: model }), built into static meshes once; a part that does not decode is
+         *  left out (its boxes are drawn) with one warning. Nothing when the scene was made without `models`. */
+        setModels(src) {
+            const gl = this.gl;
+            for (const m of this.models.values()) { for (const [mesh] of m.meshes) { gl.deleteBuffer(mesh.buf); } }
+            this.models.clear();
+            if (!this.useModels || !src || !gl) { return; }
+            for (const name of Object.keys(src).sort()) {
+                try {
+                    const groups = modelGroups(src[name]);
+                    this.models.set(name, { meshes: groups.map(([d, c, a]) => [new Mesh(gl, d), c, a]), bbox: src[name].bbox, size: src[name].source_bbox });
+                } catch (e) { if (typeof console !== 'undefined') { console.warn(`3D view: the ${name} model is not drawn (${e.message})`); } }
+            }
+        }
+
+        /** the model `name` when the models are drawn and it is loaded, else null (the boxes) */
+        model(name) { return this.useModels && this.showModels ? this.models.get(name) || null : null; }
 
         /** a texture of a canvas, or of { w, h, data } (RGBA bytes, rows top-down: the WRO floor) */
         texture(cv) {
@@ -699,6 +776,7 @@ void main() {
         frame(vp, W, H, bg) {
             const gl = this.gl;
             if (!gl || !this.geom) { return; }
+            this.later.length = 0;   // review r3 N1: a robot() that threw part-way leaves nothing for this frame
             gl.viewport(0, 0, W, H);
             this.cW = W; this.cH = H;
             const [br, bgc, bb] = hex(bg && bg.length === 7 ? bg : '#e9e9eb');
@@ -763,6 +841,13 @@ void main() {
                 if (this.gameDraw.length) { this.drawGames(vp, hz); }
             }
             if (s && this.hw) { this.robot(vp, s); }
+            if (this.later.length) {
+                const gl2 = this.gl;
+                gl2.depthMask(false);
+                for (const [v, m, c, a, mesh] of this.later) { this.draw(v, m, c, { mesh, alpha: a }); }
+                gl2.depthMask(true);
+                this.later.length = 0;
+            }
         }
 
         /** the game objects (W4): each one's model matrix (its place x, y, yaw a and base height z0 - the snapshot's
@@ -986,6 +1071,12 @@ void main() {
             this.draw(vp, m, color, { mesh: this.cyl });
         }
 
+        /** a model's meshes at model matrix m (one draw per colour); a translucent group (alpha < 1: the board's shield) kept
+         *  for the end of the frame, drawn after everything opaque with depth writes off so what is behind it shows */
+        drawModel(vp, m, model) {
+            for (const [mesh, c, a] of model.meshes) { if (a < 1) { this.later.push([vp, m, c, a, mesh]); } else { this.draw(vp, m, c, { mesh }); } }
+        }
+
         robot(vp, s) {
             const hw = this.hw, b = this.body, db = hw.driveBase, p = s.pose;
             const r = db.wheelDiameter / 2;
@@ -994,29 +1085,83 @@ void main() {
             const len = b.front + b.rear, top = b.height;
             // the body: a deck at the clearance, the board and battery on it
             part((b.front - b.rear) / 2, 0, b.clearance + 6, len, b.width, 12, '#2a2f34');
-            part(-b.rear * 0.25, 0, Math.min(top - 10, b.clearance + 30), len * 0.55, b.width * 0.7, Math.max(8, Math.min(40, top - b.clearance - 20)), '#3d454d');
-            part(-b.rear * 0.25, 0, top - 4, len * 0.45, b.width * 0.55, 8, '#a8977b');
-            // the wheels (a cylinder lies along z: turned onto y)
+            const evn = this.model('evn_alpha');
+            if (evn) {
+                // the board's model (design M4): long side across, motor jacks forward (its frame's -x turned a half turn),
+                // its footprint's rear edge at the body's rear, its bottom on the deck
+                this.drawModel(vp, M4.chain(base, M4.trans(evn.bbox[3] - b.rear, 0, b.clearance + 12), M4.rz(Math.PI)), evn);
+            } else {
+                part(-b.rear * 0.25, 0, Math.min(top - 10, b.clearance + 30), len * 0.55, b.width * 0.7, Math.max(8, Math.min(40, top - b.clearance - 20)), '#3d454d');
+                part(-b.rear * 0.25, 0, top - 4, len * 0.45, b.width * 0.55, 8, '#a8977b');
+            }
+            // the wheels (a cylinder lies along z: turned onto y); with its model (design M10) the LDraw wheel: the tyre's centre
+            // at the wheel's place, scaled to the configured diameter and the tyre's drawn width, its outboard face out (a half
+            // turn on the right), rolled by its motor's angle - positive about +y rolls forward, a mirrored motor's angle counts
+            // the other way, and the half turn reverses it on the right. The snapshot's angle is the shaft's own, so a slipping
+            // wheel spins as its motor does
+            const wheel = this.model('wheel_32020'), mp = MOTOR_PARTS[db.motor], motor = mp ? this.model(mp[0]) : null;
             for (const side of [1, -1]) {
-                part(0, side * db.axleTrack / 2, r, r, r, b.tyre, '#16191c', this.cyl, [M4.rx(Math.PI / 2)]);
-                part(0, side * (db.axleTrack / 2 - b.tyre / 2 - 6), r, 8, 8, 12, '#c9b99c', this.cyl, [M4.rx(Math.PI / 2)]);
+                if (wheel) {
+                    const sb = wheel.size, k = db.wheelDiameter / (sb[5] - sb[2]);
+                    const port = side === 1 ? db.leftPort : db.rightPort, flip = (side === 1 ? db.leftMirrored : db.rightMirrored) ? -1 : 1;
+                    const mo = (s.motors || []).find((x) => x.port === port);
+                    const rolled = (mo ? mo.angle * flip : 0) * Math.PI / 180;
+                    this.drawModel(vp, M4.chain(base, M4.trans(0, side * db.axleTrack / 2, r), ...(side === 1 ? [] : [M4.rz(Math.PI)]), M4.ry(side * rolled), M4.scale(k, b.tyre / (sb[4] - sb[1]), k)), wheel);
+                } else {
+                    part(0, side * db.axleTrack / 2, r, r, r, b.tyre, '#16191c', this.cyl, [M4.rx(Math.PI / 2)]);
+                }
+                if (motor) {
+                    // its motor (design M10): output on the axle, inboard of the tyre by MOTOR_GAP - the Medium's origin is its
+                    // outboard face, the Large's and NXT's their width's middle
+                    const w = motor.size[4] - motor.size[1], half = mp[1], y = db.axleTrack / 2 - b.tyre / 2 - MOTOR_GAP - (half ? 0 : w / 2);
+                    this.drawModel(vp, M4.chain(base, M4.trans(0, side * y, r), ...(half && side === -1 ? [M4.rz(Math.PI)] : [])), motor);
+                } else {
+                    part(0, side * (db.axleTrack / 2 - b.tyre / 2 - 6), r, 8, 8, 12, '#c9b99c', this.cyl, [M4.rx(Math.PI / 2)]);
+                }
             }
             // the caster
             part(b.caster, 0, 8, 8, 8, 8, '#9aa0a6', this.cyl, [M4.rx(Math.PI / 2)]);
             // the colour sensors, lit by what they read
+            const tcs = this.model('colour_sensor');
             for (const c of hw.colorSensors) {
                 const rd = s.sensors.find((x) => x.port === c.port);
                 const v = rd ? Math.max(0, Math.min(100, rd.value[0])) / 100 : 1;
-                part(c.forward, c.left, c.height + 3, 14, 14, 6, '#eb6834');
                 const g = Math.round((0.2 + 0.8 * v) * 255).toString(16).padStart(2, '0');
-                part(c.forward, c.left, c.height + 0.3, 8, 8, 0.6, `#${g}${g}${g}`);
+                if (tcs) {
+                    // its module (design M4): the face at the sensor's height under its die, the mount's x forward; a forward-
+                    // facing one turned to look along the heading (-z onto +x); the read patch 0.3 mm out from the face
+                    const turn = c.facing === 'forward' ? [M4.ry(-Math.PI / 2)] : [];
+                    this.drawModel(vp, M4.chain(base, M4.trans(c.forward, c.left, c.height), ...turn), tcs);
+                    part(c.forward, c.left, c.height, 8, 8, 0.6, `#${g}${g}${g}`, undefined, [...turn, M4.trans(0, 0, -0.3)]);
+                } else {
+                    part(c.forward, c.left, c.height + 3, 14, 14, 6, '#eb6834');
+                    part(c.forward, c.left, c.height + 0.3, 8, 8, 0.6, `#${g}${g}${g}`);
+                }
             }
+            const vl = this.model('distance_sensor');
             for (const d of hw.distanceSensors || []) {
-                part(d.forward, d.left, d.height, 10, 20, 12, '#eb6834', undefined, [M4.rz(d.angle * Math.PI / 180)]);
+                // its module (design M4, increment 2): turned to its angle, looking along it (the module's -z onto the
+                // heading), the face's centre at the sensor's place - where its beam starts
+                if (vl) { this.drawModel(vp, M4.chain(base, M4.trans(d.forward, d.left, d.height), M4.rz(d.angle * Math.PI / 180), M4.ry(-Math.PI / 2)), vl); } else { part(d.forward, d.left, d.height, 10, 20, 12, '#eb6834', undefined, [M4.rz(d.angle * Math.PI / 180)]); }
             }
-            if (hw.imu) { part(0, 0, top, 22, 22, 4, '#5f9e88'); }
+            // the IMU: on the body's top; with the board's model, on the board's top at its middle (design M4: the battery box
+            // it stood on is not drawn, and the body's top would leave it floating over the board)
+            // the IMU's module (increment 2) flat, its x along the robot's forward, on the board's top (else the body's)
+            const mpu = this.model('imu_sensor');
+            if (hw.imu && mpu) { this.drawModel(vp, M4.chain(base, evn ? M4.trans(evn.bbox[3] - b.rear, 0, b.clearance + 12 + evn.bbox[5]) : M4.trans(0, 0, top)), mpu); }
+            else if (hw.imu) { if (evn) { part(evn.bbox[3] - b.rear, 0, b.clearance + 12 + evn.bbox[5] + 2, 22, 22, 4, '#5f9e88'); } else { part(0, 0, top, 22, 22, 4, '#5f9e88'); } }
             // the mechanisms' parts (src/sim/engine/mechanisms.ts), posed on the chassis as the snapshot says
             for (const [f, l, u, yaw, pitch, sx, sy, sz] of (s.mech && s.mech.boxes) || []) { part(f, l, u, sx, sy, sz, '#4a6fa5', undefined, [M4.rz(yaw * Math.PI / 180), M4.ry(-pitch * Math.PI / 180)]); }
+            // a LAB rig's parts (src/sim/engine/mechanisms.ts ShaftRig.snapshot()): bars, tips, a cord and its load as boxes; a
+            // disc or pulley a cylinder about the joint's (left) axis, with a spoke turned to the joint's angle
+            const rig = s.rig || { boxes: [], kinds: [] };
+            rig.boxes.forEach(([f, l, u, yaw, pitch, sx, sy, sz], i) => {
+                const k = rig.kinds[i], turn = [M4.rz(yaw * Math.PI / 180), M4.ry(-pitch * Math.PI / 180)];
+                if (k === 'disc' || k === 'pulley') {
+                    part(f, l, u, sx, sy, sz, k === 'disc' ? '#8a6d3b' : '#9aa0a6', this.cyl, [M4.rx(Math.PI / 2)]);
+                    part(f, l, u, sx * 1.6, sz + 2, 4, '#2a2f34', undefined, turn);
+                } else { part(f, l, u, sx, sy, sz, k === 'load' ? '#c0392b' : k === 'cord' ? '#16191c' : '#a5744a', undefined, turn); }
+            });
             // the cameras (camera.ts, design §2.1): a board behind the lens (its front 1 mm behind the optical centre, so
             // inside the 5 mm near plane: a camera never sees its own housing)
             const mounts = (hw.cameras || []).map((c) => [c, M4.chain(base, M4.trans(c.forward, c.left, c.height), M4.rz(c.yaw * D2R), M4.ry(c.tilt * D2R), M4.rx(c.roll * D2R))]);
@@ -1045,5 +1190,5 @@ void main() {
         }
     }
 
-    root.EVN3DCore = { Scene3D, M4, hex };
+    root.EVN3DCore = { Scene3D, M4, hex, modelGroups, CREASE_DEG };
 })(typeof self !== 'undefined' ? self : globalThis);

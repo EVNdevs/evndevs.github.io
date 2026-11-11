@@ -2740,6 +2740,12 @@ class Bluetooth:
     ``baud``, ``name`` and ``mode`` (``'remote'`` or ``'host'`` bound to ``addr``), reboots the
     module and switches to ``baud``. Otherwise it just opens the port at ``baud``; ``configured()``
     tells which happened. Default 230400 = the highest baud the module sustains (bench 2026-09-17).
+    Built in ``boot.py`` after the board is switched on, the constructor keeps asking until the board has
+    been up about 2 s, as the module itself is still starting (a module in data mode then opens at about
+    2 s of uptime, one being programmed about 1.1 s after it answers; after a reset that did not switch
+    the power off, and later at the REPL, a module in data mode opens in 300 ms). Nothing on the header - no answer and nothing driving its receive
+    line - raises ``OSError("no Bluetooth module on serial port n")`` instead of opening a port that
+    goes nowhere.
     Third case - the module already carries the REPL (``repl(True)``, typically from ``boot.py``): a plain
     ``Bluetooth(n)`` adopts it as it stands, at the port's own baud (``print(bt)`` shows it), sends the module
     nothing and ``configured()`` is False; any configuration argument (``baud`` other than that baud, ``name``,
@@ -2759,7 +2765,10 @@ class Bluetooth:
     4800..1382400")``, ``ValueError("name must be 1..32 characters")``, ``ValueError("mode must be
     'remote' or 'host'")``, ``ValueError("addr must be 'NAP,UAP,LAP' (up to 20 characters)")``;
     ``OSError(EIO)`` when the port cannot be opened or the module leaves data mode mid-write;
-    ``OSError(ETIMEDOUT)`` when ``wait=True`` and the module is not ready within 3 s;
+    ``OSError("no Bluetooth module on serial port n")`` when ``wait=True`` and nothing is on the header
+    (with ``wait=False``, ``state()`` reads ``'absent'``);
+    ``OSError(ETIMEDOUT)`` when ``wait=True`` and the module is not ready within 3 s (after a power-on,
+    plus what is left of the first 2 s and one more 300 ms probe);
     ``ValueError("Bluetooth is closed")`` from every call after ``close()``;
     ``OSError("module is not in command mode")`` from the command-mode calls in data mode.
     """
@@ -2803,7 +2812,9 @@ class Bluetooth:
         """The board port's speed in data mode, 1200..1382400 (the module's own baud is set by the
         constructor). Queued bytes leave at the old speed first; data mode only."""
     def state(self) -> str:
-        """``'probing'``, ``'configuring'``, ``'resetting'``, ``'command'``, ``'data'`` or ``'closed'``."""
+        """``'probing'``, ``'configuring'``, ``'resetting'``, ``'command'``, ``'data'``, ``'absent'`` (nothing on
+        the header: no answer and its receive line not driven; ``wait=False`` only, as ``wait=True`` raises) or
+        ``'closed'``."""
     def ready(self) -> bool:
         """The port is open and the module is in data mode, or in command mode with no command in
         flight. The module has no STATE line on the header, so this does **not** mean a peer is

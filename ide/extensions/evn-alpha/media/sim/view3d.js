@@ -88,7 +88,18 @@
 
         get ok() { return !!this.gl; }
 
-        newScene() { return new Scene3D(this.gl, { canvas2d: (w, h) => Object.assign(document.createElement('canvas'), { width: w, height: h }), showCams: true, cull: true }); }
+        /** the scene: with the EVN board and peripherals' models (docs/SIMULATOR_MODELS_DESIGN.md M5; the page's
+         *  media/sim/models/*.js scripts, window.EVNModels) and the Models button's setting */
+        newScene() {
+            const sc = new Scene3D(this.gl, { canvas2d: (w, h) => Object.assign(document.createElement('canvas'), { width: w, height: h }), showCams: true, cull: true, models: true });
+            sc.setModels(window.EVNModels);
+            sc.showModels = this.showModels !== false;
+            return sc;
+        }
+
+        /** the Models button (sim.js): the models drawn (true) or the robot drawing's boxes (false) */
+        get models() { return this.showModels !== false; }
+        set models(on) { this.showModels = !!on; if (this.scene) { this.scene.showModels = this.showModels; } }
 
         /** the seesaws' tilt and thickness the panel's config gives (sim.js), handed to the scene */
         get seesawDeg() { return this.scene && this.scene.seesawDeg; }

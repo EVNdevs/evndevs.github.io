@@ -4,7 +4,7 @@ The main changes of each release, in a few lines. The [full changelog](../CHANGE
 the tools and the measurements behind each release. What is not tested yet is on
 [Known limitations and help us test](KNOWN_LIMITATIONS.md).
 
-## Unreleased
+## 0.2.76 (2026-11-11)
 
 - **Eight new challenges in the simulator.** Maze runner and Maze mapper, Precision stop, Slalom gates and Ball chaser,
   scored; the obstacle course now always 5 runs, with PASS, FAIL or NOT YET on the card; three more (a two-line loop, a

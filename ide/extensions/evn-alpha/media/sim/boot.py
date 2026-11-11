@@ -7,6 +7,8 @@ sees is made to look like the board's MicroPython (micropython/port/mpconfigport
     the board is built without time() / time_ns() / localtime() / gmtime() / mktime()), on the simulated clock;
   - `errno` / `uerrno`: MicroPython's names and numbers, and a file error carries them (ENOENT 2, not WebAssembly's 44);
   - open() and the os module's writes refuse with OSError EBUSY (16) while a motor drives, as the board's flash does;
+    a write the flash took (a good close() or flush() of a top-level /flash file) tells the host its name
+    (_evnsim.file_written; a level's kernel reads the file: docs/COURSE_CONTENT_DESIGN.md §3.2);
   - `sys.print_exception`, and help() with the board's text (micropython/port/help.c);
   - `micropython` (const, native, viper, opt_level, mem_info), `gc.mem_free()` / `gc.mem_alloc()`,
     and the u-names (ujson, ustruct, ...);
@@ -151,11 +153,28 @@ def _refuse_if_driving():
         raise _mp_oserror(16)
 
 
+_file_written = getattr(_evnsim, "file_written", None)
+
+
+def _written(path):
+    """A write the flash took (a good close() or flush()): the host hears a top-level /flash name
+    (docs/COURSE_CONTENT_DESIGN.md §3.2: a level's kernel reads the file then). A refused write is no write and says
+    nothing; a file renamed into a name is not seen."""
+    d, name = _os.path.split(path)
+    if d == "/flash" and _file_written is not None:
+        _file_written(name)
+
+
 _real_open = builtins.open
 
 
 _INLINE_MAX = 512       # LittleFS keeps a file this small inline in its directory; past it a write erases a block
 _open_files = _weakref.WeakSet()     # the program's files open for writing (the soft reset closes them)
+# their inner io files, held strongly until close(): a _BoardFile dropped in a reference cycle is collected with the
+# cycle, and CPython's collector finalises an unreachable set in no set order, so an inner file reached only from it
+# could be closed first (its buffered bytes lost, no hook). Held here, it is never in the unreachable set: the
+# wrapper's finaliser always finds it open and closes it through close() (review cc3_r1_B S1)
+_held_files = set()
 
 
 def _read_bytes(path):
@@ -190,6 +209,7 @@ class _BoardFile:
 
     def __init__(self, f, path, mode, committed):
         self._f = f
+        _held_files.add(f)
         _open_files.add(self)
         self._path = path
         self._committed = committed         # the bytes the flash holds for it (None: it is not on the flash)
@@ -210,6 +230,17 @@ class _BoardFile:
     def __exit__(self, *a):
         self.close()
 
+    def __del__(self):
+        # a file dropped unclosed (open(...).write(s)) closes through close(), as the board's gc closes it: committed and
+        # heard as a close is (_written), or refused while a motor drives (put back; a finaliser cannot raise to the
+        # program, so the refusal is silent). Lane cc3 c2, review cc3_r1_A S1.
+        if self.__dict__.get("_f") is None:
+            return
+        try:
+            self.close()
+        except Exception:
+            pass
+
     def write(self, data):
         n = len(data.encode("utf-8")) if isinstance(data, str) else len(data)
         if self._size + n > _INLINE_MAX:
@@ -224,6 +255,7 @@ class _BoardFile:
         except OSError as e:
             raise _translate(e) from None
         self._committed = _read_bytes(self._path)
+        _written(self._path)
 
     def flush(self):
         if self._f.closed:
@@ -233,6 +265,7 @@ class _BoardFile:
 
     def close(self):
         if self._f.closed:
+            _held_files.discard(self._f)
             return
         refused = _driving()
         if not refused:
@@ -240,12 +273,16 @@ class _BoardFile:
                 self._f.close()
             except OSError as e:
                 raise _translate(e) from None
+            finally:
+                _held_files.discard(self._f)
+            _written(self._path)
             return
         # closed either way; what was not committed is dropped
         try:
             self._f.close()
         except OSError:
             pass
+        _held_files.discard(self._f)
         _put_bytes(self._path, self._committed)
         raise _mp_oserror(16)
 
@@ -714,6 +751,12 @@ _user_modules = set()
 def reset():
     """A soft reset: a fresh __main__, and the board's modules (evn, files from the board) imported anew."""
     global _main
+    # the board's soft reboot ends a recording DataLog first, and autosaves it once the motors coast (the runtime has
+    # coasted them: Runtime.softReset; evn_mp_datalog_program_end)
+    try:
+        getattr(sys.modules.get("evn"), "_program_end", lambda: None)()
+    except BaseException:           # noqa: B036 - nothing of the old program's may stop the reset
+        pass
     # the board's gc_sweep_all closes every file the old program left open (LittleFS commits it; the motors coast
     # first): closed here, not left to CPython's collector, which loses a buffered write when the file was in a
     # reference cycle (a def or a class in the program) - its finalisers run in no set order
@@ -722,6 +765,13 @@ def reset():
             f.close()
         except BaseException:       # noqa: B036 - nothing of the old program's may stop the reset (a KeyboardInterrupt)
             pass
+    # a backstop: every close() lets go of its inner file, whatever it raises, so none is left once the wrappers closed
+    for f in list(_held_files):
+        try:
+            f.close()
+        except BaseException:       # noqa: B036 - as above
+            pass
+    _held_files.clear()
     _main = {"__name__": "__main__", "__builtins__": builtins}
     try:
         _os.chdir("/flash")             # the program's working folder is the flash again (an os.chdir() is undone)

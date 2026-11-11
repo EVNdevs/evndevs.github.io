@@ -59,6 +59,10 @@
     let written = {};           // what programs wrote (bytes) or removed (null) at the top of the flash, as the worker
                                 // posted it: a worker started again gets it back with the uploads (vm.seed)
     let restarted = false;      // a worker of this panel was ended and started again (Stop)
+    /** LB-4b §2.6 "The page" (lane lb4bw W3): the last interpreter epoch a worker reported (its `robot` message); a new
+     *  worker's init carries one above it, so its epochs are above every epoch an exec the old worker queued carries.
+     *  The base is this load's (§2.7 C5 (c)): a webview reloaded under the same panel starts above the last load's */
+    let robotEpoch = Date.now() * 1000;
     let assets;
     const trail = [];
     let follow = false;
@@ -113,7 +117,13 @@
      * when the first rigid course is picked (cfg.rigidCourses: the WRO Junior table) and posted with that course's `init`
      * / `course` only - an RCJ worker is never sent them. The worker hashes both against the pin and refuses a mismatch. */
     let joltBytes;
-    const needsEngine = (id) => (cfg.rigidCourses || []).includes(id);
+    /** LB-4b (§2.1 A-S4): the worker's robot on a body rig course (its geom's `bodyRig`: world.hw and the joint motors), null
+     *  on any other course - the 2D view draws the rig from it and the snapshot's footprint, never from the configurator */
+    let bodyRig = null;
+    /** LB-4b (SIMULATOR_LB4B_DS3B_DESIGN.md §2.2 "Jolt reaches a rig course"): a body rig course (cfg.bodyRigCourses, the
+     *  levels whose robot is a body rig: simPanel.ts) by its id, any version or field key (course.ts bodyRigCourse) */
+    const rigCourse = (id) => typeof id === 'string' && (cfg.bodyRigCourses || []).includes(id.replace(/(@v\d+)?(#.*)?$/, ''));
+    const needsEngine = (id) => (cfg.rigidCourses || []).includes(id) || rigCourse(id);
     function loadJoltBytes() {
         if (!joltBytes) {
             const get = (url, how) => fetch(url).then((r) => { if (!r.ok) { throw new Error(`${url.split('/').pop()}: ${r.status}`); } return r[how](); });
@@ -172,7 +182,7 @@
             // a restart state with a field (a WRO table): the referee settings too, applied before the restore, so the
             // settings sent at `ready` lay nothing again (W3b, §6); without one (RCJ) the init is as before
             worker.postMessage({ type: 'init', pyodide: { asm: p.asm, wasm: p.wasm.slice(0), stdlib: p.stdlib.slice(0), lock: p.lock }, evn: a.evn, boot: a.boot,
-                version: cfg.version, hw, course: id, map: mapOf(id), ctl: ctl ? ctl.buffer : undefined, state, files, written, speed, camRun, ...wroFields().fields, ...(state && state.field ? { referee: refSet } : {}), ...jolt, ...wro });
+                version: cfg.version, hw, course: id, map: mapOf(id), ctl: ctl ? ctl.buffer : undefined, state, files, written, speed, camRun, ...wroFields().fields, ...(state && state.field ? { referee: refSet } : {}), ...jolt, ...wro, epoch: robotEpoch + 1 });
             while (outbox.length) { worker.postMessage(outbox.shift()); }
         })().catch((e) => { showNote(`The simulator could not start: ${e && e.message || e}`, true); setStatus('err', 'not started'); });
     }
@@ -186,12 +196,18 @@
     function post0(m, transfer) { if (worker) { worker.postMessage(m, transfer || []); } else { outbox.push(m); } }
     function toWorker(m, transfer) { if (held.length) { held.push({ m, transfer, ready: true }); } else { post0(m, transfer); } }
     function flushHeld() { while (held.length && held[0].ready) { const e = held.shift(); post0(e.m, e.transfer); } }
+    /** an exec's stamps as the extension set them (§2.6 B4: `setup` the console agent's names and `console` a command
+     *  line's line, each the epoch simPanel last saw), forwarded whole at the relay and at restart()'s re-send. simfix's
+     *  page-side run of the setup (setupSrc / own / onOwnRun) is withdrawn (§2.7 C3): every new worker posts `robot`
+     *  (cause `start`) and the extension sends the setup for the new interpreter */
+    function stamps(m) { return { ...(m.setup !== undefined ? { setup: m.setup } : {}), ...(m.console !== undefined ? { console: m.console } : {}) }; }
 
     function onWorker(m) {
         switch (m.type) {
             case 'ready':
                 ready = true;
                 live = !!m.live;
+                link.invertedTx = [0, 0];   // a worker started (again): its tap's counts start at 0 (review link verify S-V3)
                 $('#loading').hidden = true;
                 setStatus('', 'idle');
                 if (m.snap) {
@@ -204,9 +220,15 @@
                 vscode.postMessage({ type: 'ready', shared: !!m.sab, live });
                 camHw();
                 return;
-            case 'geom': geom = m.geom; trail.length = 0; toolsNewCourse(geom.id); if (!userView) { fit(); } if (v3) { v3.setGeom(geom); } camGeom(); draw(); return;
+            // §2.6 page item 1: the course's robot (its epoch, rig flag, motors and devices, the snapshot), to the
+            // extension at once and whole (never throttled as `tele`)
+            case 'robot': robotEpoch = m.epoch; vscode.postMessage(m); return;
+            case 'geom': bodyRig = m.bodyRig || null; courseNames = Array.isArray(m.names) ? m.names : null; namesUi(); $('#chTruth').hidden = true; geom = m.geom; trail.length = 0; toolsNewCourse(geom.id); if (!userView) { fit(); } if (v3) { v3.setGeom(geom); } camGeom(); draw(); return;
             case 'wro-schematic': if (wros) { wros.schematic(m.mat, m.rgb, canvas2d); } return;
             case 'cam': onCam(m); return;
+            // LINK (linkTap.ts -> simPanel.ts / linkServer.ts): a bridged header's bytes, the peer's bytes taken
+            case 'link-tx': case 'link-ack': vscode.postMessage(m); return;
+            case 'link-note': link.invertedTx[m.port - 1] = m.invertedTx; linkStatus(); return;
             case 'busy': running = m.id; if (pending.get(m.id)?.behind) { plotRun(); } setStatus('run', 'running a program'); return;
             case 'out': if (plot.on) { plotOut(m.text); } vscode.postMessage({ type: 'out', id: m.id, text: m.text }); return;
             case 'interrupting': clearTimeout(stopWatch); return;
@@ -217,6 +239,9 @@
                 return;
             case 'trail': onTrail(m); return;
             case 'done':
+                // §2.6 page item 5: a line the worker answered `stale` (stamped with an older epoch: no busy, not run) goes
+                // to the extension marked, which posts it again behind the new setup; nothing here changes but `pending`
+                if (m.stale) { pending.delete(m.id); if (!pending.size) { setStatus('', 'idle'); } vscode.postMessage({ type: 'done', id: m.id, err: m.err || '', stale: true }); return; }
                 if (running === m.id) { running = undefined; clearTimeout(stopWatch); }
                 if (pending.get(m.id)?.run) { trailRunEnd(m.id); }
                 pending.delete(m.id);
@@ -226,6 +251,12 @@
                 return;
             case 'snap': onSnap(m.snap); return;
             case 'led': led = !!m.on; draw(); return;
+            // CC-8: a practice Run's line (card.js practice: the one region, the card's line when it is open; a note when it
+            // is not), and Save truth… offered once a practice run has a truth log; the log itself, asked for by Save truth…
+            case 'practice': if (!card.practice(m.line)) { showNote(m.line); } $('#chTruth').hidden = !m.truth; return;
+            case 'truth':
+                if (typeof m.csv === 'string') { vscode.postMessage({ type: 'truth-save', text: m.csv }); } else { showNote('No practice run\'s truth to save: Back to start, then Run.'); }
+                return;
             // the referee's 4.2.8 restart at a lack of progress: the extension restarts the board, main.py with it
             case 'referee-restart': vscode.postMessage({ type: 'referee-restart' }); return;
             case 'error':
@@ -272,8 +303,13 @@
         vscode.postMessage({ type: 'done', id, err: 'Traceback (most recent call last):\n  File "<stdin>", in <module>\nKeyboardInterrupt: \n' });
         setStatus('', 'restarting');
         restarted = true;
-        // what was queued behind it went down with the worker: the new one runs it
-        for (const [pid, p] of pending) { outbox.push({ type: 'exec', id: pid, source: p.source, ...(p.run ? { run: p.run } : {}) }); }
+        // what was queued behind it went down with the worker: the new one runs it. An exec still in `held` (behind a
+        // course whose files are on their way) never reached the dead worker: flushHeld sends it, after its course - here
+        // it would go twice, a held Run run twice (lb4b3 round 1 B N-1; lane simfix)
+        const inHeld = new Set(held.filter((e) => e.m && e.m.type === 'exec').map((e) => e.m.id));
+        // each with its stamps (§2.6 B4): the old worker's setup is dropped by the new one (an older epoch), its lines
+        // answered `stale`; the new worker's `robot` (cause `start`) has the extension send the setup again
+        for (const [pid, p] of pending) { if (!inHeld.has(pid)) { outbox.push({ type: 'exec', id: pid, source: p.source, ...(p.run ? { run: p.run } : {}), ...stamps(p) }); } }
         start(posted ? restartState(posted) : undefined);
     }
 
@@ -294,8 +330,19 @@
      *  whole: J3c-2), the UARTs always from `last` - the ports' state is no engine state, and bytes an SBC sent in the
      *  frames since the bytes' would be lost (J3c-2 fix: the uart group's READY-survives-a-restart row) */
     function restartState(last) {
+        // LB-4b (§2.2, R3-S2; OQ 369): a pick the stopped worker never took, into or out of a body rig course, carries no
+        // state at all - no pose, angles, UARTs, clock or ticks of the old course: the new worker lays the new course afresh
+        // (`rig` reads the page's rigCourse; ds1's row evaluates this function on its own, where there is none: no rig course)
+        const rig = (id) => typeof rigCourse === 'function' && rigCourse(id);
+        if (geom && geom.id !== courseId && (rig(geom.id) || rig(courseId))) { return undefined; }
         const p = restartFrame(last, postedBytes);
         const s = { pose: p.pose, angles: p.motors.map((x) => x.angle), uart: last.uart };
+        // the events' clock of a dist in force (World.snapshot's `dist`), only for the course the panel has now (a pick the
+        // stopped worker never took starts its course's clock at 0); from `last`, never an older frame
+        // (with the pushes it dropped while held: they stay never acted, W1 SF2)
+        if (last.dist && geom && geom.id === courseId) { s.dist = { ticks: last.dist.ticks, ...(Array.isArray(last.dist.dropped) ? { dropped: last.dist.dropped } : {}) }; }
+        // LB-4b: on the panel's own body rig course the clock too (the worker restores it with `ticks` before its lay)
+        if (geom && geom.id === courseId && rig(courseId) && typeof last.t === 'number') { s.t = last.t; }
         const games = p.hazards && p.hazards.games;
         // only for the course the panel has now (review r1 N2: a course switch the stopped worker never took gives a
         // state without a field: the new course starts as before); the seed the frame's own referee names first (N1: a
@@ -317,13 +364,17 @@
         switch (m.type) {
             case 'exec':
                 // a Run behind a course that has not landed starts in the plot at its `busy`, when the frames are the new course's
-                pending.set(m.id, { source: m.source, run: m.run, behind: !!m.run && courseLanding() });
+                pending.set(m.id, { source: m.source, run: m.run, behind: !!m.run && courseLanding(), ...stamps(m) });
                 if (m.run && !pending.get(m.id).behind) { plotRun(); }
                 setStatus('run', 'running a program');
                 // the Run mark (§6: simPanel.ts marks the program's Run) goes to the worker as the extension gave it
+                // and the stamps `setup` (the console agent's own exec, LB-4b §2.3 "One exec is not a program": the worker
+                // runs it without programStart, so the Board view releases no held rig) and `console` (§2.6 B4)
+                if (m.setup !== undefined || m.console !== undefined) { toWorker({ type: 'exec', id: m.id, source: m.source, ...(m.run ? { run: m.run } : {}), ...stamps(m) }); return; }
                 toWorker({ type: 'exec', id: m.id, source: m.source, ...(m.run ? { run: m.run } : {}) });
                 return;
             case 'reset': toWorker({ type: 'reset', id: m.id }); return;
+            case 'say-pose': sayPose(); return;
             case 'interrupt': interrupt(); return;
             case 'motor': toWorker(m); return;
             case 'coast': toWorker({ type: 'coast' }); return;
@@ -338,11 +389,23 @@
                 return;
             case 'hw': hw = m.hw; plotHw(); buildConfig(); clearErr(); toWorker({ type: 'hardware', hw }); trail.length = 0; if (v3) { v3.setHw(hw, body3()); } camHw(); return;
             case 'cam-server': onCamServer(m); return;
+            // LINK: a client's bytes for a bridged header; the bridge's ports and counts for the status line
+            case 'link-rx': toWorker({ type: 'link-rx', port: m.port, bytes: m.bytes }); return;
+            case 'link-server': link.server = m; linkStatus(); return;
+            case 'link-stats': link.stats = m.stats; linkStatus(); return;
             case 'hw-error': $('#cfgErr').textContent = m.message; return;
             case 'course': setCourse(m.course, false); return;
-            case 'challenge-job': void chRunJob(m); return;
-            case 'challenge-cancelled': chBusy(false); return;
+            case 'challenge-job': void runJobLoop(m, challengePresenter(m)); return;
+            // a host's refusal while a job runs (a comparison's pass holds the button: COURSE_FORMAT_DESIGN.md §16.4.4 2) frees nothing
+            case 'challenge-cancelled': if (!chal.busy) { chBusy(false); } return;
             case 'challenge-summary': chSummary(m); return;
+            // §16.4.7: the Run's comparison, shown on the card whose job it names (card.jobId), never matched with chal.id
+            case 'challenge-compare': card.compare(m); return;
+            // a lesson check (src/sim/checkHost.ts; CHK_DESIGN.md §6): the card's states, the job, the host's lines
+            case 'check-open': ckCard.open(m); return;
+            case 'check-job': void runJobLoop(m, checkPresenter(m)); return;
+            case 'check-verdict': ckCard.verdict(m); return;
+            case 'check-cannot': ckCard.cannot(m.line, m.id); return;
             case 'place': place(undefined); return;
             case 'configure': setPane('config'); return;
             case 'connected': setConn(m.text); return;
@@ -371,8 +434,14 @@
     const CH_ABORT = new Error('the challenge was stopped');
     // the levels and the runs (simPanel.ts challengeCfg); a host without challenges (an older one, a test's cfg) has none
     const chCfg = cfg.challenge || { runs: 5, min: 1, max: 20, levels: [] };
-    // busy from the job's arrival (its assets may still be loading) to its end: one job at a time (review r1 D10)
-    const chal = { busy: false, worker: undefined, next: undefined, cancel: undefined, timer: undefined, deadline: undefined, id: 0, purpose: '', starts: [] };
+    // busy from the job's arrival (its assets may still be loading) to its end: one job at a time, a challenge's or a check's
+    // (review r1 D10; CHK_DESIGN.md §6); `presenter` the running job's (runJobLoop), `hang` a check case's stall (chRunOne)
+    const chal = { busy: false, worker: undefined, next: undefined, cancel: undefined, timer: undefined, deadline: undefined, id: 0, presenter: undefined, hang: undefined, unit: 'run', starts: [] };
+    // the card and the one live region are media/sim/card.js's (CHK_DESIGN.md §6, CHK5a)
+    const card = new EVNCard.ChallengeCard({ doc: document, el, post: (m) => vscode.postMessage(m), raf: (cb) => requestAnimationFrame(cb),
+        tryAt: (start) => { if (pending.size) { showNote('The robot can be moved when no program is running.'); return; } place(start); } });
+    // the check card (#ckCard, card.js CheckCard): it speaks through the challenge card's say(), the one region
+    const ckCard = new EVNCard.CheckCard({ doc: document, el, post: (m) => vscode.postMessage(m), say: (line) => card.say(line) });
     const chLevel = () => (courseId.startsWith('challenge:') ? chCfg.levels.find((l) => `challenge:${l.id}` === courseId) : undefined);
     function challengeHeader() {
         const l = chLevel();
@@ -380,13 +449,17 @@
         if (!box) { return; }
         box.hidden = !l;
         box.title = l ? l.brief : '';
+        card.header(l);
     }
     function chRuns() {
         const n = Math.round(Number($('#chRuns').value));
         return Math.min(chCfg.max, Math.max(chCfg.min, Number.isFinite(n) ? n : chCfg.runs));
     }
     function chRunsChanged() { const n = chRuns(); $('#chRuns').value = String(n); vscode.postMessage({ type: 'challenge-runs', runs: n }); }
-    function chBusy(on) { const b = $('#chRun'); if (b) { b.disabled = on; b.textContent = on ? 'Running…' : 'Run challenge'; } }
+    function chBusy(on) {
+        const b = $('#chRun'); if (b) { b.disabled = on; b.textContent = on ? 'Running…' : 'Run challenge'; }
+        const k = $('#ckRun'); if (k) { k.disabled = on; }
+    }
     function chStart() {
         const l = chLevel();
         if (!l || chal.busy) { return; }
@@ -399,54 +472,95 @@
         if (chal.worker) { chal.worker.terminate(); chal.worker = undefined; }
         if (chal.next) { chal.next.terminate(); chal.next = undefined; }
         chal.busy = false;
+        chal.hang = undefined;
         chBusy(false);
     }
-    /** the job ends here, its worker terminated: `msg` says why (the panel's note, and the host's waiter) */
+    /** the job ends here, its worker terminated: `msg` says why (the presenter's words, and the host's waiter) */
     function chFail(msg) {
         const id = chal.id;
         const cancel = chal.cancel;
+        const P = chal.presenter;
         chal.cancel = undefined;
         chEnd();
         cancel?.();
-        $('#chProg').textContent = 'stopped';
-        showNote(`Challenge: ${msg}.`, true);
-        vscode.postMessage({ type: 'challenge-error', id, message: msg });
+        P?.failed(id, msg, 'stopped');
     }
     function chArm(run) {
         if (chal.timer) { clearTimeout(chal.timer); }
-        chal.timer = setTimeout(() => chFail(`run ${run}'s simulated clock stood still for ${CH_BUDGET_MS / 1000} s of this computer's time: a loop that never waits (no wait(), no board call) stops it`), CH_BUDGET_MS);
+        // a check's case that stalls is that case's FAIL (chal.hang: checkRun.ts hungFacts on the host), a challenge's run ends the job
+        chal.timer = setTimeout(() => (chal.hang ? chal.hang() : chFail(`${chal.unit} ${run}'s simulated clock stood still for ${CH_BUDGET_MS / 1000} s of this computer's time: a loop that never waits (no wait(), no board call) stops it`)), CH_BUDGET_MS);
     }
-    const chEnds = { goal: 'goal', time: 'out of time', ended: 'stopped short', error: 'error', still: 'stood still', touch: 'touched', visits: 'every target visited' };
-    function chRow(r) {
-        const tr = el('tr', { class: r.reached ? 'ok' : 'miss' },
-            el('td', {}, String(r.run)),
-            el('td', { title: `x ${r.start.x} mm, y ${r.start.y} mm, heading ${r.start.heading}°` }, r.run === 1 ? 'nominal' : `${r.start.x}, ${r.start.y}, ${r.start.heading}°`),
-            el('td', { title: r.error || '' }, chEnds[r.end] || r.end),
-            el('td', {}, `${r.time} s`),
-            el('td', {}, String(r.touches)),
-            el('td', {}, String(r.points)),
-            el('td', {}, chal.purpose === 'student' ? el('button', { class: 'btn', type: 'button', title: 'Put the robot at this run\'s start, to run your program from there and watch', onclick: () => { if (pending.size) { showNote('The robot can be moved when no program is running.'); return; } place(r.start); } }, 'Try') : ''));
-        $('#chRows').append(tr);
-        // why a run ended in an error, as text under its own row: the tooltip alone reaches neither a keyboard nor a
-        // screen reader (A11Y_DESIGN W6); the row spans the table, as the words do not fit the Result column
-        const why = r.error && r.error.trim().split('\n').pop();
-        if (why) { $('#chRows').append(el('tr', { class: 'why' }, el('td', { colspan: '7' }, why))); }
+    const chRow = (r) => card.row(r);
+    /** A challenge's presenter for runJobLoop: its card (#chCard), its progress words (#chProg), its note's prefix and its
+     *  messages (challenge-progress, -done, -error) */
+    function challengePresenter(m) {
+        const results = [], output = [];
+        // §16.4.7: a comparison's job (purpose 'compare') is shown on the card as it stands: no card.open, no rows - the
+        // primary's rows and summary stay; its progress in #chProg in the role's words
+        const vs = m.purpose === 'compare';
+        return {
+            prefix: 'challenge',
+            unit: 'run',
+            busy: 'a challenge is already running in the Simulator panel',
+            runs: m.job.runs,
+            // the job's own version's limit (the host sends it: an older submission's level may differ from the list's)
+            limit: () => { const lv = chCfg.levels.find((l) => l.id === m.job.level); return Number.isFinite(m.limit) ? m.limit : lv ? lv.limit : 90; },
+            hangs: false,
+            open: () => { chBusy(true); if (vs) { $('#chProg').textContent = `running the ${m.role}…`; } else { card.open({ title: m.title, runs: m.job.runs, purpose: m.purpose }); } },
+            progress: (i) => { $('#chProg').textContent = vs ? `${m.role} run ${i + 1} of ${m.job.runs}…` : `run ${i + 1} of ${m.job.runs}…`; },
+            each: (d, i) => {
+                results.push(d.result);
+                output.push(typeof d.output === 'string' ? d.output : '');
+                if (!vs) { chRow(d.result); }
+                vscode.postMessage({ type: 'challenge-progress', id: m.id, done: i + 1, of: m.job.runs });
+            },
+            done: () => {
+                // a comparison's summary is the host's challenge-compare on a student's card; a verification's or a re-test's
+                // gets none, so its line is cleared (r3 F-N3)
+                $('#chProg').textContent = vs ? (card.purpose === 'student' ? 'comparing…' : '') : 'scoring…';
+                vscode.postMessage({ type: 'challenge-done', id: m.id, results, output, engine: navigator.userAgent.match(/(Chrome|Firefox|Safari|Edg)\/[\d.]+/)?.[0] || '' });
+            },
+            failed: (id, msg, how) => {
+                $('#chProg').textContent = how;
+                const who = vs ? `Challenge, the ${m.role}` : 'Challenge';
+                showNote(how === 'stopped' ? `${who}: ${msg}.` : `${who}: ${msg}`, true);
+                vscode.postMessage({ type: 'challenge-error', id, message: msg });
+            },
+        };
     }
-    async function chRunJob(m) {
-        if (chal.busy) { vscode.postMessage({ type: 'challenge-error', id: m.id, message: 'a challenge is already running in the Simulator panel' }); return; }
+    /** A lesson check's presenter (CHK_DESIGN.md §6): #ckCard's progress, a case's facts gathered for the host, which judges
+     *  (check-progress, -done, -error); a case whose clock stands still is { hung: true }, the host's named FAIL */
+    function checkPresenter(m) {
+        const facts = [];
+        const parts = m.job.cases.length;
+        return {
+            prefix: 'check',
+            unit: 'part',
+            busy: 'a challenge or a check is already running in the Simulator panel',
+            runs: parts,
+            limit: (i) => (Array.isArray(m.limits) && Number.isFinite(m.limits[i]) ? m.limits[i] : 30),
+            hangs: true,
+            // the header's two job buttons off; Run challenge keeps its words (no challenge runs)
+            open: () => { for (const id of ['#chRun', '#ckRun']) { const b = $(id); if (b) { b.disabled = true; } } },
+            progress: (i) => { ckCard.running(i, parts); },
+            each: (d, i) => {
+                facts.push(d.hung ? { hung: true } : d.facts);
+                vscode.postMessage({ type: 'check-progress', id: m.id, done: i + 1, of: parts });
+            },
+            done: () => { $('#ckProg').textContent = 'judging…'; vscode.postMessage({ type: 'check-done', id: m.id, facts }); },
+            failed: (id, msg, how) => { $('#ckProg').textContent = how; vscode.postMessage({ type: 'check-error', id, message: msg }); },
+        };
+    }
+    /** A job's runs (a challenge's) or cases (a check's), each in a worker of its own, through presenter `P` (CHK_DESIGN.md §6:
+     *  chRunJob factored, each presenter owning its card, its progress words and its message prefix) */
+    async function runJobLoop(m, P) {
+        if (chal.busy) { vscode.postMessage({ type: `${P.prefix}-error`, id: m.id, message: P.busy }); return; }
         chal.busy = true;
-        chal.id = m.id; chal.purpose = m.purpose;
-        const lv = chCfg.levels.find((l) => l.id === m.job.level);
-        // the job's own version's limit (the host sends it: an older submission's level may differ from the list's)
-        const chLimit = Number.isFinite(m.limit) ? m.limit : lv ? lv.limit : 90;
-        chBusy(true);
-        $('#chCard').hidden = false;
-        $('#chTitle').textContent = m.title;
-        $('#chProg').textContent = `starting (${m.job.runs} run${m.job.runs === 1 ? '' : 's'})…`;
-        $('#chRows').textContent = '';
-        $('#chSum').textContent = m.purpose === 'student' ? '' : 'The report is in the editor.';
-        $('#chSave').disabled = true;
-        $('#chSave').hidden = m.purpose !== 'student';
+        chal.id = m.id;
+        chal.presenter = P;
+        // a watchdog's words name the job's unit: a challenge's run, a check's part (review chk5b_r1 N1)
+        chal.unit = P.unit;
+        P.open();
         try {
             const a = await loadAssets();
             if (!a.challengeWorker) {
@@ -454,38 +568,33 @@
                 a.challengeWorker = URL.createObjectURL(new Blob([t], { type: 'text/javascript' }));
             }
             // every run in a worker of its own (review r3 B1: nothing a program leaves behind reaches the next run); the
-            // runs' results go to the extension host, which sums them up (challenge-summary)
+            // runs' results go to the extension host, which sums them up (challenge-summary) or judges them (check-verdict)
             // the next run's worker is readied (its interpreter loads, no program runs) while a run runs (review r4 B1)
-            const results = [], output = [];
             // - where there are the cores for two interpreters at once: on one or two, two compete and it is slower
             // (review r5 S-1), so there a run's worker is readied when its turn comes
             const ahead = (navigator.hardwareConcurrency || 1) >= 4;
-            let next = chReady(a, m.job, 0);
-            for (let i = 0; i < m.job.runs; i++) {
-                $('#chProg').textContent = `run ${i + 1} of ${m.job.runs}…`;
-                const cur = next || chReady(a, m.job, i);
-                next = ahead && i + 1 < m.job.runs ? chReady(a, m.job, i + 1) : undefined;
+            // LB-4b: a body rig level's runs need the Jolt build (challengeWorker.ts loads `m.jolt` before its lockdown)
+            const jolt = m.job && typeof m.job.level === 'string' && rigCourse(`challenge:${m.job.level}`) ? await loadJoltBytes() : undefined;
+            let next = chReady(a, m.job, 0, jolt);
+            for (let i = 0; i < P.runs; i++) {
+                P.progress(i);
+                const cur = next || chReady(a, m.job, i, jolt);
+                next = ahead && i + 1 < P.runs ? chReady(a, m.job, i + 1, jolt) : undefined;
                 chal.next = next && next.w;
-                const d = await chRunOne(cur, i, chLimit);
-                results.push(d.result);
-                output.push(d.output);
-                chRow(d.result);
-                vscode.postMessage({ type: 'challenge-progress', id: m.id, done: i + 1, of: m.job.runs });
+                const d = await chRunOne(cur, i, P.limit(i), P.hangs);
+                P.each(d, i);
             }
             chEnd();
-            $('#chProg').textContent = 'scoring…';
-            vscode.postMessage({ type: 'challenge-done', id: m.id, results, output, engine: navigator.userAgent.match(/(Chrome|Firefox|Safari|Edg)\/[\d.]+/)?.[0] || '' });
+            P.done();
         } catch (e) {
             if (e === CH_ABORT) { return; }
             chEnd();
-            $('#chProg').textContent = 'did not run';
-            showNote(`Challenge: ${e && e.message || e}`, true);
-            vscode.postMessage({ type: 'challenge-error', id: m.id, message: String(e && e.message || e) });
+            P.failed(m.id, String(e && e.message || e), 'did not run');
         }
     }
 
     /** A fresh worker for run `i` of `job`, readied: it loads its interpreter and waits for chRunOne's go */
-    function chReady(a, job, i) {
+    function chReady(a, job, i, jolt) {
         const w = new Worker(a.challengeWorker, { type: 'module', name: `EVN challenge run ${i + 1}` });
         // the run's token: the program under test runs in that worker and can post messages of its own there; only
         // the worker's (they carry this) count (challengeWorker.ts; review r1 C2)
@@ -494,53 +603,60 @@
         const rec = { w, token, failed: undefined };
         // a worker that fails while it is readied fails its run when it comes, with its own reason (review r5 N-1)
         w.onerror = (ev) => { rec.failed = ev.message || 'the challenge worker did not start'; };
-        w.postMessage({ type: 'run', token, job, index: i, pyodide: { asm: p.asm, wasm: p.wasm.slice(0), stdlib: p.stdlib.slice(0), lock: p.lock }, evn: a.evn, boot: a.boot, version: cfg.version });
+        // LB-4b (§2.2): a body rig level's run takes the Jolt build's bytes (a copy each: every run's worker is its own)
+        w.postMessage({ type: 'run', token, job, index: i, pyodide: { asm: p.asm, wasm: p.wasm.slice(0), stdlib: p.stdlib.slice(0), lock: p.lock }, evn: a.evn, boot: a.boot, version: cfg.version, ...(jolt ? joltFor(jolt) : {}) });
         return rec;
     }
-    /** Run `i` in its readied worker: { result, output }, or it rejects - with CH_ABORT when the panel ended the job
-     *  (chFail has said why) */
-    function chRunOne({ w, token, failed }, i, limit) {
+    /** Run `i` in its readied worker: the worker's `done` ({ result, output } of a challenge's run, { facts } of a check's case),
+     *  or it rejects - with CH_ABORT when the panel ended the job (chFail has said why). `hangs`: a stalled clock ends this run
+     *  alone, resolving { hung: true } (a check's case; checkRun.ts hungFacts) */
+    function chRunOne({ w, token, failed }, i, limit, hangs) {
         return new Promise((resolve, reject) => {
             if (failed) { w.terminate(); reject(new Error(failed)); return; }
             chal.worker = w;
             chal.cancel = () => reject(CH_ABORT);
+            // a check's part: a stall after its program began is that part's FAIL; one before (the interpreter still loading) is
+            // a could-not-run, never a verdict on a program that did not run (review chk5b_r1 S2; scripts/check_guard.js)
+            let begun = false;
+            chal.hang = hangs ? () => {
+                if (!begun) { chFail(`part ${i + 1}'s Python did not start within ${CH_BUDGET_MS / 1000} s of this computer's time`); return; }
+                w.terminate();
+                clearTimeout(chal.deadline);
+                chal.timer = undefined; chal.worker = undefined; chal.cancel = undefined; chal.hang = undefined;
+                resolve({ hung: true });
+            } : undefined;
             const began = Date.now();
             chArm(i + 1);
             // no run gets more than CH_RUN_MS of this computer's time, beats or not (review r4 N12)
-            chal.deadline = setTimeout(() => chFail(`run ${i + 1} took more than ${CH_RUN_MS / 60000} minutes of this computer's time`), CH_RUN_MS);
+            chal.deadline = setTimeout(() => chFail(`${chal.unit} ${i + 1} took more than ${CH_RUN_MS / 60000} minutes of this computer's time`), CH_RUN_MS);
             w.onmessage = (ev) => {
                 const d = ev.data;
                 if (!d || d.token !== token || chal.worker !== w) { return; }
+                if (d.type === 'began') { begun = true; chArm(i + 1); return; }
                 if (d.type === 'beat') {
                     // a run is over at its time limit, and its program ended GRACE_S (2 s) later (challengeRun.ts): one
                     // still beating past that has escaped the stop (review r2 N1); and no run gets more than
                     // CH_RUN_MS of this computer's time, however slowly its simulated clock moves (review r3 N12)
-                    if (!(Number(d.t) <= limit + 3)) { chFail(`run ${i + 1} went on past its time limit (${limit} s): the program would not stop`); return; }
-                    if (Date.now() - began > CH_RUN_MS) { chFail(`run ${i + 1} took more than ${CH_RUN_MS / 60000} minutes of this computer's time`); return; }
+                    if (!(Number(d.t) <= limit + 3)) { chFail(`${chal.unit} ${i + 1} went on past its time limit (${limit} s): the program would not stop`); return; }
+                    if (Date.now() - began > CH_RUN_MS) { chFail(`${chal.unit} ${i + 1} took more than ${CH_RUN_MS / 60000} minutes of this computer's time`); return; }
                     chArm(i + 1);
                 } else if (d.type === 'done' || d.type === 'error') {
                     w.terminate();
                     clearTimeout(chal.deadline);
                     chal.worker = undefined;
                     chal.cancel = undefined;
-                    if (d.type === 'done') { resolve({ result: d.result, output: typeof d.output === 'string' ? d.output : '' }); } else { reject(new Error(String(d.message))); }
+                    chal.hang = undefined;
+                    if (d.type === 'done') { resolve(d); } else { reject(new Error(String(d.message))); }
                 }
             };
-            w.onerror = (ev) => { if (chal.worker !== w) { return; } chal.cancel = undefined; reject(new Error(ev.message || 'the challenge worker stopped')); };
+            w.onerror = (ev) => { if (chal.worker !== w) { return; } chal.cancel = undefined; chal.hang = undefined; reject(new Error(ev.message || 'the challenge worker stopped')); };
             w.postMessage({ type: 'go', token });
         });
     }
     /** the extension host's summary of the runs (challenge-done): shown, and Save submission ready */
     function chSummary(m) {
         if (m.id !== chal.id) { return; }
-        if (m.error) { $('#chProg').textContent = 'not scored'; showNote(`Challenge: ${m.error}`, true); return; }
-        const s = m.summary;
-        $('#chProg').textContent = 'done';
-        // a level's named values (COURSE_FORMAT_DESIGN.md §12.3) after the summary, an undefined one as -
-        const u = m.units || {};
-        const vals = s.values ? Object.entries(s.values).map(([k, v]) => ` · ${k} ${v ?? '-'}${v !== null && u[k] ? ' ' + u[k] : ''}`).join('') : '';
-        $('#chSum').textContent = `score ${s.score} · at the goal ${s.reached} of ${s.runs} · clean ${s.clean} · best ${s.best ?? '-'} s · median ${s.median ?? '-'} s${vals}`;
-        if (chal.purpose === 'student') { $('#chSave').disabled = false; }
+        if (!card.summary(m)) { showNote(`Challenge: ${m.error}`, true); }
     }
 
     /* ---- the header ---------------------------------------------------------------------------------- */
@@ -692,6 +808,7 @@
         hud();
         toolsShow();
         if (plot.on) { plotSnap(s); }
+        linkRtf(s);
         draw();
         const now = performance.now();
         if (now - lastTele > 100) { lastTele = now; vscode.postMessage({ type: 'tele', snap: s, led }); }
@@ -872,7 +989,7 @@
     const isWheel = (p) => p === hw.driveBase.leftPort || p === hw.driveBase.rightPort;
 
     /* ---- drawing ----------------------------------------------------------------------------------------- */
-    const canvas = el('canvas', { id: 'c', 'aria-label': 'The simulated robot on its course' });
+    const canvas = el('canvas', { id: 'c', role: 'img', 'aria-label': 'The simulated robot on its course' });
     const ctx = canvas.getContext('2d');
     const view = { cx: 0, cy: 0, k: 0.5 };
     let userView = false;
@@ -908,7 +1025,7 @@
     function draw() { if (!raf) { raf = requestAnimationFrame(() => { raf = 0; if (mode3d && !builder()) { v3.setSnap(snap); v3.render(); } else { paint(); } }); } }
 
     /* ---- the 3D view (media/sim/view3d.js) ---- */
-    const canvas3d = el('canvas', { id: 'c3', 'aria-label': 'The simulated robot on its course, in 3D', hidden: '' });
+    const canvas3d = el('canvas', { id: 'c3', role: 'img', 'aria-label': 'The simulated robot on its course, in 3D', hidden: '' });
     const v3 = window.EVN3D ? window.EVN3D.create(canvas3d) : undefined;
     let mode3d = false;
     if (v3 && v3.ok) { v3.seesawDeg = (cfg.seesaw || {}).deg; v3.seesawT = (cfg.seesaw || {}).t; v3.onChange = draw; }
@@ -921,7 +1038,7 @@
         if (on && !(v3 && v3.ok)) { showNote('The 3D view needs WebGL, which this window does not have.'); }
         mode3d = !!on && !!v3 && v3.ok;
         canvas.hidden = mode3d; canvas3d.hidden = !mode3d;
-        $('#view3dBtn').classList.toggle('on', mode3d);
+        toggled($('#view3dBtn'), mode3d);
         if (mode3d) { v3.setHw(hw, body3()); if (geom) { v3.setGeom(geom); } v3.follow = follow; }
         document.body.classList.toggle('in3d', mode3d);
         draw();
@@ -990,7 +1107,7 @@
         const pv = $('#camPv');
         if (pv) { pv.hidden = true; }
         const b = $('#camBtn');
-        if (b) { b.classList.remove('on'); }
+        toggled(b, false);
     }
     function camGeom() {
         if (!cams.worker) { return; }
@@ -1164,14 +1281,85 @@
         cams.preview = !cams.preview && (hw.cameras || []).length > 0;
         cams.pv.length = 0; cams.pvRel = null;
         $('#camPv').hidden = !cams.preview;
-        $('#camBtn').classList.toggle('on', cams.preview);
+        toggled($('#camBtn'), cams.preview);
     }
-    function onCamServer(m) { cams.server = m; const s = $('#camAddr'); if (s) { s.textContent = camAddrText(); } }
+    function onCamServer(m) { cams.server = m && m.off ? null : m; const s = $('#camAddr'); if (s) { s.textContent = camAddrText(); } }
     function camAddrText() {
         const s = cams.server;
         if (!s) { return 'The stream starts when a camera is applied.'; }
         if (s.error) { return s.error; }
         return `Stream: http://127.0.0.1:${s.port}/cam/<id>/stream.mjpg (or frame.jpg), with your token (?token=...) from ${s.endpoints || 'the panel'}.`;
+    }
+    /* ---- LINK, the serial bridge (docs/SIMULATOR_SBC_DESIGN.md §4.2; the configurator's Serial bridge rows) ---- */
+    const link = { server: null, stats: null, invertedTx: [0, 0], rtf: { samples: [], factor: null, outSince: null, warned: false } };
+    /** design §5.3, the free-run warning: the measured real-time factor (simulated over wall time over the last second,
+     *  from the snapshots) while a program runs with a client connected; outside 0.9-1.1 for 2 s it is said once per
+     *  excursion - the PC's program runs on the wall clock, so it is 1/factor times faster relative to the robot */
+    function linkRtf(s) {
+        const r = link.rtf, now = Date.now();
+        const connected = (link.stats || []).some((x) => x && x.connected);
+        if (running === undefined || !connected || typeof s.t !== 'number') { r.samples.length = 0; r.factor = null; r.outSince = null; r.warned = false; return; }
+        const last = r.samples[r.samples.length - 1];
+        if (last && s.t < last[1]) { r.samples.length = 0; }   // the clock went back (a new world): start again
+        r.samples.push([now, s.t]);
+        while (r.samples.length > 2 && now - r.samples[1][0] >= 1000) { r.samples.shift(); }
+        const a = r.samples[0];
+        if (now - a[0] < 500) { return; }
+        r.factor = (s.t - a[1]) / ((now - a[0]) / 1000);
+        const out = r.factor < 0.9 || r.factor > 1.1;
+        if (!out) { r.outSince = null; r.warned = false; linkStatus(); return; }
+        if (r.outSince === null) { r.outSince = now; }
+        if (!r.warned && now - r.outSince >= 2000) {
+            r.warned = true;
+            const rel = r.factor < 1 ? `${(1 / Math.max(r.factor, 1e-3)).toFixed(1)}x faster relative to it than on a robot` : `${r.factor.toFixed(1)}x slower relative to it than on a robot`;
+            showNote(`Serial bridge: the robot runs at ${r.factor.toFixed(2)}x real time, so your program on this computer is ${rel}. Keep Speed at 1x.`, false);
+        }
+        linkStatus();
+    }
+    /** the bridge's line under the configurator's rows: each header's socket, its client, its counts, why it is quiet */
+    function linkText() {
+        const on = [(hw.sbcLink || {}).serial1 === 'socket', (hw.sbcLink || {}).serial2 === 'socket'];
+        if (!on[0] && !on[1]) { return 'Off: what the board writes on Serial1 / Serial2 goes nowhere, as with nothing on the header.'; }
+        const s = link.server;
+        if (!s) { return 'The bridge opens when the robot is applied.'; }
+        if (s.error) { return s.error; }
+        const parts = [];
+        for (let i = 0; i < 2; i++) {
+            if (!on[i]) { continue; }
+            const port = (s.ports || [])[i];
+            const st = (link.stats || [])[i] || {};
+            let t = port ? `Serial${i + 1}: socket://127.0.0.1:${port}` : `Serial${i + 1}: no port`;
+            t += st.connected ? ' (connected)' : ' (no program connected)';
+            if (st.nowhere) { t += `, ${st.nowhere} bytes sent with nothing connected`; }
+            if (st.dropped) { t += `, ${st.dropped} bytes dropped: your program read too slowly (4 KB buffer)`; }
+            if (st.refusedHttp) { t += `, ${st.refusedHttp} web requests refused`; }
+            if (link.invertedTx[i]) { t += `, inverted TX (invert=UART.INV_TX): ${link.invertedTx[i]} bytes not forwarded - a PC reads them as noise`; }
+            parts.push(t);
+        }
+        for (const e of s.errors || []) { parts.push(e); }
+        if (link.rtf.factor !== null) { parts.push(`the robot runs at ${link.rtf.factor.toFixed(2)}x real time${link.rtf.factor < 0.9 || link.rtf.factor > 1.1 ? ' (keep it near 1x: your program runs on the wall clock)' : ''}`); }
+        // OQ 240: without JS Promise Integration no message reaches a running program
+        if (!live) { parts.push('This window has no JS Promise Integration: bytes from your PC reach a program only between runs'); }
+        return parts.join('. ') + '. Open it with pyserial: serial.serial_for_url("socket://127.0.0.1:<port>").';
+    }
+    function linkStatus() { const e = $('#linkAddr'); if (e) { e.textContent = linkText(); } }
+    function linkConfig(f) {
+        const sel = (k) => {
+            const c = el('input', { type: 'checkbox', id: `fLink${k}` });
+            c.checked = (hw.sbcLink || {})[`serial${k}`] === 'socket';
+            return el('label', { title: `Bridge Serial${k} to a TCP port on this computer (127.0.0.1 only) that a Python program opens with pyserial` }, c, ` Serial${k}`);
+        };
+        f.append(
+            el('h2', {}, 'Serial bridge'),
+            el('p', { class: 'sub' }, 'Connect the board\'s serial headers to a program on this computer, as a Raspberry Pi wired to Serial1 would be: what evn.UART writes reaches it at the wire\'s speed, what it writes reaches evn.UART. Bytes are timed by the simulation\'s clock; your program runs on the wall clock, so keep Speed at 1x.'),
+            el('div', { class: 'actions' }, sel(1), sel(2)),
+            el('p', { class: 'sub', id: 'linkAddr' }, linkText()),
+        );
+    }
+    function readLink() {
+        const v = (k) => ($(`#fLink${k}`) && $(`#fLink${k}`).checked ? 'socket' : 'off');
+        const l = { serial1: v(1), serial2: v(2) };
+        return l.serial1 === 'off' && l.serial2 === 'off' ? undefined : l;
     }
     /** OpenCV lines that open camera `id`'s stream (the port and token from the endpoints file) */
     function camCode(id) {
@@ -1298,6 +1486,7 @@
         if (snap) { beams(snap); robot(snap.pose, snap); }
         hazards3d(true);
         if (overs.length) { ctx.globalAlpha = 0.45; layer(true); ctx.globalAlpha = 1; }
+        namesDraw();
         toolsDraw();
     }
 
@@ -1349,6 +1538,21 @@
         const k = w.seesaws.findIndex((q) => q.tile === i), max = seesawMax(i);
         const th = snap && snap.hazards && k >= 0 ? (snap.hazards.seesaws[k] ?? max) : max;
         return Math.max(-1, Math.min(1, th / max));
+    }
+
+    /** CC-8's Show names (COURSE_CONTENT_DESIGN.md §6): each named item's name where it truly is, from the worker's `names`
+     *  (workerCore.ts courseNames; a challenge course only); the 2D view alone draws them, never a camera */
+    let courseNames = null, showNames = false;
+    function namesUi() {
+        const b = $('#namesBtn');
+        if (!b) { return; }
+        b.hidden = !(courseNames && courseNames.length);
+        b.classList.toggle('on', showNames && !b.hidden);
+        b.setAttribute('aria-pressed', String(showNames && !b.hidden));
+    }
+    function namesDraw() {
+        if (!showNames || !courseNames) { return; }
+        for (const n of courseNames) { label(n.name, n.x, n.y, n.kind === 'area' ? '#1d4f91' : '#1a1a1a', 12); }
     }
 
     function label(text, x, y, color, px = 11) {
@@ -1607,6 +1811,28 @@
         return out;
     }
 
+    /** a body rig course's robot (LB-4b §2.1): the rig's footprint() box (world points, the worker's) and its heading from
+     *  world.pose; the rig's IMU (geom's world.hw) as the class robot's is drawn */
+    function rigRobot(pose, fp) {
+        ctx.save();
+        ctx.fillStyle = 'rgba(17,21,24,0.18)';
+        ctx.strokeStyle = 'rgba(17,21,24,0.85)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        fp.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
+        ctx.closePath();
+        ctx.fill(); ctx.stroke();
+        const h = pose.heading * Math.PI / 180, ahead = Math.max(...fp.map(([x, y]) => (x - pose.x) * Math.cos(h) + (y - pose.y) * Math.sin(h)));
+        ctx.strokeStyle = '#a8977b';
+        ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.moveTo(pose.x, pose.y); ctx.lineTo(pose.x + Math.cos(h) * Math.max(0, ahead - 6), pose.y + Math.sin(h) * Math.max(0, ahead - 6)); ctx.stroke();
+        if (bodyRig.hw && bodyRig.hw.imu) {
+            ctx.translate(pose.x, pose.y); ctx.rotate(h);
+            ctx.strokeStyle = '#5f9e88'; ctx.lineWidth = 2; ctx.strokeRect(-12, -12, 24, 24);
+        }
+        ctx.restore();
+    }
+
     /** the body as the configurator sets it (hardware.ts bodyOf: null members worked out from the drive base and the
      *  sensors); rear is negative here */
     function robotShape() {
@@ -1622,6 +1848,7 @@
     }
 
     function robot(pose, s) {
+        if (bodyRig && s && Array.isArray(s.rigFp)) { rigRobot(pose, s.rigFp); return; }
         const { front, rear, half, db } = robotShape();
         ctx.save();
         ctx.translate(pose.x, pose.y);
@@ -1796,7 +2023,7 @@
             view.cx = drag.cx - (e.offsetX - drag.x) / view.k;
             view.cy = drag.cy + (e.offsetY - drag.y) / view.k;
             userView = true;
-            follow = false; $('#followBtn').classList.remove('on');
+            follow = false; toggled($('#followBtn'), false);
             draw();
         } else if (pending.size) {
             // a program started mid-drag: the robot is not moved, and the last snapshot is not written over (§6)
@@ -1945,11 +2172,27 @@
     const toolsOpen = () => document.body.classList.contains('tools');
     /** a heading as the panel states it: above -180, up to 180 */
     function wrap180(d) { const a = ((d % 360) + 360) % 360; return a > 180 ? a - 360 : a; }
-    /** a pose as the panel says it (A11Y_DESIGN §5 W3's words) */
-    const whole = (v) => fmt(Math.round(v) + 0, 0);     // + 0: never "-0"
-    const poseText = (p) => `x ${whole(p.x)} mm, y ${whole(p.y)} mm, heading ${whole(wrap180(p.heading))}°`;
+    /** a pose as the panel says it (A11Y_DESIGN §5 W3's words): card.js's, one text for the pane, its lines and W3 */
+    const poseText = (p) => EVNCard.poseText(p);
     /** into the live region: the same words twice are said twice */
     function say(text) { const e = $('#trSay'); if (e) { e.textContent = ''; e.textContent = text; } }
+    /** A11Y_DESIGN §5 W3: the command "EVN: Say the robot's position" (simPanel.ts posts say-pose): the pose the 2D and
+     *  3D views draw (the last snapshot, or where a hand move put it), and the course's nearest named item, said through
+     *  the one region whichever view is shown, by the card's say() (cleared now, written on the next frame, so a second
+     *  press is a change a screen reader hears; review plannext3 r1 S6). Page only: nothing is posted to the worker or the host */
+    function sayPose() {
+        if (!snap) { card.say('The simulator is still starting.'); return; }
+        card.say(`Robot at ${EVNCard.poseSentence(snap.pose, { names: namesNow() })}.`);
+    }
+    /** CC-8's names where the panel draws them now: a loose ball where the snapshot says it is (the 2D view's rule: the
+     *  snapshot's balls in the course's order, used when there are as many; review plannext3 r1 B1), the rest as laid */
+    function namesNow() {
+        if (!courseNames) { return null; }
+        const hb = snap && snap.hazards && snap.hazards.balls, nb = courseNames.filter((n) => n.kind === 'ball').length;
+        if (!hb || !nb || hb.length !== nb) { return courseNames; }
+        let k = 0;
+        return courseNames.map((n) => (n.kind === 'ball' ? { ...n, x: hb[k][0], y: hb[k++][1] } : n));
+    }
     /** why the robot cannot stand at (x, y), or '': the course's bounds */
     function offCourse(x, y) {
         if (!geom || !geom.bounds) { return 'The course is still loading.'; }
@@ -2977,6 +3220,7 @@
         addD.disabled = (hw.distanceSensors || []).length >= (cfg.maxDistance || 4);
         f.append(el('div', { class: 'actions' }, addD));
         camConfig(f);
+        linkConfig(f);
         const imuOn = el('input', { type: 'checkbox', id: 'fImu' });
         imuOn.checked = !!hw.imu;
         f.append(
@@ -3144,6 +3388,10 @@
             el('label', {}, 'left', numIn(s.left, { class: 'dLeft', min: -300, max: 300 })),
             el('label', {}, 'height', numIn(s.height, { class: 'dH', min: 5, max: 400 })),
             el('label', {}, 'angle', numIn(s.angle, { class: 'dA', min: -180, max: 180 })),
+            // TC-1 (SIMULATOR_LAB_DIST_DESIGN.md §6 "The distance sensor's cone"): the mount's tilt, and the beam
+            el('label', {}, 'tilt up', numIn(s.tilt ?? 0, { class: 'dTilt', min: -45, max: 45 })),
+            el('label', {}, 'beam', el('select', { class: 'dBeam' }, ...[['rays', 'three rays'], ['cone', '25° cone']].map(([v, t]) => {
+                const o = el('option', { value: v }, t); if ((s.beam ?? 'rays') === v) { o.selected = true; } return o; }))),
         );
     }
 
@@ -3249,12 +3497,17 @@
                 // a downward sensor carries no facing / cal keys (today's robots stay as they were)
                 ...(c.querySelector('.sFace')?.value === 'forward' ? { facing: 'forward' } : {}),
                 ...($('.sCal', c).value.trim() !== '' ? { cal: n('.sCal', c) } : {}) })),
-            distanceSensors: [...document.querySelectorAll('.sensor.dist')].map((c) => ({ port: n('.dPort', c), forward: n('.dFwd', c), left: n('.dLeft', c), height: n('.dH', c), angle: n('.dA', c) })),
+            distanceSensors: [...document.querySelectorAll('.sensor.dist')].map((c) => ({ port: n('.dPort', c), forward: n('.dFwd', c), left: n('.dLeft', c), height: n('.dH', c), angle: n('.dA', c),
+                // TC-1's keys only off their defaults (a stored or standard robot compares as it did)
+                ...(c.querySelector('.dTilt') && n('.dTilt', c) !== 0 ? { tilt: n('.dTilt', c) } : {}),
+                ...(c.querySelector('.dBeam')?.value === 'cone' ? { beam: 'cone' } : {}) })),
             imu: $('#fImu').checked ? { port: n('#fImuPort') } : null,
             ...readPeriph(),
             mechanisms: readMech(),
             cameras: readCams(),
         };
+        const sbc = readLink();
+        if (sbc) { next.sbcLink = sbc; }
         hw = next;
         plotHw();
         return next;
@@ -3951,7 +4204,7 @@
             c.scale(pw / def.size[0], ph / def.size[1]);
             tileInk(c, def);
             const b = el('button', {
-                type: 'button', class: 'tile' + (pick === def.id ? ' on' : ''),
+                type: 'button', class: 'tile' + (pick === def.id ? ' on' : ''), 'aria-pressed': String(pick === def.id),
                 title: `#${def.id} ${def.name}${def.elevated ? ' (on a raised platform)' : ''}${isRamp(def) ? ` (a ramp: ${def.size[1]} mm of slope, ${def.plan[1]} mm seen from above)` : ''}: one competition set has ${def.count} (an example: a map may use any number, rules 3.1.4). Click, then click the grid to place it; R or a right click turns it.`,
                 onclick: () => { pick = pick === def.id ? undefined : def.id; pickObj = undefined; startMode = false; greenMode = false; zoneMode = false; sel = undefined; selObj = undefined; selZone = false; palette(); mapPane(); draw(); },
             }, cv, el('span', { class: 'id' }, '#' + def.id), el('span', { class: 'nm' }, def.name), el('span', { class: 'ct' }, `${n} / ${def.count}`));
@@ -3977,10 +4230,10 @@
         if (!$('#mapPane')) { return; }
         $('#mapSave').textContent = dirty ? 'Save *' : 'Save';
         $('#mapDelete').disabled = !maps.some((m) => m.name === $('#mapName').value.trim());
-        $('#mapStart').classList.toggle('on', startMode);
-        $('#mapGreen').classList.toggle('on', greenMode);
-        for (const [id, type] of [['#mapObs', 'obstacle'], ['#mapBump', 'bump'], ['#mapDebris', 'debris'], ['#mapLive', 'live'], ['#mapDead', 'dead'], ['#mapFake', 'fake'], ['#mapImage', 'image']]) { $(id).classList.toggle('on', pickObj === type); }
-        $('#mapZone').classList.toggle('on', zoneMode);
+        toggled($('#mapStart'), startMode);
+        toggled($('#mapGreen'), greenMode);
+        for (const [id, type] of [['#mapObs', 'obstacle'], ['#mapBump', 'bump'], ['#mapDebris', 'debris'], ['#mapLive', 'live'], ['#mapDead', 'dead'], ['#mapFake', 'fake'], ['#mapImage', 'image']]) { toggled($(id), pickObj === type); }
+        toggled($('#mapZone'), zoneMode);
         if (selZone && !draft.zone) { selZone = false; }
         const t = sel !== undefined ? draft.tiles[sel] : undefined;
         const def = t && defOf(t);
@@ -4156,19 +4409,24 @@
         if (r.warnings.length) { box.append(el('ul', { class: 'warn' }, ...r.warnings.map((w) => el('li', {}, w)))); }
     }
 
+    /** a toggle's state, said and shown (A11Y_DESIGN.md §5 W5): `attr` aria-pressed (a switch) or aria-expanded (a pane's
+     *  button) for a screen reader, and the `on` class, which sim.css draws with a bar under the words, not by colour alone */
+    function toggled(b, on, attr = 'aria-pressed') { if (b) { b.classList.toggle('on', !!on); b.setAttribute(attr, String(!!on)); } }
+
     function setPane(name) {
+        // a pane opens at its top, its heading in view (W5: the side bar kept the last pane's scroll)
+        const side = document.querySelector('aside');
+        if (side) { side.scrollTop = 0; }
         document.body.classList.toggle('config', name === 'config');
         document.body.classList.toggle('builder', name === 'builder');
         document.body.classList.toggle('tools', name === 'tools');
         document.body.classList.toggle('plot', name === 'plot');
-        $('#plotBtn').classList.toggle('on', name === 'plot');
-        $('#plotBtn').setAttribute('aria-expanded', String(name === 'plot'));
+        toggled($('#plotBtn'), name === 'plot', 'aria-expanded');
         if (name === 'plot' && !plot.on) { plot.on = true; plotOpened(); } else if (name !== 'plot' && plot.on) { plot.on = false; plotBreak(); }
-        $('#toolsBtn').classList.toggle('on', name === 'tools');
-        $('#toolsBtn').setAttribute('aria-expanded', String(name === 'tools'));
+        toggled($('#toolsBtn'), name === 'tools', 'aria-expanded');
         if (name === 'tools') { toolsShow(); } else { tools.pick = undefined; }
-        $('#cfgBtn').classList.toggle('on', name === 'config');
-        $('#mapBtn').classList.toggle('on', name === 'builder');
+        toggled($('#cfgBtn'), name === 'config', 'aria-expanded');
+        toggled($('#mapBtn'), name === 'builder', 'aria-expanded');
         if (name === 'builder') {
             // the builder opens on the map being driven, or on what it held
             const m = mapOf(courseId);
@@ -4214,8 +4472,8 @@
                 el('div', { class: 'actions' },
                     el('button', { class: 'btn', type: 'button', id: 'mapRot', title: 'Turn it a quarter turn, an object 15° (R)', onclick: () => { if (pick) { pickRot = (pickRot + 1) % 4; mapPane(); draw(); } else if (selObj !== undefined) { rotateObject(selObj, 1); } else if (selZone) { rotateZone(); } else if (sel !== undefined) { rotateTile(sel, 1); } } }, 'Turn'),
                     el('button', { class: 'btn', type: 'button', id: 'mapDel', title: 'Remove it (Delete)', onclick: () => { if (selObj !== undefined) { removeObject(selObj); } else if (selZone) { removeZone(); } else if (sel !== undefined) { removeTile(sel); } } }, 'Remove'),
-                    el('button', { class: 'btn', type: 'button', id: 'mapStart', title: 'Set where the robot starts: click a tile near the side it comes in by', onclick: () => { startMode = !startMode; greenMode = false; zoneMode = false; pick = undefined; palette(); mapPane(); draw(); } }, 'Set start'),
-                    el('button', { class: 'btn', type: 'button', id: 'mapGreen', title: 'Put green intersection markers down: click a dashed square at a junction (click again to take it up)', onclick: () => { greenMode = !greenMode; startMode = false; zoneMode = false; pick = undefined; pickObj = undefined; palette(); mapPane(); draw(); } }, 'Green markers'),
+                    el('button', { class: 'btn', type: 'button', id: 'mapStart', 'aria-pressed': 'false', title: 'Set where the robot starts: click a tile near the side it comes in by', onclick: () => { startMode = !startMode; greenMode = false; zoneMode = false; pick = undefined; palette(); mapPane(); draw(); } }, 'Set start'),
+                    el('button', { class: 'btn', type: 'button', id: 'mapGreen', 'aria-pressed': 'false', title: 'Put green intersection markers down: click a dashed square at a junction (click again to take it up)', onclick: () => { greenMode = !greenMode; startMode = false; zoneMode = false; pick = undefined; pickObj = undefined; palette(); mapPane(); draw(); } }, 'Green markers'),
                 ),
                 el('div', { class: 'actions' },
                     ...[['mapObs', 'obstacle', 'Obstacle', 'A brick, a block or a weight on the course (rules 3.5: 150 mm or more high; heavy, fixed, or light enough to push)'],
@@ -4225,8 +4483,8 @@
                         ['mapDead', 'dead', 'Dead victim', 'A dead victim in the evacuation zone (rules 3.10): a black ball 45 mm across, 70 g'],
                         ['mapFake', 'fake', 'Fake victim', 'A fake victim to ignore (rules 3.10.5): a grey or black ball, 30 mm across, not conductive'],
                         ['mapImage', 'image', 'Fake image', 'A fake victim to ignore (rules 3.10.5): a printed picture of one on the floor']].map(([id, type, text, title]) =>
-                        el('button', { class: 'btn', type: 'button', id, title, onclick: () => { pickObj = pickObj === type ? undefined : type; pick = undefined; startMode = false; greenMode = false; zoneMode = false; sel = undefined; selObj = undefined; selZone = false; palette(); mapPane(); draw(); } }, text)),
-                    el('button', { class: 'btn', type: 'button', id: 'mapZone', title: 'The evacuation zone (rules 3.9): 4 x 3 cells, 120 x 90 cm with its walls, a silver strip at its entrance and a black one at its exit, the red and green evacuation points in two corners. Click, then click the cell for its bottom-left corner',
+                        el('button', { class: 'btn', type: 'button', id, 'aria-pressed': 'false', title, onclick: () => { pickObj = pickObj === type ? undefined : type; pick = undefined; startMode = false; greenMode = false; zoneMode = false; sel = undefined; selObj = undefined; selZone = false; palette(); mapPane(); draw(); } }, text)),
+                    el('button', { class: 'btn', type: 'button', id: 'mapZone', 'aria-pressed': 'false', title: 'The evacuation zone (rules 3.9): 4 x 3 cells, 120 x 90 cm with its walls, a silver strip at its entrance and a black one at its exit, the red and green evacuation points in two corners. Click, then click the cell for its bottom-left corner',
                         onclick: () => { zoneMode = !zoneMode; pick = undefined; pickObj = undefined; startMode = false; greenMode = false; sel = undefined; selObj = undefined; palette(); mapPane(); draw(); } }, 'Evacuation zone'),
                 ),
                 el('div', { id: 'mapProps' }),
@@ -4482,7 +4740,7 @@
         c.strokeStyle = '#bbb'; c.lineWidth = 1 / k; c.strokeRect(0, 0, 300, 300);
         tileInk(c, def);
         return el('button', {
-            type: 'button', class: 'tile' + (pick === def.id ? ' on' : ''),
+            type: 'button', class: 'tile' + (pick === def.id ? ' on' : ''), 'aria-pressed': String(pick === def.id),
             title: `${def.name} (this map's own tile ${def.id}): click, then click the grid to place it; R or a right click turns it. Select a placed one to edit it.`,
             onclick: () => { pick = pick === def.id ? undefined : def.id; pickObj = undefined; startMode = false; greenMode = false; zoneMode = false; sel = undefined; selObj = undefined; selZone = false; palette(); mapPane(); draw(); },
         }, cv, el('span', { class: 'id' }, def.id), el('span', { class: 'nm' }, def.name), el('span', { class: 'ct' }, `${n} placed`));
@@ -4537,8 +4795,14 @@
                 el('label', { class: 'inline' }, 'Course', courseSel),
                 el('span', { class: 'inline', id: 'chBox', hidden: '' },
                     el('label', { class: 'inline', title: 'How many times the challenge runs your program, each from a slightly different start (1 to 20): the runs are part of a submission' },
-                        'Runs', el('input', { type: 'number', id: 'chRuns', min: String(chCfg.min), max: String(chCfg.max), value: String(chCfg.runs), style: 'width:3.5em', onchange: chRunsChanged })),
-                    el('button', { class: 'btn primary', id: 'chRun', title: 'Run the program in the editor on this challenge, every run from its own start, and score it', onclick: () => chStart() }, 'Run challenge')),
+                        'Runs', el('input', { type: 'number', id: 'chRuns', min: String(chCfg.min), max: String(chCfg.max), value: String(chCfg.runs), style: 'width:3.5em', 'aria-describedby': 'chRunsWhy', onchange: chRunsChanged })),
+                    // why a fixed level's box is greyed, for a screen reader (the input's title is out of reach: review chk57 r2 N3)
+                    el('span', { class: 'sr', id: 'chRunsWhy' }),
+                    el('button', { class: 'btn primary', id: 'chRun', title: 'Run the program in the editor on this challenge, every run from its own start, and score it', onclick: () => chStart() }, 'Run challenge'),
+                    // CC-8: the last practice run's truth log (Run from the level's start), as a CSV
+                    el('button', { class: 'btn', id: 'chTruth', type: 'button', hidden: '', title: 'Save what the robot truly did on your last practice run (from the level\'s start): its pose, speed and contacts every 10 ms, with the level\'s drawn values, as a CSV', onclick: () => toWorker({ type: 'truth', saved: new Date().toISOString() }) }, 'Save truth…'),
+                    el('button', { class: 'btn', id: 'namesBtn', type: 'button', hidden: '', 'aria-pressed': 'false', title: 'Show the name of each named item on the course (2D view)', onclick: () => { showNames = !showNames; namesUi(); draw(); } }, 'Show names')),
+                el('button', { class: 'btn', id: 'ckRun', type: 'button', title: 'Check the program in the editor against its lesson check (the line "# check: <name>" at its top names it): the field and the board are left alone', onclick: () => vscode.postMessage({ type: 'check-start' }) }, 'Check'),
                 el('button', { class: 'btn', id: 'wroLoad', hidden: '', title: 'Load WRO\'s printing file of the RoboMission Junior 2026 mat (the PDF you downloaded from wro-association.org): the sensors then read its print. It stays on this computer, kept for the next time.', onclick: () => wroPick() }, 'Load WRO mat…'),
                 el('span', { class: 'chip', id: 'wroChip', hidden: '' }),
                 el('button', { class: 'btn', id: 'wroForget', hidden: '', title: 'Forget the WRO mat: its file is deleted and the schematic is on the floor again', onclick: () => wroForget() }, 'Forget'),
@@ -4547,16 +4811,17 @@
                 el('button', { class: 'btn', id: 'wroEnd', hidden: '', disabled: '', title: 'End the run (the team\'s STOP, General Rules 10.7.5): it is scored once the robot stands still', onclick: () => wroEndRun() }, 'End run'),
                 el('label', { class: 'inline' }, 'Speed', speedSel),
                 el('button', { class: 'btn', id: 'resetBtn', title: 'Put the robot back at the start (when no program runs)', onclick: () => { place(undefined); } }, 'Back to start'),
-                el('button', { class: 'btn', id: 'followBtn', title: 'Keep the robot in the middle of the view (in 3D: follow it from behind)', onclick: (e) => { follow = !follow; e.currentTarget.classList.toggle('on', follow); if (v3) { v3.follow = follow; } if (!follow) { userView = false; fit(); draw(); } } }, 'Follow'),
-                el('button', { class: 'btn', id: 'camBtn', hidden: '', title: 'Show the first camera\'s picture (its newest frame at its release, as your program gets it)', onclick: () => camPreviewToggle() }, 'Camera'),
-                el('button', { class: 'btn', id: 'view3dBtn', title: 'See the course and the robot in 3D (drag to turn the view, Shift+drag to move it, scroll to zoom)', onclick: () => set3d(!mode3d) }, '3D'),
+                el('button', { class: 'btn', id: 'followBtn', title: 'Keep the robot in the middle of the view (in 3D: follow it from behind)', 'aria-pressed': 'false', onclick: (e) => { follow = !follow; toggled(e.currentTarget, follow); if (v3) { v3.follow = follow; } if (!follow) { userView = false; fit(); draw(); } } }, 'Follow'),
+                el('button', { class: 'btn', id: 'camBtn', hidden: '', 'aria-pressed': 'false', title: 'Show the first camera\'s picture (its newest frame at its release, as your program gets it)', onclick: () => camPreviewToggle() }, 'Camera'),
+                el('button', { class: 'btn on only3d-btn', id: 'modelsBtn', 'aria-pressed': 'true', title: 'Draw the EVN board and the sensors as their models (off: the plain boxes); looks only, the simulation is the same', onclick: (e) => { const on = !(v3 && v3.models); if (v3) { v3.models = on; } toggled(e.currentTarget, on); draw(); } }, 'Models'),
+                el('button', { class: 'btn', id: 'view3dBtn', 'aria-pressed': 'false', title: 'See the course and the robot in 3D (drag to turn the view, Shift+drag to move it, scroll to zoom)', onclick: () => set3d(!mode3d) }, '3D'),
                 el('button', { class: 'btn', id: 'btnBtn', title: 'The board\'s user button (hold to press): evn.button.pressed()', onpointerdown: () => pressButton(true), onpointerup: () => pressButton(false), onpointerleave: () => pressButton(false) }, 'Button'),
                 el('button', { class: 'btn', id: 'newBtn', title: 'A first line follower for this robot, in your projects folder: run it with Ctrl+F5', onclick: () => vscode.postMessage({ type: 'new-program' }) }, 'New program'),
                 el('button', { class: 'btn stop', id: 'stopBtn', title: 'Stop the program (Ctrl-C): every motor coasts', disabled: '', onclick: () => vscode.postMessage({ type: 'stop' }) }, 'Stop'),
                 el('button', { class: 'btn', id: 'toolsBtn', 'aria-expanded': 'false', 'aria-controls': 'toolsPane', title: 'Type the robot\'s start pose, nudge it, the pen and the errors, the grid, ruler, protractor and markers, by keyboard: the values as text', onclick: () => setPane(toolsOpen() ? '' : 'tools') }, 'Tools'),
                 el('button', { class: 'btn', id: 'plotBtn', 'aria-expanded': 'false', 'aria-controls': 'plotPane', title: 'Plot any motor, sensor or printed name=value channel against time', onclick: () => setPane(plotOpen() ? '' : 'plot') }, 'Plot'),
-                el('button', { class: 'btn', id: 'mapBtn', title: 'Build a course of Rescue Line tiles', onclick: () => setPane(builder() ? '' : 'builder') }, 'Map builder'),
-                el('button', { class: 'btn', id: 'cfgBtn', title: 'The simulated robot\'s hardware', onclick: () => setPane(document.body.classList.contains('config') ? '' : 'config') }, 'Configure robot'),
+                el('button', { class: 'btn', id: 'mapBtn', 'aria-expanded': 'false', 'aria-controls': 'mapPane', title: 'Build a course of Rescue Line tiles', onclick: () => setPane(builder() ? '' : 'builder') }, 'Map builder'),
+                el('button', { class: 'btn', id: 'cfgBtn', 'aria-expanded': 'false', 'aria-controls': 'cfgPane', title: 'The simulated robot\'s hardware', onclick: () => setPane(document.body.classList.contains('config') ? '' : 'config') }, 'Configure robot'),
             ),
             el('div', { class: 'main' },
                 el('div', { class: 'stage' },
@@ -4588,13 +4853,8 @@
                                 el('select', { id: 'rLopStart', title: 'At a lack of progress, the declared procedure (rules 4.2.8): the start button only (the program runs on), or the program restarted as at a power cycle (main.py from the start; press then holds the button as it starts)', onchange: refSettings }, el('option', { value: 'press' }, 'LoP: button'), el('option', { value: 'restart' }, 'LoP: restart')),
                                 el('label', { title: 'Seconds of calibration counted before the run (rules 5.3.1)' }, 'calib ', el('input', { type: 'number', id: 'rCal', min: '0', max: '480', value: '0', style: 'width:4em', onchange: refSettings }), ' s')),
                             el('div', { class: 'log', id: 'rLog' })),
-                        el('div', { class: 'card ref chal', id: 'chCard', hidden: '' },
-                            el('div', { class: 'row' }, el('b', { id: 'chTitle' }), el('span', { class: 'v', id: 'chProg' })),
-                            el('table', { class: 'chtab' }, el('thead', {}, el('tr', {}, ...['Run', 'Start', 'Result', 'Time', 'Touches', 'Points', ''].map((h) => el('th', {}, h)))), el('tbody', { id: 'chRows' })),
-                            el('div', { class: 'row', id: 'chSum' }),
-                            el('div', { class: 'row' },
-                                el('button', { class: 'btn primary', id: 'chSave', type: 'button', disabled: '', title: 'Seal these runs, your program and your robot for your teacher (and EVN), as a .evnsub file to hand in', onclick: () => vscode.postMessage({ type: 'challenge-save' }) }, 'Save submission…'),
-                                el('button', { class: 'btn', type: 'button', onclick: () => { $('#chCard').hidden = true; } }, 'Close'))),
+                        card.element(),
+                        ckCard.element(),
                         el('div', { class: 'card ref wro', id: 'wroCard', hidden: '' },
                             el('div', { class: 'row' },
                                 el('span', { title: 'The Junior 2026 score of the field (scoring sheet; max 230): live while the run is on, the result once it ended, kept until the next Run' }, el('span', { class: 'k' }, 'score '), el('span', { class: 'v', id: 'wScore' }, '-')),
@@ -4610,8 +4870,8 @@
                     el('div', { class: 'hint build-only' }, 'Click to place the picked tile, drag a tile to move it, R or a right click turns it, Delete removes it. Drag the floor to pan, scroll to zoom.'),
                     el('div', { class: 'note card', id: 'note', hidden: '' }),
                     el('div', { class: 'cue card run-only', id: 'trCue', hidden: '' }, 'Robot selected: the arrow keys move it. Escape lets go', el('span', { class: 'only2d' }, ', or click the floor'), '.'),
-                    el('div', { class: 'sr', id: 'trSay', role: 'status', 'aria-live': 'polite' }),
-                    el('div', { class: 'campv card', id: 'camPv', hidden: '' }, el('canvas', { id: 'camPvC', width: '320', height: '240', 'aria-label': 'The first camera\'s newest frame' }), el('div', { class: 'camst', id: 'camSt' })),
+                    card.region(),
+                    el('div', { class: 'campv card', id: 'camPv', hidden: '' }, el('canvas', { id: 'camPvC', role: 'img', width: '320', height: '240', 'aria-label': 'The first camera\'s newest frame' }), el('div', { class: 'camst', id: 'camSt' })),
                     el('div', { class: 'loading', id: 'loading' }, 'Starting the simulated board (Python)…'),
                 ),
                 el('aside', {},

@@ -2,7 +2,7 @@
   "name": "evn-alpha-micropython",
   "displayName": "EVN ALPHA MicroPython",
   "description": "Early-access tooling for the EVN ALPHA robotics controller: flash the MicroPython firmware, run programs, open the REPL, autocomplete for the evn motor API, and a Blockly block editor that generates MicroPython.",
-  "version": "0.2.75",
+  "version": "0.2.76",
   "publisher": "evn-alpha",
   "license": "MIT",
   "preview": true,
@@ -678,6 +678,16 @@
         "category": "EVN"
       },
       {
+        "command": "evn.simulator.check",
+        "title": "Check this program",
+        "category": "EVN"
+      },
+      {
+        "command": "evn.simulator.sayPose",
+        "title": "Say the robot's position",
+        "category": "EVN"
+      },
+      {
         "command": "evn.challenge.saveSubmission",
         "title": "Save a challenge submission",
         "category": "EVN"
@@ -700,6 +710,11 @@
       {
         "command": "evn.openOfflineLessons",
         "title": "Open offline lessons",
+        "category": "EVN"
+      },
+      {
+        "command": "evn.enrolOfflineLessons",
+        "title": "Enrol this computer for offline lessons",
         "category": "EVN"
       },
       {
@@ -819,6 +834,10 @@
         {
           "command": "evn.openOfflineLessons",
           "when": "evn.offlineOn"
+        },
+        {
+          "command": "evn.enrolOfflineLessons",
+          "when": "evn.offlineOn && isWindows"
         },
         {
           "command": "evn.nb.restartKernel",
@@ -1676,6 +1695,12 @@
         "when": "activeCustomEditorId == evn.blocksEditor"
       },
       {
+        "command": "evn.simulator.sayPose",
+        "key": "ctrl+alt+p",
+        "mac": "cmd+alt+p",
+        "when": "activeWebviewPanelId == 'evn.simulator'"
+      },
+      {
         "command": "evn.openDocsForSymbol",
         "key": "ctrl+f1",
         "mac": "cmd+f1",
@@ -1757,7 +1782,7 @@
           "default": 47800,
           "minimum": 1024,
           "maximum": 65530,
-          "description": "The simulator's camera stream for your own programs (OpenCV): its HTTP port on 127.0.0.1 (http://127.0.0.1:47800/cam/1/stream.mjpg). Taken: the next free block of six; the port in use is in the Simulator panel and in ~/.evn/sim-endpoints.json."
+          "description": "The simulator's camera stream for your own programs (OpenCV): its HTTP port on 127.0.0.1 (http://127.0.0.1:47800/cam/1/stream.mjpg), and the serial bridge's ports beside it (Serial1 on +1, Serial2 on +2: socket://127.0.0.1:47801). Taken: the next free block of six; the port in use is in the Simulator panel and in ~/.evn/sim-endpoints.json."
         },
         "evn.simulator.sbc.requireToken": {
           "type": "boolean",
@@ -1767,7 +1792,7 @@
         "evn.simulator.sbc.endpointsFile": {
           "type": "boolean",
           "default": true,
-          "description": "Write the simulator's camera stream port and your token to ~/.evn/sim-endpoints.json (readable by you only) while the Simulator panel is open, for your programs to find them."
+          "description": "Write the simulator's camera stream port, its serial bridge's ports and your token to ~/.evn/sim-endpoints.json (readable by you only) while the Simulator panel is open, for your programs to find them."
         },
         "evn.blocks.renderer": {
           "type": "string",
