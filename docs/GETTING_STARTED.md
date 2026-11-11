@@ -81,7 +81,7 @@ Before it writes anything, the extension checks that its firmware file is comple
 
 Open the **EVN ALPHA** tab in the activity bar (the ℕ icon). It has *Start*, *My projects* and *Examples*.
 
-![The EVN ALPHA side bar: Start, My projects, and Examples with the Motor folder open on motor_minimal and motor_complete, in Python and in blocks](images/getting-started-sidebar.png)
+![The EVN ALPHA side bar: Start, My projects, and Examples with one row for each part of the API - Board, Motor, Robot, Pose and the sensors](images/getting-started-sidebar.png)
 
 1. Plug the motor into **motor port 1**. Keep its wheel off the ground.
 2. Under *Examples*, click **Motor** and choose *Minimal · Python* (`motor_minimal.py`).

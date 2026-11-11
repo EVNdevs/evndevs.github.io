@@ -8,7 +8,7 @@ Open the **EVN ALPHA** tab in the activity bar (the ℕ icon). It has three sect
 
 - **Start**: **New Python program**, **New blocks program**, **Board panel**, **Documentation** and **Getting started**, then the [update row](COMMANDS.md#updates). The extension's version is beside the title; quote it in a bug report.
 - **My projects**: your own programs.
-- **Examples**: a folder for every part of the API.
+- **Examples**: one row for every part of the API (only the *Extended Peripherals* group is a folder to open); click a row to choose its minimal or complete example, in Python or in blocks.
 
 Two more views, *Board* and *Console*, are in the secondary side bar on the other side of the window ([The Board view](BOARD_VIEW.md)).
 

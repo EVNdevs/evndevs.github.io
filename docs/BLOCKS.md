@@ -10,7 +10,7 @@ This page has three parts: **your first programs** (start here), **every block, 
 - Drag blocks from the **toolbox** on the left. Put the *set up* blocks under **set up**, the rest under **program** (see [Set up, then program](#set-up-then-program)). The **Python** pane on the right shows the program the blocks make; **Copy** puts it on the clipboard.
 - **Run on board** (or **Ctrl+F5**) saves the file and runs it. **Stop motors** (**Ctrl+Shift+F5**) stops it and lets every motor coast.
 - **Upload as main.py** puts the program on the board, so a press of the user button starts it after every power-on. **Export Python** saves it as a `.py` file to carry on in text.
-- **Examples**: the *Examples* list in the side bar has a folder for each part of the robot (the board, a motor, the robot, every sensor and output...). Each has a `…_minimal.evnblocks` (the few blocks you need) and a `…_complete.evnblocks` (every block of that part), next to the same programs in Python. **EVN: New project folder** copies them into `examples/`.
+- **Examples**: the *Examples* list in the side bar has a row for each part of the robot (the board, a motor, the robot, every sensor and output...); click one to choose which of its examples to open. Each has a `…_minimal.evnblocks` (the few blocks you need) and a `…_complete.evnblocks` (every block of that part), next to the same programs in Python. **EVN: New project folder** copies them into `examples/`.
 
 ![The blocks editor: the toolbox on the left, the set up and program start blocks with motor_minimal's blocks, and the MicroPython they generate on the right](images/blocks-editor.png)
 

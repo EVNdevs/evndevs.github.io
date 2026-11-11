@@ -45,8 +45,8 @@ peripherals bench-validated.
    the board plugged in. The firmware travels inside the extension; a board in UF2 (BOOTSEL) mode is
    recognised and flashed without a COM port (a flash keeps your programs, files and calibrations), or
    restarted into the firmware it already has with **EVN: Restart the board without flashing**.
-3. **Run something.** Open the **EVN ALPHA** tab in the activity bar, open `motor_minimal` in the *Motor* folder under
-   *Examples*, plug a motor into port 1, and press **Ctrl+F5**.
+3. **Run something.** Open the **EVN ALPHA** tab in the activity bar, click *Motor* under *Examples* and choose
+   **Minimal · Python**, plug a motor into port 1, and press **Ctrl+F5**.
 
 The written guide is [Getting started](https://evn.coresg.tech/#/getting-started); the extension also has
 a six-step walkthrough (**EVN: Getting started walkthrough**).
