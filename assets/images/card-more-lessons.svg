@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+<title>Lesson pages climbing grade by grade: the first written and tested, the next ones planned</title>
+<defs>
+<pattern id="dots" width="32" height="32" patternUnits="userSpaceOnUse"><circle cx="16" cy="16" r="1.4" fill="#ffffff" fill-opacity=".05"/></pattern>
+<radialGradient id="glow" cx="30%" cy="22%" r="75%"><stop offset="0" stop-color="#a8977b" stop-opacity=".16"/><stop offset="1" stop-color="#a8977b" stop-opacity="0"/></radialGradient>
+<radialGradient id="gold" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#ffd47e" stop-opacity=".35"/><stop offset="1" stop-color="#ffd47e" stop-opacity="0"/></radialGradient>
+</defs>
+<rect width="1280" height="720" fill="#111518"/><rect width="1280" height="720" fill="url(#dots)"/><rect width="1280" height="720" fill="url(#glow)"/>
+<g fill="none" stroke-linecap="round" stroke-linejoin="round" transform="translate(64 0) scale(0.9)">
+<path d="M150 450H300L350 500V740H150Z" fill="#1a1f24" stroke="#c9b99c" stroke-width="13"/><rect x="180" y="520" width="130" height="16" rx="8.0" fill="#5f6870" fill-opacity=".7"/><rect x="180" y="560" width="100" height="16" rx="8.0" fill="#5f6870" fill-opacity=".7"/><rect x="180" y="600" width="120" height="16" rx="8.0" fill="#5f6870" fill-opacity=".7"/><circle cx="290" cy="672" r="36" fill="url(#gold)" stroke="#ffd47e" stroke-width="13"/><path d="M274 674l9.6 9.6l19.2 -20.4" stroke="#ffd47e" stroke-width="13"/><path d="M400 360H550L600 410V650H400Z" fill="none" stroke="#c9b99c" stroke-width="13" stroke-dasharray="31 23"/><path d="M650 270H800L850 320V560H650Z" fill="none" stroke="#c9b99c" stroke-width="13" stroke-dasharray="31 23"/><path d="M900 180H1050L1100 230V470H900Z" fill="none" stroke="#c9b99c" stroke-width="13" stroke-dasharray="31 23"/>
+</g>
+</svg>

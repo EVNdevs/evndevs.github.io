@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+<title>Three planned papers for schools: a price sheet, a data-protection note and an accessibility statement</title>
+<defs>
+<pattern id="dots" width="32" height="32" patternUnits="userSpaceOnUse"><circle cx="16" cy="16" r="1.4" fill="#ffffff" fill-opacity=".05"/></pattern>
+<radialGradient id="glow" cx="30%" cy="22%" r="75%"><stop offset="0" stop-color="#a8977b" stop-opacity=".16"/><stop offset="1" stop-color="#a8977b" stop-opacity="0"/></radialGradient>
+<radialGradient id="gold" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#ffd47e" stop-opacity=".35"/><stop offset="1" stop-color="#ffd47e" stop-opacity="0"/></radialGradient>
+</defs>
+<rect width="1280" height="720" fill="#111518"/><rect width="1280" height="720" fill="url(#dots)"/><rect width="1280" height="720" fill="url(#glow)"/>
+<g fill="none" stroke-linecap="round" stroke-linejoin="round" transform="translate(64 0) scale(0.9)">
+<path d="M110 170H330L390 230V600H110Z" stroke="#c9b99c" stroke-width="13" stroke-dasharray="31 23"/><g transform="translate(250 390)"><path d="M-70 -40H30L80 0L30 40H-70Z" stroke="#ffd47e" stroke-width="13"/><circle cx="35" cy="0" r="10" fill="#ffd47e"/></g><path d="M500 170H720L780 230V600H500Z" stroke="#c9b99c" stroke-width="13" stroke-dasharray="31 23"/><g transform="translate(640 390)"><path d="M0 -80L70 -55V5C70 50 35 75 0 90C-35 75 -70 50 -70 5V-55Z" stroke="#ffd47e" stroke-width="13"/></g><path d="M890 170H1110L1170 230V600H890Z" stroke="#c9b99c" stroke-width="13" stroke-dasharray="31 23"/><g transform="translate(1030 390)"><circle cx="0" cy="-62" r="18" fill="#ffd47e"/><path d="M-70 -28H70M0 -28V30M0 30L-40 90M0 30L40 90" stroke="#ffd47e" stroke-width="13"/></g>
+</g>
+</svg>

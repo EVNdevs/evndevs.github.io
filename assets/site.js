@@ -911,7 +911,10 @@
          of the 2d"): the clip's first frame over the render's screen (its box in % of the render, measured on
          chapter-sim.webp: 889 x 534 px at 194, 89), and the clip itself where motion is welcome (chapterScreen) */
       screen: { box: [15.16, 8.28, 69.45, 49.67], poster: 'assets/images/sim-rcj.webp',
-        sources: [['assets/video/sim-rcj.webm', 'video/webm'], ['assets/video/sim-rcj.mp4', 'video/mp4']], loop: [1, 11] } }
+        sources: [['assets/video/sim-rcj.webm', 'video/webm'], ['assets/video/sim-rcj.mp4', 'video/mp4']], loop: [0, 14.3],
+        /* the clip's playback speed as recorded: a sped-up retake (the owner, 2026-11-11: the full course "sped up if needed
+           and marked as sped up", a "2x speed" label in the clip itself) sets it, and the render's alt then says so */
+        speed: 2 } }
   };
 
   /* A render's screen (CHAPTER_STILLS screen): the clip's first frame laid over the render's own screen, so the page,
@@ -1263,7 +1266,7 @@
         im.src = still.src;
         im.width = still.width;
         im.height = still.height;
-        im.alt = still.alt;
+        im.alt = still.alt + (still.screen && still.screen.speed > 1 ? ' The clip on its screen runs at ' + still.screen.speed + 'x speed.' : '');
         im.loading = 'lazy';
         im.decoding = 'async';
         fig.appendChild(im);

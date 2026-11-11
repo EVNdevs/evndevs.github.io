@@ -761,6 +761,7 @@ function buildChalkboard(pose, box) {
   /* behind the scene and raised by half its radius: the open space in the motors pose's view is above the motors, so the
      writing (and the chalk at it) shows there rather than behind them */
   g.position.copy(sph.center).addScaledVector(toCam, -sph.radius * 1.15).addScaledVector(up, sph.radius * 0.38);
+  g.userData.fit = { base: g.position.clone(), up: up.clone(), h: ph };          // keepInView: below the header in a short window
   g.quaternion.setFromRotationMatrix(new THREE.Matrix4().lookAt(toCam, new THREE.Vector3(0, 0, 0), up));
   g.add(plane);
   const chalkMat = new THREE.MeshStandardMaterial({ color: 0xd9ddd8, roughness: 0.95, transparent: true, opacity: 0 });
@@ -1075,6 +1076,7 @@ function buildFollower(model, group, pose, ownBox, mmU) {
   const bmat = new THREE.MeshBasicMaterial({ map: btex, color: 0x9a9d9f, transparent: true, opacity: 0, depthWrite: false });
   const board = new THREE.Group();
   board.position.copy(sph.center).addScaledVector(toCam, -sph.radius * 1.2).addScaledVector(camUp, sph.radius * 0.78);
+  board.userData.fit = { base: board.position.clone(), up: camUp.clone(), h: ph };   // keepInView
   board.quaternion.setFromRotationMatrix(new THREE.Matrix4().lookAt(toCam, new THREE.Vector3(0, 0, 0), camUp));
   board.add(new THREE.Mesh(new THREE.PlaneGeometry(pw, ph), bmat));
   board.visible = false;
@@ -1140,7 +1142,7 @@ const SCREEN_CLIP = {
   scene: 'simulator',
   poster: 'assets/images/sim-rcj.webp',
   sources: [['assets/video/sim-rcj.webm', 'video/webm'], ['assets/video/sim-rcj.mp4', 'video/mp4']],
-  loop: [1, 11]
+  loop: [0, 14.3]
 };
 function screenClip(group) {
   let screen = null;
@@ -1300,7 +1302,9 @@ export async function start(stage, opts) {
   loadEl.className = 'stage-load';
   loadEl.setAttribute('aria-hidden', 'true');
   loadEl.innerHTML = '<span class="stage-load-text"></span><span class="stage-load-bar"><i></i></span>';
-  host.appendChild(loadEl);
+  /* on the stage, over the chapters (site.css .stage-load, fixed): inside the 3D layer it sat under them, and a render
+     scrolling in overprinted its words (the Razer's fast-scroll check: "S?nsors") */
+  stage.appendChild(loadEl);
   const loadState = { board: true, key: null, loaded: 0, total: 0 };
   const onLoadProgress = (key) => (e) => {
     if (gaveUpEarly) { return; }
@@ -1326,8 +1330,8 @@ export async function start(stage, opts) {
     loadEl.classList.toggle('indet', frac < 0);
     loadEl.style.setProperty('--load', String(Math.max(0, frac)));
     const h = host.getBoundingClientRect();
-    loadEl.style.left = Math.round((box.qL + box.qR) / 2) + 'px';
-    loadEl.style.top = Math.round(Math.min(h.height - 44, Math.max(8, box.qB + 6))) + 'px';
+    loadEl.style.left = Math.round(h.left + (box.qL + box.qR) / 2) + 'px';
+    loadEl.style.top = Math.round(h.top + Math.min(h.height - 44, Math.max(8, box.qB + 6))) + 'px';
     loadEl.classList.add('on');
   }
   let loadReady = false;
@@ -1461,6 +1465,33 @@ export async function start(stage, opts) {
     }
     return POSES.length - 1;
   }
+  /* the board shown at a pose: not where a pose has no board (the simulator's laptop alone), nor while a chapter's scene is
+     not in (not loaded yet, failed, or not for this window): the chapter's own render shows the board there, and the 3D
+     board drawn over it doubled it (the owner, 2026-11-11, scrolling quickly: "the image of the evn showing and
+     persisting even as the 3d models drew over it"); it fades in as the scene arrives and the render fades out */
+  /* a background board (the chalkboard, the blocks board) kept below the site's header: in a short window (the owner's
+     1920 x 1080 at 150 %, about 1280 x 600 of page) the scene fills the height and the board, placed above it, went up
+     under the header. Each frame, from where it was built: if its top is above the canvas's top edge (plus a margin) it
+     shrinks about its foot, to 0.7 at most, then slides down behind the scene, up to 0.6 of its height */
+  const kv = new THREE.Vector3();
+  function keepInView(g) {
+    const f = g.userData.fit;
+    if (!f || !g.visible) { return; }
+    g.position.copy(f.base); g.scale.setScalar(1); g.updateMatrixWorld(true);
+    camera.updateMatrixWorld();
+    const r = canvas.getBoundingClientRect();
+    const ys = (y) => { kv.set(0, y, 0).applyMatrix4(g.matrixWorld).project(camera); return (1 - kv.y) / 2 * r.height; };
+    const top = ys(f.h / 2), foot = ys(-f.h / 2), px = (foot - top) / f.h;   // canvas px a unit
+    const limit = 14;
+    if (top >= limit || px <= 0) { return; }
+    const need = (limit - top) / px;                             // units its top must come down
+    const s = Math.max(0.7, 1 - need / f.h);                     // first shrunk about its foot (more of it stays above the scene)
+    const drop = Math.min(f.h * 0.6, need - (1 - s) * f.h);      // then, if still too high, slid down
+    g.position.copy(f.base).addScaledVector(f.up, -((1 - s) * f.h / 2 + Math.max(0, drop)));
+    g.scale.setScalar(s);
+    g.updateMatrixWorld(true);
+  }
+  function boardOn(pose) { return pose.board === false || (pose.scene && !scenes[pose.scene]) ? 0 : 1; }
   function target() {
     const p = progress();
     const i = Math.min(POSES.length - 2, Math.floor(p));
@@ -1468,7 +1499,7 @@ export async function start(stage, opts) {
     const a = POSES[i], b = POSES[i + 1];
     const fa = framing(a), fb = framing(b);
     const o = { rx: lerp(a.rx, b.rx, t), ry: lerp(a.ry, b.ry, t), zoom: lerp(a.zoom || 1, b.zoom || 1, t),
-                bf: lerp(a.board === false ? 0 : 1, b.board === false ? 0 : 1, t),
+                bf: lerp(boardOn(a), boardOn(b), t),
                 cx: lerp(fa.c.x, fb.c.x, t), cy: lerp(fa.c.y, fb.c.y, t),
                 cz: lerp(fa.c.z, fb.c.z, t), rad: lerp(fa.r, fb.r, t), p };
     for (const ax of ['x', 'y', 'z']) {
@@ -1575,6 +1606,8 @@ export async function start(stage, opts) {
       model.position.copy(follower.pivot).sub(twQ.copy(follower.pivot).applyQuaternion(model.quaternion));
       model.updateMatrixWorld(true);
     }
+    if (chalk) { keepInView(chalk.group); }
+    if (follower) { keepInView(follower.board); }
     setAssembly(asm, asmDone ? Infinity : asmT, shadow);
     setBoardFade(cur.bf > 0.999 ? 1 : cur.bf < 0.001 ? 0 : cur.bf);
     /* a replay waiting to start fades the whole board out with the items (review site76_r7 S2: it vanished in a frame and
@@ -1608,10 +1641,10 @@ export async function start(stage, opts) {
         /* fading in over the first ITEM_FADE of its way in, out over the last of its way out */
         paintItem(it, pr >= 1 ? 1 : easeOut(clamp01(pr / ITEM_FADE)));
         for (const l of it.lit) {                                 // lit only once it is plugged in
-          l.m.emissiveIntensity = pr >= 1 ? l.ei : 0;
-          l.m.color.copy(l.c0).multiplyScalar(pr >= 1 ? 1 : LIT_OFF);
+          l.m.emissiveIntensity = pr >= PLUGGED ? l.ei : 0;
+          l.m.color.copy(l.c0).multiplyScalar(pr >= PLUGGED ? 1 : LIT_OFF);
         }
-        if (usbScene && it.key !== 'rest' && pr >= 1) { usb = 1; }
+        if (usbScene && it.key !== 'rest' && pr >= PLUGGED) { usb = 1; }
         for (const m of it.mats) { m.emissive.copy(HOVER_GLOW).multiplyScalar(it.hov); }
         if (it.spin) {
           const u = it.spin0 ? clamp01((performance.now() - it.spin0) / SPIN_MS[it.spin.kind]) : 1;
@@ -1622,7 +1655,11 @@ export async function start(stage, opts) {
     });
     if (asm.leds) { setLed(asm.leds.usb, usb, boardFade * rf); }
   }
-  const ITEM_FADE = 0.4, LIT_OFF = 0.3;
+  /* PLUGGED: an item counts as plugged in (its lights on: the OLED's mark, the colour sensor's lamp, the green USB LED)
+     once 90 % of the way in - the eye sees it home there (its offset under 0.5 %), while 100 % waits for the eased
+     story to settle exactly on the pose, about 1.7 s later (the owner, 2026-11-11: "n on the oled only appears after
+     some time, same with the green led when evn connects to laptop") */
+  const ITEM_FADE = 0.4, LIT_OFF = 0.3, PLUGGED = 0.9;
   /* a replay of the entrance (owner, 2026-11-11: "Clicking the model should re-trigger the animation"): the shown items
      pulled out first (gate to 0 over GATE_MS), the board put together again, then the items plugged back in */
   let gate = 1, gateT = 1, replay = false, replays = 0;
@@ -1641,9 +1678,19 @@ export async function start(stage, opts) {
   const io = new IntersectionObserver((es) => {
     if (!stage.isConnected) { stop('left'); return; }
     visible = es[0].isIntersecting;
-    if (visible) { loop(); }
+    if (visible) { loop(); } else { hideFixed(); }
   });
   io.observe(stage);
+  /* what sits on the window over the stage (the loading pill, the run and clip buttons, the name box): the frames that
+     place them stop once the stage is out of view, so they are hidden then, not left over the page below */
+  function hideFixed() {
+    loadEl.classList.remove('on');
+    try {                                            // the buttons and the name box are made further on: none yet, nothing to hide
+      for (const el of [runEl, clipEl]) { if (!el.hidden) { el.hidden = true; } }
+      if (hovered) { hovered.hovT = 0; hovered = null; }
+      showTip();
+    } catch (e) { /* not made yet */ }
+  }
   /* any scroll, key or pointer press finishes the entrance at once */
   const onSkip = () => { if (!asmDone) { skip = true; loop(); } };
   /* a scroll ends a hover: the item would stay lit and lifted while the scroll takes it out (review site76_r6 N1) */
@@ -1951,6 +1998,9 @@ export async function start(stage, opts) {
       const dv = tg[k] - cur[k];
       if (Math.abs(dv) > (k[0] === 'q' ? 0.25 : 1e-4 * (k === 'rad' || k[0] === 'c' || k[0] === 'b' ? Math.max(1, cur.rad) : 1))) { moving = true; cur[k] += dv * kf; } else { cur[k] = tg[k]; }
     }
+    /* the board goes as the scroll says, at once: eased, it lagged a fast scroll by 200 ms and was drawn, half faded, over
+       a chapter whose scene had not loaded (the Razer's fast-scroll check, data/screens/fast-scroll-1.png); it eases in */
+    if (tg.bf < cur.bf) { cur.bf = tg.bf; }
     if (!drag && (userYaw || userPitch)) {
       const kb = 1 - Math.exp(-dt / DRAG_BACK_MS);
       userYaw -= userYaw * kb; userPitch -= userPitch * kb;
@@ -2051,7 +2101,10 @@ export async function start(stage, opts) {
       const base = new RenderPass(scene, camera);
       base.clearAlpha = 0;                   // as it ships, RenderPass's clear left the canvas opaque (data/bloom_probe)
       c.addPass(base);
-      const bloom = new UnrealBloomPass(new THREE.Vector2(r.width, r.height), 0.55, 0.45, 0.92);
+      /* strength 0.3 (was 0.55): it is on only where the first frames are fast, so the page looked different from one
+         load to the next (the owner, 2026-11-11: "bloom is very intense initially on razer, refreshing seems to set it
+         back to normal"); gentler, with or without it the page reads the same */
+      const bloom = new UnrealBloomPass(new THREE.Vector2(r.width, r.height), 0.3, 0.4, 0.94);
       /* the glow is added to the colour only: its blur writes alpha 1 everywhere, and blended as it ships it made the
          whole canvas opaque over the stage's own background. The scene's alpha is kept, so the glow adds onto the page */
       Object.assign(bloom.blendMaterial, { blending: THREE.CustomBlending, blendEquation: THREE.AddEquation,
