@@ -865,7 +865,7 @@
   var CHAPTER_STILLS = {
     motors: { src: 'assets/images/chapter-motors.webp', width: 1280, height: 892,
       alt: 'The EVN ALPHA board with LEGO MINDSTORMS EV3 and NXT motors and a small gearmotor plugged into its four motor ports.' },
-    sensors: { src: 'assets/images/chapter-sensors.webp', width: 1281, height: 1054,
+    sensors: { src: 'assets/images/chapter-sensors.webp', width: 1279, height: 1024,
       alt: 'The EVN ALPHA board with a colour sensor, a distance sensor, a gesture sensor and an OLED display showing the EVN logo, cabled to its ports.' },
     code: { src: 'assets/images/chapter-code.webp', width: 1275, height: 845,
       alt: 'The EVN ALPHA board on a USB-C cable to a laptop showing the EVN blocks editor with its Python panel.' },
@@ -881,7 +881,7 @@
     ['motors', 'Motors', 'Plug in the motors you already have.',
      'Four motor ports that work with LEGO MINDSTORMS EV3 and NXT motors, and the board calibrates each one itself.',
      ['Calibrating your robot', '#/calibration/']],
-    ['sensors', 'Sensors and displays', 'Sixteen peripheral ports. Found by name.',
+    ['sensors', 'Sensors and displays', '16 I2C peripheral ports. Found by name.',
      'Plug in a sensor or a display and it shows up by name, with four servo ports and two serial ports beside them.',
      ['Sensors and displays', '#/documentation/sensors']],
     ['code', 'Code', 'Blocks or Python, live on the robot.',
@@ -966,7 +966,7 @@
     img.width = 138;
     img.height = 640;
     img.alt = '';
-    img.loading = 'lazy';                                // hidden under 1340 px: a phone never fetches it
+    img.loading = 'lazy';                                // fetched only where it shows: 900 px and wider, or a portrait screen
     nav.appendChild(img);
     var ol = el('ol');
     var links = LED_SECTIONS.map(function (s, i) {
@@ -995,9 +995,24 @@
     }
     function onScroll() { if (!ticking) { ticking = true; requestAnimationFrame(update); } }
     if (ledTeardown) { ledTeardown(); }
+    /* lying along a portrait screen's foot, the strip would hide whatever takes focus beneath it (WCAG 2.2 2.4.11; the
+       browsers do not apply the root's scroll-padding to a focus's scroll): the page scrolls it clear, once the focus has
+       scrolled it into view */
+    function onFocus(e) {
+      requestAnimationFrame(function () {
+        var L = nav.getBoundingClientRect();
+        if (!L.width || L.width < L.height || !e.target.getBoundingClientRect || nav.contains(e.target)) { return; }
+        var b = e.target.getBoundingClientRect();
+        if (b.bottom > L.top - 12 && b.top < L.bottom && b.right > L.left && b.left < L.right) { window.scrollBy(0, b.bottom - L.top + 24); }
+      });
+    }
     window.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('resize', onScroll, { passive: true });
-    ledTeardown = function () { window.removeEventListener('scroll', onScroll); window.removeEventListener('resize', onScroll); ledTeardown = null; };
+    document.addEventListener('focusin', onFocus);
+    ledTeardown = function () {
+      window.removeEventListener('scroll', onScroll); window.removeEventListener('resize', onScroll);
+      document.removeEventListener('focusin', onFocus); ledTeardown = null;
+    };
     requestAnimationFrame(update);
     return nav;
   }
@@ -1008,7 +1023,7 @@
                       ['competition', 'Competition teams'], ['higher-learning', 'Higher learning'], ['parents', 'Parents']];
 
   function renderHome(slug) {
-    document.title = SITE;
+    document.title = SITE + ' · The natural evolution of the robot kit';   // the home page's title, as index.html's
     markCurrentNav('home');
     /* built: the home page is in <main> and its cards are there or on their way; after a failed load it is built again */
     var built = current && current.doc === 'home' && document.getElementById('audiences')

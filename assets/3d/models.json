@@ -11,6 +11,7 @@
     "compressed with glTF Transform 4.1.1 (optimize, then meshopt with a scene-wide quantization volume; simplification only within 0.05 %; the commands",
     "is in that session's data/sources.md). Budget (scripts/test_site.js): each file at most 6 MB, all of them at most 14 MB",
     "(about 7 MB gzipped, as GitHub Pages serves them); the board first, each scene only as its chapter comes near.",
+    "Their decals (art layers, screens, part markings) are lifted 0.03 mm off their surfaces in the files (that session's data/bake_decals.mjs, then the same meshopt step).",
     "`environment`: the marketing renders' studio HDRI (product_renders' studio_small_09, cut to 512 x 256 by that session's data/hdri_to_web.py), turned by `turn_deg` about +Y, loaded once the board is up. `phone_scenes`: the scenes loaded at 760 px and under: none (a phone's 3D layer is its first screen's; its chapters show their photoreal renders, site.js CHAPTER_STILLS)."
   ],
   "board": "assets/3d/evn-alpha-board.glb",

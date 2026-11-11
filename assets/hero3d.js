@@ -88,7 +88,7 @@ const SCENE_MOTION = {
   motors: { mode: 'plugs', from: 0.55 },
   sensors: { mode: 'above', from: 0.45 },
   robot: { mode: 'above', whole: true, from: 0.7 },
-  code: { mode: 'behind', whole: true, from: 0.8 },
+  code: { mode: 'behind', whole: true, from: 0.8, usb: true },   // usb: plugged in, it lights the board's green LED
   simulator: { mode: 'behind', whole: true, from: 0.8 },
   displays: { mode: 'above', from: 0.45 }
 };
@@ -206,10 +206,10 @@ function gltfLoader() {
 /* the board: its glTF scene scaled to the placeholder's 4.2 units of length and centred; `frame` is that transform, which
    every chapter scene takes too (they are in the board's own frame); `L`, `center` and `half` the board's size in that
    frame (the glTF's own units) */
-async function loadModel(models) {
+async function loadModel(models, onProgress) {
   if (!models || !models.board) { return placeholderBoard(); }
   const loader = await gltfLoader();
-  const gltf = await loader.loadAsync(new URL(models.board, document.baseURI).href);
+  const gltf = await loader.loadAsync(new URL(models.board, document.baseURI).href, onProgress);
   const g = new THREE.Group();
   const scene = gltf.scene;
   const lid = scene.getObjectByName('grp_shield');
@@ -227,6 +227,7 @@ async function loadModel(models) {
   scene.scale.setScalar(k);
   scene.position.copy(g.userData.frame.offset);
   g.add(scene);
+  decalOffsets(scene);
   return g;
 }
 
@@ -250,8 +251,9 @@ function softenEnv(root) {
    render"): no diffuse colour (plain transparency's white at 0.16 was the haze), its reflections added over what is behind
    it (premultiplied blending without the multiply: ONE, ONE_MINUS_SRC_ALPHA), and an alpha that is all but clear face-on
    and rises towards grazing angles, so the lid's edges and curves catch the light and darken a little as glass does.
-   `userData.fade` fades the whole lid with the board (a pose with board: false) */
-const GLASS_FACE = 0.04, GLASS_EDGE = '0.7';
+   `userData.fade` fades the whole lid with the board (a pose with board: false). Then (owner, 2026-11-11: "Clear top is now
+   a tad dark"): its edges darken less (0.4, was 0.7) over a narrower band (the rim's power 3, was 2), face-on 0.025 */
+const GLASS_FACE = 0.025, GLASS_EDGE = '0.4', GLASS_RIM = '3.0';
 function glassLid(m) {
   m.transmission = 0;
   m.transparent = true;
@@ -269,7 +271,7 @@ function glassLid(m) {
     sh.uniforms.uFade = fade;
     sh.fragmentShader = 'uniform float uFade;\n' + sh.fragmentShader
       .replace('#include <opaque_fragment>', [
-        'float evnRim = pow( 1.0 - saturate( abs( dot( geometryViewDir, normal ) ) ), 2.0 );',
+        'float evnRim = pow( 1.0 - saturate( abs( dot( geometryViewDir, normal ) ) ), ' + GLASS_RIM + ' );',
         'diffuseColor.a = mix( diffuseColor.a, ' + GLASS_EDGE + ', evnRim ) * uFade;',
         'outgoingLight *= uFade;',
         '#include <opaque_fragment>'].join('\n'))
@@ -277,6 +279,20 @@ function glassLid(m) {
   };
   m.customProgramCacheKey = () => 'evn-glass-lid';
   m.needsUpdate = true;
+}
+
+/* ---- the decals (owner, 2026-11-11: "Texture on some of the components only show at specific angles ..."): the art
+   layers, screens and part markings are lifted 0.03 mm off their surfaces in the GLBs themselves
+   (docs/session/2026-11-10_site76/data/bake_decals.mjs; review site76_r7 B1: done here, in the browser, it cost 2.3 s
+   of the main thread). Here they only draw with a small polygon offset towards the camera, which needs no sign */
+function decalMaterial(m) { return !!(m && (m.map || m.emissiveMap || /^mark_/i.test(m.name || ''))); }
+function decalOffsets(root) {
+  let n = 0;
+  root.traverse((o) => {
+    if (!o.isMesh) { return; }
+    for (const m of [].concat(o.material)) { if (decalMaterial(m) && !m.polygonOffset) { m.polygonOffset = true; m.polygonOffsetFactor = -1; m.polygonOffsetUnits = -2; n++; } }
+  });
+  return n;
 }
 
 /* a vector of `from`'s frame in `to`'s frame (a direction and length, not a point) */
@@ -346,48 +362,116 @@ function buildAssembly(model) {
                              new THREE.Vector3(0, -1, 0)));
   }
   const h = model.userData.half;
-  add(by('grp_cover'), ASSEMBLY.cover, h.x >= h.z ? new THREE.Vector3(1, 0, 0) : new THREE.Vector3(0, 0, 1));
-  /* the LED: its lens (the model's placeholder green) made its own red material, dark until the board is on, and a small
-     red light just above it */
-  const led = by('LED3_C2286');
-  if (led) {
-    const lens = [];
-    led.traverse((o) => {
+  /* the battery cover slides in from the face the USB-C port is on (owner, 2026-11-11: "battery cover is sliding in from
+     the wrong direction, should be from the side where the USB c port is"): USB1 (LCSC C2765186) sits mid-way along the
+     board's long +x face, so the cover comes in sideways from there (it had come along the long axis, from an end) */
+  const usb = by('USB1_C2765186');
+  add(by('grp_cover'), ASSEMBLY.cover, usb ? faceAxis(model, centreIn(scene, usb)) : new THREE.Vector3(1, 0, 0));
+  /* each part its own materials (the model shares them between parts: the shell and the cover are one white), so a part
+     fades in alone as it comes (PART_FADE); the glass lid keeps its own, faded through its uniform */
+  for (const p of A.parts) {
+    const own = new Map();
+    p.obj.traverse((o) => {
       if (!o.isMesh) { return; }
-      o.material = [].concat(o.material).map((m) => {
-        if (!(m.color && m.color.g > 0.8 && m.color.r < 0.2 && m.color.b < 0.2)) { return m; }
-        const c = m.clone();
-        c.color.setHex(0x3a0a06);
-        c.emissive.setHex(0xff2008);
-        c.emissiveIntensity = 0;
-        lens.push(c);
-        return c;
-      });
-      if (o.material.length === 1) { o.material = o.material[0]; }
+      const ms = [].concat(o.material).map((m) => { if (m.userData.fade) { return m; } if (!own.has(m)) { own.set(m, m.clone()); } return own.get(m); });
+      o.material = ms.length === 1 ? ms[0] : ms;
     });
-    const light = new THREE.PointLight(0xff2a14, 0, 1.6, 2);
-    light.position.copy(centreIn(model, led)).add(new THREE.Vector3(0, 0.06, 0));
-    model.add(light);
-    A.led = { lens, light };
+  }
+  A.leds = { power: boardLed(model, LEDS.power), usb: boardLed(model, LEDS.usb) };
+  A.led = A.leds.power;
+  for (const p of A.parts) {
+    const set = new Set();
+    p.obj.traverse((o) => { if (o.isMesh) { for (const m of [].concat(o.material)) { set.add(m); } } });
+    p.mats = [...set];
+    p.alpha = 1;
   }
   return A;
 }
-const LED_LIGHT = 0.15;                                      // the LED's light, candela in the board group's units
+/* the board's LEDs (owner, 2026-11-11: "Red led is too dark"; "When the laptop is plugged into the evn, the green led on the
+   evn should also come on"): docs/EVN ALPHA Hardware Reference.md's LED table, LED3 (C2286, red) power on, LED6 (C72043,
+   green) USB cable connected. The lens is the LED's body, named per LED from the model (review site76_r7 S1: picked as the
+   most saturated material it was LED6's terminals): `2`, the 0603's epoxy body, and in LED3 also `5.001`, the placeholder
+   under it (lit alone it hid inside the body: "Red led is too dark"). Each its own material, its own colour when off; on,
+   it emits, a small light just above it brightens what is round it, and a soft glow sprite (added light, so it reads as
+   lit with or without the bloom pass) sits over it */
+const LEDS = {
+  power: { node: 'LED3_C2286', lens: ['2', '5.001'], lit: 0xff5a40, emissive: 0xff2008, light: 0xff2a14 },
+  usb: { node: 'LED6_C72043', lens: ['2'], lit: 0x7cff90, emissive: 0x20ff48, light: 0x38ff58 }
+};
+const LED_EMISSIVE = 16, LED_LIGHT = 0.35, LED_GLOW = 0.9, LED_GLOW_SIZE = 0.3;
+let glowTex = null;
+function glowTexture() {
+  if (glowTex) { return glowTex; }
+  const c = document.createElement('canvas');
+  c.width = c.height = 64;
+  const x = c.getContext('2d');
+  const r = x.createRadialGradient(32, 32, 0, 32, 32, 32);
+  r.addColorStop(0, 'rgba(255,255,255,1)');
+  r.addColorStop(0.22, 'rgba(255,255,255,0.55)');
+  r.addColorStop(1, 'rgba(255,255,255,0)');
+  x.fillStyle = r;
+  x.fillRect(0, 0, 64, 64);
+  glowTex = new THREE.CanvasTexture(c);
+  return glowTex;
+}
+function boardLed(model, spec) {
+  const led = model.children[0] && model.children[0].getObjectByName(spec.node);
+  if (!led) { return null; }
+  const own = new Map();
+  led.traverse((o) => {
+    if (!o.isMesh) { return; }
+    const ms = [].concat(o.material).map((m) => {
+      if (!m.emissive || !spec.lens.includes(m.name)) { return m; }
+      if (!own.has(m)) {
+        const c = m.clone();
+        c.userData.c0 = c.color.clone();
+        c.emissive.setHex(spec.emissive);
+        c.emissiveIntensity = 0;
+        own.set(m, c);
+      }
+      return own.get(m);
+    });
+    o.material = ms.length === 1 ? ms[0] : ms;
+  });
+  const lens = [...own.values()];
+  if (!lens.length) { return null; }
+  const at = centreIn(model, led).add(new THREE.Vector3(0, 0.05, 0));
+  const light = new THREE.PointLight(spec.light, 0, 1.6, 2);
+  light.position.copy(at);
+  model.add(light);
+  const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture(), color: spec.light, blending: THREE.AdditiveBlending,
+                                                          transparent: true, depthWrite: false, opacity: 0 }));
+  glow.scale.setScalar(LED_GLOW_SIZE);
+  glow.position.copy(at);
+  glow.visible = false;
+  model.add(glow);
+  return { spec, lens, light, glow, on: 0 };
+}
+const ledLit = new THREE.Color();
+/* an LED on (1) or off (0), times the board's own fade */
+function setLed(L, on, fade) {
+  if (!L) { return; }
+  L.on = on;
+  for (const m of L.lens) { m.color.copy(m.userData.c0).lerp(ledLit.setHex(L.spec.lit), on); m.emissiveIntensity = LED_EMISSIVE * on; }
+  L.light.intensity = LED_LIGHT * on * fade;
+  L.glow.material.opacity = LED_GLOW * on * fade;
+  L.glow.visible = on * fade > 0.001;
+}
+/* a part fades in over the first PART_FADE of its way in (owner, 2026-11-11: "Is there a less abrupt way of having the
+   objects come in and out rather than just appearing") */
+const PART_FADE = 0.45;
 /* the board as it is t seconds into the entrance (Infinity: put together) */
 function setAssembly(A, t, shadow) {
   for (const p of A.parts) {
     const s = (t - p.t) / p.d;
     p.obj.visible = s > 0;
+    p.alpha = s >= 1 ? 1 : easeOut(clamp01(s / PART_FADE));
     const e = easeOut(clamp01(s));
     p.obj.position.copy(p.base).addScaledVector(p.off, 1 - e);
     if (p.turns) { p.obj.rotation.y = -p.turns * 2 * Math.PI * (1 - e); }
   }
   if (shadow) { shadow.userData.asm = A.parts.length ? easeOut(clamp01(t / ASSEMBLY.base.d)) : 1; }
-  if (A.led) {
-    const on = clamp01((t - ASSEMBLY.led.t) / ASSEMBLY.led.d);
-    for (const m of A.led.lens) { m.color.setHex(0x3a0a06).lerp(new THREE.Color(0xff4a30), on); m.emissiveIntensity = 6 * on; }
-    A.led.on = on;
-  }
+  A.powerOn = clamp01((t - ASSEMBLY.led.t) / ASSEMBLY.led.d);
 }
 
 /* ---- a chapter scene's items (owner, 2026-11-11: "have the wires start out of their ports so that they appear to be
@@ -460,16 +544,20 @@ function sceneItems(group, key, model, boardRoot) {
     it.pts = outline(group, it.nodes);
     it.box = new THREE.Box3().setFromPoints(it.pts.length ? it.pts : [new THREE.Vector3()]);
     it.prog = 1; it.hov = 0; it.hovT = 0; it.spin0 = 0; it.offG = new THREE.Vector3();
-    it.mats = []; it.lit = [];
-    /* each item its own materials, so one lights alone; what emits (the colour sensor's LEDs) dark until it is plugged in */
+    it.mats = []; it.lit = []; it.fm = []; it.alpha = 1;
+    /* each item its own materials, so one lights and fades alone; what emits (the colour sensor's LEDs, the OLED) dark until
+       it is plugged in: no glow, and its own colour dimmed to LIT_OFF (the colour sensor's lamp is a bright yellow plastic,
+       which read as lit even with its glow off: owner, 2026-11-11, "The color sensor should only light up after it is
+       plugged in") */
     for (const n of it.nodes) {
       n.traverse((o) => {
         if (!o.isMesh) { return; }
         const ms = [].concat(o.material).map((m) => m.clone());
         o.material = ms.length === 1 ? ms[0] : ms;
         for (const m of ms) {
+          it.fm.push({ m, op: m.opacity, tr: m.transparent });
           if (!m.emissive) { continue; }
-          if (m.emissive.r + m.emissive.g + m.emissive.b > 0 && m.emissiveIntensity > 0) { it.lit.push({ m, ei: m.emissiveIntensity }); } else { it.mats.push(m); }
+          if (m.emissive.r + m.emissive.g + m.emissive.b > 0 && m.emissiveIntensity > 0) { it.lit.push({ m, ei: m.emissiveIntensity, c0: m.color.clone() }); } else { it.mats.push(m); }
         }
       });
     }
@@ -623,7 +711,49 @@ export async function start(stage, opts) {
   const envP = loadEnvironment();
   const boardRoot = new THREE.Group();
   let model;
-  try { model = await loadModel(models); } catch (e) {        // no board: free the context now, the photo stays
+  /* a loading indicator (owner, 2026-11-11: "some indicator that each 3d asset is loading"): a small pill under the
+     render while the board, or the scene of the chapter in view, downloads - its share when the server gives the file's
+     size, else what has arrived so far; decorative like the layer (aria-hidden), the words around it say everything */
+  const LOAD_NAMES = { motors: 'Motors', sensors: 'Sensors and displays', code: 'Code', robot: 'LEGO Technic', simulator: 'Simulator' };
+  const loadEl = document.createElement('div');
+  loadEl.className = 'stage-load';
+  loadEl.setAttribute('aria-hidden', 'true');
+  loadEl.innerHTML = '<span class="stage-load-text"></span><span class="stage-load-bar"><i></i></span>';
+  host.appendChild(loadEl);
+  const loadState = { board: true, key: null, loaded: 0, total: 0 };
+  const onLoadProgress = (key) => (e) => {
+    if (gaveUpEarly) { return; }
+    loadState.key = key; loadState.loaded = e.loaded || 0; loadState.total = e.lengthComputable ? e.total : 0;
+    showLoad();
+  };
+  let gaveUpEarly = false;
+  /* where and what: the board under the first screen's still; a scene under its chapter's render, only while that chapter
+     is the one in view and its scene is not in yet */
+  function showLoad() {
+    let text = null, box = null, key = null;
+    if (loadState.board) { text = 'Loading the 3D board'; box = stillBox(); key = 'board'; }
+    else if (loadReady && !gaveUp) {
+      const i = Math.round(cur.p), pose = POSES[i];
+      if (pose && pose.scene && models && models.scenes && models.scenes[pose.scene] && !scenes[pose.scene] && !pose._failed
+          && sceneAllowed(pose.scene)) { text = 'Loading the 3D scene: ' + LOAD_NAMES[pose.scene]; box = areas && areas[i]; key = pose.scene; }
+    }
+    if (!text || !box) { loadEl.classList.remove('on'); return; }
+    const mine = loadState.key === key;
+    const frac = mine && loadState.total ? Math.min(1, loadState.loaded / loadState.total) : -1;
+    loadEl.querySelector('.stage-load-text').textContent = text + (frac >= 0 ? ' · ' + Math.round(frac * 100) + ' %'
+      : mine && loadState.loaded ? ' · ' + (loadState.loaded / 1048576).toFixed(1) + ' MB' : '');
+    loadEl.classList.toggle('indet', frac < 0);
+    loadEl.style.setProperty('--load', String(Math.max(0, frac)));
+    const h = host.getBoundingClientRect();
+    loadEl.style.left = Math.round((box.qL + box.qR) / 2) + 'px';
+    loadEl.style.top = Math.round(Math.min(h.height - 44, Math.max(8, box.qB + 6))) + 'px';
+    loadEl.classList.add('on');
+  }
+  let loadReady = false;
+  showLoad();                                       // from the request's start, before any byte has come
+  try { model = await loadModel(models, onLoadProgress('board')); } catch (e) {        // no board: free the context now, the photo stays
+    gaveUpEarly = true;
+    loadEl.remove();
     await envP;
     if (envTarget) { envTarget.dispose(); }
     pmrem.dispose(); renderer.dispose(); renderer.forceContextLoss();
@@ -646,12 +776,13 @@ export async function start(stage, opts) {
   /* the board's own parts (without the scenes added to `model` later): faded out for a pose with board: false */
   const asm = buildAssembly(model);
   const boardNode = models && models.board ? model.children[0] : model;
-  const boardMats = [];
+  const boardMats = [], byMat = new Map();
   boardNode.traverse((o) => {
     for (const m of [].concat(o.material || [])) {
-      if (!boardMats.some((b) => b.m === m)) { boardMats.push({ m, op: m.opacity, tr: m.transparent }); }
+      if (!byMat.has(m)) { const r = { m, op: m.opacity, tr: m.transparent, part: null }; byMat.set(m, r); boardMats.push(r); }
     }
   });
+  for (const p of asm.parts) { for (const m of p.mats) { if (byMat.has(m)) { byMat.get(m).part = p; } } }
   const scenes = {};                               // key -> { group, box, pts, own, items }
 
   const stackedMq = window.matchMedia(STACKED);
@@ -717,6 +848,7 @@ export async function start(stage, opts) {
      there for HOLD of the way to each neighbour (a chapter being read shows its own scene alone, settled), linear between;
      past the last chapter, the last pose */
   const HOLD = 0.15;
+  let pastLast = 0;
   function progress() {
     const r = stage.getBoundingClientRect(), h = host.getBoundingClientRect();
     const y = -r.top, mid = h.top + h.height / 2;
@@ -730,6 +862,9 @@ export async function start(stage, opts) {
        past the stage, and site.js followStill carries the board up with them) */
     const hero = stage.querySelector('.stage-hero');
     const over = hero ? Math.max(0, Math.min(hero.offsetHeight - h.height, at[1] * 0.6)) : 0;
+    /* past the last chapter's centre there is no next pose: its scene moves up with its render, as far as the page has
+       scrolled past (a last chapter shorter than the window left its scene behind, over its card's words) */
+    pastLast = Math.max(0, y - at[at.length - 1]);
     if (y <= over) { return 0; }
     for (let k = 1; k < at.length; k++) {
       const from = k === 1 ? over : at[k - 1];
@@ -753,7 +888,8 @@ export async function start(stage, opts) {
     }
     if (!areas) { measure(); }
     const a0 = stillBox();                                      // the first screen's box, as the still is now
-    for (const k of ['qL', 'qT', 'qR', 'qB']) { o[k] = lerp(i === 0 ? a0[k] : areas[i][k], areas[i + 1][k], t); }
+    const aEnd = i + 1 === POSES.length - 1 && pastLast ? Object.assign({}, areas[i + 1], { qT: areas[i + 1].qT - pastLast, qB: areas[i + 1].qB - pastLast }) : areas[i + 1];
+    for (const k of ['qL', 'qT', 'qR', 'qB']) { o[k] = lerp(i === 0 ? a0[k] : areas[i][k], aEnd[k], t); }
     return o;
   }
   const cur = target();
@@ -794,6 +930,12 @@ export async function start(stage, opts) {
     const ba = span(pa, D, C), bb = span(pb, D, C);
     const cx = lerp((ba.x0 + ba.x1) / 2, (bb.x0 + bb.x1) / 2, t), cy = lerp((ba.y0 + ba.y1) / 2, (bb.y0 + bb.y1) / 2, t);
     const px = (cx / tanW + 1) / 2 * W, py = (1 - cy / tanH) / 2 * H;
+    /* the depth range around the scene (its reach and an item's travel, at most 0.9 of the board's 4.2 units), not from
+       0.05: the depth buffer's precision goes to the nearest part of its range, and from 0.05 the decals lost to the surfaces
+       under them by the angle */
+    const R = cur.rad * 1.6 + 4.2;
+    camera.near = Math.max(0.05, D - R);
+    camera.far = D + R;
     camera.setViewOffset(W, H, px - (cur.qL + cur.qR) / 2, py - (cur.qT + cur.qB) / 2, W, H);
   }
   /* the board faded for a pose with board: false (its materials made transparent only while it fades), its lid through
@@ -804,13 +946,28 @@ export async function start(stage, opts) {
     const was = boardFade;
     boardFade = b;
     boardNode.visible = b > 0.001;
-    for (const r of boardMats) {
-      if (r.m.userData.fade) { r.m.userData.fade.value = b; continue; }
-      const tr = b < 1 ? true : r.tr;
-      if (r.m.transparent !== tr) { r.m.transparent = tr; r.m.needsUpdate = true; }
-      r.m.opacity = b < 1 ? r.op * b : r.op;
-    }
     if (was === 1 || b === 1) { loop(); }
+  }
+  /* each material's opacity: the board's fade times its part's own as it comes in (a material made transparent only while
+     it is faded) */
+  function paintBoard(rf) {
+    for (const r of boardMats) {
+      const a = boardFade * rf * (r.part ? r.part.alpha : 1);
+      if (r.m.userData.fade) { r.m.userData.fade.value = a; continue; }
+      const tr = a < 1 ? true : r.tr;
+      if (r.m.transparent !== tr) { r.m.transparent = tr; r.m.needsUpdate = true; }
+      r.m.opacity = a < 1 ? r.op * a : r.op;
+    }
+  }
+  /* an item's materials faded to `a` */
+  function paintItem(it, a) {
+    if (a === it.alpha) { return; }
+    it.alpha = a;
+    for (const f of it.fm) {
+      const tr = a < 1 ? true : f.tr;
+      if (f.m.transparent !== tr) { f.m.transparent = tr; f.m.needsUpdate = true; }
+      f.m.opacity = f.op * a;
+    }
   }
   let asmT = 0, asmDone = false;
   function apply() {
@@ -819,17 +976,26 @@ export async function start(stage, opts) {
     boardRoot.updateMatrixWorld(true);
     /* the camera: the scene's outline fitted into the pose's free area (fitWide, wide and stacked alike) */
     fitWide(new THREE.Vector3((cur.b0x + cur.b1x) / 2, (cur.b0y + cur.b1y) / 2, (cur.b0z + cur.b1z) / 2).applyMatrix4(boardRoot.matrixWorld));
+    /* a drag's turn, after the camera's fit: the board turns in place, the framing holds */
+    if (userYaw || userPitch) { boardRoot.rotation.x += userPitch; boardRoot.rotation.y += userYaw; boardRoot.updateMatrixWorld(true); }
     setAssembly(asm, asmDone ? Infinity : asmT, shadow);
     setBoardFade(cur.bf > 0.999 ? 1 : cur.bf < 0.001 ? 0 : cur.bf);
-    shadow.material.opacity = shadow.userData.asm * boardFade;
-    if (asm.led) { asm.led.light.intensity = LED_LIGHT * asm.led.on * boardFade; }
+    /* a replay waiting to start fades the whole board out with the items (review site76_r7 S2: it vanished in a frame and
+       the entrance's turn jumped it): the turn then starts unseen */
+    const rf = replay ? gate : 1;
+    paintBoard(rf);
+    shadow.material.opacity = shadow.userData.asm * boardFade * rf;
+    if (asm.leds) { setLed(asm.leds.power, asm.powerOn, boardFade * rf); }
     /* each scene's items: plugged in over the second half of the way to their pose, pulled out over the first half of the
-       way on, one after another (the last in the first out); the bare board at each midpoint */
+       way on, one after another (the last in the first out); the bare board at each midpoint. `gate` takes them all out
+       before a replayed entrance and plugs them back after it */
+    let usb = 0;
     POSES.forEach((pose, idx) => {
       const s = pose.scene && scenes[pose.scene];
       if (!s) { return; }
-      const ins = clamp01(1 - 2 * Math.abs(cur.p - idx));
+      const ins = clamp01(1 - 2 * Math.abs(cur.p - idx)) * gate;
       s.group.visible = ins > 0;
+      const usbScene = !!(SCENE_MOTION[pose.scene] && SCENE_MOTION[pose.scene].usb);
       const n = s.items.filter((it) => it.key !== 'rest').length;
       let j = 0;
       for (const it of s.items) {
@@ -841,7 +1007,13 @@ export async function start(stage, opts) {
           r.n.position.copy(r.base).addScaledVector(r.d, off).addScaledVector(r.lift, ease(it.hov));
           r.n.visible = pr > 0;
         }
-        for (const l of it.lit) { l.m.emissiveIntensity = pr >= 1 ? l.ei : 0; }   // lit only once it is plugged in
+        /* fading in over the first ITEM_FADE of its way in, out over the last of its way out */
+        paintItem(it, pr >= 1 ? 1 : easeOut(clamp01(pr / ITEM_FADE)));
+        for (const l of it.lit) {                                 // lit only once it is plugged in
+          l.m.emissiveIntensity = pr >= 1 ? l.ei : 0;
+          l.m.color.copy(l.c0).multiplyScalar(pr >= 1 ? 1 : LIT_OFF);
+        }
+        if (usbScene && it.key !== 'rest' && pr >= 1) { usb = 1; }
         for (const m of it.mats) { m.emissive.copy(HOVER_GLOW).multiplyScalar(it.hov); }
         if (it.spin) {
           const u = it.spin0 ? clamp01((performance.now() - it.spin0) / SPIN_MS[it.spin.kind]) : 1;
@@ -850,7 +1022,17 @@ export async function start(stage, opts) {
         }
       }
     });
+    if (asm.leds) { setLed(asm.leds.usb, usb, boardFade * rf); }
   }
+  const ITEM_FADE = 0.4, LIT_OFF = 0.3;
+  /* a replay of the entrance (owner, 2026-11-11: "Clicking the model should re-trigger the animation"): the shown items
+     pulled out first (gate to 0 over GATE_MS), the board put together again, then the items plugged back in */
+  let gate = 1, gateT = 1, replay = false, replays = 0;
+  /* a drag turns the board (owner, 2026-11-11: "some interactivity?"): with a mouse or pen, on the board or a shown item;
+     let go, it eases back to its pose (DRAG_BACK_MS); touch keeps the page's own scroll */
+  let userYaw = 0, userPitch = 0, drag = null, dragMoved = false, dragEnded = 0;
+  const DRAG_RAD = 0.008, DRAG_PITCH = 0.35, DRAG_BACK_MS = 450;
+  const GATE_MS = 600;
   const SPIN_MS = { hub: 1400, twitch: 700 };
 
   host.appendChild(canvas);
@@ -878,13 +1060,14 @@ export async function start(stage, opts) {
   const canHover = window.matchMedia('(any-hover: hover)').matches;
   const onPointer = (e) => {
     if (e.pointerType === 'touch') { return; }
-    pointer = { x: e.clientX, y: e.clientY };
+    pointer = { x: e.clientX, y: e.clientY, words: onWords(e.target) };
     if (!hoverQueued) { hoverQueued = true; requestAnimationFrame(hoverCheck); }
   };
   function hoverCheck() {
     hoverQueued = false;
-    if (gaveUp || !pointer || !asmDone || !judged) { return; }
+    if (gaveUp || !pointer || !asmDone || !judged || drag) { return; }
     const r = canvas.getBoundingClientRect();
+    stage.style.cursor = !pointer.words && onModel(pointer.x, pointer.y) ? 'grab' : '';
     let best = null, bestD = Infinity;
     if (pointer.x >= r.left && pointer.x <= r.right && pointer.y >= r.top && pointer.y <= r.bottom) {
       ndc.set((pointer.x - r.left) / r.width * 2 - 1, -((pointer.y - r.top) / r.height) * 2 + 1);
@@ -905,10 +1088,70 @@ export async function start(stage, opts) {
     if (best) { best.hovT = 1; if (best.spin) { best.spin0 = performance.now(); } }
     loop();
   }
+  /* the board's or a shown scene's box under a point (cheap: boxes, not triangles) */
+  function onModel(x, y) {
+    const r = canvas.getBoundingClientRect();
+    if (x < r.left || x > r.right || y < r.top || y > r.bottom) { return false; }
+    ndc.set((x - r.left) / r.width * 2 - 1, -((y - r.top) / r.height) * 2 + 1);
+    ray.setFromCamera(ndc, camera);
+    if (boardFade > 0.5 && ray.ray.intersectsBox(wb.copy(boardBox).applyMatrix4(boardRoot.matrixWorld))) { return true; }
+    for (const sc of Object.values(scenes)) { if (sc.group.visible && ray.ray.intersectsBox(wb.copy(sc.ownBox).applyMatrix4(boardRoot.matrixWorld))) { return true; } }
+    return false;
+  }
+  const INTERACTIVE = 'a, button, input, select, textarea, summary, label, [role="button"]';
+  /* words: a drag never starts on them, nor does the grab cursor show over them (review site76_r7_verify S2: the boxes the
+     test uses reach past the board's outline, over the cards' words) */
+  const WORDS = '.chapter-card, .stage-copy, p, h1, h2, h3, li';
+  const onWords = (t) => !!(t && t.closest && t.closest(WORDS));
+  const onDragStart = (e) => {
+    if (gaveUp || !asmDone || !judged || replay || e.pointerType === 'touch' || e.button !== 0) { return; }
+    if (e.target && e.target.closest && e.target.closest(INTERACTIVE)) { return; }
+    if (onWords(e.target) || !onModel(e.clientX, e.clientY)) { return; }
+    e.preventDefault();                                   // no text selection while the board turns
+    drag = { x: e.clientX, y: e.clientY, yaw: userYaw, pitch: userPitch };
+    dragMoved = false;
+    stage.style.cursor = 'grabbing';
+    if (hovered) { hovered.hovT = 0; hovered = null; }
+  };
+  const onDragMove = (e) => {
+    if (!drag) { return; }
+    const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+    if (Math.abs(dx) + Math.abs(dy) > 4) { dragMoved = true; }
+    userYaw = drag.yaw + dx * DRAG_RAD;
+    userPitch = Math.max(-DRAG_PITCH, Math.min(DRAG_PITCH, drag.pitch + dy * DRAG_RAD));
+    loop();
+  };
+  /* a drag that moved: the click its release fires (straight after, however long the button was held) is not a click */
+  const onDragEnd = () => { if (drag) { drag = null; if (dragMoved) { dragEnded = performance.now(); } dragMoved = false; stage.style.cursor = ''; loop(); } };
+  /* a click on the board (not on a link or a control over it) replays the entrance; a drag's own click does not */
+  const onClick = (e) => {
+    if (dragEnded && performance.now() - dragEnded < 300) { dragEnded = 0; return; }
+    if (gaveUp || !asmDone || replay || boardFade < 0.5 || !judged) { return; }
+    if (e.target && e.target.closest && e.target.closest(INTERACTIVE)) { return; }
+    const r = canvas.getBoundingClientRect();
+    if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) { return; }
+    ndc.set((e.clientX - r.left) / r.width * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+    ray.setFromCamera(ndc, camera);
+    if (!ray.intersectObject(boardNode, true).length) { return; }
+    replay = true;
+    gateT = 0;
+    if (hovered) { hovered.hovT = 0; hovered = null; }
+    loop();
+  };
+  function listenSkip() {
+    window.addEventListener('keydown', onSkip);
+    window.addEventListener('pointerdown', onSkip, { passive: true });
+  }
   window.addEventListener('resize', resize, { passive: true });
   window.addEventListener('scroll', onScroll, { passive: true });
-  window.addEventListener('keydown', onSkip);
-  window.addEventListener('pointerdown', onSkip, { passive: true });
+  window.addEventListener('click', onClick);
+  if (canHover) {
+    window.addEventListener('pointerdown', onDragStart);
+    window.addEventListener('pointermove', onDragMove, { passive: true });
+    window.addEventListener('pointerup', onDragEnd, { passive: true });
+    window.addEventListener('pointercancel', onDragEnd, { passive: true });
+  }
+  listenSkip();
   if (canHover) { window.addEventListener('pointermove', onPointer, { passive: true }); }
   document.addEventListener('visibilitychange', onVis);
   if (motionMq.addEventListener) { motionMq.addEventListener('change', onMotion); }
@@ -932,6 +1175,12 @@ export async function start(stage, opts) {
     io.disconnect();
     window.removeEventListener('resize', resize);
     window.removeEventListener('scroll', onScroll);
+    window.removeEventListener('click', onClick);
+    window.removeEventListener('pointerdown', onDragStart);
+    window.removeEventListener('pointermove', onDragMove);
+    window.removeEventListener('pointerup', onDragEnd);
+    window.removeEventListener('pointercancel', onDragEnd);
+    stage.style.cursor = '';
     unlistenSkip();
     window.removeEventListener('pointermove', onPointer);
     document.removeEventListener('visibilitychange', onVis);
@@ -951,6 +1200,7 @@ export async function start(stage, opts) {
     renderer.dispose();
     renderer.forceContextLoss();
     canvas.remove();
+    loadEl.remove();
     if (stage.isConnected) {
       stage.setAttribute('data-3d', 'fallback');
       stage.setAttribute('data-3d-why', reason);
@@ -963,12 +1213,23 @@ export async function start(stage, opts) {
     if (gaveUp) { return; }
     if (!visible || document.hidden) { running = false; return; }
     if (!asm0) { asm0 = time; }
-    if (!asmDone) {
-      asmT = skip ? ASSEMBLY_END : (time - asm0) / 1000;
-      if (asmT >= ASSEMBLY_END) { asmDone = true; unlistenSkip(); stage.setAttribute('data-3d-assembled', skip ? 'skipped' : 'played'); }
-    }
     /* every motion on the clock: a slow renderer jumps further each frame rather than taking longer */
     const dt = last ? Math.min(1000, time - last) : 16;
+    let anim = false;
+    if (gate !== gateT) { gate = gateT > gate ? Math.min(gateT, gate + dt / GATE_MS) : Math.max(gateT, gate - dt / GATE_MS); anim = true; }
+    if (replay && gate === 0) {                             // the items and the board are out: the entrance again
+      replay = false;
+      gate = gateT = 0;
+      asmDone = false; asm0 = time; asmT = 0; skip = false;
+      listenSkip();
+      replays++;
+      stage.setAttribute('data-3d-replays', String(replays));
+      stage.setAttribute('data-3d-assembled', 'replaying');
+    }
+    if (!asmDone) {
+      asmT = skip ? ASSEMBLY_END : (time - asm0) / 1000;
+      if (asmT >= ASSEMBLY_END) { asmDone = true; unlistenSkip(); gateT = 1; stage.setAttribute('data-3d-assembled', skip ? 'skipped' : 'played'); }
+    }
     const kf = 1 - Math.exp(-dt / FOLLOW_MS);
     const tg = target();
     let moving = false;
@@ -976,8 +1237,13 @@ export async function start(stage, opts) {
       const dv = tg[k] - cur[k];
       if (Math.abs(dv) > (k[0] === 'q' ? 0.25 : 1e-4 * (k === 'rad' || k[0] === 'c' || k[0] === 'b' ? Math.max(1, cur.rad) : 1))) { moving = true; cur[k] += dv * kf; } else { cur[k] = tg[k]; }
     }
+    if (!drag && (userYaw || userPitch)) {
+      const kb = 1 - Math.exp(-dt / DRAG_BACK_MS);
+      userYaw -= userYaw * kb; userPitch -= userPitch * kb;
+      if (Math.abs(userYaw) < 1e-3 && Math.abs(userPitch) < 1e-3) { userYaw = userPitch = 0; }
+      anim = true;
+    }
     /* hover: each item eases to lit and lifted or back; a motor's turn runs its course */
-    let anim = false;
     for (const s of Object.values(scenes)) {
       for (const it of s.items) {
         if (it.hov !== it.hovT) { it.hov = it.hovT > it.hov ? Math.min(it.hovT, it.hov + dt / HOVER_MS) : Math.max(it.hovT, it.hov - dt / HOVER_MS); anim = true; }
@@ -1009,8 +1275,11 @@ export async function start(stage, opts) {
       }
     }
     if (judged) { nearScenes(); }
+    showLoad();
     last = time;
-    if (moving || anim || !judged || !asmDone) { requestAnimationFrame(frame); } else { running = false; last = 0; markRect(); }
+    /* gate !== gateT: the frame the replayed entrance ends sets the gate on its way back up (without it the loop idled there
+       and the items never came back) */
+    if (moving || anim || replay || gate !== gateT || !judged || !asmDone) { requestAnimationFrame(frame); } else { running = false; last = 0; markRect(); }
   }
   function loop() { if (!running && !gaveUp) { running = true; last = 0; requestAnimationFrame(frame); } }
   /* where the shown model is on screen once it has settled (CSS px): data/shots.js checks it never covers the words */
@@ -1072,11 +1341,13 @@ export async function start(stage, opts) {
   let fetching = false, nLoaded = 0;
   function nearScenes() {
     if (fetching || !models || !models.scenes || !model.userData.frame) { return; }
-    const phone = window.matchMedia(PHONE).matches;
     const idx = POSES.findIndex((pose, i) => pose.scene && !scenes[pose.scene] && models.scenes[pose.scene] && !pose._failed
-                                             && cur.p >= i - 1.25
-                                             && (!phone || !models.phone_scenes || models.phone_scenes.includes(pose.scene)));
+                                             && cur.p >= i - 1.25 && sceneAllowed(pose.scene));
     if (idx >= 0) { fetching = true; loadScene(POSES[idx]).then(() => { fetching = false; loop(); }); }
+  }
+  /* phones (760 px and under) load only models.json phone_scenes */
+  function sceneAllowed(key) {
+    return !window.matchMedia(PHONE).matches || !models.phone_scenes || models.phone_scenes.includes(key);
   }
   async function loadScene(pose) {
     const loader = await gltfLoader();
@@ -1084,7 +1355,7 @@ export async function start(stage, opts) {
     {
       const keyName = pose.scene;
       try {
-        const gltf = await loader.loadAsync(new URL(models.scenes[keyName], document.baseURI).href);
+        const gltf = await loader.loadAsync(new URL(models.scenes[keyName], document.baseURI).href, onLoadProgress(keyName));
         if (gaveUp) { return; }
         const group = gltf.scene;
         softenEnv(group);
@@ -1092,6 +1363,7 @@ export async function start(stage, opts) {
         group.position.copy(fr.offset);
         model.add(group);
         group.updateMatrixWorld(true);
+        decalOffsets(group);
         /* its outline and box in the board group's frame (alone, and with the board's), and its items, all as it stands
            put together, before any item is moved */
         const ownBox = localBox(boardRoot, [group]), ownPts = outline(boardRoot, [group]);
@@ -1105,6 +1377,8 @@ export async function start(stage, opts) {
         nLoaded++;
         stage.setAttribute('data-3d-scenes', String(nLoaded));
       } catch (e) { pose._failed = true; /* a scene that does not load: its chapter shows the board alone */ }
+      if (loadState.key === keyName) { loadState.key = null; }
+      showLoad();
     }
   }
 
@@ -1120,6 +1394,9 @@ export async function start(stage, opts) {
   asmT = 0;
   apply();
   draw();
+  loadState.board = false;
+  loadReady = true;
+  showLoad();
   stage.setAttribute('data-3d', 'ready');
   stage.setAttribute('data-3d-model', models && models.board ? 'model' : 'placeholder');
   loop();
