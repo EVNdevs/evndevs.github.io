@@ -906,8 +906,76 @@
     technic: { src: 'assets/images/chapter-robot.webp', width: 1224, height: 804,
       alt: 'A two-wheeled competition robot built from LEGO Technic parts around the EVN ALPHA board.' },
     simulator: { src: 'assets/images/chapter-sim.webp', width: 1280, height: 1075,
-      alt: 'A laptop running the EVN robot simulator: a robot following the line of the Oval course.' }
+      alt: 'A laptop running the EVN robot simulator in 3D: a robot following the line on a RoboCup Junior Rescue Line course.',
+      /* its screen shows the simulator's 3D view on the full Rescue Line course (owner, 2026-11-11: "use the 3d view instead
+         of the 2d"): the clip's first frame over the render's screen (its box in % of the render, measured on
+         chapter-sim.webp: 889 x 534 px at 194, 89), and the clip itself where motion is welcome (chapterScreen) */
+      screen: { box: [15.16, 8.28, 69.45, 49.67], poster: 'assets/images/sim-rcj.webp',
+        sources: [['assets/video/sim-rcj.webm', 'video/webm'], ['assets/video/sim-rcj.mp4', 'video/mp4']], loop: [1, 11] } }
   };
+
+  /* A render's screen (CHAPTER_STILLS screen): the clip's first frame laid over the render's own screen, so the page,
+     a phone and a crawler all show the 3D Rescue Line course; then, in a browser, once the render comes into view and
+     unless the visitor asks for reduced motion or to save data, the muted clip there, looping its middle 10 s, with a
+     real button to pause it (WCAG 2.2.2: moving content over 5 s that starts on its own can be paused). Where the 3D
+     layer has the chapter (site.css hides the render), hero3d.js plays the same clip on its laptop instead. */
+  function chapterScreen(fig, scr) {
+    var box = el('div', 'chapter-screen');
+    var b = scr.box;
+    box.style.left = b[0] + '%'; box.style.top = b[1] + '%'; box.style.width = b[2] + '%'; box.style.height = b[3] + '%';
+    /* scaled with the render (site.css: 12 % larger from 761 px) about the render's own centre */
+    box.style.transformOrigin = ((50 - b[0]) / b[2] * 100).toFixed(2) + '% ' + ((50 - b[1]) / b[3] * 100).toFixed(2) + '%';
+    var poster = el('img', 'chapter-screen-still');
+    poster.src = scr.poster;
+    poster.width = 1280;
+    poster.height = 770;
+    poster.alt = '';
+    poster.loading = 'lazy';
+    poster.decoding = 'async';
+    box.appendChild(poster);
+    fig.appendChild(box);
+    if (!('IntersectionObserver' in window) || !window.matchMedia || window.matchMedia('(prefers-reduced-motion: reduce)').matches
+        || (navigator.connection && navigator.connection.saveData)) { return; }
+    var video = null, btn = null, userPaused = false, inView = false;
+    function sync() {
+      if (!video) { return; }
+      var shown = inView && box.offsetParent !== null && getComputedStyle(fig).opacity !== '0';
+      if (shown && !userPaused) { if (video.currentTime < scr.loop[0]) { video.currentTime = scr.loop[0]; } video.play().catch(function () {}); }
+      else { video.pause(); }
+      btn.setAttribute('aria-pressed', userPaused ? 'false' : 'true');
+      btn.setAttribute('aria-label', userPaused ? 'Play the simulator clip' : 'Pause the simulator clip');
+    }
+    function make() {
+      video = el('video', 'chapter-screen-clip');
+      video.muted = true; video.defaultMuted = true; video.playsInline = true; video.loop = false; video.preload = 'auto';
+      video.setAttribute('muted', ''); video.setAttribute('playsinline', ''); video.setAttribute('aria-hidden', 'true');
+      video.poster = scr.poster;
+      scr.sources.forEach(function (s) { var so = el('source'); so.src = s[0]; so.type = s[1]; video.appendChild(so); });
+      video.addEventListener('timeupdate', function () { if (video.currentTime >= scr.loop[1]) { video.currentTime = scr.loop[0]; } });
+      video.addEventListener('ended', function () { video.currentTime = scr.loop[0]; sync(); });
+      video.addEventListener('playing', function () { box.classList.add('playing'); });
+      box.appendChild(video);
+      btn = el('button', 'stage-run chapter-screen-pause');
+      btn.type = 'button';
+      btn.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path class="i-play" d="M8 5.5v13l10.5-6.5z"/>'
+        + '<path class="i-pause" d="M7 5h3.6v14H7zM13.4 5H17v14h-3.6z"/></svg>';
+      btn.addEventListener('click', function () { userPaused = !userPaused; sync(); });
+      box.appendChild(btn);
+    }
+    /* the 3D layer running on a wide screen (it loads the chapter's scene as it comes near, and plays the clip on its
+       own laptop): leave the clip to it, not fetched twice */
+    function threeD() {                                    // looked up when asked: the figure joins the page after this runs
+      var stage = fig.closest('.stage');
+      return !!stage && /^(loading|ready)$/.test(stage.getAttribute('data-3d') || '') && !window.matchMedia('(max-width: 760px)').matches;
+    }
+    var io = new IntersectionObserver(function (es) {
+      if (!box.isConnected) { io.disconnect(); if (video) { video.pause(); } return; }
+      inView = es[0].isIntersecting;
+      if (inView && !video && !threeD() && box.offsetParent !== null && getComputedStyle(fig).opacity !== '0') { make(); }
+      sync();
+    }, { threshold: 0.4 });
+    io.observe(box);
+  }
 
   /* The scroll story: [id, kicker, headline, sentence, [link label, href] or null, a small note or none]. Facts from the board's page
      (docs/BOARD.md), the CHANGELOG and the simulator's page; hero3d.js has one pose per chapter. */
@@ -1199,6 +1267,7 @@
         im.loading = 'lazy';
         im.decoding = 'async';
         fig.appendChild(im);
+        if (still.screen) { chapterScreen(fig, still.screen); }
         cw.appendChild(fig);
         ch.classList.add('has-fig');                       // site.css: the layout with a render
       }

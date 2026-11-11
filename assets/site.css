@@ -451,6 +451,16 @@ a.shot:hover { text-decoration: none; border-color: var(--accent); }
    Phones keep the render's own size */
 @media (min-width: 761px) { .chapter-fig img { transform: scale(1.12); } }
 .stage[data-3d="ready"] .chapter.has-3d .chapter-fig { opacity: 0; }
+/* a render's screen (site.js chapterScreen): the simulator's 3D clip, or its first frame, over the render's own screen;
+   scaled with the render; where the 3D layer has the chapter it is not shown (nor its button in the tab order) */
+.chapter-fig { position: relative; }
+.chapter-screen { position: absolute; overflow: hidden; border-radius: .4%; background: #111518; }
+.chapter-screen-still, .chapter-screen-clip { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.chapter-screen-clip { opacity: 0; transition: opacity .3s ease; }
+.chapter-screen.playing .chapter-screen-clip { opacity: 1; }
+.chapter-screen .chapter-screen-pause { position: absolute; right: 3%; bottom: 4%; left: auto; top: auto; transform: none; }
+.stage[data-3d="ready"] .chapter.has-3d .chapter-screen { display: none; }
+@media (min-width: 761px) { .chapter-screen { transform: scale(1.12); } }
 .chapter-card {
   max-width: 470px; padding: 26px 28px 28px; border-radius: var(--radius-lg);
   /* .88: the card alone guarantees its text's contrast whatever the canvas shows behind it (over white: --st-muted 7.6:1,

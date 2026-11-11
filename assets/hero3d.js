@@ -1128,6 +1128,72 @@ function buildFollower(model, group, pose, ownBox, mmU) {
   return fo;
 }
 
+/* ---- the simulator chapter's laptop screen (owner, 2026-11-11: "For the robot on the oval track in the simulator, is
+   it supposed to be a video on mobile? Also use the 3d view instead of the 2d"): the simulator's 3D view of a robot
+   following the line on the full RoboCup Junior Rescue Line course, a 12 s clip the Razer recorded (data/screens/
+   sim_rcj_clip.*, 1 s spare each end: SCREEN_CLIP.loop plays the middle 10 s), on the laptop's screen as a video
+   texture; its first frame (assets/images/sim-rcj.webp) until the clip can play. It plays while the scene is in view and
+   until the visitor pauses it (a real button, WCAG 2.2.2: moving content over 5 s that starts on its own can be paused);
+   muted, loaded only when this scene loads. Phones and the photo layout have the same clip over the chapter's render
+   (site.js chapterScreen) */
+const SCREEN_CLIP = {
+  scene: 'simulator',
+  poster: 'assets/images/sim-rcj.webp',
+  sources: [['assets/video/sim-rcj.webm', 'video/webm'], ['assets/video/sim-rcj.mp4', 'video/mp4']],
+  loop: [1, 11]
+};
+function screenClip(group) {
+  let screen = null;
+  group.traverse((o) => { if (!screen && o.isMesh && [].concat(o.material).some((m) => m && m.name === 'screen')) { screen = o; } });
+  if (!screen) { return null; }
+  const mat = [].concat(screen.material).find((m) => m.name === 'screen');
+  const old = mat.emissiveMap;
+  const fit = (t) => {                                   // the GLB's own placing of the picture on the screen
+    t.flipY = false;
+    t.colorSpace = THREE.SRGBColorSpace;
+    if (old) { t.offset.copy(old.offset); t.repeat.copy(old.repeat); t.rotation = old.rotation; t.center.copy(old.center); }
+    return t;
+  };
+  new THREE.TextureLoader().load(new URL(SCREEN_CLIP.poster, document.baseURI).href, (t) => {
+    if (sc.live) { t.dispose(); return; }
+    mat.emissiveMap = fit(t); mat.needsUpdate = true; sc.changed = true;
+  });
+  const video = document.createElement('video');
+  video.muted = true; video.defaultMuted = true; video.playsInline = true; video.preload = 'auto';
+  video.setAttribute('muted', ''); video.setAttribute('playsinline', '');
+  for (const [src, type] of SCREEN_CLIP.sources) {
+    const so = document.createElement('source');
+    so.src = new URL(src, document.baseURI).href; so.type = type;
+    video.appendChild(so);
+  }
+  video.addEventListener('timeupdate', () => { if (video.currentTime >= SCREEN_CLIP.loop[1]) { video.currentTime = SCREEN_CLIP.loop[0]; } });
+  video.addEventListener('ended', () => { video.currentTime = SCREEN_CLIP.loop[0]; if (sc.want) { video.play().catch(() => {}); } });
+  video.addEventListener('playing', () => {
+    if (sc.live) { return; }
+    const vt = fit(new THREE.VideoTexture(video));
+    if (mat.emissiveMap && mat.emissiveMap !== old) { mat.emissiveMap.dispose(); }
+    mat.emissiveMap = vt; mat.needsUpdate = true; sc.live = vt; sc.changed = true;
+  });
+  if (!screen.geometry.boundingBox) { screen.geometry.computeBoundingBox(); }
+  const lb = screen.geometry.boundingBox;
+  const sc = {
+    screen, video, live: null, want: false, userPaused: false, changed: false,
+    corners: [0, 1, 2, 3, 4, 5, 6, 7].map((i) => new THREE.Vector3(i & 1 ? lb.max.x : lb.min.x, i & 2 ? lb.max.y : lb.min.y, i & 4 ? lb.max.z : lb.min.z)),
+    /* the scene's share in view: plays while it is mostly in, unless paused; true while frames must be drawn */
+    step(ins) {
+      const want = ins >= 0.6 && !sc.userPaused;
+      if (want !== sc.want) {
+        sc.want = want;
+        if (want) { if (video.currentTime < SCREEN_CLIP.loop[0]) { video.currentTime = SCREEN_CLIP.loop[0]; } video.play().catch(() => {}); } else { video.pause(); }
+      }
+      const ch = sc.changed; sc.changed = false;
+      return ch || (want && !video.paused);
+    },
+    dispose() { video.pause(); video.removeAttribute('src'); while (video.firstChild) { video.firstChild.remove(); } video.load(); if (sc.live) { sc.live.dispose(); } }
+  };
+  return sc;
+}
+
 function shown(o) { for (let p = o; p; p = p.parent) { if (!p.visible) { return false; } } return true; }
 /* the outline of the shown meshes for the camera fit, in the board group's own frame: the vertices furthest along 96
    directions spread over the sphere (a box's corners overshoot a flat or spread-out scene by its empty corners); each
@@ -1301,6 +1367,7 @@ export async function start(stage, opts) {
   const scenes = {};                               // key -> { group, box, pts, own, items }
   let chalk = null;
   let follower = null;                             // the robot scene's line follower (buildFollower), once that scene is in
+  let clip = null;                                 // the simulator scene's laptop screen (screenClip), once that scene is in
   const twQ = new THREE.Vector3();                                // the motors scene's chalkboard (buildChalkboard), once that scene is in
 
   const stackedMq = window.matchMedia(STACKED);
@@ -1634,6 +1701,42 @@ export async function start(stage, opts) {
     runEl.style.transform = `translate(${Math.round(r.left + (runV.x + 1) / 2 * r.width)}px, ${Math.round(Math.max(hb, r.top + (1 - runV.y) / 2 * r.height))}px) translate(-50%, -50%)`;
     if (runEl.hidden) { runEl.hidden = false; }
   }
+  /* the simulator clip's pause button (SCREEN_CLIP): at the laptop screen's lower right while that scene is in, in the tab
+     order at the end of chapter 05's own words, as the run button is in 04's */
+  const clipEl = runEl.cloneNode(true);
+  clipEl.hidden = true;
+  const clipHome = stage.querySelectorAll('article.chapter')[POSES.findIndex((q) => q.scene === SCREEN_CLIP.scene) - 1];
+  (clipHome || stage).appendChild(clipEl);
+  function clipState() {
+    const on = !!(clip && !clip.userPaused);
+    clipEl.setAttribute('aria-pressed', on ? 'true' : 'false');      // pressed: playing (the pause icon shows)
+    clipEl.setAttribute('aria-label', on ? 'Pause the simulator clip' : 'Play the simulator clip');
+    stage.setAttribute('data-3d-clip', !clip ? 'none' : on ? (clip.video.paused ? 'waiting' : 'playing') : 'paused');
+  }
+  clipEl.addEventListener('click', () => {
+    if (!clip) { return; }
+    clip.userPaused = !clip.userPaused;
+    clipState();
+    loop();
+  });
+  const clipV = new THREE.Vector3();
+  function placeClip() {
+    const csc = clip && scenes[SCREEN_CLIP.scene];
+    const show = !!(csc && csc.group.visible && csc.ins >= 0.6 && asmDone && !replay && gate === 1);
+    clipState();
+    if (!show) { if (!clipEl.hidden) { clipEl.hidden = true; } return; }
+    clip.screen.updateMatrixWorld(true);
+    /* the screen's box as it is drawn now; the button inside its lower right (the mesh's box reaches past the picture) */
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    for (const c of clip.corners) {
+      clipV.copy(c).applyMatrix4(clip.screen.matrixWorld).project(camera);
+      x0 = Math.min(x0, clipV.x); x1 = Math.max(x1, clipV.x); y0 = Math.min(y0, -clipV.y); y1 = Math.max(y1, -clipV.y);
+    }
+    const r = canvas.getBoundingClientRect();
+    const px = r.left + ((x0 + (x1 - x0) * 0.9) + 1) / 2 * r.width, py = r.top + ((y0 + (y1 - y0) * 0.74) + 1) / 2 * r.height;
+    clipEl.style.transform = `translate(${Math.round(px)}px, ${Math.round(py)}px) translate(-50%, -50%)`;
+    if (clipEl.hidden) { clipEl.hidden = false; }
+  }
   function showTip() {
     const it = hovered && hovered.name && pointer && !pointer.words && !dragMoved ? hovered : null;
     if (!it) { tipEl.classList.remove('on'); stage.removeAttribute('data-3d-tip'); return; }
@@ -1810,6 +1913,8 @@ export async function start(stage, opts) {
     loadEl.remove();
     tipEl.remove();
     runEl.remove();
+    clipEl.remove();
+    if (clip) { clip.dispose(); }
     if (stage.isConnected) {
       stage.setAttribute('data-3d', 'fallback');
       stage.setAttribute('data-3d-why', reason);
@@ -1865,6 +1970,11 @@ export async function start(stage, opts) {
       if (chalk.step(dt, cs && cs.group.visible ? cs.ins : 0, time)) { anim = true; }
       if (stage.getAttribute('data-3d-chalk') !== chalk.state) { stage.setAttribute('data-3d-chalk', chalk.state); }
     }
+    /* the simulator's clip plays while its scene is in, unless paused */
+    if (clip) {
+      const csc = scenes[SCREEN_CLIP.scene];
+      if (clip.step(csc && csc.group.visible ? csc.ins : 0)) { anim = true; }
+    }
     /* the line follower runs while its button says so and its scene is in */
     if (follower) {
       const fsc = scenes[FOLLOW.scene];
@@ -1873,6 +1983,7 @@ export async function start(stage, opts) {
     apply();
     draw();
     placeRun();
+    placeClip();
     const at = String(Math.round(cur.p));
     if (stage.getAttribute('data-3d-at') !== at) { stage.setAttribute('data-3d-at', at); }   // the pose in view: site.css fades a phone's canvas past the first screen
     /* the story's eased position, for the LED indicator (site.js ledNav): its gold crossfades over the scenes' own change
@@ -2007,6 +2118,8 @@ export async function start(stage, opts) {
           follower = buildFollower(model, group, pose, ownBox, 4.2 / ((models && models.long_mm) || 104));
           if (follower) { boardRoot.add(follower.still, follower.board); model.add(follower.moving); }
         }
+        /* the simulator scene's laptop: the Rescue Line clip on its screen */
+        if (keyName === SCREEN_CLIP.scene) { clip = screenClip(group); }
         /* what each item is (its key, node count, direction, and a motor's hub turn or twitch): for the captures */
         stage.setAttribute('data-3d-items-' + keyName, items.map((it) => `${it.key}:${it.nodes.length}:${['x', 'y', 'z'].map((a) => Math.round(it.dir[a])).join('')}${it.spin ? ':' + it.spin.kind : ''}`).join(' '));
         group.visible = false;
