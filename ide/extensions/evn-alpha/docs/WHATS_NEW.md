@@ -4,6 +4,11 @@ The main changes of each release, in a few lines. The [full changelog](../CHANGE
 the tools and the measurements behind each release. What is not tested yet is on
 [Known limitations and help us test](KNOWN_LIMITATIONS.md).
 
+## 0.2.77 (2026-11-12)
+
+- **A smoother Simulator.** On some computers the Simulator stopped drawing for a moment every few seconds while
+  a program ran; it now draws smoothly ([Simulator](SIMULATOR.md)).
+
 ## 0.2.76 (2026-11-11)
 
 - **Eight new challenges in the simulator.** Maze runner and Maze mapper, Precision stop, Slalom gates and Ball chaser,

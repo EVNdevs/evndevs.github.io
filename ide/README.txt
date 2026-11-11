@@ -12,5 +12,5 @@ To try it locally: node scripts/serve_ide.js  (then http://localhost:8765/ide/).
 sw.js is the IDE's own service worker and offline.json its list of files (docs/curriculum/OFFLINE_DESIGN.md
 8.2): copy them with the rest. Opening the page with ?evn-sw=off removes the offline copy from that browser.
 
-extension: evn-alpha-micropython 0.2.76
-generated: 2026-11-11T13:14:18.623Z
+extension: evn-alpha-micropython 0.2.77
+generated: 2026-11-11T22:03:11.035Z

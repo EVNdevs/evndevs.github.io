@@ -150,8 +150,12 @@
                 cam.tx = s.pose.x; cam.ty = s.pose.y; cam.tz = s.pose.z || 0;
                 const want = (s.pose.heading * Math.PI / 180) + Math.PI;
                 let d = want - cam.yaw; d = Math.atan2(Math.sin(d), Math.cos(d));
-                cam.yaw += d * 0.15;
-            }
+                // eased by time, 0.15 of the way per 33.3 ms (the rate it had at a render a snapshot), so the swing is the
+                // same at any display rate now that a live world renders every frame (simstall, review r1 S2)
+                const now = performance.now(), dt = this.followAt === undefined ? 1000 / 30 : Math.min(200, Math.max(0, now - this.followAt));
+                this.followAt = now;
+                cam.yaw += d * (1 - Math.pow(0.85, dt / (1000 / 30)));
+            } else { this.followAt = undefined; }
             const eye = [cam.tx + cam.dist * Math.cos(cam.elev) * Math.cos(cam.yaw), cam.ty + cam.dist * Math.cos(cam.elev) * Math.sin(cam.yaw), cam.tz + cam.dist * Math.sin(cam.elev)];
             const proj = M4.persp(50 * Math.PI / 180, W / H, Math.max(5, cam.dist / 200), cam.dist * 20 + 20000);
             const vp = M4.mul(proj, M4.look(eye, [cam.tx, cam.ty, cam.tz], [0, 0, 1]));

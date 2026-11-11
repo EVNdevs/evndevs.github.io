@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.77 (2026-11-12)
+
+### Simulator
+- **No more stalls while a program runs.** On some graphics (an Intel Iris Plus on Windows, through Chromium's compositor),
+  the Simulator panel stopped drawing for about 0.4 s every 1 to 3 s while a program ran, in VS Code and in the browser
+  IDE. The panel now redraws at the screen's own rate while a program runs or the robot has just moved, and stays idle
+  otherwise; the longest frame went from about 0.4 s to under 20 ms. The robot's motion and every result are unchanged.
+
 ## 0.2.76 (2026-11-11)
 
 ### Simulator

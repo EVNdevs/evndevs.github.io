@@ -799,6 +799,7 @@
     function onSnap(s) {
         posted = s;
         if (s.hazards && s.hazards.engine) { postedBytes = s; }
+        if (moved(snap, s)) { liveUntil = performance.now() + LIVE_MS; }
         snap = s;
         const last = trail[trail.length - 1];
         const p = s.pose;
@@ -1022,7 +1023,32 @@
     function wy(py) { return view.cy - (py * dpr - canvas.height / 2) / (view.k * dpr); }
 
     let raf = 0;
-    function draw() { if (!raf) { raf = requestAnimationFrame(() => { raf = 0; if (mode3d && !builder()) { v3.setSnap(snap); v3.render(); } else { paint(); } }); } }
+    /* simstall (2026-11-12): a page that presents below the display's rate (a frame a snapshot, every ~33 ms) has its
+     * Present held ~0.4 s every 1-4 s by Chromium's DirectComposition swap chain on some GPUs (the Razer's Iris Plus;
+     * VS Code's webview and the hosted IDE alike; a bare canvas page at 34 ms does it, one at every vsync never does).
+     * So while the world is live - a program running, or the robot or a motor moved in the last LIVE_MS (onSnap) - the
+     * panel draws on every display frame; an idle panel stays idle. Timed by the frame's own clock: a frame time of 0
+     * (a test's stand-in requestAnimationFrame) never asks for the next one */
+    const LIVE_MS = 250;
+    let liveUntil = 0;
+    function draw() { if (!raf) { raf = requestAnimationFrame(onFrame); } }
+    function onFrame(t) {
+        raf = 0;
+        if (mode3d && !builder()) { v3.setSnap(snap); v3.render(); } else { paint(); }
+        if (t > 0 && (running !== undefined || t < liveUntil)) { draw(); }
+    }
+    /** a snapshot that moved the robot by more than this (mm, deg) or a motor by more than MOVED_DEG is live; a motor
+     *  holding after run_angle (then=HOLD) hunts by up to ~0.15 deg a snapshot, and both wheels held right after dc() move
+     *  the pose by up to ~0.06 mm a snapshot (review r1 S1, r2 S1'): neither may keep an idle panel live */
+    const MOVED_POSE = 0.1, MOVED_DEG = 0.5;
+    /** the snapshot moved something the panel draws (the robot's pose, a motor's angle): the next LIVE_MS are live */
+    function moved(a, b) {
+        if (!a || !b) { return true; }
+        const p = a.pose, q = b.pose, far = (u, v, d) => Math.abs((u || 0) - (v || 0)) > d;
+        if ([p.x - q.x, p.y - q.y, p.heading - q.heading, (p.z || 0) - (q.z || 0), (p.pitch || 0) - (q.pitch || 0), (p.roll || 0) - (q.roll || 0)].some((d) => Math.abs(d) > MOVED_POSE)) { return true; }
+        const m = a.motors || [], n = b.motors || [];
+        return m.length !== n.length || m.some((x, i) => far(x.angle, n[i].angle, MOVED_DEG));
+    }
 
     /* ---- the 3D view (media/sim/view3d.js) ---- */
     const canvas3d = el('canvas', { id: 'c3', role: 'img', 'aria-label': 'The simulated robot on its course, in 3D', hidden: '' });
