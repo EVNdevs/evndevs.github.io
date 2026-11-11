@@ -234,8 +234,8 @@
     { "id": "serial-bridge", "audience": "higher-learning", "status": "available",
       "title": "A PC program on the serial port",
       "text": "Serial1 and Serial2 of the simulated robot connect to a program on your PC.",
-      "image": { "src": "assets/images/card-serial-bridge.svg", "width": 1280, "height": 720,
-                 "alt": "A robot's serial ports 1 and 2 cabled to a program on a PC." },
+      "image": { "src": "assets/images/card-serial-bridge.jpg", "width": 1280, "height": 720,
+                 "alt": "VS Code with the robot's program reading commands on Serial1 and reporting its pose on Serial2, the simulated robot driving on a course, and a PC program in the terminal printing what it sent and the pose it read back." },
       "source": "vscode-evn-alpha/CHANGELOG.md ## 0.2.76, Simulator (The serial bridge)" },
 
     { "id": "free", "audience": "parents", "status": "available",

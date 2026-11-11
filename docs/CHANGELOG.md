@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased
+
+### Accessibility
+- **My progress is readable in every VS Code theme.** The page drew dark text with no background of its own, so in a dark
+  theme it was dark on dark. It now takes the theme's own text and background colours (Light, Dark and High Contrast all
+  at least 4.5:1); the page you download or keep in a backup still prints dark on white.
+
+### Simulator
+- **A data log a simulated program saves shows in the Board view.** After `evn.DataLog(...)` and `save()`, the Board
+  view's data folder said "no data logs yet": the simulated board never passed on what was saved under `/data`. Now the
+  log is listed by name after Read the board, downloads into your Data folder and opens in the data viewer as a board's
+  does, stays on the simulated board for the next run, and its delete button removes it.
+
 ## 0.2.77 (2026-11-12)
 
 ### Simulator
