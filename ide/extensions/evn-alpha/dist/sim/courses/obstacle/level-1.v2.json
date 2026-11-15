@@ -1,0 +1,85 @@
+{
+  "format": "evn-course/1",
+  "id": "obstacle-1",
+  "challenge": "obstacle",
+  "level": 1,
+  "version": 2,
+  "module": "G5.2",
+  "title": "Obstacle course · Level 1: Around the block",
+  "brief": "Drive round the block in the middle and get the whole robot into the green goal.",
+  "field": {
+    "arena": {
+      "size": [
+        2000,
+        1000
+      ],
+      "startBox": [
+        100,
+        350,
+        400,
+        650
+      ],
+      "goal": [
+        1600,
+        350,
+        1900,
+        650
+      ],
+      "obstacles": [
+        {
+          "x": 1000,
+          "y": 500,
+          "w": 300,
+          "d": 400
+        }
+      ],
+      "wallH": 100,
+      "wallT": 20,
+      "obstacleH": 150
+    }
+  },
+  "robot": {
+    "rule": "learner"
+  },
+  "start": {
+    "nominal": {
+      "x": 230,
+      "y": 500,
+      "heading": 0
+    },
+    "vary": {
+      "xy": 10,
+      "heading": 1
+    },
+    "draw": "uniform-square-v1"
+  },
+  "runs": {
+    "min": 1,
+    "max": 20,
+    "default": 5,
+    "fixed": 5
+  },
+  "kernel": {
+    "name": "pointToPoint",
+    "limitS": 60,
+    "goal": "footprintInside"
+  },
+  "constants": {
+    "par": 6
+  },
+  "score": {
+    "run": "if(reached, round(50 + 40 * min(1, par / max(time, 0.001)) + if(touches == 0, 10, 0), 1), 0)",
+    "summary": "round(sum(r in runs: r.points) / count(r in runs: true), 1)"
+  },
+  "pass": "score >= 60 & reached >= 0.8 * n",
+  "sources": [
+    {
+      "doc": "docs/curriculum/G05.md",
+      "where": "G5.2 Obstacle course, the level table and the scoring paragraph"
+    },
+    {
+      "doc": "src/sim/engine/challenges.ts",
+      "where": "CHALLENGE_LEVELS before the port (ported bit for bit: scripts/fixtures/course_obstacle_v1.json)"
+    }
+  ]
+}

@@ -1,0 +1,226 @@
+{
+  "format": "evn-course/1",
+  "id": "disturbance-gauntlet-2",
+  "challenge": "disturbance-gauntlet",
+  "level": 2,
+  "version": 1,
+  "module": "G11.4",
+  "title": "Disturbance gauntlet · Level 2: Hold the arm level",
+  "brief": "Practice only, not scored, until the arm bench puts the arm on its rest stop and resets the angle before each run. On the arm bench (an EV3 Large on port 3 through 12:36, a 150 mm arm with a 100 g tip, hanging at -90 deg; its encoder 360 counts a motor turn), hold the arm level (0 deg) through a payload step on the tip (50, 100 or 150 g) between 1.0 and 1.5 s, a push up on it (10, 20 or 30 mN s) between 2.5 and 3.0 s, and a second step (50 g off, 50 or 100 g on) between 4.0 and 4.5 s, each drawn per run. A run is read on the arm's true angle every 1 ms from the first load to 1 s after the last, where it ends: per load its peak |error| and its recovery (from its start until the error stays within 1 deg; never back: the time to the next load or the end), the worst of each counting, and TV = the sum of the duty's changes (%). J = 0.4 x peak / 5 deg + 0.4 x recovery / 0.3 s + 0.2 x TV / 759; the run scores 100 x clamp(2 - J, 0, 1) (a run can miss a par and still score). Your own controller over dc() on Motor(3) (a built-in run(), track() or hold() scores 0); there is no ADRC/PID ratio yet (the comparison is not built: run your PID as a second Run challenge and read the two cards). Ten runs. Par: a 5 deg peak, a 0.3 s recovery to within 1 deg, TV 759 %.",
+  "field": {
+    "arena": {
+      "size": [
+        1000,
+        600
+      ],
+      "startBox": [
+        100,
+        200,
+        400,
+        400
+      ],
+      "goal": null,
+      "obstacles": [],
+      "wallH": 100,
+      "wallT": 20,
+      "obstacleH": 150
+    },
+    "random": [
+      {
+        "name": "a1",
+        "draw": "uniform-v1",
+        "min": 1,
+        "max": 1.5,
+        "step": 0.1
+      },
+      {
+        "name": "a2",
+        "draw": "uniform-v1",
+        "min": 2.5,
+        "max": 3,
+        "step": 0.1
+      },
+      {
+        "name": "a3",
+        "draw": "uniform-v1",
+        "min": 4,
+        "max": 4.5,
+        "step": 0.1
+      },
+      {
+        "name": "m1",
+        "draw": "choice-v1",
+        "of": [
+          1,
+          2,
+          3
+        ]
+      },
+      {
+        "name": "p2",
+        "draw": "choice-v1",
+        "of": [
+          1,
+          2,
+          3
+        ]
+      },
+      {
+        "name": "m3",
+        "draw": "choice-v1",
+        "of": [
+          -1,
+          1,
+          2
+        ]
+      }
+    ]
+  },
+  "robot": {
+    "rule": "fixed",
+    "rig": {
+      "format": "evn-rig/1",
+      "name": "arm-bench",
+      "version": 1,
+      "base": "bolted",
+      "motors": [
+        {
+          "port": 3,
+          "model": "EV3 Large"
+        }
+      ],
+      "shaft": [
+        {
+          "port": 3,
+          "ratio": "12/36",
+          "zero": 270,
+          "min": -120,
+          "max": 120,
+          "parts": [
+            {
+              "kind": "bar",
+              "l": 150,
+              "massG": 0
+            },
+            {
+              "kind": "tip",
+              "l": 150,
+              "massG": 100,
+              "name": "payload"
+            }
+          ]
+        }
+      ],
+      "bodies": [],
+      "joints": [],
+      "sensors": [
+        {
+          "kind": "encoder",
+          "port": 3
+        }
+      ]
+    }
+  },
+  "start": {
+    "nominal": {
+      "x": 250,
+      "y": 300,
+      "heading": 0
+    },
+    "vary": {
+      "xy": 0,
+      "heading": 0
+    },
+    "draw": "uniform-square-v1"
+  },
+  "runs": {
+    "min": 1,
+    "max": 20,
+    "default": 5,
+    "fixed": 10
+  },
+  "kernel": {
+    "name": "pointToPoint",
+    "limitS": 6,
+    "goal": "footprintInside",
+    "final": "runEnd",
+    "end": "window",
+    "signal": {
+      "port": 3,
+      "q": "angle",
+      "ref": 0,
+      "tailS": 1,
+      "band": 1
+    },
+    "program": {
+      "noMove": [
+        3
+      ]
+    }
+  },
+  "dist": {
+    "sensors": [
+      {
+        "device": "encoder:3",
+        "countsPerRev": 360
+      }
+    ],
+    "events": [
+      {
+        "at": {
+          "$": "a1"
+        },
+        "kind": "mass",
+        "target": "payload",
+        "massG": {
+          "$": "m1 * 50"
+        }
+      },
+      {
+        "at": {
+          "$": "a2"
+        },
+        "kind": "impulse",
+        "target": "payload",
+        "mNs": {
+          "$": "p2 * 10"
+        },
+        "dir": 90
+      },
+      {
+        "at": {
+          "$": "a3"
+        },
+        "kind": "mass",
+        "target": "payload",
+        "massG": {
+          "$": "m3 * 50"
+        }
+      }
+    ]
+  },
+  "constants": {
+    "TV_PAR": 759
+  },
+  "score": {
+    "run": "if(windowDone & moveTicks == 0, 100 * clamp(2 - (0.4 * peakMax / 5 + 0.4 * recoveryMax / 0.3 + 0.2 * tv / TV_PAR), 0, 1), 0)",
+    "values": {
+      "finished": {
+        "value": "count(r in runs: r.windowDone)",
+        "unit": "runs"
+      }
+    },
+    "summary": "round(sum(r in runs: r.points) / n, 1)"
+  },
+  "pass": null,
+  "sources": [
+    {
+      "doc": "docs/curriculum/G11.md",
+      "where": "G11.4 Disturbance gauntlet, the challenge paragraph, the level table (level 2) and the run cost"
+    },
+    {
+      "doc": "vscode-evn-alpha/docs/COURSE_FORMAT_DESIGN.md",
+      "where": "§16 (kernel.signal, end \"window\"; §16.5 what G11.4's levels write; L2 practice only, OQ 115's cut)"
+    }
+  ]
+}

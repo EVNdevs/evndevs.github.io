@@ -1,0 +1,32 @@
+{
+ "format": "evn-course-index/1",
+ "generated": "node scripts/course_index.js --write; do not edit",
+ "levels": [
+  {
+   "file": "ball-chaser/level-1.v1.json",
+   "id": "ball-chaser-1",
+   "version": 1,
+   "sha256": "8decb13d3e50692a0b267d7c0c698c6db049e0fcae965e766a873e28072dd2e0",
+   "current": true,
+   "title": "Ball chaser · Level 1: Touch the ball",
+   "limit": 45,
+   "runs": {
+    "default": 5,
+    "fixed": 10
+   }
+  },
+  {
+   "file": "ball-chaser/level-2.v1.json",
+   "id": "ball-chaser-2",
+   "version": 1,
+   "sha256": "040902c1859a755f21c2a6ab6d28a3e0b588c8d4e7e9965c5ef8b3d631b0ed79",
+   "current": true,
+   "title": "Ball chaser · Level 2: The right ball",
+   "limit": 45,
+   "runs": {
+    "default": 5,
+    "fixed": 10
+   }
+  }
+ ]
+}

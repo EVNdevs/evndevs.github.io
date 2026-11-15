@@ -1,0 +1,45 @@
+{
+ "format": "evn-course-index/1",
+ "generated": "node scripts/course_index.js --write; do not edit",
+ "levels": [
+  {
+   "file": "shared-space/level-1.v1.json",
+   "id": "shared-space-1",
+   "version": 1,
+   "sha256": "7a0460e1bb007d5bc9b7a501f666e193aaf6557cee8b576f858c3acaad9bd3db",
+   "current": true,
+   "title": "Shared-space service robot · Level 1: Clear one table",
+   "limit": 90,
+   "runs": {
+    "default": 5,
+    "fixed": 5
+   }
+  },
+  {
+   "file": "shared-space/level-2.v1.json",
+   "id": "shared-space-2",
+   "version": 1,
+   "sha256": "00f9da0175f74a76bfbc0cfefbd9baf2d1f0a64ea40914804a1f81bd46e92116",
+   "current": true,
+   "title": "Shared-space service robot · Level 2: Clear a table while people cross",
+   "limit": 120,
+   "runs": {
+    "default": 5,
+    "fixed": 5
+   }
+  },
+  {
+   "file": "shared-space/level-3.v1.json",
+   "id": "shared-space-3",
+   "version": 1,
+   "sha256": "6fcb131a71f84f01172b09d2a990e1ef1c02129d8506aaa7c8e0a7c120f8ebbf",
+   "current": true,
+   "title": "Shared-space service robot · Level 3: A full service loop",
+   "limit": 300,
+   "runs": {
+    "default": 5,
+    "fixed": 5
+   }
+  }
+ ]
+}

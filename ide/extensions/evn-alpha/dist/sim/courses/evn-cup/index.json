@@ -1,0 +1,45 @@
+{
+ "format": "evn-course-index/1",
+ "generated": "node scripts/course_index.js --write; do not edit",
+ "levels": [
+  {
+   "file": "evn-cup/level-1.v1.json",
+   "id": "evn-cup-1",
+   "version": 1,
+   "sha256": "9f29cf5210083381ab991cf0643bb34b1489340b58ca0bdf72c4573ca5b1dd8a",
+   "current": true,
+   "title": "EVN Cup mission · Level 1: Rover, beacon, park",
+   "limit": 120,
+   "runs": {
+    "default": 5,
+    "fixed": 10
+   }
+  },
+  {
+   "file": "evn-cup/level-2.v1.json",
+   "id": "evn-cup-2",
+   "version": 1,
+   "sha256": "442b478c05bab44c3e8178605bfa0861cff35b92ab47024e95e83f46f3010ac8",
+   "current": true,
+   "title": "EVN Cup mission · Level 2: All six missions",
+   "limit": 120,
+   "runs": {
+    "default": 5,
+    "fixed": 10
+   }
+  },
+  {
+   "file": "evn-cup/level-3.v1.json",
+   "id": "evn-cup-3",
+   "version": 1,
+   "sha256": "e98f8080e0569523151edc14ef62faaf34355a7367eebedcc11e417b772e7b65",
+   "current": true,
+   "title": "EVN Cup mission · Level 3: All six, shuffled",
+   "limit": 120,
+   "runs": {
+    "default": 5,
+    "fixed": 10
+   }
+  }
+ ]
+}

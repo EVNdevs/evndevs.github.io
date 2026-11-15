@@ -1,0 +1,89 @@
+{
+  "format": "evn-course/1",
+  "id": "wall-board",
+  "challenge": "scenes",
+  "level": 3,
+  "version": 1,
+  "module": "G10.2",
+  "title": "Scene \u00b7 Wall board",
+  "brief": "A board of 35 black dots, 50 mm apart, on the far wall, its middle 200 mm up and 1100 mm ahead of the robot: points at known 3D positions for a camera at tilt 0 to predict. The robot stands still; each run scores 100 if it touches nothing.",
+  "field": {
+    "arena": {
+      "size": [
+        1300,
+        1000
+      ],
+      "startBox": [
+        0,
+        300,
+        400,
+        700
+      ],
+      "goal": null,
+      "obstacles": [],
+      "wallH": 400,
+      "wallT": 20,
+      "obstacleH": 100,
+      "prints": [
+        {
+          "name": "board",
+          "pattern": "dots:7x5:50",
+          "at": [
+            1300,
+            500,
+            200
+          ],
+          "yaw": 180,
+          "pitch": 0,
+          "size": [
+            350,
+            250
+          ],
+          "quiet": 25
+        }
+      ]
+    }
+  },
+  "robot": {
+    "rule": "learner"
+  },
+  "start": {
+    "nominal": {
+      "x": 200,
+      "y": 500,
+      "heading": 0
+    },
+    "vary": {
+      "xy": 0,
+      "heading": 0
+    },
+    "draw": "uniform-square-v1"
+  },
+  "runs": {
+    "min": 1,
+    "max": 20,
+    "default": 5,
+    "fixed": null
+  },
+  "kernel": {
+    "name": "pointToPoint",
+    "limitS": 30,
+    "goal": "footprintInside"
+  },
+  "constants": {},
+  "score": {
+    "run": "if(touches == 0, 100, 0)",
+    "summary": "round(sum(r in runs: r.points) / count(r in runs: true), 1)"
+  },
+  "pass": null,
+  "sources": [
+    {
+      "doc": "docs/curriculum/G10.md",
+      "where": "G10.2.2 Core 35-45 and Sim: predict the pixels of points in front of a camera at tilt 0; markers at known 3D positions once COURSE builds them"
+    },
+    {
+      "doc": "docs/COURSE_CONTENT_DESIGN.md",
+      "where": "\u00a74 prints (dots:<nx>x<ny>:<pitch>, the wall board), \u00a75.2 Scenes, \u00a77 CC-6"
+    }
+  ]
+}

@@ -1,0 +1,135 @@
+{
+  "format": "evn-course/1",
+  "id": "precision-stop-2",
+  "challenge": "precision-stop",
+  "level": 2,
+  "version": 1,
+  "module": "G7.1",
+  "title": "Precision stop · Level 2: A moving start",
+  "brief": "Start 1500 mm out and cross the speed trap (600 to 400 mm from the wall) at 300 mm/s or faster, then stop with the front bumper 100 mm from the wall and stand still for 1 s. A run that is slower through the trap, touches the wall, or is not still at 15 s, fails. Par: E = 8 mm.",
+  "field": {
+    "arena": {
+      "size": [
+        2400,
+        600
+      ],
+      "startBox": [
+        650,
+        100,
+        1010,
+        500
+      ],
+      "goal": null,
+      "obstacles": [],
+      "wallH": 100,
+      "wallT": 20,
+      "obstacleH": 150,
+      "areas": [
+        {
+          "name": "trap600",
+          "rect": [
+            1730,
+            0,
+            2400,
+            600
+          ],
+          "paint": null
+        },
+        {
+          "name": "trap400",
+          "rect": [
+            1930,
+            0,
+            2400,
+            600
+          ],
+          "paint": null
+        }
+      ]
+    }
+  },
+  "robot": {
+    "rule": "fixed"
+  },
+  "start": {
+    "nominal": {
+      "x": 830,
+      "y": 300,
+      "heading": 0
+    },
+    "vary": {
+      "xy": 60,
+      "heading": 4
+    },
+    "draw": "uniform-square-v1"
+  },
+  "runs": {
+    "min": 1,
+    "max": 20,
+    "default": 5,
+    "fixed": 20
+  },
+  "kernel": {
+    "name": "pointToPoint",
+    "limitS": 15,
+    "goal": "footprintInside",
+    "end": "still",
+    "still": {
+      "s": 1,
+      "dps": 5,
+      "mms": 3
+    },
+    "final": "runEnd",
+    "visits": {
+      "targets": [
+        {
+          "area": "trap600"
+        },
+        {
+          "area": "trap400"
+        }
+      ]
+    }
+  },
+  "constants": {
+    "wall": 2400,
+    "target": 100,
+    "trapMms": 300
+  },
+  "score": {
+    "run": "if(stopped & touches == 0 & visitTime_1 >= 0 & visitTime_2 > visitTime_1 & 200 / (visitTime_2 - visitTime_1) >= trapMms, round(max(0, 100 - 5 * abs((wall - (endX + bodyFront * cosd(endHeading) + bodyHalf * abs(sind(endHeading)))) - target)), 1), 0)",
+    "values": {
+      "stops": {
+        "value": "count(r in runs: r.stopped & r.touches == 0 & r.visitTime_1 >= 0 & r.visitTime_2 > r.visitTime_1 & 200 / (r.visitTime_2 - r.visitTime_1) >= trapMms)",
+        "unit": "runs"
+      },
+      "bias": {
+        "value": "if(stops > 0, sum(r in runs: if(r.stopped & r.touches == 0 & r.visitTime_1 >= 0 & r.visitTime_2 > r.visitTime_1 & 200 / (r.visitTime_2 - r.visitTime_1) >= trapMms, (wall - (r.endX + r.bodyFront * cosd(r.endHeading) + r.bodyHalf * abs(sind(r.endHeading)))) - target, 0)) / stops, 0)",
+        "unit": "mm",
+        "undefinedWhen": "stops < 1"
+      },
+      "spread": {
+        "value": "if(stops > 1, sqrt(sum(r in runs: if(r.stopped & r.touches == 0 & r.visitTime_1 >= 0 & r.visitTime_2 > r.visitTime_1 & 200 / (r.visitTime_2 - r.visitTime_1) >= trapMms, ((wall - (r.endX + r.bodyFront * cosd(r.endHeading) + r.bodyHalf * abs(sind(r.endHeading)))) - target - bias) ^ 2, 0)) / (stops - 1)), 0)",
+        "unit": "mm",
+        "undefinedWhen": "stops < 2"
+      },
+      "budget": {
+        "value": "abs(bias) + 2 * spread",
+        "unit": "mm",
+        "undefinedWhen": "stops < 2"
+      }
+    },
+    "summary": "if(stops > 1, round(max(0, 100 - 5 * budget - 10 * (n - stops)), 1), 0)"
+  },
+  "pass": "score >= 60 & stops >= 0.8 * n",
+  "sources": [
+    {
+      "doc": "docs/curriculum/G07.md",
+      "where": "G7.1 Precision stop, the challenge paragraph and the level table (level 2)"
+    },
+    {
+      "doc": "vscode-evn-alpha/docs/COURSE_FORMAT_DESIGN.md",
+      "where": "§10 (the still end, runEnd, batch scoring), §11.3 (visits: the speed trap), §13 (robot and start rules)"
+    }
+  ]
+}

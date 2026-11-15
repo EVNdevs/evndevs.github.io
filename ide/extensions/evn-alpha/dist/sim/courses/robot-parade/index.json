@@ -1,0 +1,19 @@
+{
+ "format": "evn-course-index/1",
+ "generated": "node scripts/course_index.js --write; do not edit",
+ "levels": [
+  {
+   "file": "robot-parade/level-1.v1.json",
+   "id": "robot-parade-1",
+   "version": 1,
+   "sha256": "a8801aaf99a122ef4abf1a74ee6de0e6d04ff006d66e35127108473808e26433",
+   "current": true,
+   "title": "Robot parade · Level 1: The square",
+   "limit": 60,
+   "runs": {
+    "default": 5,
+    "fixed": 5
+   }
+  }
+ ]
+}

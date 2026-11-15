@@ -1,0 +1,282 @@
+{
+ "format": "evn-course/1",
+ "id": "full-rescue-line-1",
+ "challenge": "full-rescue-line",
+ "level": 1,
+ "version": 1,
+ "module": "G6.3",
+ "title": "Full rescue line \u00b7 Level 1",
+ "brief": "Our own map of 300 mm tiles (a black line about 20 mm wide on white) on all 24 cells of 6 x 4, laid by the simulator's map builder: the Start tile, two 150 mm gaps on straights (a custom tile), a T junction (#70) whose green marker turns the robot on its way back, a dead end in the top row (a T entered by its stem with a marker on each side: turn round), a crossing (#80) whose markers turn the robot each time it is driven, round corners of radius 150 mm, and the Goal tile, 7.22 m of line. The robot is G6.3's (the robot file rescue-line-open, G8.4's: sensors 1 and 2 24 mm ahead, 16 mm each side, sensor 3 facing forward, sensor 4 on the centre line, a side distance sensor on I2C 7, the arm and claw); a run on a changed robot is not this level's. It starts on the Start tile on the line, facing along it, moved up to 10 mm and turned up to 5 degrees (run 1 too). The RCJ referee judges: tiles reached in order (5.4.6), a lack of progress called when the robot passes the next tile's exit off the line (5.5.1b) or takes a wrong line (5.5.1c), then put back on the Start tile. A run ends once the program has ended and the robot has then stood still for 0.5 s (both drive motors slower than 5 deg/s, the robot slower than 3 mm/s; the run's time is when that stillness began), after 3 lacks of progress, or after 180 s. The robot has stopped on the Goal when the run ended on that stillness with its axle's middle on the Goal tile. Score: 60 x the fraction of the line completed (the line through the tiles passed in order before the first lack of progress), + 20 x min(1, par / time) if it stopped on the Goal, + 20 if no lack of progress was called. Par 70 s (the record's). Pass: a mean of at least 60 over the 5 runs, and at least 4 of 5 stop on the Goal.",
+ "field": {
+  "tiles": {
+   "map": {
+    "version": 1,
+    "name": "Full rescue line L1",
+    "customTiles": [
+     {
+      "id": "G15",
+      "name": "Gap 150 mm",
+      "elements": [
+       {
+        "type": "line",
+        "pts": [
+         [
+          150,
+          0
+         ],
+         [
+          150,
+          75
+         ]
+        ],
+        "w": 20,
+        "color": "black"
+       },
+       {
+        "type": "line",
+        "pts": [
+         [
+          150,
+          225
+         ],
+         [
+          150,
+          300
+         ]
+        ],
+        "w": 20,
+        "color": "black"
+       }
+      ]
+     }
+    ],
+    "tiles": [
+     {
+      "id": "1",
+      "col": 0,
+      "row": 0,
+      "rot": 2
+     },
+     {
+      "id": "G15",
+      "col": 0,
+      "row": 1,
+      "rot": 0
+     },
+     {
+      "id": "10",
+      "col": 0,
+      "row": 2,
+      "rot": 0
+     },
+     {
+      "id": "44",
+      "col": 0,
+      "row": 3,
+      "rot": 0
+     },
+     {
+      "id": "44",
+      "col": 1,
+      "row": 3,
+      "rot": 3
+     },
+     {
+      "id": "10",
+      "col": 1,
+      "row": 2,
+      "rot": 0
+     },
+     {
+      "id": "10",
+      "col": 1,
+      "row": 1,
+      "rot": 0
+     },
+     {
+      "id": "44",
+      "col": 1,
+      "row": 0,
+      "rot": 1
+     },
+     {
+      "id": "44",
+      "col": 2,
+      "row": 0,
+      "rot": 2
+     },
+     {
+      "id": "70",
+      "col": 2,
+      "row": 1,
+      "rot": 1,
+      "green": [
+       0
+      ]
+     },
+     {
+      "id": "10",
+      "col": 2,
+      "row": 2,
+      "rot": 0
+     },
+     {
+      "id": "70",
+      "col": 2,
+      "row": 3,
+      "rot": 0,
+      "green": [
+       0,
+       1
+      ]
+     },
+     {
+      "id": "10",
+      "col": 3,
+      "row": 2,
+      "rot": 0
+     },
+     {
+      "id": "44",
+      "col": 3,
+      "row": 3,
+      "rot": 0
+     },
+     {
+      "id": "44",
+      "col": 4,
+      "row": 3,
+      "rot": 3
+     },
+     {
+      "id": "10",
+      "col": 4,
+      "row": 2,
+      "rot": 0
+     },
+     {
+      "id": "44",
+      "col": 4,
+      "row": 1,
+      "rot": 2
+     },
+     {
+      "id": "44",
+      "col": 3,
+      "row": 0,
+      "rot": 1
+     },
+     {
+      "id": "10",
+      "col": 4,
+      "row": 0,
+      "rot": 1
+     },
+     {
+      "id": "44",
+      "col": 5,
+      "row": 0,
+      "rot": 2
+     },
+     {
+      "id": "10",
+      "col": 5,
+      "row": 1,
+      "rot": 0
+     },
+     {
+      "id": "G15",
+      "col": 5,
+      "row": 2,
+      "rot": 0
+     },
+     {
+      "id": "99",
+      "col": 5,
+      "row": 3,
+      "rot": 0
+     },
+     {
+      "id": "80",
+      "col": 3,
+      "row": 1,
+      "rot": 0,
+      "green": [
+       0,
+       2
+      ]
+     }
+    ]
+   },
+   "referee": {
+    "ramp": "tile",
+    "afterThree": "retry",
+    "press": true,
+    "lopStart": "press",
+    "calibration": 0,
+    "seed": 1,
+    "autoCaptain": false,
+    "offTiles": 300,
+    "lostOff": 400,
+    "autoCaptainS": 30
+   }
+  }
+ },
+ "robot": {
+  "rule": "fixed",
+  "base": "rescue-line-open"
+ },
+ "start": {
+  "nominal": {
+   "x": 150,
+   "y": 150,
+   "heading": 90
+  },
+  "vary": {
+   "xy": 10,
+   "heading": 5
+  },
+  "draw": "uniform-square-v1"
+ },
+ "runs": {
+  "min": 1,
+  "max": 20,
+  "default": 5,
+  "fixed": 5
+ },
+ "kernel": {
+  "name": "pointToPoint",
+  "limitS": 180,
+  "goal": "footprintInside",
+  "end": "afterProgram",
+  "still": {
+   "s": 0.5,
+   "dps": 5,
+   "mms": 3
+  },
+  "final": "runEnd",
+  "tiles": {
+   "maxLops": 3,
+   "goal": "stopAxle",
+   "fraction": "untilLop"
+  }
+ },
+ "constants": {
+  "par": 70
+ },
+ "score": {
+  "run": "60 * fraction + if(goal, 20 * min(1, par / goalTime), 0) + if(lops == 0, 20, 0)",
+  "summary": "round(sum(r in runs: r.points) / count(r in runs: true), 1)"
+ },
+ "pass": "sum(r in runs: r.points) / count(r in runs: true) >= 60 & count(r in runs: r.goal) >= 0.8 * n",
+ "sources": [
+  {
+   "doc": "docs/curriculum/G06.md",
+   "where": "G6.3 Challenge - Full rescue line, the level table, level 1, and the scoring paragraph"
+  },
+  {
+   "doc": "docs/session/2026-11-14_w11-g5g6/design/g63_tiles.md",
+   "where": "G6.3 on the tile half, r3 (lane w11-g5g6)"
+  }
+ ]
+}

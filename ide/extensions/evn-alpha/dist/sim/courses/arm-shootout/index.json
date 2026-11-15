@@ -1,0 +1,84 @@
+{
+ "format": "evn-course-index/1",
+ "generated": "node scripts/course_index.js --write; do not edit",
+ "levels": [
+  {
+   "file": "arm-shootout/level-1.v1.json",
+   "id": "arm-shootout-1",
+   "version": 1,
+   "sha256": "630f5c74868b0e27010d18096752f3e58d83d7deeb6d88ca0e05a4ace3d7d60f",
+   "current": false,
+   "title": "Arm position shoot-out · Level 1: Five targets, bare arm",
+   "limit": 12.5,
+   "runs": {
+    "default": 5,
+    "fixed": 10
+   }
+  },
+  {
+   "file": "arm-shootout/level-1.v2.json",
+   "id": "arm-shootout-1",
+   "version": 2,
+   "sha256": "303133cc165666ae3ddb48fa433028e90f7d5186e0a73d547876272c2f2129cc",
+   "current": true,
+   "title": "Arm position shoot-out · Level 1: Five targets, bare arm",
+   "limit": 12.5,
+   "runs": {
+    "default": 5,
+    "fixed": 10
+   }
+  },
+  {
+   "file": "arm-shootout/level-2.v1.json",
+   "id": "arm-shootout-2",
+   "version": 1,
+   "sha256": "0c591dc29f03e543067906dec9eb607f5e15a3ced22f52c0d3bb0b246edd16a6",
+   "current": false,
+   "title": "Arm position shoot-out · Level 2: Five targets, 200 g payload",
+   "limit": 12.5,
+   "runs": {
+    "default": 5,
+    "fixed": 10
+   }
+  },
+  {
+   "file": "arm-shootout/level-2.v2.json",
+   "id": "arm-shootout-2",
+   "version": 2,
+   "sha256": "5d8273ad20bfc53da14e75926f78a31c6c99ed014ad39b9a57a3a272d4e028f7",
+   "current": true,
+   "title": "Arm position shoot-out · Level 2: Five targets, 200 g payload",
+   "limit": 12.5,
+   "runs": {
+    "default": 5,
+    "fixed": 10
+   }
+  },
+  {
+   "file": "arm-shootout/level-3.v1.json",
+   "id": "arm-shootout-3",
+   "version": 1,
+   "sha256": "5fb8d0bbe7a415ee20b3c053aca73928dbe142e852962187f3a84c934ae1d8d7",
+   "current": false,
+   "title": "Arm position shoot-out · Level 3: Five targets, a payload on or off, a noisy angle",
+   "limit": 12.5,
+   "runs": {
+    "default": 5,
+    "fixed": 10
+   }
+  },
+  {
+   "file": "arm-shootout/level-3.v2.json",
+   "id": "arm-shootout-3",
+   "version": 2,
+   "sha256": "36c4dfba97632516b4196b81b7e86b2a4f771907549c7827a1936c7dd4f1bc95",
+   "current": true,
+   "title": "Arm position shoot-out · Level 3: Five targets, a payload on or off, a noisy angle",
+   "limit": 12.5,
+   "runs": {
+    "default": 5,
+    "fixed": 10
+   }
+  }
+ ]
+}

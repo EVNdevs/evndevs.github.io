@@ -1,0 +1,91 @@
+{
+  "format": "evn-course/1",
+  "id": "obstacle-2",
+  "challenge": "obstacle",
+  "level": 2,
+  "version": 2,
+  "module": "G5.2",
+  "title": "Obstacle course · Level 2: Slalom",
+  "brief": "Weave over the first barrier and under the second, into the goal in the far corner.",
+  "field": {
+    "arena": {
+      "size": [
+        2400,
+        1200
+      ],
+      "startBox": [
+        100,
+        100,
+        400,
+        400
+      ],
+      "goal": [
+        2000,
+        800,
+        2300,
+        1100
+      ],
+      "obstacles": [
+        {
+          "x": 900,
+          "y": 400,
+          "w": 200,
+          "d": 800
+        },
+        {
+          "x": 1500,
+          "y": 800,
+          "w": 200,
+          "d": 800
+        }
+      ],
+      "wallH": 100,
+      "wallT": 20,
+      "obstacleH": 150
+    }
+  },
+  "robot": {
+    "rule": "learner"
+  },
+  "start": {
+    "nominal": {
+      "x": 230,
+      "y": 250,
+      "heading": 0
+    },
+    "vary": {
+      "xy": 20,
+      "heading": 2
+    },
+    "draw": "uniform-square-v1"
+  },
+  "runs": {
+    "min": 1,
+    "max": 20,
+    "default": 5,
+    "fixed": 5
+  },
+  "kernel": {
+    "name": "pointToPoint",
+    "limitS": 60,
+    "goal": "footprintInside"
+  },
+  "constants": {
+    "par": 10
+  },
+  "score": {
+    "run": "if(reached, round(50 + 40 * min(1, par / max(time, 0.001)) + if(touches == 0, 10, 0), 1), 0)",
+    "summary": "round(sum(r in runs: r.points) / count(r in runs: true), 1)"
+  },
+  "pass": "score >= 60 & reached >= 0.8 * n",
+  "sources": [
+    {
+      "doc": "docs/curriculum/G05.md",
+      "where": "G5.2 Obstacle course, the level table and the scoring paragraph"
+    },
+    {
+      "doc": "src/sim/engine/challenges.ts",
+      "where": "CHALLENGE_LEVELS before the port (ported bit for bit: scripts/fixtures/course_obstacle_v1.json)"
+    }
+  ]
+}

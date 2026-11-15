@@ -1,0 +1,158 @@
+{
+  "format": "evn-course/1",
+  "id": "blind-navigator-2",
+  "challenge": "blind-navigator",
+  "level": 2,
+  "version": 1,
+  "module": "G8.2",
+  "title": "Blind navigator · Level 2: Five waypoints",
+  "brief": "Five waypoints drawn inside the floor, visited in the order listed, then back to the start. tour.json holds them, a JSON list of [x, y] in mm; practice runs without it. Until P0c-2s ships, tour.json is in the arena frame: the start frame's (x, y) is the arena's (x - 300, y - 300) to within the start's 20 mm and 3 degrees; a run scores only if the robot's centre enters a circle of radius 250 mm around each waypoint in the order listed (the return to the start is not one); otherwise it scores 0 and does not finish. Par score 80. Write your own estimate as track.csv after the motors stop: one row t_ms,x_mm,y_mm at least every 500 ms from Run to the program's end (the sensor's own period: the IMU on 8 takes 500 ms to start, so keep your first row as soon as IMU(8) returns), in the start frame (x ahead at the start, y to its left, mm), with an optional fourth column th_deg (your heading estimate, shown as its RMS error, unscored); t_ms must rise row by row. The course compares it with the true position of the robot's centre at each row's t_ms. The level fixes the robot: the class robot with an IMU on I2C 8; its real axle track is drawn for each run near the 178 mm your program assumes (the hidden error). The robot starts within 20 mm and 3 degrees of (300, 300) facing +x. The run ends when the program ends, at 120 s at the latest. Per run: 60 x max(0, 1 - e_end / 200) (e_end: the true end to your true start) + 40 x max(0, 1 - e_track / 100) (e_track: the RMS distance of your estimate from the truth; 0 unless track.csv covers the run with no gap over 500 ms). Pass: a mean of at least 60 over 10 runs, and at least 8 runs that drive the tour, end within 200 mm and write track.csv.",
+  "field": {
+    "random": [
+      {
+        "name": "tour",
+        "draw": "points-v1",
+        "n": 5,
+        "box": [
+          500,
+          500,
+          2300,
+          2300
+        ],
+        "grid": 100,
+        "gap": 500,
+        "legs": "any",
+        "from": [
+          300,
+          300
+        ]
+      }
+    ],
+    "arena": {
+      "size": [
+        2600,
+        2600
+      ],
+      "startBox": [
+        200,
+        200,
+        400,
+        400
+      ],
+      "goal": null,
+      "obstacles": [],
+      "areas": [
+        {
+          "group": "wp",
+          "from": "tour",
+          "circle": 250,
+          "paint": null
+        }
+      ],
+      "wallH": 100,
+      "wallT": 20,
+      "obstacleH": 150
+    }
+  },
+  "robot": {
+    "rule": "fixed",
+    "base": "odometry-imu8",
+    "set": {
+      "axleTrack": 180
+    },
+    "draw": {
+      "axleTrack": {
+        "d": 4
+      }
+    },
+    "drawPer": "run"
+  },
+  "start": {
+    "nominal": {
+      "x": 300,
+      "y": 300,
+      "heading": 0
+    },
+    "vary": {
+      "xy": 20,
+      "heading": 3
+    },
+    "draw": "uniform-square-v1"
+  },
+  "runs": {
+    "min": 1,
+    "max": 20,
+    "default": 5,
+    "fixed": 10
+  },
+  "kernel": {
+    "name": "pointToPoint",
+    "limitS": 120,
+    "goal": "footprintInside",
+    "final": "runEnd",
+    "visits": {
+      "targets": [
+        {
+          "group": "wp"
+        }
+      ],
+      "endAtLast": false
+    },
+    "report": {
+      "kind": "series",
+      "routes": [
+        "file"
+      ],
+      "file": "track.csv",
+      "columns": [
+        "t_ms",
+        "x_mm",
+        "y_mm",
+        "th_deg?"
+      ],
+      "frame": "start",
+      "align": "atRows",
+      "fromMs": 0,
+      "to": "end",
+      "cover": {
+        "gapMs": 500,
+        "ends": "gap"
+      },
+      "rms": [
+        "xy",
+        "th"
+      ],
+      "maxRows": 60000
+    }
+  },
+  "constants": {},
+  "reveal": {
+    "file": {
+      "name": "tour.json",
+      "values": [
+        "tour"
+      ]
+    }
+  },
+  "score": {
+    "run": "round(if(visitedInOrder == 5, 60 * max(0, 1 - hypot(endX - startX, endY - startY) / 200) + if(repCovered, 40 * max(0, 1 - repRms_xy / 100), 0), 0), 1)",
+    "values": {
+      "complete": {
+        "value": "count(r in runs: r.visitedInOrder == 5 & r.repCovered & hypot(r.endX - r.startX, r.endY - r.startY) <= 200)",
+        "unit": "runs"
+      }
+    },
+    "summary": "round(sum(r in runs: r.points) / n, 1)"
+  },
+  "pass": "score >= 60 & complete >= 0.8 * n",
+  "sources": [
+    {
+      "doc": "docs/curriculum/G08.md",
+      "where": "G8.2 Blind navigator, the challenge paragraph and the level table"
+    },
+    {
+      "doc": "vscode-evn-alpha/docs/COURSE_FORMAT_DESIGN.md",
+      "where": "§17.3 (the series key, G8.2's), §17.7 (G8.2's gated term), §13 (the fixed robot, its drawn axle track), §14 (the drawn tour, reveal.file)"
+    }
+  ]
+}

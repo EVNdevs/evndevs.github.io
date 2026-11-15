@@ -1,0 +1,45 @@
+{
+ "format": "evn-course-index/1",
+ "generated": "node scripts/course_index.js --write; do not edit",
+ "levels": [
+  {
+   "file": "autonomous-courier/level-1.v1.json",
+   "id": "autonomous-courier-1",
+   "version": 1,
+   "sha256": "c346a16558077fdee0b68ed0ab50865dee86b78cf57c4e01d1af4e46c1ee71a6",
+   "current": true,
+   "title": "Autonomous courier · Level 1: The known map",
+   "limit": 96.6,
+   "runs": {
+    "default": 5,
+    "fixed": 10
+   }
+  },
+  {
+   "file": "autonomous-courier/level-2.v1.json",
+   "id": "autonomous-courier-2",
+   "version": 1,
+   "sha256": "5a219aa53d6b66545bd2149aa0c7ab5d70420e0fb24882c25abffb844657c33a",
+   "current": true,
+   "title": "Autonomous courier · Level 2: Boxes not on the map",
+   "limit": 116,
+   "runs": {
+    "default": 5,
+    "fixed": 10
+   }
+  },
+  {
+   "file": "autonomous-courier/level-3.v1.json",
+   "id": "autonomous-courier-3",
+   "version": 1,
+   "sha256": "bb3fc562fe8c1370ffee2dd46353e7d236a221eda7ac65cc1ac7799b00dd93c9",
+   "current": true,
+   "title": "Autonomous courier · Level 3: Drops and a person",
+   "limit": 116,
+   "runs": {
+    "default": 5,
+    "fixed": 10
+   }
+  }
+ ]
+}

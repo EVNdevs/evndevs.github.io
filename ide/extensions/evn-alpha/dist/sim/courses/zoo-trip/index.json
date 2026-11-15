@@ -1,0 +1,45 @@
+{
+ "format": "evn-course-index/1",
+ "generated": "node scripts/course_index.js --write; do not edit",
+ "levels": [
+  {
+   "file": "zoo-trip/level-1.v1.json",
+   "id": "zoo-trip-1",
+   "version": 1,
+   "sha256": "1cb8ee310c2d1903a2d386fc81791606aa0b4d57bb24908f8f32e23782bb7165",
+   "current": true,
+   "title": "Zoo trip · Level 1: The lion",
+   "limit": 60,
+   "runs": {
+    "default": 5,
+    "fixed": 5
+   }
+  },
+  {
+   "file": "zoo-trip/level-2.v1.json",
+   "id": "zoo-trip-2",
+   "version": 1,
+   "sha256": "c90740862679fb6e4c7845f52406b2718dd30e2a1b55c41914b778ca9f9110ff",
+   "current": true,
+   "title": "Zoo trip · Level 2: The lion, then the giraffe",
+   "limit": 60,
+   "runs": {
+    "default": 5,
+    "fixed": 5
+   }
+  },
+  {
+   "file": "zoo-trip/level-3.v1.json",
+   "id": "zoo-trip-3",
+   "version": 1,
+   "sha256": "3fcf49a58a5e42026e68505345bce7fd5d18870d483de7a1d381d63c5544580f",
+   "current": true,
+   "title": "Zoo trip · Level 3: Every animal on the card",
+   "limit": 120,
+   "runs": {
+    "default": 5,
+    "fixed": 5
+   }
+  }
+ ]
+}

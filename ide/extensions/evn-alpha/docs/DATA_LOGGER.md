@@ -41,7 +41,7 @@ A run of identical readings is kept as two rows, its first and its last. A motor
 
 After **Stop** the logger waits until every motor has stopped, then fetches the samples and writes the file.
 
-A recording also ends when the console lets go of the board: you press **Run**, open the REPL or unplug. What was already in the file stays; what the board still held is lost.
+> **Warning:** a recording also ends when the console lets go of the board: you press **Run**, open the REPL or unplug. What was already in the file stays; what the board still held is lost.
 
 ## Capture point
 

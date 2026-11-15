@@ -1,0 +1,221 @@
+{
+ "format": "evn-course/1",
+ "id": "zoo-trip-3",
+ "challenge": "zoo-trip",
+ "level": 3,
+ "version": 1,
+ "module": "G1.3",
+ "title": "Zoo trip \u00b7 Level 3: Every animal on the card",
+ "brief": "Visit every animal on the card (the lion, the giraffe, the elephant and the penguin) in any order, flashing the light in each one's square (the yellow squares), and end on the gate (the blue start box). No wheel may touch a green hedge. 120 s. 12.5 for each animal, up to 40 for speed when every animal is visited and the robot ends on the gate (a shorter route is faster), 10 for no wheel on a hedge. Par: 50 s.",
+ "field": {
+  "arena": {
+   "size": [
+    2700,
+    2400
+   ],
+   "startBox": [
+    450,
+    450,
+    750,
+    750
+   ],
+   "goal": null,
+   "obstacles": [],
+   "wallH": 100,
+   "wallT": 20,
+   "obstacleH": 100,
+   "areas": [
+    {
+     "name": "lion",
+     "rect": [
+      1050,
+      1050,
+      1350,
+      1350
+     ],
+     "paint": "yellow"
+    },
+    {
+     "name": "giraffe",
+     "rect": [
+      1650,
+      1650,
+      1950,
+      1950
+     ],
+     "paint": "yellow"
+    },
+    {
+     "name": "elephant",
+     "rect": [
+      1950,
+      750,
+      2250,
+      1050
+     ],
+     "paint": "yellow"
+    },
+    {
+     "name": "penguin",
+     "rect": [
+      450,
+      1650,
+      750,
+      1950
+     ],
+     "paint": "yellow"
+    },
+    {
+     "name": "hedgeB2",
+     "rect": [
+      750,
+      750,
+      1050,
+      1050
+     ],
+     "paint": "green",
+     "noGo": true
+    },
+    {
+     "name": "hedgeB3",
+     "rect": [
+      750,
+      1050,
+      1050,
+      1350
+     ],
+     "paint": "green",
+     "noGo": true
+    },
+    {
+     "name": "hedgeD3",
+     "rect": [
+      1350,
+      1050,
+      1650,
+      1350
+     ],
+     "paint": "green",
+     "noGo": true
+    },
+    {
+     "name": "hedgeD4",
+     "rect": [
+      1350,
+      1350,
+      1650,
+      1650
+     ],
+     "paint": "green",
+     "noGo": true
+    },
+    {
+     "name": "hedgeE1",
+     "rect": [
+      1650,
+      450,
+      1950,
+      750
+     ],
+     "paint": "green",
+     "noGo": true
+    }
+   ]
+  }
+ },
+ "robot": {
+  "rule": "fixed",
+  "base": "junior"
+ },
+ "start": {
+  "nominal": {
+   "x": 600,
+   "y": 600,
+   "heading": 90
+  },
+  "vary": {
+   "xy": 20,
+   "heading": 2
+  },
+  "draw": "uniform-square-v1"
+ },
+ "runs": {
+  "min": 1,
+  "max": 20,
+  "default": 5,
+  "fixed": 5
+ },
+ "kernel": {
+  "name": "pointToPoint",
+  "limitS": 120,
+  "goal": "footprintInside",
+  "end": "afterProgram",
+  "still": {
+   "s": 0.5,
+   "dps": 5,
+   "mms": 3
+  },
+  "final": "runEnd",
+  "noGo": "wheels",
+  "visits": {
+   "targets": [
+    {
+     "area": "lion",
+     "flash": {
+      "s": 0.9,
+      "mms": 5
+     }
+    },
+    {
+     "area": "giraffe",
+     "flash": {
+      "s": 0.9,
+      "mms": 5
+     }
+    },
+    {
+     "area": "elephant",
+     "flash": {
+      "s": 0.9,
+      "mms": 5
+     }
+    },
+    {
+     "area": "penguin",
+     "flash": {
+      "s": 0.9,
+      "mms": 5
+     }
+    }
+   ]
+  }
+ },
+ "constants": {
+  "par": 50,
+  "gx0": 450,
+  "gx1": 750,
+  "gy0": 450,
+  "gy1": 750
+ },
+ "score": {
+  "run": "round(12.5 * visited + if(visited == 4 & endX >= gx0 & endX <= gx1 & endY >= gy0 & endY <= gy1, 40 * min(1, par / max(time, 0.001)), 0) + if(noGoEntries == 0, 10, 0), 1)",
+  "values": {
+   "finished": {
+    "value": "count(r in runs: r.visited == 4 & r.endX >= gx0 & r.endX <= gx1 & r.endY >= gy0 & r.endY <= gy1)",
+    "unit": "runs"
+   }
+  },
+  "summary": "round(sum(r in runs: r.points) / n, 1)"
+ },
+ "pass": "score >= 60 & finished >= 0.8 * n",
+ "sources": [
+  {
+   "doc": "docs/curriculum/G01.md",
+   "where": "G1.3 Left and right, Challenge \u2014 Zoo trip: the zoo floor (its 6 x 5 squares from (450, 450), on the panel's grid, 450 mm of plain floor round it: the record names no wall; the gate the blue start box, the card's animal squares yellow for their pictures), the level table (level 3), the scoring paragraph; \"How a run is measured\" (the G1 run's end, stopped, the flash)"
+  },
+  {
+   "doc": "vscode-evn-alpha/docs/COURSE_FORMAT_DESIGN.md",
+   "where": "\u00a711.5 (noGo wheels: the hedges), \u00a711.8 (end afterProgram), \u00a712.1 (a flash at a visit), \u00a713.1 (the fixed robot)"
+  }
+ ]
+}

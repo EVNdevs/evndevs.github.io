@@ -11,6 +11,10 @@
  * - The card: its title, progress, the level's line (CHK7), a row per run (with, under a run that ended in an error, the error's last line as text
  *   across the table: TRAIL S5, A11Y_DESIGN W6), the summary line, Save submission (student runs only, enabled by the
  *   summary), Practice (after a student's or a practice's runs: challengeHost.ts rehearse(), P8e1) and Close. Card text is set with textContent only (a program's error is the learner's text).
+ * - On a Maze mapper level (kernel.maze), under the table, a map view per run on request (COURSE_CONTENT_DESIGN.md §3.3, CC-4):
+ *   a <details> whose summary is the view's line ("Map view, run 3: 2 wrong places"), the run's true maze as G8.3.3's `+--+`
+ *   text with each wrong place `x`, and the wrong places in words. The text is the report's (src/sim/course/mazeView.ts,
+ *   posted by challengeHost.ts with the summary as `maps`), set here with textContent only.
  *
  * No vscode API and no state of sim.js's: the page hands in `el`, `post` (vscode.postMessage) and `tryAt` (a run's Try).
  * CC-4 and CC-8 write through this file.
@@ -31,7 +35,7 @@
     'use strict';
 
     /** the run's end, in the card's words */
-    const ENDS = { goal: 'goal', time: 'out of time', ended: 'stopped short', error: 'error', still: 'stood still', touch: 'touched', visits: 'every target visited', reach: 'within reach', window: 'the window closed' };
+    const ENDS = { goal: 'goal', time: 'out of time', ended: 'stopped short', error: 'error', still: 'stood still', touch: 'touched', visits: 'every target visited', reach: 'within reach', window: 'the window closed', lane: 'the lane judge', line: 'the line judge', tiles: 'the tile judge', cover: 'covered the count', route: 'end of the route', offRoad: 'off the road' };
 
     /** the page's one live region: made once per document, found again after */
     function region(doc, el) {
@@ -78,6 +82,7 @@
                 el('div', { class: 'row' }, el('b', { id: 'chTitle' }), el('span', { class: 'v', id: 'chProg' })),
                 el('div', { class: 'row', id: 'chLine', hidden: '' }),
                 el('table', { class: 'chtab' }, el('thead', {}, el('tr', {}, ...['Run', 'Start', 'Result', 'Time', 'Touches', 'Points', ''].map((h) => el('th', {}, h)))), el('tbody', { id: 'chRows' })),
+                el('div', { id: 'chMaps', hidden: '' }),
                 el('div', { class: 'row', id: 'chSum' }),
                 el('div', { class: 'row', id: 'chCmp', hidden: '' }),
                 el('div', { class: 'row' },
@@ -113,9 +118,15 @@
         region() { return region(this.doc, this.el); }
 
         /** a job begins: the card shown, emptied, titled; `purpose` the host's (student, verify, retest) */
-        open({ title, runs, purpose }) {
+        open({ title, runs, purpose, tiles, rounds }) {
             stopReading(this.doc, 'chCard');
             this.purpose = purpose;
+            // a tile level (course/tiles.ts; the host's level list says so): its run 1 is drawn like the others (challenges.ts
+            // startPoses), and a run is at the goal by its `goal` word, as the level has no goal box (`reached` is never set)
+            this.tiles = !!tiles;
+            // P0c-2r §5.10: a rounds level's card (opened once by the level, its rounds' rows added under their headings): Try on
+            // every row, a round tried included
+            this.rounds = !!rounds;
             // a new job's card shows no other job's comparison (r2 F-S3)
             this.jobId = 0;
             this.held = null;
@@ -125,6 +136,8 @@
             this.$('chTitle').textContent = title;
             this.$('chProg').textContent = `starting (${runs} run${runs === 1 ? '' : 's'})…`;
             this.$('chRows').textContent = '';
+            this.$('chMaps').textContent = '';
+            this.$('chMaps').hidden = true;
             this.$('chSum').textContent = purpose === 'student' || purpose === 'rehearse' ? '' : 'The report is in the editor.';
             this.$('chLine').textContent = '';
             this.$('chLine').hidden = true;
@@ -138,19 +151,28 @@
         /** a run's row, as the challenge worker gave its result */
         row(r) {
             const el = this.el;
-            const tr = el('tr', { class: r.reached ? 'ok' : 'miss' },
+            const atGoal = r.reached || (this.tiles && !!r.m && r.m.goal === true);
+            const tr = el('tr', { class: atGoal ? 'ok' : 'miss' },
                 el('td', {}, String(r.run)),
-                el('td', { title: `x ${r.start.x} mm, y ${r.start.y} mm, heading ${r.start.heading}°` }, r.run === 1 ? 'nominal' : `${r.start.x}, ${r.start.y}, ${r.start.heading}°`),
+                el('td', { title: `x ${r.start.x} mm, y ${r.start.y} mm, heading ${r.start.heading}°` }, r.run === 1 && !this.tiles ? 'nominal' : `${r.start.x}, ${r.start.y}, ${r.start.heading}°`),
                 el('td', { title: r.error || '' }, ENDS[r.end] || r.end),
                 el('td', {}, `${r.time} s`),
                 el('td', {}, String(r.touches)),
                 el('td', {}, String(r.points)),
-                el('td', {}, this.purpose === 'student' ? el('button', { class: 'btn', type: 'button', title: 'Put the robot at this run\'s start, to run your program from there and watch', onclick: () => this.tryAt(r.start) }, 'Try') : ''));
+                el('td', {}, this.purpose === 'student' || this.rounds ? el('button', { class: 'btn', type: 'button', title: this.rounds ? 'Put the robot at this run\'s start on its round\'s field and run that round\'s program (shown beside the editor, read-only)' : 'Put the robot at this run\'s start, to run your program from there and watch', onclick: () => this.tryAt(r.start, r) }, 'Try') : ''));
             this.$('chRows').append(tr);
             // why a run ended in an error, as text under its own row: the tooltip alone reaches neither a keyboard nor a
             // screen reader (A11Y_DESIGN W6); the row spans the table, as the words do not fit the Result column
             const why = r.error && r.error.trim().split('\n').pop();
             if (why) { this.$('chRows').append(el('tr', { class: 'why' }, el('td', { colspan: '7' }, why))); }
+            // a series report's state and a refused write, as text under the row (COURSE_FORMAT_DESIGN.md §17.7, lane e2-report)
+            const rep = reportSentences(r.m, this.reportFile);
+            if (rep.length) { this.$('chRows').append(el('tr', { class: 'why' }, el('td', { colspan: '7' }, rep.join(' ')))); }
+        }
+
+        /** P0c-2r §5.6: a round's heading row ("Round 2: house 5", "Round 2" on a field round), its runs' rows under it */
+        roundHead(text) {
+            this.$('chRows').append(this.el('tr', { class: 'round' }, this.el('th', { colspan: '7' }, String(text))));
         }
 
         /** the extension host's summary (challenge-summary): shown, and Save submission ready for a student's runs; false when
@@ -162,7 +184,11 @@
             // a level's named values (COURSE_FORMAT_DESIGN.md §12.3) after the summary, an undefined one as -
             const u = m.units || {};
             const vals = s.values ? Object.entries(s.values).map(([k, v]) => ` · ${k} ${v ?? '-'}${v !== null && u[k] ? ' ' + u[k] : ''}`).join('') : '';
-            this.$('chSum').textContent = `score ${s.score} · at the goal ${s.reached} of ${s.runs} · clean ${s.clean} · best ${s.best ?? '-'} s · median ${s.median ?? '-'} s${vals}`;
+            // a goal: null level (the host's `noGoal`, its line word or ''; M2P-76): no goal words, which no run could earn there
+            this.$('chSum').textContent = typeof m.noGoal === 'string'
+                ? `score ${s.score} · ${s.runs} run${s.runs === 1 ? '' : 's'}${vals}${!vals && m.noGoal ? ` · ${m.noGoal}` : ''}`
+                : `score ${s.score} · at the goal ${s.reached} of ${s.runs} · clean ${s.clean} · best ${s.best ?? '-'} s · median ${s.median ?? '-'} s${vals}`;
+            this.maps(m.maps);
             this.jobId = m.id;
             // §16.4.7: with a comparison pending, Save and Practice stay off until its challenge-compare
             const practiceLine = typeof m.line === 'string' && m.line.startsWith('PRACTICE');
@@ -181,6 +207,27 @@
                 this.say(m.line);
             }
             return true;
+        }
+
+        /** CCD §3.3: the summary's map views, one <details> a run under the table, every string by textContent; none (another
+         *  level) leaves the block hidden. True when any was shown */
+        maps(list) {
+            const box = this.$('chMaps'), el = this.el;
+            box.textContent = '';
+            const views = Array.isArray(list) ? list.filter((v) => v && typeof v.line === 'string' && typeof v.grid === 'string' && Array.isArray(v.wrong)).slice(0, 20) : [];
+            for (const v of views) {
+                const d = el('details', { class: 'chmap' }, el('summary', {}));
+                d.firstChild.textContent = v.line;
+                if (v.grid) { const pre = el('pre', {}); pre.textContent = v.grid; d.append(pre); }
+                if (v.wrong.length) {
+                    const ul = el('ul', {});
+                    for (const w of v.wrong) { const li = el('li', {}); li.textContent = String(w); ul.append(li); }
+                    d.append(ul);
+                }
+                box.append(d);
+            }
+            box.hidden = views.length === 0;
+            return views.length > 0;
         }
 
         /** §16.4.7: the host's challenge-compare - shown only on the card whose summary has its id (never another Run's, nor a
@@ -206,6 +253,13 @@
         /** CC-8's practice line (the panel's own Run on a challenge level, workerCore.ts): said through the one region whether
          *  the card is open or not (COURSE_CONTENT_DESIGN.md §8 item 10); on an open card it is the card's line, and Save
          *  submission is off under it (a practice score never seals). True when the card showed it */
+        /** a rounds level's end on the page (P0c-2r, sim.js chLevelEnd): the card's progress word, then the line as practice()
+         *  says it; the card writes #chProg, never sim.js outside its challenge presenter (CHK5b wiring) */
+        levelEnded(failed, line) {
+            this.$('chProg').textContent = failed ? 'did not run' : 'ended';
+            return this.practice(line);
+        }
+
         practice(line) {
             const text = String(line);
             const open = !this.$('chCard').hidden;
@@ -374,6 +428,27 @@
      * so saying that pose is what a sighted learner already sees; it reaches no program (README §9 GT's wall is the
      * program's reads: workerCore.ts trailRefused, challengeRun.ts's VM without tools), and nothing here is posted. */
 
+    /** a series report's sentences for a run's measures (COURSE_FORMAT_DESIGN.md §17.7): its state 1-5 with the line, and,
+     *  whenever a write of the file was refused, when and why (M2P-12: a later good write leaves it said); [] on a run with
+     *  no report words or a report taken with no refusal. `file` the level's report file, else "the report file" */
+    function reportSentences(m, file) {
+        if (!m || typeof m.repState !== 'number') { return []; }
+        const f = file ? file : 'the report file', out = [];
+        const at = m.repLine > 0 ? ` (line ${m.repLine})` : '';
+        const S = {
+            1: `No report: ${f} was not written and closed in this run.`,
+            2: `The report was not read: a line is not a row of the level's columns${at}.`,
+            3: `The report was not read: t_ms does not rise row by row${at}.`,
+            4: 'The report was not read: it has too many rows or bytes for this level.',
+            5: 'The report was not read: the run gave two reports.',
+        };
+        if (S[m.repState]) { out.push(S[m.repState]); }
+        if (typeof m.repRefusedMs === 'number' && m.repRefusedMs >= 0) {
+            out.push(`The write of ${f} at ${(m.repRefusedMs / 1000).toFixed(3)} s was refused: a motor was driving (stop the motors first).`);
+        }
+        return out;
+    }
+
     /** a heading as the panel states it: above -180, up to 180 */
     function wrap180(d) { const a = ((d % 360) + 360) % 360; return a > 180 ? a - 360 : a; }
     /** a whole number as the panel says it: never "-0" */
@@ -487,5 +562,5 @@
         if (it && it.card === cardId) { cancel(it); }
     }
 
-    root.EVNCard = { ChallengeCard, CheckCard, ENDS, region, sayer, parseBox, poseText, poseSentence, wrap180, readButton, stopReading, NO_VOICE, NO_VOICE_LINE };
+    root.EVNCard = { ChallengeCard, CheckCard, ENDS, region, sayer, parseBox, poseText, poseSentence, wrap180, reportSentences, readButton, stopReading, NO_VOICE, NO_VOICE_LINE };
 })(typeof self !== 'undefined' ? self : this);

@@ -8,7 +8,8 @@ sees is made to look like the board's MicroPython (micropython/port/mpconfigport
   - `errno` / `uerrno`: MicroPython's names and numbers, and a file error carries them (ENOENT 2, not WebAssembly's 44);
   - open() and the os module's writes refuse with OSError EBUSY (16) while a motor drives, as the board's flash does;
     a write the flash took (a good close() or flush() of a top-level /flash file) tells the host its name
-    (_evnsim.file_written; a level's kernel reads the file: docs/COURSE_CONTENT_DESIGN.md §3.2);
+    (_evnsim.file_written; a level's kernel reads the file: docs/COURSE_CONTENT_DESIGN.md §3.2), and a refusal the
+    absolute path refused (_evnsim.file_refused: COURSE_FORMAT_DESIGN.md §17.4);
   - `sys.print_exception`, and help() with the board's text (micropython/port/help.c);
   - `micropython` (const, native, viper, opt_level, mem_info), `gc.mem_free()` / `gc.mem_alloc()`,
     and the u-names (ujson, ustruct, ...);
@@ -28,6 +29,7 @@ import errno as _cerrno
 import _evnsim
 import gc as _gc
 import weakref as _weakref
+from array import array as _jr_array
 
 _real_time = sys.modules.get("time") or __import__("time")
 
@@ -49,6 +51,28 @@ def _caller_is_program(depth=2):
 
 # ---------------------------------------------------------------- time, on the simulated clock
 
+_TICKS_HALF = 1 << 29              # MICROPY_PY_TIME_TICKS_PERIOD / 2: the period is 2**30 on the board
+
+
+_ticks_add_js = _evnsim.ticks_add
+
+
+def _ticks_add(ticks, delta, /):
+    """ticks_add(ticks, delta) as the board's (extmod/modtime.c v1.26.1 l.178-196): delta is read by mp_obj_get_int -
+    an int or a bool, else TypeError; past the 32-bit word OverflowError - and refused at half the period or past it, so
+    that ticks_diff(ticks_add(T, delta), T) == delta; the sum wraps at 2**30 (runtime.ts timeModule)"""
+    if not isinstance(delta, int):
+        raise TypeError("can't convert %s to int" % type(delta).__name__)
+    if not -(1 << 31) <= delta < (1 << 31):
+        raise OverflowError("overflow converting long int to machine word")
+    if not -_TICKS_HALF < delta < _TICKS_HALF:
+        raise OverflowError("ticks interval overflow")
+    return _ticks_add_js(ticks, delta)
+
+
+_ticks_add.__name__ = _ticks_add.__qualname__ = "ticks_add"
+
+
 def _sim_time(t):
     t.sleep = _evnsim.sleep
     t.sleep_ms = _evnsim.sleep_ms
@@ -56,7 +80,7 @@ def _sim_time(t):
     t.ticks_ms = _evnsim.ticks_ms
     t.ticks_us = _evnsim.ticks_us
     t.ticks_cpu = _evnsim.ticks_cpu
-    t.ticks_add = _evnsim.ticks_add
+    t.ticks_add = _ticks_add
     t.ticks_diff = _evnsim.ticks_diff
 
 
@@ -148,21 +172,45 @@ def _driving():
 _m_driving = getattr(_evnsim, "m_driving", None)
 
 
-def _refuse_if_driving():
-    if _driving():
-        raise _mp_oserror(16)
+_file_refused = getattr(_evnsim, "file_refused", None)
+
+
+def _abspath(p):
+    """a path argument (a str, bytes or an os.PathLike) as the absolute str the host is told and a _BoardFile keeps (None:
+    not a path - a file descriptor, another object)"""
+    try:
+        return _os.path.abspath(_os.fsdecode(_os.fspath(p)))
+    except Exception:       # a bad path: the refusal or the call says so, the host hears nothing
+        return None
+
+
+def _refuse(path):
+    """The flash refuses a write while a motor drives (EBUSY): the host is told the absolute path refused
+    (_evnsim.file_refused; COURSE_FORMAT_DESIGN.md §17.4 D4: a level's kernel reports a refusal of its report file), then
+    OSError 16 is raised. Every refusal point calls this."""
+    p = _abspath(path)
+    if p is not None and _file_refused is not None:
+        try:
+            _file_refused(p)
+        except Exception:   # the host's fault is never the program's to see
+            pass
+    raise _mp_oserror(16)
 
 
 _file_written = getattr(_evnsim, "file_written", None)
 
 
-def _written(path):
+def _written(path, moved=False):
     """A write the flash took (a good close() or flush()): the host hears a top-level /flash name
     (docs/COURSE_CONTENT_DESIGN.md §3.2: a level's kernel reads the file then). A refused write is no write and says
-    nothing; a file renamed into a name is not seen."""
+    nothing. `moved`: a good os.rename() into or out of the name, or its os.remove() / unlink() (§17.4, V2-S1, R3-S6):
+    told as such, so a host hears it for a report file only (kernel.maze's map.txt keeps CC-3's path)."""
     d, name = _os.path.split(path)
     if d == "/flash" and _file_written is not None:
-        _file_written(name)
+        if moved:
+            _file_written(name, True)
+        else:
+            _file_written(name)
 
 
 _real_open = builtins.open
@@ -233,7 +281,8 @@ class _BoardFile:
     def __del__(self):
         # a file dropped unclosed (open(...).write(s)) closes through close(), as the board's gc closes it: committed and
         # heard as a close is (_written), or refused while a motor drives (put back; a finaliser cannot raise to the
-        # program, so the refusal is silent). Lane cc3 c2, review cc3_r1_A S1.
+        # program, so the program sees nothing, but close()'s _refuse has told the host: §17.4). Lane cc3 c2, review
+        # cc3_r1_A S1.
         if self.__dict__.get("_f") is None:
             return
         try:
@@ -243,8 +292,8 @@ class _BoardFile:
 
     def write(self, data):
         n = len(data.encode("utf-8")) if isinstance(data, str) else len(data)
-        if self._size + n > _INLINE_MAX:
-            _refuse_if_driving()
+        if self._size + n > _INLINE_MAX and _driving():
+            _refuse(self._path)
         r = self._f.write(data)
         self._size += n
         return r
@@ -260,7 +309,8 @@ class _BoardFile:
     def flush(self):
         if self._f.closed:
             return self._f.flush()          # ValueError, as CPython says it
-        _refuse_if_driving()
+        if _driving():
+            _refuse(self._path)
         self._commit()
 
     def close(self):
@@ -284,7 +334,7 @@ class _BoardFile:
             pass
         _held_files.discard(self._f)
         _put_bytes(self._path, self._committed)
-        raise _mp_oserror(16)
+        _refuse(self._path)
 
 
 def _open(file, mode="r", *a, **k):
@@ -296,10 +346,10 @@ def _open(file, mode="r", *a, **k):
             return _real_open(file, mode, *a, **k)
         except OSError as e:
             raise _translate(e) from None
-    path = _os.path.abspath(file) if isinstance(file, (str, bytes)) else None
+    path = _abspath(file)
     committed = _read_bytes(path) if path is not None and _os.path.isfile(path) else None
-    if committed is None:
-        _refuse_if_driving()            # a create commits the new file's entry at once
+    if committed is None and _driving():
+        _refuse(file)                   # a create commits the new file's entry at once
     try:
         f = _real_open(file, mode, *a, **k)
     except OSError as e:
@@ -312,20 +362,44 @@ def _open(file, mode="r", *a, **k):
 
 
 builtins.open = _open
+# io.open, _io.open (and uio.open: uio is io, below) for the program's callers go through the same _open, as on the
+# board's VFS (§17.4); a standard-library caller keeps the real one (_open hands it through)
+import io as _io_mod        # noqa: E402
+import _io                  # noqa: E402
+_io_mod.open = _open
+_io.open = _open
+
+
+def _arg(a, k, i, kw):
+    """the call's path argument: positional `i`, else keyword `kw` (None: not given)"""
+    return a[i] if len(a) > i else k.get(kw)
 
 
 def _os_call(name, writes):
     real = getattr(_os, name)
+    # the path the flash refuses (rename's destination: the name a write would make), and what a good call prompts:
+    # a rename into or out of a top-level name and a removal are heard as commits (§17.4, V2-S1, R3-S6)
+    told = (lambda a, k: _arg(a, k, 1, "dst")) if name == "rename" else (lambda a, k: _arg(a, k, 0, "path"))
 
     def call(*a, **k):
         if not _caller_is_program():
             return real(*a, **k)
-        if writes:
-            _refuse_if_driving()
+        if writes and _driving():
+            _refuse(told(a, k))
         try:
-            return real(*a, **k)
+            r = real(*a, **k)
         except OSError as e:
             raise _translate(e) from None
+        if name == "rename":
+            for p in (_arg(a, k, 1, "dst"), _arg(a, k, 0, "src")):
+                p = _abspath(p)
+                if p is not None:
+                    _written(p, True)
+        elif name in ("remove", "unlink"):
+            p = _abspath(_arg(a, k, 0, "path"))
+            if p is not None:
+                _written(p, True)
+        return r
     call.__name__ = name
     return call
 
@@ -334,6 +408,26 @@ for _n, _w in (("remove", True), ("unlink", True), ("rename", True), ("mkdir", T
                ("listdir", False), ("stat", False), ("chdir", False), ("statvfs", False), ("getcwd", False)):
     if hasattr(_os, _n):
         setattr(_os, _n, _os_call(_n, _w))
+
+
+def _os_absent(name):
+    """an os function MicroPython's os has not and that writes the flash past the refusals (os.open / os.write ...;
+    COURSE_FORMAT_DESIGN.md §17.4, V3-N4): absent for the program's callers (AttributeError, as the board says), the
+    standard library's own callers keep it"""
+    real = getattr(_os, name)
+
+    def call(*a, **k):
+        if _caller_is_program():
+            raise AttributeError("'module' object has no attribute '%s'" % name)
+        return real(*a, **k)
+    call.__name__ = name
+    return call
+
+
+for _n in ("open", "write", "writev", "pwrite", "pwritev", "replace", "truncate", "ftruncate", "link", "symlink",
+           "posix_fallocate", "sendfile", "copy_file_range", "splice"):
+    if hasattr(_os, _n):
+        setattr(_os, _n, _os_absent(_n))
 
 # ---------------------------------------------------------------- the micropython module and the u-names
 
@@ -748,8 +842,120 @@ _main = {}
 _user_modules = set()
 
 
-def reset():
-    """A soft reset: a fresh __main__, and the board's modules (evn, files from the board) imported anew."""
+def _sweep_body():
+    """The open-file sweep (the board's gc_sweep_all at a program's end: every file left open closed, LittleFS commits it,
+    the motors coasted first; COURSE_FORMAT_DESIGN.md §17.2 D3, §17.4). Never called as it stands: its code object, which
+    no program can change, is run as a new function over a globals dict of references captured at boot - by the host for
+    the end's sweep (SimVM.sweepOpenFiles builds the dict itself, from the parts it took before any program ran), by
+    _sweep_fn below for reset() - so a program that rebinds _evnboot's names, patches _BoardFile, rewrites a function's
+    __code__ / __defaults__ / closure cells or the builtins runs none of its code in it (§17.14 R3-S1). Every name here is
+    one of those globals; nothing is looked up in the builtins.
+    Bounded: only an exact _BoardFile whose instance dict has str keys alone, whose path is a str, and whose inner file is
+    the exact io stack the real open() makes (a TextIOWrapper over a Buffered* over a FileIO, a Buffered* over a FileIO, or
+    a FileIO) with nothing in each layer's instance dict but open()'s own `mode` / `name` (so no close / flush shadowed on
+    the instance), a text layer with strict errors (any encoding), is closed - through the unbound C close of its type. No
+    driving test (D3, R2-B1: the board coasts before its sweep): each close commits and is heard, a top-level /flash name
+    told to the host (HOOK: _evnsim.file_written); no refusal is told (V3-N7). The host clears the profile, the trace, the
+    collector and sys.monitoring around it (vm.ts). LOOSE (a test mutant, FILE_ROUTE_MUTANT.sweepLoose): no layer check,
+    close through the attribute."""
+    n = 0
+    for r in LIST(STORE):
+        try:
+            if TYPE(r) is not REF:
+                continue
+            f = r()
+            if TYPE(f) is not CLS:
+                continue
+            d = INST.__get__(f, CLS)
+            bad = False
+            for k in LIST(d):
+                if TYPE(k) is not STR:
+                    bad = True
+            if bad:
+                continue
+            inner = d.get("_f")
+            path = d.get("_path")
+            if TYPE(path) is not STR:
+                continue
+            x = inner
+            tx = TYPE(x)
+            close = None
+            layers = LIST()
+            if tx is TEXT:
+                if TYPE(x.encoding) is not STR or TYPE(x.errors) is not STR:
+                    continue
+                # any encoding (the board's open() ignores it: review b2 N1, an honest cp1252 file is committed); strict errors
+                if x.errors != "strict":
+                    continue
+                close = TEXT_CLOSE
+                layers.append(x)
+                x = x.buffer
+                tx = TYPE(x)
+            if tx is BW or tx is BR or tx is BRD:
+                if close is None:
+                    close = BW_CLOSE if tx is BW else BR_CLOSE if tx is BR else BRD_CLOSE
+                layers.append(x)
+                x = x.raw
+                tx = TYPE(x)
+            if tx is not FIO:
+                continue
+            if close is None:
+                close = FIO_CLOSE
+            layers.append(x)
+            for L in layers:
+                ld = IOD.__get__(L, TYPE(L))
+                for k in LIST(ld):
+                    if TYPE(k) is not STR or k not in KEYS:
+                        bad = True
+                    else:
+                        tv = TYPE(ld[k])
+                        if tv is not STR and tv is not INT and tv is not BYTES:
+                            bad = True
+            if (bad and not LOOSE) or inner.closed:
+                continue
+            try:
+                if LOOSE:
+                    inner.close()
+                else:
+                    close(inner)
+            except OSError:
+                continue                        # not committed: nothing heard
+            finally:
+                HELD.discard(inner)
+            i = path.rfind("/")
+            if path[:i] == "/flash" and HOOK is not None:
+                HOOK(path[i + 1:])
+            n += 1
+        except BaseException:                   # noqa: B036 - nothing of the program's may stop the sweep (a KeyboardInterrupt)
+            pass
+    return n
+
+
+def _sweep_parts():
+    """the sweep's globals as captured now, before any program (the host takes them at boot: SimVM.start)"""
+    import io
+    return {
+        "__builtins__": {}, "LIST": list, "TYPE": type, "STR": str, "INT": int, "BYTES": bytes, "REF": _weakref.ref,
+        "STORE": _open_files.data, "HELD": _held_files, "HOOK": _file_written, "CLS": _BoardFile,
+        "INST": _BoardFile.__dict__["__dict__"], "IOD": _io._IOBase.__dict__["__dict__"],
+        "TEXT": io.TextIOWrapper, "BW": io.BufferedWriter, "BR": io.BufferedRandom, "BRD": io.BufferedReader, "FIO": io.FileIO,
+        "TEXT_CLOSE": io.TextIOWrapper.close, "BW_CLOSE": io.BufferedWriter.close, "BR_CLOSE": io.BufferedRandom.close,
+        "BRD_CLOSE": io.BufferedReader.close, "FIO_CLOSE": io.FileIO.close,
+        "KEYS": frozenset(("mode", "name")), "ENCODINGS": frozenset(("utf-8", "utf8", "utf_8", "ascii", "latin-1", "latin1", "iso-8859-1")),
+        "OSError": OSError, "BaseException": BaseException, "LOOSE": False,
+    }
+
+
+_sweep_fn = types.FunctionType(_sweep_body.__code__, _sweep_parts(), "sweep")
+# the host's names (vm.ts start()): the code and the parts, taken before any program runs
+sweep_code = _sweep_body.__code__
+sweep_parts = _sweep_parts
+sweep_open_files = _sweep_fn
+
+
+def reset(_sweep=sweep_open_files):
+    """A soft reset: a fresh __main__, and the board's modules (evn, files from the board) imported anew. `_sweep` the
+    open-file sweep as built at boot (a program's rebinding of the name changes nothing here)."""
     global _main
     # the board's soft reboot ends a recording DataLog first, and autosaves it once the motors coast (the runtime has
     # coasted them: Runtime.softReset; evn_mp_datalog_program_end)
@@ -759,12 +965,9 @@ def reset():
         pass
     # the board's gc_sweep_all closes every file the old program left open (LittleFS commits it; the motors coast
     # first): closed here, not left to CPython's collector, which loses a buffered write when the file was in a
-    # reference cycle (a def or a class in the program) - its finalisers run in no set order
-    for f in list(_open_files):
-        try:
-            f.close()
-        except BaseException:       # noqa: B036 - nothing of the old program's may stop the reset (a KeyboardInterrupt)
-            pass
+    # reference cycle (a def or a class in the program) - its finalisers run in no set order. The runtime has coasted the
+    # motors, so the sweep's closes are the closes close() would make (the sweep, built at boot: _sweep_body)
+    _sweep()
     # a backstop: every close() lets go of its inner file, whatever it raises, so none is left once the wrappers closed
     for f in list(_held_files):
         try:
@@ -820,8 +1023,260 @@ def format_exception(e):
     return "\n".join(lines) + "\n"
 
 
-def run(src):
-    """One paste at the raw REPL; '' when it ended normally, else the traceback."""
+# ---------------------------------------------------------------- the Junior block trace (docs/design/JR_J4_TRACE.md §3)
+#
+# run(src, jr): the page's table (trace.js table(): own, blk, pass, span, hdr, body, hdrAt, n) drives a streaming state
+# machine fed by sys.monitoring LINE events on the program's own code objects. Tool 3 (4 is BTIME's), taken by force
+# when another run left it held; local events only, never global; DISABLE for code that is not this program's. The
+# live state is one array('i'), ST = [ev, blk, ln, total[0..L-1], entry[0..L-1], step], counts saturating at 2**31 - 1,
+# read by the host through a buffer view (no Python in a frame: vm.ts jrRead). The record goes to _LAST_JR (this
+# module's, never the program's __main__), copied out first in the guarded teardown; SimVM reads and clears it.
+# The step (J4b, §4): with `hold` (the host's), a block event calls it - after the counts and the line - only while ST's
+# step word is 1 (the host writes it, no call per event in a free run). Shared path: `hold` is the host's sync wait. Live
+# path (`park`): _evnsim.jr_hold (parks) where can_run_sync() is true in the callback's frame, else `hold` (no hold taken).
+
+_LAST_JR = None
+_JR_TOOL = 3
+_JR_NAME = "evn-jr"
+_JR_SEQ_CAP = 4096
+_JR_MAX = (1 << 31) - 1
+_JR_EVENTS = ("PY_START", "PY_RESUME", "PY_RETURN", "PY_YIELD", "CALL", "LINE", "INSTRUCTION", "JUMP", "BRANCH",
+              "STOP_ITERATION", "RAISE", "EXCEPTION_HANDLED", "PY_UNWIND", "PY_THROW", "RERAISE", "C_RETURN", "C_RAISE",
+              "BRANCH_LEFT", "BRANCH_RIGHT")
+
+
+def _jr_codes(co, out):
+    """the program's code object and every one nested in its co_consts (Junior output has none: no def, no lambda)"""
+    out.append(co)
+    for c in co.co_consts:
+        if isinstance(c, types.CodeType):
+            _jr_codes(c, out)
+    return out
+
+
+def _jr_holder(hold, park):
+    """the callback's hold: the host's `hold` (the shared path's wait), or on the live path _evnsim.jr_hold where the
+    callback's frame can switch and the host's no-hold where it cannot (§4: never PARK where no turn can be taken)"""
+    if hold is None or not park:
+        return hold
+    try:
+        from pyodide.ffi import can_run_sync
+        jh = sys.modules["_evnsim"].jr_hold
+    except Exception:           # no live hold here: the run is traced, never held
+        return None
+
+    def H(k):
+        if can_run_sync():
+            jh(k)
+        else:
+            hold(k)
+    return H
+
+
+def _jr_start(code, src, jr, take, S, hold=None, park=False):
+    """the trace on `code`, its state in S; on a refusal or a failed step S['absent'] says why and the run goes untraced"""
+    M = sys.monitoring
+    try:
+        t = jr.to_py() if hasattr(jr, "to_py") else jr
+        n = int(t["n"])
+        OWN = tuple(int(x) for x in t["own"])
+        BLK = tuple(int(x) for x in t["blk"])
+        PASS = tuple(tuple(int(L) for L in p) for p in t["pass"])
+        SPAN = tuple(frozenset(int(j) for j in s) for s in t["span"])
+        BODY = tuple(frozenset(int(j) for j in s) for s in t["body"])
+        HDR_AT = tuple(tuple(int(L) for L in h) for h in t["hdrAt"])
+    except (KeyboardInterrupt, SystemExit):
+        # review j4a_build_r1 B1: a Stop taken here is the program's end, never a refusal (sig() has cleared the press)
+        S["absent"] = "stopped"
+        raise
+    except BaseException:       # noqa: B036 - a bad table is a refusal, whatever it raised
+        S["absent"] = "table"
+        return
+    if n != len(src.split("\n")):
+        S["absent"] = "n"
+        return
+    if len(OWN) != n or len(BLK) != n or len(PASS) != n or len(HDR_AT) != n or len(BODY) != len(SPAN):
+        S["absent"] = "table"
+        return
+    if BLK[0] != -1 or OWN[0] != -1:
+        S["absent"] = "line1"
+        return
+    nL = len(SPAN)
+    nK = max(max(BLK), max(OWN), -1) + 1
+    EV, BK, LN, T0, E0, SP = 0, 1, 2, 3, 3 + nL, 3 + 2 * nL
+    ST = _jr_array("i", [0] * (4 + 2 * nL))
+    ST[BK] = -1
+    ST[LN] = -1
+    RAN = [0] * nK
+    SEQ = []
+    CUT = [0]
+    CODES = frozenset(_jr_codes(code, []))
+    DISABLE = M.DISABLE
+    MAX = _JR_MAX
+    CAP = _JR_SEQ_CAP
+    HOLD = _jr_holder(hold, park)
+
+    def line(c, i1):
+        if c not in CODES:
+            return DISABLE                      # another run's leftover local events on its own code
+        i = i1 - 1
+        if i < 0 or i >= n:
+            return None
+        p = ST[LN]
+        k = BLK[i]
+        event = k >= 0 and (p < 0 or OWN[p] != k)          # a block's own line re-firing is not an event
+        for L in HDR_AT[i]:                                 # loop L entered anew: its header from outside its body
+            if p < 0 or (p not in BODY[L] and p != i):
+                ST[E0 + L] = 0
+        for L in PASS[i]:                                   # countPasses' rule, streaming (T1)
+            if p == i or p < 0 or p not in SPAN[L]:
+                if ST[T0 + L] < MAX:
+                    ST[T0 + L] += 1
+                if ST[E0 + L] < MAX:
+                    ST[E0 + L] += 1
+        ST[LN] = i
+        if event:
+            if ST[EV] < MAX:
+                ST[EV] += 1
+            ST[BK] = k
+            RAN[k] += 1
+            if len(SEQ) < CAP:
+                SEQ.append(k)
+            else:
+                CUT[0] = 1
+            if ST[SP] and HOLD is not None:     # J4b, §4: after the counts and the line (r1 A S3)
+                HOLD(k)
+        return None
+
+    S.update(ST=ST, RAN=RAN, SEQ=SEQ, CUT=CUT, CODES=CODES, nL=nL)
+    try:
+        if M.get_tool(_JR_TOOL) is not None:
+            # by force: a hand-written program in this worker took it and left it (on a free tool these raise)
+            for name in _JR_EVENTS:
+                e = getattr(M.events, name, None)
+                if e:
+                    try:
+                        M.register_callback(_JR_TOOL, e, None)
+                    except ValueError:
+                        pass
+            M.set_events(_JR_TOOL, 0)
+            M.free_tool_id(_JR_TOOL)
+        # review j4a_build_r2 V1: marked before it is taken, so a Stop landing just after use_tool_id still has the
+        # teardown free it (its `lost` test and per-step guards cover a use_tool_id that never ran)
+        S["tool"] = True
+        M.use_tool_id(_JR_TOOL, _JR_NAME)
+        M.register_callback(_JR_TOOL, M.events.LINE, line)
+        for c in CODES:
+            M.set_local_events(_JR_TOOL, c, M.events.LINE)
+        if take is not None:
+            take(ST)
+    except (KeyboardInterrupt, SystemExit):
+        # review j4a_build_r1 B1: a Stop taken while the trace starts ends the run (the teardown frees what was taken)
+        S["absent"] = "stopped"
+        S["off"] = True
+        raise
+    except BaseException:       # noqa: B036 - any step's failure: the run goes untraced (the teardown frees what was taken)
+        S["absent"] = "tool"
+        S["off"] = True
+
+
+def _jr_record(S, lost):
+    """the record copied out of the trace's state: plain lists in _LAST_JR (this module's slot, never __main__'s)"""
+    global _LAST_JR
+    if _LAST_JR is not None:
+        return                  # review j4a_build_r1 S1: a repeated teardown never overwrites the run's record
+    try:
+        absent = S.get("absent") or ("tool lost" if lost else None)
+        ST = S.get("ST")
+        nL = S.get("nL", 0)
+        rec = {"ev": 0, "seq": [], "cut": False, "ran": [], "total": []}
+        if ST is not None and not S.get("off"):
+            rec = {"ev": int(ST[0]), "seq": list(S.get("SEQ", ())), "cut": bool(S.get("CUT", (0,))[0]),
+                   "ran": list(S.get("RAN", ())), "total": list(ST[3:3 + nL])}
+        if absent:
+            rec["absent"] = absent
+        _LAST_JR = rec
+    except BaseException:       # noqa: B036
+        pass
+
+
+def _jr_drop(S):
+    """the trace's state dropped"""
+    try:
+        for k in ("SEQ", "RAN"):
+            if k in S:
+                S[k].clear()
+        S.clear()
+    except BaseException:       # noqa: B036
+        pass
+
+
+def _jr_stop(S):
+    """the guarded teardown (§3), each step on its own, never raising: is the tool still ours ('tool lost' when the
+    program freed or took it), the record copied out first, the local events off on every code object, the callback
+    unregistered, the tool freed, the state dropped (on 3.13 free_tool_id alone leaves the callback and local events live)"""
+    M = sys.monitoring
+    lost = False
+    if S.get("tool"):
+        try:
+            lost = M.get_tool(_JR_TOOL) != _JR_NAME
+        except BaseException:   # noqa: B036
+            lost = True
+    _jr_record(S, lost)
+    if S.get("tool"):
+        for c in S.get("CODES", ()):
+            try:
+                M.set_local_events(_JR_TOOL, c, 0)
+            except BaseException:   # noqa: B036
+                pass
+        try:
+            M.register_callback(_JR_TOOL, M.events.LINE, None)
+        except BaseException:   # noqa: B036
+            pass
+        try:
+            if not lost:
+                M.free_tool_id(_JR_TOOL)
+        except BaseException:   # noqa: B036
+            pass
+    _jr_drop(S)
+
+
+def _run_traced(src, jr, take, hold=None, park=False):
+    global _LAST_JR
+    _LAST_JR = None
+    S = {}
+    try:
+        code = compile(src, "<stdin>", "exec")
+        _jr_start(code, src, jr, take, S, hold, park)
+        exec(code, _main)
+        return ""
+    except SystemExit:
+        return ""
+    except BaseException as e:      # noqa: B036 - KeyboardInterrupt is the program's end too
+        return format_exception(e)
+    finally:
+        if not S:
+            S["absent"] = "start"
+        # review j4a_build_r1 S1: a KeyboardInterrupt landing between the teardown's guarded steps would leave tool 3
+        # live for the next run; every step is safe to repeat (the record is written once), so it is run again
+        for _ in range(3):
+            try:
+                _jr_stop(S)
+                break
+            except BaseException:   # noqa: B036
+                continue
+        try:
+            sys.stdout.flush()
+        except Exception:
+            pass
+
+
+def run(src, jr=None, take=None, hold=None, park=False):
+    """One paste at the raw REPL; '' when it ended normally, else the traceback. `jr`: the Junior block trace's table
+    (JR_J4_TRACE.md §3; `take(ST)` hands the host the live state once, at the start; `hold` / `park` the step, §4);
+    None: today's run, untouched."""
+    if jr is not None:
+        return _run_traced(src, jr, take, hold, park)
     try:
         code = compile(src, "<stdin>", "exec")
         exec(code, _main)

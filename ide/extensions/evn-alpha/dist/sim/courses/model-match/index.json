@@ -1,0 +1,58 @@
+{
+ "format": "evn-course-index/1",
+ "generated": "node scripts/course_index.js --write; do not edit",
+ "levels": [
+  {
+   "file": "model-match/level-1.v1.json",
+   "id": "model-match-1",
+   "version": 1,
+   "sha256": "9ab6e7cd433af287383b7e46a797e59f089201262d989dd753068a06a1698439",
+   "current": false,
+   "title": "Model match · Level 1: The free motor's step",
+   "limit": 3,
+   "runs": {
+    "default": 5,
+    "fixed": 10
+   }
+  },
+  {
+   "file": "model-match/level-1.v2.json",
+   "id": "model-match-1",
+   "version": 2,
+   "sha256": "40fc6ccc9a2ec4bb66cd018e92367d88934bbdbeceb67e93d82f90d7c7d27291",
+   "current": true,
+   "title": "Model match · Level 1: The free motor's step",
+   "limit": 3,
+   "runs": {
+    "default": 5,
+    "fixed": 10
+   }
+  },
+  {
+   "file": "model-match/level-2.v1.json",
+   "id": "model-match-2",
+   "version": 1,
+   "sha256": "e31ed29a3f83b837d7f5fc7d3840cc040e0c1e4d8a8525008446d8c559c061db",
+   "current": false,
+   "title": "Model match · Level 2: The arm's step",
+   "limit": 3,
+   "runs": {
+    "default": 5,
+    "fixed": 10
+   }
+  },
+  {
+   "file": "model-match/level-2.v2.json",
+   "id": "model-match-2",
+   "version": 2,
+   "sha256": "bb8c9d1f008bc73c7b9462e38dab61316a20dc3bf33a4d0ba026fc27a425cbc4",
+   "current": true,
+   "title": "Model match · Level 2: The arm's step",
+   "limit": 3,
+   "runs": {
+    "default": 5,
+    "fixed": 10
+   }
+  }
+ ]
+}

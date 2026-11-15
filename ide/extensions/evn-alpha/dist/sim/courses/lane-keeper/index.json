@@ -1,0 +1,58 @@
+{
+ "format": "evn-course-index/1",
+ "generated": "node scripts/course_index.js --write; do not edit",
+ "levels": [
+  {
+   "file": "lane-keeper/level-1.v1.json",
+   "id": "lane-keeper-1",
+   "version": 1,
+   "sha256": "62a7c011a7873ecef6a0d297b7bbb57208a50d75185f8fbe956976c7a32c67a2",
+   "current": false,
+   "title": "Lane keeper · Level 1: Two laps",
+   "limit": 90,
+   "runs": {
+    "default": 5,
+    "fixed": 10
+   }
+  },
+  {
+   "file": "lane-keeper/level-1.v2.json",
+   "id": "lane-keeper-1",
+   "version": 2,
+   "sha256": "57ed90da2101b64b0e97619855068c525cdb4d1b56e7cc7044a0fae9caa5eb68",
+   "current": true,
+   "title": "Lane keeper · Level 1: Two laps",
+   "limit": 90,
+   "runs": {
+    "default": 5,
+    "fixed": 10
+   }
+  },
+  {
+   "file": "lane-keeper/level-2.v1.json",
+   "id": "lane-keeper-2",
+   "version": 1,
+   "sha256": "ef6151204988f02ba317606c3174a7991c67e9b33a1b73d785af305783b89226",
+   "current": true,
+   "title": "Lane keeper · Level 2: Cones",
+   "limit": 90,
+   "runs": {
+    "default": 5,
+    "fixed": 10
+   }
+  },
+  {
+   "file": "lane-keeper/level-3.v1.json",
+   "id": "lane-keeper-3",
+   "version": 1,
+   "sha256": "d8ae1e53e7d8ed854de2f0cf74d85ce70e75602e66cf077e66c4cc5fd4749682",
+   "current": true,
+   "title": "Lane keeper · Level 3: An unseen track",
+   "limit": 90,
+   "runs": {
+    "default": 5,
+    "fixed": 10
+   }
+  }
+ ]
+}

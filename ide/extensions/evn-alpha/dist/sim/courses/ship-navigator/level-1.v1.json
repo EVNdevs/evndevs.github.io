@@ -1,0 +1,111 @@
+{
+ "format": "evn-course/1",
+ "id": "ship-navigator-1",
+ "challenge": "ship-navigator",
+ "level": 1,
+ "version": 1,
+ "module": "G4.2",
+ "title": "Ship navigator \u00b7 Level 1: Sailing orders",
+ "brief": "Square your back on the harbour wall and set the heading to 0 (north), then sail the orders: 800 mm on 000 (north), 1000 mm on 090 (east), then 700 mm on 045 (north-east) to the buoy. A buoy is reached when the middle of the robot's axle is inside its green circle. The run ends at the buoy, when the program ends, or at 60 s. 50 for reaching it, up to 40 for speed, 10 for touching no buoy and no wall but the harbour's. Par: 12 s.",
+ "field": {
+  "arena": {
+   "size": [
+    3000,
+    2000
+   ],
+   "startBox": [
+    350,
+    0,
+    650,
+    300
+   ],
+   "goal": null,
+   "obstacles": [
+    {
+     "name": "buoy1",
+     "shape": "cylinder",
+     "x": 1995,
+     "y": 1356,
+     "w": 60,
+     "d": 60,
+     "h": 150
+    }
+   ],
+   "wallH": 100,
+   "wallT": 20,
+   "obstacleH": 150,
+   "startPaint": false,
+   "areas": [
+    {
+     "name": "ring1",
+     "circle": [
+      1995,
+      1356,
+      150
+     ],
+     "paint": "green"
+    }
+   ]
+  }
+ },
+ "robot": {
+  "rule": "fixed",
+  "base": "odometry-imu8"
+ },
+ "start": {
+  "nominal": {
+   "x": 500,
+   "y": 150,
+   "heading": 90
+  },
+  "vary": {
+   "xy": 20,
+   "heading": 5
+  },
+  "draw": "uniform-square-v1"
+ },
+ "runs": {
+  "min": 1,
+  "max": 20,
+  "default": 5,
+  "fixed": 5
+ },
+ "kernel": {
+  "name": "pointToPoint",
+  "limitS": 60,
+  "goal": "footprintInside",
+  "final": "runEnd",
+  "visits": {
+   "targets": [
+    {
+     "area": "ring1"
+    }
+   ],
+   "endAtLast": true
+  }
+ },
+ "constants": {
+  "par": 12
+ },
+ "score": {
+  "run": "round(if(visitedInOrder == 1, 50 + 40 * min(1, par / max(time, 0.001)), 0) + if(touchesOf_buoy1 + touchesOf_wallW + touchesOf_wallE + touchesOf_wallN == 0, 10, 0), 1)",
+  "values": {
+   "finished": {
+    "value": "count(r in runs: r.visitedInOrder == 1)",
+    "unit": "runs"
+   }
+  },
+  "summary": "round(sum(r in runs: r.points) / n, 1)"
+ },
+ "pass": "score >= 60 & finished >= 0.8 * n",
+ "sources": [
+  {
+   "doc": "docs/curriculum/G04.md",
+   "where": "G4.2 The compass robot, Challenge: Ship navigator - the open water, the harbour against the south wall (here x 350-650, the start dot 500 mm from the west side as G4.2.9's real-floor set-up), the buoys (60 mm cylinders, 150 mm high, in 300 mm green circles), the level table (level 1), the scoring paragraph; the buoy at the orders' end from the start dot (the axle after squaring, 61 mm off the wall)"
+  },
+  {
+   "doc": "vscode-evn-alpha/docs/COURSE_FORMAT_DESIGN.md",
+   "where": "\u00a711.1 (circle areas, named cylinders; the floor left white: the blue sea is \u00a711.1's later `floor` field - a painted area under the rings made the colour sensors read blue inside them, review n1 B1), \u00a711.3 (visits on entry, in order, endAtLast), \u00a711.4 (touches by name: the south wall, the harbour's, is not counted), \u00a713.1 (the fixed robot: odometry-imu8, the class robot with the IMU on I2C 8)"
+  }
+ ]
+}

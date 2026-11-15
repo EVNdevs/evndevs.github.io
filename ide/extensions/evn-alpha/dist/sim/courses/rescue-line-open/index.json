@@ -1,0 +1,45 @@
+{
+ "format": "evn-course-index/1",
+ "generated": "node scripts/course_index.js --write; do not edit",
+ "levels": [
+  {
+   "file": "rescue-line-open/level-1.v1.json",
+   "id": "rescue-line-open-1",
+   "version": 1,
+   "sha256": "34563b5f5951e1a4c0219a79ac1d78b5e8b44c5ac1d29df61bd7b1e85b0dac75",
+   "current": true,
+   "title": "Rescue line open · Level 1: Field #01, no victims",
+   "limit": 970,
+   "runs": {
+    "default": 5,
+    "fixed": 10
+   }
+  },
+  {
+   "file": "rescue-line-open/level-2.v1.json",
+   "id": "rescue-line-open-2",
+   "version": 1,
+   "sha256": "8f0cdf6b630b0d95490f5310aa7327d0dd8c58655a67e2af7bdfd5ce687888a8",
+   "current": true,
+   "title": "Rescue line open · Level 2: An unseen field, no victims",
+   "limit": 970,
+   "runs": {
+    "default": 5,
+    "fixed": 10
+   }
+  },
+  {
+   "file": "rescue-line-open/level-3.v1.json",
+   "id": "rescue-line-open-3",
+   "version": 1,
+   "sha256": "e4587ef1a95aa5331df541db881dda9a8e6bea7f1380370828c3e5b219c34567",
+   "current": true,
+   "title": "Rescue line open · Level 3: An unseen field with victims",
+   "limit": 970,
+   "runs": {
+    "default": 5,
+    "fixed": 10
+   }
+  }
+ ]
+}

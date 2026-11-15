@@ -4,6 +4,21 @@ The main changes of each release, in a few lines. The [full changelog](../CHANGE
 the tools and the measurements behind each release. What is not tested yet is on
 [Known limitations and help us test](KNOWN_LIMITATIONS.md).
 
+## 0.2.78 (2026-11-15)
+
+- **Thirty-one new challenges in the Simulator**, from *Robot says hello*, *Zoo trip* and *Robot vacuum* for the
+  youngest to *Rescue line open*'s 8-minute RCJ games, *Autonomous courier* and practice for the EVN Open. They bring
+  ramps to climb, traffic lights that change on a clock and courses of rescue tiles. Lane keeper now has a pass rule,
+  with two more levels, and four camera scenes are there to practise on ([Simulator](SIMULATOR.md#challenges)).
+- **Engineer start on the lessons site:** twenty-two one-hour sessions in Python for newcomers who can already
+  program, from measuring runs to modelling and controlling a motor and following a line at speed.
+- **Simulated motors move as the board's do:** the board's speed limits and move caps, `hold()` where the shaft is, and
+  a move after `stop()` or `brake()` starting from rest. A data log a simulated program saves now shows in the Board
+  view, and the block editor has a Lists category ([Blocks](BLOCKS.md#lists-and-dictionaries)).
+- **Board view.** After the user button stops a program, your next command in the Board view lets the motors go
+  again (it took a new connect). The IMU's one-click Calibrate also finds the robot's front, **Set up drive base**
+  writes your `DriveBase(...)` line, and **Start now** starts `main.py` from VS Code.
+
 ## 0.2.77 (2026-11-12)
 
 - **A smoother Simulator.** On some computers the Simulator stopped drawing for a moment every few seconds while

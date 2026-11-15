@@ -1,0 +1,199 @@
+{
+ "format": "evn-course/1",
+ "id": "ship-navigator-3",
+ "challenge": "ship-navigator",
+ "level": 3,
+ "version": 1,
+ "module": "G4.2",
+ "title": "Ship navigator \u00b7 Level 3: Five buoys",
+ "brief": "Square your back on the harbour wall and set the heading to 0 (north). Five buoys stand on the chart, measured from the start dot (where the middle of the axle sits after squaring): buoy 1 800 mm north, 300 mm east; buoy 2 1600 N, 0 E; buoy 3 1500 N, 1200 E; buoy 4 700 N, 1600 E; buoy 5 1300 N, 2200 E. Reach them in any order: a buoy is reached when the middle of the robot's axle is inside its green circle. 10 for each buoy; up to 40 for speed, only when all five are reached, timed when the fifth is reached (par 35 s); 10 for touching no buoy and no wall but the harbour's. The run ends at the fifth buoy, when the program ends, or at 60 s. Pass: a mean of 60, and 4 of 5 runs reach three buoys or more.",
+ "field": {
+  "arena": {
+   "size": [
+    3000,
+    2000
+   ],
+   "startBox": [
+    350,
+    0,
+    650,
+    300
+   ],
+   "goal": null,
+   "obstacles": [
+    {
+     "name": "buoy1",
+     "shape": "cylinder",
+     "x": 800,
+     "y": 861,
+     "w": 60,
+     "d": 60,
+     "h": 150
+    },
+    {
+     "name": "buoy2",
+     "shape": "cylinder",
+     "x": 500,
+     "y": 1661,
+     "w": 60,
+     "d": 60,
+     "h": 150
+    },
+    {
+     "name": "buoy3",
+     "shape": "cylinder",
+     "x": 1700,
+     "y": 1561,
+     "w": 60,
+     "d": 60,
+     "h": 150
+    },
+    {
+     "name": "buoy4",
+     "shape": "cylinder",
+     "x": 2100,
+     "y": 761,
+     "w": 60,
+     "d": 60,
+     "h": 150
+    },
+    {
+     "name": "buoy5",
+     "shape": "cylinder",
+     "x": 2700,
+     "y": 1361,
+     "w": 60,
+     "d": 60,
+     "h": 150
+    }
+   ],
+   "wallH": 100,
+   "wallT": 20,
+   "obstacleH": 150,
+   "startPaint": false,
+   "areas": [
+    {
+     "name": "ring1",
+     "circle": [
+      800,
+      861,
+      150
+     ],
+     "paint": "green"
+    },
+    {
+     "name": "ring2",
+     "circle": [
+      500,
+      1661,
+      150
+     ],
+     "paint": "green"
+    },
+    {
+     "name": "ring3",
+     "circle": [
+      1700,
+      1561,
+      150
+     ],
+     "paint": "green"
+    },
+    {
+     "name": "ring4",
+     "circle": [
+      2100,
+      761,
+      150
+     ],
+     "paint": "green"
+    },
+    {
+     "name": "ring5",
+     "circle": [
+      2700,
+      1361,
+      150
+     ],
+     "paint": "green"
+    }
+   ]
+  }
+ },
+ "robot": {
+  "rule": "fixed",
+  "base": "odometry-imu8"
+ },
+ "start": {
+  "nominal": {
+   "x": 500,
+   "y": 150,
+   "heading": 90
+  },
+  "vary": {
+   "xy": 30,
+   "heading": 5
+  },
+  "draw": "uniform-square-v1"
+ },
+ "runs": {
+  "min": 1,
+  "max": 20,
+  "default": 5,
+  "fixed": 5
+ },
+ "kernel": {
+  "name": "pointToPoint",
+  "limitS": 60,
+  "goal": "footprintInside",
+  "final": "runEnd",
+  "visits": {
+   "targets": [
+    {
+     "area": "ring1"
+    },
+    {
+     "area": "ring2"
+    },
+    {
+     "area": "ring3"
+    },
+    {
+     "area": "ring4"
+    },
+    {
+     "area": "ring5"
+    }
+   ],
+   "endAtLast": true
+  }
+ },
+ "constants": {
+  "par": 35
+ },
+ "score": {
+  "run": "round(10 * visited + if(visited == 5, 40 * min(1, par / max(time, 0.001)), 0) + if(touchesOf_buoy1 + touchesOf_buoy2 + touchesOf_buoy3 + touchesOf_buoy4 + touchesOf_buoy5 + touchesOf_wallW + touchesOf_wallE + touchesOf_wallN == 0, 10, 0), 1)",
+  "values": {
+   "finished": {
+    "value": "count(r in runs: r.visited >= 3)",
+    "unit": "runs"
+   }
+  },
+  "summary": "round(sum(r in runs: r.points) / n, 1)"
+ },
+ "pass": "score >= 60 & finished >= 0.8 * n",
+ "sources": [
+  {
+   "doc": "docs/curriculum/G04.md",
+   "where": "G4.2 The compass robot, Challenge: Ship navigator (:324-341) - the open water, the harbour against the south wall, the buoys (60 mm cylinders, 150 mm high, in 300 mm green circles), the level table (level 3: five buoys, any order), the scoring paragraph (10 a buoy; speed only with all five, timed at the fifth; + 10 clean; pass: a mean of 60 and 4 of 5 runs reaching three or more)"
+  },
+  {
+   "doc": "docs/design/G42_SHIP_NAVIGATOR.md",
+   "where": "\u00a74.2 (this file: level 1's with five buoys, any order, endAtLast, +-30 mm / +-5 deg, par 35), \u00a74.3 (the chart: G4.2.9's teacher-page stand-ins from the start dot (500, 61), owner item SN3-1's recommended (a), built pending the owner's ruling)"
+  },
+  {
+   "doc": "vscode-evn-alpha/docs/COURSE_FORMAT_DESIGN.md",
+   "where": "\u00a711.1 (circle areas, named cylinders, the floor left white), \u00a711.3 (visits on entry, any order: visited; endAtLast ends the run at the last of them), \u00a711.4 (touches by name: the south wall, the harbour's, is not counted), \u00a713.1 (the fixed robot: odometry-imu8)"
+  }
+ ]
+}

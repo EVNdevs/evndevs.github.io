@@ -1,0 +1,256 @@
+{
+  "format": "evn-course/1",
+  "id": "measure-camera-2",
+  "challenge": "measure-camera",
+  "level": 2,
+  "version": 1,
+  "module": "G10.2",
+  "title": "Measure with a camera · level 2",
+  "brief": "The robot stands still with G10.2's camera (Camera Module 3, 640 x 480, 66 degrees; forward 60, left 0), but its tilt (20-30 degrees down) and height (100-160 mm) are drawn for each run and not told: job.json leaves them out. A calibration mat's four corner markers lie flat on the floor, each a 40 mm 2 x 2 checker on a white square, their middles at (420, 180), (420, -180), (680, 180) and (680, -180) mm (x forward, y left, from the axle's middle). Five 30 mm discs (blue, green, red, yellow, black) lie at seeded places 240-800 mm ahead of the axle, within 115 mm of the centre line. Make the frame folder, run your PC program on it, and write each disc's floor position to report.json; Score report scores it. A run scores 100 x clamp(1 - e / 40 mm, 0, 1), e the mean error over the five discs (the pairing with the least total distance; a disc not written counts 40 mm; more than five points score 0).",
+  "field": {
+    "random": [
+      {
+        "name": "discs",
+        "draw": "pointsIn-v1",
+        "n": 5,
+        "poly": [
+          [
+            455,
+            714
+          ],
+          [
+            441,
+            706
+          ],
+          [
+            441,
+            494
+          ],
+          [
+            455,
+            486
+          ],
+          [
+            999,
+            486
+          ],
+          [
+            999,
+            714
+          ]
+        ],
+        "grid": 10,
+        "gap": 60,
+        "from": [
+          200,
+          600
+        ]
+      }
+    ],
+    "arena": {
+      "size": [
+        1200,
+        1200
+      ],
+      "startBox": [
+        0,
+        450,
+        380,
+        750
+      ],
+      "goal": null,
+      "obstacles": [],
+      "wallH": 100,
+      "wallT": 20,
+      "obstacleH": 100,
+      "startPaint": false,
+      "areas": [
+        {
+          "name": "blue",
+          "from": "discs",
+          "i": 1,
+          "circle": 15,
+          "paint": "blue"
+        },
+        {
+          "name": "green",
+          "from": "discs",
+          "i": 2,
+          "circle": 15,
+          "paint": "green"
+        },
+        {
+          "name": "red",
+          "from": "discs",
+          "i": 3,
+          "circle": 15,
+          "paint": "red"
+        },
+        {
+          "name": "yellow",
+          "from": "discs",
+          "i": 4,
+          "circle": 15,
+          "paint": "yellow"
+        },
+        {
+          "name": "black",
+          "from": "discs",
+          "i": 5,
+          "circle": 15,
+          "paint": "black"
+        }
+      ],
+      "prints": [
+        {
+          "name": "mat1",
+          "pattern": "checker:2x2:20",
+          "at": [
+            620,
+            780,
+            0
+          ],
+          "yaw": 0,
+          "pitch": 90,
+          "size": [
+            40,
+            40
+          ],
+          "quiet": 20
+        },
+        {
+          "name": "mat2",
+          "pattern": "checker:2x2:20",
+          "at": [
+            620,
+            420,
+            0
+          ],
+          "yaw": 0,
+          "pitch": 90,
+          "size": [
+            40,
+            40
+          ],
+          "quiet": 20
+        },
+        {
+          "name": "mat3",
+          "pattern": "checker:2x2:20",
+          "at": [
+            880,
+            780,
+            0
+          ],
+          "yaw": 0,
+          "pitch": 90,
+          "size": [
+            40,
+            40
+          ],
+          "quiet": 20
+        },
+        {
+          "name": "mat4",
+          "pattern": "checker:2x2:20",
+          "at": [
+            880,
+            420,
+            0
+          ],
+          "yaw": 0,
+          "pitch": 90,
+          "size": [
+            40,
+            40
+          ],
+          "quiet": 20
+        }
+      ]
+    }
+  },
+  "robot": {
+    "rule": "fixed",
+    "base": "measure-camera",
+    "set": {
+      "cameraTilt": 25,
+      "cameraHeight": 130
+    },
+    "draw": {
+      "cameraTilt": {
+        "d": 5
+      },
+      "cameraHeight": {
+        "d": 30
+      }
+    },
+    "drawPer": "run"
+  },
+  "start": {
+    "nominal": {
+      "x": 200,
+      "y": 600,
+      "heading": 0
+    },
+    "vary": {
+      "xy": 0,
+      "heading": 0
+    },
+    "draw": "uniform-square-v1"
+  },
+  "runs": {
+    "min": 1,
+    "max": 20,
+    "default": 5,
+    "fixed": 10
+  },
+  "kernel": {
+    "name": "pointToPoint",
+    "limitS": 30,
+    "goal": "footprintInside",
+    "end": "afterProgram",
+    "still": {
+      "s": 1,
+      "dps": 5,
+      "mms": 3
+    },
+    "final": "runEnd",
+    "report": {
+      "kind": "matchedPoints",
+      "truth": "discs",
+      "frame": "startAxle",
+      "n": 5,
+      "missing": 40
+    }
+  },
+  "constants": {
+    "par": 0.934
+  },
+  "score": {
+    "run": "round(100 * clamp(1 - reportError / 40, 0, 1), 1)",
+    "summary": "round(sum(r in runs: r.points) / count(r in runs: true), 1)"
+  },
+  "pass": "score >= 60 & count(r in runs: r.reportCount == 5) >= 0.8 * n",
+  "sources": [
+    {
+      "doc": "docs/curriculum/G10.md",
+      "where": "G10.2 Robot and Challenge - Measure with a camera: level 2 (the tilt 20-30 and height 100-160 not announced; a 400 x 300 mm calibration mat with four corner markers at known floor positions, near edge 400 mm ahead, centred, its 400 mm side across, every corner at least 10 px inside the frame over the range), the run's score, N = 10, the default pass"
+    },
+    {
+      "doc": "docs/COURSE_CONTENT_DESIGN.md",
+      "where": "§5.2 L2 (P0c-1b with cameraTilt / cameraHeight drawn per run on a fixed robot file with the camera), §6 kernel.report, §7 CC-10"
+    },
+    {
+      "doc": "docs/session/2026-11-13_c1-cc10/design.md",
+      "where": "D7 (revised after review d1 B1 / B2 / S1 / S2): the mat as its four corner markers, checker:2x2:20 prints, middles (420 / 680, +-180); the discs within |y| 115"
+    },
+    {
+      "doc": "scripts/measure_l2_field.js",
+      "where": "the poly: node scripts/measure_l2_field.js (every camera of the range's grid sees each disc whole with a 20 px margin; the markers' least outline margin 33.9 px)"
+    },
+    {
+      "doc": "scripts/fixtures/measure_camera_l2_ref.py",
+      "where": "the par: the reference PC program's mean report error over seeds 1-10 (test_challenge.js cc10)"
+    }
+  ]
+}

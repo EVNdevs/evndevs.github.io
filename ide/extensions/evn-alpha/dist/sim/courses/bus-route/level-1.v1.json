@@ -1,0 +1,107 @@
+{
+ "format": "evn-course/1",
+ "id": "bus-route-1",
+ "challenge": "bus-route",
+ "level": 1,
+ "version": 1,
+ "module": "G2.4",
+ "title": "Bus route · Level 1: The Oval",
+ "brief": "The colour robot starts on the route, a black line 20 mm wide on white: the simulator's Oval, eight 300 mm tiles (two straights 600 mm long joined by two half circles of radius 150 mm, 2142 mm round), its start 60 mm into the bottom straight, facing along it (starts vary 10 mm and 5 degrees); the level fixes the robot. It must drive one lap, turning left at each end. Progress counts the route's 8 checkpoints, one across the line in each tile, the last back at the start one lap on, each passed in order and only within 50 mm of the line, so cutting across gains nothing. The robot's middle is the middle of its axle; its distance off is to the nearest point of the route's centreline. A run ends at the last checkpoint, when the middle is more than 150 mm off the line, once the program has ended and the robot has then stood still for 0.5 s, or at 90 s. Per run: 50 for finishing (every checkpoint passed), plus up to 40 for speed (all 40 at 30 s or less, 40 x 30 / time above it), both paid only on a finish; plus 10 if the middle was never more than 50 mm off the line. Pass: mean 60 or more over 5 runs, 4 of them finished. Par time: 30 s.",
+ "field": {
+  "arena": {
+   "size": [
+    1800,
+    1200
+   ],
+   "startBox": [
+    640,
+    430,
+    680,
+    470
+   ],
+   "startPaint": false,
+   "goal": null,
+   "obstacles": [],
+   "routes": [
+    {
+     "name": "oval",
+     "tiles": "SSLLSSLL",
+     "at": [
+      600,
+      450,
+      0
+     ],
+     "line": 20,
+     "paint": "black",
+     "lapAt": 60
+    }
+   ],
+   "wallH": 100,
+   "wallT": 20,
+   "obstacleH": 150
+  }
+ },
+ "robot": {
+  "rule": "fixed",
+  "base": "colour"
+ },
+ "start": {
+  "nominal": {
+   "x": 660,
+   "y": 450,
+   "heading": 0
+  },
+  "vary": {
+   "xy": 10,
+   "heading": 5
+  },
+  "draw": "uniform-square-v1"
+ },
+ "runs": {
+  "min": 1,
+  "max": 20,
+  "default": 5,
+  "fixed": 5
+ },
+ "kernel": {
+  "name": "pointToPoint",
+  "limitS": 90,
+  "goal": "footprintInside",
+  "final": "runEnd",
+  "end": "afterProgram",
+  "still": {
+   "s": 0.5,
+   "dps": 5,
+   "mms": 3
+  },
+  "route": {
+   "route": "oval",
+   "offMm": 150,
+   "roadMm": 50
+  }
+ },
+ "constants": {
+  "par": 30
+ },
+ "score": {
+  "run": "round(if(finished, 50 + 40 * min(1, par / max(time, 0.001)), 0) + if(onRoad, 10, 0), 1)",
+  "summary": "round(sum(r in runs: r.points) / count(r in runs: true), 1)",
+  "values": {
+   "finished": {
+    "value": "count(r in runs: r.finished)",
+    "unit": "runs"
+   }
+  }
+ },
+ "pass": "score >= 60 & finished >= 0.8 * n",
+ "sources": [
+  {
+   "doc": "docs/curriculum/G02.md",
+   "where": "G2.4 Bus route: the Challenge - Bus route paragraph, level table (level 1) and scoring; How a run is measured"
+  },
+  {
+   "doc": "docs/session/2026-11-14_w12-g2/g24/DESIGN_r2.md",
+   "where": "§1 arena.routes, §2-§4 kernel.route (the gates, the ends, the measures), §5 L1"
+  }
+ ]
+}

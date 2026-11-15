@@ -1,0 +1,171 @@
+{
+ "format": "evn-course/1",
+ "id": "traffic-light-town-1",
+ "challenge": "traffic-light-town",
+ "level": 1,
+ "version": 2,
+ "module": "G2.3",
+ "title": "Traffic-light town · Level 1: Main Street",
+ "brief": "The colour robot starts in a 300 x 300 mm start box at the west end of Main Street, a white street 300 mm wide and 2400 mm long (starts vary 10 mm and 2 degrees); the level fixes the robot. Two traffic lights, 150 x 300 mm patches across the street with their middles 800 mm and 1600 mm from the street's start, are painted red or green, changing every 4 s, each starting at a moment new every run. The school, a blue 300 x 300 mm zone, is at the street's east end. A run ends once the program has ended and the robot has then stood still for 0.5 s, or at 60 s. A robot whose colour sensor leaves a light on the far side while it is red has run a red light: that run scores 0. A run finishes when the robot stops with its middle in the school, having driven through every light, without running a red light. Per run: 50 for finishing, plus up to 40 for speed on the driving time (the run's time less the time the robot stood still; all 40 at 18 s or less, 40 x 18 / driving time above it), both paid only on a finish; plus 10 if at every stop on a red light the colour sensor was short of the light's middle line. Pass: mean 60 or more over 5 runs, 4 of them finished. Par time: 18 s.",
+ "field": {
+  "random": [
+   {
+    "name": "light1At",
+    "draw": "uniform-v1",
+    "min": 0,
+    "max": 7990,
+    "step": 10
+   },
+   {
+    "name": "light2At",
+    "draw": "uniform-v1",
+    "min": 0,
+    "max": 7990,
+    "step": 10
+   }
+  ],
+  "arena": {
+   "size": [
+    2400,
+    600
+   ],
+   "startBox": [
+    0,
+    150,
+    300,
+    450
+   ],
+   "startPaint": false,
+   "goal": null,
+   "obstacles": [],
+   "areas": [
+    {
+     "name": "light1",
+     "rect": [
+      725,
+      150,
+      875,
+      450
+     ],
+     "paint": "red",
+     "phases": {
+      "of": [
+       "red",
+       "green"
+      ],
+      "periodMs": 4000,
+      "at": "light1At"
+     }
+    },
+    {
+     "name": "light2",
+     "rect": [
+      1525,
+      150,
+      1675,
+      450
+     ],
+     "paint": "red",
+     "phases": {
+      "of": [
+       "red",
+       "green"
+      ],
+      "periodMs": 4000,
+      "at": "light2At"
+     }
+    },
+    {
+     "name": "school",
+     "rect": [
+      2100,
+      150,
+      2400,
+      450
+     ],
+     "paint": "blue"
+    }
+   ],
+   "wallH": 100,
+   "wallT": 20,
+   "obstacleH": 150
+  }
+ },
+ "robot": {
+  "rule": "fixed",
+  "base": "colour"
+ },
+ "start": {
+  "nominal": {
+   "x": 150,
+   "y": 300,
+   "heading": 0
+  },
+  "vary": {
+   "xy": 10,
+   "heading": 2
+  },
+  "draw": "uniform-square-v1"
+ },
+ "runs": {
+  "min": 1,
+  "max": 20,
+  "default": 5,
+  "fixed": 5
+ },
+ "kernel": {
+  "name": "pointToPoint",
+  "limitS": 60,
+  "goal": "footprintInside",
+  "final": "runEnd",
+  "end": "afterProgram",
+  "still": {
+   "s": 0.5,
+   "dps": 5,
+   "mms": 3
+  },
+  "lights": {
+   "sensor": 1,
+   "school": "school",
+   "cross": "all",
+   "lights": [
+    {
+     "area": "light1",
+     "dir": "+x"
+    },
+    {
+     "area": "light2",
+     "dir": "+x"
+    }
+   ]
+  }
+ },
+ "constants": {
+  "par": 18
+ },
+ "score": {
+  "run": "round(if(redRun, 0, if(stopped & inSchool & lightsCrossed == 2, 50 + 40 * min(1, par / max(driveS, 0.001)), 0) + if(redStopPast == 0, 10, 0)), 1)",
+  "summary": "round(sum(r in runs: r.points) / count(r in runs: true), 1)",
+  "values": {
+   "finished": {
+    "value": "count(r in runs: r.stopped & r.inSchool & !r.redRun & r.lightsCrossed == 2)",
+    "unit": "runs"
+   },
+   "redRuns": {
+    "value": "count(r in runs: r.redRun)",
+    "unit": "runs"
+   }
+  }
+ },
+ "pass": "score >= 60 & finished >= 0.8 * n",
+ "sources": [
+  {
+   "doc": "docs/curriculum/G02.md",
+   "where": "G2.3 Colours talk: the robot (the colour robot), How a run is measured, and the Challenge - Traffic-light town paragraph, level table and scoring (level 1)"
+  },
+  {
+   "doc": "docs/session/2026-11-14_w11-slim/g23/DESIGN_r2.md",
+   "where": "§1 lights (phases, at by a uniform-v1 draw: Build notes), §2 kernel.lights and §2.4 the score, §3 the run's end, §6 L1"
+  }
+ ]
+}

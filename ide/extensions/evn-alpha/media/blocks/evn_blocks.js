@@ -57,6 +57,35 @@
     const SERVO_PORTS = PORTS;
     const SERIAL_PORTS = [['1', '1'], ['2', '2']];
 
+    /* ---- the standard robot (ROBOT176 R1, OQ 691) ------------------------------------------------------------------
+     * A program with no "set up robot" block drives a standard robot. Which one is recorded per file: the document
+     * member `standardRobot` (validStandardRobot), set on the workspace once, at load (loadWorkspace), read through
+     * standardRobotOf() and written back by every save (documentOf). So a saved file keeps its meaning when the
+     * standard robot for new programs (DEFAULT_ROBOT) moves (site review B1, s1019: "such a file generates the
+     * Python it generated when it was saved"). */
+
+    /** SITE-25's robot (the owner, 2026-10-18: "one standard robot (left port 4 mirrored, right 3, 62.4 mm wheels,
+     * 170 mm track) in every sample and as the blocks' default"), frozen: what a version-3 file with blocks and no
+     * `standardRobot` member drives. It is also the setup block's own field defaults (WHEEL, TRACK): a hand-written
+     * block without them keeps the meaning it always had. Never edited. */
+    const SITE25_ROBOT = Object.freeze({ left: '4', right: '3', mirrored: true, wheel: 62.4, track: 170 });
+    /** The standard robot for new programs: an empty document's, a never-loaded workspace's (the toolbox's flyout) and
+     * the toolbox's "set up robot". ROBOT176 S0: SITE-25's values (no number moves); S1 holds OQ 691's robot.
+     * `let` for the test hook only (api._setDefaultRobotForTest, scripts/test_blocks.js' golden row). */
+    let DEFAULT_ROBOT = SITE25_ROBOT;
+
+    /** The document member `standardRobot` checked: ports '1'-'4' (strings: the fields compare strings) that differ,
+     * `mirrored` (the left motor's forward is counterclockwise) a boolean, `wheel` 1-999 and `track` 1-1999 numbers
+     * (the setup block's own ranges). Returns a frozen copy of exactly those five members, or null. */
+    function validStandardRobot(m) {
+        if (!m || typeof m !== 'object' || Array.isArray(m)) { return null; }
+        const port = (p) => typeof p === 'string' && /^[1-4]$/.test(p);
+        const num = (x, hi) => typeof x === 'number' && Number.isFinite(x) && x >= 1 && x <= hi;
+        if (!port(m.left) || !port(m.right) || m.left === m.right || typeof m.mirrored !== 'boolean'
+            || !num(m.wheel, 999) || !num(m.track, 1999)) { return null; }
+        return Object.freeze({ left: m.left, right: m.right, mirrored: m.mirrored, wheel: m.wheel, track: m.track });
+    }
+
     /** The port dropdown every peripheral block starts with. */
     function portField(options) {
         return { type: 'field_dropdown', name: 'PORT', options: options };
@@ -1529,13 +1558,14 @@
             args0: [
                 { type: 'field_dropdown', name: 'LEFT', options: PORTS },
                 { type: 'field_dropdown', name: 'RIGHT', options: PORTS },
-                { type: 'field_number', name: 'WHEEL', value: 62.4, min: 1, max: 999, precision: 0.1 },
-                { type: 'field_number', name: 'TRACK', value: 170, min: 1, max: 1999, precision: 0.1 },
+                // the field defaults stay SITE-25's (ROBOT176 R1): a block saved without them keeps its meaning
+                { type: 'field_number', name: 'WHEEL', value: SITE25_ROBOT.wheel, min: 1, max: 999, precision: 0.1 },
+                { type: 'field_number', name: 'TRACK', value: SITE25_ROBOT.track, min: 1, max: 1999, precision: 0.1 },
                 // the robot's speed unit, as "set up motor" has (the owner, 2026-10-09: "Like motors: set-up dropdown")
                 { type: 'field_dropdown', name: 'UNIT', options: [['mm/s', 'DEG_S'], ['% of full speed', 'PERCENT']] },
             ],
             style: 'evn_motor_blocks',
-            tooltip: 'The two wheel motors and the geometry of the robot (one per program). A motor mounted mirrored needs a "set up motor" block with counterclockwise as its positive direction. The distance between the wheels is measured between their contact patches: check it with one "turn robot 360 degrees" against a mark on the floor. Speeds in mm/s (deg/s for turning), or in % of the robot\'s full speed (the slower motor\'s): then "drive at" and "start moving" steer like LEGO\'s move steering (0 straight, 50 pivots on one wheel, 100 spins) and "set robot speed" is in % too. Without this block: the standard robot, left motor 4 mounted mirrored (counterclockwise, unless a "set up motor 4" block says otherwise), right motor 3, 62.4 mm wheels 170 mm apart, mm/s.',
+            tooltip: 'The two wheel motors and the geometry of the robot (one per program). A motor mounted mirrored needs a "set up motor" block with counterclockwise as its positive direction. The distance between the wheels is measured between their contact patches: check it with one "turn robot 360 degrees" against a mark on the floor. Speeds in mm/s (deg/s for turning), or in % of the robot\'s full speed (the slower motor\'s): then "drive at" and "start moving" steer like LEGO\'s move steering (0 straight, 50 pivots on one wheel, 100 spins) and "set robot speed" is in % too.',   // + "Without this block: ..." from the workspace's own standard robot (setupTooltip, ROBOT176 R1)
         },
         {
             type: 'evn_drivebase_gyro',
@@ -2265,9 +2295,23 @@
     }
 
     /** Load a saved workspace state the way the editor does: as written, then repaired, given its hats
-     * (a version-1 file upgraded), then its sections applied. Returns notes for the user (empty: nothing to say). */
-    function loadWorkspace(state, workspace, version) {
+     * (a version-1 file upgraded), then its sections applied. Returns notes for the user (empty: nothing to say).
+     * `standardRobot` is the document's member of that name (undefined / null: the file has none): it decides, once,
+     * the robot a program without "set up robot" drives (ROBOT176 R1, workspace.evnStandardRobot):
+     *   1. a valid member: that robot (an invalid one is ignored, with a note);
+     *   2. else a document with at least one block as written (counted before repairSections adds the hats; a file of
+     *      only the two hats counts): SITE-25's robot, what a version-3 file meant when it was saved. A version 1 / 2
+     *      file gets the same, after keepSavedRobot (unchanged) gave a program that drove the default robot
+     *      LEGACY_ROBOT's "set up robot" block: once upgraded it is a version-3 file of the SITE-25 years;
+     *   3. else (an empty document: VS Code's New File, EMPTY_DOCUMENT, of any version): DEFAULT_ROBOT - its Python
+     *      names no robot, so nothing it meant can change. */
+    function loadWorkspace(state, workspace, version, standardRobot) {
         let notes;
+        const member = validStandardRobot(standardRobot);
+        const hasBlocks = !!(state && typeof state === 'object' && state.blocks && Array.isArray(state.blocks.blocks)
+            && state.blocks.blocks.length);
+        workspace.evnStandardRobot = member || (hasBlocks ? SITE25_ROBOT : DEFAULT_ROBOT);
+        zeroBased(workspace);
         loadingDepth++;
         loadRefusals.length = 0;
         try {
@@ -2282,8 +2326,37 @@
         notes = notes.concat(upgradeWorkspace(workspace, !(Number(version) >= 2)));
         applySections(workspace);
         if (!(Number(version) >= STANDARD_ROBOT_VERSION)) { notes = notes.concat(keepSavedRobot(workspace)); }
+        if (standardRobot !== undefined && standardRobot !== null && !member) {
+            notes.push('the file\'s "standardRobot" member is not a robot this editor reads (ports 1-4 that differ, mirrored '
+                + 'true or false, wheel 1-999 mm, track 1-1999 mm): it was ignored, and a program without a "set up robot" '
+                + 'block drives ' + robotWords(workspace.evnStandardRobot));
+        }
         separateStacks(workspace);
         return notes;
+    }
+
+    /** The robot a program without "set up robot" drives in this workspace (ROBOT176 R1): the one loadWorkspace set
+     * (a flyout asks its target workspace), else - a workspace that never went through loadWorkspace (a test's, Junior's
+     * normaliser's) - DEFAULT_ROBOT. Every reader of the standard robot asks this, never DEFAULT_ROBOT itself. */
+    function standardRobotOf(workspace) {
+        const ws = workspace && workspace.isFlyout && workspace.targetWorkspace ? workspace.targetWorkspace : workspace;
+        return (ws && ws.evnStandardRobot) || DEFAULT_ROBOT;
+    }
+    /** "left motor 4 mirrored, right motor 3, 62.4 mm wheels 170 mm apart", for the notes */
+    function robotWords(r) {
+        return 'left motor ' + r.left + (r.mirrored ? ' mirrored' : '') + ', right motor ' + r.right + ', ' + r.wheel
+            + ' mm wheels ' + r.track + ' mm apart';
+    }
+    /** The document a save writes (ROBOT176 R1): what the file carried besides its workspace (`lastDoc`: `needs`, and
+     * anything a later format adds), the format and version, the workspace's state, and `standardRobot` - the
+     * workspace's own robot (standardRobotOf), never DEFAULT_ROBOT, so a reopened file drives what it drove. The
+     * editor's two writers (editor.js serialize, saveCopy) call this. */
+    function documentOf(workspace, lastDoc, format, version) {
+        const r = standardRobotOf(workspace);
+        return Object.assign({}, lastDoc || {}, {
+            format, version, standardRobot: { left: r.left, right: r.right, mirrored: r.mirrored, wheel: r.wheel, track: r.track },
+            workspace: Blockly.serialization.workspaces.save(workspace),
+        });
     }
 
     /** The first file version whose program without a "set up robot" block drives the standard robot (DEFAULT_ROBOT).
@@ -2315,7 +2388,7 @@
         applySections(workspace);
         return ['a "set up robot" block was added under "set up" with the robot this program drove when it was saved '
             + '(left motor 1, right motor 2, 56 mm wheels 112 mm apart): a program without one now drives the standard robot '
-            + '(left motor 4 mirrored, right motor 3, 62.4 mm wheels 170 mm apart)'];
+            + '(' + robotWords(standardRobotOf(workspace)) + ')'];
     }
 
     /* A file keeps the x/y it was saved with, but a stack's height depends on the renderer and the
@@ -2403,7 +2476,8 @@
     }
     // `file` is the name the "file ... the line" block writes through (`with open(...) as file:`); `os` and
     // `struct` are the modules the file and I2C blocks import
-    generator.addReservedWords('evn,motor_1,motor_2,motor_3,motor_4,stopwatch,drive_base,pose,data_log,file,os,struct,json,' +
+    // `sys`: Blockly's "sub-list to # from end" writes `sys.maxsize` (Lists, review r1 S1)
+    generator.addReservedWords('evn,sys,motor_1,motor_2,motor_3,motor_4,stopwatch,drive_base,pose,data_log,file,os,struct,json,' +
         Object.keys(DEVICES).map((cls) => DEVICES[cls][0]).join(',') + ',' +
         OBJECT_NAMES.join(',') + ',' + EVN_NAMES.join(','));
 
@@ -2537,7 +2611,7 @@
     }
 
     /** Name of the robot's DriveBase object, defining it (once) from the "set up robot" block; without
-     * one the robot is the standard robot (DEFAULT_ROBOT: left motor 4 mirrored, right 3, 62.4 mm wheels 170 mm apart). */
+     * one the robot is the workspace's standard robot (standardRobotOf: SITE-25's for a saved version-3 file without its own). */
     function driveRef(block) {
         const name = 'drive_base';
         if (!generator.definitions_[name]) {
@@ -2580,6 +2654,23 @@
         this.setWarningText(steeringClash(this));
     };
     api.steeringClash = steeringClash;   // for scripts/test_blocks.js
+
+    /** The "set up robot" block's tooltip: what the block is (its JSON tooltip), then the robot a program without it
+     * drives - the block's own workspace's standard robot (standardRobotOf), so the tip never names another robot
+     * than the one the generator uses (ROBOT176 R1, review d2 S7). */
+    function setupTooltip(base, robot) {
+        return base + ' Without this block: the standard robot, left motor ' + robot.left
+            + (robot.mirrored ? ' mounted mirrored (counterclockwise, unless a "set up motor ' + robot.left + '" block says otherwise)' : '')
+            + ', right motor ' + robot.right + ', ' + robot.wheel + ' mm wheels ' + robot.track + ' mm apart, mm/s.';
+    }
+    {
+        const init = Blockly.Blocks['evn_drivebase_setup'].init;
+        Blockly.Blocks['evn_drivebase_setup'].init = function () {
+            init.call(this);
+            const base = String(this.tooltip);
+            this.setTooltip(() => setupTooltip(base, standardRobotOf(this.workspace)));
+        };
+    }
 
     /* ---- the pose (evn.Pose) ----------------------------------------------------------------------- */
 
@@ -2629,11 +2720,6 @@
         return gyro ? gyro.getFieldValue('PORT') : '';
     }
 
-    /** The standard robot (the owner, 2026-10-18, SITE-25: "one standard robot (left port 4 mirrored, right 3, 62.4 mm
-     * wheels, 170 mm track) in every sample and as the blocks' default"): the robot of a program with no "set up robot"
-     * block, and where a "set up robot" block from the toolbox starts (with its "set up motor 4 counterclockwise"). */
-    const DEFAULT_ROBOT = { left: '4', right: '3', wheel: 62.4, track: 170 };
-
     /** True when the program drives or reads the default robot: a robot or pose block (or a Python block naming
      * drive_base) runs, and no enabled "set up robot" block chooses another one. */
     function usesDefaultRobot(workspace) {
@@ -2647,17 +2733,20 @@
      * the port: the standard robot's left motor is mounted mirrored, so its forward is counterclockwise. A "set up
      * motor" block of the port always wins (motorRef / motorReversed read it first). */
     function defaultMirrored(block, port) {
-        return port === DEFAULT_ROBOT.left && !!block.workspace && usesDefaultRobot(block.workspace);
+        if (!block.workspace) { return false; }
+        const robot = standardRobotOf(block.workspace);
+        return robot.mirrored && port === robot.left && usesDefaultRobot(block.workspace);
     }
 
-    /** The robot's ports and geometry from the "set up robot" block (or the standard robot's, DEFAULT_ROBOT). */
+    /** The robot's ports and geometry from the "set up robot" block (or the workspace's standard robot, standardRobotOf). */
     function driveGeometry(block) {
         const setup = block.workspace.getBlocksByType('evn_drivebase_setup', false).find((b) => b.isEnabled());
+        const robot = standardRobotOf(block.workspace);
         return {
-            left: setup ? setup.getFieldValue('LEFT') : DEFAULT_ROBOT.left,
-            right: setup ? setup.getFieldValue('RIGHT') : DEFAULT_ROBOT.right,
-            wheel: setup ? Number(setup.getFieldValue('WHEEL')) : DEFAULT_ROBOT.wheel,
-            track: setup ? Number(setup.getFieldValue('TRACK')) : DEFAULT_ROBOT.track,
+            left: setup ? setup.getFieldValue('LEFT') : robot.left,
+            right: setup ? setup.getFieldValue('RIGHT') : robot.right,
+            wheel: setup ? Number(setup.getFieldValue('WHEEL')) : robot.wheel,
+            track: setup ? Number(setup.getFieldValue('TRACK')) : robot.track,
             percent: !!setup && setup.getFieldValue('UNIT') === 'PERCENT',   // speeds in % of full speed (else mm/s)
         };
     }
@@ -2812,7 +2901,10 @@
         || (typeof require === 'function' ? require('blockly/blocks').loops : null);
     if (loopsLib && loopsLib.loopTypes) { loopsLib.loopTypes.add('evn_forever'); }
     generator.forBlock['evn_forever'] = function (block) {
-        const body = generator.statementToCode(block, 'DO') || generator.PASS;
+        // Blockly's loop trap, as controls_repeat_ext writes it: empty unless a caller sets INFINITE_LOOP_TRAP, STATEMENT_PREFIX
+        // or STATEMENT_SUFFIX (only Junior's line map does, src/junior/junior.js generate: a *forever*'s passes;
+        // JR_JUNIOR_MODE.md D3, jr-j2 r2 S-c), so every plain generation is unchanged
+        const body = generator.addLoopTrap(generator.statementToCode(block, 'DO'), block) || generator.PASS;
         return 'while True:\n' + body;
     };
     generator.forBlock['evn_stopwatch_time'] = function () {
@@ -3713,6 +3805,144 @@ def ${generator.FUNCTION_NAME_PLACEHOLDER_}(name):
         return [code || 'None', Order.NONE];
     };
 
+    /* ---- lists and dictionaries (JR_JUNIOR_MODE.md §4.9 J9, need N24) ----------------------
+     * The Lists category is Blockly's own list blocks with Blockly's own generators; what EVN adds is the index base
+     * and two dictionary blocks. G5.4.6 (`order = ["blue", "red"]`, `order[0]`, `spot = {"red": 1, ...}`,
+     * `go_to(spot[crate])`) and the `PRG.DATA` list lessons read the Python pane beside the blocks, and teach that
+     * Python counts from 0 ("Expect: misconception: `order[1]` is the first"). So the blocks count from 0 too: "in list
+     * order get # 0" is `order[0]`, "find first occurrence" answers -1 when the item is not there, as `index()` would
+     * have it. ZERO_BASED holds that for every workspace the program is generated from (the editor, the Junior
+     * transform, the tests), whatever Options it was made with: Blockly's list generators and tooltips read
+     * `workspace.options.oneBasedIndex`, so one workspace made without the option would turn the same file into other
+     * Python. The editor also injects with it, for the toolbox flyout's tooltips (the flyout copies the option once). */
+    const ZERO_BASED = Object.freeze({ oneBasedIndex: false });
+    function zeroBased(workspace) {
+        if (workspace && workspace.options) { workspace.options.oneBasedIndex = ZERO_BASED.oneBasedIndex; }
+    }
+
+    /* A dictionary: "create dictionary with key [red] value [1] / key [blue] value [2]" is `{'red': 1, 'blue': 2}`, its
+     * pairs added and removed with the gear as Blockly's "create list with" items are; "in dictionary [spot] get
+     * [blue]" is `spot['blue']`. A key not in the dictionary stops the program with KeyError, as `spot['green']` does in
+     * Python (G5.4.6 asks "What if the order has green?"): never a quiet None. */
+    const DICT_CREATE = 'evn_dict_create';
+    const DICT_GET = 'evn_dict_get';
+    const DICT_CONTAINER = 'evn_dict_create_container';      // the gear's bubble: only there, never in the toolbox
+    const DICT_ITEM = 'evn_dict_create_item';
+    Blockly.common.defineBlocksWithJsonArray([
+        {
+            type: DICT_GET,
+            message0: 'in dictionary %1 get %2',
+            args0: [{ type: 'input_value', name: 'DICT' }, { type: 'input_value', name: 'KEY' }],
+            inputsInline: true, output: null, style: 'list_blocks',
+            tooltip: 'The value stored under this key in the dictionary: dictionary[key]. A key that is not in the dictionary stops the program with KeyError.',
+        },
+        {
+            type: DICT_CONTAINER,
+            message0: 'dictionary %1 %2',
+            args0: [{ type: 'input_dummy' }, { type: 'input_statement', name: 'STACK' }],
+            style: 'list_blocks', enableContextMenu: false,
+            tooltip: 'Add, remove or reorder the key and value pairs of this dictionary.',
+        },
+        {
+            type: DICT_ITEM,
+            message0: 'key and value',
+            previousStatement: null, nextStatement: null, style: 'list_blocks', enableContextMenu: false,
+            tooltip: 'One key and its value in the dictionary.',
+        },
+    ]);
+    Blockly.Blocks[DICT_CREATE] = {
+        init: function () {
+            this.setStyle('list_blocks');
+            this.setInputsInline(true);
+            this.itemCount_ = 2;
+            this.updateShape_();
+            this.setOutput(true, null);
+            this.setMutator(new Blockly.icons.MutatorIcon([DICT_ITEM], this));
+            this.setTooltip('A dictionary: each key has its value, {key: value, ...}. Use the gear to add or remove pairs.');
+        },
+        saveExtraState: function () { return { itemCount: this.itemCount_ }; },
+        loadExtraState: function (state) {
+            const n = Number(state && state.itemCount);
+            this.itemCount_ = Number.isInteger(n) && n >= 0 ? n : 0;
+            this.updateShape_();
+        },
+        decompose: function (workspace) {
+            const container = workspace.newBlock(DICT_CONTAINER);
+            container.initSvg();
+            let connection = container.getInput('STACK').connection;
+            for (let i = 0; i < this.itemCount_; i++) {
+                const item = workspace.newBlock(DICT_ITEM);
+                item.initSvg();
+                connection.connect(item.previousConnection);
+                connection = item.nextConnection;
+            }
+            return container;
+        },
+        compose: function (container) {
+            const pairs = [];
+            for (let item = container.getInputTargetBlock('STACK'); item; item = item.getNextBlock()) {
+                if (!item.isInsertionMarker()) { pairs.push([item.keyConnection_, item.valueConnection_]); }
+            }
+            // what is no longer on any pair comes loose (a pair removed in the bubble) before the rest move up, as Blockly's
+            // own "create list with" does: a rendered workspace would otherwise hand a displaced block to a moving one's
+            // empty input (Node's headless workspace re-attaches no orphan, so test_blocks.js cannot see this line)
+            const kept = pairs.flat();
+            for (let i = 0; i < this.itemCount_; i++) {
+                for (const name of ['KEY' + i, 'VALUE' + i]) {
+                    const target = this.getInput(name).connection.targetConnection;
+                    if (target && !kept.includes(target)) { target.disconnect(); }
+                }
+            }
+            this.itemCount_ = pairs.length;
+            this.updateShape_();
+            pairs.forEach((p, i) => {
+                if (p[0]) { p[0].reconnect(this, 'KEY' + i); }
+                if (p[1]) { p[1].reconnect(this, 'VALUE' + i); }
+            });
+        },
+        saveConnections: function (container) {
+            let i = 0;
+            for (let item = container.getInputTargetBlock('STACK'); item; item = item.getNextBlock()) {
+                if (item.isInsertionMarker()) { continue; }
+                const key = this.getInput('KEY' + i);
+                const value = this.getInput('VALUE' + i);
+                item.keyConnection_ = key ? key.connection.targetConnection : undefined;
+                item.valueConnection_ = value ? value.connection.targetConnection : undefined;
+                i++;
+            }
+        },
+        updateShape_: function () {
+            if (this.itemCount_ && this.getInput('EMPTY')) { this.removeInput('EMPTY'); }
+            else if (!this.itemCount_ && !this.getInput('EMPTY')) { this.appendDummyInput('EMPTY').appendField('create empty dictionary'); }
+            for (let i = 0; i < this.itemCount_; i++) {
+                if (this.getInput('KEY' + i)) { continue; }
+                const key = this.appendValueInput('KEY' + i);
+                if (i === 0) { key.appendField('create dictionary with'); }
+                key.appendField('key');
+                this.appendValueInput('VALUE' + i).appendField('value');
+                this.appendEndRowInput('END' + i);
+            }
+            for (let i = this.itemCount_; this.getInput('KEY' + i); i++) {
+                this.removeInput('KEY' + i);
+                this.removeInput('VALUE' + i);
+                this.removeInput('END' + i);
+            }
+        },
+    };
+    generator.forBlock[DICT_CREATE] = function (block) {
+        const pairs = [];
+        for (let i = 0; i < block.itemCount_; i++) {
+            pairs.push((generator.valueToCode(block, 'KEY' + i, Order.NONE) || 'None') + ': '
+                + (generator.valueToCode(block, 'VALUE' + i, Order.NONE) || 'None'));
+        }
+        return ['{' + pairs.join(', ') + '}', Order.ATOMIC];
+    };
+    generator.forBlock[DICT_GET] = function (block) {
+        const dict = generator.valueToCode(block, 'DICT', Order.MEMBER) || '{}';
+        const key = generator.valueToCode(block, 'KEY', Order.NONE) || 'None';
+        return [dict + '[' + key + ']', Order.MEMBER];
+    };
+
     /* ---- toolbox ------------------------------------------------------------------------- */
 
     function shadowNum(n) {
@@ -3720,6 +3950,13 @@ def ${generator.FUNCTION_NAME_PLACEHOLDER_}(name):
     }
     function shadowText(t) {
         return { shadow: { type: 'text', fields: { TEXT: t } } };
+    }
+    /** a real (not shadow) block, for the slots a gear adds, removes and reorders (Lists: review r1 B1) */
+    function realText(t) {
+        return { block: { type: 'text', fields: { TEXT: t } } };
+    }
+    function realNum(n) {
+        return { block: { type: 'math_number', fields: { NUM: n } } };
     }
     function shadowColour(name) {
         return { shadow: { type: 'evn_color', fields: { COLOR: name } } };
@@ -3761,13 +3998,12 @@ def ${generator.FUNCTION_NAME_PLACEHOLDER_}(name):
                     { kind: 'block', type: 'evn_drivebase_speeds', inputs: { SPEED: shadowNum(300), TURN: shadowNum(150) } },
                     { kind: 'block', type: 'evn_drivebase_accel', inputs: { ACCEL: shadowNum(750), TURN: shadowNum(750) } },
                     { kind: 'block', type: 'evn_drivebase_reset' },
-                    // the robot the generator assumes without this block (driveGeometry, DEFAULT_ROBOT): the standard
-                    // robot, left 4 mirrored, right 3 - a block from the toolbox starts there too, with the mirrored
-                    // motor's "set up motor 4 counterclockwise" under it (SITE-25)
-                    {
-                        kind: 'block', type: 'evn_drivebase_setup', fields: { LEFT: '4', RIGHT: '3' },
-                        next: { block: { type: 'evn_motor_setup', fields: { PORT: '4', DIRECTION: 'CCW' } } },
-                    },
+                    // the standard robot for new programs (DEFAULT_ROBOT, ROBOT176 R1): a block from the toolbox names
+                    // every field from it, with the mirrored motor's "set up motor <left> counterclockwise" under it
+                    Object.assign({
+                        kind: 'block', type: 'evn_drivebase_setup',
+                        fields: { LEFT: DEFAULT_ROBOT.left, RIGHT: DEFAULT_ROBOT.right, WHEEL: DEFAULT_ROBOT.wheel, TRACK: DEFAULT_ROBOT.track },
+                    }, DEFAULT_ROBOT.mirrored ? { next: { block: { type: 'evn_motor_setup', fields: { PORT: DEFAULT_ROBOT.left, DIRECTION: 'CCW' } } } } : {}),
                     { kind: 'block', type: 'evn_drivebase_gyro' },
                 ],
             },
@@ -4067,6 +4303,7 @@ def ${generator.FUNCTION_NAME_PLACEHOLDER_}(name):
                     { kind: 'block', type: 'controls_repeat_ext', inputs: { TIMES: shadowNum(10) } },
                     { kind: 'block', type: 'controls_whileUntil' },
                     { kind: 'block', type: 'controls_for', inputs: { FROM: shadowNum(1), TO: shadowNum(10), BY: shadowNum(1) } },
+                    { kind: 'block', type: 'controls_forEach' },        // for each item in a list (Lists, J9)
                     { kind: 'block', type: 'controls_flow_statements' },
                 ],
             },
@@ -4088,6 +4325,32 @@ def ${generator.FUNCTION_NAME_PLACEHOLDER_}(name):
                     { kind: 'block', type: 'text' },
                     { kind: 'block', type: 'text_join' },
                     { kind: 'block', type: 'text_print', inputs: { TEXT: { shadow: { type: 'text', fields: { TEXT: 'hello' } } } } },
+                ],
+            },
+            {
+                // Blockly's list blocks, counting from 0 as Python does (ZERO_BASED), then the dictionary blocks (J9)
+                kind: 'category', name: 'Lists', categorystyle: 'list_category',
+                contents: [
+                    { kind: 'block', type: 'lists_create_with', extraState: { itemCount: 0 } },
+                    // the gear's slots hold real blocks, never shadows: removeInput disposes a slot's shadow, so it could not
+                    // move with its pair, and the slot's stale shadow state would be saved (review r1 B1)
+                    { kind: 'block', type: 'lists_create_with', extraState: { itemCount: 2 }, inputs: { ADD0: realText('blue'), ADD1: realText('red') } },
+                    { kind: 'block', type: 'lists_repeat', inputs: { NUM: shadowNum(3) } },
+                    { kind: 'block', type: 'lists_length' },
+                    { kind: 'block', type: 'lists_isEmpty' },
+                    { kind: 'block', type: 'lists_indexOf' },
+                    { kind: 'block', type: 'lists_getIndex', inputs: { AT: shadowNum(0) } },
+                    { kind: 'block', type: 'lists_setIndex', inputs: { AT: shadowNum(0) } },
+                    // "in list ... insert at last" is `append`
+                    { kind: 'block', type: 'lists_setIndex', fields: { MODE: 'INSERT', WHERE: 'LAST' } },
+                    { kind: 'block', type: 'lists_getSublist', inputs: { AT1: shadowNum(0), AT2: shadowNum(1) } },
+                    { kind: 'block', type: 'lists_split', inputs: { DELIM: shadowText(',') } },
+                    { kind: 'block', type: 'lists_sort' },
+                    { kind: 'block', type: 'lists_reverse' },
+                    { kind: 'label', text: 'Dictionaries: a value for each key' },
+                    { kind: 'block', type: DICT_CREATE, extraState: { itemCount: 2 }, inputs: {
+                        KEY0: realText('red'), VALUE0: realNum(1), KEY1: realText('blue'), VALUE1: realNum(2) } },
+                    { kind: 'block', type: DICT_GET, inputs: { KEY: shadowText('blue') } },
                 ],
             },
             { kind: 'category', name: 'Variables', categorystyle: 'variable_category', custom: 'VARIABLE' },
@@ -4128,6 +4391,7 @@ def ${generator.FUNCTION_NAME_PLACEHOLDER_}(name):
 
     /** Generate the MicroPython program for a workspace. */
     function workspaceToPython(workspace) {
+        zeroBased(workspace);       // lists count from 0 in every workspace a program is generated from (ZERO_BASED)
         // the sections decide what runs; in the editor they are already applied (a no-op here), and mid-drag they
         // wait for the drop (a block just taken from the toolbox would show greyed while it is carried)
         if (!(workspace.isDragging && workspace.isDragging())) {
@@ -4139,8 +4403,15 @@ def ${generator.FUNCTION_NAME_PLACEHOLDER_}(name):
 
     // CORE_NAMES / DEVICE_NAMES are exported for scripts/test_blocks.js, which compares them with the module's table.
     Object.assign(api, { TOOLBOX, PALETTE, BLOCK_STYLES, CATEGORY_STYLES, workspaceToPython, CORE_NAMES, DEVICE_NAMES, SETUP_TYPES,
-        CONNECTION_CHECKER, SETUP_HAT, PROGRAM_HAT, COMMENT, applySections, repairSections, upgradeWorkspace, loadWorkspace, STANDARD_ROBOT_VERSION, setBoardConnected,
-        SERIAL_TYPES, serialClash });
+        CONNECTION_CHECKER, SETUP_HAT, PROGRAM_HAT, COMMENT, ZERO_BASED, DICT_CREATE, DICT_GET, DICT_CONTAINER, DICT_ITEM, applySections, repairSections, upgradeWorkspace, loadWorkspace, STANDARD_ROBOT_VERSION, setBoardConnected,
+        SERIAL_TYPES, serialClash, SITE25_ROBOT, standardRobotOf, validStandardRobot, documentOf });
+    /** The golden row's hook (scripts/test_blocks.js, ROBOT176 R1): DEFAULT_ROBOT as given (a valid robot), null back to
+     * SITE-25's. The toolbox was built when the factory ran and does not move with it. Tests only. */
+    api._setDefaultRobotForTest = function (r) {
+        const v = r === null ? SITE25_ROBOT : validStandardRobot(r);
+        if (!v) { throw new Error('_setDefaultRobotForTest: not a robot'); }
+        DEFAULT_ROBOT = v;
+    };
     if (typeof self !== 'undefined') { self.evnBlocks = api; }
     return api;
 }));

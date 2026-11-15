@@ -1,0 +1,282 @@
+{
+ "format": "evn-course/1",
+ "id": "traffic-light-town-3",
+ "challenge": "traffic-light-town",
+ "level": 3,
+ "version": 1,
+ "module": "G2.3",
+ "title": "Traffic-light town · Level 3: Across town",
+ "brief": "The colour robot starts in a 300 x 300 mm start box on the north street of a town loop (starts vary 15 mm and 3 degrees); the level fixes the robot. The loop is four white streets 300 mm wide whose outer edges make a 2400 x 1800 mm rectangle, driven clockwise from the start: east along the north street, south along the east street, west along the south street. A yellow 100 x 100 mm turn sign in the middle of the north-east junction, and another in the middle of the south-east junction, each mean turn right. Three traffic lights, 150 x 300 mm patches across the street, one on each street of the route, are painted red or green, changing every 4 s, each starting at a moment new every run. The school, a blue 300 x 300 mm zone, is on the south street at the route's end. The town is new every run: the first sign's middle is 550 to 850 mm ahead of the start, the school's middle 550 to 1750 mm past the second sign's, and each light at a place new every run on its street, between the start box, the junctions and the school. A run ends once the program has ended and the robot has then stood still for 0.5 s, or at 120 s. A robot whose colour sensor leaves a light on the far side while it is red has run a red light: that run scores 0. A run finishes when the robot stops with its middle in the school, having driven through every light, without running a red light. Per run: 50 for finishing, plus up to 40 for speed on the driving time (the run's time less the time the robot stood still; all 40 at par or less, 40 x par / driving time above it), both paid only on a finish; plus 10 if at every stop on a red light the colour sensor was short of the light's middle line. Pass: mean 60 or more over 5 runs, 4 of them finished. Par time: 1 s for every 150 mm of the route, measured along the streets' middle from the start to the school's middle (17 to 27 s; the run table's toSign and toSchool give each run's route: toSign + 1500 + toSchool).",
+ "field": {
+  "random": [
+   {
+    "name": "toSign",
+    "draw": "uniform-v1",
+    "min": 550,
+    "max": 850,
+    "step": 100
+   },
+   {
+    "name": "toSchool",
+    "draw": "uniform-v1",
+    "min": 550,
+    "max": 1750,
+    "step": 100
+   },
+   {
+    "name": "light1Slot",
+    "draw": "int-v1",
+    "min": 0,
+    "max": 2
+   },
+   {
+    "name": "light2Slot",
+    "draw": "int-v1",
+    "min": 0,
+    "max": 9
+   },
+   {
+    "name": "light3Slot",
+    "draw": "int-v1",
+    "min": 0,
+    "max": 2
+   },
+   {
+    "name": "light1At",
+    "draw": "uniform-v1",
+    "min": 0,
+    "max": 7990,
+    "step": 10
+   },
+   {
+    "name": "light2At",
+    "draw": "uniform-v1",
+    "min": 0,
+    "max": 7990,
+    "step": 10
+   },
+   {
+    "name": "light3At",
+    "draw": "uniform-v1",
+    "min": 0,
+    "max": 7990,
+    "step": 10
+   }
+  ],
+  "arena": {
+   "size": [
+    3000,
+    2100
+   ],
+   "startBox": [
+    1700,
+    1650,
+    2000,
+    1950
+   ],
+   "startPaint": false,
+   "goal": null,
+   "obstacles": [],
+   "areas": [
+    {
+     "name": "light1",
+     "rect": [
+      {
+       "$": "2050 + light1Slot * (toSign - 550) / 2"
+      },
+      1650,
+      {
+       "$": "2200 + light1Slot * (toSign - 550) / 2"
+      },
+      1950
+     ],
+     "paint": "red",
+     "phases": {
+      "of": [
+       "red",
+       "green"
+      ],
+      "periodMs": 4000,
+      "at": "light1At"
+     }
+    },
+    {
+     "name": "sign1",
+     "rect": [
+      {
+       "$": "1850 + toSign - 50"
+      },
+      1750,
+      {
+       "$": "1850 + toSign + 50"
+      },
+      1850
+     ],
+     "paint": "yellow"
+    },
+    {
+     "name": "light2",
+     "rect": [
+      {
+       "$": "1700 + toSign"
+      },
+      {
+       "$": "1450 - 100 * light2Slot"
+      },
+      {
+       "$": "2000 + toSign"
+      },
+      {
+       "$": "1600 - 100 * light2Slot"
+      }
+     ],
+     "paint": "red",
+     "phases": {
+      "of": [
+       "red",
+       "green"
+      ],
+      "periodMs": 4000,
+      "at": "light2At"
+     }
+    },
+    {
+     "name": "sign2",
+     "rect": [
+      {
+       "$": "1850 + toSign - 50"
+      },
+      250,
+      {
+       "$": "1850 + toSign + 50"
+      },
+      350
+     ],
+     "paint": "yellow"
+    },
+    {
+     "name": "light3",
+     "rect": [
+      {
+       "$": "1500 + toSign - light3Slot * (toSchool - 550) / 2"
+      },
+      150,
+      {
+       "$": "1650 + toSign - light3Slot * (toSchool - 550) / 2"
+      },
+      450
+     ],
+     "paint": "red",
+     "phases": {
+      "of": [
+       "red",
+       "green"
+      ],
+      "periodMs": 4000,
+      "at": "light3At"
+     }
+    },
+    {
+     "name": "school",
+     "rect": [
+      {
+       "$": "1700 + toSign - toSchool"
+      },
+      150,
+      {
+       "$": "2000 + toSign - toSchool"
+      },
+      450
+     ],
+     "paint": "blue"
+    }
+   ],
+   "wallH": 100,
+   "wallT": 20,
+   "obstacleH": 150
+  }
+ },
+ "robot": {
+  "rule": "fixed",
+  "base": "colour"
+ },
+ "start": {
+  "nominal": {
+   "x": 1850,
+   "y": 1800,
+   "heading": 0
+  },
+  "vary": {
+   "xy": 15,
+   "heading": 3
+  },
+  "draw": "uniform-square-v1"
+ },
+ "runs": {
+  "min": 1,
+  "max": 20,
+  "default": 5,
+  "fixed": 5
+ },
+ "kernel": {
+  "name": "pointToPoint",
+  "limitS": 120,
+  "goal": "footprintInside",
+  "final": "runEnd",
+  "end": "afterProgram",
+  "still": {
+   "s": 0.5,
+   "dps": 5,
+   "mms": 3
+  },
+  "lights": {
+   "sensor": 1,
+   "school": "school",
+   "cross": "all",
+   "lights": [
+    {
+     "area": "light1",
+     "dir": "+x"
+    },
+    {
+     "area": "light2",
+     "dir": "-y"
+    },
+    {
+     "area": "light3",
+     "dir": "-x"
+    }
+   ]
+  }
+ },
+ "constants": {},
+ "score": {
+  "run": "let par = (toSign + 1500 + toSchool) / 150 in round(if(redRun, 0, if(stopped & inSchool & lightsCrossed == 3, 50 + 40 * min(1, par / max(driveS, 0.001)), 0) + if(redStopPast == 0, 10, 0)), 1)",
+  "summary": "round(sum(r in runs: r.points) / count(r in runs: true), 1)",
+  "values": {
+   "finished": {
+    "value": "count(r in runs: r.stopped & r.inSchool & !r.redRun & r.lightsCrossed == 3)",
+    "unit": "runs"
+   },
+   "redRuns": {
+    "value": "count(r in runs: r.redRun)",
+    "unit": "runs"
+   }
+  }
+ },
+ "pass": "score >= 60 & finished >= 0.8 * n",
+ "sources": [
+  {
+   "doc": "docs/curriculum/G02.md",
+   "where": "G2.3 Colours talk: the robot (the colour robot), How a run is measured, and the Challenge - Traffic-light town paragraph, level table and scoring (level 3)"
+  },
+  {
+   "doc": "docs/session/2026-11-14_w11-slim/g23/DESIGN_r2.md",
+   "where": "§1 lights (phases, at by a uniform-v1 draw: Build notes), §2 kernel.lights and §2.4 the score, §3 the run's end"
+  },
+  {
+   "doc": "docs/session/2026-11-14_w12-g2/g23l3/DESIGN_r2.md",
+   "where": "§1 the town (a 2400 x 1800 loop driven clockwise, arena 3000 x 2100, the draws), §2-§4 the kernel (kernel.lights.cross \"all\", lightsCrossed, limit 120 s), §3 the par per run (CFD §14.4); start vary OI-L3-1 default (a), G02's 15 mm / 3 degrees"
+  }
+ ]
+}

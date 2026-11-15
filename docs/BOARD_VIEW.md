@@ -73,7 +73,7 @@ The calibration also finds which way the encoder counts. A non-LEGO motor wired 
 
 Choosing a different motor clears the port's calibration; right-click *Clear calibration* does it by hand.
 
-A custom, JGA25, Pololu 25D, CHR-GM16 or CM22-2230 motor is not fully trusted until it is calibrated, and `Motor(port)` says so once. If its encoder counts the other way, its first move runs away until the board's runaway guard coasts it, after about a quarter of a second. The program then stops with a `RuntimeError` that says to calibrate it. A custom motor is guarded this way only when it was given its no-load speed.
+> **Warning:** a custom, JGA25, Pololu 25D, CHR-GM16 or CM22-2230 motor is not fully trusted until it is calibrated, and `Motor(port)` says so once. If its encoder counts the other way, its first move runs away until the board's runaway guard coasts it, after about a quarter of a second. The program then stops with a `RuntimeError` that says to calibrate it. A custom motor is guarded this way only when it was given its no-load speed.
 
 **Move it** with the row's buttons:
 
@@ -112,6 +112,8 @@ On a device it knows:
 ### Files on the board
 
 **Files on the board** is kept up to date without you pressing anything. It starts with a **Storage** row (`Storage · 10.6 MB free of 11.0 MB (96 %)`). It turns into a warning when less than a tenth of the space, or less than 256 kB, is free: a data log the board cannot save is lost. The warning offers **Download all data logs**.
+
+![Files on the board: the Storage row (11.0 MB free of 11.0 MB), the data folder with one data log, main.py (starts at the user button after power-on), a lib folder and notes.txt](images/board-files.png)
 
 The **data** folder holds what `evn.DataLog` saves (`data · 3 data logs, 412 kB`, newest first). Click a log, or its cloud button, to download it into the **Data** folder of your projects folder. A `.csv` opens in the [data viewer](DATA_LOGGER.md#looking-at-a-log). If a file of that name is already there, choose **Replace** or **Keep both**.
 

@@ -1,0 +1,93 @@
+{
+  "format": "evn-course/1",
+  "id": "maze-runner-1",
+  "challenge": "maze-runner",
+  "level": 1,
+  "version": 1,
+  "module": "G3.3",
+  "title": "Maze runner · Level 1: One corridor",
+  "brief": "Follow the one winding corridor from the blue cell to the green cell.",
+  "field": {
+    "arena": {
+      "size": [
+        1980,
+        1180
+      ],
+      "startBox": [
+        0,
+        0,
+        380,
+        380
+      ],
+      "goal": [
+        1600,
+        800,
+        1980,
+        1180
+      ],
+      "obstacles": [
+        {
+          "x": 800,
+          "y": 390,
+          "w": 1600,
+          "d": 20,
+          "color": "#ffffff"
+        },
+        {
+          "x": 1180,
+          "y": 790,
+          "w": 1600,
+          "d": 20,
+          "color": "#ffffff"
+        }
+      ],
+      "wallH": 100,
+      "wallT": 20,
+      "obstacleH": 100
+    }
+  },
+  "robot": {
+    "rule": "learner"
+  },
+  "start": {
+    "nominal": {
+      "x": 190,
+      "y": 190,
+      "heading": 0
+    },
+    "vary": {
+      "xy": 15,
+      "heading": 3
+    },
+    "draw": "uniform-square-v1"
+  },
+  "runs": {
+    "min": 1,
+    "max": 20,
+    "default": 5,
+    "fixed": 5
+  },
+  "kernel": {
+    "name": "pointToPoint",
+    "limitS": 120,
+    "goal": "footprintInside"
+  },
+  "constants": {
+    "par": 30
+  },
+  "score": {
+    "run": "if(reached, round(50 + 40 * min(1, par / max(time, 0.001)) + if(touches == 0, 10, 0), 1), 0)",
+    "summary": "round(sum(r in runs: r.points) / count(r in runs: true), 1)"
+  },
+  "pass": "score >= 60 & reached >= 0.8 * n",
+  "sources": [
+    {
+      "doc": "docs/curriculum/G03.md",
+      "where": "G3.3 Maze runner, the level table (level 1) and the scoring paragraph"
+    },
+    {
+      "doc": "docs/COURSE_CONTENT_DESIGN.md",
+      "where": "§2, §3.1: a fixed maze is plain obstacles; a cell is cell - wall clear, the walls centre to centre 400 apart"
+    }
+  ]
+}

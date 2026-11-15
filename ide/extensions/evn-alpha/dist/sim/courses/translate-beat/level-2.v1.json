@@ -1,0 +1,103 @@
+{
+  "format": "evn-course/1",
+  "id": "translate-beat-2",
+  "challenge": "translate-beat",
+  "level": 2,
+  "version": 1,
+  "module": "G5.1",
+  "title": "Translate and beat · Level 2: Triangle, hexagon, star",
+  "brief": "The class robot starts in the middle of a 2400 x 2400 mm floor facing +x (starts vary 10 mm and 2 degrees); the level fixes the robot. In this order, from one function polygon(n, side) (the star as star(points, side), or polygon with a turn argument): an equilateral triangle of 500 mm sides, a regular hexagon of 250 mm sides and a five-point star of 400 mm lines, standing still for 1 s between shapes (wait(1000)): the course splits the trail at the first two stops, and each shape's closing error (its distance plus 2 mm per degree) runs from where it began to where the next stop begins (the star's, to the run's end); the worst of the three is the run's. Fewer than two stops: not every side drawn. The run ends when the program ends, or at 90 s. Line budget: 20 non-blank lines. 50 points for a closing error under 30 mm, plus 40 x min(1, 5 mm / error), plus 10 at or under par time with the program within the line budget. A run that does not draw every side (the axle's middle travels 90 % of the perimeters and each shape encloses 80 % of its area) scores 0. Pass: mean 60 or more over 5 runs, 4 of them closing within 30 mm (every side drawn). Par: 40 s.",
+  "field": {
+    "arena": {
+      "size": [
+        2400,
+        2400
+      ],
+      "startBox": [
+        1050,
+        1050,
+        1350,
+        1350
+      ],
+      "goal": null,
+      "obstacles": [],
+      "wallH": 100,
+      "wallT": 20,
+      "obstacleH": 150
+    }
+  },
+  "robot": {
+    "rule": "fixed"
+  },
+  "start": {
+    "nominal": {
+      "x": 1200,
+      "y": 1200,
+      "heading": 0
+    },
+    "vary": {
+      "xy": 10,
+      "heading": 2
+    },
+    "draw": "uniform-square-v1"
+  },
+  "runs": {
+    "min": 1,
+    "max": 20,
+    "default": 5,
+    "fixed": 5
+  },
+  "kernel": {
+    "name": "pointToPoint",
+    "limitS": 90,
+    "goal": "footprintInside",
+    "final": "runEnd",
+    "trail": {
+      "pieces": 3,
+      "stop": {
+        "s": 0.9,
+        "dps": 5,
+        "mms": 3
+      }
+    },
+    "program": {
+      "lines": true
+    }
+  },
+  "constants": {
+    "perim": 5000,
+    "area1": 108253,
+    "area2": 162380,
+    "area3": 64984,
+    "closeMm": 30,
+    "precMm": 5,
+    "headW": 2,
+    "par": 40,
+    "lineBudget": 20
+  },
+  "score": {
+    "run": "if(trailLength >= 0.9 * perim & pieceArea_1 >= 0.8 * area1 & pieceArea_2 >= 0.8 * area2 & pieceArea_3 >= 0.8 * area3, let e = max(max((pieceClose_1 + headW * pieceTurn_1), (pieceClose_2 + headW * pieceTurn_2)), (pieceClose_3 + headW * pieceTurn_3)) in round(if(e < closeMm, 50, 0) + if(e <= precMm, 40, 40 * precMm / e) + if(time <= par & programLines <= lineBudget, 10, 0), 1), 0)",
+    "values": {
+      "closes": {
+        "value": "count(r in runs: r.trailLength >= 0.9 * perim & r.pieceArea_1 >= 0.8 * area1 & r.pieceArea_2 >= 0.8 * area2 & r.pieceArea_3 >= 0.8 * area3 & max(max((r.pieceClose_1 + headW * r.pieceTurn_1), (r.pieceClose_2 + headW * r.pieceTurn_2)), (r.pieceClose_3 + headW * r.pieceTurn_3)) <= closeMm)",
+        "unit": "runs"
+      }
+    },
+    "summary": "round(sum(r in runs: r.points) / n, 1)"
+  },
+  "pass": "score >= 60 & closes >= 0.8 * n",
+  "sources": [
+    {
+      "doc": "docs/curriculum/G05.md",
+      "where": "G5.1 Translate and beat, the challenge paragraph and the level table (level 2)"
+    },
+    {
+      "doc": "docs/curriculum/G04.md",
+      "where": "G4.1 Shape artist: every side drawn (90 % of the perimeter, 80 % of the area by the shoelace formula), a stop (still 0.9 s after first moving: 5 deg/s, 3 mm/s)"
+    },
+    {
+      "doc": "vscode-evn-alpha/docs/COURSE_FORMAT_DESIGN.md",
+      "where": "§18 (kernel.trail, P0c-4), §10 (runEnd), §12.2 (programLines), §13 (the fixed robot)"
+    }
+  ]
+}

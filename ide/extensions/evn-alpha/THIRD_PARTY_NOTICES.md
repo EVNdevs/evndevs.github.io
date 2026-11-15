@@ -9,10 +9,11 @@ in the firmware repository); the ST entry below is a precaution until it is sett
 third-party files, the Blockly block editor (Apache License 2.0), the Jost typeface (SIL Open Font License 1.1),
 Pyodide 0.28.3 - CPython 3.13 compiled to WebAssembly, the robot simulator's Python (Mozilla Public License 2.0;
 CPython itself: the PSF License Agreement) - pdf.js 6.4.299, the simulator's renderer of a WRO mat (Apache License
-2.0) - and Jolt Physics through JoltPhysics.js 1.1.1, the simulator's physics engine (MIT) - ship in the extension with
+2.0) - Jolt Physics through JoltPhysics.js 1.1.1, the simulator's physics engine (MIT) - and OpenCV 4.10.0's ArUco
+dictionary `DICT_4X4_50`, the simulator's printed tags (Apache License 2.0) - ship in the extension with
 their licence files beside them (`media/blockly/LICENSE`, `media/fonts/LICENSE-Jost.txt`, for Pyodide the files in
 `media/pyodide/` listed under "Pyodide" below, for pdf.js `dist/sim/LICENSE-pdfjs.txt`, for Jolt the files in
-`media/jolt/` listed under "Jolt Physics" below; the sources: <https://github.com/pyodide/pyodide/tree/0.28.3>,
+`media/jolt/` listed under "Jolt Physics" below, for OpenCV `media/sim/LICENSE-OpenCV.txt`; the sources: <https://github.com/pyodide/pyodide/tree/0.28.3>,
 <https://github.com/python/cpython>, <https://github.com/mozilla/pdf.js/tree/v6.4.299> and
 <https://github.com/jrouwe/JoltPhysics.js/tree/1.1.1>).
 
@@ -176,6 +177,7 @@ upstream file named:
 | musl libc (Emscripten's C library) | MIT | `COPYRIGHT-musl.txt` | Emscripten 4.0.9 `system/lib/libc/musl/COPYRIGHT` |
 | libffi | MIT | `LICENSE-libffi.txt` | libffi `LICENSE` at f08493d2 (the commit Pyodide's `cpython/Makefile` builds) |
 | HACL* (the hash functions) | MIT | `LICENSE-HACL.txt` | the header of `Modules/_hacl/Hacl_Hash_SHA2.h` at CPython v3.13.2 |
+| bzip2 / libbzip2 1.0.6 (the `bz2` module; Pyodide's `Makefile.envs` links Emscripten's `-s USE_BZIP2` port) | bzip2's own BSD-style licence | `LICENSE-bzip2.txt` | `LICENSE` at tag 1.0.6 of github.com/emscripten-ports/bzip2 (the source Emscripten 4.0.9's `tools/ports/bzip2.py` builds) |
 
 ## The notebook's packages (the browser IDE's notebook)
 
@@ -183,12 +185,23 @@ The notebook (`docs/NOTEBOOK_DESIGN.md`) loads Pyodide 0.28.3's own builds of Nu
 they need, and Pyodide's unvendored standard-library modules, each wheel exactly as Pyodide publishes it (its sha256 is the
 one in `pyodide-lock.json`). They ship in the browser IDE in `media/pyodide/`, with these licence texts beside them in
 `media/pyodide/nb-licenses/` (from `licenses/nb/`, each copied verbatim from the file named). The VS Code extension
-(the VSIX) does not carry them: by the owner's ruling on OQ 88 (c) the desktop downloads the same files from the site
-on first use (NB-6).
+(the VSIX) does not carry the packages: by the owner's ruling on OQ 88 (c) the desktop downloads the same files from
+the site on first use (NB-6). It does carry these licence texts, in its own `licenses/nb/`.
 
 | Package (version) | Licence | File beside it | Copied from |
 |---|---|---|---|
 | NumPy 2.2.5 | BSD-3-Clause | `LICENSE-numpy.txt` | the wheel's `numpy-2.2.5.dist-info/LICENSE.txt` |
+| Every library NumPy 2.2.5 bundles, as it lists them (lapack-lite, dragon4, libdivide installed; Meson, spin and tempita only in the source, not installed) | as listed in the file | `LICENSE-numpy-BUNDLED.txt` | NumPy's 2.2.5 source release (PyPI `numpy-2.2.5.tar.gz`, sha256 `a9c0d994…43c291`): `LICENSES_bundled.txt` (the wheel's `.dist-info` carries only the BSD-3-Clause text; review nb7_r1 S3). The installed three are the next rows; the rows after them are the other code NumPy compiles in with a licence text of its own (pocketfft, pythoncapi-compat, the random generators) and Highway, which it may (kept, as the cautious reading). Left out: svml and x86-simd-sort (x86-only, not in the wasm32 build). NumPy's own list misses two that do ship: the msun and UTF-8 decoder rows below (review nb6_r2) |
+| NumPy 2.2.5 bundles: lapack-lite | BSD-3-Clause | `LICENSE-numpy-LAPACK_LITE.txt` | NumPy's 2.2.5 source release (PyPI `numpy-2.2.5.tar.gz`, sha256 `a9c0d994…43c291`): `numpy/linalg/lapack_lite/LICENSE.txt` |
+| NumPy 2.2.5 bundles: dragon4 | MIT | `LICENSE-numpy-DRAGON4.txt` | NumPy's 2.2.5 source release (PyPI `numpy-2.2.5.tar.gz`, sha256 `a9c0d994…43c291`): lines 1-31 (the licence comment and its relicensing note) of `numpy/_core/src/multiarray/dragon4.c` |
+| NumPy 2.2.5 bundles: libdivide | Zlib | `LICENSE-numpy-LIBDIVIDE.txt` | NumPy's 2.2.5 source release (PyPI `numpy-2.2.5.tar.gz`, sha256 `a9c0d994…43c291`): `numpy/_core/include/numpy/libdivide/LICENSE.txt` |
+| NumPy 2.2.5 bundles: pocketfft | BSD-3-Clause | `LICENSE-numpy-POCKETFFT.txt` | NumPy's 2.2.5 source release (PyPI `numpy-2.2.5.tar.gz`, sha256 `a9c0d994…43c291`): `numpy/fft/pocketfft/LICENSE.md` |
+| NumPy 2.2.5 bundles: FreeBSD msun's complex functions (the pinned wheel's `libnpymath.a` defines `npy_cacos`, `npy_casin`, `npy_catan` and the rest itself) | BSD-2-Clause | `LICENSE-numpy-NPYMATH-COMPLEX.txt` | NumPy's 2.2.5 source release (PyPI `numpy-2.2.5.tar.gz`, sha256 `a9c0d994…43c291`): lines 1-33 (the licence comment) of `numpy/_core/src/npymath/npy_math_complex.c.src` |
+| NumPy 2.2.5 bundles: Bjoern Hoehrmann's DFA UTF-8 decoder (StringDType; always compiled) | MIT | `LICENSE-numpy-UTF8-DECODER.txt` | NumPy's 2.2.5 source release (PyPI `numpy-2.2.5.tar.gz`, sha256 `a9c0d994…43c291`): lines 167-186 (the licence comment) of `numpy/_core/src/multiarray/stringdtype/utf8_utils.c` |
+| NumPy 2.2.5 bundles: pythoncapi-compat | 0BSD | `LICENSE-numpy-PYTHONCAPI_COMPAT.txt` | NumPy's 2.2.5 source release (PyPI `numpy-2.2.5.tar.gz`, sha256 `a9c0d994…43c291`): `numpy/_core/src/common/pythoncapi-compat/COPYING` |
+| NumPy 2.2.5 bundles: Highway | Apache-2.0 or BSD-3-Clause | `LICENSE-numpy-HIGHWAY.txt`, `LICENSE-numpy-HIGHWAY-BSD3.txt` | NumPy's 2.2.5 source release (PyPI `numpy-2.2.5.tar.gz`, sha256 `a9c0d994…43c291`): `numpy/_core/src/highway/LICENSE`, `numpy/_core/src/highway/LICENSE-BSD3` |
+| NumPy 2.2.5's random generators: the distributions, MT19937, PCG64, Philox, SFC64, SplitMix64 | as listed in each file | `LICENSE-numpy-RANDOM-DISTRIBUTIONS.txt`, `LICENSE-numpy-RANDOM-MT19937.txt`, `LICENSE-numpy-RANDOM-PCG64.txt`, `LICENSE-numpy-RANDOM-PHILOX.txt`, `LICENSE-numpy-RANDOM-SFC64.txt`, `LICENSE-numpy-RANDOM-SPLITMIX64.txt` | NumPy's 2.2.5 source release (PyPI `numpy-2.2.5.tar.gz`, sha256 `a9c0d994…43c291`): `numpy/random/src/<name>/LICENSE.md` for each |
+| NumPy 2.2.5's own in-wheel texts: numpy.random (NCSA / BSD-3-Clause), numpy.ma, and the random C headers' | as listed in each file | `LICENSE-numpy-RANDOM.txt`, `LICENSE-numpy-MA.txt`, `LICENSE-numpy-RANDOM-INCLUDE.txt` | NumPy's 2.2.5 source release (PyPI `numpy-2.2.5.tar.gz`, sha256 `a9c0d994…43c291`): `numpy/random/LICENSE.md`, `numpy/ma/LICENSE` (each the same bytes as the wheel's); the third from the wheel itself (`numpy-2.2.5-cp313-cp313-pyodide_2025_0_wasm32.whl`, sha256 as `media/nb/nb-packages.json` pins it): `numpy/_core/include/numpy/random/LICENSE.txt`, which the source release does not hold (its bytes are libdivide's text, `LICENSE-numpy-LIBDIVIDE.txt`) |
 | SciPy 1.14.1 | BSD-3-Clause | `LICENSE-scipy.txt` | the wheel's `scipy-1.14.1.dist-info/LICENSE.txt` (the same bytes as SciPy's `LICENSE.txt` at tag v1.14.1) |
 | The code SciPy 1.14.1 bundles, with its licence text in the wheel | uarray: BSD-3-Clause; pocketfft: BSD-3-Clause; ARPACK: BSD-3-Clause; Qhull: the Qhull licence | `LICENSE-scipy-UARRAY.txt`, `LICENSE-scipy-POCKETFFT.txt`, `LICENSE-scipy-ARPACK.txt`, `LICENSE-scipy-QHULL.txt` | the wheel's `scipy/_lib/_uarray/LICENSE`, `scipy/fft/_pocketfft/LICENSE.md`, `scipy/sparse/linalg/_eigen/arpack/COPYING`, `scipy/spatial/qhull_src/COPYING.txt` |
 | Every component SciPy 1.14.1 bundles (Cephes, SuperLU, HiGHS, Boost.Math, UNU.RAN, fast_float, ryu and the rest: BSD, MIT and BSL-1.0 licences, each named with its files) | as listed in the file | `LICENSE-scipy-BUNDLED.txt` | SciPy's `LICENSES_bundled.txt` at tag v1.14.1 (the wheel's `.dist-info` carries only the BSD-3-Clause text). Its "For details, see" paths are older than 1.14.1's tree; the texts they point to are the `LICENSE-scipy-*.txt` rows below, each from the file named |
@@ -207,6 +220,8 @@ on first use (NB-6).
 | SciPy 1.14.1 bundles: HiGHS's extern code under the Boost licence | BSL-1.0 | `LICENSE-scipy-HIGHS-BOOST.txt` | SciPy's 1.14.1 source release (PyPI `scipy-1.14.1.tar.gz`, sha256 `5a275584…08417`: the tag v1.14.1 with its submodules at their pinned commits): `scipy/_lib/highs/extern/LICENCE_1_0.txt` |
 | SciPy 1.14.1 bundles: Boost.Math | BSL-1.0 | `LICENSE-scipy-BOOST_MATH.txt` | SciPy's 1.14.1 source release (PyPI `scipy-1.14.1.tar.gz`, sha256 `5a275584…08417`: the tag v1.14.1 with its submodules at their pinned commits): `scipy/_lib/boost_math/LICENSE` |
 | SciPy 1.14.1 bundles: pocketfft (C++, scipy/_lib/pocketfft) | BSD-3-Clause | `LICENSE-scipy-POCKETFFT_CPP.txt` | SciPy's 1.14.1 source release (PyPI `scipy-1.14.1.tar.gz`, sha256 `5a275584…08417`: the tag v1.14.1 with its submodules at their pinned commits): `scipy/_lib/pocketfft/LICENSE.md` |
+| SciPy 1.14.1 bundles: pocketfft's header, compiled into `pypocketfft` (its copyright lines beyond LICENSE.md's: Peter Bell; Matteo Frigo and MIT for the odd-sized DCT-IV; Tan Ping Liang) | BSD-3-Clause | `LICENSE-scipy-POCKETFFT_HDRONLY.txt` | SciPy's 1.14.1 source release (PyPI `scipy-1.14.1.tar.gz`, sha256 `5a275584…08417`: the tag v1.14.1 with its submodules at their pinned commits): lines 1-40 (the licence comment) of `scipy/_lib/pocketfft/pocketfft_hdronly.h` (review nb6_r3) |
+| SciPy 1.14.1 bundles: the ellipsoidal harmonics of Bardhan, Knepley and Padmanabhan (compiled into `scipy/special/_ellip_harm_2`) | BSD-2-Clause | `LICENSE-scipy-ELLIP_HARM.txt` | SciPy's 1.14.1 source release (PyPI `scipy-1.14.1.tar.gz`, sha256 `5a275584…08417`: the tag v1.14.1 with its submodules at their pinned commits): lines 1-29 (the licence comment) of `scipy/special/_ellip_harm.pxd`; neither the wheel nor SciPy's LICENSES_bundled.txt carries it (review nb6_r3) |
 | SciPy 1.14.1 bundles: COBYQA | BSD-3-Clause | `LICENSE-scipy-COBYQA.txt` | SciPy's 1.14.1 source release (PyPI `scipy-1.14.1.tar.gz`, sha256 `5a275584…08417`: the tag v1.14.1 with its submodules at their pinned commits): `scipy/_lib/cobyqa/LICENSE` |
 | SciPy 1.14.1 bundles: DIRECT | MIT | `LICENSE-scipy-DIRECT.txt` | SciPy's 1.14.1 source release (PyPI `scipy-1.14.1.tar.gz`, sha256 `5a275584…08417`: the tag v1.14.1 with its submodules at their pinned commits): `scipy/optimize/_direct/COPYING` |
 | SciPy 1.14.1 bundles: TNC | MIT | `LICENSE-scipy-TNC.txt` | SciPy's 1.14.1 source release (PyPI `scipy-1.14.1.tar.gz`, sha256 `5a275584…08417`: the tag v1.14.1 with its submodules at their pinned commits): `scipy/optimize/tnc/LICENSE` |
@@ -271,6 +286,16 @@ below) with pdf.js 6.4.299 (the npm package `pdfjs-dist`, <https://github.com/mo
 licence, with the licence's text beside them in `dist/sim/LICENSE-pdfjs.txt` (copied from the package's `LICENSE`).
 pdf.js ships no NOTICE file. None of pdf.js's CMaps, standard fonts, ICC profiles or WebAssembly decoders is shipped
 or used.
+
+## OpenCV's ArUco dictionary (the simulator's printed tags)
+
+The simulator draws ArUco tags (a course's `prints`, docs/COURSE_CONTENT_DESIGN.md §4) from the dictionary `DICT_4X4_50`
+of OpenCV 4.10.0 (<https://github.com/opencv/opencv/tree/4.10.0>), licensed under the Apache License, Version 2.0, so a
+tag the simulator draws is the one `cv2.aruco` detects. The 50 markers' bytes, as OpenCV stores them, ship as
+`media/sim/aruco_4x4_50.js` (in the extension and in the browser IDE), written by `scripts/aruco_dict.py` from the
+pinned release (`opencv-python-headless` 4.10.0.84) and otherwise unchanged; no OpenCV code ships. The licence's text
+ships beside it in `media/sim/LICENSE-OpenCV.txt`, after OpenCV's `COPYRIGHT` lines, each copied verbatim from OpenCV
+4.10.0's `LICENSE` and `COPYRIGHT`. OpenCV 4.10.0 ships no NOTICE file.
 
 ## RCJ Rescue CMS tile images and the 2026 official fields (the simulator's RCJ courses)
 

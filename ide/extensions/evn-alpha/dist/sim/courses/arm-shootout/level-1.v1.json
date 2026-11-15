@@ -1,0 +1,241 @@
+{
+  "format": "evn-course/1",
+  "id": "arm-shootout-1",
+  "challenge": "arm-shootout",
+  "level": 1,
+  "version": 1,
+  "module": "G9.2",
+  "title": "Arm position shoot-out · Level 1: Five targets, bare arm",
+  "brief": "On the arm bench (an EV3 Large on port 3 through 12:36, a 150 mm arm, 100 g at its tip; arm angle from horizontal, -90 hanging, +90 up; arm = Motor(3, gears=[12, 36])), with the bare arm (its 100 g tip): from hanging rest, started at -90 + a0 (a0 drawn -5..5 deg per run), hold five targets, 2.5 s each: +30, +90, -20, +60, 0 in an order drawn per run. targets.json holds the run's order and a0 ({\"order\": [...], \"a0\": ...}); Motor() reads 0 where it starts, so call arm.reset_angle(-90 + a0). Drive the arm only with dc() (run, run_angle, run_target, run_time, hold or track_target scores 0; reset_angle() and the closing evn.stop_all() are allowed), with a median interval between dc() calls of at most 10 ms. Each target's window is read on the arm's true angle every 1 ms: IAE (deg s), overshoot OS past the target on the side away from the window's start (deg), settling t_s until |e| stays within 2 deg (a target never settled: 2.5 s). The run ends with the fifth window (12.5 s) and scores S = 40 min(1, IAE_par / sum IAE) + 30 min(1, t_s,par / mean t_s) + 30 max(0, 1 - OS_max / 5). Ten runs; pass: a mean of 60 or more and 8 or more runs finished (a run finishes when it reaches the fifth window's end, dc() only, at most 10 ms). The card shows the team's mean sum IAE and t_s beside the pars, and beat-the-par = 10 log2(IAE_par / the team's mean sum IAE), uncapped. Practice until LAB and COURSE ship. Par (the reference PID with gravity feedforward and clamping anti-windup, its mean over the seeds): sum IAE 77.6 deg s, mean t_s 0.318 s.",
+  "field": {
+    "random": [
+      {
+        "name": "order",
+        "draw": "sample-v1",
+        "of": [
+          30,
+          90,
+          -20,
+          60,
+          0
+        ],
+        "k": 5
+      },
+      {
+        "name": "a0",
+        "draw": "uniform-v1",
+        "min": -5,
+        "max": 5,
+        "step": 0.1
+      }
+    ],
+    "arena": {
+      "size": [
+        1000,
+        600
+      ],
+      "startBox": [
+        100,
+        200,
+        400,
+        400
+      ],
+      "goal": null,
+      "obstacles": [],
+      "wallH": 100,
+      "wallT": 20,
+      "obstacleH": 150
+    }
+  },
+  "robot": {
+    "rule": "fixed",
+    "rig": {
+      "format": "evn-rig/1",
+      "name": "arm-bench",
+      "version": 1,
+      "base": "bolted",
+      "motors": [
+        {
+          "port": 3,
+          "model": "EV3 Large"
+        }
+      ],
+      "shaft": [
+        {
+          "port": 3,
+          "ratio": "12/36",
+          "zero": 270,
+          "min": -120,
+          "max": 120,
+          "parts": [
+            {
+              "kind": "bar",
+              "l": 150,
+              "massG": 0
+            },
+            {
+              "kind": "tip",
+              "l": 150,
+              "massG": 100,
+              "name": "payload"
+            }
+          ]
+        }
+      ],
+      "bodies": [],
+      "joints": [],
+      "sensors": [
+        {
+          "kind": "encoder",
+          "port": 3
+        }
+      ]
+    }
+  },
+  "start": {
+    "nominal": {
+      "x": 250,
+      "y": 300,
+      "heading": 0
+    },
+    "vary": {
+      "xy": 0,
+      "heading": 0
+    },
+    "draw": "uniform-square-v1",
+    "shafts": [
+      {
+        "port": 3,
+        "joint": {
+          "$": "-90 + a0"
+        }
+      }
+    ]
+  },
+  "runs": {
+    "min": 1,
+    "max": 20,
+    "default": 5,
+    "fixed": 10
+  },
+  "reveal": {
+    "file": {
+      "name": "targets.json",
+      "values": [
+        "order",
+        "a0"
+      ]
+    }
+  },
+  "kernel": {
+    "name": "pointToPoint",
+    "limitS": 12.5,
+    "goal": "footprintInside",
+    "final": "runEnd",
+    "end": "window",
+    "sample": {
+      "signal": {
+        "of": "shaft",
+        "port": 3,
+        "q": "angle"
+      },
+      "everyMs": 1,
+      "windows": [
+        {
+          "fromS": 0.001,
+          "toS": 2.5,
+          "ref": {
+            "$": "order_1"
+          }
+        },
+        {
+          "fromS": 2.501,
+          "toS": 5,
+          "ref": {
+            "$": "order_2"
+          }
+        },
+        {
+          "fromS": 5.001,
+          "toS": 7.5,
+          "ref": {
+            "$": "order_3"
+          }
+        },
+        {
+          "fromS": 7.501,
+          "toS": 10,
+          "ref": {
+            "$": "order_4"
+          }
+        },
+        {
+          "fromS": 10.001,
+          "toS": 12.5,
+          "ref": {
+            "$": "order_5"
+          }
+        }
+      ],
+      "stats": [
+        "iae",
+        "os",
+        "ts"
+      ],
+      "band": 2
+    },
+    "program": {
+      "noMove": [
+        3
+      ],
+      "dcInterval": [
+        3
+      ]
+    }
+  },
+  "constants": {
+    "IAE_PAR": 77.6,
+    "TS_PAR": 0.318
+  },
+  "score": {
+    "run": "if(sampled & moveTicks == 0 & dcMedianMs >= 0 & dcMedianMs <= 10, 40 * min(1, IAE_PAR / max(iaeSum, 0.001)) + 30 * min(1, TS_PAR / max(tsMean, 0.001)) + 30 * max(0, 1 - osMax / 5), 0)",
+    "values": {
+      "finished": {
+        "value": "count(r in runs: r.sampled & r.moveTicks == 0 & r.dcMedianMs >= 0 & r.dcMedianMs <= 10)",
+        "unit": "runs"
+      },
+      "iae": {
+        "value": "round(sum(r in runs: r.iaeSum) / n, 1)",
+        "unit": "deg s"
+      },
+      "ts": {
+        "value": "round(sum(r in runs: r.tsMean) / n, 3)",
+        "unit": "s"
+      },
+      "iaePar": {
+        "value": "IAE_PAR",
+        "unit": "deg s"
+      },
+      "tsPar": {
+        "value": "TS_PAR",
+        "unit": "s"
+      },
+      "beatPar": {
+        "value": "round(10 * log2(IAE_PAR / max(iae, 0.001)), 1)",
+        "unit": "points"
+      }
+    },
+    "summary": "round(sum(r in runs: r.points) / n, 1)"
+  },
+  "pass": "score >= 60 & finished >= 0.8 * n",
+  "sources": [
+    {
+      "doc": "docs/curriculum/G09.md",
+      "where": "G9.2 PID, properly: the robot (§9 LAB arm bench) and the Arm position shoot-out paragraph and level table (level 1)"
+    },
+    {
+      "doc": "vscode-evn-alpha/docs/COURSE_FORMAT_DESIGN.md",
+      "where": "§19.1 kernel.sample (G9.2 L1-L2's worked level), §19.2 start.shafts, §19.13 the panel's laying, §19.9 SIG-2 (the start told)"
+    }
+  ]
+}

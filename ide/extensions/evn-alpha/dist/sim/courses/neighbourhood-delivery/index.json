@@ -1,0 +1,32 @@
+{
+ "format": "evn-course-index/1",
+ "generated": "node scripts/course_index.js --write; do not edit",
+ "levels": [
+  {
+   "file": "neighbourhood-delivery/level-1.v1.json",
+   "id": "neighbourhood-delivery-1",
+   "version": 1,
+   "sha256": "2058982b7bbd2d4d143b508ad8e5bdcf805fe0756027a07af378cf80bff5ad66",
+   "current": true,
+   "title": "Neighbourhood delivery · Level 1: House 3",
+   "limit": 60,
+   "runs": {
+    "default": 5,
+    "fixed": 5
+   }
+  },
+  {
+   "file": "neighbourhood-delivery/level-2.v1.json",
+   "id": "neighbourhood-delivery-2",
+   "version": 1,
+   "sha256": "3b15ec2bc90c349d1e63dbb50add0e3da36eeaaf55d4d5bb2f617dd7a31bbf79",
+   "current": true,
+   "title": "Neighbourhood delivery · Level 2: Bakery, then house 7",
+   "limit": 60,
+   "runs": {
+    "default": 5,
+    "fixed": 5
+   }
+  }
+ ]
+}

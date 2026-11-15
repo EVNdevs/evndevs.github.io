@@ -1,0 +1,113 @@
+{
+ "format": "evn-course/1",
+ "id": "bus-route-2",
+ "challenge": "bus-route",
+ "level": 2,
+ "version": 1,
+ "module": "G2.4",
+ "title": "Bus route · Level 2: The yellow square",
+ "brief": "The colour robot starts on the route, a black line 20 mm wide on white: fourteen 300 mm tiles in a 6 x 3 grid (about 4 m of line), from its start 60 mm into the first tile, facing along it (starts vary 10 mm and 5 degrees); the level fixes the robot. The route has two junctions where a branch leaves to the right. 60 mm before the first, a yellow 30 x 30 mm square painted over the line means \"turn this way\": the route turns right there, along the branch, and straight on is a dead end. The second junction has no square, so the bus goes straight on. Progress counts the route's 14 checkpoints, one across the line in each tile, the last at the route's end, each passed in order and only within 50 mm of the line, so cutting across gains nothing. The robot's middle is the middle of its axle; its distance off is to the nearest point of the route's centreline. A run ends at the last checkpoint, when the middle is more than 150 mm off the line, once the program has ended and the robot has then stood still for 0.5 s, or at 90 s. Per run: 50 for finishing (every checkpoint passed), plus up to 40 for speed (all 40 at 40 s or less, 40 x 40 / time above it), both paid only on a finish; plus 10 if the middle was never more than 50 mm off the line. Pass: mean 60 or more over 5 runs, 4 of them finished. Par time: 40 s.",
+ "field": {
+  "arena": {
+   "size": [
+    2400,
+    1500
+   ],
+   "startBox": [
+    940,
+    1030,
+    980,
+    1070
+   ],
+   "startPaint": false,
+   "goal": null,
+   "obstacles": [],
+   "routes": [
+    {
+     "name": "bus",
+     "tiles": "SSStRSSSSLLSTS",
+     "at": [
+      900,
+      1050,
+      0
+     ],
+     "line": 20,
+     "paint": "black",
+     "markers": [
+      {
+       "at": 1005,
+       "size": 30,
+       "paint": "yellow"
+      }
+     ]
+    }
+   ],
+   "wallH": 100,
+   "wallT": 20,
+   "obstacleH": 150
+  }
+ },
+ "robot": {
+  "rule": "fixed",
+  "base": "colour"
+ },
+ "start": {
+  "nominal": {
+   "x": 960,
+   "y": 1050,
+   "heading": 0
+  },
+  "vary": {
+   "xy": 10,
+   "heading": 5
+  },
+  "draw": "uniform-square-v1"
+ },
+ "runs": {
+  "min": 1,
+  "max": 20,
+  "default": 5,
+  "fixed": 5
+ },
+ "kernel": {
+  "name": "pointToPoint",
+  "limitS": 90,
+  "goal": "footprintInside",
+  "final": "runEnd",
+  "end": "afterProgram",
+  "still": {
+   "s": 0.5,
+   "dps": 5,
+   "mms": 3
+  },
+  "route": {
+   "route": "bus",
+   "offMm": 150,
+   "roadMm": 50
+  }
+ },
+ "constants": {
+  "par": 40
+ },
+ "score": {
+  "run": "round(if(finished, 50 + 40 * min(1, par / max(time, 0.001)), 0) + if(onRoad, 10, 0), 1)",
+  "summary": "round(sum(r in runs: r.points) / count(r in runs: true), 1)",
+  "values": {
+   "finished": {
+    "value": "count(r in runs: r.finished)",
+    "unit": "runs"
+   }
+  }
+ },
+ "pass": "score >= 60 & finished >= 0.8 * n",
+ "sources": [
+  {
+   "doc": "docs/curriculum/G02.md",
+   "where": "G2.4 Bus route: the Challenge - Bus route paragraph, level table (level 2) and scoring; How a run is measured"
+  },
+  {
+   "doc": "docs/session/2026-11-14_w12-g2/g24l23/DESIGN_r1.md",
+   "where": "§0 D1-D9, §1 the tiles T / t, §2 the marker (painted twice), §3 open routes, §5 L2, Build notes OI-10"
+  }
+ ]
+}

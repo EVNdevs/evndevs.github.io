@@ -1,0 +1,151 @@
+{
+  "format": "evn-course/1",
+  "id": "lane-keeper-2",
+  "challenge": "lane-keeper",
+  "level": 2,
+  "version": 1,
+  "module": "G10.3",
+  "title": "Lane keeper \u00b7 Level 2: Cones",
+  "brief": "The level 1 loop with four cones (50 mm across, 100 mm tall, 30 g, loose) in the lane, 100 mm from its centre: a red one left of the centre, keep it on your left (pass on its right); a green one right of it, keep it on your right. Their places and colours are drawn each run: one in each 1250 mm of the lane from 500 mm to 5500 mm along it, at least 600 mm apart. Each lap, as the robot's centre passes a cone, it must be on the cone's far side from the centre line; a cone passed on the wrong side or knocked (touched, once a cone) costs 25. Two laps, clock from the start line (300 mm along) to the second lap's crossing; a departure is a wheel's middle over a line or crossing it, and a wheel outside counts one more each second; the fourth ends the run. Score: 100 x min(1.2, par / T) - 15 per departure - 25 per cone wrong or knocked, between 0 and 100; 0 if not finished. Par 23.8 s. Pass: a mean of at least 60 with 8 of 10 runs finished. Practice until the simulator's camera reaches a run (LINK): no sensor here sees a cone's colour, so the bench level reveals them.",
+  "field": {
+    "random": [
+      {
+        "name": "cones",
+        "draw": "along-v1",
+        "n": 4,
+        "path": "lane",
+        "s": [
+          500,
+          5500
+        ],
+        "gap": 600,
+        "offset": 100,
+        "of": [
+          "red",
+          "green"
+        ]
+      }
+    ],
+    "arena": {
+      "size": [
+        3000,
+        1300
+      ],
+      "startBox": [
+        578.5,
+        200,
+        678.5,
+        300
+      ],
+      "goal": null,
+      "obstacles": [
+        {
+          "group": "cone",
+          "from": "cones",
+          "at": [
+            0,
+            0
+          ],
+          "shape": "cylinder",
+          "w": 50,
+          "d": 50,
+          "h": 100,
+          "massG": 30,
+          "colorBy": {
+            "red": "#d9302a",
+            "green": "#2e9e4a"
+          }
+        }
+      ],
+      "wallH": 100,
+      "wallT": 20,
+      "obstacleH": 60,
+      "startPaint": false,
+      "lanes": [
+        {
+          "name": "lane",
+          "path": [
+            [
+              "S",
+              1743
+            ],
+            [
+              "A",
+              400,
+              180
+            ],
+            [
+              "S",
+              1743
+            ],
+            [
+              "A",
+              400,
+              180
+            ]
+          ],
+          "at": [
+            628.5,
+            250,
+            0
+          ],
+          "width": 300,
+          "line": 25,
+          "paint": "black",
+          "startLine": 300
+        }
+      ]
+    }
+  },
+  "robot": {
+    "rule": "learner"
+  },
+  "start": {
+    "nominal": {
+      "x": 628.5,
+      "y": 250,
+      "heading": 0
+    },
+    "vary": {
+      "xy": 30,
+      "heading": 5
+    },
+    "draw": "uniform-square-v1"
+  },
+  "runs": {
+    "min": 1,
+    "max": 20,
+    "default": 5,
+    "fixed": 10
+  },
+  "kernel": {
+    "name": "pointToPoint",
+    "limitS": 90,
+    "goal": "footprintInside",
+    "final": "runEnd",
+    "lane": {
+      "lane": "lane",
+      "laps": 2,
+      "departures": 3,
+      "cones": "cone"
+    }
+  },
+  "constants": {
+    "par": 23.8
+  },
+  "score": {
+    "run": "if(finished, clamp(100 * min(1.2, par / lapTime) - 15 * departures - 25 * (conesWrong + conesKnocked), 0, 100), 0)",
+    "summary": "round(sum(r in runs: r.points) / count(r in runs: true), 1)"
+  },
+  "pass": "score >= 60 & count(r in runs: r.finished) >= 0.8 * n",
+  "sources": [
+    {
+      "doc": "docs/curriculum/G10.md",
+      "where": "G10.3 Lane keeper, the challenge paragraph and the level table, level 2 (the practice pars, OQ 165: 23.8 s, ruled 2026-11-07)"
+    },
+    {
+      "doc": "vscode-evn-alpha/docs/COURSE_CONTENT_DESIGN.md",
+      "where": "\u00a75.3 Lane keeper (Cones (L2): along-v1, the cone item, kernel.lane's cones); \u00a74 massG; \u00a77 CC-13 (records: docs/session/2026-11-13_c1-lanekeep/)"
+    }
+  ]
+}

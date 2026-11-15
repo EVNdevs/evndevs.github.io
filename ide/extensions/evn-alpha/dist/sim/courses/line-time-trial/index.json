@@ -1,0 +1,45 @@
+{
+ "format": "evn-course-index/1",
+ "generated": "node scripts/course_index.js --write; do not edit",
+ "levels": [
+  {
+   "file": "line-time-trial/level-1.v1.json",
+   "id": "line-time-trial-1",
+   "version": 1,
+   "sha256": "46be7810b127b2cafed5e6465c0e8eec89e66730fc374d34eb1cdd9b5e80375d",
+   "current": true,
+   "title": "Line time-trial · Level 1: The Oval",
+   "limit": 60,
+   "runs": {
+    "default": 5,
+    "fixed": 5
+   }
+  },
+  {
+   "file": "line-time-trial/level-2.v1.json",
+   "id": "line-time-trial-2",
+   "version": 1,
+   "sha256": "b16977ba6d082a6611c4ccb1ccb1a44dc7d9d61d517c848699a662760b682123",
+   "current": true,
+   "title": "Line time-trial · Level 2: S-bends and zigzags",
+   "limit": 60,
+   "runs": {
+    "default": 5,
+    "fixed": 5
+   }
+  },
+  {
+   "file": "line-time-trial/level-3.v1.json",
+   "id": "line-time-trial-3",
+   "version": 1,
+   "sha256": "b1f6dfd2f2b33a96c60a1e7e0092bf2ef21e3ee3d86a5e8d2b0908603cd8750f",
+   "current": true,
+   "title": "Line time-trial · Level 3: Corners and gaps",
+   "limit": 60,
+   "runs": {
+    "default": 5,
+    "fixed": 5
+   }
+  }
+ ]
+}

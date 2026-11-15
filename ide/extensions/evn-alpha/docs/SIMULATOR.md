@@ -374,7 +374,7 @@ Line competition set ("Tile List for Single Set": 37 kinds of tile, 104 tiles), 
   robot starts on its bar). Without a start the robot starts on the Start tile, else on the first tile you placed.
   A robot whose body reaches past the start tile's joint from there is pulled back until its front is 5 mm behind it
   (rules 5.4.1: robots start behind the joint); the builder says so when even its axle at the tile's back edge leaves
-  its front over the joint.
+  its front over the joint, and so does the panel's note at every Run.
 - The dashed blue line is the line the robot is scored along, from the start (the green arrow) tile by tile: across
   each tile on its line (through the gaps), into the tile it leads to, turning at each junction as its green markers
   say, until it reaches the Goal (#99), a tile with no line where it arrives, or its own start again (a loop). Under
@@ -683,7 +683,14 @@ scored and the robot is never put back) and on again (a new game from where the 
   a back-up can take that distance away but never add it. A robot that turns round, or drives on tail first, and stops
   near a joint is not called, and neither is one that stops on a wrong line it has only turned onto. Driving back onto
   the tile before after turning round is called, after 5 mm when the turn or a back-up left the sensors deep past the
-  joint, within 60 mm of it. A robot coming back into its own tile over the joint ahead of it is not called either.
+  joint, within 60 mm of it. A robot coming back into its own tile over the joint ahead of it is not called either,
+  nor one that backs a few mm over the end of a line that is not the course's own joint (on a junction, the branch not
+  taken) and drives forward back over it, on along the course: crossing back undoes the back-up's crossing, so that
+  side counts its carry from before it. Over a joint of the course up to the tile after next nothing is undone: turned
+  round, backed tail first onto the next tile and driven back onto the tile before is figure 3. A branch the course
+  takes only later, coming back through the junction, is not yet such a joint, so that back-up and return is not
+  called on the first pass either; on the second pass the branch it took the first time is a joint, and the same
+  back-up and return over it is called.
   Nothing else is automatic: stopping, circling or wandering off
   the course are not against the rules. For unattended runs the engine's `autoCaptain`
   setting (off) calls the team captain's 5.5.1a, logged as the captain's, when the robot's centre is over `offTiles`
@@ -738,8 +745,8 @@ scored and the robot is never put back) and on again (a new game from where the 
 - **Practice** (5.3.7, 4.1.1, 4.1.2): a game that is not a rules run is still scored, and the card says *practice* and
   why: it was put down off the Start tile, a motor was driven from the Board view (any motor button, coast, brake and
   stop included, and a motor model changed there), code was uploaded, or a program
-  was started or the board reset mid-game and then drove a motor (the extension's own file listing or soft reset
-  drives nothing and does not count) - except right after a lack of progress, the team's 4.2.8 procedure. The referee is the simulator's reading of the draft rules; a real referee decides what "following the line"
+  was started or the board reset mid-game and then drove a motor or moved a servo (a servo's `stop()` and the
+  extension's own file listing or soft reset drive nothing and do not count) - except right after a lack of progress, the team's 4.2.8 procedure. The referee is the simulator's reading of the draft rules; a real referee decides what "following the line"
   is.
 
 ## Lesson checks
@@ -789,6 +796,42 @@ are 100 mm high and 20 mm thick, 380 mm clear between them, for the class robot 
 sensors read the start box as blue and the goal as green. On a challenge course the robot works as on any other: run your program with
 Ctrl+F5 and watch it, as often as you like.
 
+### Every challenge
+
+The **Course** list holds these challenges; the table gives the module each comes from. A level marked practice has no
+pass rule: its runs are never PASS or FAIL. A *bench* challenge is the same task set up for a lesson page's stand-in
+camera, and is practice. Each level's description in the Course list says what it asks; a few levels with a pass rule
+say there that they are practice until a later version; today their runs are graded PASS or FAIL like any other level's.
+
+| Challenge | Module | Levels |
+| :--- | :--- | :--- |
+| *Maze runner* | G3.3 | 1 *One corridor*, 2 *A dead end*, 3 *The island* |
+| *Shape artist* | G4.1 | 1 *A square that closes*, 2 *Triangle, then hexagon*, 3 *A star on a mystery robot* (practice) |
+| *Translate and beat* | G5.1 | 1 *A square that closes*, 2 *Triangle, hexagon, star*, 3 *A rosette* |
+| *Obstacle course* | G5.2 | 1 *Around the block*, 2 *Slalom*, 3 *The gauntlet* |
+| *Treasure map* | G6.1 | 1 *Four treasures, square legs*, 2 *Four treasures, any angle*, 3 *Five treasures, your order* |
+| *Precision stop* | G7.1 | 1 *Stop at 100 mm*, 2 *A moving start*, 3 *A moving start, a wider angle* |
+| *Weightlifter* | G7.2 | 1 *Lift 50 g*, 3 *Lift 150 g fastest, energy counted* |
+| *Cruise control* | G7.3 | 1 *The flat lane*, 3 *The payload* |
+| *Slalom gates* | G8.1 | 1 *Through the gates*, 2 *Faster*, 3 *Random gates* |
+| *Maze mapper* | G8.3 | 1 *Find the exit*, 2 *Map it, come home*, 3 *The centre, a map, home* |
+| *Model match* | G9.1 | 1 *The free motor's step* (practice), 2 *The arm's step* (practice) |
+| *Arm position shoot-out* | G9.2 | 1 *Five targets, bare arm* (practice), 2 *Five targets, 200 g payload* (practice), 3 *Five targets, a payload on or off, a noisy angle* (practice) |
+| *Line grand prix* | G9.3 | 1 *Flowing loop*, 2 *Hairpins* |
+| *Balancer* | G9.4 | 1 *Balance 30 s*, 2 *Hold your place under three pushes*: all practice |
+| *Ball chaser* | G10.1 | 1 *Touch the ball*, 2 *The right ball* |
+| *Ball chaser bench* | G10.1 | 1 *Touch the ball*, 2 *The right ball*: all practice |
+| *Measure with a camera* | G10.2 | 1, 2 |
+| *Lane keeper* | G10.3 | 1 *Two laps*, 2 *Cones*, 3 *An unseen track* |
+| *Lane keeper bench* | G10.3 | 1 *Two laps*, 2 *Cones*, 3 *An unseen track*: all practice |
+| *Tag navigator* | G10.4 | 1 *Visit all four*, 2 *The printed order*, 3 *Hidden tags* (practice) |
+| *Tag navigator bench* | G10.4 | 1 *Visit all four*, 2 *The printed order*, 3 *Hidden tags*: all practice |
+| *Disturbance gauntlet* | G11.4 | 1 *Hold 300 deg/s* (practice), 2 *Hold the arm level* (practice), 3 *Twenty plants, one tuning* (practice) |
+
+The list also holds six scenes to practise on, with no pass rule: each run scores 100 if the robot touches nothing and 0
+if it does. They are *Ten-cell corridor*, *Island maze*, *Wall board*, *Checkerboard on a stand*, *Measure with a
+camera, level 1's field* and *Tag navigator field*.
+
 ### Running a challenge
 
 1. Open the program in the editor (one file: the challenge runs it on a fresh board, without the files you uploaded).
@@ -831,6 +874,18 @@ run: `random`, `random.seed()` with no seed, `random.Random()`, `random.SystemRa
 draw from the run's seed. A program that reads the computer's clock (`datetime.now()`) or reaches into the browser
 (`import js`) can differ from run to run, and then does not verify: use `StopWatch` or `time.ticks_ms()`, which follow
 simulated time.
+
+**Levels in rounds** (P0c-2r; no bundled level uses them yet). Such a level runs in rounds: in each, the panel shows
+the round's value (a house's number; on a level that shows it only on the field, no number), and the time left as a
+disc that drains. Change your program in that time, then press **Ready** (or let the time run out): the round's runs
+use the program in the editor at that moment, and the practice board is drawn with the round's value. **Next round**
+starts the next one; **End this level** ends it with nothing recorded. While a level runs, Run challenge, Check and the
+Course list are off. **Try a round** runs one round for practice (never recorded or sealed). Try on a run of a round
+runs that round's program (shown read-only beside the editor), not the editor's. The program must be a Python file
+open in the editor: a blocks file cannot be a level's source yet. Two settings belong to the teacher's arrangement on
+this computer and are never sealed: `evn.challenge.roundTimeFactor` (1, 1.5 or 2 times the window) and
+`evn.challenge.teacherCalls` (on a level that allows it, a button per value to call the round's value; the report
+says "called (not drawn)").
 
 ### Handing it in
 
@@ -944,7 +999,7 @@ the clear channel here is the mean of red, green and blue (the TCS34725's own we
 
 ### The game objects
 
-Each object is the EVN owner's LEGO model of WRO's building instructions, brick by brick: its size from the bricks,
+Each object is EVN's LEGO model of WRO's building instructions, brick by brick: its size from the bricks,
 its mass and its centre of mass from the parts' weights (about +/-10 %). The visitors (red, green, blue and black, about
 35 g each), the red towers (126.5 mm tall, about 125 g), the yellow towers - a base, and a top that rests on it by
 friction (it plugs into nothing) - the artefacts (blue, red, green, black and yellow, about 31 g), the dirt particles (a
@@ -1117,7 +1172,7 @@ and rules are WRO's.
 | Start checks | Junior's, with at most **4** motors (servos counted, 5.2.8) and **no camera** (5.2.7: cameras are for Junior and Senior): a camera in the configuration marks *illegal start: the robot has a camera: cameras are not allowed in this category (5.2.7)*. The run still runs and scores |
 | Not here | the International Final's extra task; surprise rules; national organisers' versions |
 
-**The game objects** are the EVN owner's LEGO models of WRO's building instructions, brick by brick, as on Junior: their
+**The game objects** are EVN's LEGO models of WRO's building instructions, brick by brick, as on Junior: their
 size from the bricks, their mass and centre of mass from the parts' weights (about +/-10 %). The notes (27 to 56 g; the
 black and the yellow one about 70 mm tall, the others about 80 mm), the cables (a long beam on two feet, 25 g), the
 guitar (41 g) and the microphone (80 g), both about 128 mm tall, the keyboard (49 g), the congas (66 g), the clef (65 g,
@@ -1201,7 +1256,7 @@ restarting; what differs is here. The same not-affiliated note applies: WRO's ma
 | Start checks | Junior's, with at most **6** motors (servos counted, 5.2.8); cameras are allowed (5.2.7: in Junior and Senior). Each that fails marks an *illegal start*; the run still runs and scores |
 | Not here | the International Final's extra task; surprise rules; national organisers' versions (the task without the frame included) |
 
-**The game objects** are the EVN owner's LEGO models of WRO's building instructions, brick by brick, as on Junior: their
+**The game objects** are EVN's LEGO models of WRO's building instructions, brick by brick, as on Junior: their
 size from the bricks, their mass and centre of mass from the parts' weights (about +/-10 %). The rectangular trowel
 (27 g), the cement bowl (39 g, standing on a 32 mm foot under its 80 mm ring) and the masonry trowel (52 g, lying on its
 blade as in the rules' photo) start on their grey areas along the bottom edge; the mosaic tiles (a block of six 2 x 4
@@ -1316,7 +1371,10 @@ team, an area's boundary line part of it, an object held by the claw scoring not
   ADCs, each on an I2C port, with their **switches** (below).
 
 **Apply** checks the configuration and restarts the simulated board with it: a running program stops, the robot
-stays where it is and the Board view reconnects. The robot is kept for you (in every window, and after a restart).
+stays where it is and the Board view reconnects. Sensors placed closer than their modules (a colour or distance sensor's
+module is 24 x 24 mm across its face, 16 mm deep) are listed under the form as a warning, never refused: the 3D view and
+the cameras draw the modules overlapping, and each sensor reads at its place as before. The
+default robot's sensors, 24 mm apart, only touch. The wheels are the LEGO 32019 tyre's 20 mm wide: the footprint, the tyres' collision boxes and the drawing take it; the diameter is the wheel diameter set here. The robot is kept for you (in every window, and after a restart).
 **Copy setup code** puts the lines that build this robot in a program on the clipboard, for example:
 
 ```python
@@ -1337,7 +1395,7 @@ offered keeps what it had (no distance sensor is added).
 
 ### The WRO drive base preset
 
-**Preset: WRO drive base**, under the drive base's fields, writes the EVN owner's competition drive base into the
+**Preset: WRO drive base**, under the drive base's fields, writes EVN's competition drive base into the
 form: two EV3 Medium wheels, the left on port 3 mounted mirrored and the right on port 2, 62.6 mm wheels 176.7 mm
 apart, a body 47 mm ahead of the axle and 77 mm behind it, 216 mm wide (the wheels inside it), 62.6 mm high (the
 wheels' tops) and 1.5 mm over the floor, its rollers 71.4 mm behind the axle, and 411 g (its parts added up, the
@@ -1358,8 +1416,8 @@ patches, a little inside the 176.7 mm between their middles.
 
 ## Cameras
 
-The owner (2026-10-27): "We can also expose virtual camera streams (with configurable hardware and software
-parameters). Users can then process the stream with tools like opencv". A camera on the simulated robot is what a
+The simulator can expose virtual camera streams, with configurable hardware and software parameters, for you to
+process with tools like OpenCV. A camera on the simulated robot is what a
 Raspberry Pi camera on a team's robot would be: its picture goes to a program of yours on this computer (Python with
 OpenCV, say), not to the EVN program - the EVN board has no camera input.
 
@@ -1379,8 +1437,11 @@ OpenCV, say), not to the EVN program - the EVN board has no camera input.
 The 3D view draws each camera's board and its field of view (four blue rays). The **Camera** button over the course
 shows the first camera's newest frame at its release (as your program gets it from the stream), with its frame rate, the frames dropped and the time a frame takes to draw and
 encode. A camera draws the same scene as the 3D view - the course, the obstacles, the victims, the robot's own body
-and mechanisms (a claw in front of the lens hides the floor) - but never the distance sensors' beams or the cameras'
-rays. Cameras need WebGL in a Web Worker: a window without it (a blocklisted GPU, some remote desktops) refuses them
+and mechanisms (a claw in front of the lens hides the floor), and the robot's models: the board, the sensors' modules,
+the wheels and the motors (always, whatever the 3D view's **Models** button says) - but never
+the distance sensors' beams or the cameras' rays. A frame that shows the robot's models costs more to draw: 73 ms
+against 18 ms for a 640 x 480 PNG of the default robot from above on the software renderer (SwiftShader), less on a
+GPU. Cameras need WebGL in a Web Worker: a window without it (a blocklisted GPU, some remote desktops) refuses them
 at **Apply**, with that reason.
 
 **Timing is the simulation's.** Frame *k* is taken at *t_k* = *k* / fps of simulated time from the run's start (the
@@ -1479,11 +1540,28 @@ and errors:
   is and is done when `t` is up, as on the board. A `run_angle()`, `run_target()` or `run_time()` given while the
   motor turns faster than 5 degrees/s carries its speed on only when the motor is held by a command (`run()`, a move,
   or `dc()`, whose measured speed it takes) and there is room to stop before the target; otherwise - coasting, braked,
-  or the target too close or behind - it starts from rest where the shaft is and brakes, as the board does. Slower
-  than that, a move counts from where the motor is held: after `track_target()` (or `hold()`) from the held target,
-  where the board counts from the shaft (unchanged). The drive base's wheels keep their own rule: a maneuver given
-  while the base moves carries each wheel's speed on when it has room to stop, also after `stop()` / `brake()`, where
-  the board starts the wheels from rest.
+  or the target too close or behind - it starts from rest where the shaft is and brakes, as the board does; slower
+  than 5 degrees/s it always starts from rest on the shaft. A `run_angle()` or `run_time()` counts from the target of a
+  finished move the motor still holds (so ten `run_angle(90)` make 900 degrees) while the shaft is within 45 degrees of
+  it, and from the shaft otherwise - after `track_target()`, `run()`, a coast, or a hold pushed further off - as the
+  board does; `hold()` holds where the shaft is, and `run()` starts from the shaft. The drive base's wheels keep their
+  own rule: a maneuver given while the base moves carries each wheel's speed on when it has room to stop, and after
+  `stop()` / `brake()` (wheels coasting or braked) both wheels start from rest, as on the board; a `drive()` after a
+  coast starts from the speeds the wheels have. `run()` cruises at most at the board's speed budget, the motor's
+  no-load speed per volt times 0.95 of the pack (or of `settings(max_voltage=)`) less its friction voltage, its ramp
+  easing into it (an EV3 Large reaches about 870 degrees/s on a 7.9 V pack, a JGA25 about 603 on 8.2 V); when the
+  acceleration alone would take more than half that budget, it cruises at half. A `run_angle()`, `run_target()` or
+  `run_time()` is capped as the board caps a move: its cruise at most the no-load speed at the whole pack less the
+  speed its acceleration takes in one time constant, and never over that budget (an EV3 Large's `run_target(2000, ...)`
+  cruises at about 797 degrees/s on 7.9 V), half the budget when its acceleration alone would take more than half (the
+  acceleration then capped too), and its deceleration at its own cap; `run_time()` is sized for the speed
+  it will get, so it still takes `time`, and a `then=Stop.NONE` move runs on at the capped speed. The simulated motors
+  read as
+  calibrated, so a `Motor()` whose model's speed limit is under its measured no-load speed at the pack starts with that
+  speed as its limit (a CHR-GM16 1122 degrees/s at 7.9 V, not 900), and `evn.calibration()` / `calibrate()` give the
+  breakaway voltage the simulated motor has, its friction voltage (`v_break_mv` = `v_f_mv`); `calibrate(wait=False)`
+  returns at once and changes `full_speed()` and the speed limit only when a later `calibrate()` collects it, or at the
+  next `Motor(port)`, as on the board.
   `model.settings()` keeps and reads back what you set (the firmware's defaults for the motor's model until then),
   but the simulated motor's controller is the simulator's own and does not use it (`control.pid()`, `control.evn()`
   and `control.law()` are not there: the firmware has none); `control.state()` and `model.state()` read the measured angle and speed in deg/s (no observer estimates,
@@ -1495,7 +1573,11 @@ and errors:
   wheel whose target is a stopping distance ahead carries its speed into its move, the other is braked as hard as its
   motor can and brought back. A `turn(90)` during `drive(400, 0)` runs on about 30 mm and comes back to where it was
   called, and the tyres slip while the inner wheel brakes (the robot turns about 86 degrees for `angle()`'s 90, as
-  a real robot slips). Two drive bases (on four motors) run at once, as the firmware allows.
+  a real robot slips). `hold()` holds each wheel where its shaft is when it is called (during a `drive()` or a maneuver
+  the robot brakes as hard as its motors can), and a robot already holding the end of a maneuver keeps that place, as
+  on the board. The constructor refuses its wheels as the board does (`expected an evn.Motor`, `left_motor and
+  right_motor must be different motors`, `wheel_diameter 1..1000 mm, axle_track 1..2000 mm`, both ends excluded). Two
+  drive bases (on four motors) run at once, as the firmware allows.
 - `ColorSensor`: `normalized`, `percent`, `raw`, `read`, `rgb`, `hsv`, `color`, `color_match`,
   `detectable_colors`, `ambient`, `lux`, `age`, `gain`, `integration_time`, `wait_time`, `ranges`,
   `calibrate_black`, `calibrate_white`, `clear_calibration`. Each port's stored calibration is the course's own black
@@ -1507,7 +1589,9 @@ and errors:
   `gravity`, `angular_velocity`, `raw`, `read`, `stationary`, `ready`, `heading_confidence`, `settings`, `dmp`,
   `sample_rate`, `ranges`, `filter`, `axes`, `age`, `temperature`, `close`, and `calibrate` / `calibration` /
   `clear_calibration` / `calibrate_gyro` (the simulated module is calibrated: they return at once): the chassis'
-  motion at the module's rate (200 Hz), with a little noise. Its acceleration is the mean over each sample's period,
+  motion at the module's rate (200 Hz under the DMP; after `dmp(False)` the raw `sample_rate()`, 1000 Hz until set,
+  each mode keeping its own rate as the board's driver does, and `dmp(False, rate=5)` refused as on the board), with
+  a little noise. Its acceleration is the mean over each sample's period,
   as the chip's filter gives it, so a crash into something solid shows: every reading made from the chip's counts
   (`acceleration()`, `linear_acceleration()`, `angular_velocity()`, `read()`, `raw()`) reads up to its range in
   `ranges()`: 2000 deg/s and +-2 g with the DMP on (the board's pin), 2000 deg/s and +-16 g after `dmp(False)` turns
@@ -1532,7 +1616,8 @@ and errors:
   constructor after ~50 ms. A closed switch takes ~500 counts off its electrode (a bare finger's, on the board).
 - `ADC` (ADS1115): `raw`, `voltage`, `read`, `inputs` (0..3 single-ended, 4..7 differential: AIN0-AIN1, AIN0-AIN3,
   AIN1-AIN3, AIN2-AIN3), `range`, `data_rate`, `continuous`, `age`, `close`, with the driver's defaults (input 0,
-  +-4.096 V, 860 SPS: a conversion every 3 ms per scanned input, 151 ms at 8 SPS) and checks; a code clips at the
+  +-4.096 V, 860 SPS: a conversion every 3 ms per scanned input, 151 ms at 8 SPS; in `continuous()` one every 2 ms at
+  860 SPS, 125 ms at 8, as the board's 1 kHz poll reads them) and checks; a code clips at the
   range's full scale. No noise is added.
 - `PID`, `StopWatch`, `wait`, `stop_all`, `battery`, `button`, `led` (the panel shows the board's LED), `Color`,
   `Port`, `Direction`, `Stop`, `SpeedUnit`, `Side`.

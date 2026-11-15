@@ -2,6 +2,8 @@
 
 Every command of the extension is in the command palette (**Ctrl+Shift+P**); type `EVN:` to list them.
 
+![The command palette with EVN: typed: the EVN commands listed, from Open a data log and Open data logger to Calibrate all motors, Calibrate colour sensors and Check for extension and firmware updates](images/commands-palette.png)
+
 ## The commands
 
 | Command | What it does |
@@ -40,10 +42,12 @@ Every command of the extension is in the command palette (**Ctrl+Shift+P**); typ
 | Show the board output | the *EVN Board output* panel: what the command line answered, and what a program the board started by itself prints |
 | Clear the console view | empty the *Console* view's transcript (Ctrl+L in the view does the same) |
 | Connect the live console / Pause the live console (keep listening) / Disconnect the live console (free the port) | take the port for the live console; stop sending to the board but keep showing what it prints; or let go of the port for another tool |
+| Start now (the board runs main.py) | on the *Board is waiting for the user button* row: the board resets into `main.py` (as *Upload and run now*), and the console connects again to show its output |
 | Connect instead (the board does not start main.py) | on the *Board is waiting for the user button* row: end the start wait without starting `main.py` and connect |
+| Set up drive base | on the *Motors* row (the rocket): the two wheel ports, both calibrated, each wheel's direction from a short drive, the wheel, the axle track and the IMU, ending in the `DriveBase(...)` line ([Calibration](CALIBRATION.md)) |
 | Open data logger / Open a data log / Stop the data logger recording | record what the board measures, open a recording, end a recording ([Recording data](DATA_LOGGER.md)) |
 | Open in data viewer | a `.csv` in the data viewer (right-click it in the Explorer, or **Reopen Editor With...**) |
-| Pair the Bluetooth module in Windows | open the Windows Bluetooth settings to add the module (`HC-05` or `EVN Bluetooth`, PIN `1234`) ([Working without the USB cable](BLUETOOTH.md)) |
+| Pair the Bluetooth module | on Windows, open the Windows Bluetooth settings to add the module (`HC-05` or `EVN Bluetooth`, PIN `1234`); on macOS and Linux, say where to pair it ([Working without the USB cable](BLUETOOTH.md#on-macos-and-linux)) |
 | Switch the board to Bluetooth now (test the wireless link) / Switch the board back to USB | move the live console onto the wireless link with the cable still in, and back |
 | Getting started walkthrough | the five guided steps (four in the browser IDE) |
 | Enable evn autocomplete in every Python file | `evn` autocompletes in any Python file, not only inside your projects folder |

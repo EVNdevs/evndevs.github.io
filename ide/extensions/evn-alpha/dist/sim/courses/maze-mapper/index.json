@@ -1,0 +1,58 @@
+{
+ "format": "evn-course-index/1",
+ "generated": "node scripts/course_index.js --write; do not edit",
+ "levels": [
+  {
+   "file": "maze-mapper/level-1.v1.json",
+   "id": "maze-mapper-1",
+   "version": 1,
+   "sha256": "85c20ee44f813946d28f88086395d1fcd8b45649edbeee504040826f11cd343f",
+   "current": false,
+   "title": "Maze mapper · Level 1: Find the exit",
+   "limit": 300,
+   "runs": {
+    "default": 5,
+    "fixed": 10
+   }
+  },
+  {
+   "file": "maze-mapper/level-1.v2.json",
+   "id": "maze-mapper-1",
+   "version": 2,
+   "sha256": "fdf19a899fcd577b328ec0303d07a2fb6e4d3f180d7c6df4468244c54f76bca7",
+   "current": true,
+   "title": "Maze mapper · Level 1: Find the exit",
+   "limit": 300,
+   "runs": {
+    "default": 5,
+    "fixed": 10
+   }
+  },
+  {
+   "file": "maze-mapper/level-2.v1.json",
+   "id": "maze-mapper-2",
+   "version": 1,
+   "sha256": "38cf30036f2157a0034057a3e0239237fb213bb436a8d23bb2607f3102430f0d",
+   "current": true,
+   "title": "Maze mapper · Level 2: Map it, come home",
+   "limit": 300,
+   "runs": {
+    "default": 5,
+    "fixed": 10
+   }
+  },
+  {
+   "file": "maze-mapper/level-3.v1.json",
+   "id": "maze-mapper-3",
+   "version": 1,
+   "sha256": "072837e8b7f92a55a082c899e9c869ba860f8014ebbc65a45a2e919142215475",
+   "current": true,
+   "title": "Maze mapper · Level 3: The centre, a map, home",
+   "limit": 300,
+   "runs": {
+    "default": 5,
+    "fixed": 10
+   }
+  }
+ ]
+}

@@ -1,0 +1,32 @@
+{
+ "format": "evn-course-index/1",
+ "generated": "node scripts/course_index.js --write; do not edit",
+ "levels": [
+  {
+   "file": "cruise-control/level-1.v1.json",
+   "id": "cruise-control-1",
+   "version": 1,
+   "sha256": "db01c5187925065806374745054a507642714638a7a57c8dda6c4705416f5b43",
+   "current": true,
+   "title": "Cruise control · Level 1: The flat lane",
+   "limit": 10,
+   "runs": {
+    "default": 5,
+    "fixed": 10
+   }
+  },
+  {
+   "file": "cruise-control/level-3.v1.json",
+   "id": "cruise-control-3",
+   "version": 1,
+   "sha256": "3f24a6d3689b147d5d425b55f42bc1d4fb052e224af0432af60ddc9000745a3f",
+   "current": true,
+   "title": "Cruise control · Level 3: The payload",
+   "limit": 10,
+   "runs": {
+    "default": 5,
+    "fixed": 10
+   }
+  }
+ ]
+}

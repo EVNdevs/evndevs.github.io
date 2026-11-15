@@ -1,0 +1,320 @@
+{
+ "format": "evn-course/1",
+ "id": "pick-and-place-1",
+ "challenge": "pick-and-place",
+ "level": 1,
+ "version": 1,
+ "module": "G12.3",
+ "title": "Pick and place · Level 1: four balls to spots whose coordinates are given",
+ "brief": "Move the four balls from the tray to the four spots. The robot stands at (600, 600) facing 180 deg (the tray behind it, at world bearing 0); its base turns, its arm stays in one plane. The tray (80 x 300 mm, 60 mm high) holds the balls (40 mm, 30 g) on the 254.5 mm ring at world bearings -30, -10, 10 and 30 deg. The spots are 40 x 40 mm with tops of 20 (s1), 40 (s2), 60 (s3) and 80 mm (s4); each run moves them a little, and the runner fills in spots.json: keys p1 .. p4 (s1 .. s4), each [[x, y]] in mm. Per ball: 10 within 10 mm of a spot's centre, 5 within 25; -5 for a drop (a ball touching the floor), -5 for each collision of the arm with the tray; + 20 x min(1, par / t) when all four are within 25 mm before the limit. Run score = 100 x points / 60 (floor 0). Pass: a mean of 60 and at least 8 of 10 runs finishing.",
+ "field": {
+  "random": [
+   {
+    "name": "p1",
+    "draw": "pointsIn-v1",
+    "n": 1,
+    "poly": [
+     [
+      739,
+      782
+     ],
+     [
+      744,
+      790
+     ],
+     [
+      693,
+      820
+     ],
+     [
+      688,
+      812
+     ]
+    ],
+    "grid": 10,
+    "gap": 10,
+    "from": [
+     600,
+     600
+    ]
+   },
+   {
+    "name": "p2",
+    "draw": "pointsIn-v1",
+    "n": 1,
+    "poly": [
+     [
+      506,
+      822
+     ],
+     [
+      501,
+      831
+     ],
+     [
+      450,
+      801
+     ],
+     [
+      455,
+      792
+     ]
+    ],
+    "grid": 10,
+    "gap": 10,
+    "from": [
+     600,
+     600
+    ]
+   },
+   {
+    "name": "p3",
+    "draw": "pointsIn-v1",
+    "n": 1,
+    "poly": [
+     [
+      459,
+      415
+     ],
+     [
+      454,
+      406
+     ],
+     [
+      505,
+      376
+     ],
+     [
+      510,
+      385
+     ]
+    ],
+    "grid": 10,
+    "gap": 10,
+    "from": [
+     600,
+     600
+    ]
+   },
+   {
+    "name": "p4",
+    "draw": "pointsIn-v1",
+    "n": 1,
+    "poly": [
+     [
+      693,
+      380
+     ],
+     [
+      698,
+      371
+     ],
+     [
+      749,
+      401
+     ],
+     [
+      744,
+      410
+     ]
+    ],
+    "grid": 10,
+    "gap": 10,
+    "from": [
+     600,
+     600
+    ]
+   }
+  ],
+  "arena": {
+   "size": [
+    1200,
+    1200
+   ],
+   "startBox": [
+    520,
+    520,
+    680,
+    680
+   ],
+   "goal": null,
+   "obstacles": [
+    {
+     "name": "tray",
+     "x": 835,
+     "y": 600,
+     "w": 80,
+     "d": 300,
+     "h": 60
+    },
+    {
+     "name": "s1",
+     "from": "p1",
+     "i": 1,
+     "w": 40,
+     "d": 40,
+     "h": 20
+    },
+    {
+     "name": "s2",
+     "from": "p2",
+     "i": 1,
+     "w": 40,
+     "d": 40,
+     "h": 40
+    },
+    {
+     "name": "s3",
+     "from": "p3",
+     "i": 1,
+     "w": 40,
+     "d": 40,
+     "h": 60
+    },
+    {
+     "name": "s4",
+     "from": "p4",
+     "i": 1,
+     "w": 40,
+     "d": 40,
+     "h": 80
+    }
+   ],
+   "balls": [
+    {
+     "name": "b1",
+     "x": 820.403,
+     "y": 472.75,
+     "d": 40,
+     "massG": 30,
+     "color": "#e67e22",
+     "on": "tray"
+    },
+    {
+     "name": "b2",
+     "x": 850.634,
+     "y": 555.807,
+     "d": 40,
+     "massG": 30,
+     "color": "#e67e22",
+     "on": "tray"
+    },
+    {
+     "name": "b3",
+     "x": 850.634,
+     "y": 644.193,
+     "d": 40,
+     "massG": 30,
+     "color": "#e67e22",
+     "on": "tray"
+    },
+    {
+     "name": "b4",
+     "x": 820.403,
+     "y": 727.25,
+     "d": 40,
+     "massG": 30,
+     "color": "#e67e22",
+     "on": "tray"
+    }
+   ],
+   "wallH": 100,
+   "wallT": 20,
+   "obstacleH": 60
+  }
+ },
+ "robot": {
+  "rule": "fixed",
+  "base": "pick-and-place"
+ },
+ "start": {
+  "nominal": {
+   "x": 600,
+   "y": 600,
+   "heading": 180
+  },
+  "vary": {
+   "xy": 0,
+   "heading": 0
+  },
+  "draw": "uniform-square-v1"
+ },
+ "runs": {
+  "min": 1,
+  "max": 20,
+  "default": 5,
+  "fixed": 10
+ },
+ "reveal": {
+  "file": {
+   "name": "spots.json",
+   "values": [
+    "p1",
+    "p2",
+    "p3",
+    "p4"
+   ]
+  }
+ },
+ "kernel": {
+  "name": "pointToPoint",
+  "limitS": 80.7,
+  "goal": "footprintInside",
+  "pickPlace": {
+   "balls": [
+    "b1",
+    "b2",
+    "b3",
+    "b4"
+   ],
+   "spots": [
+    "s1",
+    "s2",
+    "s3",
+    "s4"
+   ],
+   "near": [
+    10,
+    25
+   ],
+   "restMm": 1,
+   "stillMmS": 5,
+   "restMs": 200,
+   "floorMm": 0.2,
+   "tray": "tray",
+   "trayGapMs": 500
+  }
+ },
+ "constants": {
+  "par": 26.9
+ },
+ "score": {
+  "run": "max(0, round(100 * (10 * placeHits10 + 5 * (placeHits25 - placeHits10) - 5 * placeDrops - 5 * placeTray + if(placeFinished, 20 * min(1, par / time), 0)) / 60, 1))",
+  "values": {
+   "finished": {
+    "value": "count(r in runs: r.placeFinished)",
+    "unit": "finished runs"
+   }
+  },
+  "summary": "round(sum(r in runs: r.points) / n, 1)"
+ },
+ "pass": "score >= 60 & finished >= 0.8 * n",
+ "sources": [
+  {
+   "doc": "docs/curriculum/G12.md",
+   "where": "G12.3 Pick and place, the challenge paragraph, the level table (level 1), the score and its definitions"
+  },
+  {
+   "doc": "docs/design/PICK_AND_PLACE_L1.md",
+   "where": "the level's layout, the robot's envelope, the references and the par"
+  },
+  {
+   "doc": "docs/design/PICK_AND_PLACE_COURSE.md",
+   "where": "§4 kernel.pickPlace (built), §8"
+  },
+  {
+   "doc": "docs/design/PICK_AND_PLACE_TRAY.md",
+   "where": "placeTray (built)"
+  }
+ ]
+}

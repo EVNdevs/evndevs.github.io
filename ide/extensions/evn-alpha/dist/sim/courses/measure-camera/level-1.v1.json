@@ -1,0 +1,165 @@
+{
+  "format": "evn-course/1",
+  "id": "measure-camera-1",
+  "challenge": "measure-camera",
+  "level": 1,
+  "version": 1,
+  "module": "G10.2",
+  "title": "Measure with a camera \u00b7 level 1",
+  "brief": "The robot stands still with G10.2's camera (Camera Module 3, 640 x 480, 66 degrees; forward 60, left 0, height 120, tilt down 30). Five 30 mm discs (blue, green, red, yellow, black) lie at seeded places 220-800 mm ahead of the axle. Make the frame folder, run your PC program on it, and write each disc's floor position (x forward, y left, mm, from the axle's middle) to report.json; Score report scores it. A run scores 100 x clamp(1 - e / 40 mm, 0, 1), e the mean error over the five discs (the pairing with the least total distance; a disc not written counts 40 mm; more than five points score 0).",
+  "field": {
+    "random": [
+      {
+        "name": "discs",
+        "draw": "pointsIn-v1",
+        "n": 5,
+        "poly": [
+          [
+            421,
+            497
+          ],
+          [
+            999,
+            192
+          ],
+          [
+            999,
+            1008
+          ],
+          [
+            421,
+            703
+          ]
+        ],
+        "grid": 10,
+        "gap": 60,
+        "from": [
+          200,
+          600
+        ]
+      }
+    ],
+    "arena": {
+      "size": [
+        1200,
+        1200
+      ],
+      "startBox": [
+        0,
+        450,
+        380,
+        750
+      ],
+      "goal": null,
+      "obstacles": [],
+      "wallH": 100,
+      "wallT": 20,
+      "obstacleH": 100,
+      "startPaint": false,
+      "areas": [
+        {
+          "name": "blue",
+          "from": "discs",
+          "i": 1,
+          "circle": 15,
+          "paint": "blue"
+        },
+        {
+          "name": "green",
+          "from": "discs",
+          "i": 2,
+          "circle": 15,
+          "paint": "green"
+        },
+        {
+          "name": "red",
+          "from": "discs",
+          "i": 3,
+          "circle": 15,
+          "paint": "red"
+        },
+        {
+          "name": "yellow",
+          "from": "discs",
+          "i": 4,
+          "circle": 15,
+          "paint": "yellow"
+        },
+        {
+          "name": "black",
+          "from": "discs",
+          "i": 5,
+          "circle": 15,
+          "paint": "black"
+        }
+      ]
+    }
+  },
+  "robot": {
+    "rule": "fixed",
+    "base": "measure-camera"
+  },
+  "start": {
+    "nominal": {
+      "x": 200,
+      "y": 600,
+      "heading": 0
+    },
+    "vary": {
+      "xy": 0,
+      "heading": 0
+    },
+    "draw": "uniform-square-v1"
+  },
+  "runs": {
+    "min": 1,
+    "max": 20,
+    "default": 5,
+    "fixed": 10
+  },
+  "kernel": {
+    "name": "pointToPoint",
+    "limitS": 30,
+    "goal": "footprintInside",
+    "end": "afterProgram",
+    "still": {
+      "s": 1,
+      "dps": 5,
+      "mms": 3
+    },
+    "final": "runEnd",
+    "report": {
+      "kind": "matchedPoints",
+      "truth": "discs",
+      "frame": "startAxle",
+      "n": 5,
+      "missing": 40
+    }
+  },
+  "constants": {
+    "par": 0.285
+  },
+  "score": {
+    "run": "round(100 * clamp(1 - reportError / 40, 0, 1), 1)",
+    "summary": "round(sum(r in runs: r.points) / count(r in runs: true), 1)"
+  },
+  "pass": "score >= 60 & count(r in runs: r.reportCount == 5) >= 0.8 * n",
+  "sources": [
+    {
+      "doc": "docs/curriculum/G10.md",
+      "where": "G10.2 Robot (the class robot plus Camera Module 3, forward 60, left 0, height 120, tilt down 30; the challenge fixes the robot) and Challenge - Measure with a camera: level 1, the run's score 100 x clip(1 - e / 40 mm, 0, 1), N = 10, the default pass (mean at least 60, at least 80 % of runs with all five written)"
+    },
+    {
+      "doc": "docs/COURSE_CONTENT_DESIGN.md",
+      "where": "\u00a75.2 L1, \u00a76 kernel.report, \u00a77 CC-7 (the field: scenes measure-field) and CC-9 (Frame folder, Score report)"
+    },
+    {
+      "doc": "scripts/camera_footprint.js",
+      "where": "the poly: node scripts/camera_footprint.js measure-camera-1 (the footprint less 20 px and the disc's 15 mm, x 220-800 ahead)"
+    },
+    {
+      "doc": "scripts/fixtures/measure_camera_ref.py",
+      "where": "the par: the reference PC program's mean report error over seeds 1-10 (test_challenge.js measure1)"
+    }
+  ]
+}

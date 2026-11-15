@@ -1,0 +1,214 @@
+{
+  "format": "evn-course/1",
+  "id": "disturbance-gauntlet-3",
+  "challenge": "disturbance-gauntlet",
+  "level": 3,
+  "version": 2,
+  "module": "G11.4",
+  "title": "Disturbance gauntlet · Level 3: Twenty plants, one tuning",
+  "brief": "Practice only, no pass, until the owner rules on the plants it draws (owner item G114-2): with the loads on, some drawn plants (a small b x tau, or a small b against the loads) cannot hold 300 deg/s at full duty, so every controller scores 0 on those runs. Level 1's task on the flywheel bench (an EV3 Medium on port 3 turning a 341.5 g disc of 50 mm radius and a pulley of 9 mm radius with a 200 g load on its cord), its motor drawn per run: b x 0.5 to 2, tau x 0.5 to 2, Coulomb friction 0 to 20 % of full duty, and on some runs one extra 10 ms sample of delay. One tuning, chosen before the runs are drawn. The three loads are fixed: 4 mN m at 1.0 s, 8 at 2.5 s and 12 at 4.0 s, each staying on; the run is read on the true speed from 1.0 s to 6.0 s, where it ends. J = 0.8 x IAE / 56.9 + 0.2 x TV / 33.7; the run scores 100 x clamp(2 - J, 0, 1). Your own controller over dc() on Motor(3) (a built-in run(), track() or hold() scores 0); hand in your PID too: at Run challenge pick it as the comparison program, and it runs on the same seed, scored the same way, for the ADRC / PID ratio of IAE over the runs both take through the window on your own controller (a run of either on a built-in law is not paired) - shown on the card and sealed in your submission, never scored. Twenty runs. Par: IAE 56.9 deg, TV 33.7 %.",
+  "field": {
+    "arena": {
+      "size": [
+        1000,
+        600
+      ],
+      "startBox": [
+        100,
+        200,
+        400,
+        400
+      ],
+      "goal": null,
+      "obstacles": [],
+      "wallH": 100,
+      "wallT": 20,
+      "obstacleH": 150
+    },
+    "random": [
+      {
+        "name": "pb",
+        "draw": "uniform-v1",
+        "min": 0.5,
+        "max": 2,
+        "step": 0.3
+      },
+      {
+        "name": "pt",
+        "draw": "uniform-v1",
+        "min": 0.5,
+        "max": 2,
+        "step": 0.3
+      },
+      {
+        "name": "pc",
+        "draw": "int-v1",
+        "min": 0,
+        "max": 4
+      },
+      {
+        "name": "pd",
+        "draw": "choice-v1",
+        "of": [
+          0,
+          10
+        ]
+      }
+    ]
+  },
+  "robot": {
+    "rule": "fixed",
+    "rig": {
+      "format": "evn-rig/1",
+      "name": "flywheel-bench",
+      "version": 1,
+      "base": "bolted",
+      "motors": [
+        {
+          "port": 3,
+          "model": "EV3 Medium"
+        }
+      ],
+      "shaft": [
+        {
+          "port": 3,
+          "ratio": 1,
+          "zero": 0,
+          "min": null,
+          "max": null,
+          "parts": [
+            {
+              "kind": "disc",
+              "r": 50,
+              "massG": 341.5,
+              "name": "flywheel"
+            },
+            {
+              "kind": "pulley",
+              "r": 9,
+              "massG": 200,
+              "name": "load"
+            }
+          ]
+        }
+      ],
+      "bodies": [],
+      "joints": [],
+      "sensors": [
+        {
+          "kind": "encoder",
+          "port": 3
+        }
+      ]
+    }
+  },
+  "start": {
+    "nominal": {
+      "x": 250,
+      "y": 300,
+      "heading": 0
+    },
+    "vary": {
+      "xy": 0,
+      "heading": 0
+    },
+    "draw": "uniform-square-v1"
+  },
+  "runs": {
+    "min": 1,
+    "max": 20,
+    "default": 5,
+    "fixed": 20
+  },
+  "kernel": {
+    "name": "pointToPoint",
+    "limitS": 6.5,
+    "goal": "footprintInside",
+    "final": "runEnd",
+    "end": "window",
+    "signal": {
+      "port": 3,
+      "q": "speed",
+      "ref": 300,
+      "tailS": 2,
+      "band": 1
+    },
+    "program": {
+      "noMove": [
+        3
+      ]
+    }
+  },
+  "dist": {
+    "plant": [
+      {
+        "port": 3,
+        "b": {
+          "$": "pb"
+        },
+        "tau": {
+          "$": "pt"
+        },
+        "coulomb": {
+          "$": "pc * 0.05"
+        },
+        "delayMs": {
+          "$": "pd"
+        }
+      }
+    ],
+    "events": [
+      {
+        "at": 1,
+        "kind": "torque",
+        "target": "flywheel",
+        "Nm": 0.004
+      },
+      {
+        "at": 2.5,
+        "kind": "torque",
+        "target": "flywheel",
+        "Nm": 0.008
+      },
+      {
+        "at": 4,
+        "kind": "torque",
+        "target": "flywheel",
+        "Nm": 0.012
+      }
+    ]
+  },
+  "constants": {
+    "IAE_PAR": 56.9,
+    "TV_PAR": 33.7
+  },
+  "score": {
+    "run": "if(windowDone & moveTicks == 0, 100 * clamp(2 - (0.8 * iae / IAE_PAR + 0.2 * tv / TV_PAR), 0, 1), 0)",
+    "values": {
+      "finished": {
+        "value": "count(r in runs: r.windowDone)",
+        "unit": "runs"
+      }
+    },
+    "summary": "round(sum(r in runs: r.points) / n, 1)",
+    "compare": {
+      "roles": [
+        "ADRC",
+        "PID"
+      ],
+      "of": "iae",
+      "pairWhen": "windowDone & moveTicks == 0"
+    }
+  },
+  "pass": null,
+  "sources": [
+    {
+      "doc": "docs/curriculum/G11.md",
+      "where": "G11.4 Disturbance gauntlet, the challenge paragraph, the level table (level 3) and the run cost"
+    },
+    {
+      "doc": "vscode-evn-alpha/docs/COURSE_FORMAT_DESIGN.md",
+      "where": "§16 (kernel.signal, end \"window\"; §16.5 what G11.4's levels write; the plant spread: SIMULATOR_LAB_DIST_CUT_DESIGN.md §4, DS-5; §16.4 the comparison, score.compare: the ADRC / PID ratio of IAE, X1 of §16.4.10)"
+    }
+  ]
+}

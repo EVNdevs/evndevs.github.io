@@ -1,0 +1,218 @@
+{
+  "format": "evn-course/1",
+  "id": "balancer-1",
+  "challenge": "balancer",
+  "level": 1,
+  "version": 1,
+  "module": "G9.4",
+  "title": "Balancer · Level 1: Balance 30 s",
+  "brief": "The balancing robot (a rig, not the class robot: EV3 Large motors on ports 1-2, left mirrored on 1, 56 mm wheels 150 mm apart, an IMU on I2C 8) starts held upright within 3 deg and is released at the Run. Balance for 30 s. Practice: the fall end and the score (100 x t_up / 30 - 2 x RMS tilt) wait for the body truth (GT); the run is not scored yet.",
+  "field": {
+    "random": [
+      {
+        "name": "tilt",
+        "draw": "uniform-v1",
+        "min": -3,
+        "max": 3,
+        "step": 0.1
+      },
+      {
+        "name": "comOff",
+        "draw": "uniform-v1",
+        "min": -5,
+        "max": 5,
+        "step": 0.1
+      }
+    ],
+    "arena": {
+      "size": [
+        2000,
+        2000
+      ],
+      "startBox": [
+        800,
+        800,
+        1200,
+        1200
+      ],
+      "goal": null,
+      "obstacles": [],
+      "wallH": 100,
+      "wallT": 20,
+      "obstacleH": 60
+    }
+  },
+  "robot": {
+    "rule": "fixed",
+    "rig": {
+      "format": "evn-rig/1",
+      "name": "balancer",
+      "version": 1,
+      "base": "floor",
+      "start": {
+        "pitch": {
+          "$": "tilt"
+        }
+      },
+      "bodies": [
+        {
+          "name": "body",
+          "shape": {
+            "box": [
+              80,
+              120,
+              200
+            ]
+          },
+          "massG": 700,
+          "com": [
+            {
+              "$": "comOff"
+            },
+            0,
+            120
+          ]
+        },
+        {
+          "name": "left",
+          "wheel": {
+            "d": 56,
+            "w": 20
+          },
+          "massG": 50,
+          "inertiaKgM2": [
+            0.0000115,
+            0.00002,
+            0.0000115
+          ],
+          "friction": 1,
+          "at": [
+            0,
+            75,
+            0
+          ]
+        },
+        {
+          "name": "right",
+          "wheel": {
+            "d": 56,
+            "w": 20
+          },
+          "massG": 50,
+          "inertiaKgM2": [
+            0.0000115,
+            0.00002,
+            0.0000115
+          ],
+          "friction": 1,
+          "at": [
+            0,
+            -75,
+            0
+          ]
+        }
+      ],
+      "joints": [
+        {
+          "kind": "hinge",
+          "a": "body",
+          "b": "left",
+          "at": [
+            0,
+            75,
+            0
+          ],
+          "axis": [
+            0,
+            1,
+            0
+          ],
+          "motor": {
+            "port": 1,
+            "model": "EV3 Large",
+            "gear": 1,
+            "mirrored": true
+          }
+        },
+        {
+          "kind": "hinge",
+          "a": "body",
+          "b": "right",
+          "at": [
+            0,
+            -75,
+            0
+          ],
+          "axis": [
+            0,
+            1,
+            0
+          ],
+          "motor": {
+            "port": 2,
+            "model": "EV3 Large",
+            "gear": 1
+          }
+        }
+      ],
+      "sensors": [
+        {
+          "kind": "imu",
+          "port": 8,
+          "body": "body",
+          "at": [
+            0,
+            0,
+            150
+          ]
+        }
+      ]
+    }
+  },
+  "start": {
+    "nominal": {
+      "x": 1000,
+      "y": 1000,
+      "heading": 0
+    },
+    "vary": {
+      "xy": 0,
+      "heading": 0
+    },
+    "draw": "uniform-square-v1"
+  },
+  "runs": {
+    "min": 1,
+    "max": 20,
+    "default": 5,
+    "fixed": 10
+  },
+  "kernel": {
+    "name": "pointToPoint",
+    "limitS": 30,
+    "goal": "footprintInside",
+    "end": "afterProgram",
+    "still": {
+      "s": 1,
+      "dps": 5,
+      "mms": 3
+    },
+    "final": "runEnd"
+  },
+  "constants": {},
+  "score": {
+    "run": "0",
+    "summary": "0"
+  },
+  "pass": null,
+  "sources": [
+    {
+      "doc": "docs/curriculum/G09.md",
+      "where": "G9.4 Stand tall: the robot, the challenge and level 1 (:1635-1652); the figures (:2092-2093)"
+    },
+    {
+      "doc": "vscode-evn-alpha/docs/SIMULATOR_LB4B_DS3B_DESIGN.md",
+      "where": "§2.1 the robot on a body rig course, §2.8 the push recovered (lane lb4bw W1)"
+    }
+  ]
+}

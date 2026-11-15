@@ -1,0 +1,134 @@
+{
+  "format": "evn-course/1",
+  "id": "line-grand-prix-1",
+  "challenge": "line-grand-prix",
+  "level": 1,
+  "version": 1,
+  "module": "G9.3",
+  "title": "Line grand prix \u00b7 Level 1: Flowing loop",
+  "brief": "A flowing 4.8 m loop, every radius at least 300 mm: a rounded box (straights of 743 and 600 mm, 300 mm corners at the east, 500 mm corners at the west). The robot starts on the line at the south straight's west end, heading east (anticlockwise), within 10 mm and 5 degrees. A 19 mm black line on white. The robot is G9.3's line racer (EV3 Large on 81.6 mm wheels, four colour sensors in a row 70 mm ahead of the axle, +27, +9, -9, -27 mm left, 8 mm up); a run on a changed robot is not this level's. One lap with a flying start: the clock starts when the robot's centre first crosses the start line, 350 mm along the line ahead of the start, and stops when it crosses it again a lap later, which ends the run. The lap is valid if the robot's centre never strays more than 120 mm from the line and the line is never under none of the sensors' footprints (a disc round each, its radius the sensor's height) for more than 0.3 s at a time, read on every 1 ms tick from the start line's crossing; the first tick that breaks either rule ends the run, and so does the lap's clock passing 3 x par (not valid). Score: 100 x min(1, par / T) for a valid lap, else 0. Par 11.1 s (the reference's mean lap). Pass: a mean of at least 60 with 8 of 10 runs valid.",
+  "field": {
+    "arena": {
+      "size": [
+        2000,
+        1700
+      ],
+      "startBox": [
+        730,
+        280,
+        770,
+        320
+      ],
+      "goal": null,
+      "obstacles": [],
+      "wallH": 100,
+      "wallT": 20,
+      "obstacleH": 60,
+      "startPaint": false,
+      "lines": [
+        {
+          "name": "track",
+          "path": [
+            [
+              "S",
+              743.363
+            ],
+            [
+              "A",
+              300,
+              90
+            ],
+            [
+              "S",
+              600
+            ],
+            [
+              "A",
+              300,
+              90
+            ],
+            [
+              "S",
+              743.363
+            ],
+            [
+              "A",
+              500,
+              90
+            ],
+            [
+              "S",
+              200
+            ],
+            [
+              "A",
+              500,
+              90
+            ]
+          ],
+          "at": [
+            700,
+            300,
+            0
+          ],
+          "line": 19,
+          "paint": "black",
+          "startLine": 400
+        }
+      ]
+    }
+  },
+  "robot": {
+    "rule": "fixed",
+    "base": "line-racer"
+  },
+  "start": {
+    "nominal": {
+      "x": 750,
+      "y": 300,
+      "heading": 0
+    },
+    "vary": {
+      "xy": 10,
+      "heading": 5
+    },
+    "draw": "uniform-square-v1"
+  },
+  "runs": {
+    "min": 1,
+    "max": 20,
+    "default": 5,
+    "fixed": 10
+  },
+  "kernel": {
+    "name": "pointToPoint",
+    "limitS": 43.3,
+    "goal": "footprintInside",
+    "final": "runEnd",
+    "line": {
+      "line": "track",
+      "laps": 1,
+      "offMm": 120,
+      "lostS": 0.3,
+      "maxLapS": 33.3
+    }
+  },
+  "constants": {
+    "par": 11.1
+  },
+  "score": {
+    "run": "if(lapValid, 100 * min(1, par / lapTime), 0)",
+    "summary": "round(sum(r in runs: r.points) / count(r in runs: true), 1)"
+  },
+  "pass": "score >= 60 & count(r in runs: r.lapValid) >= 0.8 * n",
+  "sources": [
+    {
+      "doc": "docs/curriculum/G09.md",
+      "where": "G9.3 Line grand prix, the challenge paragraph and the level table, level 1 (4.8 m, radii at least 300 mm)"
+    },
+    {
+      "doc": "vscode-evn-alpha/docs/COURSE_FORMAT_DESIGN.md",
+      "where": "\u00a720 item 11: arena.lines, kernel.line, G9.3 L1-L2 (lane e1-line, docs/session/2026-11-13_e1-line/)"
+    }
+  ]
+}

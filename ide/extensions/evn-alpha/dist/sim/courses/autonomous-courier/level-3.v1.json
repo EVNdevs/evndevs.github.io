@@ -1,0 +1,460 @@
+{
+ "format": "evn-course/1",
+ "id": "autonomous-courier-3",
+ "challenge": "autonomous-courier",
+ "level": 3,
+ "version": 1,
+ "module": "G12.1",
+ "title": "Autonomous courier · Level 3: Drops and a person",
+ "brief": "Practice (OQ 116: level 3 stays practice until DIST). Level 2, with two more boxes dropped mid-run and a person. Carry the parcel from the depot to zone A, then zone B, and back to the depot, on a known map with boxes that are not on it. The arena is 3000 x 2000 mm, (0, 0) its bottom-left corner, walled by 20 mm strips inside it; two rows of shelves (x 700-800: y 20-200, 460-900, 1260-1500, 1900-1980; x 1900-2000: y 20-300, 700-1300, 1680-1980) and five 100 mm pillars at (1140-1240, 700-800), (1460-1560, 1140-1240), (1240-1340, 300-400), (2340-2440, 1100-1200), (2600-2700, 900-1000). The depot is (100-500, 100-500), zone A (1300-1700, 1560-1900), zone B (2500-2900, 200-600). Line 1 of the program must be start = (x, y, heading): the runner fills in the run's start (mm, mm, degrees anticlockwise from +x); run 1 starts at (300, 300, 0), runs 2-10 with x and y each within 60 mm of it and the heading within 15 degrees; practice shows seed 0's boxes, and a practice Run is told where the robot stands ((300, 300, 0) when it is at the start). Before the run the flash holds grid.txt, the occupancy grid of the shelves, pillars and wall strips in 10 mm cells: line 1 'grid-v1 10 300 200', then 200 rows of 300 characters, 1 occupied and 0 free, the BOTTOM row first, so rows = open('grid.txt').read().split()[4:] and rows[r][c] is the cell at x 10c-10c+10, y 10r-10r+10 (self-check: rows[0][0] is '1', the south wall). Merged 2 x 2 it is the lessons' 20 mm grid. A zone is reached when the middle of the axle stays inside it, slower than 5 mm/s and turning slower than 5 degrees a second, for 0.5 s; done when zone A, zone B and then the depot are reached in that order, which ends the run. T is the time from Run to the depot's reached stop. Write your plan to plan.csv: rows t_ms,x_mm,y_mm in the arena's frame, t_ms from t0 = time.ticks_ms() taken first, every row of one plan sharing the t_ms at which it took effect (a replan is a new block), at most 862 points and 55168 bytes in all; write it in a finally: after evn.stop_all() (the run's end raises KeyboardInterrupt, and a write while a motor drives is refused), within the run's 2 s grace. e is the RMS distance of the true middle of the axle from the plan in effect, every 1 ms from the first plan to the run's end (no plan.csv: the plan term scores 0). Before the start 3, 4 or 5 boxes (150 x 150 x 150 mm, brown) stand on or near the routes, at positions drawn per run and not told, at least 500 mm apart: they are not on grid.txt, so sense them and plan around them. One box always stands at the mouth of one of the two aisles through the first shelf row (y 900-1260 or 1500-1900), and one at a gap through the second (y 300-700 or 1300-1680), so no route is clear on every run; every zone can always still be reached (on the lessons' 20 mm grid with 170 mm clearance, a diagonal step only between two free cells). The boxes are fixed: a contact holds the robot and is a collision. The boxes not on a route (5 boxes stand in every run) wait in the north-east, at (2550, 1700) and (2850, 1290). A collision is a contact with a wall, shelf, pillar or box that begins after at least 0.5 s with none. Two more boxes (150 mm, the same) are dropped mid-run, each at a moment drawn per run (the first 4-9 s, the second 14-20 s): at that moment the first free spot 500, 600 ... 1000 mm straight ahead of the middle of the robot's axle along its heading (a spot off every block, 50 mm clear of the robot, 200 mm clear of every zone, clear of the person's walk, and keeping every zone reachable from the robot on the lessons' 20 mm grid with 170 mm clearance), or, if none, tried again every 0.5 s; the second only after the first; a dropped box is fixed, and a contact with it a collision. The person: a 200 mm cylinder 1700 mm tall walking up and down x = 1600 between y 700 and 1300 at 150 mm/s, from a place and direction drawn per run; it waits while its next step would bring it within 250 mm of the robot's body and turns back after 2 s of waiting; it passes through the pillar at (1460-1560, 1140-1240). The safety gate: a contact with the person, or passing closer than 150 mm between the robot's body (its outline: front, rear, half width) and the cylinder, scores the run 0 and fails the level, whatever else it did; the person is no collision. Per run: S = 40 done + 30 min(1, par / T) + 30 clamp(1 - e / 40, 0, 1) - 15 collisions, at least 0, the time and plan terms only when done. Pass: a mean S of at least 60, at least 8 of 10 runs done, e at most 40 mm on at least 8 of 10 runs, and no run breaking the gate. Par 38.64 s (level 1's + 20 %); the limit 116.0 s. The robot: the class robot with an IMU (MPU-6500, flat) on I2C 8, distance5 looking ahead, and two side distance sensors: right on I2C 7 (50 mm ahead, left -40, 40 mm up, -90 degrees), left on I2C 9 (its mirror).",
+ "field": {
+  "arena": {
+   "size": [
+    3000,
+    2000
+   ],
+   "startBox": [
+    100,
+    100,
+    500,
+    500
+   ],
+   "goal": null,
+   "obstacles": [
+    {
+     "x": 1500,
+     "y": 10,
+     "w": 3000,
+     "d": 20,
+     "h": 100
+    },
+    {
+     "x": 1500,
+     "y": 1990,
+     "w": 3000,
+     "d": 20,
+     "h": 100
+    },
+    {
+     "x": 10,
+     "y": 1000,
+     "w": 20,
+     "d": 1960,
+     "h": 100
+    },
+    {
+     "x": 2990,
+     "y": 1000,
+     "w": 20,
+     "d": 1960,
+     "h": 100
+    },
+    {
+     "x": 750,
+     "y": 110,
+     "w": 100,
+     "d": 180,
+     "h": 300
+    },
+    {
+     "x": 750,
+     "y": 680,
+     "w": 100,
+     "d": 440,
+     "h": 300
+    },
+    {
+     "x": 750,
+     "y": 1380,
+     "w": 100,
+     "d": 240,
+     "h": 300
+    },
+    {
+     "x": 750,
+     "y": 1940,
+     "w": 100,
+     "d": 80,
+     "h": 300
+    },
+    {
+     "x": 1950,
+     "y": 160,
+     "w": 100,
+     "d": 280,
+     "h": 300
+    },
+    {
+     "x": 1950,
+     "y": 1000,
+     "w": 100,
+     "d": 600,
+     "h": 300
+    },
+    {
+     "x": 1950,
+     "y": 1830,
+     "w": 100,
+     "d": 300,
+     "h": 300
+    },
+    {
+     "x": 1190,
+     "y": 750,
+     "w": 100,
+     "d": 100,
+     "h": 300
+    },
+    {
+     "x": 1510,
+     "y": 1190,
+     "w": 100,
+     "d": 100,
+     "h": 300
+    },
+    {
+     "x": 1290,
+     "y": 350,
+     "w": 100,
+     "d": 100,
+     "h": 300
+    },
+    {
+     "x": 2390,
+     "y": 1150,
+     "w": 100,
+     "d": 100,
+     "h": 300
+    },
+    {
+     "x": 2650,
+     "y": 950,
+     "w": 100,
+     "d": 100,
+     "h": 300
+    },
+    {
+     "x": {
+      "$": "if(b1 == 1, 590, 590)"
+     },
+     "y": {
+      "$": "if(b1 == 1, 1080, 1700)"
+     },
+     "w": 150,
+     "d": 150,
+     "h": 150,
+     "color": "#b5895a"
+    },
+    {
+     "x": {
+      "$": "if(b2 == 1, 1350, 1000)"
+     },
+     "y": {
+      "$": "if(b2 == 1, 750, 750)"
+     },
+     "w": 150,
+     "d": 150,
+     "h": 150,
+     "color": "#b5895a"
+    },
+    {
+     "x": {
+      "$": "if(onRoute >= 4, if(b3 == 1, 2450, 2450), 2550)"
+     },
+     "y": {
+      "$": "if(onRoute >= 4, if(b3 == 1, 850, 950), 1700)"
+     },
+     "w": 150,
+     "d": 150,
+     "h": 150,
+     "color": "#b5895a"
+    },
+    {
+     "x": {
+      "$": "if(b4 == 1, 1810, 2090)"
+     },
+     "y": {
+      "$": "if(b4 == 1, 500, 1490)"
+     },
+     "w": 150,
+     "d": 150,
+     "h": 150,
+     "color": "#b5895a"
+    },
+    {
+     "x": {
+      "$": "if(onRoute >= 5, if(b5 == 1, 1050, 1250), 2850)"
+     },
+     "y": {
+      "$": "if(onRoute >= 5, if(b5 == 1, 1450, 1300), 1290)"
+     },
+     "w": 150,
+     "d": 150,
+     "h": 150,
+     "color": "#b5895a"
+    }
+   ],
+   "wallH": 100,
+   "wallT": 20,
+   "obstacleH": 300,
+   "areas": [
+    {
+     "name": "depot",
+     "rect": [
+      100,
+      100,
+      500,
+      500
+     ],
+     "paint": null
+    },
+    {
+     "name": "zoneA",
+     "rect": [
+      1300,
+      1560,
+      1700,
+      1900
+     ],
+     "paint": null
+    },
+    {
+     "name": "zoneB",
+     "rect": [
+      2500,
+      200,
+      2900,
+      600
+     ],
+     "paint": null
+    }
+   ],
+   "reachable": {
+    "cell": 20,
+    "clear": 170,
+    "areas": [
+     "zoneA",
+     "zoneB",
+     "depot"
+    ]
+   }
+  },
+  "random": [
+   {
+    "name": "onRoute",
+    "draw": "int-v1",
+    "min": 3,
+    "max": 5
+   },
+   {
+    "name": "b1",
+    "draw": "int-v1",
+    "min": 1,
+    "max": 2
+   },
+   {
+    "name": "b2",
+    "draw": "int-v1",
+    "min": 1,
+    "max": 2
+   },
+   {
+    "name": "b3",
+    "draw": "int-v1",
+    "min": 1,
+    "max": 2
+   },
+   {
+    "name": "b4",
+    "draw": "int-v1",
+    "min": 1,
+    "max": 2
+   },
+   {
+    "name": "b5",
+    "draw": "int-v1",
+    "min": 1,
+    "max": 2
+   },
+   {
+    "name": "py",
+    "draw": "uniform-v1",
+    "min": 750,
+    "max": 1250,
+    "step": 1
+   },
+   {
+    "name": "pd",
+    "draw": "choice-v1",
+    "of": [
+     -1,
+     1
+    ]
+   },
+   {
+    "name": "t1",
+    "draw": "uniform-v1",
+    "min": 4,
+    "max": 9,
+    "step": 0.1
+   },
+   {
+    "name": "t2",
+    "draw": "uniform-v1",
+    "min": 14,
+    "max": 20,
+    "step": 0.1
+   }
+  ]
+ },
+ "robot": {
+  "rule": "learner",
+  "standard": "courier"
+ },
+ "start": {
+  "nominal": {
+   "x": 300,
+   "y": 300,
+   "heading": 0
+  },
+  "vary": {
+   "xy": 60,
+   "heading": 15
+  },
+  "draw": "uniform-square-v1"
+ },
+ "runs": {
+  "min": 1,
+  "max": 20,
+  "default": 5,
+  "fixed": 10
+ },
+ "kernel": {
+  "name": "pointToPoint",
+  "limitS": 116.0,
+  "goal": "footprintInside",
+  "final": "runEnd",
+  "visits": {
+   "targets": [
+    {
+     "area": "zoneA",
+     "dwell": {
+      "s": 0.5,
+      "mms": 5,
+      "dps": 5
+     }
+    },
+    {
+     "area": "zoneB",
+     "dwell": {
+      "s": 0.5,
+      "mms": 5,
+      "dps": 5
+     }
+    },
+    {
+     "area": "depot",
+     "dwell": {
+      "s": 0.5,
+      "mms": 5,
+      "dps": 5
+     }
+    }
+   ],
+   "endAtLast": "inOrder"
+  },
+  "collisions": {
+   "quietS": 0.5
+  },
+  "report": {
+   "kind": "series",
+   "routes": [
+    "file"
+   ],
+   "file": "plan.csv",
+   "columns": [
+    "t_ms",
+    "x_mm",
+    "y_mm"
+   ],
+   "frame": "arena",
+   "align": "path",
+   "fromMs": "first",
+   "to": "end",
+   "cover": null,
+   "rms": [
+    "xy"
+   ],
+   "maxRows": 862
+  },
+  "actors": {
+   "person": {
+    "r": 100,
+    "h": 1700,
+    "x": 1600,
+    "y": [
+     700,
+     1300
+    ],
+    "v": 150,
+    "from": "py",
+    "dir": "pd",
+    "waitWithin": 250,
+    "turnAfterS": 2,
+    "sep": 150
+   },
+   "drops": [
+    {
+     "at": "t1",
+     "size": 150
+    },
+    {
+     "at": "t2",
+     "size": 150
+    }
+   ],
+   "retryS": 0.5,
+   "spots": [
+    500,
+    1000,
+    100
+   ]
+  }
+ },
+ "constants": {
+  "par": 38.64,
+  "epar": 40
+ },
+ "reveal": {
+  "map": {
+   "name": "grid.txt",
+   "cell": 10
+  },
+  "start": {
+   "as": "start"
+  }
+ },
+ "score": {
+  "run": "if(personBreach, 0, max(0, if(visitedInOrder == 3, 40 + 30 * min(1, par / max(time, 0.001)) + if(repHas, 30 * clamp(1 - repRms_xy / epar, 0, 1), 0), 0) - 15 * collisions))",
+  "summary": "round(sum(r in runs: r.points) / n, 1)"
+ },
+ "pass": "score >= 60 & count(r in runs: r.visitedInOrder == 3) >= 0.8 * n & count(r in runs: r.repHas & r.repRms_xy <= epar) >= 0.8 * n & count(r in runs: r.personBreach) == 0",
+ "sources": [
+  {
+   "doc": "docs/curriculum/G12.md",
+   "where": "G12.1 Plan and track, the challenge paragraph, the level table (level 2), the run score and the definitions; OQ 117 (b)"
+  },
+  {
+   "doc": "docs/design/G121_COURIER.md",
+   "where": "§15 slice C-2: the boxes, the reachability proof, the par (level 1's + 20 %)"
+  },
+  {
+   "doc": "vscode-evn-alpha/learn/content/lessons/G12/G12.1/G12.1.1.md",
+   "where": "the practice stand-in's arena, start and card (the plan the course takes)"
+  },
+  {
+   "doc": "docs/design/G121_COURIER.md",
+   "where": "§16 slice C-3 (revision 3, verified; §16.11 as built): the person (C-3a), the drops on option (a) (C-3b; C3-1 ruled by the owner's \"Accept all defaults\", RULINGS_0930.md item 25), the gate; L2's score times the gate, L2's pass and no breach (§16.2)"
+  }
+ ]
+}

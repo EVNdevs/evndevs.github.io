@@ -1,0 +1,45 @@
+{
+ "format": "evn-course-index/1",
+ "generated": "node scripts/course_index.js --write; do not edit",
+ "levels": [
+  {
+   "file": "slalom-gates/level-1.v1.json",
+   "id": "slalom-gates-1",
+   "version": 1,
+   "sha256": "c19c2366af7138b9c24723a1fac0272ecad3a3966c11d81789ce4e3451f40f47",
+   "current": true,
+   "title": "Slalom gates · Level 1: Through the gates",
+   "limit": 60,
+   "runs": {
+    "default": 5,
+    "fixed": 10
+   }
+  },
+  {
+   "file": "slalom-gates/level-2.v1.json",
+   "id": "slalom-gates-2",
+   "version": 1,
+   "sha256": "b4fb011eecc054e64cfdb7f1324914c9d29aa5ee16d082129a44d38086407132",
+   "current": true,
+   "title": "Slalom gates · Level 2: Faster",
+   "limit": 60,
+   "runs": {
+    "default": 5,
+    "fixed": 10
+   }
+  },
+  {
+   "file": "slalom-gates/level-3.v1.json",
+   "id": "slalom-gates-3",
+   "version": 1,
+   "sha256": "c1e7b8ae32371eb67bad9f6fe381c3190e72e5837acc7153618d9877c1118f36",
+   "current": true,
+   "title": "Slalom gates · Level 3: Random gates",
+   "limit": 60,
+   "runs": {
+    "default": 5,
+    "fixed": 10
+   }
+  }
+ ]
+}

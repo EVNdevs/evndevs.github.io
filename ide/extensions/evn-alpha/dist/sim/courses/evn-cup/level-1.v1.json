@@ -1,0 +1,68 @@
+{
+  "format": "evn-course/1",
+  "id": "evn-cup-1",
+  "challenge": "evn-cup",
+  "level": 1,
+  "version": 1,
+  "module": "G7.4",
+  "title": "EVN Cup mission · Level 1: Rover, beacon, park",
+  "brief": "120 s. Push the rover out of the crater into base (M2), the beacon into the signal circle (M4), then park in the garage and stand still (M6). Ten starts, ±10 mm and ±2°. Field damage costs 10: the beacon touched, moved over 20 mm from where it stood and left out of the signal, or the rover touched and left on the crater's rim. M6 needs your program to end without an error at least 1 s before the 120 s: the robot then stands still for 1 s (a program still running at 120 s, or one that stops on an error, scores no park). The walls keep the robot on the mat. Pass: mean 45 / 75. Par: 75 / 75. The mat's layout is a proposal (owner item EC-1).",
+  "field": {
+    "arena": {
+      "size": [2000, 1200],
+      "startBox": [0, 475, 250, 725],
+      "startPaint": false,
+      "goal": null,
+      "wallH": 50,
+      "wallT": 20,
+      "obstacleH": 80,
+      "obstacles": [
+        { "name": "rover", "shape": "box", "x": 1000, "y": 800, "w": 120, "d": 80, "h": 60, "massG": 150, "color": "#ff8c00" },
+        { "name": "beacon", "shape": "cylinder", "x": 700, "y": 400, "w": 60, "d": 60, "h": 120, "massG": 80, "color": "#1e64c8" }
+      ],
+      "areas": [
+        { "name": "crater", "circle": [1000, 800, 150], "paint": "red" },
+        { "name": "base", "rect": [300, 700, 600, 950], "paint": "green" },
+        { "name": "signal", "circle": [1400, 400, 80], "paint": "yellow" },
+        { "name": "garage", "rect": [1450, 650, 1750, 950], "paint": "blue" }
+      ],
+      "lines": [
+        { "name": "guide", "path": [["S", 1500], ["A", 50, 90], ["S", 700], ["A", 50, 90], ["S", 1500], ["A", 50, 90], ["S", 700], ["A", 50, 90]], "at": [250, 200, 0], "line": 20, "paint": "black", "startLine": 0 }
+      ]
+    }
+  },
+  "robot": { "rule": "fixed" },
+  "start": { "nominal": { "x": 125, "y": 600, "heading": 0 }, "vary": { "xy": 10, "heading": 2 }, "draw": "uniform-square-v1" },
+  "runs": { "min": 1, "max": 20, "default": 5, "fixed": 10 },
+  "kernel": {
+    "name": "pointToPoint",
+    "limitS": 120,
+    "goal": "footprintInside",
+    "end": "afterProgram",
+    "still": { "s": 1, "dps": 5, "mms": 3 },
+    "final": "runEnd",
+    "place": {
+      "items": [
+        { "name": "rover", "areas": ["crater", "base"] },
+        { "name": "beacon", "areas": ["signal"] }
+      ],
+      "robotAreas": ["garage"]
+    }
+  },
+  "constants": { "damageMm": 20 },
+  "score": {
+    "run": "max(0, if(wholly_rover_base & !partly_rover_crater, 30, if(!partly_rover_crater, 10, 0)) + if(wholly_beacon_signal, 25, if(partly_beacon_signal, 10, 0)) + if(stopped & robotWholly_garage, 20, if(stopped & robotPartly_garage, 5, 0)) - if(touchesOf_beacon > 0 & moved_beacon > damageMm & !partly_beacon_signal, 10, 0) - if(touchesOf_rover > 0 & partly_rover_crater & !wholly_rover_crater, 10, 0))",
+    "values": {
+      "m2": { "value": "count(r in runs: r.wholly_rover_base & !r.partly_rover_crater)", "unit": "runs" },
+      "m4": { "value": "count(r in runs: r.wholly_beacon_signal)", "unit": "runs" },
+      "m6": { "value": "count(r in runs: r.stopped & r.robotWholly_garage)", "unit": "runs" }
+    },
+    "summary": "round(sum(r in runs: r.points) / n, 1)"
+  },
+  "pass": "score >= 45",
+  "sources": [
+    { "doc": "docs/curriculum/G07.md", "where": "G7.4 The challenge - EVN Cup mission: the definitions, the mission table (M2, M4, M6, field damage) and the level table (level 1)" },
+    { "doc": "vscode-evn-alpha/docs/COURSE_FORMAT_DESIGN.md", "where": "§22 (end-place) kernel.place; §20.1 arena.lines (the guide line); §11.8 afterProgram" },
+    { "doc": "docs/session/2026-11-13_w10-c1-evn-cup/draft/level-1.v1.draft.json", "where": "the level 1 draft (its layout moved clear of the guide line: owner item EC-1)" }
+  ]
+}

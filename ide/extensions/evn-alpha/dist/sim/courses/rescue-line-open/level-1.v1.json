@@ -1,0 +1,74 @@
+{
+  "format": "evn-course/1",
+  "id": "rescue-line-open-1",
+  "challenge": "rescue-line-open",
+  "level": 1,
+  "version": 1,
+  "module": "G8.4",
+  "title": "Rescue line open · Level 1: Field #01, no victims",
+  "brief": "The organisers' 2026 practice field #01 (RL2026D1_1), known in advance, no victims; the RCJ referee (2026 rules) runs each 8-minute game, calls lacks of progress and puts the robot back on the last checkpoint. Score: the line share (line tracing + exit bonus as a share of the field's maximum, before the multiplier). Ten games. Pass: mean 60 and at least 8 games finish (played to the Goal or to the 8 minutes). Par 80 / 100.",
+  "field": {
+    "course": "RL2026D1_1",
+    "maps": {
+      "RL2026D1_1": {"version":1,"name":"RL2026D1_1","tiles":[{"id":"1","col":0,"row":5,"rot":0},{"id":"10","col":0,"row":4,"rot":2,"seesaw":true},{"id":"cms-tile-12","col":0,"row":3,"rot":2},{"id":"cms-tile-71","col":7,"row":0,"rot":3},{"id":"cms-tile-26","col":1,"row":3,"rot":3},{"id":"80","col":1,"row":4,"rot":0,"green":[1]},{"id":"70","col":1,"row":5,"rot":0,"green":[0,1]},{"id":"49","col":2,"row":4,"rot":2,"green":[1,3]},{"id":"cms-tile-5","col":2,"row":5,"rot":1},{"id":"20","col":3,"row":5,"rot":1},{"id":"cms-tile-18","col":4,"row":5,"rot":2},{"id":"80","col":5,"row":5,"rot":3,"green":[1]},{"id":"cms-tile-19","col":5,"row":4,"rot":0},{"id":"10","col":6,"row":5,"rot":3,"ramp":true},{"id":"70","col":7,"row":5,"rot":3,"green":[0,1],"z":137.48},{"id":"cms-tile-5","col":5,"row":3,"rot":2,"checkpoint":true},{"id":"cms-tile-18","col":6,"row":3,"rot":0},{"id":"41","col":7,"row":3,"rot":2},{"id":"45","col":3,"row":4,"rot":0},{"id":"cms-tile-13","col":6,"row":4,"rot":0},{"id":"cms-022","col":3,"row":3,"rot":3,"checkpoint":true},{"id":"cms-tile-18","col":4,"row":4,"rot":0},{"id":"cms-tile-51","col":7,"row":4,"rot":0},{"id":"cms-tile-46","col":4,"row":0,"rot":2},{"id":"20","col":5,"row":0,"rot":1},{"id":"cms-tile-79","col":6,"row":0,"rot":3},{"id":"cms-009","col":7,"row":1,"rot":0},{"id":"10","col":5,"row":2,"rot":1,"ramp":2},{"id":"10","col":6,"row":2,"rot":1,"z":137.48,"ramp":2},{"id":"99","col":7,"row":2,"rot":3,"z":274.95},{"id":"cms-tile-12","col":4,"row":2,"rot":1},{"id":"40","col":4,"row":1,"rot":1},{"id":"cms-tile-59","col":5,"row":1,"rot":2,"checkpoint":true},{"id":"cms-tile-56","col":6,"row":1,"rot":0}],"customTiles":[{"id":"cms-tile-12","name":"RCJ CMS tile-12.png","elements":[{"type":"line","pts":[[0,150],[27.29,150],[30.92,145.16]],"w":20,"color":"black"},{"type":"arc","c":[14.49,10.96],"r":135.2,"from":83.02,"to":11.19,"w":20,"color":"black"},{"type":"line","pts":[[147.12,37.2],[150,35.31],[150,0]],"w":20,"color":"black"}]},{"id":"cms-tile-71","name":"RCJ CMS tile-71.png","elements":[{"type":"line","pts":[[0,150],[70,150],[150,0]],"w":20,"color":"black"}]},{"id":"cms-tile-26","name":"RCJ CMS tile-26.png","elements":[{"type":"line","pts":[[0,150],[130,190],[190,150],[150,0]],"w":20,"color":"black"}]},{"id":"cms-tile-5","name":"RCJ CMS tile-5.png","elements":[{"type":"line","pts":[[0,150],[90,150],[90,120],[92.76,90],[150,90],[150,0]],"w":20,"color":"black"}]},{"id":"cms-tile-18","name":"RCJ CMS tile-18.png","elements":[{"type":"line","pts":[[0,150],[30,150],[50,170],[90,130],[130,170],[170,130],[210,170],[250,130],[270,150],[300,150]],"w":20,"color":"black"}]},{"id":"cms-tile-19","name":"RCJ CMS tile-19.png","elements":[{"type":"line","pts":[[150,50],[150,0]],"w":20,"color":"black"},{"type":"line","pts":[[50,150],[0,150]],"w":20,"color":"black"},{"type":"line","pts":[[150,250],[150,300]],"w":20,"color":"black"},{"type":"line","pts":[[250,150],[300,150]],"w":20,"color":"black"}]},{"id":"cms-tile-13","name":"RCJ CMS tile-13.png","elements":[{"type":"line","pts":[[0,150],[66.51,149.86]],"w":20,"color":"black"},{"type":"arc","c":[111.18,139.41],"r":45.88,"from":166.83,"to":88.55,"w":20,"color":"black"},{"type":"line","pts":[[112.34,185.28],[112.82,185.1]],"w":20,"color":"black"},{"type":"arc","c":[65.45,96.01],"r":100.9,"from":62,"to":24.89,"w":20,"color":"black"},{"type":"line","pts":[[156.98,138.48],[158.92,139.4]],"w":20,"color":"black"},{"type":"arc","c":[196.36,157.14],"r":41.43,"from":205.36,"to":286.37,"w":20,"color":"black"},{"type":"line","pts":[[208.04,117.39],[207.9,118.12]],"w":20,"color":"black"},{"type":"arc","c":[171.55,176.64],"r":68.89,"from":301.85,"to":337.44,"w":20,"color":"black"},{"type":"line","pts":[[235.17,150.21],[300,150]],"w":20,"color":"black"}]},{"id":"cms-022","name":"RCJ CMS 022.png","elements":[{"type":"line","pts":[[0,150],[40,150],[42.89,154.19]],"w":19.24,"color":"black"},{"type":"arc","c":[23.79,185.48],"r":36.66,"from":301.4,"to":370.94,"w":19.24,"color":"black"},{"type":"line","pts":[[59.78,192.44],[60.26,192.67]],"w":19.24,"color":"black"},{"type":"arc","c":[92.74,187.6],"r":32.87,"from":171.13,"to":72.36,"w":19.24,"color":"black"},{"type":"line","pts":[[102.7,218.92],[103.36,218.86]],"w":19.24,"color":"black"},{"type":"arc","c":[113.94,183.22],"r":37.18,"from":106.54,"to":12.99,"w":19.24,"color":"black"},{"type":"line","pts":[[150.17,191.58],[150.62,104.15]],"w":19.24,"color":"black"},{"type":"arc","c":[186.89,118.48],"r":39,"from":201.56,"to":286.27,"w":19.24,"color":"black"},{"type":"line","pts":[[197.82,81.04],[198.32,80.68]],"w":19.24,"color":"black"},{"type":"arc","c":[207.07,112.76],"r":33.25,"from":254.75,"to":373.2,"w":19.24,"color":"black"},{"type":"line","pts":[[239.44,120.35],[240.47,120.61]],"w":19.24,"color":"black"},{"type":"arc","c":[271.11,117.99],"r":30.75,"from":175.12,"to":113.12,"w":19.24,"color":"black"},{"type":"line","pts":[[259.04,146.27],[260,150],[300,150]],"w":19.24,"color":"black"}]},{"id":"cms-tile-51","name":"RCJ CMS tile-51.png","elements":[{"type":"line","pts":[[0,150],[43.35,150],[90,105.53],[150,43.65],[150,0]],"w":20,"color":"black"}]},{"id":"cms-tile-46","name":"RCJ CMS tile-46.png","elements":[{"type":"line","pts":[[0,150],[60,150],[150,60],[240,150],[300,150]],"w":17.95,"color":"black"}]},{"id":"cms-tile-79","name":"RCJ CMS tile-79.png","elements":[{"type":"line","pts":[[150,0],[137.18,14.6],[80,14.62],[80,100],[80,102.96],[82.89,105.15],[150,105.06],[150,193.51],[146.82,193.47],[145.9,195.85],[110,195.26],[80,195.82],[80,285.64],[137.39,285.64],[150,300]],"w":20,"color":"black"}]},{"id":"cms-009","name":"RCJ CMS 009.png","elements":[{"type":"line","pts":[[0,150],[130,210],[220,150],[150,6.97],[150,0]],"w":19.48,"color":"black"}]},{"id":"cms-tile-59","name":"RCJ CMS tile-59.png","elements":[{"type":"line","pts":[[0,150],[100,150],[105.05,153.53]],"w":20,"color":"black"},{"type":"arc","c":[78.68,237.95],"r":88.44,"from":287.35,"to":319.86,"w":20,"color":"black"},{"type":"line","pts":[[146.29,180.94],[150,180],[180,160],[200,153.21],[200,150],[300,150]],"w":20,"color":"black"}]},{"id":"cms-tile-56","name":"RCJ CMS tile-56.png","elements":[{"type":"line","pts":[[0,150],[10,150],[10,190],[150,190],[150,110],[290,110],[290,150],[300,150]],"w":20,"color":"black"}]}],"zone":{"col":0,"row":0,"cols":4,"rows":3,"entrance":{"side":"N","k":3},"exit":{"side":"E","k":0},"red":"SW","green":"NW"},"start":{"col":0,"row":5,"side":"C"},"objects":[{"type":"obstacle","x":1350,"y":1350,"rot":135,"z":0,"shape":"box","w":100,"d":60,"h":150,"mass":2000},{"type":"bump","x":1307.68,"y":1647.68,"rot":135,"z":0,"length":240,"width":30,"height":10},{"type":"bump","x":1392.32,"y":1652.32,"rot":135,"z":0,"length":240,"width":30,"height":10},{"type":"bump","x":1875,"y":1650,"rot":90,"z":34.37,"length":240,"width":30,"height":10},{"type":"bump","x":2025,"y":1650,"rot":90,"z":103.11,"length":240,"width":30,"height":10},{"type":"bump","x":1650,"y":750,"rot":90,"z":68.74,"length":240,"width":30,"height":10},{"type":"bump","x":1875,"y":750,"rot":90,"z":171.85,"length":240,"width":30,"height":10},{"type":"bump","x":2025,"y":750,"rot":90,"z":240.59,"length":240,"width":30,"height":10},{"type":"bump","x":1950,"y":450,"rot":-180,"z":0,"length":240,"width":30,"height":10},{"type":"obstacle","x":450,"y":450,"rot":0,"z":0,"shape":"box","w":100,"d":60,"h":150,"mass":2000}]}
+    }
+  },
+  "robot": {
+    "rule": "learner"
+  },
+  "start": {
+    "nominal": {
+      "x": 0,
+      "y": 0,
+      "heading": 0
+    },
+    "vary": {
+      "xy": 0,
+      "heading": 0
+    },
+    "draw": "rcjStart-v1"
+  },
+  "runs": {
+    "min": 1,
+    "max": 20,
+    "default": 5,
+    "fixed": 10
+  },
+  "kernel": {
+    "name": "rcjGame",
+    "limitS": 480,
+    "referee": {
+      "rules": "rcj-2026",
+      "autoCaptain": true,
+      "victims": {
+        "live": 0,
+        "dead": 0
+      },
+      "victimSeed": "run"
+    }
+  },
+  "constants": {
+    "par": 80
+  },
+  "score": {
+    "run": "round(100 * (line + exit) / lineMax, 1)",
+    "values": {
+      "finishes": {
+        "value": "count(r in runs: r.finished)",
+        "unit": "games"
+      }
+    },
+    "summary": "round(sum(r in runs: r.points) / n, 1)"
+  },
+  "pass": "score >= 60 & finishes >= 8",
+  "sources": [
+    {
+      "doc": "docs/curriculum/G08.md",
+      "where": "G8.4 Rescue line open, the challenge paragraph and the level table (level 1)"
+    },
+    {
+      "doc": "vscode-evn-alpha/docs/COURSE_FORMAT_DESIGN.md",
+      "where": "§24, item 16: the referee's game as a course level (field.course, kernel.rcjGame, rcjStart-v1), as revision 2 (§24.13) restates it"
+    }
+  ]
+}

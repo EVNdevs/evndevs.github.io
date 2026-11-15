@@ -1,0 +1,189 @@
+{
+ "format": "evn-course/1",
+ "id": "perfect-parking-2",
+ "challenge": "perfect-parking",
+ "level": 2,
+ "version": 1,
+ "module": "G2.1",
+ "title": "Perfect parking \u00b7 Level 2: Turn back, then park",
+ "brief": "Drive until the front bumper reaches the turn-back line at 120 cm (118 cm or beyond counts), then reverse into the bay: its lines at 86 and 94 cm, its middle line at 90 cm. 30 s. 50 for parked after the turn-back line, up to 40 for closeness to the middle line (all 40 within 1 cm, 10 at a bay line), 10 for touching no cone. No par.",
+ "field": {
+  "arena": {
+   "size": [
+    2000,
+    600
+   ],
+   "startBox": [
+    0,
+    150,
+    215,
+    450
+   ],
+   "goal": null,
+   "obstacles": [
+    {
+     "name": "coneL",
+     "shape": "cylinder",
+     "x": 1100,
+     "y": 500,
+     "w": 80,
+     "d": 80,
+     "h": 150
+    },
+    {
+     "name": "coneR",
+     "shape": "cylinder",
+     "x": 1100,
+     "y": 100,
+     "w": 80,
+     "d": 80,
+     "h": 150
+    }
+   ],
+   "wallH": 100,
+   "wallT": 20,
+   "obstacleH": 150,
+   "startPaint": false,
+   "areas": [
+    {
+     "name": "startLine",
+     "rect": [
+      198.0,
+      150,
+      202.0,
+      450
+     ],
+     "paint": "black"
+    },
+    {
+     "name": "bayLine1",
+     "rect": [
+      1055.0,
+      150,
+      1065.0,
+      450
+     ],
+     "paint": "black"
+    },
+    {
+     "name": "bayLine2",
+     "rect": [
+      1135.0,
+      150,
+      1145.0,
+      450
+     ],
+     "paint": "black"
+    },
+    {
+     "name": "bayMiddle",
+     "rect": [
+      1098.0,
+      150,
+      1102.0,
+      450
+     ],
+     "paint": "black"
+    },
+    {
+     "name": "turnBack",
+     "rect": [
+      1395.0,
+      150,
+      1405.0,
+      450
+     ],
+     "paint": "black"
+    },
+    {
+     "name": "turnReached",
+     "rect": [
+      1290,
+      0,
+      2000,
+      600
+     ],
+     "paint": null
+    }
+   ]
+  }
+ },
+ "robot": {
+  "rule": "fixed",
+  "base": "junior-front90"
+ },
+ "start": {
+  "nominal": {
+   "x": 110,
+   "y": 300,
+   "heading": 0
+  },
+  "vary": {
+   "xy": 10,
+   "heading": 2
+  },
+  "draw": "uniform-square-v1"
+ },
+ "runs": {
+  "min": 1,
+  "max": 20,
+  "default": 5,
+  "fixed": 5
+ },
+ "kernel": {
+  "name": "pointToPoint",
+  "limitS": 30,
+  "goal": "footprintInside",
+  "end": "afterProgram",
+  "still": {
+   "s": 0.5,
+   "dps": 5,
+   "mms": 3
+  },
+  "final": "runEnd",
+  "visits": {
+   "targets": [
+    {
+     "area": "turnReached",
+     "dwell": {
+      "s": 0.001,
+      "mms": 100000
+     },
+     "facing": {
+      "heading": 0,
+      "tol": 8,
+      "dps": 100000
+     }
+    }
+   ]
+  }
+ },
+ "constants": {
+  "s0": 200,
+  "front": 90,
+  "lo": 860,
+  "hi": 940,
+  "mid": 900
+ },
+ "score": {
+  "run": "round(if(stopped & (endX + front * cosd(endHeading) - s0) >= lo & (endX + front * cosd(endHeading) - s0) <= hi & visitTime_1 >= 0, 50 + min(40, 50 - abs((endX + front * cosd(endHeading) - s0) - mid) / 10 * 10), 0) + if(touchesOf_coneL + touchesOf_coneR == 0, 10, 0), 1)",
+  "values": {
+   "finished": {
+    "value": "count(r in runs: r.stopped & (r.endX + front * cosd(r.endHeading) - s0) >= lo & (r.endX + front * cosd(r.endHeading) - s0) <= hi & r.visitTime_1 >= 0)",
+    "unit": "runs"
+   }
+  },
+  "summary": "round(sum(r in runs: r.points) / n, 1)"
+ },
+ "pass": "score >= 60 & finished >= 0.8 * n",
+ "sources": [
+  {
+   "doc": "docs/curriculum/G02.md",
+   "where": "G2.1 Measure the world, Challenge \u2014 Perfect parking: the lane, the ruler from the start line (here x 200), the front bumper (the Junior robot's front 90 mm), the bay, the level table (level 2), the scoring paragraph; \"How a run is measured\". The cones read as 150 mm high, 80 mm across, 200 mm either side of the lane's middle; the bay's lines 10 mm wide, centred on their marks; the turn-back judged by the axle's middle at 118 cm less the front's 90 mm, on a tick the robot faces down the lane within 8 degrees (a one-tick dwell with facing, CC-15: the bumper then at most 90 (1 - cos 8 deg) = 0.9 mm short of 118 cm; a robot turned round never counts, review k1 B1)"
+  },
+  {
+   "doc": "vscode-evn-alpha/docs/COURSE_FORMAT_DESIGN.md",
+   "where": "\u00a710.2 (endX / endY / endHeading, stopped), \u00a711.8 (end afterProgram), \u00a711.4 (touches by name), \u00a713.1 (the fixed robot), \u00a713.2 (uniform-square-v1), \u00a711.3 with CC-15's facing (a one-tick dwell facing down the lane)"
+  }
+ ]
+}

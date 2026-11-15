@@ -1,0 +1,324 @@
+{
+  "format": "evn-course/1",
+  "id": "shared-space-3",
+  "challenge": "shared-space",
+  "level": 3,
+  "version": 1,
+  "module": "G6.4",
+  "title": "Shared-space service robot · Level 3: A full service loop",
+  "brief": "As level 2 (the same robot: side distance sensors 30° each side, 60 mm up), a full service loop: collect the cup at table 3's, table 2's and table 5's pickup points in turn (one at a time: a cup is placed only in an empty tray, so tip each out at the station - the door open, the scoop tilted), take each to the blue station, then stop wholly in the grey parking bay. Never touch a person, never pass within 200 mm of one while faster than 100 mm/s. 60 × trays returned ÷ 3, plus 40 × min(1, par ÷ time) when all three are returned and the robot then parks (the time is the park's; no park, no speed points). The run ends when your program ends (and the robot stands still), or at 300 s. Pass: mean 60 or more, all three delivered in at least 4 of 5 runs, no run breaks the gate.",
+  "field": {
+    "arena": {
+      "size": [
+        3000,
+        2000
+      ],
+      "startBox": [
+        100,
+        850,
+        400,
+        1150
+      ],
+      "startPaint": false,
+      "goal": null,
+      "obstacles": [
+        {
+          "name": "table1",
+          "x": 2600,
+          "y": 350,
+          "w": 600,
+          "d": 600,
+          "h": 750,
+          "color": "#8a6a4a"
+        },
+        {
+          "name": "table2",
+          "x": 1500,
+          "y": 350,
+          "w": 600,
+          "d": 600,
+          "h": 750,
+          "color": "#8a6a4a"
+        },
+        {
+          "name": "table3",
+          "x": 400,
+          "y": 350,
+          "w": 600,
+          "d": 600,
+          "h": 750,
+          "color": "#8a6a4a"
+        },
+        {
+          "name": "table4",
+          "x": 2600,
+          "y": 1650,
+          "w": 600,
+          "d": 600,
+          "h": 750,
+          "color": "#8a6a4a"
+        },
+        {
+          "name": "table5",
+          "x": 1500,
+          "y": 1650,
+          "w": 600,
+          "d": 600,
+          "h": 750,
+          "color": "#8a6a4a"
+        },
+        {
+          "name": "table6",
+          "x": 400,
+          "y": 1650,
+          "w": 600,
+          "d": 600,
+          "h": 750,
+          "color": "#8a6a4a"
+        }
+      ],
+      "balls": [
+        {
+          "name": "cup3",
+          "x": 400,
+          "y": 600,
+          "d": 45,
+          "massG": 70,
+          "color": "#f5f5f5",
+          "on": "table3"
+        },
+        {
+          "name": "cup2",
+          "x": 1500,
+          "y": 600,
+          "d": 45,
+          "massG": 70,
+          "color": "#f5f5f5",
+          "on": "table2"
+        },
+        {
+          "name": "cup5",
+          "x": 1500,
+          "y": 1400,
+          "d": 45,
+          "massG": 70,
+          "color": "#f5f5f5",
+          "on": "table5"
+        }
+      ],
+      "areas": [
+        {
+          "name": "station",
+          "rect": [
+            2700,
+            800,
+            3000,
+            1200
+          ],
+          "paint": "blue"
+        },
+        {
+          "name": "park",
+          "rect": [
+            100,
+            850,
+            400,
+            1150
+          ],
+          "paint": "grey"
+        },
+        {
+          "name": "pick3",
+          "rect": [
+            250,
+            650,
+            550,
+            900
+          ],
+          "paint": null
+        },
+        {
+          "name": "pick2",
+          "rect": [
+            1350,
+            650,
+            1650,
+            900
+          ],
+          "paint": null
+        },
+        {
+          "name": "pick5",
+          "rect": [
+            1350,
+            1100,
+            1650,
+            1350
+          ],
+          "paint": null
+        }
+      ],
+      "wallH": 100,
+      "wallT": 20,
+      "obstacleH": 750
+    },
+    "random": [
+      {
+        "name": "pyA",
+        "draw": "uniform-v1",
+        "min": 250,
+        "max": 1750,
+        "step": 2
+      },
+      {
+        "name": "pdA",
+        "draw": "choice-v1",
+        "of": [
+          -1,
+          1
+        ]
+      },
+      {
+        "name": "pyB",
+        "draw": "uniform-v1",
+        "min": 250,
+        "max": 1750,
+        "step": 2
+      },
+      {
+        "name": "pdB",
+        "draw": "choice-v1",
+        "of": [
+          -1,
+          1
+        ]
+      }
+    ]
+  },
+  "robot": {
+    "rule": "fixed",
+    "base": "hawker-carrier-sides"
+  },
+  "start": {
+    "nominal": {
+      "x": 200,
+      "y": 1000,
+      "heading": 0
+    },
+    "vary": {
+      "xy": 15,
+      "heading": 3
+    },
+    "draw": "uniform-square-v1"
+  },
+  "runs": {
+    "min": 1,
+    "max": 20,
+    "default": 5,
+    "fixed": 5
+  },
+  "kernel": {
+    "name": "pointToPoint",
+    "limitS": 300,
+    "goal": "footprintInside",
+    "end": "afterProgram",
+    "still": {
+      "s": 0.1,
+      "dps": 5,
+      "mms": 3
+    },
+    "final": "runEnd",
+    "service": {
+      "cups": [
+        {
+          "cup": "cup3",
+          "pick": "pick3"
+        },
+        {
+          "cup": "cup2",
+          "pick": "pick2"
+        },
+        {
+          "cup": "cup5",
+          "pick": "pick5"
+        }
+      ],
+      "station": "station",
+      "park": "park"
+    },
+    "actors": {
+      "person": {
+        "r": 200,
+        "h": 1700,
+        "x": 950,
+        "y": [
+          250,
+          1750
+        ],
+        "v": 200,
+        "from": "pyA",
+        "dir": "pdA",
+        "waitWithin": 200,
+        "turnAfterS": 2,
+        "sep": 200
+      },
+      "person2": {
+        "r": 200,
+        "h": 1700,
+        "x": 2050,
+        "y": [
+          250,
+          1750
+        ],
+        "v": 200,
+        "from": "pyB",
+        "dir": "pdB",
+        "waitWithin": 200,
+        "turnAfterS": 2,
+        "sep": 200
+      }
+    },
+    "safety": {
+      "mm": 200,
+      "mms": 100
+    }
+  },
+  "constants": {
+    "par": 172.3,
+    "traysAsked": 3,
+    "limitS": 300
+  },
+  "score": {
+    "run": "if(safetyBreach, 0, 60 * (traysReturned / traysAsked) + if(traysReturned == traysAsked & serviceT > 0, 40 * min(1, par / serviceT), 0))",
+    "values": {
+      "delivered": {
+        "value": "count(r in runs: r.traysReturned >= traysAsked)",
+        "unit": "runs"
+      },
+      "breached": {
+        "value": "count(r in runs: r.safetyBreach)",
+        "unit": "runs"
+      }
+    },
+    "summary": "sum(r in runs: r.points) / n"
+  },
+  "pass": "score >= 60 & delivered >= 0.8 * n & breached == 0",
+  "sources": [
+    {
+      "doc": "docs/curriculum/G06.md",
+      "where": "G6.4 Robots for people, the challenge paragraph, the level table (level 3) and the safety gate"
+    },
+    {
+      "doc": "docs/curriculum/G06.md",
+      "where": "G6.4.5 Safe around people, the Deepen (the side distance sensors: the level's robot, owner item G6.4-9 (a)); G6.4.6's Deepen (tipping the tray out at the station)"
+    },
+    {
+      "doc": "docs/design/G64_SERVICE.md",
+      "where": "§2-§7 (the hall, the levels, the pickup, kernel.service, the people on C-3a's actors, kernel.safety)"
+    },
+    {
+      "doc": "docs/design/G121_COURIER.md",
+      "where": "§16 (C-3a's moving actors: the person's walk, its wait and turn)"
+    }
+  ]
+}

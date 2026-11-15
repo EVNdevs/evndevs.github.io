@@ -1,0 +1,99 @@
+{
+  "format": "evn-course/1",
+  "id": "checkerboard",
+  "challenge": "scenes",
+  "level": 4,
+  "version": 1,
+  "module": "G10.2",
+  "title": "Scene \u00b7 Checkerboard on a stand",
+  "brief": "A checkerboard of 10 x 7 squares of 25 mm (9 x 6 inner corners) on the face of a stand in the middle of the field, its middle 200 mm up: drive round it and photograph it from many poses to calibrate the camera. Each run scores 100 if the robot touches nothing.",
+  "field": {
+    "arena": {
+      "size": [
+        1600,
+        1600
+      ],
+      "startBox": [
+        0,
+        600,
+        400,
+        1000
+      ],
+      "goal": null,
+      "obstacles": [
+        {
+          "name": "stand",
+          "x": 1110,
+          "y": 800,
+          "w": 20,
+          "d": 320,
+          "h": 330,
+          "color": "#9a9ea3"
+        }
+      ],
+      "wallH": 100,
+      "wallT": 20,
+      "obstacleH": 100,
+      "prints": [
+        {
+          "name": "board",
+          "pattern": "checker:10x7:25",
+          "at": [
+            1100,
+            800,
+            200
+          ],
+          "yaw": 180,
+          "pitch": 0,
+          "size": [
+            250,
+            175
+          ],
+          "quiet": 30
+        }
+      ]
+    }
+  },
+  "robot": {
+    "rule": "learner"
+  },
+  "start": {
+    "nominal": {
+      "x": 200,
+      "y": 800,
+      "heading": 0
+    },
+    "vary": {
+      "xy": 0,
+      "heading": 0
+    },
+    "draw": "uniform-square-v1"
+  },
+  "runs": {
+    "min": 1,
+    "max": 20,
+    "default": 5,
+    "fixed": null
+  },
+  "kernel": {
+    "name": "pointToPoint",
+    "limitS": 120,
+    "goal": "footprintInside"
+  },
+  "constants": {},
+  "score": {
+    "run": "if(touches == 0, 100, 0)",
+    "summary": "round(sum(r in runs: r.points) / count(r in runs: true), 1)"
+  },
+  "pass": null,
+  "sources": [
+    {
+      "doc": "docs/curriculum/G10.md",
+      "where": "G10.2.7 Core 15-30 and Sim: the checkerboard (9 x 6 inner corners, 25 mm squares) placed on the course, or the robot driven around a fixed board"
+    },
+    {
+      "doc": "docs/COURSE_CONTENT_DESIGN.md",
+      "where": "\u00a74 prints (checker:<nx>x<ny>:<sq>), \u00a75.2 Scenes (the checkerboard on a stand), \u00a77 CC-6"
+    }
+  ]
+}

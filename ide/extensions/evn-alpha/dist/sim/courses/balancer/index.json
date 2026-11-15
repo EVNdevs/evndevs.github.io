@@ -1,0 +1,34 @@
+{
+ "format": "evn-course-index/1",
+ "generated": "node scripts/course_index.js --write; do not edit",
+ "levels": [
+  {
+   "file": "balancer/level-1.v1.json",
+   "id": "balancer-1",
+   "version": 1,
+   "sha256": "99727e0a808234e322e792be5e1edd6c1fe4c9367b30e5359de05a08d1387606",
+   "current": true,
+   "title": "Balancer · Level 1: Balance 30 s",
+   "limit": 30,
+   "runs": {
+    "default": 5,
+    "fixed": 10
+   },
+   "bodyRig": true
+  },
+  {
+   "file": "balancer/level-2.v1.json",
+   "id": "balancer-2",
+   "version": 1,
+   "sha256": "3f19445719be67f9afe3b2fa9ee8b51e4a454ba0a3ead1be3354f22ee7e9babf",
+   "current": true,
+   "title": "Balancer · Level 2: Hold your place under three pushes",
+   "limit": 30,
+   "runs": {
+    "default": 5,
+    "fixed": 10
+   },
+   "bodyRig": true
+  }
+ ]
+}

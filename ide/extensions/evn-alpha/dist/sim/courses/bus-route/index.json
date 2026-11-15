@@ -1,0 +1,45 @@
+{
+ "format": "evn-course-index/1",
+ "generated": "node scripts/course_index.js --write; do not edit",
+ "levels": [
+  {
+   "file": "bus-route/level-1.v1.json",
+   "id": "bus-route-1",
+   "version": 1,
+   "sha256": "787d32043d09745c0905918a39c6a38bdb96cd2a28d805069f1217e335a22a7a",
+   "current": true,
+   "title": "Bus route · Level 1: The Oval",
+   "limit": 90,
+   "runs": {
+    "default": 5,
+    "fixed": 5
+   }
+  },
+  {
+   "file": "bus-route/level-2.v1.json",
+   "id": "bus-route-2",
+   "version": 1,
+   "sha256": "ae7044377c8761688befda2fcb52fde398c425c1c6e33baf902a601bceb1d956",
+   "current": true,
+   "title": "Bus route · Level 2: The yellow square",
+   "limit": 90,
+   "runs": {
+    "default": 5,
+    "fixed": 5
+   }
+  },
+  {
+   "file": "bus-route/level-3.v1.json",
+   "id": "bus-route-3",
+   "version": 1,
+   "sha256": "beadfefcb9b5742d20c9ae33375a4330c6928cc631387e7ed30d7453165ed71c",
+   "current": true,
+   "title": "Bus route · Level 3: The sharp bend",
+   "limit": 90,
+   "runs": {
+    "default": 5,
+    "fixed": 5
+   }
+  }
+ ]
+}

@@ -1,0 +1,245 @@
+{
+ "format": "evn-course/1",
+ "id": "mini-mission-2",
+ "challenge": "mini-mission",
+ "level": 2,
+ "version": 1,
+ "module": "G4.3",
+ "title": "Mini mission \u00b7 Level 2: Cubes home, then park",
+ "brief": "Push the red cube into the red zone and the blue cube into the blue zone (each wholly inside, on the far wall), then park the whole robot in the garage (bottom right, its black outline). The cubes stand up to 20 mm each way (along and across) from their level-1 places, a new place each run. The run ends when your program ends, or at 120 s (the round); it finishes when the program ends within the round. 35 for each cube wholly in its zone, 20 for the whole robot inside the garage when the run ends, 10 for no field damage. No speed points: the mean time (par 50 s) only breaks ties.",
+ "field": {
+  "arena": {
+   "size": [
+    2000,
+    1200
+   ],
+   "startBox": [
+    0,
+    0,
+    250,
+    250
+   ],
+   "goal": null,
+   "wallH": 50,
+   "wallT": 20,
+   "obstacleH": 50,
+   "obstacles": [
+    {
+     "name": "cubeRed",
+     "x": {
+      "$": "900 + redDx"
+     },
+     "y": {
+      "$": "600 + redDy"
+     },
+     "w": 50,
+     "d": 50,
+     "h": 50,
+     "massG": 40,
+     "color": "#dc1e1e"
+    },
+    {
+     "name": "cubeBlue",
+     "x": {
+      "$": "1100 + blueDx"
+     },
+     "y": {
+      "$": "600 + blueDy"
+     },
+     "w": 50,
+     "d": 50,
+     "h": 50,
+     "massG": 40,
+     "color": "#1e50dc"
+    }
+   ],
+   "areas": [
+    {
+     "name": "line",
+     "rect": [
+      0,
+      290,
+      2000,
+      310
+     ],
+     "paint": "black"
+    },
+    {
+     "name": "shelf",
+     "rect": [
+      850,
+      525,
+      1150,
+      675
+     ],
+     "paint": null
+    },
+    {
+     "name": "zoneRed",
+     "rect": [
+      800,
+      1000,
+      1000,
+      1200
+     ],
+     "paint": "red"
+    },
+    {
+     "name": "zoneBlue",
+     "rect": [
+      1000,
+      1000,
+      1200,
+      1200
+     ],
+     "paint": "blue"
+    },
+    {
+     "name": "garage",
+     "rect": [
+      1700,
+      0,
+      2000,
+      300
+     ],
+     "paint": null
+    },
+    {
+     "name": "garageW",
+     "rect": [
+      1700,
+      0,
+      1710,
+      300
+     ],
+     "paint": "black"
+    },
+    {
+     "name": "garageS",
+     "rect": [
+      1700,
+      0,
+      2000,
+      10
+     ],
+     "paint": "black"
+    },
+    {
+     "name": "garageE",
+     "rect": [
+      1990,
+      0,
+      2000,
+      300
+     ],
+     "paint": "black"
+    }
+   ]
+  },
+  "random": [
+   {
+    "name": "redDx",
+    "draw": "uniform-v1",
+    "min": -20,
+    "max": 20,
+    "step": 10
+   },
+   {
+    "name": "redDy",
+    "draw": "uniform-v1",
+    "min": -20,
+    "max": 20,
+    "step": 10
+   },
+   {
+    "name": "blueDx",
+    "draw": "uniform-v1",
+    "min": -20,
+    "max": 20,
+    "step": 10
+   },
+   {
+    "name": "blueDy",
+    "draw": "uniform-v1",
+    "min": -20,
+    "max": 20,
+    "step": 10
+   }
+  ]
+ },
+ "robot": {
+  "rule": "fixed",
+  "base": "odometry-imu8"
+ },
+ "start": {
+  "nominal": {
+   "x": 125,
+   "y": 125,
+   "heading": 0
+  },
+  "vary": {
+   "xy": 15,
+   "heading": 3
+  },
+  "draw": "uniform-square-v1"
+ },
+ "runs": {
+  "min": 1,
+  "max": 20,
+  "default": 5,
+  "fixed": 5
+ },
+ "kernel": {
+  "name": "pointToPoint",
+  "limitS": 120,
+  "goal": "footprintInside",
+  "final": "runEnd",
+  "place": {
+   "items": [
+    {
+     "name": "cubeRed",
+     "areas": [
+      "zoneRed"
+     ]
+    },
+    {
+     "name": "cubeBlue",
+     "areas": [
+      "zoneBlue"
+     ]
+    }
+   ],
+   "robotAreas": [
+    "garage"
+   ]
+  }
+ },
+ "constants": {
+  "par": 50
+ },
+ "score": {
+  "run": "round(if(wholly_cubeRed_zoneRed, 35, 0) + if(wholly_cubeBlue_zoneBlue, 35, 0) + if(robotWholly_garage, 20, 0) + 10, 1)",
+  "values": {
+   "finished": {
+    "value": "count(r in runs: r.time < 120)",
+    "unit": "runs"
+   },
+   "meanTime": {
+    "value": "round(sum(r in runs: r.time) / n, 2)",
+    "unit": "s"
+   }
+  },
+  "summary": "round(sum(r in runs: r.points) / n, 1)"
+ },
+ "pass": "score >= 60 & finished >= 0.8 * n",
+ "sources": [
+  {
+   "doc": "docs/curriculum/G04.md",
+   "where": "G4.3 Missions, Challenge - Mini mission: the mat (2000 x 1200, walls 50 mm), the start area bottom-left, the line 300 mm from the bottom wall, the cubes (50 mm, 40 g) on the shelf in the middle, the zones along the far wall and the garage bottom-right (their places the lane's: the record gives sizes only; the zones above the cubes, the shelf unpainted: no grey ink; the garage's black outline drawn 10 mm wide, its north side the line's own paint), the level table (level 2: objects +-20 mm - each cube's x and y drawn per run, uniform-v1 in 10 mm steps (-20, -10, 0, 10, 20: the four draws' 625 fields; the field check enumerates every one in course_draws.js --check, about 1.3 ms each); starts +-15 mm, +-3 deg; par 50 s), the scoring paragraph (35 a cube wholly in its zone, 20 the whole robot inside the garage (its 300 x 300 square, outline included, judged on the end tick), + 10 no field damage: at level 2 no object the task does not move; the time a tie-break only)"
+  },
+  {
+   "doc": "vscode-evn-alpha/docs/COURSE_FORMAT_DESIGN.md",
+   "where": "\u00a722 (kernel.place: wholly_<item>_<area> and robotWholly_garage on the end tick), \u00a714.2 (scalars in geometry: each cube's x / y over its draws), \u00a711.1 (loose obstacles: massG), \u00a713.1 (the fixed robot: the class robot with the IMU on I2C 8, G04.md G4.3's robot)"
+  }
+ ]
+}

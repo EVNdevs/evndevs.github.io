@@ -1,0 +1,115 @@
+{
+  "format": "evn-course/1",
+  "id": "line-time-trial-1",
+  "challenge": "line-time-trial",
+  "level": 1,
+  "version": 1,
+  "module": "G3.2",
+  "title": "Line time-trial \u00b7 Level 1: The Oval",
+  "brief": "The Oval, two laps: a 2142 mm loop (600 mm straights joined by half circles of radius 150 mm, the simulator's Oval course), a 20 mm black line on white. The robot starts on the line 60 mm along the south straight, heading east (anticlockwise), moved up to 10 mm either way and turned up to 3 degrees (run 1 at the nominal start). The robot is the class robot (Configure robot's default: four downward colour sensors 24 and 48 mm ahead, 16 mm either side); a run on a changed robot is not this level's. The clock starts when the middle of the robot's axle first crosses the start line, 40 mm ahead of the nominal start, and stops when it crosses it the second time after that (two laps, 4285 mm), which ends the run. The run is finished if the axle's middle never goes more than 150 mm from the line's centre and the line is never under none of the sensors for more than 5 s at a time, read on every 1 ms tick from the start line's crossing; the first tick that breaks either rule ends the run, and so does 60 s. Score per run (G03.md's A-081 scoring: a tuned two-state follower passes levels 1 and 2 under the first scoring): 40 for finishing, + 30 x min(1, par / time), + 30 if the axle's middle was never more than 20 mm off the line; 0 for a run that does not finish. Par 18 s. Pass: a mean of at least 60 over the 5 runs, and at least 4 of 5 runs finish.",
+  "field": {
+    "arena": {
+      "size": [
+        1600,
+        1100
+      ],
+      "startBox": [
+        540,
+        380,
+        580,
+        420
+      ],
+      "goal": null,
+      "obstacles": [],
+      "wallH": 100,
+      "wallT": 20,
+      "obstacleH": 60,
+      "startPaint": false,
+      "lines": [
+        {
+          "name": "oval",
+          "path": [
+            [
+              "S",
+              600
+            ],
+            [
+              "A",
+              150,
+              180
+            ],
+            [
+              "S",
+              600
+            ],
+            [
+              "A",
+              150,
+              180
+            ]
+          ],
+          "at": [
+            500,
+            400,
+            0
+          ],
+          "line": 20,
+          "paint": "black",
+          "startLine": 100
+        }
+      ]
+    }
+  },
+  "robot": {
+    "rule": "fixed"
+  },
+  "start": {
+    "nominal": {
+      "x": 560,
+      "y": 400,
+      "heading": 0
+    },
+    "vary": {
+      "xy": 10,
+      "heading": 3
+    },
+    "draw": "uniform-square-v1"
+  },
+  "runs": {
+    "min": 1,
+    "max": 20,
+    "default": 5,
+    "fixed": 5
+  },
+  "kernel": {
+    "name": "pointToPoint",
+    "limitS": 60,
+    "goal": "footprintInside",
+    "final": "runEnd",
+    "line": {
+      "line": "oval",
+      "laps": 2,
+      "offMm": 150,
+      "lostS": 5,
+      "maxLapS": 60
+    }
+  },
+  "constants": {
+    "par": 18
+  },
+  "score": {
+    "run": "if(lapValid, 40 + 30 * min(1, par / lapTime) + if(maxOffset <= 20, 30, 0), 0)",
+    "summary": "round(sum(r in runs: r.points) / count(r in runs: true), 1)"
+  },
+  "pass": "sum(r in runs: r.points) / count(r in runs: true) >= 60 & count(r in runs: r.lapValid) >= 0.8 * n",
+  "sources": [
+    {
+      "doc": "docs/curriculum/G03.md",
+      "where": "G3.2 Challenge - Line time-trial, the measurement rules and the level table, level 1 (the Oval, two laps, par 18 s)"
+    },
+    {
+      "doc": "vscode-evn-alpha/docs/COURSE_FORMAT_DESIGN.md",
+      "where": "\u00a720 item 11: arena.lines and kernel.line (lane e1-line); G3.2 L1 as course data (lane w12-c1g3)"
+    }
+  ]
+}

@@ -1,0 +1,95 @@
+{
+  "format": "evn-course/1",
+  "id": "shape-artist-3",
+  "challenge": "shape-artist",
+  "level": 3,
+  "version": 1,
+  "module": "G4.1",
+  "title": "Shape artist · Level 3: A star on a mystery robot",
+  "brief": "Practice only, no pass, until P1 (CHK) gives the record's calibration run: one ten-turn run (a turn of 3600 degrees) on the same mystery robot before the scored runs. Today every Run challenge draws a new robot, so no run can measure the robot the scored runs meet. The class robot starts in the middle of an empty 2400 x 2400 mm floor facing +x (starts vary 20 mm and 5 degrees); the level fixes the robot: a mystery robot, the class robot with its axle track drawn for each job (one seed, the same robot on all five runs) between 172 and 186 mm and not shown (not necessarily the class robot's 178 mm; the wheels cannot count it). The pen is the middle of the axle. The run ends when the program ends, or at 60 s. Draw a five-point star of 500 mm lines (turns of 144 degrees). The closing error is the distance from where the pen starts to where it ends. 50 points for drawing every side without touching a wall (the pen travels 90 % of the perimeter and the trail encloses 80 % of the star's area, its inner pentagon counted twice), plus 40 for the close (all 40 at a closing error of 10 mm or less, 40 x 10 / error above), plus 10 for ending within 2 degrees of the start heading. A run that does not draw every side scores 0. Once scored, its pass is level 1's: mean 60 or more over 5 runs, 4 of them finishing (every side drawn, no wall touched). Par error: 10 mm.",
+  "field": {
+    "arena": {
+      "size": [
+        2400,
+        2400
+      ],
+      "startBox": [
+        1050,
+        1050,
+        1350,
+        1350
+      ],
+      "goal": null,
+      "obstacles": [],
+      "wallH": 100,
+      "wallT": 20,
+      "obstacleH": 150
+    }
+  },
+  "robot": {
+    "rule": "fixed",
+    "set": {
+      "axleTrack": 179
+    },
+    "draw": {
+      "axleTrack": {
+        "d": 7
+      }
+    },
+    "drawPer": "job"
+  },
+  "start": {
+    "nominal": {
+      "x": 1200,
+      "y": 1200,
+      "heading": 0
+    },
+    "vary": {
+      "xy": 20,
+      "heading": 5
+    },
+    "draw": "uniform-square-v1"
+  },
+  "runs": {
+    "min": 1,
+    "max": 20,
+    "default": 5,
+    "fixed": 5
+  },
+  "kernel": {
+    "name": "pointToPoint",
+    "limitS": 60,
+    "goal": "footprintInside",
+    "final": "runEnd",
+    "trail": {
+      "pieces": 1
+    }
+  },
+  "constants": {
+    "perim": 2500,
+    "area1": 101537,
+    "parErr": 10,
+    "headDeg": 2
+  },
+  "score": {
+    "run": "if(trailLength >= 0.9 * perim & pieceArea_1 >= 0.8 * area1, let e = pieceClose_1 in round(if(touches == 0, 50, 0) + if(e <= parErr, 40, 40 * parErr / e) + if(abs(wrap180(endHeading - startHeading)) <= headDeg, 10, 0), 1), 0)",
+    "values": {
+      "finished": {
+        "value": "count(r in runs: r.trailLength >= 0.9 * perim & r.pieceArea_1 >= 0.8 * area1 & r.touches == 0)",
+        "unit": "runs"
+      }
+    },
+    "summary": "round(sum(r in runs: r.points) / n, 1)"
+  },
+  "pass": null,
+  "sources": [
+    {
+      "doc": "docs/curriculum/G04.md",
+      "where": "G4.1 Shape artist, the challenge paragraph, the level table (level 3) and *The mystery robot (level 3)*"
+    },
+    {
+      "doc": "vscode-evn-alpha/docs/COURSE_FORMAT_DESIGN.md",
+      "where": "§18 (kernel.trail, P0c-4), §10 (runEnd), §13 (the fixed robot, its drawn axle track, one robot a job; §13.4's G4.1 L3 calibration run: P1's), §4.2 item 7"
+    }
+  ]
+}

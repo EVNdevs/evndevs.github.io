@@ -22,6 +22,7 @@ _s_m_gen, _s_m_lib, _s_m_limits, _s_m_model, _s_m_run = _s.m_gen, _s.m_lib, _s.m
 _s_m_limit_at_cap = _s.m_limit_at_cap
 _s_m_run_angle, _s_m_run_target, _s_m_run_time = _s.m_run_angle, _s.m_run_target, _s.m_run_time
 _s_m_stall_tol, _s_m_stalled, _s_m_state, _s_m_stop = _s.m_stall_tol, _s.m_stalled, _s.m_state, _s.m_stop
+_s_m_count = _s.m_count
 _s_m_tol, _s_m_track, _s_m_vcap, _s_m_volts, _s_m_wait = _s.m_tol, _s.m_track, _s.m_vcap, _s.m_volts, _s.m_wait
 _s_db_close, _s_db_closed, _s_db_curve, _s_db_done = _s.db_close, _s.db_closed, _s.db_curve, _s.db_done
 _s_db_drive, _s_db_new, _s_db_reset, _s_db_settings = _s.db_drive, _s.db_new, _s.db_reset, _s.db_settings
@@ -58,6 +59,22 @@ def _num(v, what):
     if type(v) is bool or not isinstance(v, (int, float)):
         raise TypeError("%s must be a number" % what)
     if v != v or v in (float("inf"), float("-inf")):
+        raise ValueError("%s must be a finite number" % what)
+    return v
+
+
+# a double rounds to float32's inf from 2**128 - 2**103 up (round to nearest even): the board's
+# (float)mp_obj_get_float() then refuses it (evn_motor.c evn_mp_finite_float), and a big int (10**400) too, where a
+# test on the double passes it (Razer simdrive N2: drive(10**400, 0) drove at the cap). Every Motor / DriveBase argument
+# the board reads through evn_mp_finite_float takes _num32, under the board's name for it (w11-rev-w8 S3). The boundary
+# is a double's: the board parses a literal straight to float32 and a big int with mpz_as_float, so within about 1 ulp
+# of it the two may disagree (review w8-audit-a r1 N1)
+_F32_INF = 3.4028235677973366e38
+
+
+def _num32(v, what):
+    """_num, then the board's float32 test: 'must be a finite number' past float32's range"""
+    if not -_F32_INF < _num(v, what) < _F32_INF:
         raise ValueError("%s must be a finite number" % what)
     return v
 
@@ -170,8 +187,11 @@ class Color:
         self._name = None
 
     def __repr__(self):
-        if self._name:
-            return "Color." + self._name
+        # evn_color.c color_print: a value equal to a named colour prints as its name (hsv() on a calibrated white is
+        # Color.WHITE there), the table's first match (s1106z simcolor Left)
+        name = self._name or _COLOR_NAMES.get((self.h, self.s, self.v))
+        if name:
+            return "Color." + name
         return "Color(h=%d, s=%d, v=%d)" % (self.h, self.s, self.v)
 
     def __eq__(self, other):
@@ -195,6 +215,7 @@ class Color:
         return Color(self.h, self.s, self.v / f)
 
 
+_COLOR_NAMES = {}   # (h, s, v) -> the first named colour of hal_color.h's table with that value
 for _n, _h, _sat, _v in (("NONE", 0, 0, 0), ("BLACK", 0, 0, 10), ("GRAY", 0, 0, 50), ("WHITE", 0, 0, 100),
                          ("RED", 0, 100, 100), ("BROWN", 30, 100, 50), ("ORANGE", 30, 100, 100),
                          ("YELLOW", 60, 100, 100), ("GREEN", 120, 100, 100), ("CYAN", 180, 100, 100),
@@ -202,6 +223,7 @@ for _n, _h, _sat, _v in (("NONE", 0, 0, 0), ("BLACK", 0, 0, 10), ("GRAY", 0, 0, 
     _c = Color(_h, _sat, _v)
     _c._name = _n
     setattr(Color, _n, _c)
+    _COLOR_NAMES.setdefault((_c.h, _c.s, _c.v), _n)
 
 
 # ---------------------------------------------------------------- motors
@@ -286,21 +308,21 @@ class Control:
             return (int(round(m._out_speed(sp / k))), acc, int(round(m._torque_now())))
         sp = ac = dc = -1
         if speed is not None:
-            if not _num(speed, "speed limit") > 0:
+            if not _num32(speed, "speed limit") > 0:
                 raise ValueError("speed limit must be positive")
             sp = m._in_speed(speed) * k
         if acceleration is not None:
             if isinstance(acceleration, (tuple, list)):
                 if len(acceleration) != 2:
                     raise ValueError("acceleration must be a number or (accel, decel)")
-                up, down = _num(acceleration[0], "acceleration"), _num(acceleration[1], "deceleration")
+                up, down = _num32(acceleration[0], "acceleration"), _num32(acceleration[1], "deceleration")
             else:
-                up = down = _num(acceleration, "acceleration")
+                up = down = _num32(acceleration, "acceleration")
             if not (up > 0 and down > 0):
                 raise ValueError("acceleration must be positive")
             ac, dc = up * k, down * k
         if torque is not None:
-            if not _num(torque, "torque limit") > 0:
+            if not _num32(torque, "torque limit") > 0:
                 raise ValueError("torque limit must be positive")
         _s_m_limits(m.port, sp, ac, dc)
         if torque is not None:
@@ -319,9 +341,9 @@ class Control:
         m = self._m
         if speed is None and position is None:
             return (float(m._out_speed(self._tol[0])), float(self._tol[1]))
-        if speed is not None and _num(speed, "speed tolerance") < 0:
+        if speed is not None and _num32(speed, "speed tolerance") < 0:
             raise ValueError("speed tolerance must not be negative")
-        if position is not None and not _num(position, "position tolerance") > 0:
+        if position is not None and not _num32(position, "position tolerance") > 0:
             raise ValueError("position tolerance must be positive")
         if speed is not None:
             self._tol[0] = float(m._in_speed(speed))
@@ -333,7 +355,7 @@ class Control:
         m = self._m
         if speed is None and time is None:
             return (float(m._out_speed(self._stall[0])), int(self._stall[1]))
-        if speed is not None and _num(speed, "stall speed") < 0:
+        if speed is not None and _num32(speed, "stall speed") < 0:
             raise ValueError("stall speed must not be negative")
         if time is not None:
             t = _int(time)
@@ -393,6 +415,11 @@ class Model:
         self._set[:4] = v[:4]
 
 
+# evn_motor.c EVN_AIM_CHAIN_MAX_DEG: a relative move counts from a completed move's held aim while the shaft is within
+# this many output degrees of it, else from the measured angle (relative_start_user_deg)
+_AIM_MAX = 45.0
+
+
 class Motor:
     def __init__(self, port, positive_direction=Direction.CLOCKWISE, gears=None, reset_angle=True, profile=None,
                  speed_unit=SpeedUnit.DEG_S, *, model=None):
@@ -405,7 +432,7 @@ class Motor:
         positive_direction = _int(positive_direction)
         if positive_direction not in (Direction.CLOCKWISE, Direction.COUNTERCLOCKWISE):
             raise ValueError("positive_direction must be a Direction value")
-        if profile is not None and _num(profile, "profile") <= 0:
+        if profile is not None and _num32(profile, "profile") <= 0:
             raise ValueError("profile must be positive")
         self._ratio = _ratio(gears)
         if model is not None:
@@ -440,6 +467,10 @@ class Motor:
         # max_voltage: 9000 mV on every library motor, its rating no cap (evn_default_max_voltage_mv; the simulated
         # robot has no custom motor, the one kind a rating caps)
         self._vmax = 9000
+        # a calibrated port (every simulated one reads as calibrated: evn.calibration()) raises a fixed limit to the
+        # measured no-load speed at the present pack, and a limit at the cap takes it (evn_motor.c:953-965, motor_make_new:
+        # `if (fs > m->speed_limit) m->speed_limit = fs`, then speed_limit_at_cap), so run(100) in PERCENT is not clamped
+        _s_m_limit_at_cap(port, self._full_shaft(), True)
         self.control = Control(self)
         self.model = Model(self)
         if profile is not None:
@@ -463,7 +494,7 @@ class Motor:
         return self._full_k * _s_m_full(self.port, self._vmax / 1000.0)
 
     def _in_speed(self, v):
-        _num(v, "speed")
+        _num32(v, "speed")
         if self._unit == SpeedUnit.PERCENT:
             return v * self._full_shaft() / self._ratio / 100.0
         return v
@@ -506,8 +537,9 @@ class Motor:
 
     def reset_angle(self, angle=None, /):
         self._live()
-        th = _s_m_state(self.port)[0]
-        self._off = th * self._sign / self._ratio - (0 if angle is None else _num(angle, "angle"))
+        # the count without the encoder's jitter (docs/design/ARM_NOISE.md: a reset on a noisy reading would bias the run)
+        th = _s_m_count(self.port)
+        self._off = th * self._sign / self._ratio - (0 if angle is None else _num32(angle, "angle"))
 
     def speed(self):
         self._live()
@@ -546,28 +578,39 @@ class Motor:
 
     def dc(self, duty, /):
         self._live()
-        _chk(_s_m_dc(self.port, _num(duty, "duty") * self._sign))
+        _chk(_s_m_dc(self.port, _num32(duty, "duty") * self._sign))
 
     def run_time(self, speed, time, then=Stop.HOLD, wait=True):
         self._live()
+        # the board's two paths (evn_motor.c:1335-1356): an int judged exactly, a float through evn_mp_finite_float and
+        # then as its float32 (2147483647.0 rounds up to 2147483648.0 there), each with the board's message
         _num(time, "time")
-        if not 0 <= time <= 2147483647:
-            raise ValueError("time must be 0 to 2147483647 ms")
-        _chk(_s_m_run_time(self.port, self._in_speed(speed) * self._sign * self._ratio, time, self._then(then)))
+        if type(time) is float:
+            _num32(time, "time")
+            if time < 0:
+                raise ValueError("time must not be negative")
+            if _struct.unpack("f", _struct.pack("f", time))[0] >= 2147483648.0:
+                raise ValueError("time must be at most 2147483647 ms (24.8 days); a float this large rounds to 2147483648 "
+                                 "in this port's 32-bit floats - pass an int for the exact bound")
+        elif time < 0:
+            raise ValueError("time must not be negative")
+        elif time > 2147483647:
+            raise ValueError("time must be at most 2147483647 ms (24.8 days)")
+        _chk(_s_m_run_time(self.port, self._in_speed(speed) * self._sign * self._ratio, time, self._then(then), _AIM_MAX * self._ratio))
         if wait:
             self._wait()
 
     def run_angle(self, speed, rotation_angle, then=Stop.HOLD, wait=True):
         self._live()
-        _num(rotation_angle, "rotation_angle")
+        _num32(rotation_angle, "rotation_angle")
         v = self._mag(speed) * (-1 if speed < 0 else 1)
-        _chk(_s_m_run_angle(self.port, v * self._ratio, rotation_angle * self._ratio * self._sign, self._then(then)))
+        _chk(_s_m_run_angle(self.port, v * self._ratio, rotation_angle * self._ratio * self._sign, self._then(then), _AIM_MAX * self._ratio))
         if wait:
             self._wait()
 
     def run_target(self, speed, target_angle, then=Stop.HOLD, wait=True):
         self._live()
-        _num(target_angle, "target_angle")
+        _num32(target_angle, "target_angle")
         shaft = (target_angle + self._off) * self._ratio * self._sign
         v = self._mag(speed)
         _chk(_s_m_run_target(self.port, v * self._ratio, shaft, self._then(then)))
@@ -580,7 +623,7 @@ class Motor:
             raise ValueError("then=Stop.NONE: the motor cannot keep running after the stall")
         self._then(then)
         if duty_limit is not None:
-            d = _num(duty_limit, "duty_limit")
+            d = _num32(duty_limit, "duty_limit")
             if not 0 < d <= 100:
                 raise ValueError("duty_limit must be 0..100 %")
             # the stall force: this share of settings()' max_voltage (the pack, when that is above it)
@@ -598,21 +641,23 @@ class Motor:
 
     def track_target(self, target_angle, /):
         self._live()
-        _chk(_s_m_track(self.port, (_num(target_angle, "target_angle") + self._off) * self._ratio * self._sign))
+        _chk(_s_m_track(self.port, (_num32(target_angle, "target") + self._off) * self._ratio * self._sign))
 
     def speed_unit(self, unit=None, /):
+        """motor_speed_unit: mp_obj_get_int, then the board's message"""
         self._live()
         if unit is None:
             return self._unit
+        unit = _int(unit)
         if unit not in (SpeedUnit.DEG_S, SpeedUnit.PERCENT):
-            raise ValueError("unit must be SpeedUnit.DEG_S or SpeedUnit.PERCENT")
+            raise ValueError("speed_unit must be a SpeedUnit value")
         self._unit = unit
 
     def full_speed(self, deg_s=None, /):
         self._live()
         if deg_s is None:
             return int(round(self._full_shaft() / self._ratio))
-        v = _num(deg_s, "full speed")
+        v = _num32(deg_s, "full speed")
         if not v > 0:
             raise ValueError("full speed must be positive")
         self._full_k = v * self._ratio / _s_m_full(self.port, self._vmax / 1000.0)
@@ -620,22 +665,27 @@ class Motor:
     def calibrate(self, wait=True):
         self._live()
         r = _s_m_cal(self.port)
+        if not wait:
+            # the board returns with the run started (evn_motor.c:1644-1647) and applies nothing: the 100 % model and the
+            # limit follow the record at a waited calibrate() that collects it, or at the next Motor(port) (review sim75
+            # r1 N4: applied here at once)
+            return None
         # the 100 % model is the calibration's again; the limit rises to its figure, and one at the cap takes it (evn_motor.c)
         self._full_k = 1.0
         _s_m_limit_at_cap(self.port, self._full_shaft(), True)
-        return (r[0], r[1], r[2], r[3]) if wait else None
+        return (r[0], r[1], r[2], r[3])
 
     def settings(self, max_voltage=None, *, stall_timeout=None):
         self._live()
         if max_voltage is None and stall_timeout is None:
             return (self._vmax, self._stall_timeout)
         if stall_timeout is not None:
-            ms = _num(stall_timeout, "stall_timeout")
+            ms = _num32(stall_timeout, "stall_timeout")
             if ms < 0 or ms > 60000 or 0 < ms < 1:
                 raise ValueError("stall_timeout must be 0 (wait forever) or 1..60000 ms")
             self._stall_timeout = int(ms + 0.5)
         if max_voltage is not None:
-            v = int(_num(max_voltage, "max_voltage"))
+            v = int(_num32(max_voltage, "max_voltage"))
             if not 0 <= v <= 12000:
                 raise ValueError("max_voltage must be 0..12000 mV")
             self._vmax = max(v, 1)    # 0 mV is the smallest cap, not "uncapped" (evn_motor.c), and settings() reads it
@@ -662,23 +712,36 @@ class Motor:
 class DriveBase:
     def __init__(self, left_motor, right_motor, wheel_diameter, axle_track, *, imu=None, compass=None,
                  declination=None, pose=None, speed_unit=SpeedUnit.DEG_S):
-        if not isinstance(left_motor, Motor) or not isinstance(right_motor, Motor):
-            raise TypeError("left_motor and right_motor must be Motor objects")
-        if left_motor is right_motor or left_motor.port == right_motor.port:
-            raise ValueError("a motor cannot be both wheels")
-        left_motor._live()
-        right_motor._live()
-        if not 1 <= _num(wheel_diameter, "wheel_diameter") <= 1000:
-            raise ValueError("wheel_diameter must be 1..1000 mm")
-        if not 1 <= _num(axle_track, "axle_track") <= 2000:
-            raise ValueError("axle_track must be 1..2000 mm")
+        # the SpeedUnit first, an int keyword (MP_ARG_INT), before the wheels are looked at (evn_drivebase.c:910-915)
+        speed_unit = _int(speed_unit)
+        if speed_unit not in (SpeedUnit.DEG_S, SpeedUnit.PERCENT):
+            raise ValueError("speed_unit must be a SpeedUnit value")
+        # each wheel as evn_drivebase.c:917-918 takes it (evn_mp_motor_from_obj: an evn.Motor, then open), the left one
+        # first, then the two told apart (:919); then both sizes, judged together on open ranges (:928-931)
+        for m in (left_motor, right_motor):
+            if not isinstance(m, Motor):
+                raise TypeError("expected an evn.Motor")
+            m._live()
+        if left_motor is right_motor:
+            raise ValueError("left_motor and right_motor must be different motors")
+        # as the board's float (evn_mp_finite_float: float32) before the test (review sim-motor2 r1 N3: 999.99999 rounds
+        # to 1000 there and is refused; past float32's range it is inf there: "must be a finite number", verify V1)
+        def f32(v, what):
+            try:
+                f = _struct.unpack("f", _struct.pack("f", _num(v, what)))[0]
+            except OverflowError:   # CPython's struct; Pyodide's gives inf
+                f = float("inf")
+            if f in (float("inf"), float("-inf")):
+                raise ValueError("%s must be a finite number" % what)
+            return f
+        wd, at = f32(wheel_diameter, "wheel_diameter"), f32(axle_track, "axle_track")
+        if not (1 < wd < 1000 and 1 < at < 2000):
+            raise ValueError("wheel_diameter 1..1000 mm, axle_track 1..2000 mm")
         if imu is not None or compass is not None or pose is not None:
             raise OSError("the simulated DriveBase drives on its encoders: imu=, compass= and pose= (a Pose's fused "
                           "heading) are not simulated yet - read an IMU() yourself for the heading")
         if declination is not None:
             raise ValueError("declination= needs compass=")
-        if speed_unit not in (SpeedUnit.DEG_S, SpeedUnit.PERCENT):
-            raise ValueError("speed_unit must be SpeedUnit.DEG_S or SpeedUnit.PERCENT")
         # wheels with different gears are allowed: the binding refuses them only when it builds a Pose (imu= /
         # compass=, refused above)
         olds = []
@@ -734,24 +797,27 @@ class DriveBase:
         return then
 
     def _wait(self):
-        _s_db_wait(self._id, min(self.left._stall_timeout, self.right._stall_timeout))
+        # the wheels' stall timeout as evn_drivebase.c wait_done takes it: the shorter of the two that is not 0 (0 on both:
+        # wait forever) - min() let one wheel's 0 turn the other's off (Razer simmech_r2 SF1)
+        tl, tr = self.left._stall_timeout, self.right._stall_timeout
+        _s_db_wait(self._id, tr if tr != 0 and (tl == 0 or tr < tl) else tl)
 
     def straight(self, distance, then=Stop.HOLD, wait=True):
         self._go()
-        _chk(_s_db_straight(self._id, _num(distance, "distance"), self._then(then)))
+        _chk(_s_db_straight(self._id, _num32(distance, "distance"), self._then(then)))
         if wait:
             self._wait()
 
     def turn(self, angle, then=Stop.HOLD, wait=True):
         self._go()
-        _chk(_s_db_turn(self._id, _num(angle, "angle"), self._then(then)))
+        _chk(_s_db_turn(self._id, _num32(angle, "angle"), self._then(then)))
         if wait:
             self._wait()
 
     def curve(self, radius, angle, then=Stop.HOLD, wait=True):
         self._go()
-        _num(radius, "radius")
-        _num(angle, "angle")
+        _num32(radius, "radius")
+        _num32(angle, "angle")
         path = abs(radius) * abs(angle) * 3.14159265 / 180.0
         sgn = -1 if radius < 0 else 1
         # forwards along a positive radius; a positive angle turns clockwise (to the right)
@@ -762,14 +828,14 @@ class DriveBase:
 
     def arc(self, radius, distance=None, angle=None, then=Stop.HOLD, wait=True):
         self._go()
-        if not abs(_num(radius, "radius")) > 0:
+        if not abs(_num32(radius, "radius")) > 0:
             raise ValueError("radius must not be zero (use turn())")
         if (distance is None) == (angle is None):
             raise ValueError("give exactly one of distance= and angle=")
         if distance is not None:
-            path = _num(distance, "distance")
+            path = _num32(distance, "distance")
         else:
-            path = _num(angle, "angle") * 3.14159265 / 180.0 * abs(radius)
+            path = _num32(angle, "angle") * 3.14159265 / 180.0 * abs(radius)
         # to the right for a positive radius: the heading turns clockwise as the path goes forward
         turn = path / abs(radius) * 180.0 / 3.14159265 * (1 if radius > 0 else -1)
         _chk(_s_db_curve(self._id, path, turn, self._then(then)))
@@ -785,7 +851,7 @@ class DriveBase:
         if len(args) == 2 and not kw and not self._why and not self.left._closed and not self.right._closed and self._unit != SpeedUnit.PERCENT:
             speed, turn = args
             ts, tt = type(speed), type(turn)
-            if (ts is float or ts is int) and (tt is float or tt is int) and speed - speed == 0 and turn - turn == 0:
+            if (ts is float or ts is int) and (tt is float or tt is int) and -_F32_INF < speed < _F32_INF and -_F32_INF < turn < _F32_INF:
                 _chk(_s_db_drive(self._id, speed, turn))
                 return
         names = ("speed", "turn_rate", "steering")
@@ -811,9 +877,9 @@ class DriveBase:
             raise TypeError("drive(): steering in SpeedUnit.PERCENT, turn_rate in SpeedUnit.DEG_S")
         if second is None:
             raise TypeError("drive() missing steering" if pct else "drive() missing turn_rate")
-        speed = _num(a["speed"], "speed")
+        speed = _num32(a["speed"], "speed")
         if pct:
-            st = _num(second, "steering")
+            st = _num32(second, "steering")
             sp = max(-100.0, min(100.0, speed))
             st = max(-100.0, min(100.0, st))
             full_mm, _ = self._full()
@@ -826,7 +892,7 @@ class DriveBase:
             w = (vl - vr) / 2 * k / (self._t / self._d)
             _chk(_s_db_drive(self._id, v, w))
             return
-        _chk(_s_db_drive(self._id, speed, _num(second, "turn_rate")))
+        _chk(_s_db_drive(self._id, speed, _num32(second, "turn_rate")))
 
     def stop(self):
         self._go()
@@ -858,7 +924,7 @@ class DriveBase:
 
     def reset(self, distance=0, angle=0):
         self._live()
-        _chk(_s_db_reset(self._id, _num(distance, "distance"), _num(angle, "angle")))
+        _chk(_s_db_reset(self._id, _num32(distance, "distance"), _num32(angle, "angle")))
 
     def done(self):
         self._live()
@@ -892,14 +958,25 @@ class DriveBase:
         self._live()
         pct = self._unit == SpeedUnit.PERCENT
 
-        def pair(a):
+        # each value as drivebase_settings takes it, in its order and with its messages (evn_drivebase.c:1713-1782): a
+        # speed through evn_mp_finite_float and positive, an acceleration through parse_accel (a number or (accel, decel),
+        # each part finite under the argument's name, both positive)
+        def speed(v, what):
+            if v is not None and not _num32(v, what) > 0:
+                raise ValueError("%s must be positive" % what)
+
+        def pair(a, what):
             if a is None:
                 return -1, -1
             if isinstance(a, (tuple, list)):
                 if len(a) != 2:
-                    raise ValueError("an acceleration is a number or an (accel, decel) pair")
-                return _num(a[0], "acceleration"), _num(a[1], "deceleration")
-            return _num(a, "acceleration"), a
+                    raise ValueError("acceleration must be a number or (accel, decel)")
+                up, down = _num32(a[0], what), _num32(a[1], what)
+            else:
+                up = down = _num32(a, what)
+            if not (up > 0 and down > 0):
+                raise ValueError("acceleration must be positive")
+            return up, down
 
         fm, ft = self._full()
         if straight_speed is None and straight_acceleration is None and turn_rate is None and turn_acceleration is None:
@@ -909,23 +986,23 @@ class DriveBase:
             ss = r[0] * 100.0 / fm if pct else r[0]
             tr = r[3] * 100.0 / ft if pct else r[3]
             return (int(round(ss)), sa, int(round(tr)), ta)
-        for v in (straight_speed, turn_rate):
-            if v is not None and _num(v, "speed") <= 0:
-                raise ValueError("speeds must be positive")
-        sa, sd = pair(straight_acceleration)
-        ta, td = pair(turn_acceleration)
-        for v in (sa, sd, ta, td):
-            if v != -1 and v <= 0:
-                raise ValueError("accelerations must be positive")
+        speed(straight_speed, "straight_speed")
+        sa, sd = pair(straight_acceleration, "straight_acceleration")
+        speed(turn_rate, "turn_rate")
+        ta, td = pair(turn_acceleration, "turn_acceleration")
         ss = -1 if straight_speed is None else (straight_speed * fm / 100.0 if pct else straight_speed)
         tr = -1 if turn_rate is None else (turn_rate * ft / 100.0 if pct else turn_rate)
         _s_db_settings(self._id, ss, sa, sd, tr, ta, td)
 
     def speed_unit(self, unit=None, /):
+        """drivebase_speed_unit: db_self first (a closed base, or a wheel's Motor closed, raises before the read or the
+        set), mp_obj_get_int, then the board's message"""
+        self._live()
         if unit is None:
             return self._unit
+        unit = _int(unit)
         if unit not in (SpeedUnit.DEG_S, SpeedUnit.PERCENT):
-            raise ValueError("unit must be SpeedUnit.DEG_S or SpeedUnit.PERCENT")
+            raise ValueError("speed_unit must be a SpeedUnit value")
         self._unit = unit
 
     def close(self):
@@ -1366,7 +1443,7 @@ class DistanceSensor:
 _AXES = {"x": (1, 0, 0), "y": (0, 1, 0), "z": (0, 0, 1), "-x": (-1, 0, 0), "-y": (0, -1, 0), "-z": (0, 0, -1)}
 _imu_gen = {}
 _imu_live = {}      # port -> the IMU object running it (a newer IMU(port) takes it over)
-_IMU_STATE = ("_dmp", "_gyro_cal", "_rate", "_ranges", "_filter", "_top", "_front", "_settings", "_ready", "_yaw0")
+_IMU_STATE = ("_dmp", "_gyro_cal", "_rate", "_raw_rate", "_ranges", "_filter", "_top", "_front", "_settings", "_ready", "_yaw0")
 
 
 def _dot(a, b):
@@ -1413,7 +1490,10 @@ class IMU:
         self._closed = False
         self._dmp = True
         self._gyro_cal = True
+        # two rates, as the board's config: the DMP's (dmp_rate_hz, 200) and the raw registers' (sample_rate_hz, 1000;
+        # hal_mpu6500_default_config); sample_rate() reads and sets the one of the mode in force
         self._rate = 200
+        self._raw_rate = 1000
         self._ranges = (2000, 2)
         self._filter = (41, 41)
         self._top, self._front = "z", "x"
@@ -1632,23 +1712,38 @@ class IMU:
     def sample_rate(self, hz=None, /):
         self._live()
         if hz is None:
-            return self._rate
+            return self._rate if self._dmp else self._raw_rate
         if self._dmp and not 12 <= hz <= 200:
             raise ValueError("DMP rate must be 12..200 Hz")
         if not self._dmp and not 4 <= hz <= 1000:
             raise ValueError("sample_rate must be 4..1000 Hz")
-        self._rate = int(hz)
+        if self._dmp:
+            self._rate = int(hz)
+        else:
+            self._raw_rate = int(hz)
+        self._apply_rate()
+
+    def _apply_rate(self):
         # the DMP runs at 200 Hz over a whole number, a raw rate at 1000 Hz over one (hal_mpu6500.c dmp_divider,
-        # raw_divider): a raw 400 Hz runs at 500 Hz
-        _s_imu_rate(self.port, 200.0 / max(1, int(200 // hz)) if self._dmp else 1000.0 / max(1, int(1000 // hz)))
+        # raw_divider, period_of): a raw 400 Hz runs at 500 Hz
+        if self._dmp:
+            _s_imu_rate(self.port, 200.0 / max(1, int(200 // self._rate)))
+        else:
+            _s_imu_rate(self.port, 1000.0 / max(1, int(1000 // self._raw_rate)))
 
     def dmp(self, *a, rate=None, tap=True, orientation=True, gyro_cal=True):
         self._live()
         if not a:
             return self._dmp
+        # the rate is checked before anything changes, in either mode (evn_imu.c imu_dmp: dmp(False, rate=5) raises
+        # "rate must be 12..200 Hz"); rate=None keeps the DMP's own rate (dmp_rate_hz), never the raw one
+        if rate is not None and not 12 <= rate <= 200:
+            raise ValueError("rate must be 12..200 Hz")
         was = self._dmp
         self._dmp = bool(a[0])
         self._gyro_cal = bool(gyro_cal)
+        if rate is not None:
+            self._rate = int(rate)     # hal_mpu6500_set_dmp stores dmp_rate_hz whether it enables or not
         # the DMP pins 2000 dps / 2 g (hal_mpu6500.c clamp_cfg); LEAVING a DMP that was on puts raw mode back at the
         # maxima, 2000 dps / 16 g (hal_mpu6500_set_dmp: `if (!enable && in->cfg.dmp)`); dmp(False) with the DMP already
         # off keeps the ranges() given
@@ -1656,12 +1751,8 @@ class IMU:
             self._ranges = (2000, 16)
         if self._dmp:
             self._ranges = (2000, 2)
-            if rate is not None:
-                if not 12 <= rate <= 200:
-                    raise ValueError("rate must be 12..200 Hz")
-                self._rate = int(rate)
-            self._rate = min(200, max(12, self._rate))
-            _s_imu_rate(self.port, 200.0 / max(1, int(200 // self._rate)))
+        # leaving the DMP samples at the raw sample_rate() again (hal_mpu6500.c reconfigure / period_of), not at 200 Hz
+        self._apply_rate()
 
     def axes(self, *, top=None, front=None):
         self._live()
@@ -2123,8 +2214,19 @@ def autostart(on=None):
     return False
 
 
-def set_stop_button(b):
-    pass
+def set_stop_button(b, /):
+    # evn_periph.c evn_set_stop_button: evn.button = the stop on, None = off for this run (the button an input only), a
+    # tuple / list / set of evn.button on, an empty one off; anything else TypeError. The stop itself: runtime.ts
+    # BUTTON_STOP_OPTS (s1113r sim-mech2; off by default, an owner item: the button stays an input either way)
+    on = b is button
+    if not on and b is not None:
+        if type(b) not in (tuple, list, set):
+            raise TypeError("set_stop_button: evn.button or None")
+        for x in b:
+            if x is not button:
+                raise TypeError("set_stop_button: evn.button or None")
+            on = True
+    _s.stop_button(1 if on else 0)
 
 
 def reset(*, start=False):

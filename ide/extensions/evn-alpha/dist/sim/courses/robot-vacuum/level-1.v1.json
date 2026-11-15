@@ -1,0 +1,133 @@
+{
+ "format": "evn-course/1",
+ "id": "robot-vacuum-1",
+ "challenge": "robot-vacuum",
+ "level": 1,
+ "version": 1,
+ "module": "G2.2",
+ "title": "Robot vacuum · Level 1: An empty room",
+ "brief": "The bumper robot starts in a 300 x 300 mm start square in a corner of an empty 1800 x 1200 mm room with walls 100 mm high (starts vary 30 mm and 20 degrees); the level fixes the robot. 30 of the floor's 150 mm squares are dusty, somewhere new every run. A dusty square is cleaned when the robot's body passes over its centre. The run ends when the 20th square is cleaned, when the program ends, or at 90 s. 50 points for cleaning 20 squares, plus up to 40 for speed (all 40 at 40 s or less to the 20th square, 40 x 40 / time above), plus 10 if the robot was never stuck (never more than 2 s on end pushing on a wall or furniture without moving). Pass: mean 60 or more over 5 runs, 4 of them cleaning 20. Par time: 40 s.",
+ "field": {
+  "random": [
+   {
+    "name": "dust",
+    "draw": "cells-v1",
+    "n": 30,
+    "box": [
+     0,
+     0,
+     1800,
+     1200
+    ],
+    "cell": 150,
+    "except": [
+     [
+      0,
+      0,
+      300,
+      300
+     ]
+    ]
+   }
+  ],
+  "arena": {
+   "size": [
+    1800,
+    1200
+   ],
+   "startBox": [
+    0,
+    0,
+    300,
+    300
+   ],
+   "goal": null,
+   "obstacles": [],
+   "areas": [
+    {
+     "group": "dusty",
+     "from": "dust",
+     "rect": [
+      -75,
+      -75,
+      75,
+      75
+     ],
+     "paint": "grey"
+    }
+   ],
+   "wallH": 100,
+   "wallT": 20,
+   "obstacleH": 150
+  }
+ },
+ "robot": {
+  "rule": "fixed",
+  "base": "bumper"
+ },
+ "start": {
+  "nominal": {
+   "x": 150,
+   "y": 150,
+   "heading": 45
+  },
+  "vary": {
+   "xy": 30,
+   "heading": 20
+  },
+  "draw": "uniform-square-v1"
+ },
+ "runs": {
+  "min": 1,
+  "max": 20,
+  "default": 5,
+  "fixed": 5
+ },
+ "kernel": {
+  "name": "pointToPoint",
+  "limitS": 90,
+  "goal": "footprintInside",
+  "final": "runEnd",
+  "end": "goal",
+  "cover": {
+   "group": "dusty",
+   "timeAt": 20,
+   "endAtCount": 20
+  },
+  "events": [
+   "stuck"
+  ]
+ },
+ "constants": {
+  "par": 40
+ },
+ "score": {
+  "run": "round(if(covered >= 20, 50 + 40 * min(1, par / max(coverTime_20, 0.001)), 0) + if(stuckMaxS <= 2, 10, 0), 1)",
+  "summary": "round(sum(r in runs: r.points) / count(r in runs: true), 1)",
+  "values": {
+   "finished": {
+    "value": "count(r in runs: r.covered >= 20)",
+    "unit": "runs"
+   },
+   "cleaned": {
+    "value": "round(sum(r in runs: r.covered) / n, 1)",
+    "unit": "squares"
+   },
+   "neverStuck": {
+    "value": "count(r in runs: r.stuckMaxS <= 2)",
+    "unit": "runs"
+   }
+  }
+ },
+ "pass": "score >= 60 & finished >= 0.8 * n",
+ "sources": [
+  {
+   "doc": "docs/curriculum/G02.md",
+   "where": "G2.2 Bump and turn: the robot (the bumper robot) and the Challenge - Robot vacuum paragraph, level table and scoring (level 1)"
+  },
+  {
+   "doc": "vscode-evn-alpha/docs/COURSE_FORMAT_DESIGN.md",
+   "where": "§15.1 kernel.events stuck, §15.2 kernel.cover and cells-v1 (P0c-3a)"
+  }
+ ]
+}

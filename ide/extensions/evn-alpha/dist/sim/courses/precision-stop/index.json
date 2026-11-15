@@ -1,0 +1,45 @@
+{
+ "format": "evn-course-index/1",
+ "generated": "node scripts/course_index.js --write; do not edit",
+ "levels": [
+  {
+   "file": "precision-stop/level-1.v1.json",
+   "id": "precision-stop-1",
+   "version": 1,
+   "sha256": "5f32d9489ca29603af5a373a8c91ca3e3a5508f899c0b88affeaa9591c9a0a6d",
+   "current": true,
+   "title": "Precision stop · Level 1: Stop at 100 mm",
+   "limit": 15,
+   "runs": {
+    "default": 5,
+    "fixed": 20
+   }
+  },
+  {
+   "file": "precision-stop/level-2.v1.json",
+   "id": "precision-stop-2",
+   "version": 1,
+   "sha256": "b5a666fb7f90b9c438d20824e870b91c8c3ee5dc79b73f08e26d4b8b35b030f6",
+   "current": true,
+   "title": "Precision stop · Level 2: A moving start",
+   "limit": 15,
+   "runs": {
+    "default": 5,
+    "fixed": 20
+   }
+  },
+  {
+   "file": "precision-stop/level-3.v1.json",
+   "id": "precision-stop-3",
+   "version": 1,
+   "sha256": "93e357e79445364bcc782ee4c993543e4b19d535b0a9c39ba065100ab85774af",
+   "current": true,
+   "title": "Precision stop · Level 3: A moving start, a wider angle",
+   "limit": 15,
+   "runs": {
+    "default": 5,
+    "fixed": 20
+   }
+  }
+ ]
+}

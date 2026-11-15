@@ -43,6 +43,16 @@
      *  back (review rcjcam r1 B2) */
     let camRun = cfg.camRun || 0;
     let ready = false;
+    /** CC-8 (lane cc8, LC-13): the line for a practice run still on in the worker (its `practice-on`), null with none - a
+     *  worker restart ends the run with the worker, and no message of the old worker's can say so */
+    let practiceLost = null;
+    /** CC-8 (lane cc8): this Run's practice line, said before its end - the Run's end readout (trailRunEnd) says it with
+     *  its own, as a line written at once into the one region would drop the practice line queued for the next frame */
+    let practiceSaid = null;
+    /** T1 (w9-cc-b, review d1_a S1): the Save truth… ask waiting for its reply, by id; a `truth` message answering no ask (a
+     *  program can make the worker post one by calling its handler itself) saves nothing */
+    let truthAsk = null, truthSeq = 0;
+
     let running;                // the id of the exec the worker is running
     const pending = new Map();  // every exec sent and not yet answered: id -> { source, run } (a restart sends them again,
                                 // each with its Run mark: docs/SIMULATOR_WRO_DESIGN.md §6)
@@ -54,6 +64,17 @@
      *  §1.7 2's cost rule, J3c-2): a restart starts from it when the last posted has none; dropped at a course switch */
     let postedBytes;
     let geom;
+    /** M2O-02 (s1113r sim-mech2; simleft r1 N3): `picks` numbers the panel's picks (setCourse; a start's `init` carries the
+     *  number its course is), `geomPick` is the number the worker's last `geom` echoes (workerCore.ts pickNo): equal, the
+     *  worker has taken the panel's last pick - a same-id pick too, which enters the course afresh (LB4B_DS3B §2.2). A geom
+     *  with no number (a row's stand-in worker; workerCore.ts always sends one) is judged by its id alone, as before */
+    let picks = 0, geomPick;
+    /** LC-31 N3 (simfix r1; s1113r sim-mech2): the soft resets sent to the worker and not answered yet (its `done` id 0, in
+     *  order: the worker's chain is FIFO), each with its place among the execs (`seq`, as pending's): restart() sends them
+     *  again in that order, so a reset that reached the dead worker behind a running program still runs before the lines
+     *  that came after it (before: lost, and the next line kept the names it would have cleared) */
+    const resets = [];
+    let sendSeq = 0;
     let led = false;
     let files = {};             // the Board view's uploads (the extension's 'files' message: never a program's file)
     let written = {};           // what programs wrote (bytes) or removed (null) at the top of the flash, as the worker
@@ -67,6 +88,9 @@
     const trail = [];
     let follow = false;
     let starting;
+    /** the last start ended before it made a worker (a stored WRO course whose files cannot be had: review lazy r2 verify
+     *  SF2 (a)): no worker took any course, so the next course picked starts one on it rather than queue for none */
+    let startFailed = false;
     // the map builder
     const LIB = new Map((cfg.tiles || []).map((t) => [t.id, t]));
     // the line tiles that may be laid as a ramp, as one (tiles.ts slopedDef; rules 3.7.5)
@@ -127,13 +151,14 @@
     function loadJoltBytes() {
         if (!joltBytes) {
             const get = (url, how) => fetch(url).then((r) => { if (!r.ok) { throw new Error(`${url.split('/').pop()}: ${r.status}`); } return r[how](); });
-            joltBytes = Promise.all([get(cfg.joltUrl + 'jolt.glue.js', 'text'), get(cfg.joltUrl + 'jolt.wasm', 'arrayBuffer')]).then(([glue, wasm]) => ({ glue, wasm }));
+            // with the engine's code (M2P-95, engineGlue.ts: dist/sim/enginechunk.js), which the worker imports before the engine
+            joltBytes = Promise.all([get(cfg.joltUrl + 'jolt.glue.js', 'text'), get(cfg.joltUrl + 'jolt.wasm', 'arrayBuffer'), get(cfg.engineChunkUrl, 'text')]).then(([glue, wasm, chunk]) => ({ glue, wasm, chunk }));
             joltBytes.catch(() => { joltBytes = undefined; });
         }
         return joltBytes;
     }
     /** a copy of the bytes for one message (a worker restarted later needs them again) */
-    const joltFor = (j) => ({ jolt: { glue: j.glue, wasm: j.wasm.slice(0) } });
+    const joltFor = (j) => ({ jolt: { glue: j.glue, wasm: j.wasm.slice(0), chunk: j.chunk } });
 
     /* ---- a WRO course's package (D230, owner 2026-11-05 "Load on first use"): its files (cfg.wroPackages: game.json,
      * the mat, the models...) fetched from cfg.wroUrl the first time the course is picked, kept, and posted with that
@@ -162,34 +187,91 @@
         if (m) { wroTexts.delete(m[1]); }
     }
 
+    /* ---- a challenge level's file (w10-slim, DESIGN_r1.md "The workers"; src/sim/course/courseStore.ts): no worker bundle
+     * holds a level; the page fetches the files a course or a job names from cfg.courseUrl (build.js's copy, dist/sim/courses)
+     * the first time they are needed, keeps them, and posts them with that course's `init` / `course`, a run's `run` and a
+     * frame folder's ask. The worker sha256-checks each against its bundled index pin and refuses a mismatch by name
+     * (CourseFileError); each URL carries the pin (cfg.courseFiles: id@version -> [file, sha256 16]), so no cache serves
+     * another release's copy; a text the worker refused is dropped (courseRefused), so the next ask fetches it again. */
+    const courseTexts = new Map();
+    /** the level keys (id@version) a course id names: its own version (...@v<n>), else the current one (cfg.courseCurrent) */
+    function courseKeys(id) {
+        const m = /^challenge:([^@#]+)(?:@v(\d+))?(?:#.*)?$/.exec(String(id || ''));
+        if (!m) { return []; }
+        return [m[2] !== undefined ? `${m[1]}@${m[2]}` : `${m[1]}@${(cfg.courseCurrent || {})[m[1]]}`];
+    }
+    /** a job's level keys: a challenge run's version and its level's current one (challengeRun.ts checkJob reads both: review
+     *  d1 B1); a check's cases' challenge courses (review r1 B5b) */
+    function jobCourseKeys(job) {
+        if (!job) { return []; }
+        if (typeof job.level === 'string') { return [`${job.level}@${job.version}`, `${job.level}@${(cfg.courseCurrent || {})[job.level]}`]; }
+        return Array.isArray(job.cases) ? job.cases.flatMap((c) => courseKeys(c && c.world && c.world.course)) : [];
+    }
+    /** the files of `keys` ({ coursePkg: { files } }, or {} when none is a level this build has: the worker then says
+     *  "unknown challenge" as before) */
+    function courseFiles(keys) {
+        const files = cfg.courseFiles || {};
+        const rels = [...new Set(keys.filter((k) => files[k]).map((k) => files[k][0]))];
+        if (!rels.length) { return Promise.resolve({}); }
+        const pin = Object.fromEntries(Object.values(files));
+        const get = (rel) => {
+            if (!courseTexts.has(rel)) {
+                const p = fetch(cfg.courseUrl + rel + (pin[rel] ? `?${pin[rel]}` : '')).then((r) => { if (!r.ok) { throw new Error(`${rel}: ${r.status}`); } return r.text(); });
+                p.catch(() => { courseTexts.delete(rel); });
+                courseTexts.set(rel, p);
+            }
+            return courseTexts.get(rel);
+        };
+        return Promise.all(rels.map(get)).then((texts) => ({ coursePkg: { files: Object.fromEntries(rels.map((r, i) => [r, texts[i]])) } }));
+    }
+    const courseFor = (id) => courseFiles(courseKeys(id));
+    /** a worker's error naming a level file it refused (courseStore.ts CourseFileError: "assets/courses/<file>: ..."): that
+     *  text is not kept */
+    function courseRefused(message) {
+        const m = /assets\/courses\/(\S+?): /.exec(String(message || ''));
+        if (m) { courseTexts.delete(m[1]); }
+    }
+
     function start(state) {
         ready = false;
+        startFailed = false;
         // the course this start is for, read once (review lazy r1 A B2): a course picked while its files load goes as a
         // `course` message after this init, never as this init's id with another course's files
-        const id = courseId;
+        const id = courseId, pick = picks;
         starting = (async () => {
             const a = await loadAssets();
             const jolt = needsEngine(id) ? joltFor(await loadJoltBytes()) : {};
             const wro = await wroFor(id);
+            const crs = await courseFor(id);
             const shared = typeof SharedArrayBuffer !== 'undefined' && self.crossOriginIsolated;
             ctl = shared ? new Int32Array(new SharedArrayBuffer(32)) : undefined;
             if (ctl) { new Float64Array(ctl.buffer, 16, 1)[0] = speed; }
             worker = new Worker(a.worker, { type: 'module', name: 'EVN simulator' });
-            worker.onmessage = (ev) => onWorker(ev.data);
+            const me = worker;
+            // T1 (w9-cc-b design): this worker's token, given in its init and held here only; a message it stamps with it
+            // is the worker's own, one a program posts itself (`js.postMessage`) has none (SEALED_TYPES)
+            const tk = Array.from(crypto.getRandomValues(new Uint8Array(16)), (b) => b.toString(16).padStart(2, '0')).join('');
+            worker.onmessage = (ev) => onWorker(ev.data, me, typeof tk === 'string' && !!ev.data && ev.data.tk === tk);
             worker.onerror = (ev) => { showNote(`The simulator stopped: ${ev.message || 'an error in the worker'}`, true); setStatus('err', 'stopped'); };
             const p = a.pyodide;
             // ...wroFields: a loaded WRO mat's raster (a copy), so a restarted worker has the mat too (§3.2)
             // a restart state with a field (a WRO table): the referee settings too, applied before the restore, so the
             // settings sent at `ready` lay nothing again (W3b, §6); without one (RCJ) the init is as before
             worker.postMessage({ type: 'init', pyodide: { asm: p.asm, wasm: p.wasm.slice(0), stdlib: p.stdlib.slice(0), lock: p.lock }, evn: a.evn, boot: a.boot,
-                version: cfg.version, hw, course: id, map: mapOf(id), ctl: ctl ? ctl.buffer : undefined, state, files, written, speed, camRun, ...wroFields().fields, ...(state && state.field ? { referee: refSet } : {}), ...jolt, ...wro, epoch: robotEpoch + 1 });
+                token: tk, version: cfg.version, hw, course: id, pick, map: mapOf(id), ...(typeof roundFor === 'function' ? roundFor(id) : {}), ctl: ctl ? ctl.buffer : undefined, state, files, written, speed, camRun, ...wroFields().fields, ...(state && state.field ? { referee: refSet } : {}), ...jolt, ...wro, ...crs, epoch: robotEpoch + 1 });
             while (outbox.length) { worker.postMessage(outbox.shift()); }
-        })().catch((e) => { showNote(`The simulator could not start: ${e && e.message || e}`, true); setStatus('err', 'not started'); });
+        })().catch((e) => { startFailed = !worker; showNote(`The simulator could not start: ${e && e.message || e}`, true); setStatus('err', 'not started'); });
     }
 
     /** what comes for the board while its worker is (re)starting waits here, in order: the worker queues it behind
      *  its own start (the coast after a stopped run, the next Run) */
     const outbox = [];
+    /** the worker each `ready` sent to the extension came from, oldest first: the host answers each with one `link-epoch`,
+     *  in order (simPanel.ts linkWorkerReady), which goes to that worker only if it is still the page's (review link r1
+     *  N1); nothing new crosses to the host, so the page's posts are as they were */
+    const epochFor = [];
+    /** how many epochFor entries were ever pushed and shifted (RC-2's drain after a route goes back: chLink) */
+    let epochPushed = 0, epochShifted = 0;
     /** while a rigid course's engine files are on their way, its `course` (a slot filled when they come) and everything
      *  after it wait here, in order */
     const held = [];
@@ -202,7 +284,13 @@
      *  (cause `start`) and the extension sends the setup for the new interpreter */
     function stamps(m) { return { ...(m.setup !== undefined ? { setup: m.setup } : {}), ...(m.console !== undefined ? { console: m.console } : {}) }; }
 
-    function onWorker(m) {
+    /** T1: the board worker's messages the page takes only with the worker's token (`sealed`: posted by the worker itself, not
+     *  by a program through `js.postMessage`): the CC-8 practice path's, which the page shows as the practice line (the card's
+     *  line, the one region) or saves as the run's truth. A program that hooks the worker's realm can still choose what the
+     *  worker itself posts unless the worker is locked down (T2, worker.ts). The rest are stamped but not checked (design T1) */
+    const SEALED_TYPES = new Set(['practice', 'practice-on', 'truth']);
+    function onWorker(m, from, sealed) {
+        if (!m || (SEALED_TYPES.has(m.type) && !sealed)) { return; }
         switch (m.type) {
             case 'ready':
                 ready = true;
@@ -217,19 +305,24 @@
                 }
                 toWorker({ type: 'referee', op: 'settings', settings: refSet });
                 trailResync();
+                // the worker that sent it (review sim-link2 r1 N1 (b): never undefined, which would let any link-epoch through);
+                // the host answers this ready with one link-epoch (linkRoute.ts linkWorkerReady)
+                epochFor.push(from || worker);
+                epochPushed++;
                 vscode.postMessage({ type: 'ready', shared: !!m.sab, live });
                 camHw();
                 return;
             // §2.6 page item 1: the course's robot (its epoch, rig flag, motors and devices, the snapshot), to the
             // extension at once and whole (never throttled as `tele`)
             case 'robot': robotEpoch = m.epoch; vscode.postMessage(m); return;
-            case 'geom': bodyRig = m.bodyRig || null; courseNames = Array.isArray(m.names) ? m.names : null; namesUi(); $('#chTruth').hidden = true; geom = m.geom; trail.length = 0; toolsNewCourse(geom.id); if (!userView) { fit(); } if (v3) { v3.setGeom(geom); } camGeom(); draw(); return;
+            case 'geom': geomPick = typeof m.pick === 'number' ? m.pick : undefined; bodyRig = m.bodyRig || null; courseNames = Array.isArray(m.names) ? m.names : null; namesUi(); $('#chTruth').hidden = true; geom = m.geom; trail.length = 0; toolsNewCourse(geom.id); if (!userView) { fit(); } if (v3) { v3.setGeom(geom); } camGeom(); draw(); return;
             case 'wro-schematic': if (wros) { wros.schematic(m.mat, m.rgb, canvas2d); } return;
             case 'cam': onCam(m); return;
             // LINK (linkTap.ts -> simPanel.ts / linkServer.ts): a bridged header's bytes, the peer's bytes taken
             case 'link-tx': case 'link-ack': vscode.postMessage(m); return;
             case 'link-note': link.invertedTx[m.port - 1] = m.invertedTx; linkStatus(); return;
-            case 'busy': running = m.id; if (pending.get(m.id)?.behind) { plotRun(); } setStatus('run', 'running a program'); return;
+            // (lane cc8, review r1 V1): an earlier run's line posted before this Run's start is not this Run's
+            case 'busy': running = m.id; if (pending.get(m.id)?.run) { practiceSaid = null; } if (pending.get(m.id)?.behind) { plotRun(); } setStatus('run', 'running a program'); return;
             case 'out': if (plot.on) { plotOut(m.text); } vscode.postMessage({ type: 'out', id: m.id, text: m.text }); return;
             case 'interrupting': clearTimeout(stopWatch); return;
             case 'written':
@@ -243,6 +336,8 @@
                 // to the extension marked, which posts it again behind the new setup; nothing here changes but `pending`
                 if (m.stale) { pending.delete(m.id); if (!pending.size) { setStatus('', 'idle'); } vscode.postMessage({ type: 'done', id: m.id, err: m.err || '', stale: true }); return; }
                 if (running === m.id) { running = undefined; clearTimeout(stopWatch); }
+                // a reset's answer (id 0; LC-31 N3): the oldest sent
+                if (m.id === 0 && !pending.has(0)) { resets.shift(); }
                 if (pending.get(m.id)?.run) { trailRunEnd(m.id); }
                 pending.delete(m.id);
                 if (!pending.size) { setStatus('', 'idle'); }
@@ -253,14 +348,23 @@
             case 'led': led = !!m.on; draw(); return;
             // CC-8: a practice Run's line (card.js practice: the one region, the card's line when it is open; a note when it
             // is not), and Save truth… offered once a practice run has a truth log; the log itself, asked for by Save truth…
-            case 'practice': if (!card.practice(m.line)) { showNote(m.line); } $('#chTruth').hidden = !m.truth; return;
+            case 'practice': practiceLost = null; practiceSaid = m.line; if (!card.practice(m.line)) { showNote(m.line); } $('#chTruth').hidden = !m.truth; return;
+            // a practice run is on (lane cc8, LC-13): the line a worker restart says for it (restart(): it ends with the worker)
+            case 'practice-on': practiceLost = typeof m.lost === 'string' ? m.lost : null; practiceSaid = null; return;
+            // CC-9's frame-jobs / report-score replies come from the frame folder's own worker now, never this one (CC-10, design
+            // D6: frameFolderAsk): a reply a program posts here is dropped
             case 'truth':
+                if (truthAsk === null || m.id !== truthAsk) { return; }
+                truthAsk = null;
                 if (typeof m.csv === 'string') { vscode.postMessage({ type: 'truth-save', text: m.csv }); } else { showNote('No practice run\'s truth to save: Back to start, then Run.'); }
                 return;
             // the referee's 4.2.8 restart at a lack of progress: the extension restarts the board, main.py with it
             case 'referee-restart': vscode.postMessage({ type: 'referee-restart' }); return;
+            // a Run on a map whose start cannot keep this robot's front behind the start tile's joint (rules 5.4.1)
+            case 'start-warning': showNote(`Start: ${m.text}`); return;
             case 'error':
                 wroRefused(m.message);
+                courseRefused(m.message);
                 showNote(`Simulator: ${m.message}`, true);
                 vscode.postMessage({ type: 'error', id: m.id, message: m.message });
                 return;
@@ -301,6 +405,12 @@
         try { worker.terminate(); } catch { /* gone */ }
         worker = undefined;
         vscode.postMessage({ type: 'done', id, err: 'Traceback (most recent call last):\n  File "<stdin>", in <module>\nKeyboardInterrupt: \n' });
+        // a practice run on: no score, said as the worker says a run given up (card.js practice: the one region); the new
+        // worker has no truth log to save
+        if (practiceLost) { const line = practiceLost; practiceLost = null; if (!card.practice(line)) { showNote(line); } }
+        $('#chTruth').hidden = true;
+        // T1 (review r2 S1): an ask the ended worker never answered is no ask of the new one's
+        truthAsk = null;
         setStatus('', 'restarting');
         restarted = true;
         // what was queued behind it went down with the worker: the new one runs it. An exec still in `held` (behind a
@@ -308,8 +418,15 @@
         // it would go twice, a held Run run twice (lb4b3 round 1 B N-1; lane simfix)
         const inHeld = new Set(held.filter((e) => e.m && e.m.type === 'exec').map((e) => e.m.id));
         // each with its stamps (§2.6 B4): the old worker's setup is dropped by the new one (an older epoch), its lines
-        // answered `stale`; the new worker's `robot` (cause `start`) has the extension send the setup again
+        // answered `stale`; the new worker's `robot` (cause `start`) has the extension send the setup again. The resets
+        // not answered with them, in the order the extension sent them all (LC-31 N3); one still in `held` goes from there
+        const o0 = outbox.length;
         for (const [pid, p] of pending) { if (!inHeld.has(pid)) { outbox.push({ type: 'exec', id: pid, source: p.source, ...(p.run ? { run: p.run } : {}), ...stamps(p) }); } }
+        const again = outbox.splice(o0).map((m) => ({ seq: pending.get(m.id).seq, m }));
+        const heldMsgs = new Set(held.map((e) => e.m));
+        for (const r of resets) { if (!heldMsgs.has(r.m)) { again.push(r); } }
+        again.sort((a, b) => a.seq - b.seq);
+        for (const e of again) { outbox.push(e.m); }
         start(posted ? restartState(posted) : undefined);
     }
 
@@ -334,20 +451,28 @@
         // state at all - no pose, angles, UARTs, clock or ticks of the old course: the new worker lays the new course afresh
         // (`rig` reads the page's rigCourse; ds1's row evaluates this function on its own, where there is none: no rig course)
         const rig = (id) => typeof rigCourse === 'function' && rigCourse(id);
-        if (geom && geom.id !== courseId && (rig(geom.id) || rig(courseId))) { return undefined; }
+        // M2O-02: the course the panel has now is the worker's only when it took the panel's last pick (the numbers equal):
+        // a pick it never took - another id, or the same id again (entered afresh, §2.2) - carries none of the old course's
+        // clock, dist or field (`picks` absent where a row evaluates this function on its own: the id alone, as before)
+        const taken = !!geom && geom.id === courseId && (typeof picks !== 'number' || geomPick === undefined || geomPick === picks);
+        if (geom && !taken && (rig(geom.id) || rig(courseId))) { return undefined; }
         const p = restartFrame(last, postedBytes);
         const s = { pose: p.pose, angles: p.motors.map((x) => x.angle), uart: last.uart };
         // the events' clock of a dist in force (World.snapshot's `dist`), only for the course the panel has now (a pick the
         // stopped worker never took starts its course's clock at 0); from `last`, never an older frame
         // (with the pushes it dropped while held: they stay never acted, W1 SF2)
-        if (last.dist && geom && geom.id === courseId) { s.dist = { ticks: last.dist.ticks, ...(Array.isArray(last.dist.dropped) ? { dropped: last.dist.dropped } : {}) }; }
-        // LB-4b: on the panel's own body rig course the clock too (the worker restores it with `ticks` before its lay)
-        if (geom && geom.id === courseId && rig(courseId) && typeof last.t === 'number') { s.t = last.t; }
+        if (last.dist && taken) { s.dist = { ticks: last.dist.ticks, ...(Array.isArray(last.dist.dropped) ? { dropped: last.dist.dropped } : {}) }; }
+        // LB-4b: on the panel's own body rig course the clock too (the worker restores it with `ticks` before its lay); lane
+        // cc8 (LC-13, lb4b2 B-N5): on any course of the panel's with a dist in force, the clock with its ticks
+        if (taken && (rig(courseId) || s.dist) && typeof last.t === 'number') { s.t = last.t; }
+        // G2.3 (inc 2a): a light course's light clock (World.snapshot's `lightsT0`), only for the course the panel has now: the
+        // worker's restoreLights() keeps the lights' phase (t - t0) across the restart
+        if (taken && typeof last.lightsT0 === 'number' && typeof last.t === 'number') { s.lights = { t0: last.lightsT0, t: last.t }; }
         const games = p.hazards && p.hazards.games;
         // only for the course the panel has now (review r1 N2: a course switch the stopped worker never took gives a
         // state without a field: the new course starts as before); the seed the frame's own referee names first (N1: a
         // geometry of a new seed can come before its snap), else the geometry's
-        if (games && games.length && geom && geom.id === courseId) {
+        if (games && games.length && taken) {
             const laid = p.referee && p.referee.kind === 'wro' && typeof p.referee.laidSeed === 'number' ? p.referee.laidSeed : undefined;
             s.servos = (p.servos || []).map((v) => ({ port: v.port, angle: v.angle }));
             s.field = { seed: laid !== undefined ? laid : typeof geom.seed === 'number' ? geom.seed : undefined, games };
@@ -364,7 +489,8 @@
         switch (m.type) {
             case 'exec':
                 // a Run behind a course that has not landed starts in the plot at its `busy`, when the frames are the new course's
-                pending.set(m.id, { source: m.source, run: m.run, behind: !!m.run && courseLanding(), ...stamps(m) });
+                pending.set(m.id, { source: m.source, run: m.run, behind: !!m.run && courseLanding(), seq: ++sendSeq, ...stamps(m) });
+                if (m.run) { practiceSaid = null; }
                 if (m.run && !pending.get(m.id).behind) { plotRun(); }
                 setStatus('run', 'running a program');
                 // the Run mark (§6: simPanel.ts marks the program's Run) goes to the worker as the extension gave it
@@ -373,7 +499,7 @@
                 if (m.setup !== undefined || m.console !== undefined) { toWorker({ type: 'exec', id: m.id, source: m.source, ...(m.run ? { run: m.run } : {}), ...stamps(m) }); return; }
                 toWorker({ type: 'exec', id: m.id, source: m.source, ...(m.run ? { run: m.run } : {}) });
                 return;
-            case 'reset': toWorker({ type: 'reset', id: m.id }); return;
+            case 'reset': { const r = { type: 'reset', id: m.id }; resets.push({ seq: ++sendSeq, m: r }); toWorker(r); return; }
             case 'say-pose': sayPose(); return;
             case 'interrupt': interrupt(); return;
             case 'motor': toWorker(m); return;
@@ -387,15 +513,47 @@
                 for (const n of m.changed || []) { delete written[n]; }
                 toWorker({ type: 'files', files, changed: m.changed || [] });
                 return;
-            case 'hw': hw = m.hw; plotHw(); buildConfig(); clearErr(); toWorker({ type: 'hardware', hw }); trail.length = 0; if (v3) { v3.setHw(hw, body3()); } camHw(); return;
+            case 'hw': hw = m.hw; plotHw(); buildConfig(); clearErr(); cfgWarn(m.warnings); toWorker({ type: 'hardware', hw }); trail.length = 0; if (v3) { v3.setHw(hw, body3()); } camHw(); return;
             case 'cam-server': onCamServer(m); return;
             // LINK: a client's bytes for a bridged header; the bridge's ports and counts for the status line
-            case 'link-rx': toWorker({ type: 'link-rx', port: m.port, bytes: m.bytes }); return;
+            // RECORD RC-2: while a linked challenge run runs, its worker takes them (chLink), the board's worker otherwise
+            // (on the run's own port, with no token: review rc2 r1 B1); after the route goes back, a stamped byte is dropped until
+            // the board's worker has its new epoch (the run's epoch's bytes, sent before the host resynced: review rc2 r1 S1)
+            case 'link-rx':
+                if (chal.link) { chal.link.port.postMessage({ type: 'link-rx', port: m.port, bytes: m.bytes, epoch: m.epoch }); return; }
+                if (m.epoch !== undefined && epochShifted < chal.drainUntil) { return; }
+                toWorker({ type: 'link-rx', port: m.port, bytes: m.bytes, epoch: m.epoch }); return;
+            // the host's epoch after a worker's ready (linkServer.ts resync; review link verify S-V1)
+            // - to the worker whose ready it answers only (review link r1 N1: an older worker's, still on its way when
+            // restart() started this one, would open this one's gate to an epoch the host writes off at its own ready)
+            // (RC-2: a route change's, to the linked run's worker while it is the route's, else to the board's: chLink)
+            case 'link-epoch': {
+                // counted whenever an entry was there (review rc2 r2 S-n1: an entry may be undefined - a route back while the
+                // board's worker restarts - and an uncounted one would hold the drain on for good)
+                const had = epochFor.length > 0;
+                const to = epochFor.shift();
+                if (had) { epochShifted++; }
+                if (to && chal.link && to === chal.link.w) { chal.link.port.postMessage({ type: 'link-epoch', epoch: m.epoch }); } else if (to === undefined || to === worker) { toWorker({ type: 'link-epoch', epoch: m.epoch }); }
+                return;
+            }
             case 'link-server': link.server = m; linkStatus(); return;
             case 'link-stats': link.stats = m.stats; linkStatus(); return;
             case 'hw-error': $('#cfgErr').textContent = m.message; return;
             case 'course': setCourse(m.course, false); return;
             case 'challenge-job': void runJobLoop(m, challengePresenter(m)); return;
+            // P0c-2r §5: a rounds level's loop (challengeHost.ts runRounds): its card, each round, a refused go, a round's
+            // runs over, the level's end; a Try's end; each with the level's token (another's ignored)
+            case 'challenge-level': chLevelOpen(m); return;
+            case 'challenge-round': chRoundStart(m); return;
+            case 'challenge-round-refused': chRoundRefused(m); return;
+            case 'challenge-round-ran': chRoundRan(m); return;
+            case 'challenge-level-end': chLevelEnd(m); return;
+            case 'challenge-try-end': boardRoundSet(chRound && chLevelRun ? chLevelRun.level : null, chRound ? chRound.values : null, chRound ? chRound.r : undefined); return;
+            // CC-9: the folder the learner picked and the seed the host drew for it (never written there); report.json's text
+            // with the folder's level, seed, runs and robot, to the worker that scores it
+            // the asks go to a worker of their own that runs no Python (CC-10, design D6; frameFolderAsk), never the board's
+            case 'frame-folder-go': frameAsks.add(`f${m.id}`); void frameFolderAsk({ type: 'frame-jobs', id: m.id, level: (chLevel() || {}).id || null, hw, seed: m.seed }); return;
+            case 'report-text': frameAsks.add(`r${m.id}`); void frameFolderAsk({ type: 'report-score', id: m.id, level: m.level, version: m.version, seed: m.seed, runs: m.runs, hw: m.hw, text: m.text }); return;
             // a host's refusal while a job runs (a comparison's pass holds the button: COURSE_FORMAT_DESIGN.md §16.4.4 2) frees nothing
             case 'challenge-cancelled': if (!chal.busy) { chBusy(false); } return;
             case 'challenge-summary': chSummary(m); return;
@@ -436,10 +594,33 @@
     const chCfg = cfg.challenge || { runs: 5, min: 1, max: 20, levels: [] };
     // busy from the job's arrival (its assets may still be loading) to its end: one job at a time, a challenge's or a check's
     // (review r1 D10; CHK_DESIGN.md §6); `presenter` the running job's (runJobLoop), `hang` a check case's stall (chRunOne)
-    const chal = { busy: false, worker: undefined, next: undefined, cancel: undefined, timer: undefined, deadline: undefined, id: 0, presenter: undefined, hang: undefined, unit: 'run', starts: [] };
+    const chal = { busy: false, worker: undefined, next: undefined, cancel: undefined, timer: undefined, deadline: undefined, id: 0, presenter: undefined, hang: undefined, unit: 'run', starts: [], link: undefined, drainUntil: 0, rc: undefined, coursePkg: undefined, from: 0 };
+    /** RECORD RC-2 (docs/design/RECORD.md §9): LINK's bridge routed to a linked run's worker `w` (its `link-ready`, at its
+     *  program's start), or back to the board's worker (`w` undefined: the run ended, failed or was stopped). Each change asks
+     *  the host to resync (`link-route`: linkRoute.ts linkRouteChanged), whose link-epoch goes to the worker named here. The
+     *  run's inbound messages go on `port` (a MessageChannel's, transferred with its run message: review rc2 r1 B1); a route
+     *  back drains stamped bytes until its link-epoch is delivered (drainUntil: review rc2 r1 S1) */
+    function chLink(w, port) {
+        if (w ? chal.link && chal.link.w === w : !chal.link) { return; }
+        if (!w && chal.link) { try { chal.link.port.close(); } catch { /* closed */ } }
+        chal.link = w ? { w, port } : undefined;
+        epochFor.push(w || worker);
+        epochPushed++;
+        if (!w) { chal.drainUntil = epochPushed; }
+        vscode.postMessage({ type: 'link-route' });
+    }
     // the card and the one live region are media/sim/card.js's (CHK_DESIGN.md §6, CHK5a)
     const card = new EVNCard.ChallengeCard({ doc: document, el, post: (m) => vscode.postMessage(m), raf: (cb) => requestAnimationFrame(cb),
-        tryAt: (start) => { if (pending.size) { showNote('The robot can be moved when no program is running.'); return; } place(start); } });
+        tryAt: (start, r) => {
+            if (pending.size) { showNote('The robot can be moved when no program is running.'); return; }
+            // P0c-2r §5.10: a rounds run's Try - the board on that run's round values, the robot at its start, then the host runs
+            // that round's program (challenge-try; read-only beside the editor), the board back on the round shown after
+            const rn = r && card.rounds && chSeen && Number.isInteger(r.run) ? Math.floor((r.run - 1) / chSeen.k) + 1 : undefined;
+            const rv = rn !== undefined ? chSeen.rounds[rn] : undefined;
+            if (rv) { boardRoundSet(chSeen.level, rv, rn); }
+            place(start);
+            if (rv) { vscode.postMessage({ type: 'challenge-try', level: chSeen.level, run: r.run }); }
+        } });
     // the check card (#ckCard, card.js CheckCard): it speaks through the challenge card's say(), the one region
     const ckCard = new EVNCard.CheckCard({ doc: document, el, post: (m) => vscode.postMessage(m), say: (line) => card.say(line) });
     const chLevel = () => (courseId.startsWith('challenge:') ? chCfg.levels.find((l) => `challenge:${l.id}` === courseId) : undefined);
@@ -449,6 +630,10 @@
         if (!box) { return; }
         box.hidden = !l;
         box.title = l ? l.brief : '';
+        // CC-9: Frame folder and Score report on a level scored from a report (challengeHost.ts challengeCfg `report`)
+        for (const id of ['#chFrames', '#chReport']) { const b = $(id); if (b) { b.hidden = !(l && l.report); } }
+        // P0c-2r §5.12: Try a round, on a rounds level's box beside Run challenge
+        const tr = $('#chTryRound'); if (tr) { tr.hidden = !(l && l.rounds); }
         card.header(l);
     }
     function chRuns() {
@@ -457,8 +642,13 @@
     }
     function chRunsChanged() { const n = chRuns(); $('#chRuns').value = String(n); vscode.postMessage({ type: 'challenge-runs', runs: n }); }
     function chBusy(on) {
-        const b = $('#chRun'); if (b) { b.disabled = on; b.textContent = on ? 'Running…' : 'Run challenge'; }
-        const k = $('#ckRun'); if (k) { k.disabled = on; }
+        // P0c-2r §5: a rounds level holds Run challenge, Check, Try a round and the Course list from its card's opening to its
+        // end, its failure or End - never freed between rounds (a job's end calls chBusy(false) through chEnd)
+        const lock = on || !!chLevelRun;
+        const b = $('#chRun'); if (b) { b.disabled = lock; b.textContent = on ? 'Running…' : 'Run challenge'; }
+        const k = $('#ckRun'); if (k) { k.disabled = lock; }
+        const t = $('#chTryRound'); if (t) { t.disabled = lock; }
+        const c = $('#course'); if (c) { c.disabled = !!chLevelRun; }
     }
     function chStart() {
         const l = chLevel();
@@ -471,6 +661,9 @@
         if (chal.deadline) { clearTimeout(chal.deadline); chal.deadline = undefined; }
         if (chal.worker) { chal.worker.terminate(); chal.worker = undefined; }
         if (chal.next) { chal.next.terminate(); chal.next = undefined; }
+        chLink(undefined);
+        // RC-2's link / record are the ended job's: a later chReady never inherits them (review rc2 r3b N1)
+        chal.rc = undefined;
         chal.busy = false;
         chal.hang = undefined;
         chBusy(false);
@@ -495,10 +688,15 @@
      *  messages (challenge-progress, -done, -error) */
     function challengePresenter(m) {
         const results = [], output = [];
+        // RECORD RC-2: a linked run's sealed record entry and RTF; a replay's verdict (Verify)
+        const records = [], rtf = [], replays = [];
         // §16.4.7: a comparison's job (purpose 'compare') is shown on the card as it stands: no card.open, no rows - the
         // primary's rows and summary stay; its progress in #chProg in the role's words
         const vs = m.purpose === 'compare';
-        return {
+        // P0c-2r §5.6: a round's job runs only its range [from, to) (the host's challenge-job carries it); its card opened once
+        // by the level (challenge-level), so a round adds its heading and its rows
+        const rg = m.purpose === 'round' && Number.isInteger(m.from) && Number.isInteger(m.to) && m.to > m.from ? { from: m.from, to: m.to, r: m.from / Math.max(1, m.to - m.from) + 1 } : null;
+        return Object.assign({
             prefix: 'challenge',
             unit: 'run',
             busy: 'a challenge is already running in the Simulator panel',
@@ -506,11 +704,13 @@
             // the job's own version's limit (the host sends it: an older submission's level may differ from the list's)
             limit: () => { const lv = chCfg.levels.find((l) => l.id === m.job.level); return Number.isFinite(m.limit) ? m.limit : lv ? lv.limit : 90; },
             hangs: false,
-            open: () => { chBusy(true); if (vs) { $('#chProg').textContent = `running the ${m.role}…`; } else { card.open({ title: m.title, runs: m.job.runs, purpose: m.purpose }); } },
-            progress: (i) => { $('#chProg').textContent = vs ? `${m.role} run ${i + 1} of ${m.job.runs}…` : `run ${i + 1} of ${m.job.runs}…`; },
+            open: () => { chBusy(true); if (rg) { card.roundHead(chRoundHead(rg.r)); return; } if (vs) { $('#chProg').textContent = `running the ${m.role}…`; } else { card.open({ title: m.title, runs: m.job.runs, purpose: m.purpose, tiles: !!(chCfg.levels.find((l) => l.id === m.job.level) || {}).tiles }); } },
+            progress: (i) => { $('#chProg').textContent = rg ? `round ${rg.r}: run ${i + 1} of ${rg.to - rg.from}…` : vs ? `${m.role} run ${i + 1} of ${m.job.runs}…` : `run ${i + 1} of ${m.job.runs}…`; },
             each: (d, i) => {
                 results.push(d.result);
                 output.push(typeof d.output === 'string' ? d.output : '');
+                if (typeof d.record === 'string') { records.push(d.record); rtf.push(typeof d.rtf === 'number' ? d.rtf : null); }
+                if (d.replay) { replays.push(d.replay); }
                 if (!vs) { chRow(d.result); }
                 vscode.postMessage({ type: 'challenge-progress', id: m.id, done: i + 1, of: m.job.runs });
             },
@@ -518,7 +718,8 @@
                 // a comparison's summary is the host's challenge-compare on a student's card; a verification's or a re-test's
                 // gets none, so its line is cleared (r3 F-N3)
                 $('#chProg').textContent = vs ? (card.purpose === 'student' ? 'comparing…' : '') : 'scoring…';
-                vscode.postMessage({ type: 'challenge-done', id: m.id, results, output, engine: navigator.userAgent.match(/(Chrome|Firefox|Safari|Edg)\/[\d.]+/)?.[0] || '' });
+                vscode.postMessage({ type: 'challenge-done', id: m.id, results, output, engine: navigator.userAgent.match(/(Chrome|Firefox|Safari|Edg)\/[\d.]+/)?.[0] || '',
+                    ...(records.length ? { records, rtf } : {}), ...(replays.length ? { replays } : {}) });
             },
             failed: (id, msg, how) => {
                 $('#chProg').textContent = how;
@@ -526,7 +727,9 @@
                 showNote(how === 'stopped' ? `${who}: ${msg}.` : `${who}: ${msg}`, true);
                 vscode.postMessage({ type: 'challenge-error', id, message: msg });
             },
-        };
+            /** a round's job of a level that has ended (End, a page's other level): its loop stops */
+            gone: () => !!rg && (!chLevelRun || chLevelRun.token !== m.token),
+        }, rg ? { runs: rg.to - rg.from, from: rg.from } : {});
     }
     /** A lesson check's presenter (CHK_DESIGN.md §6): #ckCard's progress, a case's facts gathered for the host, which judges
      *  (check-progress, -done, -error); a case whose clock stands still is { hung: true }, the host's named FAIL */
@@ -554,12 +757,15 @@
     /** A job's runs (a challenge's) or cases (a check's), each in a worker of its own, through presenter `P` (CHK_DESIGN.md §6:
      *  chRunJob factored, each presenter owning its card, its progress words and its message prefix) */
     async function runJobLoop(m, P) {
-        if (chal.busy) { vscode.postMessage({ type: `${P.prefix}-error`, id: m.id, message: P.busy }); return; }
+        // a challenge refused while a check runs names the check (review chk5b_r1 N1)
+        if (chal.busy) { vscode.postMessage({ type: `${P.prefix}-error`, id: m.id, message: P.prefix === 'challenge' && chal.presenter && chal.presenter.prefix === 'check' ? 'a check is running in the Simulator panel: run the challenge when it ends' : P.busy }); return; }
         chal.busy = true;
         chal.id = m.id;
         chal.presenter = P;
         // a watchdog's words name the job's unit: a challenge's run, a check's part (review chk5b_r1 N1)
         chal.unit = P.unit;
+        // P0c-2r §5.6: the first run's index in the job (a round's range); 0 for every other job
+        chal.from = Number.isInteger(P.from) ? P.from : 0;
         P.open();
         try {
             const a = await loadAssets();
@@ -575,13 +781,26 @@
             const ahead = (navigator.hardwareConcurrency || 1) >= 4;
             // LB-4b: a body rig level's runs need the Jolt build (challengeWorker.ts loads `m.jolt` before its lockdown)
             const jolt = m.job && typeof m.job.level === 'string' && rigCourse(`challenge:${m.job.level}`) ? await loadJoltBytes() : undefined;
+            // RECORD RC-2: a linked level's runs run live with the bridge (m.link); Verify's replay takes run i's record (chReady
+            // reads chal.rc, the job's)
+            chal.rc = (i) => ({ link: m.link === true, record: Array.isArray(m.records) ? m.records[i] : undefined });
+            // w10-slim (review d1 B1, r1 B5b): the job's level files, posted to every run's worker before its lockdown
+            chal.coursePkg = await courseFiles(jobCourseKeys(m.job));
             let next = chReady(a, m.job, 0, jolt);
             for (let i = 0; i < P.runs; i++) {
+                if (P.gone && P.gone()) { if (next) { next.w.terminate(); } chEnd(); return; }
                 P.progress(i);
                 const cur = next || chReady(a, m.job, i, jolt);
                 next = ahead && i + 1 < P.runs ? chReady(a, m.job, i + 1, jolt) : undefined;
                 chal.next = next && next.w;
-                const d = await chRunOne(cur, i, P.limit(i), P.hangs);
+                let d = await chRunOne(cur, i, P.limit(i), P.hangs);
+                // RC-2: a linked run outside the RTF band (0.9-1.1x: linkedRun.ts) is not counted and is run once more; a
+                // second miss ends the job (this computer could not run it in real time)
+                if (d.counted === false) {
+                    const was = d.rtf;
+                    d = await chRunOne(chReady(a, m.job, i, jolt), i, P.limit(i), P.hangs);
+                    if (d.counted === false) { throw new Error(`run ${i + 1} ran at ${was}x and then ${d.rtf}x real time, and a linked run counts only at 0.9x to 1.1x: close other programs and run the challenge again`); }
+                }
                 P.each(d, i);
             }
             chEnd();
@@ -589,28 +808,34 @@
         } catch (e) {
             if (e === CH_ABORT) { return; }
             chEnd();
+            // a level text a run's worker refused is not kept (review w11-slim r1 S2)
+            courseRefused(e && e.message);
             P.failed(m.id, String(e && e.message || e), 'did not run');
         }
     }
 
     /** A fresh worker for run `i` of `job`, readied: it loads its interpreter and waits for chRunOne's go */
     function chReady(a, job, i, jolt) {
-        const w = new Worker(a.challengeWorker, { type: 'module', name: `EVN challenge run ${i + 1}` });
+        const w = new Worker(a.challengeWorker, { type: 'module', name: `EVN challenge run ${chal.from + i + 1}` });
         // the run's token: the program under test runs in that worker and can post messages of its own there; only
         // the worker's (they carry this) count (challengeWorker.ts; review r1 C2)
         const token = Array.from(crypto.getRandomValues(new Uint8Array(16)), (b) => b.toString(16).padStart(2, '0')).join('');
         const p = a.pyodide;
-        const rec = { w, token, failed: undefined };
+        // RC-2: a linked run's inbound link messages on a port of its own (review rc2 r1 B1); the job's link / record (runJobLoop)
+        const rc = chal.rc ? chal.rc(i) : undefined;
+        const ch = rc && rc.link ? new MessageChannel() : undefined;
+        const rec = { w, token, failed: undefined, port: ch && ch.port1 };
         // a worker that fails while it is readied fails its run when it comes, with its own reason (review r5 N-1)
         w.onerror = (ev) => { rec.failed = ev.message || 'the challenge worker did not start'; };
         // LB-4b (§2.2): a body rig level's run takes the Jolt build's bytes (a copy each: every run's worker is its own)
-        w.postMessage({ type: 'run', token, job, index: i, pyodide: { asm: p.asm, wasm: p.wasm.slice(0), stdlib: p.stdlib.slice(0), lock: p.lock }, evn: a.evn, boot: a.boot, version: cfg.version, ...(jolt ? joltFor(jolt) : {}) });
+        w.postMessage({ type: 'run', token, job, index: chal.from + i, pyodide: { asm: p.asm, wasm: p.wasm.slice(0), stdlib: p.stdlib.slice(0), lock: p.lock }, evn: a.evn, boot: a.boot, version: cfg.version, ...(jolt ? joltFor(jolt) : {}),
+            ...(rc && rc.link ? { link: true } : {}), ...(rc && rc.record !== undefined ? { record: rc.record } : {}), ...(chal.coursePkg || {}) }, ch ? [ch.port2] : []);
         return rec;
     }
     /** Run `i` in its readied worker: the worker's `done` ({ result, output } of a challenge's run, { facts } of a check's case),
      *  or it rejects - with CH_ABORT when the panel ended the job (chFail has said why). `hangs`: a stalled clock ends this run
      *  alone, resolving { hung: true } (a check's case; checkRun.ts hungFacts) */
-    function chRunOne({ w, token, failed }, i, limit, hangs) {
+    function chRunOne({ w, token, failed, port }, i, limit, hangs) {
         return new Promise((resolve, reject) => {
             if (failed) { w.terminate(); reject(new Error(failed)); return; }
             chal.worker = w;
@@ -621,27 +846,37 @@
             chal.hang = hangs ? () => {
                 if (!begun) { chFail(`part ${i + 1}'s Python did not start within ${CH_BUDGET_MS / 1000} s of this computer's time`); return; }
                 w.terminate();
+                // both watchdogs end with the part: a hang reached by over() leaves its stall timer set (review chk-judge r1 B2)
+                clearTimeout(chal.timer);
                 clearTimeout(chal.deadline);
-                chal.timer = undefined; chal.worker = undefined; chal.cancel = undefined; chal.hang = undefined;
+                chal.timer = undefined; chal.deadline = undefined; chal.worker = undefined; chal.cancel = undefined; chal.hang = undefined;
                 resolve({ hung: true });
             } : undefined;
             const began = Date.now();
+            // a run that will not end: the job's end (chFail), but a check's part whose program began is that part's FAIL at its
+            // limit (chal.hang: hungFacts), as the gate's wall clock gives it (scripts/check_guard.js; review chk5b_r1 N1)
+            const over = (msg) => (hangs && begun && chal.hang ? chal.hang() : chFail(msg));
             chArm(i + 1);
             // no run gets more than CH_RUN_MS of this computer's time, beats or not (review r4 N12)
-            chal.deadline = setTimeout(() => chFail(`${chal.unit} ${i + 1} took more than ${CH_RUN_MS / 60000} minutes of this computer's time`), CH_RUN_MS);
+            chal.deadline = setTimeout(() => over(`${chal.unit} ${i + 1} took more than ${CH_RUN_MS / 60000} minutes of this computer's time`), CH_RUN_MS);
             w.onmessage = (ev) => {
                 const d = ev.data;
                 if (!d || d.token !== token || chal.worker !== w) { return; }
                 if (d.type === 'began') { begun = true; chArm(i + 1); return; }
+                // RECORD RC-2: a linked run's program started (the bridge routed here), its bytes and acks out to the host
+                if (d.type === 'link-ready') { if (port) { chLink(w, port); } return; }
+                if (d.type === 'link-tx' || d.type === 'link-ack') { const { token: _t, ...out } = d; vscode.postMessage(out); return; }
+                if (d.type === 'link-note') { link.invertedTx[d.port - 1] = d.invertedTx; linkStatus(); return; }
                 if (d.type === 'beat') {
                     // a run is over at its time limit, and its program ended GRACE_S (2 s) later (challengeRun.ts): one
                     // still beating past that has escaped the stop (review r2 N1); and no run gets more than
                     // CH_RUN_MS of this computer's time, however slowly its simulated clock moves (review r3 N12)
-                    if (!(Number(d.t) <= limit + 3)) { chFail(`${chal.unit} ${i + 1} went on past its time limit (${limit} s): the program would not stop`); return; }
-                    if (Date.now() - began > CH_RUN_MS) { chFail(`${chal.unit} ${i + 1} took more than ${CH_RUN_MS / 60000} minutes of this computer's time`); return; }
+                    if (!(Number(d.t) <= limit + 3)) { over(`${chal.unit} ${i + 1} went on past its time limit (${limit} s): the program would not stop`); return; }
+                    if (Date.now() - began > CH_RUN_MS) { over(`${chal.unit} ${i + 1} took more than ${CH_RUN_MS / 60000} minutes of this computer's time`); return; }
                     chArm(i + 1);
                 } else if (d.type === 'done' || d.type === 'error') {
                     w.terminate();
+                    if (chal.link && chal.link.w === w) { chLink(undefined); }
                     clearTimeout(chal.deadline);
                     chal.worker = undefined;
                     chal.cancel = undefined;
@@ -657,6 +892,179 @@
     function chSummary(m) {
         if (m.id !== chal.id) { return; }
         if (!card.summary(m)) { showNote(`Challenge: ${m.error}`, true); }
+    }
+
+    /* ---- P0c-2r §5: a rounds level's loop, page side (src/sim/challengeHost.ts runRounds) -------------------------------------
+     * challenge-level opens the card once and takes the lock (chBusy: Run challenge, Check, Try a round and the Course list off
+     * until challenge-level-end); challenge-round shows the round's banner - "Round r of n", its value per `show` ("number":
+     * the value; "field": no number, the field alone), the time left as a draining disc from a deadline (never dots), Ready, End
+     * this level (with a confirm) and, where the host allows it, the teacher's call (a button per value, each confirmed) - and
+     * draws the board's practice world with the round's values (worker only: never the host's `course`). The go (Ready, or
+     * the deadline once) posts challenge-round-go; a refusal shows why and waits for Ready. Each message carries the token */
+    /** the rounds level running: { token, level, n, k, rehearsal } (null: none) */
+    let chLevelRun = null;
+    /** the round shown: { r, n, k, values, show, editS, call, support, deadline, called, going, auto, ran, said } (null: none) */
+    let chRound = null;
+    /** the last level's rounds the card shows rows of (a Try's values per round): { level, k, rounds: { r: values } } */
+    let chSeen = null;
+    /** the practice world's round values on the board (a round shown, or a Try's run's): { level, values, r } (null: seed 0's) */
+    let boardRound = null;
+    /** the round values a course message for `id` carries to the board worker (its practice world, §3), else none. start()
+     *  and setCourse() call it through `typeof roundFor` (scripts/test_wro_lazy.js runs those two alone, on stubs) */
+    function roundFor(id) { return boardRound && id === `challenge:${boardRound.level}` ? { round: boardRound.values, roundNo: boardRound.r } : {}; }
+    /** the board's practice world on `values` of `level`'s round `r` (null: seed 0's), sent again when the panel shows that
+     *  level; `r` is the round shown, which a practice run records as roundNo (P0c-2r §2, review build r1 N2) */
+    function boardRoundSet(level, values, r) {
+        const prev = boardRound;
+        boardRound = level && values ? { level, values: { ...values }, r } : null;
+        if (JSON.stringify(boardRound) === JSON.stringify(prev)) { return; }
+        const lv = level || (prev && prev.level);
+        if (lv && courseId === `challenge:${lv}`) { setCourse(courseId, false); }
+    }
+    const roundShowsNumber = (show) => Object.values(show || {}).every((v) => v === 'number');
+    /** a round's words: "house 5" per show "number" (a called value said so), none on a "field" round */
+    function roundValueWords(r) {
+        const R = chRound && chRound.r === r ? chRound : null;
+        const vals = R ? (R.called !== undefined ? { [Object.keys(R.values)[0]]: R.called } : R.values) : chSeen && chSeen.rounds[r];
+        const show = R ? R.show : chSeen && chSeen.show;
+        if (!vals || !roundShowsNumber(show)) { return ''; }
+        return Object.entries(vals).map(([k, v]) => `${k} ${v}`).join(', ') + (R && R.called !== undefined ? ' (called)' : '');
+    }
+    /** the card's heading for round r: "Round r: house 5", "Round r" on a field round */
+    function chRoundHead(r) { const w = roundValueWords(r); return w ? `Round ${r}: ${w}` : `Round ${r}`; }
+    function chLevelOpen(m) {
+        if (chLevelRun) { return; }
+        chLevelRun = { token: m.token, level: m.level, n: m.n, k: m.k, rehearsal: m.purpose === 'rehearse' };
+        chSeen = { level: m.level, k: m.k, rounds: {}, show: undefined };
+        card.open({ title: m.title, runs: m.runs, purpose: m.purpose, rounds: true });
+        chBusy(true);
+    }
+    function chRoundStart(m) {
+        if (!chLevelRun || m.token !== chLevelRun.token || m.level !== chLevelRun.level) { return; }
+        chRound = { r: m.r, n: m.n, k: m.k, values: m.values || {}, show: m.show || {}, editS: Number(m.editS) || 120, call: m.call === true, support: Array.isArray(m.support) ? m.support : [],
+            deadline: Date.now() + (Number(m.editS) || 120) * 1000, called: undefined, going: false, auto: false, ran: false, said: {}, why: '' };
+        chSeen.rounds[m.r] = { ...chRound.values };
+        chSeen.show = chRound.show;
+        boardRoundSet(chLevelRun.level, chRound.values, chRound.r);
+        roundUi();
+        chRoundTick();
+    }
+    function chRoundRefused(m) {
+        if (!chLevelRun || !chRound || m.token !== chLevelRun.token || m.r !== chRound.r) { return; }
+        chRound.going = false;
+        chRound.why = String(m.why || '');
+        showNote(`Round ${chRound.r}: ${chRound.why}. Fix it, then Ready.`, true);
+        roundUi();
+    }
+    function chRoundRan(m) {
+        if (!chLevelRun || !chRound || m.token !== chLevelRun.token || m.r !== chRound.r) { return; }
+        chRound.ran = true;
+        roundUi();
+        if (m.r < m.n) { card.say(`Round ${m.r} done. Next round when you are ready.`); }
+    }
+    function chLevelEnd(m) {
+        if (!chLevelRun || m.token !== chLevelRun.token) { return; }
+        const level = chLevelRun.level;
+        chLevelRun = null;
+        chRound = null;
+        if (chRoundTimer) { clearTimeout(chRoundTimer); chRoundTimer = undefined; }
+        // a round's job still running (End, a closed level): stopped here, its runs never reported
+        if (chal.busy && chal.presenter && chal.presenter.gone && chal.presenter.gone()) { const c = chal.cancel; chal.cancel = undefined; chEnd(); if (c) { c(); } }
+        boardRoundSet(level, null);
+        if (m.why) {
+            const line = m.failed ? `Level ended in round ${m.r}: ${m.why}.${m.r > 1 ? ' The earlier rounds are lost.' : ''}` : `Level ended: ${m.why}. Nothing was recorded.`;
+            card.levelEnded(m.failed, line);
+            showNote(line, true);
+        }
+        roundUi();
+        chBusy(false);
+    }
+    function chTryRound() {
+        const l = chLevel();
+        if (!l || !l.rounds || chal.busy || chLevelRun) { return; }
+        chBusy(true);
+        vscode.postMessage({ type: 'challenge-try-round', level: l.id });
+    }
+    /** the go (Ready, or the deadline once): a practice run still going stopped (r3 N2), the call in the go alone */
+    function chRoundGo() {
+        const R = chRound;
+        if (!chLevelRun || !R || R.going || R.ran) { return; }
+        R.going = true;
+        R.why = '';
+        if (pending.size) { interrupt(); }
+        vscode.postMessage({ type: 'challenge-round-go', token: chLevelRun.token, level: chLevelRun.level, r: R.r, ...(R.called !== undefined ? { called: R.called } : {}) });
+        roundUi();
+    }
+    let chRoundTimer;
+    /** the time left, from the deadline (not by counting ticks); said at 1 minute, 30 s and 10 s; the go once at 0 */
+    function chRoundTick() {
+        if (chRoundTimer) { clearTimeout(chRoundTimer); chRoundTimer = undefined; }
+        const R = chRound;
+        if (!R || R.ran) { return; }
+        const left = Math.max(0, (R.deadline - Date.now()) / 1000);
+        for (const [at, words] of [[60, '1 minute left'], [30, '30 seconds left'], [10, '10 seconds left']]) {
+            if (left <= at && R.editS > at && !R.said[at]) { R.said[at] = true; if (left > at - 2) { card.say(`Round ${R.r}: ${words}.`); } }
+        }
+        roundClock(left);
+        if (left <= 0) { if (!R.auto) { R.auto = true; chRoundGo(); } return; }
+        chRoundTimer = setTimeout(chRoundTick, 250);
+    }
+    /** the disc drains with the time left (a conic gradient; its label the time in words) */
+    function roundClock(left) {
+        const R = chRound, d = $('#chClock');
+        if (!d || !R) { return; }
+        const f = Math.max(0, Math.min(1, left / R.editS));
+        d.style.setProperty('--left', `${(f * 360).toFixed(1)}deg`);
+        const s = Math.ceil(left);
+        d.setAttribute('aria-label', s > 0 ? `${Math.floor(s / 60) ? `${Math.floor(s / 60)} min ` : ''}${s % 60} s left` : 'time is up');
+        d.dataset.left = String(s);
+    }
+    /** the round's banner card, built once (hidden with no round) */
+    function roundCard() {
+        return el('div', { class: 'card ref chal', id: 'chRoundCard', hidden: '', role: 'region', 'aria-labelledby': 'chRoundTitle' },
+            el('div', { class: 'row' }, el('b', { id: 'chRoundTitle' }), el('span', { class: 'v', id: 'chRoundValue' }), el('span', { class: 'clock', id: 'chClock', role: 'img' })),
+            el('div', { class: 'row', id: 'chRoundWhy', hidden: '' }),
+            el('div', { class: 'row', id: 'chCall', hidden: '' }),
+            el('div', { class: 'row', id: 'chCallAsk', hidden: '' },
+                el('span', { id: 'chCallQ' }),
+                el('button', { class: 'btn', type: 'button', id: 'chCallYes', onclick: () => { const R = chRound; const a = $('#chCallAsk'); if (R && a.dataset.v !== undefined) { R.called = Number(a.dataset.v); } a.hidden = true; roundUi(); } }, 'Call it'),
+                el('button', { class: 'btn', type: 'button', onclick: () => { $('#chCallAsk').hidden = true; } }, 'No')),
+            el('div', { class: 'row' },
+                el('button', { class: 'btn primary', type: 'button', id: 'chReady', title: 'The program is ready: run this round now (the window ends early)', onclick: () => chRoundGo() }, 'Ready'),
+                el('button', { class: 'btn primary', type: 'button', id: 'chNext', hidden: '', title: 'Start the next round', onclick: () => { if (chLevelRun && chRound && chRound.ran) { const r = chRound.r; vscode.postMessage({ type: 'challenge-round-next', token: chLevelRun.token, level: chLevelRun.level, r }); $('#chNext').hidden = true; } } }, 'Next round'),
+                el('button', { class: 'btn', type: 'button', id: 'chEndLevel', title: 'End this level: nothing is recorded or savable', onclick: () => { $('#chEndAsk').hidden = false; } }, 'End this level')),
+            el('div', { class: 'row', id: 'chEndAsk', hidden: '' },
+                el('span', {}, 'End this level? Nothing is recorded.'),
+                el('button', { class: 'btn', type: 'button', id: 'chEndYes', onclick: () => { $('#chEndAsk').hidden = true; if (chLevelRun) { vscode.postMessage({ type: 'challenge-round-end', token: chLevelRun.token, level: chLevelRun.level }); } } }, 'End it'),
+                el('button', { class: 'btn', type: 'button', onclick: () => { $('#chEndAsk').hidden = true; } }, 'Keep going')));
+    }
+    /** the banner from the round's state */
+    function roundUi() {
+        const box = $('#chRoundCard');
+        if (!box) { return; }
+        const R = chRound;
+        box.hidden = !chLevelRun || !R;
+        if (box.hidden) { $('#chEndAsk').hidden = true; $('#chCallAsk').hidden = true; return; }
+        $('#chRoundTitle').textContent = `${chLevelRun.rehearsal ? 'Try a round' : `Round ${R.r} of ${R.n}`}`;
+        const w = roundValueWords(R.r);
+        $('#chRoundValue').textContent = w || 'read it off the field';
+        $('#chRoundWhy').textContent = R.why;
+        $('#chRoundWhy').hidden = !R.why;
+        $('#chReady').hidden = R.ran;
+        $('#chReady').disabled = R.going;
+        $('#chNext').hidden = !(R.ran && R.r < R.n);
+        $('#chClock').hidden = R.ran;
+        // the teacher's call (§5.4): a button per value, each with its confirm, until the go
+        const c = $('#chCall');
+        c.textContent = '';
+        c.hidden = !(R.call && R.support.length && !R.going && !R.ran);
+        if (!c.hidden) {
+            const name = Object.keys(R.values)[0];
+            c.append(el('span', {}, `Call a ${name}: `));
+            for (const v of R.support) {
+                c.append(el('button', { class: 'btn', type: 'button', 'data-v': String(v), onclick: () => { const a = $('#chCallAsk'); a.dataset.v = String(v); $('#chCallQ').textContent = `Call ${name} ${v}?`; a.hidden = false; } }, String(v)));
+            }
+        }
     }
 
     /* ---- the header ---------------------------------------------------------------------------------- */
@@ -714,6 +1122,12 @@
     /** the Course list: while a program runs, only where the worker takes it in mid-run (live); else the program has
      *  the worker until it ends, and the list would show a course the robot is not on */
     function pickCourse(id) {
+        // P0c-2r §5: the Course list is the level's while a rounds level runs (disabled; a pick that comes anyway is refused)
+        if (chLevelRun) {
+            showNote('A rounds level is running: finish it or end it (End this level), then pick another course.');
+            courseOptions();
+            return;
+        }
         if (pending.size && !live) {
             showNote('The course can be changed when no program is running.');
             courseOptions();
@@ -733,18 +1147,26 @@
         courseOptions();
         userView = false;
         const wf = wroFields();
-        const msg = { type: 'course', course: id, map: mapOf(id), ...wf.fields };
-        if (needsEngine(id)) {
+        const pick = ++picks;
+        const msg = { type: 'course', course: id, pick, map: mapOf(id), ...wf.fields, ...(typeof roundFor === 'function' ? roundFor(id) : {}) };
+        if (startFailed && !worker) {
+            // no worker to send the course to (the start failed): a start on it, which reads courseId and this pick
+            start();
+        } else if (needsEngine(id) || courseKeys(id).length) {
+            // w10-slim: a challenge course's level file goes with its course message, as a rigid course's engine files do
             // the engine's files first (once; J4): the course goes with them, and every later message after it
             const slot = { m: msg, transfer: wf.transfer, ready: false };
             held.push(slot);
             // a course whose files cannot be had is not sent: the page and the host go back to the course before it (the
             // worker never left it), the note naming the file (review lazy r1 A N1)
             const wro = wroFor(id).catch((e) => { showNote(`The WRO course's files could not load (${e && e.message || e}): back on the course before`, true); return null; });
-            loadJoltBytes().then(joltFor, (e) => { showNote(`The physics engine could not load: ${e && e.message || e}`, true); return {}; }).then(async (jolt) => {
-                const w = await wro;
-                if (w === null) {
+            const crs = courseFor(id).catch((e) => { showNote(`The challenge level's file could not load (${e && e.message || e}): back on the course before`, true); return null; });
+            (needsEngine(id) ? loadJoltBytes().then(joltFor, (e) => { showNote(`The physics engine could not load: ${e && e.message || e}`, true); return {}; }) : Promise.resolve({})).then(async (jolt) => {
+                const w = await wro, c = await crs;
+                if (w === null || c === null) {
                     held.splice(held.indexOf(slot), 1);
+                    // never sent: the last pick is the one before it again (M2O-02), unless another pick came after
+                    if (picks === pick) { picks = pick - 1; }
                     flushHeld();
                     // back on the course the worker never left: no message to it; the host told whoever started the switch
                     // (its stored id too: review lazy r1 verify N-a)
@@ -758,7 +1180,7 @@
                     }
                     return;
                 }
-                slot.m = { ...msg, ...jolt, ...w }; slot.ready = true;
+                slot.m = { ...msg, ...jolt, ...w, ...c }; slot.ready = true;
                 flushHeld();
             });
         } else {
@@ -1050,22 +1472,25 @@
         return m.length !== n.length || m.some((x, i) => far(x.angle, n[i].angle, MOVED_DEG));
     }
 
+    /** the wheels' width, mm: hardware.ts TYRE_MM (OQ 507: the LEGO 32019's 20 mm) - the 3D view's body (body3) and the plan's
+     *  wheels; test_simulator.js simModels pins it to TYRE_MM */
+    const TYRE_MM = 20;
     /* ---- the 3D view (media/sim/view3d.js) ---- */
     const canvas3d = el('canvas', { id: 'c3', role: 'img', 'aria-label': 'The simulated robot on its course, in 3D', hidden: '' });
     const v3 = window.EVN3D ? window.EVN3D.create(canvas3d) : undefined;
     let mode3d = false;
-    if (v3 && v3.ok) { v3.seesawDeg = (cfg.seesaw || {}).deg; v3.seesawT = (cfg.seesaw || {}).t; v3.onChange = draw; }
+    if (v3 && v3.ok) { v3.seesawDeg = (cfg.seesaw || {}).deg; v3.seesawT = (cfg.seesaw || {}).t; v3.onChange = draw; v3.onFollowOff = () => { follow = false; toggled($('#followBtn'), follow); }; }
     /** the body as the 3D view draws it (hardware.ts bodyOf) */
     function body3() {
         const sh = robotShape(), c = hw.chassis || {};
-        return { front: sh.front, rear: -sh.rear, width: 2 * sh.half, height: c.height ?? 100, clearance: c.clearance ?? 10, caster: sh.caster, tyre: 18 };
+        return { front: sh.front, rear: -sh.rear, width: 2 * sh.half, height: c.height ?? 100, clearance: c.clearance ?? 10, caster: sh.caster, tyre: TYRE_MM };
     }
     function set3d(on) {
         if (on && !(v3 && v3.ok)) { showNote('The 3D view needs WebGL, which this window does not have.'); }
         mode3d = !!on && !!v3 && v3.ok;
         canvas.hidden = mode3d; canvas3d.hidden = !mode3d;
         toggled($('#view3dBtn'), mode3d);
-        if (mode3d) { v3.setHw(hw, body3()); if (geom) { v3.setGeom(geom); } v3.follow = follow; }
+        if (mode3d) { v3.setHw(hw, body3()); if (geom) { v3.setGeom(geom, snap && snap.pose); } v3.follow = follow; }
         document.body.classList.toggle('in3d', mode3d);
         draw();
     }
@@ -1105,6 +1530,94 @@
         const kind = cams.kind !== undefined ? cams.kind : camGlHere();
         return kind ? '' : `Cameras need WebGL in a Web Worker, which this window does not have${cams.reason ? ` (${cams.reason})` : ' (a blocklisted GPU or a remote desktop)'}: remove the cameras to apply.`;
     }
+    /** Frame folder… (CC-9, course/frameFolder.ts): the worker's frame jobs rendered one at a time through a camera worker of the
+     *  folder's own (camWorker.ts, the live cameras' untouched), each frame's PNG and job.json to the host, which writes them.
+     *  The camera worker's FrameSlot drops a request a newer one replaces, so each frame is asked only after the last came */
+    /** the frame-jobs / report-score asks on their way to the worker (f<id>, r<id>): a reply is taken once, and only for these */
+    const frameAsks = new Set();
+    /** a frame not back in this long fails the folder (camWorker.ts drops a frame whose camera could not be made: r1 S2) */
+    const FRAME_MS = 30000;
+    /** a frame folder's worker answering nothing in this long fails its ask (it builds ten Worlds: well under a second) */
+    const FRAME_ASK_MS = 60000;
+    /** CC-10 (design D6; review c1-measure r1 S1's real fix): one Frame folder… / Score report… ask in a fresh worker of its own
+     *  (src/sim/frameFolderWorker.ts: no Python, one message), its reply taken only from that worker, with that ask's random
+     *  token and a live ask id (frameAsks); then the worker ends */
+    let frameWorkerBlob;
+    async function frameFolderAsk(ask) {
+        let w, timer;
+        const end = () => { clearTimeout(timer); if (w) { w.terminate(); w = undefined; } };
+        const fail = (why) => {
+            end();
+            courseRefused(why);
+            if (ask.type === 'frame-jobs') { if (frameAsks.delete(`f${ask.id}`)) { vscode.postMessage({ type: 'frame-folder-write', id: ask.id, error: why }); } }
+            else if (frameAsks.delete(`r${ask.id}`)) { showNote(`PRACTICE: no score - ${why}`); }
+        };
+        try {
+            // the bundle fetched and made a blob URL once, as the challenge worker's (review c1-cc10 r1 S2)
+            if (!frameWorkerBlob) {
+                const r = await fetch(cfg.frameFolderWorkerUrl);
+                if (!r.ok) { throw new Error(`framefolderworker.js: ${r.status}`); }
+                frameWorkerBlob = URL.createObjectURL(new Blob([await r.text()], { type: 'text/javascript' }));
+            }
+            const token = Array.from(crypto.getRandomValues(new Uint8Array(16)), (b) => b.toString(16).padStart(2, '0')).join('');
+            w = new Worker(frameWorkerBlob, { type: 'module', name: 'EVN frame folder jobs' });
+            const me = w;
+            timer = setTimeout(() => fail(`the frame folder's worker sent nothing for ${FRAME_ASK_MS / 1000} s`), FRAME_ASK_MS);
+            w.onerror = (ev) => fail(ev.message || 'the frame folder\'s worker did not start');
+            w.onmessage = (ev) => {
+                const m = ev.data;
+                if (w !== me || !m || m.token !== token || m.id !== ask.id) { return; }
+                end();
+                switch (m.type) {
+                    // the folder's frame jobs, rendered here and written by the host; Score report's line (CC-9)
+                    // a refused level text named in the reply is not kept (review w11-slim r1 S2)
+                    case 'frame-jobs': if (frameAsks.delete(`f${m.id}`)) { void frameFolderRender(m); } courseRefused(m.error); return;
+                    case 'report-score': if (frameAsks.delete(`r${m.id}`) && !card.practice(m.line)) { showNote(m.line); } courseRefused(m.line); return;
+                }
+            };
+            // w10-slim: the ask's level files (Frame folder: the current version; Score report: the report's and the current)
+            const crs = await courseFiles(ask.type === 'report-score' ? jobCourseKeys({ level: ask.level, version: ask.version }) : courseKeys(`challenge:${ask.level}`));
+            if (w !== me) { return; }
+            w.postMessage({ ...ask, token, ...crs });
+        } catch (e) { fail(String(e && e.message || e)); }
+    }
+    async function frameFolderRender(m) {
+        const fail = (why) => { vscode.postMessage({ type: 'frame-folder-write', id: m.id, error: why }); };
+        if (m.error) { fail(m.error); return; }
+        let fw;
+        try {
+            const r = await fetch(cfg.camWorkerUrl);
+            if (!r.ok) { throw new Error(`camworker.js: ${r.status}`); }
+            fw = new Worker(URL.createObjectURL(new Blob([await r.text()], { type: 'text/javascript' })), { name: 'EVN frame folder' });
+            let waiting = null;
+            fw.onmessage = (ev) => { const w = waiting; if (w && w(ev.data)) { waiting = null; } };
+            const next = (want) => new Promise((resolve, reject) => {
+                const timer = setTimeout(() => { waiting = null; reject(new Error(`the frame folder's camera sent nothing for ${FRAME_MS / 1000} s`)); }, FRAME_MS);
+                waiting = (d) => {
+                    if (d.op === 'error' || d.op === 'held' || want(d)) { clearTimeout(timer); }
+                    if (d.op === 'error') { reject(new Error(`the frame folder's camera: ${d.message}`)); return true; }
+                    if (d.op === 'held') { reject(new Error('the frame folder\'s camera held the frame')); return true; }
+                    if (!want(d)) { return false; }
+                    resolve(d); return true;
+                };
+            });
+            fw.postMessage({ op: 'init' });
+            const ready = await next((d) => d.op === 'ready');
+            if (!ready.kind) { throw new Error(`cameras need WebGL in a Web Worker: ${ready.reason || 'none here'}`); }
+            fw.postMessage({ op: 'models', models: window.EVNModels || {} });
+            const frames = [];
+            for (const j of m.jobs) {
+                fw.postMessage({ op: 'hw', hw: j.hw, body: j.body, seesaw: cfg.seesaw });
+                fw.postMessage({ op: 'geom', geom: j.geom });
+                fw.postMessage({ op: 'frame', ...j.frame });
+                const f = await next((d) => d.op === 'frame' && d.run === j.frame.run);
+                if (f.mime !== 'image/png') { throw new Error(`frame ${j.run} came as ${f.mime}, not PNG`); }
+                frames.push({ name: j.name, bytes: new Uint8Array(f.bytes) });
+            }
+            vscode.postMessage({ type: 'frame-folder-write', id: m.id, level: m.level, version: m.version, runs: m.runs, hw: m.hw, job: m.job, frames });
+        } catch (e) { fail(String(e && e.message || e)); }
+        finally { if (fw) { fw.terminate(); } }
+    }
     /** the robot's cameras changed (or the board started): the camera worker started, told, or ended */
     function camHw() {
         const on = (hw.cameras || []).length > 0;
@@ -1119,6 +1632,8 @@
                 cams.worker = new Worker(URL.createObjectURL(new Blob([text], { type: 'text/javascript' })), { name: 'EVN cameras' });
                 cams.worker.onmessage = (ev) => onCamWorker(ev.data);
                 cams.worker.postMessage({ op: 'init' });
+                // the robot's models the page loaded (simPanel.ts SIM_MODELS): the cameras draw them (OQ 493)
+                cams.worker.postMessage({ op: 'models', models: window.EVNModels || {} });
                 camHw();
             }).catch((e) => { cams.starting = null; showNote(`The cameras could not start: ${e && e.message || e}`, true); });
             return;
@@ -1406,7 +1921,9 @@
      * and kept again only once the new key has held for a second frame: while the view moves (Follow, a drag, a zoom)
      * or a seesaw tilts, each frame draws the floor as before and keeps nothing (review r1 B1); the rest (the debris, the start,
      * the trail, the beams, the robot, the obstacles, the tiles over the robot) is drawn over it each frame as before. */
-    const floor = { canvas: null, key: null, last: null, geom: null, order: [], byTile: new Map(), loose: [] };
+    // G2.3 (DESIGN_r2.md §1.3): `lights`, the course's light paint entries - kept out of the floor (their colour changes in a run)
+    // and drawn each frame by lights2d() in the snapshot's colour; none on every other course
+    const floor = { canvas: null, key: null, last: null, geom: null, order: [], byTile: new Map(), loose: [], lights: [] };
     /** two floor keys the same (compared as numbers: a key turned into a string each frame cost Follow its frames) */
     const sameKey = (a, b) => !!a && a.length === b.length && a.every((v, i) => v === b[i]);
     function paintIndex() {
@@ -1416,7 +1933,9 @@
         floor.order = tiles.map((t, i) => i).sort((a, b) => (tiles[a].span ? tiles[a].span[1] : 0) - (tiles[b].span ? tiles[b].span[1] : 0));
         floor.byTile = new Map();
         floor.loose = [];
+        floor.lights = [];
         for (const p of geom.paint) {
+            if (p.light !== undefined) { floor.lights.push(p); continue; }
             if (p.tile === undefined || p.tile === null) { floor.loose.push(p); continue; }
             if (!floor.byTile.has(p.tile)) { floor.byTile.set(p.tile, []); }
             floor.byTile.get(p.tile).push(p);
@@ -1498,6 +2017,7 @@
         // (a frame that drew the floor is in the world transform still: the same calls as before the cache)
         // EN2: the decals over the floor (kept out of the floor's cache: they change with the seed), under every body
         decals2d();
+        lights2d();
         debris3d();
         if (geom.start) { startMark(geom.start); }
         gridDraw();
@@ -1567,10 +2087,12 @@
     }
 
     /** CC-8's Show names (COURSE_CONTENT_DESIGN.md §6): each named item's name where it truly is, from the worker's `names`
-     *  (workerCore.ts courseNames; a challenge course only); the 2D view alone draws them, never a camera */
+     *  (workerCore.ts courseNames; a challenge course only); the 2D view and the 3D view draw them (view3d.js setNames: lane
+     *  cc8, the Scene3D `names` option), never a camera */
     let courseNames = null, showNames = false;
     function namesUi() {
         const b = $('#namesBtn');
+        if (v3 && v3.ok) { v3.setNames(courseNames, showNames); }
         if (!b) { return; }
         b.hidden = !(courseNames && courseNames.length);
         b.classList.toggle('on', showNames && !b.hidden);
@@ -1639,6 +2161,13 @@
         for (const d of (geom && geom.decals) || []) { ctx.fillStyle = `rgb(${d.rgb[0]},${d.rgb[1]},${d.rgb[2]})`; poly(d.poly); ctx.fill(); }
     }
 
+    /** G2.3 (DESIGN_r2.md §1.3): each light's paint in its colour now - `lightCss[snap.lights[k]]` (its course's first
+     *  colour while no snapshot of it has come) - over the floor and its cache, under every body */
+    function lights2d() {
+        const ls = snap && snap.lights;
+        for (const p of floor.lights) { paintOne(p, (ls && p.lightCss[ls[p.light]]) || p.css); }
+    }
+
     /** bumps and debris (under the robot), obstacles and pillars (`tall`: drawn over it, they stand above it) */
     function hazards3d(tall) {
         if (!tall) { bumps3d(); debris3d(); return; }
@@ -1677,6 +2206,16 @@
             g.addColorStop(0, '#ffffff'); g.addColorStop(0.35, bl.color); g.addColorStop(1, '#202020');
             ctx.fillStyle = g;
             ctx.beginPath(); ctx.arc(at[0], at[1], bl.r, 0, 2 * Math.PI); ctx.fill();
+        });
+        // CC-6 (CCD §4): each print's outline - its quiet rectangle's corners seen from above (a tag on a post's face: a line
+        // along the face; a print lying on the floor: its rectangle); the 3D view and the cameras draw the pattern
+        (w.prints || []).forEach((p) => {
+            const y = p.yaw * Math.PI / 180, q = p.pitch * Math.PI / 180, n = [Math.cos(q) * Math.cos(y), Math.cos(q) * Math.sin(y), Math.sin(q)];
+            const u = [-Math.sin(y), Math.cos(y)], v = [-n[2] * u[1], n[2] * u[0]], hw = p.size[0] / 2 + p.quiet, hh = p.size[1] / 2 + p.quiet;
+            const pts = [[-hw, hh], [hw, hh], [hw, -hh], [-hw, -hh]].map(([s, t]) => [p.at[0] + s * u[0] + t * v[0], p.at[1] + s * u[1] + t * v[1]]);
+            ctx.strokeStyle = '#1b1b1b';
+            ctx.lineWidth = Math.max(2, 3 / view.k / dpr);
+            poly(pts); ctx.stroke();
         });
     }
 
@@ -1759,6 +2298,15 @@
         const w = W3();
         if (!w) { return; }
         for (const s of w.surfaces) {
+            // P0c-3t-1 (P0C3T §6): a challenge arena's ramp or platform (no tiles), outlined, a ramp shaded, its top's height
+            if ((s.kind === 'ramp' || s.kind === 'tile') && !(geom.tiles || []).length) {
+                ctx.fillStyle = 'rgba(160,160,160,0.22)';
+                ctx.strokeStyle = 'rgba(90,90,90,0.9)';
+                ctx.lineWidth = Math.max(1, 1.2 / view.k / dpr);
+                poly(s.poly); if (s.kind === 'ramp') { ctx.fill(); } ctx.stroke();
+                const hz = Math.max(...s.poly.map(([x, y]) => s.a + s.bx * x + s.by * y));
+                label(`${Math.round(hz)}`, s.poly.reduce((u, p) => u + p[0], 0) / s.poly.length, s.poly.reduce((u, p) => u + p[1], 0) / s.poly.length, '#444444', 10);
+            }
             if (s.kind === 'bump') {
                 ctx.fillStyle = 'rgba(160,160,160,0.28)';
                 ctx.strokeStyle = 'rgba(90,90,90,0.8)';
@@ -1804,13 +2352,13 @@
     }
 
     /** one piece of the course's paint: a stroke (round or mitred corners), a filled polygon or an arc, clipped to its tile */
-    function paintOne(p) {
+    function paintOne(p, css = p.css) {
         ctx.save();
         if (p.clip) { ctx.beginPath(); ctx.rect(p.clip[0], p.clip[1], p.clip[2] - p.clip[0], p.clip[3] - p.clip[1]); ctx.clip(); }
-        ctx.strokeStyle = p.css;
-        ctx.fillStyle = p.css;
+        ctx.strokeStyle = css;
+        ctx.fillStyle = css;
         ctx.lineWidth = p.w;
-        ctx.lineCap = 'butt';
+        ctx.lineCap = p.cap || 'butt';
         ctx.lineJoin = p.join || 'round';
         ctx.beginPath();
         if (p.kind === 'arc') { ctx.arc(p.c[0], p.c[1], p.r, p.a0, p.a1, p.a1 < p.a0); }
@@ -1888,7 +2436,7 @@
         ctx.fill(); ctx.stroke();
         // wheels
         ctx.fillStyle = 'rgba(17,21,24,0.85)';
-        for (const side of [1, -1]) { ctx.fillRect(-db.wheelDiameter / 2, side * db.axleTrack / 2 - 9, db.wheelDiameter, 18); }
+        for (const side of [1, -1]) { ctx.fillRect(-db.wheelDiameter / 2, side * db.axleTrack / 2 - TYRE_MM / 2, db.wheelDiameter, TYRE_MM); }
         // caster
         ctx.beginPath(); ctx.arc(robotShape().caster, 0, 8, 0, 2 * Math.PI); ctx.stroke();
         // distance sensors: a box looking its way
@@ -2208,8 +2756,13 @@
      *  press is a change a screen reader hears; review plannext3 r1 S6). Page only: nothing is posted to the worker or the host */
     function sayPose() {
         if (!snap) { card.say('The simulator is still starting.'); return; }
+        // P0c-2r §2 (r2 S4; review build r1 N3): on a show "field" round's board the value is read off the field, so the nearest
+        // named item's distance is not said by default (the access arrangement that would turn it on is not built)
+        if (fieldRoundShown()) { card.say(`Robot at ${EVNCard.poseText(snap.pose)}.`); return; }
         card.say(`Robot at ${EVNCard.poseSentence(snap.pose, { names: namesNow() })}.`);
     }
+    /** the board is on a rounds level's round whose values the panel never shows as a number (a show "field" round) */
+    function fieldRoundShown() { return !!(boardRound && chSeen && chSeen.level === boardRound.level && !roundShowsNumber(chSeen.show)); }
     /** CC-8's names where the panel draws them now: a loose ball where the snapshot says it is (the 2D view's rule: the
      *  snapshot's balls in the course's order, used when there are as many; review plannext3 r1 B1), the rest as laid */
     function namesNow() {
@@ -2316,8 +2869,11 @@
     }
     /** a Run's end: the line said, and printed when asked for (off by default: a program's output stays the board's) */
     function trailRunEnd(id) {
+        const pl = practiceSaid;
+        practiceSaid = null;
         if (!tools.text) { return; }
-        say(tools.text);
+        // the Run's practice line with it (lane cc8): written at once, the readout alone would drop that line, queued
+        say(pl ? `${tools.text} ${pl}` : tools.text);
         if (tools.print) { vscode.postMessage({ type: 'out', id, text: `${tools.text}\n` }); }
     }
     /** a worker started again (no shared memory, Stop) has the panel's settings back; none changed, nothing is sent */
@@ -2569,7 +3125,7 @@
     const plot = {
         on: false,          // the pane is open: only then is anything taken
         paused: false,
-        scored: false,      // a Run challenge was on at the last look
+        scored: false,      // what ran apart at the last look: false, 'challenge' (a Run challenge) or 'check'
         chans: new Map(),   // label -> channel, live first, then printed in the order they came
         key: '',            // the snapshot's shape the live channels were built from
         t0: undefined,      // the world's clock at the plot's zero
@@ -2650,7 +3206,8 @@
     const plotKey = (s) => [s.motors, s.sensors, s.distance].map((l) => l.map((d) => d.port).join()).join('/') + (s.imu ? '/imu' : '');
     /** whether anything is taken now: never in a Run challenge, whose robot is not the panel's */
     function plotTakes() {
-        const scored = chal.busy;
+        // what runs apart from the panel: a Run challenge's scored runs, or a check's parts (CHK5b's notes)
+        const scored = chal.busy ? (chal.presenter && chal.presenter.prefix === 'check' ? 'check' : 'challenge') : false;
         if (scored !== plot.scored) { plot.scored = scored; plotBreak(); plotShow(); }
         return !scored && !plot.paused;
     }
@@ -3127,7 +3684,7 @@
             setText(key.children[i] || key.appendChild(el('li')), `${c.label}: ${PLOT_STYLES[c.style].words}${Number.isFinite(lo) ? `, from ${plotNum(lo)} to ${plotNum(hi)}${u}, now ${now}${u}` : ', no samples'}`);
         });
         const chans = [...plot.chans.values()], samples = chans.reduce((a, c) => a + c.n, 0), bytes = chans.reduce((a, c) => a + c.x.byteLength + c.y.byteLength + c.ln.byteLength, 0);
-        const parts = [plot.scored ? 'A scored run is on: it runs apart from this panel, and nothing is taken until it ends.' : plot.paused ? 'Paused: nothing is taken, the run goes on.' : 'Taking samples.',
+        const parts = [plot.scored === 'check' ? 'A check is running: it runs apart from this panel, and nothing is taken until it ends.' : plot.scored ? 'A scored run is on: it runs apart from this panel, and nothing is taken until it ends.' : plot.paused ? 'Paused: nothing is taken, the run goes on.' : 'Taking samples.',
             ...(plot.missed ? [`The last Run went with this pane shut, and nothing is kept while it is shut: ${view.rows.length ? 'these samples start from when it opened' : 'press Run with it open'}.`] : []),
             ...(plot.held.length ? ['Some or all of these samples are from before the last Run, which came while paused.'] : []),
             ...(plot.late && !plot.paused ? ['The last Run\'s start is missing: it came while paused, and nothing was taken until the resume.'] : []),
@@ -3306,20 +3863,30 @@
         hw.mechanisms = hw.mechanisms || [];
         const box = el('div', { style: 'display:flex;flex-direction:column;gap:8px' });
         hw.mechanisms.forEach((m, i) => box.append(mechCard(m, i)));
-        const preset = (p) => () => {
-            // a touch array already fitted whose electrodes the preset's wires leave free is reused (a second click does
-            // not add another: review r1)
+        // a touch array already fitted whose electrodes the preset's wires leave free is reused (a second click does
+        // not add another: review r1)
+        const reuseFor = (p) => {
             const chs = p.mechanisms.flatMap((m) => [m.contacts, m.held]).filter(Boolean).map((w) => w.channel);
-            const reuse = hw.touchArrays.find((t) => !t.electrodes.some((e) => chs.includes(e.channel)));
+            return hw.touchArrays.find((t) => !t.electrodes.some((e) => chs.includes(e.channel)));
+        };
+        // the configurator fits at most 2 touch arrays ("+ Add a touch array"): a preset that would add a third is off
+        const presetFull = (p) => !reuseFor(p) && p.touchArrays.length > 0 && hw.touchArrays.length + p.touchArrays.length > 2;
+        const preset = (p) => () => {
+            if (presetFull(p)) { return; }
+            const reuse = reuseFor(p);
             const port = reuse ? reuse.port : freePort(), fill = (o) => JSON.parse(JSON.stringify(o).replace(/"port":0/g, `"port":${port}`));
             hw.servos = [...hw.servos.filter((s) => !p.servos.some((q) => q.port === s.port)), ...p.servos];
             if (!reuse) { hw.touchArrays = [...hw.touchArrays, ...fill(p.touchArrays)]; }
             hw.mechanisms = fill(p.mechanisms);
         };
-        const go = (label, on) => el('button', { class: 'btn', type: 'button', onclick: () => { readForm(); on(); buildConfig(); } }, label);
+        const go = (label, on, full = false) => {
+            const b = el('button', { class: 'btn', type: 'button', onclick: () => { readForm(); on(); buildConfig(); } }, label);
+            if (full) { b.disabled = true; b.title = 'Two touch arrays are fitted and neither has these electrodes free: remove one first'; }
+            return b;
+        };
         f.append(el('h2', {}, 'Mechanisms'),
             el('p', { class: 'sub' }, 'A claw, a lift arm, a scoop, a storage bin or a release door, on a servo port or a motor port the wheels do not use. Its joint follows the shaft: joint = ratio x (shaft angle - zero), held at min / max (a claw\'s joint is its jaw gap in mm; an arm\'s its pitch, a scoop\'s or bin\'s its tilt, a door\'s its opening, in degrees). "on" puts it on an earlier arm / scoop / bin\'s tip. A claw\'s contacts close on a conductive (live) victim; a ball-held switch closes while a ball is in it.'),
-            box, el('div', { class: 'actions' }, go('+ Add a mechanism', () => hw.mechanisms.push({ type: 'claw' })), ...MECH_PRESETS.map((p) => go(p.name, preset(p)))));
+            box, el('div', { class: 'actions' }, go('+ Add a mechanism', () => hw.mechanisms.push({ type: 'claw' })), ...MECH_PRESETS.map((p) => go(p.name, preset(p), presetFull(p)))));
     }
     function mechCard(m, i) {
         const type = el('select', { class: 'mType' }, ...['arm', 'claw', 'scoop', 'bin', 'door'].map((t) => { const o = el('option', { value: t }, t); if (t === m.type) { o.selected = true; } return o; }));
@@ -3540,6 +4107,15 @@
     }
 
     function clearErr() { $('#cfgErr').textContent = ''; }
+    /** the configurator's warnings on the robot applied (simPanel.ts: hardware.ts moduleOverlaps, OQ 494 - sensors closer than
+     *  their 24 mm modules): a list under the form, never a refusal; none clears it */
+    function cfgWarn(ws) {
+        const box = $('#cfgWarn');
+        if (!box) { return; }
+        box.textContent = '';
+        for (const w of Array.isArray(ws) ? ws : []) { box.append(el('li', {}, String(w))); }
+        box.hidden = !box.childElementCount;
+    }
     /** a downward colour sensor's cal over its height (hardware.ts refuses it too: review W2c r2 N-3) */
     function calRefusal(h) {
         const i = h.colorSensors.findIndex((s) => s.facing !== 'forward' && s.cal !== undefined && s.cal > s.height);
@@ -4439,6 +5015,39 @@
      *  button) for a screen reader, and the `on` class, which sim.css draws with a bar under the words, not by colour alone */
     function toggled(b, on, attr = 'aria-pressed') { if (b) { b.classList.toggle('on', !!on); b.setAttribute(attr, String(!!on)); } }
 
+    /* ---- the readouts' layout (M2P-98, owner 2026-11-12: the sensor readout and the referee panel covered too much of
+     * the view) ----
+     * Docked (the Dock readouts toggle, body.docked; sim.css): the HUD is a column of its own beside the field, the
+     * course's canvas the rest of the stage, so nothing covers the robot or the field; the default where the window is
+     * DOCK_MIN_PX wide or more, else over the field as before. Each card that grows - the sensors' bars, the referee's
+     * settings and events (RCJ), the WRO referee's notes and switch - folds behind a disclosure button (aria-expanded,
+     * aria-controls naming what it hides): the sensors open by default, the referees' parts open while docked and folded
+     * over the field. The learner's choices are kept in the webview's state (vscode.setState) when it has one. */
+    const DOCK_MIN_PX = 1000;
+    const layout = (() => { try { const st = vscode.getState && vscode.getState(); return st && typeof st.layout === 'object' && st.layout ? { ...st.layout } : {}; } catch { return {}; } })();
+    function keepLayout() { try { if (vscode.setState) { vscode.setState({ ...((vscode.getState && vscode.getState()) || {}), layout }); } } catch { /* no state here */ } }
+    const docked = () => (typeof layout.dock === 'boolean' ? layout.dock : window.innerWidth >= DOCK_MIN_PX);
+    /** the folds: [button id, the id of what it hides, open by default] */
+    const FOLDS = [['sensFold', 'bars', () => true], ['refFold', 'refMore', () => docked()], ['wroFold', 'wroMore', () => docked()]];
+    const foldOpen = (id, dflt) => (layout.fold && typeof layout.fold[id] === 'boolean' ? layout.fold[id] : dflt());
+    function layoutUi() {
+        document.body.classList.toggle('docked', docked());
+        toggled($('#dockBtn'), docked());
+        for (const [id, part, dflt] of FOLDS) {
+            const open = foldOpen(id, dflt), b = $('#' + id), x = $('#' + part);
+            toggled(b, open, 'aria-expanded');
+            if (x) { x.classList.toggle('folded', !open); }
+        }
+    }
+    function setDock(on) { layout.dock = !!on; keepLayout(); layoutUi(); }
+    function setFold(id) {
+        const f = FOLDS.find((x) => x[0] === id);
+        layout.fold = { ...(layout.fold || {}), [id]: !foldOpen(id, f[2]) };
+        keepLayout(); layoutUi();
+    }
+    /** a fold's button: its words say what it opens; Enter and Space work as on any button */
+    const foldBtn = (id, part, words, title) => el('button', { class: 'btn fold', id, type: 'button', 'aria-expanded': 'true', 'aria-controls': part, title, onclick: () => setFold(id) }, words);
+
     function setPane(name) {
         // a pane opens at its top, its heading in view (W5: the side bar kept the last pane's scroll)
         const side = document.querySelector('aside');
@@ -4825,9 +5434,14 @@
                     // why a fixed level's box is greyed, for a screen reader (the input's title is out of reach: review chk57 r2 N3)
                     el('span', { class: 'sr', id: 'chRunsWhy' }),
                     el('button', { class: 'btn primary', id: 'chRun', title: 'Run the program in the editor on this challenge, every run from its own start, and score it', onclick: () => chStart() }, 'Run challenge'),
+                    // P0c-2r §5.12 (R14): one round of a rounds level, a rehearsal (never recorded or savable)
+                    el('button', { class: 'btn', id: 'chTryRound', type: 'button', hidden: '', title: 'Try one round of this level: its value, its edit window and its runs, for practice (not recorded, not for sealing)', onclick: () => chTryRound() }, 'Try a round'),
                     // CC-8: the last practice run's truth log (Run from the level's start), as a CSV
-                    el('button', { class: 'btn', id: 'chTruth', type: 'button', hidden: '', title: 'Save what the robot truly did on your last practice run (from the level\'s start): its pose, speed and contacts every 10 ms, with the level\'s drawn values, as a CSV', onclick: () => toWorker({ type: 'truth', saved: new Date().toISOString() }) }, 'Save truth…'),
-                    el('button', { class: 'btn', id: 'namesBtn', type: 'button', hidden: '', 'aria-pressed': 'false', title: 'Show the name of each named item on the course (2D view)', onclick: () => { showNames = !showNames; namesUi(); draw(); } }, 'Show names')),
+                    el('button', { class: 'btn', id: 'chTruth', type: 'button', hidden: '', title: 'Save what the robot truly did on your last practice run (from the level\'s start): its pose, speed and contacts every 10 ms, with the level\'s drawn values, as a CSV', onclick: () => { truthAsk = `truth-${++truthSeq}-${Array.from(crypto.getRandomValues(new Uint8Array(8)), (b) => b.toString(16).padStart(2, '0')).join('')}`; toWorker({ type: 'truth', id: truthAsk, saved: new Date().toISOString() }); } }, 'Save truth…'),
+                    // CC-9: a report level's frames for the team's PC program, and its report.json scored as practice
+                    el('button', { class: 'btn', id: 'chFrames', type: 'button', hidden: '', title: 'Write each run\'s camera frame (frame-1.png ...) and job.json into a folder you pick (in the browser IDE: one zip to download), for your PC program; a new folder draws new fields', onclick: () => vscode.postMessage({ type: 'frame-folder' }) }, 'Frame folder…'),
+                    el('button', { class: 'btn', id: 'chReport', type: 'button', hidden: '', title: 'Score the report.json your PC program wrote into the frame folder (in the browser IDE: uploaded, for the zip you choose) against its fields: practice, not for sealing', onclick: () => vscode.postMessage({ type: 'report-score' }) }, 'Score report…'),
+                    el('button', { class: 'btn', id: 'namesBtn', type: 'button', hidden: '', 'aria-pressed': 'false', title: 'Show the name of each named item on the course (the 2D and 3D views)', onclick: () => { showNames = !showNames; namesUi(); draw(); } }, 'Show names')),
                 el('button', { class: 'btn', id: 'ckRun', type: 'button', title: 'Check the program in the editor against its lesson check (the line "# check: <name>" at its top names it): the field and the board are left alone', onclick: () => vscode.postMessage({ type: 'check-start' }) }, 'Check'),
                 el('button', { class: 'btn', id: 'wroLoad', hidden: '', title: 'Load WRO\'s printing file of the RoboMission Junior 2026 mat (the PDF you downloaded from wro-association.org): the sensors then read its print. It stays on this computer, kept for the next time.', onclick: () => wroPick() }, 'Load WRO mat…'),
                 el('span', { class: 'chip', id: 'wroChip', hidden: '' }),
@@ -4837,7 +5451,8 @@
                 el('button', { class: 'btn', id: 'wroEnd', hidden: '', disabled: '', title: 'End the run (the team\'s STOP, General Rules 10.7.5): it is scored once the robot stands still', onclick: () => wroEndRun() }, 'End run'),
                 el('label', { class: 'inline' }, 'Speed', speedSel),
                 el('button', { class: 'btn', id: 'resetBtn', title: 'Put the robot back at the start (when no program runs)', onclick: () => { place(undefined); } }, 'Back to start'),
-                el('button', { class: 'btn', id: 'followBtn', title: 'Keep the robot in the middle of the view (in 3D: follow it from behind)', 'aria-pressed': 'false', onclick: (e) => { follow = !follow; toggled(e.currentTarget, follow); if (v3) { v3.follow = follow; } if (!follow) { userView = false; fit(); draw(); } } }, 'Follow'),
+                el('button', { class: 'btn', id: 'dockBtn', type: 'button', 'aria-pressed': 'false', title: 'Put the readouts (the time, the sensors, the referee) in a column beside the field, so they cover none of it; off: over the field', onclick: () => setDock(!docked()) }, 'Dock readouts'),
+                el('button', { class: 'btn', id: 'followBtn', title: 'Keep the robot in the view (in 3D: follow it from behind, close up, the robot low in the view)', 'aria-pressed': 'false', onclick: (e) => { follow = !follow; toggled(e.currentTarget, follow); if (v3) { v3.follow = follow; } if (!follow) { userView = false; fit(); draw(); } } }, 'Follow'),
                 el('button', { class: 'btn', id: 'camBtn', hidden: '', 'aria-pressed': 'false', title: 'Show the first camera\'s picture (its newest frame at its release, as your program gets it)', onclick: () => camPreviewToggle() }, 'Camera'),
                 el('button', { class: 'btn on only3d-btn', id: 'modelsBtn', 'aria-pressed': 'true', title: 'Draw the EVN board and the sensors as their models (off: the plain boxes); looks only, the simulation is the same', onclick: (e) => { const on = !(v3 && v3.models); if (v3) { v3.models = on; } toggled(e.currentTarget, on); draw(); } }, 'Models'),
                 el('button', { class: 'btn', id: 'view3dBtn', 'aria-pressed': 'false', title: 'See the course and the robot in 3D (drag to turn the view, Shift+drag to move it, scroll to zoom)', onclick: () => set3d(!mode3d) }, '3D'),
@@ -4861,15 +5476,18 @@
                             el('span', { class: 'only3d', title: 'How high the robot\'s wheels stand (mm), and its pitch (nose up +) and roll (left side up +)' }, el('span', { class: 'k' }, 'height '), el('span', { class: 'v', id: 'hZ' }, '-')),
                             el('span', { class: 'finish', id: 'hFin' }),
                         )),
-                        el('div', { class: 'card bars', id: 'bars' }),
+                        el('div', { class: 'card sens', id: 'sensCard' },
+                            foldBtn('sensFold', 'bars', 'Sensors', 'Show or hide the sensors\' and motors\' readings'),
+                            el('div', { class: 'bars', id: 'bars' })),
                         el('div', { class: 'card ref', id: 'refCard', hidden: '' },
                             el('div', { class: 'row' },
                                 el('span', { title: 'The field score: (line tracing + exit bonus) x the evacuation zone multiplier (rules 5.6.12)' }, el('span', { class: 'k' }, 'score '), el('span', { class: 'v', id: 'rScore' }, '-')),
                                 el('span', { title: 'What is left of the game\'s 8 minutes, calibration included (rules 5.3.1)' }, el('span', { class: 'k' }, 'left '), el('span', { class: 'v', id: 'rClock' }, '-')),
                                 el('span', { title: 'Lacks of progress (rules 5.5)' }, el('span', { class: 'k' }, 'LoP '), el('span', { class: 'v', id: 'rLop' }, '-')),
                                 el('span', { title: 'Victims rescued: entirely in their evacuation point, the robot not touching them, at rest 0.2 s (rules 5.6.6); the referee takes each one out' }, el('span', { class: 'k' }, 'rescued '), el('span', { class: 'v', id: 'rVic' }, '-')),
-                                el('span', { class: 'v', id: 'rPrac', hidden: '', title: 'Not a rules run (rules 5.3.7, 4.1.1): the score is kept, marked practice' })),
-                            el('div', { class: 'row' },
+                                el('span', { class: 'v', id: 'rPrac', hidden: '', title: 'Not a rules run (rules 5.3.7, 4.1.1): the score is kept, marked practice' }),
+                                foldBtn('refFold', 'refMore', 'Settings and events', 'Show or hide the referee\'s settings and its last events')),
+                            el('div', { class: 'more', id: 'refMore' }, el('div', { class: 'row' },
                                 el('label', { title: 'The referee judges the run (rules 5.3-5.7): off, nothing is scored and the robot is never put back' }, el('input', { type: 'checkbox', id: 'rOn', checked: '', onchange: refSettings }), ' referee'),
                                 el('button', { class: 'btn', type: 'button', title: 'Call a lack of progress (rules 5.5.1a): the robot is put back on the last checkpoint', onclick: () => toWorker({ type: 'referee', op: 'lop' }) }, 'Lack of progress'),
                                 el('button', { class: 'btn', type: 'button', title: 'End the game now (rules 5.7.1)', onclick: () => toWorker({ type: 'referee', op: 'end' }) }, 'End game'),
@@ -4878,18 +5496,20 @@
                                 el('label', { title: 'After a lack of progress the start button is pressed for the robot (rules 4.2.8)' }, el('input', { type: 'checkbox', id: 'rPress', checked: '', onchange: refSettings }), ' press'),
                                 el('select', { id: 'rLopStart', title: 'At a lack of progress, the declared procedure (rules 4.2.8): the start button only (the program runs on), or the program restarted as at a power cycle (main.py from the start; press then holds the button as it starts)', onchange: refSettings }, el('option', { value: 'press' }, 'LoP: button'), el('option', { value: 'restart' }, 'LoP: restart')),
                                 el('label', { title: 'Seconds of calibration counted before the run (rules 5.3.1)' }, 'calib ', el('input', { type: 'number', id: 'rCal', min: '0', max: '480', value: '0', style: 'width:4em', onchange: refSettings }), ' s')),
-                            el('div', { class: 'log', id: 'rLog' })),
+                            el('div', { class: 'log', id: 'rLog' }))),
+                        roundCard(),
                         card.element(),
                         ckCard.element(),
                         el('div', { class: 'card ref wro', id: 'wroCard', hidden: '' },
                             el('div', { class: 'row' },
                                 el('span', { title: 'The Junior 2026 score of the field (scoring sheet; max 230): live while the run is on, the result once it ended, kept until the next Run' }, el('span', { class: 'k' }, 'score '), el('span', { class: 'v', id: 'wScore' }, '-')),
-                                el('span', { title: 'The run\'s 2 minutes from the program\'s Run (General Rules 10.1); a program that waits for its start button has that wait inside its time' }, el('span', { class: 'k' }, 'run '), el('span', { class: 'v', id: 'wClock' }, '-'))),
+                                el('span', { title: 'The run\'s 2 minutes from the program\'s Run (General Rules 10.1); a program that waits for its start button has that wait inside its time' }, el('span', { class: 'k' }, 'run '), el('span', { class: 'v', id: 'wClock' }, '-')),
+                                foldBtn('wroFold', 'wroMore', 'Details', 'Show or hide the referee\'s notes on the run and its switch')),
                             el('div', { class: 'row' }, el('span', { class: 'v', id: 'wLines', title: 'Points by mission: 3.1 visitors, 3.2 towers, 3.3 artefacts, 3.4 dirt, 3.5 bonus' })),
-                            el('div', { class: 'row' }, el('span', { class: 'v', id: 'wMarks' })),
+                            el('div', { class: 'more', id: 'wroMore' }, el('div', { class: 'row' }, el('span', { class: 'v', id: 'wMarks' })),
                             el('div', { class: 'row' },
                                 el('label', { title: 'The WRO referee scores the run (General Rules 10; Junior rules 3): turned on, the field is laid from the seed and the robot put at the start' }, el('input', { type: 'checkbox', id: 'wOn', checked: '', onchange: wroRefToggle }), ' referee'),
-                                el('span', { class: 'log', title: 'The game objects are bodies of the physics engine (Jolt Physics; docs/SIMULATOR.md "WRO RoboMission"): they are pushed, gripped, stacked and tipped over, and the sensors read them where they lie; a real table may differ' }, 'physics engine'))),
+                                el('span', { class: 'log', title: 'The game objects are bodies of the physics engine (Jolt Physics; docs/SIMULATOR.md "WRO RoboMission"): they are pushed, gripped, stacked and tipped over, and the sensors read them where they lie; a real table may differ' }, 'physics engine')))),
                     ),
                     el('div', { class: 'hint run-only only2d' }, 'Drag the robot to move it, its handle to turn it (Shift: 15° steps), or use Tools by keyboard. Drag the floor to pan, scroll to zoom.'),
                     el('div', { class: 'hint run-only only3d-view' }, 'Drag to turn the view, Shift+drag (or a right drag) to move it, scroll to zoom. Follow follows the robot. The robot is moved in the 2D view.'),
@@ -4904,6 +5524,7 @@
                     el('div', { id: 'cfgPane', class: 'pane' },
                         el('div', { id: 'cfgForm', style: 'display:flex;flex-direction:column;gap:10px' }),
                         el('div', { class: 'err', id: 'cfgErr' }),
+                        el('ul', { class: 'warn', id: 'cfgWarn', role: 'status', hidden: '' }),
                         el('div', { class: 'actions' },
                             el('button', { class: 'btn primary', type: 'button', onclick: () => { clearErr(); const h = readForm(); const why = camRefusal(h) || calRefusal(h); if (why) { $('#cfgErr').textContent = why; return; } vscode.postMessage({ type: 'apply-hw', hw: h }); } }, 'Apply'),
                             el('button', { class: 'btn', type: 'button', onclick: () => { clearErr(); vscode.postMessage({ type: 'default-hw' }); } }, 'Defaults'),
@@ -4919,17 +5540,21 @@
                 ),
             ),
         );
+        layoutUi();
         courseOptions();
         wroHeader();
         challengeHeader();
         mapList();
         buildConfig();
+        cfgWarn(cfg.hwWarnings);
         setLicence(cfg.licence);
         if (cfg.configure) { setPane('config'); }
     }
 
     build();
     resize();
+    // P0c-2r §5 (r2 S7): once per load of this page (never a board worker's `ready`): the host ends a rounds level running
+    vscode.postMessage({ type: 'page-load' });
     start(undefined);
     void starting;
 })();

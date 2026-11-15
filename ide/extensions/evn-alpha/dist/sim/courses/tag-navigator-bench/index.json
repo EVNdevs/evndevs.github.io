@@ -1,0 +1,45 @@
+{
+ "format": "evn-course-index/1",
+ "generated": "node scripts/course_index.js --write; do not edit",
+ "levels": [
+  {
+   "file": "tag-navigator-bench/level-1.v1.json",
+   "id": "tag-navigator-bench-1",
+   "version": 1,
+   "sha256": "5778ddbd8c351c6280836b02569ce79f1ec84d9deb5ed7f405e18d9911389ced",
+   "current": true,
+   "title": "Tag navigator bench · Level 1: Visit all four",
+   "limit": 120,
+   "runs": {
+    "default": 5,
+    "fixed": 10
+   }
+  },
+  {
+   "file": "tag-navigator-bench/level-2.v1.json",
+   "id": "tag-navigator-bench-2",
+   "version": 1,
+   "sha256": "264c524e86a83f59e19bb942bcd210f51e4bc7703261d129669ff4c4da3fe2d7",
+   "current": true,
+   "title": "Tag navigator bench · Level 2: The printed order",
+   "limit": 120,
+   "runs": {
+    "default": 5,
+    "fixed": 10
+   }
+  },
+  {
+   "file": "tag-navigator-bench/level-3.v1.json",
+   "id": "tag-navigator-bench-3",
+   "version": 1,
+   "sha256": "935d26b27f1a6b93605be7f27ff4e8b0dab7cae004fce583ce72388c0a256009",
+   "current": true,
+   "title": "Tag navigator bench · Level 3: Hidden tags",
+   "limit": 120,
+   "runs": {
+    "default": 5,
+    "fixed": 10
+   }
+  }
+ ]
+}

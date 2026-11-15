@@ -1,0 +1,102 @@
+{
+ "format": "evn-course-index/1",
+ "generated": "node scripts/course_index.js --write; do not edit",
+ "levels": [
+  {
+   "file": "scenes/level-4.v1.json",
+   "id": "checkerboard",
+   "version": 1,
+   "sha256": "57d375eb3a260f9ee4872025da3cf86eb49f0269f763ac9bb01660a6800fbfc3",
+   "current": true,
+   "title": "Scene · Checkerboard on a stand",
+   "limit": 120,
+   "runs": {
+    "default": 5
+   }
+  },
+  {
+   "file": "scenes/level-1.v1.json",
+   "id": "corridor",
+   "version": 1,
+   "sha256": "559c191ed758039ceb1b2397ffa9018ffe2978c743ac8a18a06ab0ef7fab3335",
+   "current": false,
+   "title": "Scene · Ten-cell corridor",
+   "limit": 60,
+   "runs": {
+    "default": 5
+   }
+  },
+  {
+   "file": "scenes/level-1.v2.json",
+   "id": "corridor",
+   "version": 2,
+   "sha256": "1cce084f93067aaad0353686d6189c63fafdbaa4b09637368bc6ed2a353fbf87",
+   "current": true,
+   "title": "Scene · Ten-cell corridor",
+   "limit": 60,
+   "runs": {
+    "default": 5
+   }
+  },
+  {
+   "file": "scenes/level-2.v1.json",
+   "id": "maze-island",
+   "version": 1,
+   "sha256": "6bf663b8bea063689b0499de6e63df7368f0c57cc1e9e797ab49947b2fa72a81",
+   "current": true,
+   "title": "Scene · Island maze",
+   "limit": 120,
+   "runs": {
+    "default": 5
+   }
+  },
+  {
+   "file": "scenes/level-5.v1.json",
+   "id": "measure-field",
+   "version": 1,
+   "sha256": "7268c6429a85a4800c8f8e24a4c957b18e0fc21409a66498e27e32a4fa4fcec1",
+   "current": false,
+   "title": "Scene · Measure with a camera, level 1's field",
+   "limit": 30,
+   "runs": {
+    "default": 5
+   }
+  },
+  {
+   "file": "scenes/level-5.v2.json",
+   "id": "measure-field",
+   "version": 2,
+   "sha256": "a61fc6ebcd73e0e4c128ad06979e41ef66a6ca6b4426f841d221f12f87ccf31b",
+   "current": true,
+   "title": "Scene · Measure with a camera, level 1's field",
+   "limit": 30,
+   "runs": {
+    "default": 5
+   }
+  },
+  {
+   "file": "scenes/level-6.v1.json",
+   "id": "tag-field",
+   "version": 1,
+   "sha256": "808fe326d4a313de8a9ed8fefeb3fb39acd058417997870cbd26b4e0545cd18b",
+   "current": true,
+   "title": "Scene · Tag navigator field",
+   "limit": 120,
+   "runs": {
+    "default": 5
+   }
+  },
+  {
+   "file": "scenes/level-3.v1.json",
+   "id": "wall-board",
+   "version": 1,
+   "sha256": "92564602d38f098714346b831b3eb6a06a9c67d0163286bd0234ef44c0ea30d9",
+   "current": true,
+   "title": "Scene · Wall board",
+   "limit": 30,
+   "runs": {
+    "default": 5
+   }
+  }
+ ]
+}

@@ -1,0 +1,342 @@
+{
+ "format": "evn-course/1",
+ "id": "mini-mission-3",
+ "challenge": "mini-mission",
+ "level": 3,
+ "version": 1,
+ "module": "G4.3",
+ "title": "Mini mission \u00b7 Level 3: Four tasks in the round",
+ "brief": "Four tasks, any order, in the 120 s round: the red cube wholly into the red zone (20), the blue cube wholly into the blue zone (20), the tree (the green cylinder) pushed from its black square wholly onto the green patch (25), the flag (the yellow box) knocked off its yellow pad - no part of it left on the pad (15), and the whole robot parked inside the garage when the run ends (20). Every object stands up to 30 mm each way (along and across) from its place, a new place each run. The run ends when your program ends, or at 120 s; it finishes when the program ends within the round. No speed points: the round is the limit.",
+ "field": {
+  "arena": {
+   "size": [
+    2000,
+    1200
+   ],
+   "startBox": [
+    0,
+    0,
+    250,
+    250
+   ],
+   "goal": null,
+   "wallH": 50,
+   "wallT": 20,
+   "obstacleH": 50,
+   "obstacles": [
+    {
+     "name": "cubeRed",
+     "x": {
+      "$": "900 + redDx"
+     },
+     "y": {
+      "$": "600 + redDy"
+     },
+     "w": 50,
+     "d": 50,
+     "h": 50,
+     "massG": 40,
+     "color": "#dc1e1e"
+    },
+    {
+     "name": "cubeBlue",
+     "x": {
+      "$": "1100 + blueDx"
+     },
+     "y": {
+      "$": "600 + blueDy"
+     },
+     "w": 50,
+     "d": 50,
+     "h": 50,
+     "massG": 40,
+     "color": "#1e50dc"
+    },
+    {
+     "name": "tree",
+     "shape": "cylinder",
+     "x": {
+      "$": "400 + treeDx"
+     },
+     "y": {
+      "$": "700 + treeDy"
+     },
+     "w": 60,
+     "d": 60,
+     "h": 100,
+     "massG": 80,
+     "color": "#2e8b3a"
+    },
+    {
+     "name": "flag",
+     "x": {
+      "$": "1550 + flagDx"
+     },
+     "y": {
+      "$": "750 + flagDy"
+     },
+     "w": 40,
+     "d": 40,
+     "h": 100,
+     "massG": 20,
+     "color": "#e6c619"
+    }
+   ],
+   "areas": [
+    {
+     "name": "line",
+     "rect": [
+      0,
+      290,
+      2000,
+      310
+     ],
+     "paint": "black"
+    },
+    {
+     "name": "shelf",
+     "rect": [
+      850,
+      525,
+      1150,
+      675
+     ],
+     "paint": null
+    },
+    {
+     "name": "zoneRed",
+     "rect": [
+      800,
+      1000,
+      1000,
+      1200
+     ],
+     "paint": "red"
+    },
+    {
+     "name": "zoneBlue",
+     "rect": [
+      1000,
+      1000,
+      1200,
+      1200
+     ],
+     "paint": "blue"
+    },
+    {
+     "name": "treeSquare",
+     "rect": [
+      340,
+      640,
+      460,
+      760
+     ],
+     "paint": "black"
+    },
+    {
+     "name": "greenPatch",
+     "rect": [
+      300,
+      1000,
+      500,
+      1200
+     ],
+     "paint": "green"
+    },
+    {
+     "name": "flagPad",
+     "rect": [
+      1490,
+      690,
+      1610,
+      810
+     ],
+     "paint": "yellow"
+    },
+    {
+     "name": "garage",
+     "rect": [
+      1700,
+      0,
+      2000,
+      300
+     ],
+     "paint": null
+    },
+    {
+     "name": "garageW",
+     "rect": [
+      1700,
+      0,
+      1710,
+      300
+     ],
+     "paint": "black"
+    },
+    {
+     "name": "garageS",
+     "rect": [
+      1700,
+      0,
+      2000,
+      10
+     ],
+     "paint": "black"
+    },
+    {
+     "name": "garageE",
+     "rect": [
+      1990,
+      0,
+      2000,
+      300
+     ],
+     "paint": "black"
+    }
+   ]
+  },
+  "random": [
+   {
+    "name": "redDx",
+    "draw": "uniform-v1",
+    "min": -30,
+    "max": 30,
+    "step": 30
+   },
+   {
+    "name": "redDy",
+    "draw": "uniform-v1",
+    "min": -30,
+    "max": 30,
+    "step": 30
+   },
+   {
+    "name": "blueDx",
+    "draw": "uniform-v1",
+    "min": -30,
+    "max": 30,
+    "step": 30
+   },
+   {
+    "name": "blueDy",
+    "draw": "uniform-v1",
+    "min": -30,
+    "max": 30,
+    "step": 30
+   },
+   {
+    "name": "treeDx",
+    "draw": "uniform-v1",
+    "min": -30,
+    "max": 30,
+    "step": 30
+   },
+   {
+    "name": "treeDy",
+    "draw": "uniform-v1",
+    "min": -30,
+    "max": 30,
+    "step": 30
+   },
+   {
+    "name": "flagDx",
+    "draw": "uniform-v1",
+    "min": -30,
+    "max": 30,
+    "step": 30
+   },
+   {
+    "name": "flagDy",
+    "draw": "uniform-v1",
+    "min": -30,
+    "max": 30,
+    "step": 30
+   }
+  ]
+ },
+ "robot": {
+  "rule": "fixed",
+  "base": "odometry-imu8"
+ },
+ "start": {
+  "nominal": {
+   "x": 125,
+   "y": 127,
+   "heading": 0
+  },
+  "vary": {
+   "xy": 20,
+   "heading": 3
+  },
+  "draw": "uniform-square-v1"
+ },
+ "runs": {
+  "min": 1,
+  "max": 20,
+  "default": 5,
+  "fixed": 5
+ },
+ "kernel": {
+  "name": "pointToPoint",
+  "limitS": 120,
+  "goal": "footprintInside",
+  "final": "runEnd",
+  "place": {
+   "items": [
+    {
+     "name": "cubeRed",
+     "areas": [
+      "zoneRed"
+     ]
+    },
+    {
+     "name": "cubeBlue",
+     "areas": [
+      "zoneBlue"
+     ]
+    },
+    {
+     "name": "tree",
+     "areas": [
+      "greenPatch"
+     ]
+    },
+    {
+     "name": "flag",
+     "areas": [
+      "flagPad"
+     ]
+    }
+   ],
+   "robotAreas": [
+    "garage"
+   ]
+  }
+ },
+ "constants": {},
+ "score": {
+  "run": "round(if(wholly_cubeRed_zoneRed, 20, 0) + if(wholly_cubeBlue_zoneBlue, 20, 0) + if(wholly_tree_greenPatch, 25, 0) + if(partly_flag_flagPad, 0, 15) + if(robotWholly_garage, 20, 0), 1)",
+  "values": {
+   "finished": {
+    "value": "count(r in runs: r.time < 120)",
+    "unit": "runs"
+   },
+   "meanTime": {
+    "value": "round(sum(r in runs: r.time) / n, 2)",
+    "unit": "s"
+   }
+  },
+  "summary": "round(sum(r in runs: r.points) / n, 1)"
+ },
+ "pass": "score >= 60 & finished >= 0.8 * n",
+ "sources": [
+  {
+   "doc": "docs/curriculum/G04.md",
+   "where": "G4.3 Missions, Challenge - Mini mission: the mat (2000 x 1200, walls 50 mm), the start area bottom-left, the line 300 mm from the bottom wall, the cubes (50 mm, 40 g) on the shelf in the middle, the zones along the far wall and the garage bottom-right (their places the lane's: the record gives sizes only; the zones above the cubes, the shelf unpainted: no grey ink; the garage's black outline drawn 10 mm wide, its north side the line's own paint), level 3's tree (an 80 g cylinder 60 mm across, its height the lane's: 100 mm) on a black square (the lane's: 120 mm, so the tree stays on it at +-30 mm) to push onto a green patch (the lane's: 200 x 200 on the far wall, the zones' size), judged wholly on it as the cubes are, and the flag (a light 40 x 40 x 100 mm box: its 20 g the lane's) to knock off a yellow pad (the lane's: 120 mm, so the flag stands wholly on it at +-30 mm), judged as no part of the flag on the pad on the end tick (partly_flag_flagPad false; a place, so no upright word: CFD 22.7's knocked-over is not in level 3's scoring, which has no field-damage term); the level table (level 3: four tasks, any order, in the 120 s round - red cube 20, blue cube 20, tree 25, flag 15, parked at the end 20; objects +-30 mm - each object's x and y drawn per run, uniform-v1 in 30 mm steps (-30, 0, 30: the eight draws' 3^8 = 6561 fields; 4 values each, 65 536 fields, is the most the field check enumerates and added ~50 s to course_draws.js --check) (a cube may then stand up to 5 mm off the 300 x 150 shelf, an unpainted patch); starts +-20 mm, +-3 deg (the nominal start 2 mm north of level 1's, y 127: at y 125 the widest start's lowest corner is 2.47 mm inside the arena, under the loader's 2.62 mm heading-step pad (load.ts startFootprints); at y 127 every start stays inside both the arena and the 250 x 250 start area - review mm1 S1); no par: the round is the limit), the scoring paragraph (level 3: the points of the tasks done, 100 at most, no speed points)"
+  },
+  {
+   "doc": "vscode-evn-alpha/docs/COURSE_FORMAT_DESIGN.md",
+   "where": "\u00a722 (kernel.place: wholly_<item>_<area>, partly_flag_flagPad and robotWholly_garage on the end tick), \u00a714.2 (scalars in geometry: each cube's x / y over its draws), \u00a711.1 (loose obstacles: massG), \u00a713.1 (the fixed robot: the class robot with the IMU on I2C 8, G04.md G4.3's robot)"
+  }
+ ]
+}

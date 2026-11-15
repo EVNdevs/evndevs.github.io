@@ -42,9 +42,9 @@ Ports **M1 to M4** take a LEGO EV3 or NXT motor. Each also has a 6-pin header, m
 | M3 | GP14 | GP15 | GP23 | GP22 |
 | M4 | GP13 | GP12 | GP21 | GP20 |
 
-- When a port has a LEGO motor plugged in, **do not connect anything else to its encoder inputs.**
-- The encoder inputs are **input only and not 5 V-tolerant.**
-- The motor driver inputs are not exposed on the board.
+> **Warning: the encoder inputs are input only and not 5 V-tolerant.** When a port has a LEGO motor plugged in, do not connect anything else to its encoder inputs.
+
+The motor driver inputs are not exposed on the board.
 
 ## I2C ports
 
@@ -63,7 +63,7 @@ The I2C ports are **I2C only** and 5 V-tolerant.
 | SRV3 | signal GP10 | `GND · 5V · SIG` |
 | SRV4 | signal GP11 | `GND · 5V · SIG` |
 
-These pins can also be used for GPIO, SPI and more, but they are **not 5 V-tolerant. Do not apply more than 3.3 V to them.**
+> **Warning: no more than 3.3 V on these pins.** They can also be used for GPIO, SPI and more, but they are not 5 V-tolerant.
 
 ## Current ratings
 

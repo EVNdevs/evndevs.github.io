@@ -1,0 +1,45 @@
+{
+ "format": "evn-course-index/1",
+ "generated": "node scripts/course_index.js --write; do not edit",
+ "levels": [
+  {
+   "file": "evn-open-car/level-1.v1.json",
+   "id": "evn-open-car-1",
+   "version": 1,
+   "sha256": "7694a56b55f04545fbd3328f9551440a23e739cd865e780b750377aed8aef4fd",
+   "current": true,
+   "title": "EVN Open car practice · Level 1: One lap, a crossing, a sign, a cone",
+   "limit": 90,
+   "runs": {
+    "default": 5,
+    "fixed": 5
+   }
+  },
+  {
+   "file": "evn-open-car/level-2.v1.json",
+   "id": "evn-open-car-2",
+   "version": 1,
+   "sha256": "ed195fb04552dc5a96b779ed110df92c81ccc202a0d1d5f6be25231b7f5d5685",
+   "current": true,
+   "title": "EVN Open car practice · Level 2: Twenty unseen starts, the Wilson bound",
+   "limit": 90,
+   "runs": {
+    "default": 5,
+    "fixed": 20
+   }
+  },
+  {
+   "file": "evn-open-car/level-3.v1.json",
+   "id": "evn-open-car-3",
+   "version": 1,
+   "sha256": "7b83a9c1e0d933bed2d0b6d4f394dc0096ab92e3094319b69fb42c66c168fa65",
+   "current": true,
+   "title": "EVN Open car practice · Level 3: A shifted start and a push",
+   "limit": 90,
+   "runs": {
+    "default": 5,
+    "fixed": 10
+   }
+  }
+ ]
+}

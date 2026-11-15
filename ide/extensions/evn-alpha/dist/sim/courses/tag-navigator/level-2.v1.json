@@ -1,0 +1,320 @@
+{
+  "format": "evn-course/1",
+  "id": "tag-navigator-2",
+  "challenge": "tag-navigator",
+  "level": 2,
+  "version": 1,
+  "module": "G10.4",
+  "title": "Tag navigator \u00b7 Level 2: The printed order",
+  "brief": "Visit the four stations in the order on line 1 of the program, the one statement order = [a, b, c, d] (tag ids): on a scored run the runner fills it in; practice runs without it, so practise with seed 0's: order = [3, 1, 2, 0]. Four 100 mm ArUco tags (DICT_4X4_50, ids 0-3), each on an orange post with its middle 150 mm up: tag 0 at (100, 900) facing +x, tag 1 at (1200, 1700) facing -y, tag 2 at (2300, 900) facing -x, tag 3 at (1200, 100) facing +y, on a 2.4 x 1.8 m walled field. Station k is 300 mm in front of tag k: (400, 900), (1200, 1400), (2000, 900), (1200, 400). A station is visited when the robot's centre (the axle's middle) stays within 100 mm of it, facing its tag within 15 degrees, moving slower than 5 mm/s and turning slower than 5 degrees a second, for the whole of 0.5 s. Run 1 starts at (1200, 900) facing +x; runs 2-10 start anywhere in the 500 mm box in the middle (x 950-1450, y 650-1150), at any heading. T is the time to the last station's visit (the end of its 0.5 s stop), in the order, which ends the run; 120 s if the four are not visited in the order. Per run: 100 x min(1, par / T) - 0.25 x the mean stop error (mm: the centre's distance from the station at each counted visit) - 25 per station not visited in the order (a visit counts only at the next station due), at least 0. Pass: a mean of at least 60 with 8 of 10 runs visiting all four in the order. Par 17.1 s. No course run sees a tag until LINK or BCAM gives it a camera.",
+  "field": {
+    "random": [
+      {
+        "name": "order",
+        "draw": "sample-v1",
+        "of": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "k": 4
+      }
+    ],
+    "arena": {
+      "size": [
+        2400,
+        1800
+      ],
+      "startBox": [
+        950,
+        650,
+        1450,
+        1150
+      ],
+      "goal": null,
+      "obstacles": [
+        {
+          "name": "post0",
+          "x": 80,
+          "y": 900,
+          "w": 40,
+          "d": 160,
+          "h": 250,
+          "color": "#ff8c00"
+        },
+        {
+          "name": "post1",
+          "x": 1200,
+          "y": 1720,
+          "w": 160,
+          "d": 40,
+          "h": 250,
+          "color": "#ff8c00"
+        },
+        {
+          "name": "post2",
+          "x": 2320,
+          "y": 900,
+          "w": 40,
+          "d": 160,
+          "h": 250,
+          "color": "#ff8c00"
+        },
+        {
+          "name": "post3",
+          "x": 1200,
+          "y": 80,
+          "w": 160,
+          "d": 40,
+          "h": 250,
+          "color": "#ff8c00"
+        }
+      ],
+      "wallH": 100,
+      "wallT": 20,
+      "obstacleH": 250,
+      "startPaint": false,
+      "areas": [
+        {
+          "name": "station0",
+          "circle": [
+            400,
+            900,
+            100
+          ],
+          "paint": null,
+          "group": "stations"
+        },
+        {
+          "name": "station1",
+          "circle": [
+            1200,
+            1400,
+            100
+          ],
+          "paint": null,
+          "group": "stations"
+        },
+        {
+          "name": "station2",
+          "circle": [
+            2000,
+            900,
+            100
+          ],
+          "paint": null,
+          "group": "stations"
+        },
+        {
+          "name": "station3",
+          "circle": [
+            1200,
+            400,
+            100
+          ],
+          "paint": null,
+          "group": "stations"
+        }
+      ],
+      "prints": [
+        {
+          "name": "tag0",
+          "pattern": "aruco-4x4-50:0",
+          "at": [
+            100,
+            900,
+            150
+          ],
+          "yaw": 0,
+          "pitch": 0,
+          "size": [
+            100,
+            100
+          ],
+          "quiet": 20
+        },
+        {
+          "name": "tag1",
+          "pattern": "aruco-4x4-50:1",
+          "at": [
+            1200,
+            1700,
+            150
+          ],
+          "yaw": -90,
+          "pitch": 0,
+          "size": [
+            100,
+            100
+          ],
+          "quiet": 20
+        },
+        {
+          "name": "tag2",
+          "pattern": "aruco-4x4-50:2",
+          "at": [
+            2300,
+            900,
+            150
+          ],
+          "yaw": 180,
+          "pitch": 0,
+          "size": [
+            100,
+            100
+          ],
+          "quiet": 20
+        },
+        {
+          "name": "tag3",
+          "pattern": "aruco-4x4-50:3",
+          "at": [
+            1200,
+            100,
+            150
+          ],
+          "yaw": 90,
+          "pitch": 0,
+          "size": [
+            100,
+            100
+          ],
+          "quiet": 20
+        }
+      ]
+    }
+  },
+  "robot": {
+    "rule": "learner"
+  },
+  "start": {
+    "nominal": {
+      "x": 1200,
+      "y": 900,
+      "heading": 0
+    },
+    "vary": {
+      "xy": 0,
+      "heading": 180
+    },
+    "draw": "free-v1"
+  },
+  "runs": {
+    "min": 1,
+    "max": 20,
+    "default": 5,
+    "fixed": 10
+  },
+  "kernel": {
+    "name": "pointToPoint",
+    "limitS": 120,
+    "goal": "footprintInside",
+    "final": "runEnd",
+    "visits": {
+      "targets": [
+        {
+          "group": "stations",
+          "pick": "order_1 + 1",
+          "dwell": {
+            "s": 0.5,
+            "mms": 5
+          },
+          "facing": {
+            "heading": [
+              180,
+              90,
+              0,
+              -90
+            ],
+            "tol": 15,
+            "dps": 5
+          }
+        },
+        {
+          "group": "stations",
+          "pick": "order_2 + 1",
+          "dwell": {
+            "s": 0.5,
+            "mms": 5
+          },
+          "facing": {
+            "heading": [
+              180,
+              90,
+              0,
+              -90
+            ],
+            "tol": 15,
+            "dps": 5
+          }
+        },
+        {
+          "group": "stations",
+          "pick": "order_3 + 1",
+          "dwell": {
+            "s": 0.5,
+            "mms": 5
+          },
+          "facing": {
+            "heading": [
+              180,
+              90,
+              0,
+              -90
+            ],
+            "tol": 15,
+            "dps": 5
+          }
+        },
+        {
+          "group": "stations",
+          "pick": "order_4 + 1",
+          "dwell": {
+            "s": 0.5,
+            "mms": 5
+          },
+          "facing": {
+            "heading": [
+              180,
+              90,
+              0,
+              -90
+            ],
+            "tol": 15,
+            "dps": 5
+          }
+        }
+      ],
+      "endAtLast": "inOrder"
+    }
+  },
+  "constants": {
+    "par": 17.1
+  },
+  "reveal": {
+    "line": {
+      "value": "order",
+      "as": "order"
+    }
+  },
+  "score": {
+    "run": "max(0, 100 * min(1, par / max(if(visitedInOrder == 4, time, 120), 0.001)) - 0.25 * stopErrInOrder - 25 * (4 - visitedInOrder))",
+    "summary": "round(sum(r in runs: r.points) / n, 1)"
+  },
+  "pass": "score >= 60 & count(r in runs: r.visitedInOrder == 4) >= 0.8 * n",
+  "sources": [
+    {
+      "doc": "docs/curriculum/G10.md",
+      "where": "G10.4 Tag navigator, the challenge paragraph, the level table (level 2) and the scoring paragraph"
+    },
+    {
+      "doc": "vscode-evn-alpha/docs/COURSE_CONTENT_DESIGN.md",
+      "where": "\u00a75.4 Tag navigator; \u00a77 CC-7 (the Tag field, scenes tag-field), CC-15 (facing, stopErr / stopErrInOrder, endAtLast \"inOrder\", pick over a sample's words)"
+    },
+    {
+      "doc": "docs/session/2026-11-13_c1-tag2/design.md",
+      "where": "\u00a71 the par (the bench reference's mean T: an owner item, review d1 S1)"
+    }
+  ]
+}

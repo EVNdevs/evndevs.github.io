@@ -2,7 +2,11 @@
 
 Build a program by snapping blocks together, then run it on the board with one click. The blocks editor is part of the EVN ALPHA extension for VS Code and of the browser IDE. Every block becomes a line of MicroPython, shown beside the blocks as you work, so you can see (and later copy) the program the board runs.
 
-This page has three parts: **your first programs** (start here), **every block, category by category** (with a picture of each category as the editor shows it), and, at the end, **for programmers** (the file format and how the Python is put together).
+This page has three parts:
+
+- **your first programs** (start here);
+- **every block, category by category** (with a picture of each category as the editor shows it);
+- and, at the end, **for programmers** (the file format and how the Python is put together).
 
 ## Using it
 
@@ -10,7 +14,7 @@ This page has three parts: **your first programs** (start here), **every block, 
 - Drag blocks from the **toolbox** on the left. Put the *set up* blocks under **set up**, the rest under **program** (see [Set up, then program](#set-up-then-program)). The **Python** pane on the right shows the program the blocks make; **Copy** puts it on the clipboard.
 - **Run on board** (or **Ctrl+F5**) saves the file and runs it. **Stop motors** (**Ctrl+Shift+F5**) stops it and lets every motor coast.
 - **Upload as main.py** puts the program on the board, so a press of the user button starts it after every power-on. **Export Python** saves it as a `.py` file to carry on in text.
-- **Examples**: the *Examples* list in the side bar has a folder for each part of the robot (the board, a motor, the robot, every sensor and output...). Each has a `…_minimal.evnblocks` (the few blocks you need) and a `…_complete.evnblocks` (every block of that part), next to the same programs in Python. **EVN: New project folder** copies them into `examples/`.
+- **Examples**: the *Examples* list in the side bar has a row for each part of the robot (the board, a motor, the robot, every sensor and output...). Click one to choose which of its examples to open. Each has a `…_minimal.evnblocks` (the few blocks you need) and a `…_complete.evnblocks` (every block of that part), next to the same programs in Python. **EVN: New project folder** copies them into `examples/`.
 
 ![The blocks editor: the toolbox on the left, the set up and program start blocks with motor_minimal's blocks, and the MicroPython they generate on the right](images/blocks-editor.png)
 
@@ -20,7 +24,23 @@ Settings: `evn.blocks.renderer` (look of the blocks: `zelos` rounded/Scratch-lik
 
 ## Safety
 
-The same rules as for Python programs apply: **Ctrl+C** in the terminal and **Stop motors** stop a running program and coast every motor; the board's **user button** coasts every motor and ends the running program, and no motor moves again until the next program starts - except while a *wait for a button press* block waits (the press it waits for is an input; the button is the stop again after the release), and in a program with a *button pressed?* block, which reads the button as an input for the whole run (in every program, holding it 2 s reboots the board); connecting a tool to the board also coasts the motors. A **forever** loop only ends one of those ways. **Keep the wheels off the ground for the first run of any program.**
+**Keep the wheels off the ground for the first run of any program.** The same rules as for Python programs apply:
+
+- **Ctrl+C** in the terminal and **Stop motors** stop a running program and coast every motor.
+- The board's **user button** coasts every motor and ends the running program, and no motor moves again until the next program starts. In every program, holding it 2 s reboots the board.
+- Connecting a tool to the board also coasts the motors.
+
+A **forever** loop only ends one of those ways.
+
+<details>
+<summary>When the user button is an input</summary>
+
+The button does not stop the program in two cases:
+
+- while a *wait for a button press* block waits (the press it waits for is an input; the button is the stop again after the release);
+- in a program with a *button pressed?* block, which reads the button as an input for the whole run.
+
+</details>
 
 ## Your first programs
 
@@ -54,14 +74,23 @@ A motor, an IMU, a compass or a colour sensor works better calibrated, and the b
 
 Every blocks program has the two yellow start blocks Pybricks users know. They can't be deleted, and a file has one of each:
 
-- **set up**: the *set up …* blocks go under it, one for each motor, the robot, and each sensor or output the program uses, with its port. They are all in the **Setup** category (and in each device's own category). Only set-up blocks (and comments) snap under **set up**, and set-up blocks snap nowhere else: a set-up is done once, before the program starts, so one inside a loop or an `if` would look conditional without being so. In the Python they become the lines under `# Set up all devices.`
-- **program**: the blocks under it run from top to bottom after the set-up, starting at `# The main program starts here.` Its **play button** runs the program on the board, exactly like *Run on board* (with no board it asks for the port, as that button does). The button is white while a board is connected and outlined when none is.
+- **set up**: the *set up …* blocks go under it, one for each motor, the robot, and each sensor or output the program uses, with its port. They are all in the **Setup** category (and in each device's own category). Only set-up blocks (and comments) snap under **set up**, and set-up blocks snap nowhere else. A set-up is done once, before the program starts, so one inside a loop or an `if` would look conditional without being so. In the Python they become the lines under `# Set up all devices.`
+- **program**: the blocks under it run from top to bottom after the set-up, starting at `# The main program starts here.` Its **play button** runs the program on the board, exactly like *Run on board*. With no board it asks for the port, as that button does. The button is white while a board is connected and outlined when none is.
 - A stack attached to neither block is **greyed out and does not run**, as a block left loose in Pybricks does not. Drag it back under **program** and it runs again. Function definitions (*Functions*) stand on their own as before, and a loose **comment** stays as it is. Disabling **set up** or **program** (right-click) switches off everything under it.
 - The **comment** block (`# …`, in *Setup* and *Advanced*) goes anywhere, in either part, and becomes a `#` line in the Python.
 
 ### Coming from Pybricks
 
-What works the same: the **set up** / **program** start blocks and the play button on **program**; the Setup palette; the Python opening with the set-up lines (stopwatch included) under `# Set up all devices.`; `wait`, **wait until** and **wait forever**; speeds in °/s, distances in mm; motor moves ending in *hold*, *brake* or *coast* with a *wait* option; the robot's straight, turn, arc and stop; the live, read-only Python beside the blocks, with *Copy* and *Export Python*.
+What works the same:
+
+- the **set up** / **program** start blocks and the play button on **program**;
+- the Setup palette;
+- the Python opening with the set-up lines (stopwatch included) under `# Set up all devices.`;
+- `wait`, **wait until** and **wait forever**;
+- speeds in °/s, distances in mm;
+- motor moves ending in *hold*, *brake* or *coast* with a *wait* option;
+- the robot's straight, turn, arc and stop;
+- the live, read-only Python beside the blocks, with *Copy* and *Export Python*.
 
 What is different on the EVN ALPHA:
 
@@ -100,7 +129,9 @@ Every *set up* block of every category, in one place, with the **comment** block
 | set motor *1* angle to *0* | `motor_1.reset_angle()` (a non-zero value: `reset_angle(value)`) |
 | stop all motors | `stop_all()` |
 
-`then` is *hold* (default), *coast*, *brake*, *keep running* (`Stop.NONE`) or *coast (smart)* (`Stop.COAST_SMART`); it is only written when it differs from the default. `wait` unticked adds `wait=False` (the move continues while the program goes on: use it to move two motors together, then **wait until motor is done**).
+Here `then` is *hold* (default), *coast*, *brake*, *keep running* (`Stop.NONE`) or *coast (smart)* (`Stop.COAST_SMART`); it is only written when it differs from the default.
+
+Unticked, `wait` adds `wait=False`: the move continues while the program goes on. Use it to move two motors together, then **wait until motor is done**.
 
 ### Robot (a drive base: two wheel motors driven together)
 
@@ -122,15 +153,29 @@ Every *set up* block of every category, in one place, with the **comment** block
 | robot *follows* its gyro: IMU on port *3* | `imu_3 = IMU(3)` at the top and `imu=3` on the **set up robot** line after it (`drive_base = DriveBase(motor_4, motor_3, wheel_diameter=62.4, axle_track=170, imu=3)`: the base builds its own `Pose` from its ports, geometry and motor directions), then `drive_base.use_gyro(True)` where the block sits; no separate `Pose` line. With a [Pose block](#pose-where-the-robot-is) in the program the IMU goes on the pose's line instead (`pose = Pose(..., imu=3)`) and the robot adopts that pose (`pose=pose`) |
 | robot *stops following* its gyro: IMU on port *3* | `drive_base.use_gyro(False)` (the robot drives on its wheels alone again) |
 
-One robot per program. Without a **set up robot** block the robot is the standard robot of every example: left motor 4 mounted mirrored (counterclockwise, unless a **set up motor** block for port 4 says otherwise), right motor 3, 62.4 mm wheels 170 mm apart. A **set up robot** block from the toolbox starts on that robot, with the mirrored motor's **set up motor 4** *counterclockwise* under it. `then` here is *hold*, *coast*, *brake* or *coast (smart)* (a drive base has no *keep running*: use **drive at**). Both wheels run on one time base, so a straight is straight and an arc is an arc (if one wheel is held back, both wait for it); the distance between the wheels is measured between the tyres' contact patches — check it with one *turn robot 360 degrees* against a mark on the floor.
+One robot per program. Without a **set up robot** block the robot is the standard robot of every example:
 
-**Robot follows its gyro** makes the robot itself, not just its wheels, drive the path: the wheel encoders and an EVN IMU fixed to the chassis track where the robot really is (`evn.Pose`), and every straight, turn and arc is corrected as it goes, so scrub on a turn, a dragged cable and the gyro's drift do not add up over minutes. Put it before the first move and keep the robot still while the program starts: it waits, up to 35 s, for the IMU to settle (an `OSError` if the robot was moving). A robot pushed sideways is the one thing the pose cannot see. The `drive_base_gyro` example is the `drive_base` one with this block.
+- left motor 4 mounted mirrored (counterclockwise, unless a **set up motor** block for port 4 says otherwise);
+- right motor 3;
+- 62.4 mm wheels 170 mm apart.
+
+A **set up robot** block from the toolbox starts on that robot, with the mirrored motor's **set up motor 4** *counterclockwise* under it. Here `then` is *hold*, *coast*, *brake* or *coast (smart)* (a drive base has no *keep running*: use **drive at**).
+
+Both wheels run on one time base, so a straight is straight and an arc is an arc (if one wheel is held back, both wait for it). The distance between the wheels is measured between the tyres' contact patches — check it with one *turn robot 360 degrees* against a mark on the floor.
+
+**Robot follows its gyro** makes the robot itself, not just its wheels, drive the path. The wheel encoders and an EVN IMU fixed to the chassis track where the robot really is (`evn.Pose`). Every straight, turn and arc is corrected as it goes, so scrub on a turn, a dragged cable and the gyro's drift do not add up over minutes.
+
+Put it before the first move and keep the robot still while the program starts: it waits, up to 35 s, for the IMU to settle (an `OSError` if the robot was moving). A robot pushed sideways is the one thing the pose cannot see. The `drive_base_gyro` example is the `drive_base` one with this block.
 
 ### Pose (where the robot is)
 
 ![The Pose category: set up pose with a compass, pose x / y / heading / speed / turn rate, pose uncertainty, pose is using a source, set pose](images/blocks/blocks-pose.png)
 
-Where the robot is on the floor (`evn.Pose`, [API reference](API_ROBOT.md#pose--where-the-robot-is)): its position and heading from the wheel encoders, the IMU of **robot follows its gyro** when the program has one, and the compass of **set up pose**. One pose per program, `pose`, created at the top from the **set up robot** geometry (or the default robot) and the direction of each wheel's **set up motor**; the robot adopts it, so the pose the blocks read is the one the robot follows. It keeps counting while the robot drives, turns or is pushed by hand. The robot starts at x 0, y 0, heading 0: forward is +y, its right +x, headings clockwise in degrees; with a compass the heading starts from north (x East, y North).
+Where the robot is on the floor (`evn.Pose`, [API reference](API_ROBOT.md#pose--where-the-robot-is)): its position and heading from the wheel encoders, the IMU of **robot follows its gyro** when the program has one, and the compass of **set up pose**. It keeps counting while the robot drives, turns or is pushed by hand.
+
+One pose per program, `pose`, created at the top from the **set up robot** geometry (or the default robot) and the direction of each wheel's **set up motor**. The robot adopts it, so the pose the blocks read is the one the robot follows.
+
+The robot starts at x 0, y 0, heading 0: forward is +y, its right +x, headings clockwise in degrees. With a compass the heading starts from north (x East, y North).
 
 | Block | Python |
 | :--- | :--- |
@@ -147,13 +192,33 @@ pose = Pose(4, 3, wheel_diameter=62.4, axle_track=170, reverse_left=True, imu=3,
 drive_base = DriveBase(motor_4, motor_3, wheel_diameter=62.4, axle_track=170, pose=pose)
 ```
 
-(after `imu_3 = IMU(3)` and `compass_14 = Compass(14)`): the pose takes the ports, the wheel and the track of **set up robot**, `reverse_left=True` for a motor set up counterclockwise, the IMU of **robot follows its gyro** (a *stops following* block alone adds none) and the compass of **set up pose**, and the board checks that the robot's and the pose's ports, directions, wheel and track agree. Without a pose block nothing changes: the robot builds its own pose from `imu=`. A program without **set up robot** gets the standard robot's pose, `Pose(4, 3, wheel_diameter=62.4, axle_track=170, reverse_left=True)`, and no robot line. `examples/04_pose/` has a minimal program (a robot pushed by hand) and a complete one (30 cm out and back with the gyro and a compass).
+(after `imu_3 = IMU(3)` and `compass_14 = Compass(14)`). The pose takes:
+
+- the ports, the wheel and the track of **set up robot**;
+- `reverse_left=True` for a motor set up counterclockwise;
+- the IMU of **robot follows its gyro** (a *stops following* block alone adds none);
+- and the compass of **set up pose**.
+
+The board checks that the robot's and the pose's ports, directions, wheel and track agree. Without a pose block nothing changes: the robot builds its own pose from `imu=`. A program without **set up robot** gets the standard robot's pose, `Pose(4, 3, wheel_diameter=62.4, axle_track=170, reverse_left=True)`, and no robot line.
+
+`examples/04_pose/` has a minimal program (a robot pushed by hand) and a complete one (30 cm out and back with the gyro and a compass).
 
 ### Controllers
 
 ![The Controllers category: set pid to a PID, set hold to an ADRC, controller output for target and measurement, reset controller, the PID's and the ADRC's terms](images/blocks/blocks-controllers.png)
 
-Controllers of your own (`evn.PID` / `evn.ADRC`, API reference: [PID](API_ROBOT.md#pid--a-controller-for-your-own-loops), [ADRC](API_ROBOT.md#adrc--disturbance-rejection-for-your-own-loops)): give one a target and a measurement each time round a loop, and it gives an output you send where you like - a motor's power, the robot's turn rate. A controller lives in an ordinary variable: use **set** *pid* **to** (**PID** kp ki kd ...) once, before the loop (the Controllers category has it ready-made); the blocks below then take that variable. Make as many as the program needs, one variable each. The **PID ...** / **ADRC ...** block fits a variable, not a number input (inside the loop, it would build a new controller at every pass). A block whose variable no block sets, or sets only to a number or a text, or that reads a PID's terms from a variable holding an ADRC (or the other way round), shows a warning; on the board it would stop with `AttributeError`.
+Controllers of your own (`evn.PID` / `evn.ADRC`, API reference: [PID](API_ROBOT.md#pid--a-controller-for-your-own-loops), [ADRC](API_ROBOT.md#adrc--disturbance-rejection-for-your-own-loops)): give one a target and a measurement each time round a loop. It gives an output you send where you like - a motor's power, the robot's turn rate.
+
+- A controller lives in an ordinary variable: use **set** *pid* **to** (**PID** kp ki kd ...) once, before the loop (the Controllers category has it ready-made). The blocks below then take that variable.
+- Make as many as the program needs, one variable each.
+- The **PID ...** / **ADRC ...** block fits a variable, not a number input (inside the loop, it would build a new controller at every pass).
+
+<details>
+<summary>When a controller block shows a warning</summary>
+
+A block shows a warning when no block sets its variable, or sets it only to a number or a text. So does one that reads a PID's terms from a variable holding an ADRC (or the other way round). On the board it would stop with `AttributeError`.
+
+</details>
 
 Units are the API's: ki per second, kd in seconds, the bandwidth in rad/s; a gain may be negative (the output then falls as the measurement rises). The output limit is the range of whatever the output drives (a motor's power: 100; the robot's turn rate: a few hundred deg/s); 0 means none. A loop with a controller must run at least every 200 ms: one that waits longer stops with "updates further apart than dt_max: raise dt_max".
 
@@ -166,7 +231,13 @@ Units are the API's: ki per second, kd in seconds, the bandwidth in rad/s; a gai
 | PID *pid* *P term* / *I term* / *D term* / *output* / *error* | `pid.p` / `pid.i` / `pid.d` / `pid.output` / `pid.error` |
 | ADRC *hold* *estimate* / *rate* / *disturbance* / *output* / *error* | `hold.estimate` / `hold.rate` / `hold.disturbance` / `hold.output` / `hold.error` |
 
-A line follower is **set** *pid* **to** (**PID** kp *1.5* ki *0.2* kd *0.08* output limit ± *120*), then, in a loop, **drive at** *120* mm/s turning (**controller** *pid* **output for target** *34* **measured** (**colour sensor 2 brightness**)) and **wait** *10* ms; `examples/23_controllers/` has it (minimal, blocks and Python) and the line follower followed by a heading hold on the IMU with an ADRC in a second variable, every term printed (complete).
+A line follower is:
+
+1. **set** *pid* **to** (**PID** kp *1.5* ki *0.2* kd *0.08* output limit ± *120*);
+2. then, in a loop, **drive at** *120* mm/s turning (**controller** *pid* **output for target** *34* **measured** (**colour sensor 2 brightness**));
+3. and **wait** *10* ms.
+
+`examples/23_controllers/` has it (minimal, blocks and Python) and the line follower followed by a heading hold on the IMU with an ADRC in a second variable, every term printed (complete).
 
 ### Sensing (values)
 
@@ -210,7 +281,9 @@ A line follower is **set** *pid* **to** (**PID** kp *1.5* ki *0.2* kd *0.08* out
 
 ![The Data log category: set up data log, record a motor, record a sensor, start / stop, add row, save](images/blocks/blocks-data-log.png)
 
-The board records while the program runs (`evn.DataLog`): each reading at the rate its source makes new ones, kept in the board's memory, and written to a CSV file on the board by **save data log** once the motors have stopped. One data log per program, `data_log`, created at the top from **set up data log** (without one: `DataLog()`, the file `/data/log_<date>_<time>.csv`).
+The board records while the program runs (`evn.DataLog`). It takes each reading at the rate its source makes new ones and keeps it in the board's memory. The **save data log** block writes it to a CSV file on the board once the motors have stopped.
+
+One data log per program, `data_log`, created at the top from **set up data log** (without one: `DataLog()`, the file `/data/log_<date>_<time>.csv`).
 
 | Block | Python |
 | :--- | :--- |
@@ -221,7 +294,9 @@ The board records while the program runs (`evn.DataLog`): each reading at the ra
 | data log: add row *a* *b* *c* | `data_log.log(a, b)`: one value per column of **set up data log** (an empty slot is `None`, an empty cell; a slot beyond the columns is ignored); starts the log if it was never started; after *stop* it is an error (`RuntimeError`) |
 | save data log | `data_log.save()` (after *stop data log* and with the motors stopped: the board refuses to write its flash while a motor drives, `OSError` 16; a stop just issued is fine). A data log not yet saved (recording or stopped) is saved by itself when main.py ends, the editor's Run finishes, the board soft-reboots or a with block ends, once the motors coast |
 
-When a reading's share of the memory is full the board keeps every second sample and halves its rate, so the recording never stops by itself; a run of identical readings is kept as two rows, its first and its last (the rows of **add row** are all kept). `examples/22_data_log/` has a minimal and a complete program; the extension's own data logger (the graph button on the *Board* view) records the same way without a program.
+When a reading's share of the memory is full the board keeps every second sample and halves its rate, so the recording never stops by itself. A run of identical readings is kept as two rows, its first and its last (the rows of **add row** are all kept).
+
+`examples/22_data_log/` has a minimal and a complete program; the extension's own data logger (the graph button on the *Board* view) records the same way without a program.
 
 ### Files (on the board)
 
@@ -238,7 +313,9 @@ Files live in the board's 11 MB flash file system and stay after a power cycle (
 | delete file *notes.txt* | `delete_file('notes.txt')`: `os.remove()`, and nothing when there is no such file |
 | files on the board | `os.listdir()`: the names in `/`; print it |
 
-**The flash is not written while a motor drives**: a write or a delete then raises `OSError` 16 (EBUSY), because a flash write would stop the 1 kHz motor loop. Keep the values in variables during a move and write them after it (a holding, braked or coasting motor does not block a write), or record with the data log, which saves once the motors coast. `examples/21_files/` has a minimal and a complete program.
+**The flash is not written while a motor drives**: a write or a delete then raises `OSError` 16 (EBUSY), because a flash write would stop the 1 kHz motor loop. Keep the values in variables during a move and write them after it, or record with the data log, which saves once the motors coast. A holding, braked or coasting motor does not block a write.
+
+`examples/21_files/` has a minimal and a complete program.
 
 ### Sensors (the EVN Standard Peripherals you read)
 
@@ -440,7 +517,7 @@ A serial header, Serial 1 or Serial 2, as a plain serial port ([API reference](A
 
 ![The I2C blocks: set up, addresses that answer, a device answers, read a register, read bytes as a list, write a register](images/blocks/blocks-serial-and-i2c-i2c.png)
 
-A chip on I2C port 1 to 16 that has no category of its own, read and written register by register as its datasheet describes ([API reference](API_SYSTEM.md#i2c--raw-i2c-port)). One object per port, `i2c_1`. The address and the register are two hex digits after the printed `0x`, as a datasheet writes them (an address is 01 to 77; 70 on every port and 6A on port 16 belong to the board and are refused).
+A chip on I2C port 1 to 16 that has no category of its own, read and written register by register as its datasheet describes ([API reference](API_SYSTEM.md#i2c--raw-i2c-port)). One object per port, `i2c_1`. The address and the register are two hex digits after the printed `0x`, as a datasheet writes them. An address is 01 to 77; 70 on every port and 6A on port 16 belong to the board and are refused.
 
 | Block | Python |
 | :--- | :--- |
@@ -453,11 +530,20 @@ A chip on I2C port 1 to 16 that has no category of its own, read and written reg
 
 > **Warning:** a saved file whose I2C address or register a field refuses (edited as text, or from another version) opens with the block's default in its place - address 68, register 75 - and a note naming it. Check that block before you run the program: it would read or write another chip's register.
 
-A wrong register can change how a chip works until it is switched off: check the datasheet before a write. The board refuses its own addresses with `ValueError` (0x70 on every port, 0x6A on port 16). `examples/20_i2c/` names the EVN IMU module by its WHO_AM_I register before it writes anything; `examples/19_uart/` needs only a jumper wire from TX to RX.
+A wrong register can change how a chip works until it is switched off: check the datasheet before a write. The board refuses its own addresses with `ValueError` (0x70 on every port, 0x6A on port 16).
+
+`examples/20_i2c/` names the EVN IMU module by its WHO_AM_I register before it writes anything; `examples/19_uart/` needs only a jumper wire from TX to RX.
 
 ### Extended (the EVN Extended Peripherals)
 
-Devices the firmware drives natively that EVN does not stock ([API reference](API_EXTENDED.md#evn-extended-peripherals)): the HiTechnic NXT colour sensor and compass (through an NXT cable adapter; the firmware runs their port at 100 kHz), the DFRobot HuskyLens camera (set its Protocol Type to I2C), the ST VL53L1X distance sensor (up to 4 m) and the ams-OSRAM TCS3430 XYZ colour sensor. They work like the sensors above: one object per port, named after it, a sub-category each.
+Devices the firmware drives natively that EVN does not stock ([API reference](API_EXTENDED.md#evn-extended-peripherals)):
+
+- the HiTechnic NXT colour sensor and compass (through an NXT cable adapter; the firmware runs their port at 100 kHz);
+- the DFRobot HuskyLens camera (set its Protocol Type to I2C);
+- the ST VL53L1X distance sensor (up to 4 m);
+- and the ams-OSRAM TCS3430 XYZ colour sensor.
+
+They work like the sensors above: one object per port, named after it, a sub-category each.
 
 #### HiTechnic colour sensor
 
@@ -557,7 +643,23 @@ Devices the firmware drives natively that EVN does not stock ([API reference](AP
 
 ![The Functions category: define a function, with or without a result](images/blocks/blocks-functions.png)
 
-Blockly's standard blocks, which write standard Python (`if`, `while`, `for count in range(…)`, arithmetic, `str(…)` joins, variables, `def`). MicroPython runs all of it.
+Blockly's standard blocks, which write standard Python (`if`, `while`, `for count in range(…)`, `for item in a_list`, arithmetic, `str(…)` joins, variables, `def`). MicroPython runs all of it.
+
+### Lists and dictionaries
+
+![The Lists category: create an empty list, create a list with items, a list of one item repeated, length, is empty, find an item, get / set / insert at a position, a sub-list, a list from text, sort, reverse, then the two dictionary blocks: create a dictionary with keys and values, and get the value of a key](images/blocks/blocks-lists.png)
+
+Blockly's list blocks, which write Python lists. They count from **0**, as Python does and as the Python pane shows: *in list order get # 0* is `order[0]`, the first item, and *find first occurrence of item* gives -1 when the item is not in the list. Use the gear on *create list with* or *create dictionary with* to add or remove items.
+
+| Block | Python |
+| :--- | :--- |
+| create list with *"blue"* *"red"* | `['blue', 'red']` |
+| in list *order* get # *0* | `order[0]` |
+| length of *order* | `len(order)` |
+| in list *order* insert at last as *"yellow"* | `order.append('yellow')` |
+| for each item *crate* in list *order* (Loops) | `for crate in order:` |
+| create dictionary with key *"red"* value *1* key *"blue"* value *2* | `{'red': 1, 'blue': 2}` |
+| in dictionary *spot* get *"blue"* | `spot['blue']`: a key that is not in the dictionary stops the program with `KeyError` |
 
 ### Advanced
 
@@ -584,22 +686,95 @@ What the editor does behind the blocks. Not needed to build a program.
 
 - A `.evnblocks` file is JSON (the Blockly workspace); it can be committed, diffed and shared. `<name>.evnblocks.py` is rewritten at every run: edit the blocks, not that file. For the same reason *My projects* hides it, and a Python program of yours cannot be created, renamed or saved under a name ending in `.evnblocks` (the name box refuses it).
 
-A file made before the **set up** and **program** blocks existed opens with its set-up blocks stacked under **set up** and its stacks chained under **program** in the order they used to run (top to bottom, then left to right), so it generates the same program; the first edit saves it in the current format (`"version": 3`). What cannot be placed that way is left loose and named in the status line: a stack that ran after a *forever* ended by a *break* (nothing can follow *forever*), and a value block standing on its own. A file that breaks the rules (edited as text, or merged) opens whole: blocks in the wrong part are taken out as a stack of their own, beside the one they were in, and the blocks after them close up; a second **set up** / **program** is removed and its blocks come loose. The status line says what moved. A file that cannot be opened completely (a block this version does not know) is shown read-only and is never saved, run, uploaded or exported. A file saved before the standard robot became the default (`"version"` 1 or 2, up to 0.2.69) whose program drives or reads the robot without a **set up robot** block drove the old default robot then: it opens with a **set up robot** block for that robot (left motor 1, right motor 2, 56 mm wheels 112 mm apart, mm/s) added at the end of **set up**, and the status line says so, so it still drives the same motors the same way; the first edit saves it as `"version": 3`. To move it to the standard robot, delete that block. Open a version-3 file only with this version of the extension or a later one: an earlier one shows it read-only, says to update the extension, and never saves, runs, uploads or exports it. A file from a later version opens read-only here, and nothing is saved from it.
+Open a version-3 file only with this version of the extension or a later one. An earlier one shows it read-only, says to update the extension, and never saves, runs, uploads or exports it. A file from a later version opens read-only here, and nothing is saved from it.
+
+A file that cannot be opened completely (a block this version does not know) is shown read-only and is never saved, run, uploaded or exported.
+
+<details>
+<summary>Files made before the set up and program blocks</summary>
+
+A file made before the **set up** and **program** blocks existed opens with its set-up blocks stacked under **set up**. Its stacks are chained under **program** in the order they used to run (top to bottom, then left to right), so it generates the same program. The first edit saves it in the current format (`"version": 3`).
+
+What cannot be placed that way is left loose and named in the status line:
+
+- a stack that ran after a *forever* ended by a *break* (nothing can follow *forever*);
+- and a value block standing on its own.
+
+</details>
+
+<details>
+<summary>A file that breaks the rules</summary>
+
+A file that breaks the rules (edited as text, or merged) opens whole. Blocks in the wrong part are taken out as a stack of their own, beside the one they were in, and the blocks after them close up. A second **set up** / **program** is removed and its blocks come loose. The status line says what moved.
+
+</details>
+
+<details>
+<summary>A file saved before the standard robot was the default</summary>
+
+A file saved before the standard robot became the default (`"version"` 1 or 2, up to 0.2.69) may drive or read the robot without a **set up robot** block. Such a program drove the old default robot then. It opens with a **set up robot** block for that robot (left motor 1, right motor 2, 56 mm wheels 112 mm apart, mm/s) added at the end of **set up**, and the status line says so.
+
+So it still drives the same motors the same way; the first edit saves it as `"version": 3`. To move it to the standard robot, delete that block.
+
+</details>
+
+<details>
+<summary>The robot a file drives without "set up robot"</summary>
+
+A save writes the file's own standard robot beside its version. The `"standardRobot"` member holds:
+
+- `left` and `right`: the motor ports, `"1"`-`"4"`, as text, and different from each other;
+- `mirrored`: `true` when the left motor is mounted mirrored, so counterclockwise is its forward;
+- `wheel`: the wheel diameter, 1-999 mm;
+- `track`: the distance between the wheels, 1-1999 mm.
+
+A program without a **set up robot** block drives that robot. So a file keeps its robot when the extension's standard robot changes.
+
+A file without the member drives the standard robot of the version that saved it:
+- A file with blocks drives left motor 4 mirrored, right motor 3, 62.4 mm wheels 170 mm apart.
+- An empty file drives the standard robot of this version.
+
+A member this version cannot read (a number for a port, say) is ignored, and the status line says which robot the program drives instead.
+
+</details>
 
 ### Python blocks
 
-The two **Python** blocks are the escape hatch. `motor_1` .. `motor_4`, `drive_base`, `data_log` and every peripheral object (`color_sensor_1`, `display_3`, `rgb_2`, `uart_1`, `i2c_5`, …) are available: a Python block that mentions one has it created at the top of the program like a block would. A Python block that uses `os.`, `struct.` or `json.` gets that module imported at the top as well. A Python block always imports the core names (`Motor`, `Port`, `Stop`, `Direction`, `SpeedUnit`, `wait`, `StopWatch`, `battery`, `button`, `led`, `stop_all`) and adds a bare `import evn`, plus any other name from the module it spells out (`ColorSensor`, `Color`, `Icon`, `Side`, `DriveBase`, `Pose`, `DataLog`, `UART`, `I2C`, `Flash`, `core1_status`, …), so the import line stays readable and nothing in the module is out of reach. A device named inside a string or a `#` comment is *not* opened, and a port outside the device's range is ignored (serial ports are 1 and 2). With a [Pose block](#pose-where-the-robot-is) in the program the pose is `pose` (and `drive_base.pose` is the same object); without one, the robot's pose is `drive_base.pose` when a **robot follows its gyro** block is in the program (the base builds it from `imu=`). A Python block never creates the pose itself: mentioning `pose` there needs a Pose block in the program. Nor should it construct one (`Pose(...)`, or a `DriveBase(..., imu=...)` / `compass=...`, which builds one) in a program with a Pose block or **robot follows its gyro**: a robot has one Pose, the top of the program has made it, and a second stops the program with `OSError` at that line - or, a `Pose(...)` on the same sources, takes the program's over, and the program then stops with `ValueError` (replaced) where it next reads its own. The same holds for a serial port a UART or Bluetooth block uses (`UART(1, 9600)` in a Python block beside a *UART 1* block): the editor puts a warning on such a Python block.
+The two **Python** blocks are the escape hatch. In them, `motor_1` .. `motor_4`, `drive_base`, `data_log` and every peripheral object (`color_sensor_1`, `display_3`, `rgb_2`, `uart_1`, `i2c_5`, …) are available. A Python block that mentions one has it created at the top of the program like a block would. A Python block that uses `os.`, `struct.` or `json.` gets that module imported at the top as well.
+
+A Python block always imports the core names (`Motor`, `Port`, `Stop`, `Direction`, `SpeedUnit`, `wait`, `StopWatch`, `battery`, `button`, `led`, `stop_all`) and adds a bare `import evn`. It adds any other name from the module it spells out too (`ColorSensor`, `Color`, `Icon`, `Side`, `DriveBase`, `Pose`, `DataLog`, `UART`, `I2C`, `Flash`, `core1_status`, …). So the import line stays readable and nothing in the module is out of reach.
+
+A device named inside a string or a `#` comment is *not* opened, and a port outside the device's range is ignored (serial ports are 1 and 2).
+
+With a [Pose block](#pose-where-the-robot-is) in the program the pose is `pose` (and `drive_base.pose` is the same object). Without one, the robot's pose is `drive_base.pose` when a **robot follows its gyro** block is in the program (the base builds it from `imu=`). A Python block never creates the pose itself: mentioning `pose` there needs a Pose block in the program.
+
+<details>
+<summary>A second Pose or UART from a Python block</summary>
+
+Nor should a Python block construct a pose (`Pose(...)`, or a `DriveBase(..., imu=...)` / `compass=...`, which builds one) in a program with a Pose block or **robot follows its gyro**. A robot has one Pose, and the top of the program has made it. A second stops the program with `OSError` at that line. A `Pose(...)` on the same sources instead takes the program's over, and the program then stops with `ValueError` (replaced) where it next reads its own.
+
+The same holds for a serial port a UART or Bluetooth block uses (`UART(1, 9600)` in a Python block beside a *UART 1* block): the editor puts a warning on such a Python block.
+
+</details>
 
 ### Helper functions at the top of the program
 
 Some blocks need a few lines Python does not have built in; the program gets them at its top when a block needs them:
 
-- `read_file`, `file_exists` and `delete_file` (*Files*): `open()` and `os` as in MicroPython. `read_file` reads the whole file into memory (for small text files: a big one stops the program with `MemoryError`; read it a line at a time in a Python block).
+- `read_file`, `file_exists` and `delete_file` (*Files*): `open()` and `os` as in MicroPython. The `read_file` helper reads the whole file into memory (for small text files: a big one stops the program with `MemoryError`; read it a line at a time in a Python block).
 - `bytes_to_text` (*Bluetooth*): decodes UTF-8 and gives bytes that are not UTF-8 as one character each, so a peer at the wrong speed shows garbled text instead of stopping the program with `UnicodeError`.
 - `two_bytes(value, '>H')` (*I2C*): packs a 16-bit write with `struct`, refusing a value outside 0 to 65535 with `ValueError` (`struct.pack` alone would write it cut to 16 bits).
-- `uart_receive(uart, line_wait=None)` (*UART*): the line, the text and the throw-away blocks share it. It uses only the calls MicroPython's `machine.UART` has (`UART(id, baudrate)`, `write`, `read(n)`, `any`), so the blocks run the same on an `evn.UART`: it reads a line a byte at a time (`read(1)`) against a `StopWatch` (`machine.UART` has no `readline(timeout=)`), and every read gives a count (`read(uart.any())` for the text: a bare `read()` keeps reading while the other side keeps sending). The wait holds even against a device that never stops sending: what had arrived when the block started is read to its line end, then the block gives up once the time is over. A line of more than 1024 bytes comes in pieces of 1024. The port holds 255 bytes, so at 460800 and 921600 baud a burst over about 250 bytes can arrive faster than it is read and lose bytes. A part line the helper kept is not counted by *bytes waiting*; *received text* still gives it.
+- `uart_receive(uart, line_wait=None)` (*UART*): the line, the text and the throw-away blocks share it. It uses only the calls MicroPython's `machine.UART` has (`UART(id, baudrate)`, `write`, `read(n)`, `any`), so the blocks run the same on an `evn.UART`:
+  - It reads a line a byte at a time (`read(1)`) against a `StopWatch` (`machine.UART` has no `readline(timeout=)`).
+  - Every read gives a count (`read(uart.any())` for the text: a bare `read()` keeps reading while the other side keeps sending).
+  - The wait holds even against a device that never stops sending: what had arrived when the block started is read to its line end, then the block gives up once the time is over.
+  - A line of more than 1024 bytes comes in pieces of 1024.
+  - The port holds 255 bytes, so at 460800 and 921600 baud a burst over about 250 bytes can arrive faster than it is read and lose bytes.
+  - A part line the helper kept is not counted by *bytes waiting*; *received text* still gives it.
 
-A Python block that constructs `uart_1` itself (`uart_1 = UART(1, 9600)`, as programs did before the UART blocks) is left to do so while no UART or Bluetooth block uses that port. A UART block on the port does construct it at the top, and the Python block's own `UART(1, 9600)` would then stop the program with `OSError` ("serial port 1 is already open"): the editor warns on that Python block. Replace its line with a **set up UART** block at its speed. A file whose I2C address or register a field refuses opens with the block's default in its place (address 68, register 75) and a note naming it: check that block before the program runs.
+A Python block that constructs `uart_1` itself (`uart_1 = UART(1, 9600)`, as programs did before the UART blocks) is left to do so while no UART or Bluetooth block uses that port. A UART block on the port does construct it at the top, and the Python block's own `UART(1, 9600)` would then stop the program with `OSError` ("serial port 1 is already open"): the editor warns on that Python block. Replace its line with a **set up UART** block at its speed.
+
+A file whose I2C address or register a field refuses opens with the block's default in its place (address 68, register 75) and a note naming it: check that block before the program runs.
 
 The colour blocks have no swatch picker: Blockly's colour-picker field is a plugin, not part of Blockly's core.
 
@@ -609,16 +784,38 @@ Each device has the few calls a program usually needs; everything else in the AP
 
 - **Motors**: `gears`, `reset_angle=False` and `model=` in the constructor, `speed_unit()` / `full_speed(x)` after it, `control.target_tolerances()` / `stall_tolerances()`, `settings(max_voltage=…)`, `model`, `close()`; the module's `evn.configure_motor()` / `motor_config()` / `clear_calibration()` (the Board view's gear and right-click menu do these).
 - **Robot**: `curve()` (the older Pybricks sign convention of `arc()`), `state()`, `reset(distance, angle)`, `follower()`, `pose_error()`, `speed_unit()` to switch the unit mid-program (**set up robot** sets it once), `then=Stop.COAST_SMART` chains, `close()`.
-- **Every peripheral**: `close()`, `age()`, `read()` (the "wait for a new reading" form of each getter), `raw()`, and the tuning calls — colour sensor `gain()`, `integration_time()`, `ranges()` / `normalized()` (a calibrated white and black), `color_match()`, `thresholds()`, `lux()`, `color_temperature()`; distance sensor `timing_budget()`, `signal_rate_limit()`; gesture sensor `engines()`, `gain()`, `led()`, `gesture_config()`; environment sensor `oversampling()`, `filter()`, `standby()`, `forced()`; compass `field()`, `field_strength()`, `heading_confidence()`, `axes()`, `calibration()` (installing a calibration by hand), `calibrate_directions()` (the Board view draws it), `stored_calibration()`, `clear_calibration()`; touch pads `touched()`, `events()`, `data()`, `thresholds()`, `electrodes()`, `autoconfig()`; IMU `euler()`, `quaternion()`, `acceleration()`, `linear_acceleration()`, `gravity()`, `angular_velocity()`, `temperature()`, `tap()`, `screen_orientation()`, `calibration()`, `cancel_calibration()`, `clear_calibration()`, `calibrate_gyro()`, `settings()`, `ranges()`, `filter()`, `sample_rate()`, `axes()`, `dmp()`; ADC `raw()`, `inputs()`, `range()`, `data_rate()`, `continuous()`.
+- **Every peripheral**: `close()`, `age()`, `read()` (the "wait for a new reading" form of each getter), `raw()`, and the tuning calls:
+  - colour sensor `gain()`, `integration_time()`, `ranges()` / `normalized()` (a calibrated white and black), `color_match()`, `thresholds()`, `lux()`, `color_temperature()`;
+  - distance sensor `timing_budget()`, `signal_rate_limit()`;
+  - gesture sensor `engines()`, `gain()`, `led()`, `gesture_config()`;
+  - environment sensor `oversampling()`, `filter()`, `standby()`, `forced()`;
+  - compass `field()`, `field_strength()`, `heading_confidence()`, `axes()`, `calibration()` (installing a calibration by hand), `calibrate_directions()` (the Board view draws it), `stored_calibration()`, `clear_calibration()`;
+  - touch pads `touched()`, `events()`, `data()`, `thresholds()`, `electrodes()`, `autoconfig()`;
+  - IMU `euler()`, `quaternion()`, `acceleration()`, `linear_acceleration()`, `gravity()`, `angular_velocity()`, `temperature()`, `tap()`, `screen_orientation()`, `calibration()`, `cancel_calibration()`, `clear_calibration()`, `calibrate_gyro()`, `settings()`, `ranges()`, `filter()`, `sample_rate()`, `axes()`, `dmp()`;
+  - ADC `raw()`, `inputs()`, `range()`, `data_rate()`, `continuous()`.
 - **Displays**: the OLED's drawing calls (`pixel`, `line`, `rect`, `draw_circle`, `draw_text`, `splash`, `contrast`, `flip`, `invert`, `scroll`), the matrix's `bitmap()` / `animate()` / `orientation()` / `blink()` / `hline()` / `vline()` / `rect()`, the 7-segment's `digit()`, `char()`, `point()`, `segments()`.
 - **RGB LEDs**: `range()`, `on()` with a list, `blink()`, `animate()`, `hsv()`, `get()`, `invert()`, `count()`.
 - **Servo**: `set_range()`, `enable()` / `disable()`, and the constructor's `reverse=` / `range=` / `min_us=` / `max_us=`.
 - **Board**: `battery.cells()` / `present()` / `age()`.
 - **Data log**: `info()`, `running()`, `quantities()`, `close()`, `save(path)` with a path of your own, more than three columns in one row, and the constructor's `timestamp=` / `extension=` / `append=` / `size=` / `autosave=` / `on_full=`.
-- **Extended peripherals**: HiTechnic colour sensor `version()`, `firmware()`, `color_match()`, `detectable_colors()`, `black_reference()` / `white_reference()`, `stored_calibration()` / `clear_calibration()`, `normalized_rgb()` / `ambient_raw()` as whole tuples, `raw()`, `mains()`; HiTechnic compass `calibrating()`, `firmware()`; HuskyLens `blocks(id)` / `arrows(id)` as whole lists, `frame()`, `algorithm()` as a getter; VL53L1X `status()`, `raw()`, `timing_budget()` / `distance_mode()` / `inter_measurement()` / `roi()` / `signal_threshold()` / `sigma_threshold()` / `distance_threshold()` as getters, `roi(w, h, center)` with a centre of your own, `offset()` / `crosstalk()` (getters and setters), `stored_calibration()`, `evn.vl53l1x_calibration(port)`; TCS3430 `color_match()`, `detectable_colors()` (teach it colours from its own `hsv()`), `black_reference()` / `white_reference()`, `xyz()` as a tuple, `raw()`, `xy()`, `saturated()`, `integration_time()` / `gain()` / `wait_time()` / `autozero()` / `thresholds()` as getters, `thresholds()` with persistence 0 (every reading), `stored_calibration()`, `clear_calibration()`; `age()` and `close()` of every one.
+- **Extended peripherals**:
+  - HiTechnic colour sensor `version()`, `firmware()`, `color_match()`, `detectable_colors()`, `black_reference()` / `white_reference()`, `stored_calibration()` / `clear_calibration()`, `normalized_rgb()` / `ambient_raw()` as whole tuples, `raw()`, `mains()`;
+  - HiTechnic compass `calibrating()`, `firmware()`;
+  - HuskyLens `blocks(id)` / `arrows(id)` as whole lists, `frame()`, `algorithm()` as a getter;
+  - VL53L1X `status()`, `raw()`, `timing_budget()` / `distance_mode()` / `inter_measurement()` / `roi()` / `signal_threshold()` / `sigma_threshold()` / `distance_threshold()` as getters, `roi(w, h, center)` with a centre of your own, `offset()` / `crosstalk()` (getters and setters), `stored_calibration()`, `evn.vl53l1x_calibration(port)`;
+  - TCS3430 `color_match()`, `detectable_colors()` (teach it colours from its own `hsv()`), `black_reference()` / `white_reference()`, `xyz()` as a tuple, `raw()`, `xy()`, `saturated()`, `integration_time()` / `gain()` / `wait_time()` / `autozero()` / `thresholds()` as getters, `thresholds()` with persistence 0 (every reading), `stored_calibration()`, `clear_calibration()`;
+  - `age()` and `close()` of every one.
 - **Bluetooth**: `read()`, `read_all()`, `clear()`, `wait_until()`, `repl()`, `command()`, `address()`, `configured()`, `set_baudrate()`, and the constructor's `name=` / `baud=` / `mode=` (a block always uses the defaults).
 - **Pose**: `state()`, `parameters()`, `settings()`, `bounded()`, `configured()`, `close()`, and the constructor's `gear_ratio=` / `declination=` / `imu_offset=`; a pose without the wheels (an IMU and / or a compass alone), and a pose's IMU without **robot follows its gyro** switching the loop on.
-- **UART**: `read(n)` / `readinto()` / `readline()` with the object's own timeouts (the blocks read what is waiting, a count at a time), `flush()`, `txdone()`, `sendbreak()`, `init()`, `overflow()`, `flush_rx()`, `repl()`, `deinit()` / `close()`, bytes that are not text (`uart_1.write(bytes([0x55, 0xAA]))`), a speed outside the set-up's list, and the constructor's `bits=` / `parity=` / `stop=` / `timeout=` / `timeout_char=` / `invert=` (a block always opens 8 data bits, no parity, 1 stop bit at the speed it names).
-- **I2C**: `readfrom()` / `readfrom_into()` / `writeto()` / `writevto()` (a device without registers; `stop=False` holds a write for the next call), `readfrom_mem_into()`, `freq()` and `I2C(port, freq=...)` for a slower bus, `I2C(port, timeout=...)` for a chip that holds the clock, `stats()`, a write of more than two bytes, and a register address wider than a byte (`addrsize=`).
+- **UART**:
+  - `read(n)` / `readinto()` / `readline()` with the object's own timeouts (the blocks read what is waiting, a count at a time);
+  - `flush()`, `txdone()`, `sendbreak()`, `init()`, `overflow()`, `flush_rx()`, `repl()`, `deinit()` / `close()`;
+  - bytes that are not text (`uart_1.write(bytes([0x55, 0xAA]))`);
+  - a speed outside the set-up's list;
+  - and the constructor's `bits=` / `parity=` / `stop=` / `timeout=` / `timeout_char=` / `invert=` (a block always opens 8 data bits, no parity, 1 stop bit at the speed it names).
+- **I2C**:
+  - `readfrom()` / `readfrom_into()` / `writeto()` / `writevto()` (a device without registers; `stop=False` holds a write for the next call), `readfrom_mem_into()`;
+  - `freq()` and `I2C(port, freq=...)` for a slower bus, `I2C(port, timeout=...)` for a chip that holds the clock;
+  - `stats()`, a write of more than two bytes, and a register address wider than a byte (`addrsize=`).
 - **Files**: folders (`os.mkdir()`, `os.chdir()`, `os.rmdir()`), `os.rename()`, sizes and free space (`os.stat()`, `os.statvfs()`), reading a line at a time, binary files, and `json` for settings (a Python block that uses `os.` or `json.` gets it imported).
 - **The rest of the module**: `Flash`, `evn.calibration()` / `imu_calibration()` / `compass_calibration()` / `color_calibration()` / `vl53l1x_calibration()` (the stored records as dicts), `clock()`, `reset()`, `reset_cause()`, `bootloader()`, `autostart()`, `core1_status()`, `evn.version`.

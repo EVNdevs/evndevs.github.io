@@ -1,7 +1,9 @@
 {
   "note": "The Examples tree's folders, in this order: one per object of the API, each with <slug>_minimal and <slug>_complete in Python, and in blocks where \"blocks\" lists the blocks of that object. scripts/build.js copies the folder entries into index.json; scripts/test_examples.js checks every example against this file: classes and module = what the complete Python example must call (every public method, less \"skip\", each with its reason), blocks = what the complete blocks example must use. Every EVN block of the editor's toolbox is used by some blocks example or listed under a \"skipBlocks\" (a folder's, or the one below for a block of no object), each with its reason.",
   "skipBlocks": {
-    "evn_python_value": "a Python expression typed in by hand; its statement twin (evn_python) is in the gesture sensor and IMU examples"
+    "evn_python_value": "a Python expression typed in by hand; its statement twin (evn_python) is in the gesture sensor and IMU examples",
+    "evn_dict_create": "a Python dictionary, data of no object of the API (the Lists category, JR J9): G5.4.6's lesson builds one; scripts/test_blocks.js J9 rows L2, L4, L5 generate and run it",
+    "evn_dict_get": "a Python dictionary lookup, data of no object of the API (the Lists category, JR J9): G5.4.6's lesson uses it; scripts/test_blocks.js J9 rows L2, L4 generate and run it"
   },
   "folders": [
     {

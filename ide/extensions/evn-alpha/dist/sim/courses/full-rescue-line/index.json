@@ -1,0 +1,45 @@
+{
+ "format": "evn-course-index/1",
+ "generated": "node scripts/course_index.js --write; do not edit",
+ "levels": [
+  {
+   "file": "full-rescue-line/level-1.v1.json",
+   "id": "full-rescue-line-1",
+   "version": 1,
+   "sha256": "9dcfee300d0b32fc6d2a4f9e31e3cfc4902f54a82e9c6aa999b0cdd56514f837",
+   "current": true,
+   "title": "Full rescue line · Level 1",
+   "limit": 180,
+   "runs": {
+    "default": 5,
+    "fixed": 5
+   }
+  },
+  {
+   "file": "full-rescue-line/level-2.v1.json",
+   "id": "full-rescue-line-2",
+   "version": 1,
+   "sha256": "b37c511d841fcd43cf99fc7d327b543c51cf8b69c63a538f05d2cfa6ba1c67b1",
+   "current": true,
+   "title": "Full rescue line · Level 2",
+   "limit": 240,
+   "runs": {
+    "default": 5,
+    "fixed": 5
+   }
+  },
+  {
+   "file": "full-rescue-line/level-3.v1.json",
+   "id": "full-rescue-line-3",
+   "version": 1,
+   "sha256": "d736615a18626b92527cf09d4c2d75113c5ed243e6a59dbb67f00a2ff6f697f2",
+   "current": true,
+   "title": "Full rescue line · Level 3",
+   "limit": 480,
+   "runs": {
+    "default": 5,
+    "fixed": 5
+   }
+  }
+ ]
+}

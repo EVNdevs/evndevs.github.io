@@ -1,0 +1,45 @@
+{
+ "format": "evn-course-index/1",
+ "generated": "node scripts/course_index.js --write; do not edit",
+ "levels": [
+  {
+   "file": "blind-navigator/level-1.v1.json",
+   "id": "blind-navigator-1",
+   "version": 1,
+   "sha256": "b87ab2b710c6e86ea1a23da4f27d4bbcc95dd3a4a95ea47dd5160f3c944fd789",
+   "current": true,
+   "title": "Blind navigator · Level 1: A square",
+   "limit": 120,
+   "runs": {
+    "default": 5,
+    "fixed": 10
+   }
+  },
+  {
+   "file": "blind-navigator/level-2.v1.json",
+   "id": "blind-navigator-2",
+   "version": 1,
+   "sha256": "0e1c3315450ba684d8a742b1a08fa25f9485e76136870e5f630446ad14f0135d",
+   "current": true,
+   "title": "Blind navigator · Level 2: Five waypoints",
+   "limit": 120,
+   "runs": {
+    "default": 5,
+    "fixed": 10
+   }
+  },
+  {
+   "file": "blind-navigator/level-3.v1.json",
+   "id": "blind-navigator-3",
+   "version": 1,
+   "sha256": "8f21dfa89abb8e962d6cf550b3a25d54703941c83dcdffb674795b9257745f4e",
+   "current": true,
+   "title": "Blind navigator · Level 3: Slippery patches and a gyro bias",
+   "limit": 120,
+   "runs": {
+    "default": 5,
+    "fixed": 10
+   }
+  }
+ ]
+}

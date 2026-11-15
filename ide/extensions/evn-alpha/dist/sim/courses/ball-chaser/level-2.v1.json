@@ -1,0 +1,149 @@
+{
+  "format": "evn-course/1",
+  "id": "ball-chaser-2",
+  "challenge": "ball-chaser",
+  "level": 2,
+  "version": 1,
+  "module": "G10.1",
+  "title": "Ball chaser \u00b7 Level 2: The right ball",
+  "brief": "Touch the orange ball with the front of the robot, among a red ball, a yellow ball, an orange cube and a brown ball. Touching any of those first scores 0. A touch is within 20 mm of the robot's front edge; 45 s.",
+  "field": {
+    "random": [
+      {
+        "name": "things",
+        "draw": "pointsIn-v1",
+        "n": 5,
+        "box": [
+          150,
+          150,
+          1850,
+          1850
+        ],
+        "grid": 50,
+        "gap": 200,
+        "fromGap": 800,
+        "from": [
+          250,
+          250
+        ]
+      }
+    ],
+    "arena": {
+      "size": [
+        2000,
+        2000
+      ],
+      "startBox": [
+        0,
+        0,
+        400,
+        400
+      ],
+      "goal": null,
+      "obstacles": [
+        {
+          "name": "cube",
+          "from": "things",
+          "i": 4,
+          "w": 60,
+          "d": 60,
+          "h": 60,
+          "color": "#ff8c00"
+        }
+      ],
+      "wallH": 100,
+      "wallT": 20,
+      "obstacleH": 60,
+      "wallColor": "#9a9ea3",
+      "balls": [
+        {
+          "name": "orange",
+          "d": 60,
+          "massG": 40,
+          "color": "#ff8c00",
+          "from": "things",
+          "i": 1
+        },
+        {
+          "name": "red",
+          "d": 60,
+          "massG": 40,
+          "color": "#dc1e1e",
+          "from": "things",
+          "i": 2
+        },
+        {
+          "name": "yellow",
+          "d": 60,
+          "massG": 40,
+          "color": "#ffdc00",
+          "from": "things",
+          "i": 3
+        },
+        {
+          "name": "brown",
+          "d": 60,
+          "massG": 40,
+          "color": "#964b00",
+          "from": "things",
+          "i": 5
+        }
+      ]
+    }
+  },
+  "robot": {
+    "rule": "learner"
+  },
+  "start": {
+    "nominal": {
+      "x": 250,
+      "y": 250,
+      "heading": 45
+    },
+    "vary": {
+      "xy": 10,
+      "heading": 2
+    },
+    "draw": "uniform-square-v1"
+  },
+  "runs": {
+    "min": 1,
+    "max": 20,
+    "default": 5,
+    "fixed": 10
+  },
+  "kernel": {
+    "name": "pointToPoint",
+    "limitS": 45,
+    "goal": "footprintInside",
+    "final": "runEnd",
+    "reach": {
+      "target": "orange",
+      "foes": [
+        "red",
+        "yellow",
+        "cube",
+        "brown"
+      ],
+      "mm": 20
+    }
+  },
+  "constants": {
+    "par": 6.3
+  },
+  "score": {
+    "run": "if(reachWon, round(100 * min(1, par / max(time, 0.001)), 1), 0)",
+    "summary": "round(sum(r in runs: r.points) / count(r in runs: true), 1)"
+  },
+  "pass": "score >= 60 & count(r in runs: r.reachWon) >= 0.8 * n",
+  "sources": [
+    {
+      "doc": "docs/curriculum/G10.md",
+      "where": "G10.1 Ball chaser, the challenge paragraph and the level table (levels 1-2) (on origin/worktree-g101-1106)"
+    },
+    {
+      "doc": "vscode-evn-alpha/docs/COURSE_CONTENT_DESIGN.md",
+      "where": "\u00a74 arena.balls, \"i\", pointsIn-v1; \u00a75.1 Ball chaser arena and kernel.reach; \u00a77 CC-5 (OQ 350-353: docs/session/2026-11-08_cc5/owner_items.md)"
+    }
+  ]
+}

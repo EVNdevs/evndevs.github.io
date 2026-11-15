@@ -1,0 +1,167 @@
+{
+ "format": "evn-course/1",
+ "id": "line-time-trial-3",
+ "challenge": "line-time-trial",
+ "level": 3,
+ "version": 1,
+ "module": "G3.2",
+ "title": "Line time-trial \u00b7 Level 3: Corners and gaps",
+ "brief": "A loop of right-angle corners and gaps, one lap of 4800 mm: from the start east 1350 mm, a left corner, north 600, left, west 300, right, north 300, left, west 1200, left, south 900, left, east 150 back to the start; a 20 mm black line on white, every corner sharp (a right angle, as the Corners tile's). Three gaps in the line: 200 mm on the centre from 350 to 550 mm along the first straight, 100 mm from 1000 to 1100 along it, and 200 mm on the long straight heading west (each gap's ends are round, so the white on the centre is 180 / 80 / 180 mm). The robot starts on the line 60 mm along the first straight, heading east, moved up to 20 mm either way and turned up to 5 degrees (run 1 at the nominal start). The robot is the class robot (Configure robot's default: four downward colour sensors 24 and 48 mm ahead, 16 mm either side); a run on a changed robot is not this level's. The clock starts when the middle of the robot's axle first crosses the start line, 40 mm ahead of the nominal start, and stops when it crosses it again a lap later, which ends the run. The run is finished if the axle's middle never goes more than 150 mm from the line's centre (across a gap, from the straight the gap interrupts) and the line is never under none of the sensors for more than 5 s at a time, read on every 1 ms tick from the start line's crossing; the first tick that breaks either rule ends the run, and so does 60 s. At a corner the distance is read from the stretch of line the robot is following (the line's local reading, not the nearest point anywhere): a robot that turns early and runs on beside the next stretch is read as far off as it is from the stretch it left, so cut no corner. Score per run (G03.md's A-081 scoring): 40 for finishing, + 30 x min(1, par / time), + 30 if the axle's middle was never more than 20 mm off the line; 0 for a run that does not finish. Par 30 s. Pass: a mean of at least 60 over the 5 runs, and at least 4 of 5 runs finish.",
+ "field": {
+  "arena": {
+   "size": [
+    2400,
+    1500
+   ],
+   "startBox": [
+    630,
+    420,
+    690,
+    480
+   ],
+   "goal": null,
+   "obstacles": [],
+   "wallH": 100,
+   "wallT": 20,
+   "obstacleH": 60,
+   "startPaint": false,
+   "lines": [
+    {
+     "name": "track",
+     "path": [
+      [
+       "S",
+       1350
+      ],
+      [
+       "V",
+       90
+      ],
+      [
+       "S",
+       600
+      ],
+      [
+       "V",
+       90
+      ],
+      [
+       "S",
+       300
+      ],
+      [
+       "V",
+       -90
+      ],
+      [
+       "S",
+       300
+      ],
+      [
+       "V",
+       90
+      ],
+      [
+       "S",
+       1200
+      ],
+      [
+       "V",
+       90
+      ],
+      [
+       "S",
+       900
+      ],
+      [
+       "V",
+       90
+      ],
+      [
+       "S",
+       150
+      ]
+     ],
+     "at": [
+      600,
+      450,
+      0
+     ],
+     "line": 20,
+     "paint": "black",
+     "startLine": 100,
+     "gaps": [
+      [
+       350,
+       550
+      ],
+      [
+       1000,
+       1100
+      ],
+      [
+       3050,
+       3250
+      ]
+     ]
+    }
+   ]
+  }
+ },
+ "robot": {
+  "rule": "fixed"
+ },
+ "start": {
+  "nominal": {
+   "x": 660,
+   "y": 450,
+   "heading": 0
+  },
+  "vary": {
+   "xy": 20,
+   "heading": 5
+  },
+  "draw": "uniform-square-v1"
+ },
+ "runs": {
+  "min": 1,
+  "max": 20,
+  "default": 5,
+  "fixed": 5
+ },
+ "kernel": {
+  "name": "pointToPoint",
+  "limitS": 60,
+  "goal": "footprintInside",
+  "final": "runEnd",
+  "line": {
+   "line": "track",
+   "laps": 1,
+   "offMm": 150,
+   "lostS": 5,
+   "maxLapS": 60
+  }
+ },
+ "constants": {
+  "par": 30
+ },
+ "score": {
+  "run": "if(lapValid, 40 + 30 * min(1, par / lapTime) + if(maxOffset <= 20, 30, 0), 0)",
+  "summary": "round(sum(r in runs: r.points) / count(r in runs: true), 1)"
+ },
+ "pass": "sum(r in runs: r.points) / count(r in runs: true) >= 60 & count(r in runs: r.lapValid) >= 0.8 * n",
+ "sources": [
+  {
+   "doc": "docs/curriculum/G03.md",
+   "where": "G3.2 Challenge - Line time-trial, the measurement rules (across a gap the centreline continues as a straight segment joining the line's two ends) and the level table, level 3 (a track of Corners and Gaps, a 100-200 mm gap, about 4.8 m, starts +-20 mm, +-5 deg, par 30 s)"
+  },
+  {
+   "doc": "vscode-evn-alpha/docs/COURSE_FORMAT_DESIGN.md",
+   "where": "\u00a720 item 11: arena.lines and kernel.line (lane e1-line); G3.2 L3 on line_gaps.md's V pieces and gaps (the path the tiles SGSglSlrlSGSlSSl with every corner a V)"
+  },
+  {
+   "doc": "docs/session/2026-11-14_w12-c1g3/design/line_gaps.md",
+   "where": "\u00a72 (the V corner and gaps), \u00a73 (the paint), \u00a74 (the footprint over a gap; the local offset at a corner: the owner's OI-5 (a), RULINGS_0930), \u00a75 (this level); the 5 s lost rule kept (OI-2 (a))"
+  }
+ ]
+}

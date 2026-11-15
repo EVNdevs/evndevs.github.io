@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.2.78 (2026-11-15)
 
 ### Accessibility
 - **My progress is readable in every VS Code theme.** The page drew dark text with no background of its own, so in a dark
@@ -8,10 +8,264 @@
   at least 4.5:1); the page you download or keep in a backup still prints dark on white.
 
 ### Simulator
+- **The RCJ referee no longer calls a robot that backs a few mm over a junction's branch the course does not take, then
+  drives on along the course** (5.5.1c), also the first time through a junction the course comes back to later. A
+  back-up further past the branch is still called, as is turning round onto the tile before. Still open: the second time
+  through such a junction, the same back-up over the branch it took the first time is still called.
+- **Simulated motors run as the board's do.** `run()` no longer reaches the motor's no-load speed: it stops at the
+  board's speed budget (0.95 of the pack, less the friction voltage), easing into it, so an EV3 Large's `run(1000)` on a
+  7.9 V pack cruises at about 870 degrees/s, not 917. A `Motor()` whose model's speed limit is under its no-load speed
+  (CHR-GM16, CM22-2230, Pololu 25D) starts at the no-load speed, as on a calibrated board, so `run(100)` in percent is not
+  held back before `calibrate()`. A move given to a motor under 5 degrees/s starts from rest where the shaft is, and a
+  `run_angle()` or `run_time()` counts from the last finished move's target only while the shaft is within 45 degrees of
+  it: after `track_target(720)` a `run_angle(300, 90)` now turns 90 degrees from the shaft instead of heading for 720.
+  `hold()` holds where the shaft is. A `straight()` or `turn()` right after `robot.stop()` or `brake()` starts both wheels
+  from rest. `evn.calibration()` reports `v_break_mv` as the simulated motor's own breakaway (its friction voltage, 700 mV
+  on an EV3 Medium; it read 1000), and `DriveBase.speed_unit()` on a closed base raises, as on the board.
+- **Simulated moves are capped as the board caps them.** `run_angle()`, `run_target()` and `run_time()` no longer cruise
+  at the motor's no-load speed: like the board they stop at the no-load speed at the pack less what the acceleration
+  takes, so an EV3 Large's `run_target(2000, 3600)` on a 7.9 V pack cruises at about 797 degrees/s, not 917, and a
+  `then=Stop.NONE` move runs on at that speed; `run_time()` is sized for the speed the motor will get, so it still takes
+  its time. `DriveBase.hold()` during a `drive()` or a maneuver holds each wheel where it is (it held where the
+  wheels were being told to be, a little behind). `DriveBase()` refuses its wheels with the board's messages, and a
+  wheel diameter of exactly 1 or 1000 mm as the board does. `calibrate(wait=False)` no longer changes `full_speed()` or
+  the speed limit at once: a later `calibrate()` or the next `Motor()` does, as on the board.
 - **A data log a simulated program saves shows in the Board view.** After `evn.DataLog(...)` and `save()`, the Board
   view's data folder said "no data logs yet": the simulated board never passed on what was saved under `/data`. Now the
   log is listed by name after Read the board, downloads into your Data folder and opens in the data viewer as a board's
   does, stays on the simulated board for the next run, and its delete button removes it.
+- **The 3D view opens on the robot.** Its first view stands behind the robot, close enough that the robot is larger in
+  the view, with the course ahead of it. **Dock readouts** puts the time, the sensors and the referee in a column beside
+  the field so they cover none of it; it is on when the window is at least 1000 pixels wide, and the button switches it.
+- **The wheels are the LEGO 32019 tyre's 20 mm wide**: the robot's footprint, the tyres' collision boxes and the drawing
+  take it (the diameter is still the one you set). **Apply** in *Configure robot* lists sensors placed closer than their
+  modules as a warning, never a refusal.
+- **A camera sees the robot's models**: the board, the sensors' modules, the wheels and the motors are in every
+  camera's frame, whatever the 3D view's **Models** button says. Such a frame takes longer to draw (73 ms against 18 ms
+  for a 640 x 480 PNG on a software renderer, less on a GPU).
+- **Show names** now labels a challenge course's named items in the 3D view too, and a practice run lost when the
+  simulator restarts its worker now says so. A maze level's submission report shows each run's map, and Read aloud
+  speaks it.
+- **Fixes.** A `DriveBase` wait times out on its own stall clock, and a soft reset is no longer lost when the simulator
+  restarts its worker. On the simulated robot, the Board view's IMU `stationary()`, `ready()`, `up()`, `read()` and
+  `reset_heading()` follow the simulated IMU instead of stand-ins. A program saved with Windows line ends is judged the
+  same as one without by the lesson checks. A Ctrl-C from the serial bridge coasts the motors before it stops
+  the program, and `ticks_add()` / `ticks_diff()` take integers past 2^53 exactly. The physics engine's code now
+  loads only with the engine, on the courses and levels that use it.
+- **The simulated IMU keeps the board's two rates:** the DMP's (200 Hz until set) and the raw registers' (1000 Hz until
+  set). `dmp(False)` now samples at the raw `sample_rate()` (it stayed at 200 Hz), `dmp(True)` comes back at the DMP's
+  own rate, and `dmp(False, rate=5)` raises `ValueError` as on the board (it went through).
+- **The simulated ADC's `continuous()` readings come at the board's cadence:** every 2 ms at 860 SPS (they came every
+  ~1.4 ms), 125 ms at 8 SPS: 1 / DR read at the board's next 1 kHz poll.
+- **Simulated numbers and colours as on the board.** A `Motor` or `DriveBase` argument too large for the board's 32-bit
+  floats now raises `ValueError` ("must be a finite number"); `drive(10**400, 0)` drove at the cap. `print()` of a
+  colour equal to a named one prints its name (an `hsv()` of calibrated white prints `Color.WHITE`), and the messages
+  of `settings()` and of a time that is negative or over 2147483647 ms read as the board's.
+- **The RCJ referee counts a servo as a robot driven:** a program started mid-game (not after a lack of progress) that
+  then moves a servo makes the game practice, as one that drives a motor does (5.3.7, 4.1.1). A servo's `stop()` does not.
+  With the `autoCaptain` setting on, the referee no longer calls a lack of progress as the robot nears the evacuation
+  zone, where no line is judged: it called one there in every game, as "from the line".
+- **A Run says when the robot cannot start behind the start tile's joint** (rules 5.4.1), in the panel's note, as the map
+  builder already did.
+- **A mechanism preset never adds a third touch array:** with two fitted and neither with the preset's electrodes free,
+  its button is off (two is the configurator's limit, and Apply refused the third).
+- **A challenge level's file loads the first time the level needs it**, checked against its checksum. If it does not
+  load, the panel stays on the course before and says "The challenge level's file could not load", and the next time
+  the level is opened the file is fetched again.
+
+### Course and challenges
+- **Thirty-one new challenges in the Course list**, their levels scored with a pass rule unless named as practice below:
+  - *Robot says hello* (G1.1): drive from the garage to one visitor's mat, then two, flash the light at each and come
+    back; on level 3 stop on the star, scored on how close.
+  - *Neighbourhood delivery* (G1.2): stop in house 3's square and flash; then wait at the bakery for the load, with the
+    light on, and take it on to house 7.
+  - *Zoo trip* (G1.3): visit the lion, then the giraffe, then every animal on the card in any order, never a wheel on a
+    hedge.
+  - *Robot parade* (G1.4): drive a square through four corner flags in order and back into the start box.
+  - *Perfect parking* (G2.1): park with the front bumper between the bay's lines, then turn back at a line first and
+    reverse into the bay.
+  - *Robot vacuum* (G2.2): a bumper robot cleans 20 of the 30 dusty squares, somewhere new each run, in an empty room;
+    a robot that is never stuck against a wall for 2 s scores more.
+  - *Traffic-light town* (G2.3): drive Main Street to the school with a colour sensor and never run a red light: the
+    lights change on a clock, drawn in their colour in the 2D and 3D views. Level 2 turns at a sign.
+  - *Bus route* (G2.4): drive one lap of the Oval route's black line, through its checkpoints in order and close to
+    the line.
+  - *Drag race* (G3.1) and *Line time-trial* (G3.2): sprint and stop inside the green box; lap the Oval twice, then a
+    lap of S-bends and zigzags, then one of corners and gaps, against the clock.
+  - *Mini mission* (G4.3): push the red cube into the red zone and the blue cube into the blue one.
+  - *Translate and beat* (G5.1) and *Shape artist* (G4.1): drive shapes that close (a square, a triangle and a hexagon,
+    a star, a rosette), scored on how far the end is from the start. Shape artist's third level, a star on a mystery
+    robot, is practice.
+  - *Rescue line lite* (G5.3) and *Full rescue line* (G6.3): follow a line over a course of tiles to the goal tile:
+    round corners first, then gaps, a T junction with its green marker, a dead end, a crossing, a cube, a speed bump and
+    ramps. A tile course is judged by the RCJ referee's tile rules, and the card says when the tile judge ended a run.
+  - *Treasure map* (G6.1): visit four treasures the run places on the 100 mm grid, then five in your own order, and come
+    back to base.
+  - *Hill climb and push* (G6.2): climb a 25 degree ramp and stop in the green zone, then with a 600 g load, then push
+    a 600 g box 900 mm into the zone. The ramps and platforms are drawn in the 2D and 3D views.
+  - *Shared-space service robot* (G6.4): in a hawker hall, stop square at table 3 so the cup is put in the robot's
+    tray, then carry it to the return station.
+  - *Weightlifter* (G7.2): choose the gear, lift a payload the program is not told to +45 degrees and hold it 2 s; 40 to
+    60 g, then 140 to 160 g with the energy counted.
+  - *Cruise control* (G7.3): hold 200 mm/s for 10 s with `dc()` only, then with a payload.
+  - *EVN Cup mission* (G7.4): a 120 s match of six missions: the rover, the beacon and parking first, then all six, then
+    all six with the cubes' colours shuffled.
+  - *Blind navigator* (G8.2): with no landmarks, drive a square drawn for each run, then five waypoints, then the same
+    over slippery patches with a gyro bias the program is not told.
+  - *Rescue line open* (G8.4): the RCJ referee runs an 8-minute game on a 2026 practice field: field #01, then a field
+    drawn for each game, then one with victims.
+  - *Model match* (G9.1), practice: predict a motor's step, the free motor's and then the arm's, and write the
+    prediction to the flash before the step.
+  - *Arm position shoot-out* (G9.2), practice: hold an arm at five targets, bare and then with a 200 g payload, then
+    with a payload clamped on or taken off once in each run, unannounced, and an angle reading that jitters.
+  - *Line grand prix* (G9.3): follow a line round a flowing loop, then a loop with hairpins and an S-bend.
+  - *Measure with a camera* (G10.2): a still robot's camera frames go to your PC program, which writes each disc's floor
+    position; on level 2 the camera's tilt and height are not told.
+  - *Tag navigator* (G10.4): visit four stations marked by ArUco tags on posts, in any order, then in the order the run
+    gives. The third level, with hidden tags, is practice, as are three bench levels of the same task.
+  - *Autonomous courier* (G12.1): carry a parcel from the depot to two zones and back on a known map, then with boxes
+    that are not on the map, then with boxes dropped during the run and a person walking.
+  - *EVN Open practice* and *EVN Open car practice* (G12.4): practice for the capstone against example requirements,
+    four for the robot and five for the car: five runs, then twenty unseen starts judged on the Wilson bound, then a
+    shifted start and a push.
+- **G10.3's challenge has a pass rule now, with two more levels:** four loose cones to pass on the side their colour
+  says, and a track drawn new for each run. As their briefs say, levels 2 and 3 stay practice until the simulator's
+  camera reaches a run: no sensor sees a cone's colour yet. Its first level is now version 2. Three bench levels of the
+  same task are practice.
+- **The Balancer's second level** (practice): hold your place through three pushes drawn for each run.
+- **Disturbance gauntlet:** Run challenge also asks for your PID program, which runs on the same draws. The card shows
+  your controller's error as a ratio of the PID's (never scored), and a Run without that program cannot be handed in.
+  The draws and scores are unchanged. Level 1 is now practice, as levels 2 and 3 already were.
+- **Four camera scenes to practise on:** a wall board, a checkerboard on a stand, and the fields of *Measure with a
+  camera* and *Tag navigator*. The printed tags are OpenCV's DICT_4X4_50 (Apache 2.0, THIRD_PARTY_NOTICES.md).
+
+### Board view and live console
+- **The user button's stop lets go at your next Board-view command.** After the button stopped a program, every motor
+  command was refused until the next connect. Now the next command you start in the Board view releases the stop: a
+  motor, servo or LED row, a motor's calibration, a line typed in *Send a command* or the Console view, the first move of *Set
+  up drive base*. Program output, a Stop click and the Board view's own readings never release it, and a release moves
+  nothing. Connecting again releases it too, and an automatic reconnect now says so. A program that caught the button's
+  stop and then calls `Motor.calibrate()` gets the stop again at once, instead of failing seconds later.
+- **The IMU's one-click Calibrate is level + front.** After the level calibration it asks you to lift the robot's back so
+  it tips nose-down 20 to 45 degrees and hold it still about 2 s: the board's own `imu.find_front()` finds which sensor
+  axis points forward and stores it with the calibration, so you no longer read the module's axes yourself. Close that
+  dialog to keep the front as it is. Advanced still offers the level calibration alone and the two poses; the old
+  Advanced nose-down step, which proposed the axes from the extension's own reading and needed a 60 degree tip, is gone.
+- **A paused console keeps listening after a board RESET.** Its listener lost the port when the board reset and did not
+  come back; it is now started again (after 1, 2 and 4 s). If it still cannot hold the port the row says so and offers
+  Pause, which tries again.
+- "Select board port" with no mpremote offers *Set Python path* again, and editing `evn.port` while the simulator is the
+  board no longer restarts the live console.
+- **Set up drive base** (the rocket button on the Motors row): pick the left and right motor ports, calibrate both, drive
+  a few centimetres to find each wheel's direction, pick the wheel and type the axle track, choose the IMU; it ends with
+  the `DriveBase(...)` line, copied or inserted at the cursor.
+- **Start now** on the "Board is waiting for the user button" row starts `main.py` from VS Code (the board resets into
+  it, as *Upload and run now* does). With the console paused, a program you start with the user button shows the status
+  bar's *running* item and **Stop**.
+- **Shorter hovers and dialogs.** The motor row's hover says what the row and its buttons are; the calibration figures
+  are behind its **Details** link. The calibration dialogs are one sentence with the rest underneath, and the colour
+  panel's footnote is one line with the exposure modes behind a disclosure.
+- The colour calibration, compass map and data logger panels open in the active editor column (`evn.panels.openIn`:
+  `"beside"` brings the old place back). While the data logger records or a compass / colour calibration runs, the IMU's
+  find-the-front step is refused instead of leaving them unanswered.
+- A data log whose name holds `\` or `:` now downloads under a safe file name, from a board or the simulator.
+- **Saved simulator maps are capped at 2 MiB in all**, beside the cap of 100 maps, and the map builder refuses a save
+  past it.
+- **Bluetooth ports on macOS and Linux.** A port named `/dev/cu.HC-05` or holding "Bluetooth" (macOS) and `/dev/rfcomm`
+  ports (Linux) are taken as the board's Bluetooth ports. The commands are now *Pair the Bluetooth module* and *Use the
+  Bluetooth port for the board*. Not yet tried on a Mac or a Linux PC.
+- **Updates are checked byte for byte.** The site's `latest.json` now names the SHA-256 of the extension it offers, and
+  **Update** installs a download only when it has exactly that digest (it reads `latest.json` once more first if the
+  copy it holds is older than the site's), so a damaged or swapped file is never installed.
+- Smaller fixes: *Set up drive base* refuses a length finer than 0.1 mm instead of writing it rounded; an open colour
+  calibration panel stays in the column you put it in; a motor whose Stop failed keeps its Stop button; after *Start
+  now* on an older firmware the row says to flash the current one. With no board found, the status bar's hover asks
+  whether the board is switched on (the red LED) and plugged in, and the IMU calibration's progress says that pausing
+  the console cancels it.
+
+### Challenge submissions
+- **Re-test a submission offline, for teachers.** For a level whose run is linked to a PC program, the submission
+  report has **Export re-test job**. On a separate login of a desktop PC, **EVN: Re-test jobs (offline)** runs the
+  exported `.evnretest` jobs one after another, with the learner's PC program, on a PC that is offline, and writes
+  each result beside its job; **EVN: Read re-test results** shows a result in the open submission report, with the
+  credited score (the lower of the sealed one and the re-test's). The Python that runs the PC program is the one the
+  new `evn.retestPython` setting names by its absolute path, never one found on PATH. Both commands are in every
+  Command Palette; in the browser IDE the first says it needs the desktop.
+
+### Blocks
+- **A Lists category**: Blockly's list blocks, counting from 0 as Python does, and two dictionary blocks (create
+  with keys and values, get a key's value; a missing key stops the program with `KeyError`).
+- **A blocks file keeps its robot.** A save writes the robot a program without **set up robot** drives into the file,
+  so the file keeps it if the extension's standard robot changes; the block's hover says which robot that is
+  (docs/BLOCKS.md, "The robot a file drives without set up robot").
+
+### Notebook
+- **The licence texts of the notebook's packages come with the extension** (`licenses/nb/`): NumPy, SciPy, Matplotlib
+  and the libraries they bundle, as THIRD_PARTY_NOTICES.md names them. The desktop download fetched the packages
+  without them.
+- The notebook page says that its NumPy, which runs in WebAssembly, gives `-inf`, `inf` or `nan` with no
+  `RuntimeWarning`, and that a `nan` cast to `int` gives 0: check a result with `np.isfinite()`.
+
+### Browser IDE
+- Clearer wording in the port chooser, and closing the tab asks first while a Run or the REPL holds a real board's port.
+- The physics engine's script is published exactly as built. The site stored it with other line ends, so it did not
+  match the checksum the browser IDE's offline copy checks each file against.
+- **An example opens straight from the site.** Each row of the site's *Example programs* page has *Open in the browser
+  IDE*, which opens that example in the browser IDE (`ide/?example=02_motor/motor_minimal.py`). A link opens only one
+  of the extension's own examples, never another file; the first visit's getting-started walkthrough then waits for
+  the next visit.
+- **Frame folder and Score report work in the browser IDE.** The frames come as one zip to save with the Explorer's
+  *Download...*, and the `report.json` your PC program writes goes back with *Upload...*.
+
+### Lessons
+- **Engineer start, a new module on the lessons site** ([learn.coresg.tech](https://learn.coresg.tech)): twenty-two
+  one-hour sessions in Python for newcomers who can already program. Measure runs, then model a motor and control it,
+  steer by wheels and a gyro, and follow a line at speed.
+- Offline lessons on Windows: a lessons policy folder that cannot be read is now noted in the log, and you get your own
+  offline lessons instead; a sealed folder with no credential no longer stops every account's lessons.
+
+### Documentation
+- **The Examples list as it is now.** The getting-started guide's sidebar picture and its run steps, the blocks editor's
+  page, Programs and the README's Motor steps show and describe the Examples list with one row per object, as the
+  sidebar shows it, in place of folders.
+- The guides are rewritten in shorter paragraphs, with new screenshots and module photos. Getting started shows how
+  the cells' 25 A rating is worked out, and the Bluetooth page gives its defaults as the firmware has them.
+- The API pages give each item's details in a list under its table, and the site's Help link opens *Reporting
+  problems* in Troubleshooting.
+
+### Firmware
+- **The MPU-6500 IMU recovers faster when its own gyro calibration lands.** When the IMU's built-in calibration finishes
+  while the robot is still, the firmware kept taking its old bias estimate off the gyro until two readings in a row
+  agreed on the new one (about 0.75 s, up to 2 s), which put a small turn into a `Pose`'s rotation and into `heading()`.
+  It now drops the old estimate at once and takes nothing off until the new one is confirmed (about 0.25 s). On the
+  bench board that turn after a landing went from 0.28 to 0.11 degrees on average (16 alternating runs), `heading()`'s
+  from 0.32 to 0.12. The cost: a single unsteady reading at rest can drop a good estimate for about half a second
+  (on the host model, at worst 0.16 degrees of `heading()` over 25 s). Measured on one board's MPU-6500; the LSM6DSV
+  is unchanged.
+- **The four motor outputs now switch a quarter period apart.** Until now all four motor ports switched on at the
+  same instant in every PWM period (40 microseconds at the default 25 kHz), so the battery saw the sum of their current
+  steps at once. The firmware now starts the four ports' PWM a quarter period apart (ports 1 and 2, and 3 and 4,
+  half a period apart), so those steps are spread out. On the bench board the loaded moves of EV3 Medium, EV3 Large and NXT motors were
+  unchanged (8 alternating runs, no result worse beyond its noise, no missed motor tick); the battery reading's
+  ripple showed no difference either, as its charger averages over many periods. Measured on one board.
+- **`DriveBase.use_gyro(True)` armed while the robot moves no longer starts about 10 ms behind** (at 600 mm/s it ended
+  about 5 mm short). A `use_gyro(True, timeout=...)` that raises no longer leaves its gyro loop to arm later, and
+  `use_gyro(True)` returns at once when the gyro loop is already on for this Pose.
+- **`DriveBase.drive()` with a speed near the largest float drives at the cap.** A speed so large that the wheels'
+  speeds overflowed (`drive(2e38, 0)` on small wheels) sent NaN to both wheels; it now drives at the cap with the radius
+  kept, as any other speed over the cap does, and a result that is still not a finite number raises `ValueError` before
+  anything moves.
+- Groundwork for the LSM6DSV IMU, which comes in a later release: the firmware is 496 bytes larger and behaves as
+  before, and `evn.LSM6DSV` is still not there.
+- `evn._encoder_phases()`, the measurement the bench's wheel check uses, returns only once its closing coast has been
+  taken, so a `Motor()` straight after it is no longer refused with "command in flight: retry".
+
+### Release gate
+- `run_mpy_load.py`, the `.mpy` loader's host test, needs a POSIX host. On Windows the release gate counts it as one
+  named exempt row, never a pass. It passed on Linux (Ubuntu 24.04, 28 passed, 0 failed, 6 of 6 mutants) at the files
+  this release ships (the record: `docs/session/2026-11-13_int2/mpy_load_linux.md`).
+- The loaded-move grader (`tools/bench/loaded_abba_grade.py`) no longer passes a set whose moves stalled: it reports
+  LOADED INCOMPLETE (exit code 3), and a stalled reference is not graded.
 
 ## 0.2.77 (2026-11-12)
 
@@ -54,7 +308,10 @@
 - **The RCJ referee no longer calls a lack of progress on a robot left facing back near a joint of its line.** A robot
   that turns round, or drives on tail first, and stops near a joint is not called, nor one that stops on a wrong line it
   has only turned onto: moving forward, the robot must also have been carried at least 5 mm along that line, on it, and a
-  back-up can take that distance away but never add it.
+  back-up can take that distance away but never add it. Before, about one stop in ten after a turn round was put back.
+  Nor is a robot called facing on along the course on the small forward settle after a back-up near a junction's branch,
+  or as it drives on from there. Turned round and driven back onto the tile before is still called, and now also when a
+  back-up first took the sensors past the joint.
 - **A program that prints in a loop no longer runs a challenge out of memory.** Only the end of a run's output is kept as
   it prints (the card and a submission keep its last 4,000 characters, as before).
 - **Fixes.** The Board view's motors (`m1` to `m4`) still work after a Stop that restarts the simulation (they raised
@@ -154,22 +411,19 @@
   the program had ended there, so a program that draws its path and prints `closing_error()` last keeps its points. The
   refusal is stated under the run's row.
 - **Simulator: the JGA25-370 runs on the pack too, as the firmware now does.** No default 6 V cap: `settings()` reads 9000,
-  `dc(100)` reaches 636 deg/s at 8.2 V (the bench unit: 645), and the speed limit follows the voltage as on the board
+  `dc(100)` reaches 612 deg/s on the simulator's 7.9 V pack (636 at 8.2 V; the bench unit: 645), and the speed limit follows the voltage as on the board
   (`settings(max_voltage=6000)` gives 462; `control.limits(speed=)` sets a figure of your own). On every motor,
   `full_speed()` and 100 % now follow `settings(max_voltage=)` and a `full_speed(deg_s)` scales with the supply, as on the
   board; `max_voltage=0` reads 1 mV. `calibrate()` raises a speed limit under the motor's no-load speed to it, and `settings()`
   and `speed_unit()` refuse a replaced or closed Motor, as on the board.
-- **Simulator: the RCJ referee no longer calls a lack of progress on a robot that stops, backs up or turns round on its
-  own tile.** A straight that
+- **Simulator: the RCJ referee no longer calls a lack of progress on a robot that stops or backs up on its own tile, facing
+  on along the course.** A straight that
   ended 20-50 mm short of a tile's joint settled backward by a fraction of a millimetre, and the referee read that as
   backing onto a line out of sequence (5.5.1c): about one stopping place in ten lost the attempt and the robot was put
   back. A back-up now counts only over a joint the line sensors really crossed, and never over the tile's own joint ahead;
   a real reverse past the tile before is still called, at any speed, at that tile's joint rather than as the reverse
-  begins. The referee also no longer calls a robot where it stops near a joint after turning round or driving on tail
-  first; before, about one stop in ten after a turn round was put back. Nor does it call a robot facing on along the
-  course on the small forward settle after a back-up near a junction's branch, or as it drives on from there. Turned
-  round and driven back onto the tile before is still called, and now also when a back-up first took the sensors past
-  the joint. A robot that turns onto a line out of sequence and stops there is called only once it moves along that line.
+  begins. Still open: a robot facing back along the course (turned round, or driving on tail first) can be called where
+  it stops near a joint of its own line.
 - **`calibrate()` keeps a motor's load (ledger MC-59, the owner's ruling).** A wheel, an arm or a gear train may stay on the
   shaft: `calibrate()` keeps the record and warns (`WARNING: Motor(n): ...`, `evn.calibration(port)["warning"]`), and raises
   only when no controller could run on what it measured: no breakaway (0.80 duty, the high pulse, the ramp's top), no three

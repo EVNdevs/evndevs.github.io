@@ -1,0 +1,123 @@
+{
+  "format": "evn-course/1",
+  "id": "maze-island",
+  "challenge": "scenes",
+  "level": 2,
+  "version": 1,
+  "module": "G8.3",
+  "title": "Scene · Island maze",
+  "brief": "G8.3.1's maze B on real walls: four by four 280 mm cells (268 mm clear), 12 mm walls 100 mm high, a loop round the green centre, whose walls touch no outside wall, so a right hand on the outside wall goes round it for ever. Each run scores 100 if the robot never touches a wall and 0 if it does; the score is the mean of the runs.",
+  "field": {
+    "arena": {
+      "size": [
+        1108,
+        1108
+      ],
+      "startBox": [
+        0,
+        0,
+        268,
+        268
+      ],
+      "goal": null,
+      "obstacles": [
+        {
+          "x": 274,
+          "y": 414,
+          "w": 12,
+          "d": 292,
+          "color": "#ffffff"
+        },
+        {
+          "x": 554,
+          "y": 694,
+          "w": 12,
+          "d": 292,
+          "color": "#ffffff"
+        },
+        {
+          "x": 834,
+          "y": 554,
+          "w": 12,
+          "d": 572,
+          "color": "#ffffff"
+        },
+        {
+          "x": 554,
+          "y": 274,
+          "w": 572,
+          "d": 12,
+          "color": "#ffffff"
+        },
+        {
+          "x": 414,
+          "y": 834,
+          "w": 292,
+          "d": 12,
+          "color": "#ffffff"
+        }
+      ],
+      "areas": [
+        {
+          "name": "centre",
+          "rect": [
+            280,
+            280,
+            828,
+            828
+          ],
+          "paint": "green"
+        }
+      ],
+      "wallH": 100,
+      "wallT": 12,
+      "obstacleH": 100
+    }
+  },
+  "robot": {
+    "rule": "learner"
+  },
+  "start": {
+    "nominal": {
+      "x": 134,
+      "y": 134,
+      "heading": 90
+    },
+    "vary": {
+      "xy": 0,
+      "heading": 0
+    },
+    "draw": "uniform-square-v1"
+  },
+  "runs": {
+    "min": 1,
+    "max": 20,
+    "default": 5,
+    "fixed": null
+  },
+  "kernel": {
+    "name": "pointToPoint",
+    "limitS": 120,
+    "goal": "footprintInside"
+  },
+  "constants": {},
+  "score": {
+    "run": "if(touches == 0, 100, 0)",
+    "summary": "round(sum(r in runs: r.points) / count(r in runs: true), 1)"
+  },
+  "pass": null,
+  "sources": [
+    {
+      "doc": "docs/curriculum/G08.md",
+      "where": "G8.3.1 Lost in a maze: the starter, a wall follower on three distance sensors, circles the island in the middle"
+    },
+    {
+      "doc": "vscode-evn-alpha/learn/content/lessons/G08/G8.3/G8.3.1.md",
+      "where": "maze B (LOOP, \"9513\", \"83aa\", \"ac6a\", \"c556\"), cell (0, 0) the south-west corner, the robot facing north"
+    },
+    {
+      "doc": "docs/COURSE_CONTENT_DESIGN.md",
+      "where": "§3.1 The follower: a plain scene maze-island, pass null; §2: a scene is a small arena with pass null"
+    }
+  ]
+}

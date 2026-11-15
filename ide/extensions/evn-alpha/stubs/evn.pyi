@@ -575,13 +575,17 @@ class DriveBase:
         a vibrating surface). ``wait=False`` (EVN's, 2026-11-01) returns at once instead: until ``IMU.ready()`` the
         robot drives on its wheels alone, exactly as with ``use_gyro(False)``, and the loop turns on at the first
         maneuver, ``drive()`` or ``hold()`` (of a robot not already holding) started after it (``use_gyro()`` reads ``True`` from then; a maneuver
-        already running is not corrected until the next one); ``use_gyro(False)`` withdraws it. Turning on while moving
-        leaves the robot about 10 ms of travel short, as ``use_gyro(True)`` mid-move does. By default ``IMU.ready()`` needs rest, so
+        already running is not corrected until the next one); ``use_gyro(False)`` withdraws it, and so does a later
+        ``use_gyro(True)`` that raises (no pose, a geometry mismatch, the IMU not ready within ``timeout``, no estimate
+        yet, a Ctrl-C in the wait): the robot stays on its wheels and no later maneuver turns the loop on. Turning on while moving (here, or
+        ``use_gyro(True)`` mid-move) starts the loop on the path the wheels are commanded at its first step: the robot
+        ends short only by the pose's age at that step (the estimate is read a little after it is made), not by a
+        whole pose period. By default ``IMU.ready()`` needs rest, so
         a program that never rests may never turn it on: ``use_gyro()`` staying ``False`` is the only sign. ``wait`` and
         ``timeout`` go with ``use_gyro=True`` only, ``timeout`` with ``wait=True`` only (``TypeError`` otherwise). ``OSError`` also when the pose has no estimate yet, and from the next maneuver if the base's ``Pose`` was closed or replaced meanwhile
         (``use_gyro`` is then off; the loop never trims on a stranger's estimate). Called again while it is on, on
-        the same ``Pose``, it re-checks the geometry and changes nothing else: the correction in force is kept (a
-        robot holding after a maneuver does not move). The loop belongs to this robot: another ``DriveBase``'s
+        the same ``Pose``, it re-checks the geometry and changes nothing else, at once, without waiting for
+        ``IMU.ready()``: the correction in force is kept (a robot holding after a maneuver does not move). The loop belongs to this robot: another ``DriveBase``'s
         ``stop()`` / ``brake()`` leaves it alone. ``use_gyro(False)`` drops the trims (the wheels move back to their untrimmed references,
         up to the trim limit at the trim slew) and returns to wheel-only maneuvers. With it on, each maneuver
         counts from the aim the wheel holds INCLUDING its trim, so a correction is kept, not undone; a maneuver
@@ -2775,8 +2779,10 @@ class Bluetooth:
     def __init__(self, port: int, baud: Optional[int] = None, name: Optional[str] = None, mode: Optional[str] = None,
                  addr: Optional[str] = None, *, stay_in_command: bool = False, wait: bool = True,
                  rxbuf: Optional[int] = None) -> None:
-        """``name=None`` keeps "EVN Bluetooth", ``mode=None`` keeps ``'remote'``; ``baud`` left out means 230400, or
-        the port's own baud when the module already carries the REPL. ``rxbuf``: ``None`` or up to 255 is the port's
+        """``None`` means not given. ``baud=None``: 230400, or the port's own baud when the module already carries the
+        REPL. When the module is programmed (its button held), ``name=None`` writes "EVN Bluetooth" and ``mode=None``
+        writes ``'remote'`` (the name and role are always written, so a module renamed before is renamed back);
+        ``addr=None`` sends no binding (a module keeps the address it was bound to). In data mode none of them is sent. ``rxbuf``: ``None`` or up to 255 is the port's
         255-byte receive buffer (about 11 ms of data at 230400 baud); 256..16384 a buffer of that many bytes on the
         heap, freed by ``close()`` (``MemoryError`` when the heap has no room, ``ValueError`` above 16384)."""
     def write(self, data: bytes, /) -> int:

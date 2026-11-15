@@ -16,7 +16,9 @@ Devices the firmware drives natively that EVN does not stock: the HiTechnic NXT 
 | [`VL53L1X`](#vl53l1x--time-of-flight-distance-sensor-up-to-4-m) | ST VL53L1X time-of-flight distance sensor | I2C 1–16 | `examples/extended_peripherals/04_vl53l1x/` |
 | [`TCS3430`](#tcs3430--xyz-colour-and-ambient-light-sensor) | ams-OSRAM TCS3430 XYZ colour / ambient light sensor | I2C 1–16 | `examples/extended_peripherals/05_tcs3430/` |
 
-**The HiTechnic sensors run their port at 100 kHz.** At the standard 400 kHz they failed about one read in 800 on the bench; at 100 kHz none failed. The rate is per port (`evn.I2C(port).freq()` shows it): every other port stays at 400 kHz. `close()` or the end of the program puts the port back to 400 kHz. A standard peripheral on the same port as a HiTechnic sensor runs at 100 kHz too. Their address is 0x01 (the NXT's 8-bit 0x02), which `evn.I2C` and its `scan()` reach.
+**The HiTechnic sensors run their port at 100 kHz.** At the standard 400 kHz they failed about one read in 800 on the bench; at 100 kHz none failed. The rate is per port (`evn.I2C(port).freq()` shows it): every other port stays at 400 kHz. `close()` or the end of the program puts the port back to 400 kHz.
+
+A standard peripheral on the same port as a HiTechnic sensor runs at 100 kHz too. Their address is 0x01 (the NXT's 8-bit 0x02), which `evn.I2C` and its `scan()` reach.
 
 The HuskyLens, the VL53L1X and the TCS3430 run at the standard 400 kHz.
 
@@ -24,7 +26,13 @@ Blocks for all five are in the **Extended** category of the block editor (`docs/
 
 ## HiTechnicColorSensor — HiTechnic NXT Color Sensor V1 / V2
 
-Plug the sensor into an I2C port through an NXT cable adapter (SDA, SCL, power and ground). The V2 (type "ColorPD") and the older V1 (type "Color") are both taken (the V1 follows its register map and has not been tried on hardware yet: [help us test](KNOWN_LIMITATIONS.md#help-us-test)); `version()` says which is on the port. The V2 has three modes, switched on demand: the LED on with the ambient light cancelled (every colour reading, the colour index and the normalised red, green and blue), the LED off (`ambient()`, `ambient_raw()`) and the LED on without cancellation (`raw()`).
+Plug the sensor into an I2C port through an NXT cable adapter (SDA, SCL, power and ground). The V2 (type "ColorPD") and the older V1 (type "Color") are both taken; `version()` says which is on the port. The V1 follows its register map and has not been tried on hardware yet: [help us test](KNOWN_LIMITATIONS.md#help-us-test).
+
+The V2 has three modes, switched on demand:
+
+- the LED on with the ambient light cancelled (every colour reading, the colour index and the normalised red, green and blue);
+- the LED off (`ambient()`, `ambient_raw()`);
+- the LED on without cancellation (`raw()`).
 
 **Constructor**
 
@@ -80,11 +88,22 @@ while True:
 
 **Notes**
 
-**Calibrate once**, at the distance the colours will be read: `hc.calibrate_black()` with nothing in front, then `hc.calibrate_white()` over a white sheet — from a program, or the Board view's Calibrate on the sensor's row. The two references are **stored on the board for the port** (like a `ColorSensor`'s: `evn.color_calibration(port)` shows them), so every later `HiTechnicColorSensor(port)` starts calibrated; a V1 and a V2 each keep their own (a V2's record is not used by a V1). One colour calibration per port: calibrating a `ColorSensor` or a `GestureSensor` on the port replaces it, and the reverse.
+**Calibrate once**, at the distance the colours will be read: `hc.calibrate_black()` with nothing in front, then `hc.calibrate_white()` over a white sheet — from a program, or the Board view's Calibrate on the sensor's row. The two references are **stored on the board for the port** (like a `ColorSensor`'s: `evn.color_calibration(port)` shows them). So every later `HiTechnicColorSensor(port)` starts calibrated. A V1 and a V2 each keep their own (a V2's record is not used by a V1).
 
-`evn.DataLog` records the sensor: `color`, `color_number`, `rgb`, `hsv`, `reflection`, `color_index` and `normalized_rgb` (LED on), `ambient` and `ambient_raw` (LED off), `raw`. A reading is recorded only while the sensor is in its mode — the program's own calls choose the mode (a `color()` in the loop keeps the LED on), the logger never switches it.
+One colour calibration per port: calibrating a `ColorSensor` or a `GestureSensor` on the port replaces it, and the reverse.
 
-On a V2, a call that needs a different mode from the last one switches the sensor. It then waits for the first reading in the new mode: about **125 ms**. Group the calls by mode: `color()`, `color_match()`, `color_number()`, `color_index()`, `rgb()`, `normalized_rgb()`, `hsv()`, `reflection()`, `calibrate_black()` and `calibrate_white()` share one mode, `ambient()` and `ambient_raw()` another, while `rgb()` and `ambient()` called in turn in a loop run at about 4 Hz. A garbled read (on a V2 a colour number above 17 or an index above 63, on a V1 all four bytes 0xFF — all 0xFF from a loose NXT cable, say) is never returned: it counts as a bus error, and three in a row are treated as an unplug. While the sensor is unplugged every reading raises `OSError("HiTechnicColorSensor on port N not responding")`; a replugged sensor is found again by itself. After `close()` every call except `close()` raises `ValueError`. The V1 is supported from its register map alone; only a V2 has been on the bench.
+`evn.DataLog` records the sensor: `color`, `color_number`, `rgb`, `hsv`, `reflection`, `color_index` and `normalized_rgb` (LED on), `ambient` and `ambient_raw` (LED off), `raw`. A reading is recorded only while the sensor is in its mode. The program's own calls choose the mode (a `color()` in the loop keeps the LED on); the logger never switches it.
+
+On a V2, a call that needs a different mode from the last one switches the sensor. It then waits for the first reading in the new mode: about **125 ms**. Group the calls by mode:
+
+- `color()`, `color_match()`, `color_number()`, `color_index()`, `rgb()`, `normalized_rgb()`, `hsv()`, `reflection()`, `calibrate_black()` and `calibrate_white()` share one mode;
+- `ambient()` and `ambient_raw()` another.
+
+Called in turn in a loop, `rgb()` and `ambient()` run at about 4 Hz.
+
+A garbled read is never returned: it counts as a bus error, and three in a row are treated as an unplug. Garbled is, on a V2, a colour number above 17 or an index above 63; on a V1, all four bytes 0xFF (all 0xFF from a loose NXT cable, say).
+
+While the sensor is unplugged every reading raises `OSError("HiTechnicColorSensor on port N not responding")`; a replugged sensor is found again by itself. After `close()` every call except `close()` raises `ValueError`. The V1 is supported from its register map alone; only a V2 has been on the bench.
 
 ## HiTechnicCompass — HiTechnic NXT Compass Sensor
 
@@ -122,7 +141,11 @@ while True:
 
 **Notes**
 
-A heading only: there is no field vector and no `heading_confidence()` (the sensor gives nothing to base one on; the standard [`Compass`](API_SENSORS.md#compass--magnetometer-qmc5883l--hmc5883l) has both). Every reading takes the heading in both of the forms HiTechnic documents — twice the two-degree register plus the one-degree adder, and the 16-bit word after them — and uses it only when the two agree: a read that disagrees (torn while the sensor turns, or garbled) is dropped and read again at once, never returned; only a sensor whose two forms keep disagreeing is looked for again. `evn.DataLog` records `heading` (relative to `north()`). While the sensor is unplugged `heading()` raises `OSError("HiTechnicCompass on port N not responding")`; a replugged sensor is found again by itself. After `close()` every call except `close()` raises `ValueError`.
+A heading only: there is no field vector and no `heading_confidence()` (the sensor gives nothing to base one on; the standard [`Compass`](API_SENSORS.md#compass--magnetometer-qmc5883l--hmc5883l) has both).
+
+Every reading takes the heading in both of the forms HiTechnic documents and uses it only when the two agree. The forms are twice the two-degree register plus the one-degree adder, and the 16-bit word after them. A read that disagrees (torn while the sensor turns, or garbled) is dropped and read again at once, never returned. Only a sensor whose two forms keep disagreeing is looked for again.
+
+`evn.DataLog` records `heading` (relative to `north()`). While the sensor is unplugged `heading()` raises `OSError("HiTechnicCompass on port N not responding")`; a replugged sensor is found again by itself. After `close()` every call except `close()` raises `ValueError`.
 
 ## HuskyLens — DFRobot HuskyLens AI camera
 
@@ -167,7 +190,9 @@ while True:
 
 ## VL53L1X — time-of-flight distance sensor, up to 4 m
 
-Plug the sensor into an I2C port. It measures the distance to what is in front of it with an infrared laser pulse, up to about 4 m in the dark (about 1.3 m in short mode), and ranges continuously; the firmware keeps the latest measurement. Its address, 0x29, is also the standard [`DistanceSensor`](API_SENSORS.md#distancesensor--time-of-flight-distance-sensor-vl53l0x)'s (VL53L0X) and the [`ColorSensor`](API_SENSORS.md#colorsensor--colour-sensor-tcs34725)'s (TCS34725): the firmware reads their ID registers first and takes the port only when its own model ID (0xEACC) answers.
+Plug the sensor into an I2C port. It measures the distance to what is in front of it with an infrared laser pulse, up to about 4 m in the dark (about 1.3 m in short mode). It ranges continuously; the firmware keeps the latest measurement.
+
+Its address, 0x29, is also the standard [`DistanceSensor`](API_SENSORS.md#distancesensor--time-of-flight-distance-sensor-vl53l0x)'s (VL53L0X) and the [`ColorSensor`](API_SENSORS.md#colorsensor--colour-sensor-tcs34725)'s (TCS34725). The firmware reads their ID registers first and takes the port only when its own model ID (0xEACC) answers.
 
 **Constructor**
 
@@ -237,9 +262,28 @@ print(tof.distance(), 'mm')            # about 140 now
 print(tof.stored_calibration())        # the target, the spread of the 50 readings, the sensor's own values
 ```
 
-The sensor comes with its own factory offset and crosstalk; a port that was never calibrated keeps them untouched (the firmware writes those registers only for a calibrated port). The first calibration of a port reads them and keeps them in its record, so `clear_calibration()`, `offset(None)` and `crosstalk(None)` put them back without a power cycle. Storing is a flash write the board never makes while a motor drives: the new values are in force at once and are written to the flash by the next `stored_calibration()` (or calibration change) once the motors have stopped (`stored_calibration()["pending"]` until then); while another calibration already waits for the flash a new one raises `RuntimeError` (stop the motors and try again). Nothing identifies the module: another VL53L1X plugged into a calibrated port gets that port's calibration, and a clear there puts back the first sensor's own values (unplug and replug the sensor to get its own). Ctrl-C or `close()` during a calibration puts the values before back: `close()` at once, Ctrl-C by the sensor's next reading (within about one timing budget, at most about half a second). A hard reset of the board (the RESET button, the watchdog, a flash, `evn.reset()`) while it calibrates a port with no calibration stored yet, or right after a Ctrl-C stopped that, leaves the powered sensor on the calibration's zeros: `clear_calibration()` puts its own values back - unless the port's record never reached the flash (a motor was driving when the calibration started; `part_offset` is `None` in `stored_calibration()` after the reset): then unplug and replug the sensor before calibrating or setting it again, or its zeros are kept as its own values. The same holds for a port's first `offset(mm)` / `crosstalk(cps)` set by hand while a motor drove: a hard reset before its record reached the flash leaves the sensor on the value set with `part_offset` `None`, and the next calibration or setting would keep that value as the sensor's own - unplug and replug it first.
+The sensor comes with its own factory offset and crosstalk. A port that was never calibrated keeps them untouched (the firmware writes those registers only for a calibrated port). The first calibration of a port reads them and keeps them in its record, so `clear_calibration()`, `offset(None)` and `crosstalk(None)` put them back without a power cycle.
 
-**The SPAD numbers** (ST's UM2555, section 3.1; the table as ST prints it, pin 1 marked above its first row; UM2555 reads its example "viewing from behind the device looking toward the target"). A region's `center` is the SPAD at its middle; for an even width or height the middle falls between two SPADs, and ST's rule takes the one to the right, or above. Which way a shifted region looks depends on how the sensor is mounted: try it against a target on one side.
+Storing is a flash write the board never makes while a motor drives. The new values are in force at once and are written to the flash by the next `stored_calibration()` (or calibration change) once the motors have stopped (`stored_calibration()["pending"]` until then). While another calibration already waits for the flash a new one raises `RuntimeError` (stop the motors and try again).
+
+Nothing identifies the module: another VL53L1X plugged into a calibrated port gets that port's calibration. A clear there puts back the first sensor's own values (unplug and replug the sensor to get its own).
+
+<details>
+<summary>A calibration cut short</summary>
+
+Ctrl-C or `close()` during a calibration puts the values before back: `close()` at once, Ctrl-C by the sensor's next reading (within about one timing budget, at most about half a second).
+
+A hard reset of the board (the RESET button, the watchdog, a flash, `evn.reset()`) can come while it calibrates a port with no calibration stored yet, or right after a Ctrl-C stopped that. It leaves the powered sensor on the calibration's zeros, and `clear_calibration()` puts its own values back.
+
+The exception is a port whose record never reached the flash (a motor was driving when the calibration started; `part_offset` is `None` in `stored_calibration()` after the reset). Then unplug and replug the sensor before calibrating or setting it again, or its zeros are kept as its own values.
+
+The same holds for a port's first `offset(mm)` / `crosstalk(cps)` set by hand while a motor drove. A hard reset before its record reached the flash leaves the sensor on the value set with `part_offset` `None`. The next calibration or setting would keep that value as the sensor's own - unplug and replug it first.
+
+</details>
+
+**The SPAD numbers** (ST's UM2555, section 3.1; the table as ST prints it, pin 1 marked above its first row). UM2555 reads its example "viewing from behind the device looking toward the target".
+
+A region's `center` is the SPAD at its middle. For an even width or height the middle falls between two SPADs, and ST's rule takes the one to the right, or above. Which way a shifted region looks depends on how the sensor is mounted: try it against a target on one side.
 
 ```
 128 136 144 152 160 168 176 184 | 192 200 208 216 224 232 240 248
@@ -260,15 +304,36 @@ The sensor comes with its own factory offset and crosstalk; a port that was neve
 120 112 104  96  88  80  72  64 |  56  48  40  32  24  16   8   0
 ```
 
-So `roi(8, 16, 167)` is the left half and `roi(8, 16, 231)` the right half of the table (UM2555's own two-zone example). A region the chip cannot select (near the edge) reads `status()` `'roi fail'` (ST's status 13, UM2555 section 4.2; `'min range fail'` on firmware 0.2.62 and earlier): shrink it or move the centre one SPAD inwards.
+So `roi(8, 16, 167)` is the left half and `roi(8, 16, 231)` the right half of the table (UM2555's own two-zone example). A region the chip cannot select (near the edge) reads `status()` `'roi fail'`: shrink it or move the centre one SPAD inwards. That is ST's status 13, UM2555 section 4.2 (`'min range fail'` on firmware 0.2.62 and earlier).
 
 **Notes**
 
-Every setter rewrites the sensor's configuration at once, whatever the sensor is doing, and waits for the first measurement under the new setting (58–179 ms on the bench for a mode or budget; not a whole `inter_measurement()` period). The measurement already under way is let finish first (the sensor completes it even when told to stop, and it would otherwise come back as the new setting's first reading), so a setter can take up to one more timing budget of the old setting; the reading it returns on is always the new setting's own. At the default 33 ms budget, back to back, a new measurement arrives about 31 times a second. Under a distance threshold the sensor itself compares each measurement and raises its data-ready flag for one that meets the threshold (there is no interrupt wire: the firmware polls that flag); a measurement that does not becomes a reading with the status `'not detected'` (one the sensor flags, `'signal fail'` or `'sigma fail'` for example, may be reported with its own status instead, never as detected), so a reading still comes every measurement period, `age()` stays short and nothing times out while nothing is detected. Silence is never an error under a threshold: a sensor that stops measuring but keeps its settings reads `'not detected'` for ever (a reset is caught and the sensor configured again; an unplug raises `OSError` as below). Without a threshold, a sensor that keeps answering but stops measuring (seen on the bench, rarely, after many setting changes) is reset by the firmware and configured again with its settings and its stored calibration, by itself. While the sensor is unplugged every reading raises `OSError("VL53L1X on port N not responding")`, and so does a setter, which then leaves the previous setting in place; a replugged sensor is found again by itself and gets the settings back. Two VL53L1X at once (each on its own port). After `close()` every call except `close()` raises `ValueError("VL53L1X is closed")`. `evn.DataLog` records it: `distance`, `status`, `raw`, `detected` ([the data logger](API_SYSTEM.md)).
+Every setter rewrites the sensor's configuration at once, whatever the sensor is doing. It waits for the first measurement under the new setting (58–179 ms on the bench for a mode or budget; not a whole `inter_measurement()` period). At the default 33 ms budget, back to back, a new measurement arrives about 31 times a second.
+
+The measurement already under way is let finish first, so a setter can take up to one more timing budget of the old setting. The sensor completes it even when told to stop, and it would otherwise come back as the new setting's first reading. The reading the setter returns on is always the new setting's own.
+
+Under a distance threshold the sensor itself compares each measurement and raises its data-ready flag for one that meets the threshold. There is no interrupt wire: the firmware polls that flag. A measurement that does not meet it becomes a reading with the status `'not detected'`. So a reading still comes every measurement period, `age()` stays short and nothing times out while nothing is detected.
+
+<details>
+<summary>Failed measurements and silence</summary>
+
+- Under a threshold, a measurement the sensor flags (`'signal fail'` or `'sigma fail'` for example) may be reported with its own status instead, never as detected.
+- Silence is never an error under a threshold: a sensor that stops measuring but keeps its settings reads `'not detected'` for ever. A reset is caught and the sensor configured again; an unplug raises `OSError` as below.
+- Without a threshold, a sensor that keeps answering but stops measuring (seen on the bench, rarely, after many setting changes) is reset by the firmware. It is configured again with its settings and its stored calibration, by itself.
+
+</details>
+
+While the sensor is unplugged every reading raises `OSError("VL53L1X on port N not responding")`, and so does a setter, which then leaves the previous setting in place. A replugged sensor is found again by itself and gets the settings back. Two VL53L1X at once (each on its own port). After `close()` every call except `close()` raises `ValueError("VL53L1X is closed")`.
+
+`evn.DataLog` records it: `distance`, `status`, `raw`, `detected` ([the data logger](API_SYSTEM.md)).
 
 ## TCS3430 — XYZ colour and ambient light sensor
 
-Plug the sensor into an I2C port. Its X, Y and Z channels follow the CIE 1931 colour-matching curves (the way the eye sees colour), and two more channels measure infrared (IR1, 687–830 nm at half response, and IR2 from 827 nm). The EVN module lights its target with its own LED and is used close to it, so the defaults are the fastest: one 2.78 ms integration cycle at 64x gain, no wait, a new reading about every 3 ms. Its address, 0x39, is also the standard [`GestureSensor`](API_SENSORS.md#gesturesensor--gesture-proximity-and-colour-sensor-apds-9960)'s (APDS-9960): the two are told apart by their ID registers. Its black / white calibration is stored on the board for the port, like the `ColorSensor`'s.
+Plug the sensor into an I2C port. Its X, Y and Z channels follow the CIE 1931 colour-matching curves (the way the eye sees colour). Two more channels measure infrared (IR1, 687–830 nm at half response, and IR2 from 827 nm).
+
+The EVN module lights its target with its own LED and is used close to it, so the defaults are the fastest: one 2.78 ms integration cycle at 64x gain, no wait, a new reading about every 3 ms.
+
+Its address, 0x39, is also the standard [`GestureSensor`](API_SENSORS.md#gesturesensor--gesture-proximity-and-colour-sensor-apds-9960)'s (APDS-9960): the two are told apart by their ID registers. Its black / white calibration is stored on the board for the port, like the `ColorSensor`'s.
 
 **Constructor**
 
@@ -334,17 +399,39 @@ tcs.calibrate_black()   # nothing in front of the sensor
 tcs.calibrate_white()   # a white sheet
 ```
 
-The board stores the calibration for the port (the colour calibration page, one record per I2C port, as the `ColorSensor`'s and `GestureSensor`'s): every later `TCS3430(port)` starts with it, after a reboot or a re-plug. Calibrating a `ColorSensor` or `GestureSensor` on the same port replaces it (and the reverse); nothing identifies the module itself, so another module on the port, or another distance to the target, needs a new calibration. The write happens only when the calibration changed and never while a motor drives (`stored_calibration()["pending"]` is then `True` until the motors stop).
+The board stores the calibration for the port (the colour calibration page, one record per I2C port, as the `ColorSensor`'s and `GestureSensor`'s). Every later `TCS3430(port)` starts with it, after a reboot or a re-plug. Calibrating a `ColorSensor` or `GestureSensor` on the same port replaces it (and the reverse).
+
+Nothing identifies the module itself, so another module on the port, or another distance to the target, needs a new calibration. The write happens only when the calibration changed and never while a motor drives (`stored_calibration()["pending"]` is then `True` until the motors stop).
 
 Calibration details (both colour sensors):
 
-- `calibrate_white()` is refused when the target is too dark (TCS3430: Y under 5 % of the full scale at the current setting; HiTechnic: any channel under 20 of 255) or not at least 10 % above the black on every channel — a "white" taken with nothing in front would otherwise make every later reading white.
+- `calibrate_white()` is refused when the target is too dark (TCS3430: Y under 5 % of the full scale at the current setting; HiTechnic: any channel under 20 of 255) or not at least 10 % above the black on every channel. A "white" taken with nothing in front would otherwise make every later reading white.
 - A black as bright as the existing white is taken and stored, and the white is cleared: `calibrate_black()` then raises `ValueError("this black is as bright as the white reference: the white was cleared, calibrate_white() again")`. On the HiTechnic, a black with a channel near full scale (230+) is refused, and nothing changes.
-- HiTechnic: the references belong to the open object: they survive an unplug and replug on the same port (a different unit plugged in inherits them), a second object on the same port shares them, and `close()` forgets them; they are also stored for the port, so the next `HiTechnicColorSensor(port)` starts with them again (`clear_calibration()` forgets both). TCS3430: the references are the port's stored record, installed by `TCS3430(port)`; a second object on the same port shares them.
-- TCS3430: the references are normalised to gain and integration time with the datasheet's typical gain ratios, so after `gain()` changes a white stays close to, but not exactly on, s 0 — take the white again at the setting you will read at.
+- HiTechnic: the references belong to the open object. They survive an unplug and replug on the same port (a different unit plugged in inherits them), a second object on the same port shares them, and `close()` forgets them. They are also stored for the port, so the next `HiTechnicColorSensor(port)` starts with them again (`clear_calibration()` forgets both).
+- TCS3430: the references are the port's stored record, installed by `TCS3430(port)`; a second object on the same port shares them.
+- TCS3430: the references are normalised to gain and integration time with the datasheet's typical gain ratios, so after `gain()` changes a white stays close to, but not exactly on, s 0. Take the white again at the setting you will read at.
 - HiTechnic: `reflection()` and `rgb()` stay the sensor's raw values; only `hsv()`, `color()` and `color_match()` use the references.
 
 
-The references stay valid when `gain()` or `integration_time()` change. Measured by hand (the default 2.78 ms at 64x, targets about 1 cm away, after `calibrate_black()` with nothing in front and `calibrate_white()` on a white sheet): nothing in front `Color.NONE` 1.00, white `Color.WHITE` 1.00 (`s` 0, `v` 100), red `Color.RED` 0.98 (`h` 1, `s` 83), green `Color.GREEN` 0.75 (`h` 140, `s` 94), blue `Color.BLUE` 0.91–0.93 (`h` 231, `s` 73).
+The references stay valid when `gain()` or `integration_time()` change. Measured by hand (the default 2.78 ms at 64x, targets about 1 cm away, after `calibrate_black()` with nothing in front and `calibrate_white()` on a white sheet):
 
-`gain(n)`, `integration_time(ms)`, `wait_time(ms)` and `autozero(...)` wait for the first reading under the new setting. With nothing in front, 64x reads about 16–18 counts at 2.78 ms. For far-field or ambient light use `integration_time(100)` or more. The counts are not a calibrated XYZ (no per-unit correction matrix): for colours the named ones do not separate, hold the sensor over each real target, keep what `hsv()` returns and pass those `Color` objects to `detectable_colors()`. There is no lux or colour-temperature conversion: ams-OSRAM publishes the method (XYZ through a colour calibration matrix regressed against a reference meter for the finished optical stack, application note AN000571; then lux = Y and the colour temperature by McCamy's formula, AN000517) but no matrix for the bare sensor, and measuring one per unit is a characterisation this firmware does not ask for. An unplugged sensor is noticed at the firmware's next look at the chip — up to 90 % of a cycle (integration + wait) after the last reading, as it does not poll through the wait; until then the readings return that last one, `age()` growing. From then on every reading (and `ir2()`, `interrupt()`) raises `OSError("TCS3430 on port N not responding")` at once, whatever the wait; a replugged sensor is found again by itself. Two TCS3430 at once; a second `TCS3430(port)` on a port that is already open shares its settings and calibration, but sets the chip up again, so the readings pause for about two cycles. After `close()` every call except `close()` raises `ValueError("TCS3430 is closed")`.
+- nothing in front `Color.NONE` 1.00;
+- white `Color.WHITE` 1.00 (`s` 0, `v` 100);
+- red `Color.RED` 0.98 (`h` 1, `s` 83);
+- green `Color.GREEN` 0.75 (`h` 140, `s` 94);
+- blue `Color.BLUE` 0.91–0.93 (`h` 231, `s` 73).
+
+`gain(n)`, `integration_time(ms)`, `wait_time(ms)` and `autozero(...)` wait for the first reading under the new setting. With nothing in front, 64x reads about 16–18 counts at 2.78 ms. For far-field or ambient light use `integration_time(100)` or more.
+
+The counts are not a calibrated XYZ (no per-unit correction matrix). For colours the named ones do not separate, hold the sensor over each real target, keep what `hsv()` returns and pass those `Color` objects to `detectable_colors()`.
+
+<details>
+<summary>Why there is no lux or colour temperature</summary>
+
+There is no lux or colour-temperature conversion. ams-OSRAM publishes the method but no matrix for the bare sensor, and measuring one per unit is a characterisation this firmware does not ask for. The method: XYZ through a colour calibration matrix regressed against a reference meter for the finished optical stack (application note AN000571); then lux = Y and the colour temperature by McCamy's formula (AN000517).
+
+</details>
+
+An unplugged sensor is noticed at the firmware's next look at the chip: up to 90 % of a cycle (integration + wait) after the last reading, as it does not poll through the wait. Until then the readings return that last one, `age()` growing. From then on every reading (and `ir2()`, `interrupt()`) raises `OSError("TCS3430 on port N not responding")` at once, whatever the wait. A replugged sensor is found again by itself.
+
+Two TCS3430 at once. A second `TCS3430(port)` on a port that is already open shares its settings and calibration, but sets the chip up again, so the readings pause for about two cycles. After `close()` every call except `close()` raises `ValueError("TCS3430 is closed")`.

@@ -1,0 +1,148 @@
+{
+  "format": "evn-course/1",
+  "id": "model-match-1",
+  "challenge": "model-match",
+  "level": 1,
+  "version": 1,
+  "module": "G9.1",
+  "title": "Model match · Level 1: The free motor's step",
+  "brief": "Predict a step of the free EV3 Medium on port 3 of the class robot, from rest. The course sets line 1 to `d = <duty>`, drawn 25 to 90 % per run. Before the step, write your model's 201 predictions of Motor(3).speed() in deg/s, for t = 0, 0.002, ..., 0.4 s, to the flash file predict.txt (numbers separated by blanks, commas or new lines); then call Motor(3).dc(d) and hold it, the program still running (a wait past the window): the run ends 0.4 s after the step. The course reads Motor(3).speed() every 2 ms from the step (t = 0 is the reading before the duty acts) to 0.4 s, both included. NRMSE = rms(prediction - reading) / y_ss, y_ss the mean of the last 50 ms, both ends (26 readings); a run scores 100 x clamp(1 - NRMSE / 0.15, 0, 1), and 0 when the step is not dc(d) held to the end, when a built-in move ran on port 3, or when any other motor (ports 1, 2, 4) drew energy. Ten runs; pass: a mean of 60 or more and 8 runs predicted. Practice until COURSE ships. The identification check (a card line, not the score): also write your K (deg/s per V), tau (s) and u_f (V), three numbers, to model.txt before the step (u = d / 100 x battery.voltage() / 1000); the card shows them beside the course's own, fitted to its ten steps (the y_ss line over u, tau the 63.2 % time), and matches 1 when K and tau are within 10 % and u_f within 0.15 V of its fit (over the runs that score). On one simulated motor it tells whether your numbers describe it, not who found them (the lessons print numbers for this motor). Par: the reference model's mean score on seed 0, 99.3 (mean NRMSE 0.11 %).",
+  "field": {
+    "arena": {
+      "size": [
+        1000,
+        600
+      ],
+      "startBox": [
+        100,
+        200,
+        400,
+        400
+      ],
+      "goal": null,
+      "obstacles": [],
+      "wallH": 100,
+      "wallT": 20,
+      "obstacleH": 150
+    },
+    "random": [
+      {
+        "name": "d",
+        "draw": "uniform-v1",
+        "min": 25,
+        "max": 90,
+        "step": 1
+      }
+    ]
+  },
+  "robot": {
+    "rule": "fixed"
+  },
+  "start": {
+    "nominal": {
+      "x": 250,
+      "y": 300,
+      "heading": 0
+    },
+    "vary": {
+      "xy": 0,
+      "heading": 0
+    },
+    "draw": "uniform-square-v1"
+  },
+  "runs": {
+    "min": 1,
+    "max": 20,
+    "default": 5,
+    "fixed": 10
+  },
+  "kernel": {
+    "name": "pointToPoint",
+    "limitS": 3,
+    "goal": "footprintInside",
+    "final": "runEnd",
+    "end": "window",
+    "step": {
+      "port": 3,
+      "windowS": 0.4,
+      "everyMs": 2,
+      "predict": "predict.txt",
+      "ySs": {
+        "lastMs": 50
+      },
+      "params": "model.txt"
+    },
+    "program": {
+      "noMove": [
+        3
+      ]
+    },
+    "energy": [
+      1,
+      2,
+      4
+    ]
+  },
+  "reveal": {
+    "line": {
+      "value": "d",
+      "as": "d"
+    }
+  },
+  "constants": {},
+  "score": {
+    "run": "if(predicted & stepped & stepHeld & stepDuty == d & moveTicks == 0 & energy_1 == 0 & energy_2 == 0 & energy_4 == 0, 100 * clamp(1 - nrmse / 0.15, 0, 1), 0)",
+    "values": {
+      "finished": {
+        "value": "count(r in runs: r.predicted)",
+        "unit": "runs"
+      },
+      "idK": {
+        "value": "if(count(r in runs: r.predicted & r.stepped & r.stepHeld & r.stepDuty == r.d & r.moveTicks == 0 & r.energy_1 == 0 & r.energy_2 == 0 & r.energy_4 == 0) >= 2 & (count(r in runs: r.predicted & r.stepped & r.stepHeld & r.stepDuty == r.d & r.moveTicks == 0 & r.energy_1 == 0 & r.energy_2 == 0 & r.energy_4 == 0) * sum(r in runs: if(r.predicted & r.stepped & r.stepHeld & r.stepDuty == r.d & r.moveTicks == 0 & r.energy_1 == 0 & r.energy_2 == 0 & r.energy_4 == 0, (r.d * r.stepV / 100) ^ 2, 0)) - sum(r in runs: if(r.predicted & r.stepped & r.stepHeld & r.stepDuty == r.d & r.moveTicks == 0 & r.energy_1 == 0 & r.energy_2 == 0 & r.energy_4 == 0, r.d * r.stepV / 100, 0)) ^ 2) > 0, (count(r in runs: r.predicted & r.stepped & r.stepHeld & r.stepDuty == r.d & r.moveTicks == 0 & r.energy_1 == 0 & r.energy_2 == 0 & r.energy_4 == 0) * sum(r in runs: if(r.predicted & r.stepped & r.stepHeld & r.stepDuty == r.d & r.moveTicks == 0 & r.energy_1 == 0 & r.energy_2 == 0 & r.energy_4 == 0, r.d * r.stepV / 100 * r.ySs, 0)) - sum(r in runs: if(r.predicted & r.stepped & r.stepHeld & r.stepDuty == r.d & r.moveTicks == 0 & r.energy_1 == 0 & r.energy_2 == 0 & r.energy_4 == 0, r.d * r.stepV / 100, 0)) * sum(r in runs: if(r.predicted & r.stepped & r.stepHeld & r.stepDuty == r.d & r.moveTicks == 0 & r.energy_1 == 0 & r.energy_2 == 0 & r.energy_4 == 0, r.ySs, 0))) / (count(r in runs: r.predicted & r.stepped & r.stepHeld & r.stepDuty == r.d & r.moveTicks == 0 & r.energy_1 == 0 & r.energy_2 == 0 & r.energy_4 == 0) * sum(r in runs: if(r.predicted & r.stepped & r.stepHeld & r.stepDuty == r.d & r.moveTicks == 0 & r.energy_1 == 0 & r.energy_2 == 0 & r.energy_4 == 0, (r.d * r.stepV / 100) ^ 2, 0)) - sum(r in runs: if(r.predicted & r.stepped & r.stepHeld & r.stepDuty == r.d & r.moveTicks == 0 & r.energy_1 == 0 & r.energy_2 == 0 & r.energy_4 == 0, r.d * r.stepV / 100, 0)) ^ 2), 0)",
+        "unit": "deg/s per V",
+        "undefinedWhen": "count(r in runs: r.predicted & r.stepped & r.stepHeld & r.stepDuty == r.d & r.moveTicks == 0 & r.energy_1 == 0 & r.energy_2 == 0 & r.energy_4 == 0) < 2 | (count(r in runs: r.predicted & r.stepped & r.stepHeld & r.stepDuty == r.d & r.moveTicks == 0 & r.energy_1 == 0 & r.energy_2 == 0 & r.energy_4 == 0) * sum(r in runs: if(r.predicted & r.stepped & r.stepHeld & r.stepDuty == r.d & r.moveTicks == 0 & r.energy_1 == 0 & r.energy_2 == 0 & r.energy_4 == 0, (r.d * r.stepV / 100) ^ 2, 0)) - sum(r in runs: if(r.predicted & r.stepped & r.stepHeld & r.stepDuty == r.d & r.moveTicks == 0 & r.energy_1 == 0 & r.energy_2 == 0 & r.energy_4 == 0, r.d * r.stepV / 100, 0)) ^ 2) <= 0"
+      },
+      "idUf": {
+        "value": "if(count(r in runs: r.predicted & r.stepped & r.stepHeld & r.stepDuty == r.d & r.moveTicks == 0 & r.energy_1 == 0 & r.energy_2 == 0 & r.energy_4 == 0) >= 2 & idK > 0, sum(r in runs: if(r.predicted & r.stepped & r.stepHeld & r.stepDuty == r.d & r.moveTicks == 0 & r.energy_1 == 0 & r.energy_2 == 0 & r.energy_4 == 0, r.d * r.stepV / 100, 0)) / count(r in runs: r.predicted & r.stepped & r.stepHeld & r.stepDuty == r.d & r.moveTicks == 0 & r.energy_1 == 0 & r.energy_2 == 0 & r.energy_4 == 0) - sum(r in runs: if(r.predicted & r.stepped & r.stepHeld & r.stepDuty == r.d & r.moveTicks == 0 & r.energy_1 == 0 & r.energy_2 == 0 & r.energy_4 == 0, r.ySs, 0)) / (count(r in runs: r.predicted & r.stepped & r.stepHeld & r.stepDuty == r.d & r.moveTicks == 0 & r.energy_1 == 0 & r.energy_2 == 0 & r.energy_4 == 0) * idK), 0)",
+        "unit": "V",
+        "undefinedWhen": "count(r in runs: r.predicted & r.stepped & r.stepHeld & r.stepDuty == r.d & r.moveTicks == 0 & r.energy_1 == 0 & r.energy_2 == 0 & r.energy_4 == 0) < 2 | (count(r in runs: r.predicted & r.stepped & r.stepHeld & r.stepDuty == r.d & r.moveTicks == 0 & r.energy_1 == 0 & r.energy_2 == 0 & r.energy_4 == 0) * sum(r in runs: if(r.predicted & r.stepped & r.stepHeld & r.stepDuty == r.d & r.moveTicks == 0 & r.energy_1 == 0 & r.energy_2 == 0 & r.energy_4 == 0, (r.d * r.stepV / 100) ^ 2, 0)) - sum(r in runs: if(r.predicted & r.stepped & r.stepHeld & r.stepDuty == r.d & r.moveTicks == 0 & r.energy_1 == 0 & r.energy_2 == 0 & r.energy_4 == 0, r.d * r.stepV / 100, 0)) ^ 2) <= 0 | idK <= 0"
+      },
+      "idTauMs": {
+        "value": "if(count(r in runs: r.predicted & r.stepped & r.stepHeld & r.stepDuty == r.d & r.moveTicks == 0 & r.energy_1 == 0 & r.energy_2 == 0 & r.energy_4 == 0 & r.tau63 >= 0) >= 1, 1000 * sum(r in runs: if(r.predicted & r.stepped & r.stepHeld & r.stepDuty == r.d & r.moveTicks == 0 & r.energy_1 == 0 & r.energy_2 == 0 & r.energy_4 == 0 & r.tau63 >= 0, r.tau63, 0)) / count(r in runs: r.predicted & r.stepped & r.stepHeld & r.stepDuty == r.d & r.moveTicks == 0 & r.energy_1 == 0 & r.energy_2 == 0 & r.energy_4 == 0 & r.tau63 >= 0), 0)",
+        "unit": "ms",
+        "undefinedWhen": "count(r in runs: r.predicted & r.stepped & r.stepHeld & r.stepDuty == r.d & r.moveTicks == 0 & r.energy_1 == 0 & r.energy_2 == 0 & r.energy_4 == 0 & r.tau63 >= 0) < 1"
+      },
+      "yourK": {
+        "value": "if(count(r in runs: r.params) >= 1, sum(r in runs: if(r.params, r.teamK, 0)) / count(r in runs: r.params), 0)",
+        "unit": "deg/s per V",
+        "undefinedWhen": "count(r in runs: r.params) < 1"
+      },
+      "yourTauMs": {
+        "value": "if(count(r in runs: r.params) >= 1, 1000 * sum(r in runs: if(r.params, r.teamTau, 0)) / count(r in runs: r.params), 0)",
+        "unit": "ms",
+        "undefinedWhen": "count(r in runs: r.params) < 1"
+      },
+      "yourUf": {
+        "value": "if(count(r in runs: r.params) >= 1, sum(r in runs: if(r.params, r.teamUf, 0)) / count(r in runs: r.params), 0)",
+        "unit": "V",
+        "undefinedWhen": "count(r in runs: r.params) < 1"
+      },
+      "matches": {
+        "value": "if(abs(yourK - idK) <= 0.1 * idK & abs(yourTauMs - idTauMs) <= 0.1 * idTauMs & abs(yourUf - idUf) <= 0.15, 1, 0)",
+        "undefinedWhen": "count(r in runs: r.params) < 1 | count(r in runs: r.predicted & r.stepped & r.stepHeld & r.stepDuty == r.d & r.moveTicks == 0 & r.energy_1 == 0 & r.energy_2 == 0 & r.energy_4 == 0) < 2 | (count(r in runs: r.predicted & r.stepped & r.stepHeld & r.stepDuty == r.d & r.moveTicks == 0 & r.energy_1 == 0 & r.energy_2 == 0 & r.energy_4 == 0) * sum(r in runs: if(r.predicted & r.stepped & r.stepHeld & r.stepDuty == r.d & r.moveTicks == 0 & r.energy_1 == 0 & r.energy_2 == 0 & r.energy_4 == 0, (r.d * r.stepV / 100) ^ 2, 0)) - sum(r in runs: if(r.predicted & r.stepped & r.stepHeld & r.stepDuty == r.d & r.moveTicks == 0 & r.energy_1 == 0 & r.energy_2 == 0 & r.energy_4 == 0, r.d * r.stepV / 100, 0)) ^ 2) <= 0 | idK <= 0 | count(r in runs: r.predicted & r.stepped & r.stepHeld & r.stepDuty == r.d & r.moveTicks == 0 & r.energy_1 == 0 & r.energy_2 == 0 & r.energy_4 == 0 & r.tau63 >= 0) < 1"
+      }
+    },
+    "summary": "round(sum(r in runs: r.points) / n, 1)"
+  },
+  "pass": "score >= 60 & finished >= 0.8 * n",
+  "sources": [
+    {
+      "doc": "docs/curriculum/G09.md",
+      "where": "G9.1 Challenge — Model match, the level table (level 1) and the NRMSE paragraph"
+    },
+    {
+      "doc": "vscode-evn-alpha/docs/COURSE_FORMAT_DESIGN.md",
+      "where": "§19.3 (12c-3 kernel.step, G9.1 L1-L2), §19.13 (revision 3: over, the deadline read), §19.9 SIG-1 (the default built)"
+    }
+  ]
+}

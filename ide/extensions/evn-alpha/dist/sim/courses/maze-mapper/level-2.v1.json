@@ -1,0 +1,101 @@
+{
+  "format": "evn-course/1",
+  "id": "maze-mapper-2",
+  "challenge": "maze-mapper",
+  "level": 2,
+  "version": 1,
+  "module": "G8.3",
+  "title": "Maze mapper · Level 2: Map it, come home",
+  "brief": "A new 6 x 6 maze every run, perfect (one path between any two cells). Explore it, write map.txt with the motors stopped (six lines, the north row first, of six hex digits: walls N 1, E 2, S 4, W 8), then come home to the start cell by a shortest path.",
+  "field": {
+    "random": [
+      {
+        "name": "mz",
+        "draw": "maze-v1",
+        "cols": 6,
+        "rows": 6,
+        "cell": 280,
+        "wall": 12,
+        "loops": [
+          0,
+          0
+        ],
+        "exit": null
+      }
+    ],
+    "arena": {
+      "size": [
+        1668,
+        1668
+      ],
+      "startBox": [
+        0,
+        0,
+        268,
+        268
+      ],
+      "goal": null,
+      "obstacles": [],
+      "maze": {
+        "from": "mz",
+        "h": 100,
+        "color": "#ffffff"
+      },
+      "areas": [],
+      "wallH": 100,
+      "wallT": 12,
+      "obstacleH": 100
+    }
+  },
+  "robot": {
+    "rule": "learner",
+    "standard": "maze-class"
+  },
+  "start": {
+    "nominal": {
+      "x": 134,
+      "y": 134,
+      "heading": 90
+    },
+    "vary": {
+      "xy": 10,
+      "heading": 2
+    },
+    "draw": "uniform-square-v1"
+  },
+  "runs": {
+    "min": 1,
+    "max": 20,
+    "default": 5,
+    "fixed": 10
+  },
+  "kernel": {
+    "name": "pointToPoint",
+    "limitS": 300,
+    "goal": "footprintInside",
+    "final": "runEnd",
+    "maze": {
+      "from": "mz",
+      "map": "map.txt",
+      "home": true
+    }
+  },
+  "constants": {
+    "par": 155
+  },
+  "score": {
+    "run": "round(40 * mapSkill + if(homeOk, 30, 0) + if(finished, 30 * min(1, par / max(homeTime, 0.001)), 0), 1)",
+    "summary": "round(sum(r in runs: r.points) / count(r in runs: true), 1)"
+  },
+  "pass": "score >= 60 & count(r in runs: r.finished) >= 0.8 * n",
+  "sources": [
+    {
+      "doc": "docs/curriculum/G08.md",
+      "where": "G8.3 Maze mapper, the level table (level 2) and the scorer's definitions"
+    },
+    {
+      "doc": "vscode-evn-alpha/docs/COURSE_CONTENT_DESIGN.md",
+      "where": "§3.1 the field, §3.2 kernel.maze (decision 2's defaults (a): OQ 214, OQ 215, open), §3.4 the cell (280 mm, OQ 305)"
+    }
+  ]
+}

@@ -1,0 +1,159 @@
+{
+  "format": "evn-course/1",
+  "id": "lane-keeper-3",
+  "challenge": "lane-keeper",
+  "level": 3,
+  "version": 1,
+  "module": "G10.3",
+  "title": "Lane keeper \u00b7 Level 3: An unseen track",
+  "brief": "An unseen lane track from a seed: a rounded rectangle 2200-2500 mm by 1100-1200 mm (centre line) with corners of radius 250 or 300 mm and one notch 600-700 mm deep into its north side (its floor 200 mm across, its corners of the same radius), 6.8-7.9 m round; the same two 25 mm black lines 300 mm apart. The robot starts on the lane's centre at the south side's west end, heading east (anticlockwise), within 30 mm and 5 degrees. Four cones as level 2: drawn in the lane from 500 mm to 5500 mm along it, 100 mm from the centre, red left of it (keep it on your left), green right. Two laps, clock from the start line (300 mm along) to the second lap's crossing; a departure is a wheel's middle over a line or crossing it, and a wheel outside counts one more each second; the fourth ends the run. Score: 100 x min(1.2, par / T) - 15 per departure - 25 per cone wrong or knocked, between 0 and 100; 0 if not finished. Par 28.4 s. Pass: a mean of at least 60 with 8 of 10 runs finished. Practice until the simulator's camera reaches a run (LINK): the bench level reveals the track and the cones.",
+  "field": {
+    "random": [
+      {
+        "name": "track",
+        "draw": "track-v1",
+        "W": [
+          2200,
+          2500
+        ],
+        "H": [
+          1100,
+          1200
+        ],
+        "r": [
+          250,
+          300
+        ],
+        "place": [
+          100,
+          200
+        ],
+        "depth": [
+          600,
+          700
+        ],
+        "width": 200
+      },
+      {
+        "name": "cones",
+        "draw": "along-v1",
+        "n": 4,
+        "path": "lane",
+        "s": [
+          500,
+          5500
+        ],
+        "gap": 600,
+        "offset": 100,
+        "of": [
+          "red",
+          "green"
+        ]
+      }
+    ],
+    "arena": {
+      "size": [
+        3100,
+        1750
+      ],
+      "startBox": [
+        500,
+        200,
+        600,
+        300
+      ],
+      "goal": null,
+      "obstacles": [
+        {
+          "group": "cone",
+          "from": "cones",
+          "at": [
+            0,
+            0
+          ],
+          "shape": "cylinder",
+          "w": 50,
+          "d": 50,
+          "h": 100,
+          "massG": 30,
+          "colorBy": {
+            "red": "#d9302a",
+            "green": "#2e9e4a"
+          }
+        }
+      ],
+      "wallH": 100,
+      "wallT": 20,
+      "obstacleH": 60,
+      "startPaint": false,
+      "lanes": [
+        {
+          "name": "lane",
+          "path": {
+            "from": "track"
+          },
+          "at": [
+            550,
+            250,
+            0
+          ],
+          "width": 300,
+          "line": 25,
+          "paint": "black",
+          "startLine": 300
+        }
+      ]
+    }
+  },
+  "robot": {
+    "rule": "learner"
+  },
+  "start": {
+    "nominal": {
+      "x": 550,
+      "y": 250,
+      "heading": 0
+    },
+    "vary": {
+      "xy": 30,
+      "heading": 5
+    },
+    "draw": "uniform-square-v1"
+  },
+  "runs": {
+    "min": 1,
+    "max": 20,
+    "default": 5,
+    "fixed": 10
+  },
+  "kernel": {
+    "name": "pointToPoint",
+    "limitS": 90,
+    "goal": "footprintInside",
+    "final": "runEnd",
+    "lane": {
+      "lane": "lane",
+      "laps": 2,
+      "departures": 3,
+      "cones": "cone"
+    }
+  },
+  "constants": {
+    "par": 28.4
+  },
+  "score": {
+    "run": "if(finished, clamp(100 * min(1.2, par / lapTime) - 15 * departures - 25 * (conesWrong + conesKnocked), 0, 100), 0)",
+    "summary": "round(sum(r in runs: r.points) / count(r in runs: true), 1)"
+  },
+  "pass": "score >= 60 & count(r in runs: r.finished) >= 0.8 * n",
+  "sources": [
+    {
+      "doc": "docs/curriculum/G10.md",
+      "where": "G10.3 Lane keeper, the challenge paragraph and the level table, level 3 (the practice pars, OQ 165: 28.4 s, ruled 2026-11-07)"
+    },
+    {
+      "doc": "vscode-evn-alpha/docs/COURSE_CONTENT_DESIGN.md",
+      "where": "\u00a75.3 Lane keeper (Track (L3): track-v1; Cones (L2)); \u00a77 CC-14 (records: docs/session/2026-11-13_c1-lanekeep/)"
+    }
+  ]
+}

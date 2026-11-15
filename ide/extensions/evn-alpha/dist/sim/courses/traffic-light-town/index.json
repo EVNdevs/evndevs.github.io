@@ -1,0 +1,71 @@
+{
+ "format": "evn-course-index/1",
+ "generated": "node scripts/course_index.js --write; do not edit",
+ "levels": [
+  {
+   "file": "traffic-light-town/level-1.v1.json",
+   "id": "traffic-light-town-1",
+   "version": 1,
+   "sha256": "4a513c6be159a49f0345b2b3657d42c6c5be0d95f0a4ebedc0d7f137143666b3",
+   "current": false,
+   "title": "Traffic-light town · Level 1: Main Street",
+   "limit": 60,
+   "runs": {
+    "default": 5,
+    "fixed": 5
+   }
+  },
+  {
+   "file": "traffic-light-town/level-1.v2.json",
+   "id": "traffic-light-town-1",
+   "version": 2,
+   "sha256": "22f2090cd8a352a647564ad011846f7df986901b2f4d7c57f00c0cbecdf8a30c",
+   "current": true,
+   "title": "Traffic-light town · Level 1: Main Street",
+   "limit": 60,
+   "runs": {
+    "default": 5,
+    "fixed": 5
+   }
+  },
+  {
+   "file": "traffic-light-town/level-2.v1.json",
+   "id": "traffic-light-town-2",
+   "version": 1,
+   "sha256": "d1d3b623b672106a1ca2946814323d505964e705cede3d5dc600879e9d32553e",
+   "current": false,
+   "title": "Traffic-light town · Level 2: Turn at the sign",
+   "limit": 60,
+   "runs": {
+    "default": 5,
+    "fixed": 5
+   }
+  },
+  {
+   "file": "traffic-light-town/level-2.v2.json",
+   "id": "traffic-light-town-2",
+   "version": 2,
+   "sha256": "50d5068fe09d49af72523cd8434cb8e47df544ab3dde1b72c5887344f4cdaf65",
+   "current": true,
+   "title": "Traffic-light town · Level 2: Turn at the sign",
+   "limit": 60,
+   "runs": {
+    "default": 5,
+    "fixed": 5
+   }
+  },
+  {
+   "file": "traffic-light-town/level-3.v1.json",
+   "id": "traffic-light-town-3",
+   "version": 1,
+   "sha256": "4ec4d0d787a443d25df89ce0110bbc7ef4130e37e015e28a52657e996edc9816",
+   "current": true,
+   "title": "Traffic-light town · Level 3: Across town",
+   "limit": 120,
+   "runs": {
+    "default": 5,
+    "fixed": 5
+   }
+  }
+ ]
+}

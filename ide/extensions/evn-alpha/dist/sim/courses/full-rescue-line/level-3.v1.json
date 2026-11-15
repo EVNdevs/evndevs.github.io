@@ -1,0 +1,467 @@
+{
+ "format": "evn-course/1",
+ "id": "full-rescue-line-3",
+ "challenge": "full-rescue-line",
+ "level": 3,
+ "version": 1,
+ "module": "G6.3",
+ "title": "Full rescue line · Level 3",
+ "brief": "Level 2's map of 300 mm tiles (the Start tile, two 150 mm gaps, a T junction, a dead end, a crossing, the fixed 150 mm cube, the speed bump, the 20 degree ramps up and down with the raised straight between) with its tail re-laid through the evacuation zone: past the ramp down, a corner, a straight with two pieces of debris and a corner into the zone, 4 x 3 cells (inside 1160 x 860 mm) entered by its silver strip on the north side and left by its black strip on the west side to the Goal tile; 10.07 m of line. In the zone, 2 live victims (silver) and 1 dead victim (black), and the red and green evacuation points in two of its corners - the victims' places and the points' corners drawn for each run and never told to the program. The robot is G6.3's (the robot file rescue-line-open); a run on a changed robot is not this level's. It starts on the Start tile on the line, facing along it, moved up to 10 mm and turned up to 5 degrees. The RCJ referee judges the line as at levels 1 and 2 and counts each rescue: a live victim at rest wholly in the green point and untouched by the robot, the dead victim in the red point only after both live ones. A run ends once the program has ended and the robot has then stood still for 0.5 s, after 3 lacks of progress, or after 480 s. Score: (80 x the fraction of the line completed - leaving the zone and reaching the Goal included - + 20 if no lack of progress was called) x 1.4 for each rescue, / 2.744. Par 240 s (the record's; no term in the score). Pass: a mean of at least 60 over the 5 runs, and at least 4 of 5 stop on the Goal.",
+ "field": {
+  "random": [
+   {
+    "name": "corners",
+    "draw": "sample-v1",
+    "of": [
+     "SW",
+     "SE",
+     "NE",
+     "NW"
+    ],
+    "k": 2
+   },
+   {
+    "name": "victims",
+    "draw": "pointsIn-v1",
+    "n": 3,
+    "poly": [
+     [
+      638,
+      1263
+     ],
+     [
+      1162,
+      1263
+     ],
+     [
+      1437,
+      1538
+     ],
+     [
+      1437,
+      1762
+     ],
+     [
+      1162,
+      2037
+     ],
+     [
+      638,
+      2037
+     ],
+     [
+      363,
+      1762
+     ],
+     [
+      363,
+      1538
+     ]
+    ],
+    "grid": 10,
+    "gap": 90,
+    "from": [
+     1050,
+     2080
+    ],
+    "fromGap": 250
+   }
+  ],
+  "tiles": {
+   "map": {
+    "version": 1,
+    "name": "Full rescue line L3",
+    "customTiles": [
+     {
+      "id": "G15",
+      "name": "Gap 150 mm",
+      "elements": [
+       {
+        "type": "line",
+        "pts": [
+         [
+          150,
+          0
+         ],
+         [
+          150,
+          75
+         ]
+        ],
+        "w": 20,
+        "color": "black"
+       },
+       {
+        "type": "line",
+        "pts": [
+         [
+          150,
+          225
+         ],
+         [
+          150,
+          300
+         ]
+        ],
+        "w": 20,
+        "color": "black"
+       }
+      ]
+     }
+    ],
+    "tiles": [
+     {
+      "id": "1",
+      "col": 0,
+      "row": 0,
+      "rot": 2
+     },
+     {
+      "id": "G15",
+      "col": 0,
+      "row": 1,
+      "rot": 0
+     },
+     {
+      "id": "10",
+      "col": 0,
+      "row": 2,
+      "rot": 0
+     },
+     {
+      "id": "44",
+      "col": 0,
+      "row": 3,
+      "rot": 0
+     },
+     {
+      "id": "44",
+      "col": 1,
+      "row": 3,
+      "rot": 3
+     },
+     {
+      "id": "10",
+      "col": 1,
+      "row": 2,
+      "rot": 0
+     },
+     {
+      "id": "10",
+      "col": 1,
+      "row": 1,
+      "rot": 0
+     },
+     {
+      "id": "44",
+      "col": 1,
+      "row": 0,
+      "rot": 1
+     },
+     {
+      "id": "44",
+      "col": 2,
+      "row": 0,
+      "rot": 2
+     },
+     {
+      "id": "70",
+      "col": 2,
+      "row": 1,
+      "rot": 1,
+      "green": [
+       0
+      ]
+     },
+     {
+      "id": "10",
+      "col": 2,
+      "row": 2,
+      "rot": 0
+     },
+     {
+      "id": "70",
+      "col": 2,
+      "row": 3,
+      "rot": 0,
+      "green": [
+       0,
+       1
+      ]
+     },
+     {
+      "id": "10",
+      "col": 3,
+      "row": 2,
+      "rot": 0
+     },
+     {
+      "id": "44",
+      "col": 3,
+      "row": 3,
+      "rot": 0
+     },
+     {
+      "id": "44",
+      "col": 4,
+      "row": 3,
+      "rot": 3
+     },
+     {
+      "id": "10",
+      "col": 4,
+      "row": 2,
+      "rot": 0
+     },
+     {
+      "id": "44",
+      "col": 4,
+      "row": 1,
+      "rot": 2
+     },
+     {
+      "id": "44",
+      "col": 3,
+      "row": 0,
+      "rot": 1
+     },
+     {
+      "id": "10",
+      "col": 4,
+      "row": 0,
+      "rot": 1
+     },
+     {
+      "id": "44",
+      "col": 5,
+      "row": 0,
+      "rot": 2
+     },
+     {
+      "id": "10",
+      "col": 5,
+      "row": 1,
+      "rot": 0
+     },
+     {
+      "id": "G15",
+      "col": 5,
+      "row": 2,
+      "rot": 0
+     },
+     {
+      "id": "10",
+      "col": 5,
+      "row": 3,
+      "rot": 0
+     },
+     {
+      "id": "80",
+      "col": 3,
+      "row": 1,
+      "rot": 0,
+      "green": [
+       0,
+       2
+      ]
+     },
+     {
+      "id": "10",
+      "col": 5,
+      "row": 4,
+      "rot": 0,
+      "ramp": true,
+      "incline": 20
+     },
+     {
+      "id": "10",
+      "col": 5,
+      "row": 5,
+      "rot": 0,
+      "z": 109.1910702798607
+     },
+     {
+      "id": "10",
+      "col": 5,
+      "row": 6,
+      "rot": 0,
+      "ramp": 2,
+      "incline": 20
+     },
+     {
+      "id": "44",
+      "col": 5,
+      "row": 7,
+      "rot": 3
+     },
+     {
+      "id": "10",
+      "col": 4,
+      "row": 7,
+      "rot": 1
+     },
+     {
+      "id": "44",
+      "col": 3,
+      "row": 7,
+      "rot": 0
+     },
+     {
+      "id": "99",
+      "col": 0,
+      "row": 5,
+      "rot": 1
+     }
+    ],
+    "objects": [
+     {
+      "type": "bump",
+      "x": 1650,
+      "y": 1050,
+      "rot": 0,
+      "length": 240,
+      "width": 30,
+      "height": 10
+     },
+     {
+      "type": "obstacle",
+      "x": 450,
+      "y": 640,
+      "rot": 0,
+      "shape": "box",
+      "w": 150,
+      "d": 150,
+      "h": 150,
+      "mass": 0
+     },
+     {
+      "type": "debris",
+      "x": 1260,
+      "y": 2230,
+      "rot": 35,
+      "length": 60,
+      "diameter": 3
+     },
+     {
+      "type": "debris",
+      "x": 1190,
+      "y": 2270,
+      "rot": -50,
+      "length": 45,
+      "diameter": 2
+     },
+     {
+      "type": "victim",
+      "kind": "live",
+      "from": "victims",
+      "i": 1
+     },
+     {
+      "type": "victim",
+      "kind": "live",
+      "from": "victims",
+      "i": 2
+     },
+     {
+      "type": "victim",
+      "kind": "dead",
+      "from": "victims",
+      "i": 3
+     }
+    ],
+    "zone": {
+     "col": 1,
+     "row": 4,
+     "cols": 4,
+     "rows": 3,
+     "entrance": {
+      "side": "N",
+      "k": 2
+     },
+     "exit": {
+      "side": "W",
+      "k": 1
+     },
+     "red": {
+      "from": "corners",
+      "i": 1
+     },
+     "green": {
+      "from": "corners",
+      "i": 2
+     }
+    }
+   },
+   "referee": {
+    "ramp": "tile",
+    "afterThree": "retry",
+    "press": true,
+    "lopStart": "press",
+    "calibration": 0,
+    "seed": 1,
+    "autoCaptain": false,
+    "offTiles": 300,
+    "lostOff": 400,
+    "autoCaptainS": 30
+   }
+  }
+ },
+ "robot": {
+  "rule": "fixed",
+  "base": "rescue-line-open"
+ },
+ "start": {
+  "nominal": {
+   "x": 150,
+   "y": 150,
+   "heading": 90
+  },
+  "vary": {
+   "xy": 10,
+   "heading": 5
+  },
+  "draw": "uniform-square-v1"
+ },
+ "runs": {
+  "min": 1,
+  "max": 20,
+  "default": 5,
+  "fixed": 5
+ },
+ "kernel": {
+  "name": "pointToPoint",
+  "limitS": 480,
+  "goal": "footprintInside",
+  "end": "afterProgram",
+  "still": {
+   "s": 0.5,
+   "dps": 5,
+   "mms": 3
+  },
+  "final": "runEnd",
+  "tiles": {
+   "maxLops": 3,
+   "goal": "stopAxle",
+   "fraction": "untilLop",
+   "score": "rescue"
+  }
+ },
+ "constants": {
+  "par": 240
+ },
+ "score": {
+  "run": "(80 * fraction + if(lops == 0, 20, 0)) * 1.4 ^ rescues / 2.744",
+  "summary": "round(sum(r in runs: r.points) / count(r in runs: true), 1)"
+ },
+ "pass": "sum(r in runs: r.points) / count(r in runs: true) >= 60 & count(r in runs: r.goal) >= 0.8 * n",
+ "sources": [
+  {
+   "doc": "docs/curriculum/G06.md",
+   "where": "G6.3 Challenge - Full rescue line, the level table, level 3, and the scoring paragraph"
+  },
+  {
+   "doc": "docs/session/2026-11-14_w12-g63/design/g63_l3.md",
+   "where": "G6.3 level 3 on the tile half (lane w12-g63), rev 3"
+  }
+ ]
+}

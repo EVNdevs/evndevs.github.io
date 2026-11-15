@@ -1,0 +1,45 @@
+{
+ "format": "evn-course-index/1",
+ "generated": "node scripts/course_index.js --write; do not edit",
+ "levels": [
+  {
+   "file": "robot-says-hello/level-1.v1.json",
+   "id": "robot-says-hello-1",
+   "version": 1,
+   "sha256": "ffed9ab11b6062d2fa4a57ccab185739cd5a04a6ef228847c91a71cda4054305",
+   "current": true,
+   "title": "Robot says hello · Level 1: One visitor",
+   "limit": 60,
+   "runs": {
+    "default": 5,
+    "fixed": 5
+   }
+  },
+  {
+   "file": "robot-says-hello/level-2.v1.json",
+   "id": "robot-says-hello-2",
+   "version": 1,
+   "sha256": "73e729b20efc7489df08f65791a0e3be619d38d2f444abda460810a656ae3045",
+   "current": true,
+   "title": "Robot says hello · Level 2: Two visitors",
+   "limit": 60,
+   "runs": {
+    "default": 5,
+    "fixed": 5
+   }
+  },
+  {
+   "file": "robot-says-hello/level-3.v1.json",
+   "id": "robot-says-hello-3",
+   "version": 1,
+   "sha256": "0b86b09806e90b2df221f8fce36749937acda28b2001fb04408406a42403e3a5",
+   "current": true,
+   "title": "Robot says hello · Level 3: On the star",
+   "limit": 60,
+   "runs": {
+    "default": 5,
+    "fixed": 5
+   }
+  }
+ ]
+}

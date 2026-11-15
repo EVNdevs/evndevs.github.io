@@ -1,0 +1,159 @@
+{
+ "format": "evn-course/1",
+ "id": "perfect-parking-1",
+ "challenge": "perfect-parking",
+ "level": 1,
+ "version": 1,
+ "module": "G2.1",
+ "title": "Perfect parking \u00b7 Level 1: The bay at 54 cm",
+ "brief": "Park in the bay: stop with the robot's front bumper between the bay's lines (50 and 58 cm on the ruler; its middle line at 54 cm). 30 s. 50 for parked, up to 40 for closeness to the middle line (all 40 within 1 cm, 10 at a bay line), 10 for touching no cone. No par: parking is about where, not how fast.",
+ "field": {
+  "arena": {
+   "size": [
+    2000,
+    600
+   ],
+   "startBox": [
+    0,
+    150,
+    215,
+    450
+   ],
+   "goal": null,
+   "obstacles": [
+    {
+     "name": "coneL",
+     "shape": "cylinder",
+     "x": 740,
+     "y": 500,
+     "w": 80,
+     "d": 80,
+     "h": 150
+    },
+    {
+     "name": "coneR",
+     "shape": "cylinder",
+     "x": 740,
+     "y": 100,
+     "w": 80,
+     "d": 80,
+     "h": 150
+    }
+   ],
+   "wallH": 100,
+   "wallT": 20,
+   "obstacleH": 150,
+   "startPaint": false,
+   "areas": [
+    {
+     "name": "startLine",
+     "rect": [
+      198.0,
+      150,
+      202.0,
+      450
+     ],
+     "paint": "black"
+    },
+    {
+     "name": "bayLine1",
+     "rect": [
+      695.0,
+      150,
+      705.0,
+      450
+     ],
+     "paint": "black"
+    },
+    {
+     "name": "bayLine2",
+     "rect": [
+      775.0,
+      150,
+      785.0,
+      450
+     ],
+     "paint": "black"
+    },
+    {
+     "name": "bayMiddle",
+     "rect": [
+      738.0,
+      150,
+      742.0,
+      450
+     ],
+     "paint": "black"
+    }
+   ]
+  }
+ },
+ "robot": {
+  "rule": "fixed",
+  "base": "junior-front90"
+ },
+ "start": {
+  "nominal": {
+   "x": 110,
+   "y": 300,
+   "heading": 0
+  },
+  "vary": {
+   "xy": 0,
+   "heading": 1
+  },
+  "draw": "lane-v1",
+  "lane": {
+   "x": [
+    105,
+    115
+   ]
+  }
+ },
+ "runs": {
+  "min": 1,
+  "max": 20,
+  "default": 5,
+  "fixed": 5
+ },
+ "kernel": {
+  "name": "pointToPoint",
+  "limitS": 30,
+  "goal": "footprintInside",
+  "end": "afterProgram",
+  "still": {
+   "s": 0.5,
+   "dps": 5,
+   "mms": 3
+  },
+  "final": "runEnd"
+ },
+ "constants": {
+  "s0": 200,
+  "front": 90,
+  "lo": 500,
+  "hi": 580,
+  "mid": 540
+ },
+ "score": {
+  "run": "round(if(stopped & (endX + front * cosd(endHeading) - s0) >= lo & (endX + front * cosd(endHeading) - s0) <= hi, 50 + min(40, 50 - abs((endX + front * cosd(endHeading) - s0) - mid) / 10 * 10), 0) + if(touchesOf_coneL + touchesOf_coneR == 0, 10, 0), 1)",
+  "values": {
+   "finished": {
+    "value": "count(r in runs: r.stopped & (r.endX + front * cosd(r.endHeading) - s0) >= lo & (r.endX + front * cosd(r.endHeading) - s0) <= hi)",
+    "unit": "runs"
+   }
+  },
+  "summary": "round(sum(r in runs: r.points) / n, 1)"
+ },
+ "pass": "score >= 60 & finished >= 0.8 * n",
+ "sources": [
+  {
+   "doc": "docs/curriculum/G02.md",
+   "where": "G2.1 Measure the world, Challenge \u2014 Perfect parking: the lane, the ruler from the start line (here x 200), the front bumper (the Junior robot's front 90 mm), the bay, the level table (level 1), the scoring paragraph; \"How a run is measured\". The cones read as 150 mm high, 80 mm across, 200 mm either side of the lane's middle; the bay's lines 10 mm wide, centred on their marks"
+  },
+  {
+   "doc": "vscode-evn-alpha/docs/COURSE_FORMAT_DESIGN.md",
+   "where": "\u00a710.2 (endX / endY / endHeading, stopped), \u00a711.8 (end afterProgram), \u00a711.4 (touches by name), \u00a713.1 (the fixed robot), \u00a713.2 (lane-v1)"
+  }
+ ]
+}

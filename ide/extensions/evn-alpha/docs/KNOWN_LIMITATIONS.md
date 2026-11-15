@@ -8,67 +8,90 @@ been tried on real hardware yet. If you have the parts for one of the untested i
 ### Motors
 
 - **A held motor can keep a small back-and-forth.** After `hold()` from speed (also `DriveBase.hold()`, and a move
-  that ends with `then=Stop.HOLD`), some motors keep swinging a few degrees each way instead of settling, in a small
-  share of holds: up to about 1 hold in 9 on some motors, and about 1 in 5 on an EV3 Large with nothing on its shaft.
-  Use `stop()` when the motor need not hold.
+  that ends with `then=Stop.HOLD`), some motors keep swinging a few degrees each way instead of settling. This
+  happens in a small share of holds: up to about 1 hold in 9 on some motors, and about 1 in 5 on an EV3 Large with
+  nothing on its shaft. Use `stop()` when the motor need not hold.
 - **A held motor cannot feel a load taken away.** If a weight is lifted off a holding arm, or the arm is lowered onto
-  a rest, the motor keeps pushing as if the load were still there (it draws current), and the next command starts
-  with that push.
-- **A Pololu 25D (or any motor whose rotor cogs) overshoots about 1°** at the end of a move, because it comes to rest
-  in the detent nearest its target; its final position is the better for it.
+  a rest, the motor keeps pushing as if the load were still there (it draws current). The next command starts with
+  that push.
+- **A Pololu 25D (or any motor whose rotor cogs) overshoots about 1°** at the end of a move. It comes to rest in the
+  detent nearest its target; its final position is the better for it.
 - **`run_until_stalled` needs a real obstruction:** a free shaft never stalls. `duty_limit` is how hard it pushes
   before the stall is reported; without one the motor pushes with the whole battery.
-- **A non-LEGO motor whose encoder counts the other way cannot run a move until it is calibrated:** the board coasts
-  it within about a quarter of a second of running away, and the program gets a `RuntimeError` asking for `calibrate()`
+- **A non-LEGO motor whose encoder counts the other way cannot run a move until it is calibrated.** The board coasts
+  it within about a quarter of a second of running away. The program gets a `RuntimeError` asking for `calibrate()`
   ([Motor](API_ROBOT.md#motor)).
 
 ### Files, ports and the extension
 
 - **A file write is refused while a motor drives:** it raises `OSError: [Errno 16] EBUSY`. Motors that hold, brake or
   coast do not block it. Keep readings in a list while the robot moves and write the file after `stop()` or a
-  `wait=True` move, or catch the `OSError` and write later. A refusal loses nothing already accepted from a file you
-  close: a refused `close()` keeps the data and writes it once the motors stop. A log that catches the error and
-  carries on can have a gap where its refused lines were. Reading is refused only for a file opened for writing that
-  still holds unwritten data, or one whose refused `close()` is still waiting.
+  `wait=True` move, or catch the `OSError` and write later.
+  <details>
+  <summary>What a refusal keeps, and what reading is refused</summary>
+
+  A refusal loses nothing already accepted from a file you close: a refused `close()` keeps the data and writes it
+  once the motors stop. A log that catches the error and carries on can have a gap where its refused lines were.
+
+  Reading is refused only for a file opened for writing that still holds unwritten data, or one whose refused
+  `close()` is still waiting.
+
+  </details>
 - **A file object never closed loses its buffered bytes if it is freed while a motor drives** (as in 0.2.70): the
   garbage collector's late close is refused, with no error. The board runs a collection at the 9th `open()` while 8
   files are open, so `open(p, 'a').write(line)` in a loop while a motor drives loses lines at every 9th call. Close
   each file, or use `with`.
 - **After a refused `os.rmdir()` or `os.rename()` on a file system of about 100 folders,** the first file call once
   the motors stop can take about a second: the board completes the refused change there.
-- **If a mounted file system's guard block cannot be allocated** (a user `os.mount()` on a full heap; the board's own
-  file system is mounted at a fresh heap), every write to it raises `OSError: [Errno 16] EBUSY`, motors stopped or
-  not. Free memory (`gc.collect()`) and mount it again.
-- **A file-system repair can wait for the next reset:** after a folder change (`os.mkdir()`, `os.rmdir()`,
-  `os.rename()`) refused while a motor drove, or cut by a power loss, or, rarely, any refused write that moved a worn
-  folder block, on a board with many folders in all (more than about 48 nested, or about 125 in one folder), the
-  first file call after the stop takes about 2 s and every file write raises `OSError: [Errno 16] EBUSY` for the rest
-  of that program, with the motors stopped. Reads still work; a refused `close()` waits. After that warning,
-  soft-reset (Ctrl-D, the next run from the editor) or power-cycle once: a program's end does not repair (a `main.py`
-  started again by the user button cannot write either). The soft reset or power cycle finishes the repair before
-  `boot.py`, once: about 15 s on a board of about 100 folders in a shallow tree, about 26 s if they are nested 100
-  deep, at most about 80 s. The editor waits for the board and says "repairing the file system" past 5 s: the console
-  and the browser IDE up to 90 s (270 s over Bluetooth), Run and Upload up to 90 s over either link. Run and Upload
-  need `mpremote` 1.23 or later for that wait; an older `mpremote`, like `mpremote` run by hand, waits 10 s and may
-  report a connection error once during the repair (run again). The waiting `close()` is then written and writes work
-  again. Beyond about 175 folders nested in one chain, or with a damaged folder list, writes
-  stay refused (and a waiting close loses its data), and every power-on waits about 75 s before `boot.py`: a damaged
-  folder list is formatted at the next reset (every file lost); otherwise copy your files off the board, reformat
-  with `vfs.VfsLfs2.mkfs(evn.Flash(), progsize=256)` and press Ctrl-D.
+- **If a mounted file system's guard block cannot be allocated**, every write to it raises
+  `OSError: [Errno 16] EBUSY`, motors stopped or not. That happens on a user `os.mount()` on a full heap; the board's
+  own file system is mounted at a fresh heap. Free memory (`gc.collect()`) and mount it again.
+- **A file-system repair can wait for the next reset.** It happens on a board with many folders in all (more than
+  about 48 nested, or about 125 in one folder), after:
+  - a folder change (`os.mkdir()`, `os.rmdir()`, `os.rename()`) refused while a motor drove, or cut by a power loss;
+  - or, rarely, any refused write that moved a worn folder block.
+
+  Then the first file call after the stop takes about 2 s, and every file write raises `OSError: [Errno 16] EBUSY`
+  for the rest of that program, with the motors stopped. Reads still work; a refused `close()` waits.
+
+  After that warning, soft-reset (Ctrl-D, the next run from the editor) or power-cycle once. A program's end does not
+  repair (a `main.py` started again by the user button cannot write either).
+  <details>
+  <summary>How long the repair takes, and when it cannot finish</summary>
+
+  The soft reset or power cycle finishes the repair before `boot.py`, once. It takes about 15 s on a board of about
+  100 folders in a shallow tree, about 26 s if they are nested 100 deep, at most about 80 s.
+
+  The editor waits for the board and says "repairing the file system" past 5 s:
+
+  - the console and the browser IDE up to 90 s (270 s over Bluetooth);
+  - Run and Upload up to 90 s over either link.
+
+  Run and Upload need `mpremote` 1.23 or later for that wait. An older `mpremote`, like `mpremote` run by hand, waits
+  10 s and may report a connection error once during the repair (run again). The waiting `close()` is then written
+  and writes work again.
+
+  Beyond about 175 folders nested in one chain, or with a damaged folder list, writes stay refused (and a waiting
+  close loses its data). Every power-on then waits about 75 s before `boot.py`. A damaged folder list is formatted at
+  the next reset (every file lost). Otherwise copy your files off the board, reformat with
+  `vfs.VfsLfs2.mkfs(evn.Flash(), progsize=256)` and press Ctrl-D.
+
+  </details>
 - **A board that keeps its port open but never answers after a soft reset** (a `boot.py` that hangs, or a board stuck
-  after `soft reboot`) is now reported by the editor after 90 s (the console and the browser IDE over Bluetooth:
-  270 s; Run and Upload with an `mpremote` older than 1.23: 10 s, as before), not after 8-10 s: the same wait gives a
-  file-system repair its time.
+  after `soft reboot`) is now reported by the editor after 90 s, not after 8-10 s. The console and the browser IDE
+  over Bluetooth wait 270 s; Run and Upload with an `mpremote` older than 1.23 wait 10 s, as before. The same wait
+  gives a file-system repair its time.
 - **At most 8 open files and directories per file system:** the 9th raises `OSError: [Errno 24] EMFILE` (the board
   runs one garbage collection first, so a file object dropped without `close()` frees its place). Each mounted file
   system sets about 1.6 KB of heap aside for this. A `vfs.VfsLfs2` you create yourself keeps that memory and its
-  caches (about 4 KB) until you call its `umount()` (or `os.umount()` once mounted), or until the next soft reset, even
-  after your program drops it: unmount it before you make another.
-- **A rename refused half-way while a motor drives** can hide, from `os.listdir()` and from `open()` for reading
-  (`ENOENT`), the files listed after the renamed one in its old folder, or, when the rename reported success, still
-  list the file under its old name too, until the motors stop and the next file call runs. Nothing is lost. Rarely
-  (a worn flash block moved inside the rename), a rename onto a file with the same bytes and the same time stamp
-  raises `EBUSY` although it landed; trying it again then raises `ENOENT`.
+  caches (about 4 KB) even after your program drops it. It keeps them until you call its `umount()` (or
+  `os.umount()` once mounted), or until the next soft reset: unmount it before you make another.
+- **A rename refused half-way while a motor drives** can hide files from `os.listdir()` and from `open()` for
+  reading (`ENOENT`): the files listed after the renamed one in its old folder. Or, when the rename reported success,
+  it can still list the file under its old name too. Either lasts until the motors stop and the next file call runs.
+  Nothing is lost.
+  - Rarely (a worn flash block moved inside the rename), a rename onto a file with the same bytes and the same time
+    stamp raises `EBUSY` although it landed; trying it again then raises `ENOENT`.
 - **After a power loss in the middle of a rename or a folder update**, the first file write runs the file system's
   repair first; while a motor drives it raises `OSError: [Errno 16] EBUSY` until the motors stop.
 - A `close()` refused while `micropython.heap_lock()` is in force, or whose later write fails because the file system

@@ -9,7 +9,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
 
     <!-- this build's version (scripts/ide_offline.js stamps it): the service worker serves a page its own version's files -->
-    <meta name="evn-ide-version" content="0.2.77+e49d821325c3">
+    <meta name="evn-ide-version" content="0.2.78+ef6f8ab443cb">
 
     <!-- filled in by the script below, from wherever this page is served -->
     <meta id="vscode-workbench-web-configuration" data-settings="{}">
@@ -106,7 +106,16 @@
         if (query.get('evn-dev') === 'sim' || hash.get('evn-dev') === 'sim') {
             evnDev['evn.developer.simulatedBoard'] = true;
         }
-        config.configurationDefaults = { 'workbench.startupEditor': 'none', '[evn-dev]': evnDev };
+        /* SITE-20 (#94): ?example=<folder>/<file> (or #example=) opens that example (the site's Example programs page
+           links each row so). The path is kept only as src/exampleLink.ts EXAMPLE_LINK_RE / _MAX allow (plain names,
+           .py or .evnblocks; no backslash, as this is a template literal; test_web_firstrun.js D holds the two equal) and handed over as the default of a made-up
+           language override, as [evn-dev] is; the extension opens it only when it is one of its own examples. */
+        var evnOpen = {};
+        var example = query.get('example') || hash.get('example');
+        if (example && example.length <= 200 && /^[0-9A-Za-z_][0-9A-Za-z_-]*([/][0-9A-Za-z_][0-9A-Za-z_-]*)*[.](py|evnblocks)$/.test(example)) {
+            evnOpen['evn.web.openExample'] = example;
+        }
+        config.configurationDefaults = { 'workbench.startupEditor': 'none', '[evn-dev]': evnDev, '[evn-open]': evnOpen };
         void origin;
         /* The IDE's own service worker (docs/curriculum/OFFLINE_DESIGN.md §8.2): sw.js, scoped to this folder, caches
            the workbench and the extension host's files so a reload works offline. ?evn-sw=off (or a kill-switch build,

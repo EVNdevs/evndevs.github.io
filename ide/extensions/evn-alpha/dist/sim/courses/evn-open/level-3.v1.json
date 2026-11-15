@@ -1,0 +1,172 @@
+{
+ "format": "evn-course/1",
+ "id": "evn-open-3",
+ "challenge": "evn-open",
+ "level": 3,
+ "version": 1,
+ "module": "G12.4",
+ "title": "EVN Open practice · Level 3: A shifted start and a push",
+ "brief": "Practice for the EVN Open capstone (G12.4): never a capstone level, which your teacher witnesses on your own option's task. The course fixes one example set of approved requirements. R1 (headline): the whole robot in the green goal. R2 (safety): never touch a wall or a block, and never enter the red crossing. R3: the goal within 20 s. R4: square as the whole robot first fits in the goal (the run ends there, so square up before it): heading within 10 deg of east. A run that breaks R2 scores 0 and fails the level, whatever else it did; any other run scores 25 for each requirement it meets. A requirement is met over the level when it holds on at least 80 % of the runs (R2 on every run). Level 3: ten runs from a shifted start (+-40 mm, +-6 deg), each with one push the course draws: at 2 to 8 s, 50 to 100 mNs, 100 mm ahead of the axle, to the left or the right: a kick that turns the robot (one holding still on its motors turns about 0.5, 1.5 or 3 deg). Pass: no run breaks R2, and R1, R3 and R4 each hold on at least 8 of the 10 runs; a run that stops safely after the push (no breach) misses R1 and is allowed. Par: 16 s.",
+ "field": {
+  "arena": {
+   "size": [
+    2400,
+    1200
+   ],
+   "startBox": [
+    100,
+    150,
+    400,
+    450
+   ],
+   "goal": [
+    2000,
+    150,
+    2300,
+    500
+   ],
+   "obstacles": [
+    {
+     "name": "blockA",
+     "x": 800,
+     "y": 350,
+     "w": 200,
+     "d": 700
+    },
+    {
+     "name": "blockB",
+     "x": 1500,
+     "y": 850,
+     "w": 200,
+     "d": 700
+    }
+   ],
+   "areas": [
+    {
+     "name": "crossing",
+     "rect": [
+      1000,
+      0,
+      1300,
+      120
+     ],
+     "paint": "red",
+     "noGo": true
+    }
+   ],
+   "wallH": 100,
+   "wallT": 20,
+   "obstacleH": 150
+  },
+  "random": [
+   {
+    "name": "pushAt",
+    "draw": "uniform-v1",
+    "min": 2,
+    "max": 8,
+    "step": 0.5
+   },
+   {
+    "name": "pushMNs",
+    "draw": "uniform-v1",
+    "min": 50,
+    "max": 100,
+    "step": 25
+   },
+   {
+    "name": "pushDir",
+    "draw": "choice-v1",
+    "of": [
+     90,
+     -90
+    ]
+   }
+  ]
+ },
+ "robot": {
+  "rule": "learner"
+ },
+ "start": {
+  "nominal": {
+   "x": 230,
+   "y": 300,
+   "heading": 0
+  },
+  "vary": {
+   "xy": 40,
+   "heading": 6
+  },
+  "draw": "uniform-square-v1"
+ },
+ "runs": {
+  "min": 1,
+  "max": 20,
+  "default": 5,
+  "fixed": 10
+ },
+ "kernel": {
+  "name": "pointToPoint",
+  "limitS": 60,
+  "goal": "footprintInside",
+  "final": "runEnd"
+ },
+ "dist": {
+  "events": [
+   {
+    "at": {
+     "$": "pushAt"
+    },
+    "kind": "impulse",
+    "mNs": {
+     "$": "pushMNs"
+    },
+    "dir": {
+     "$": "pushDir"
+    },
+    "at_mm": 100
+   }
+  ]
+ },
+ "constants": {
+  "par": 16,
+  "tmax": 20,
+  "square": 10
+ },
+ "score": {
+  "run": "if(touches > 0 | noGoEntries > 0, 0, 25 + if(reached, 25, 0) + if(reached & time <= tmax, 25, 0) + if(reached & abs(wrap180(endHeading)) <= square, 25, 0))",
+  "values": {
+   "breaches": {
+    "value": "count(r in runs: r.touches > 0 | r.noGoEntries > 0)",
+    "unit": "runs"
+   },
+   "goal": {
+    "value": "count(r in runs: r.reached)",
+    "unit": "runs"
+   },
+   "inTime": {
+    "value": "count(r in runs: r.reached & r.time <= tmax)",
+    "unit": "runs"
+   },
+   "squareIn": {
+    "value": "count(r in runs: r.reached & abs(wrap180(r.endHeading)) <= square)",
+    "unit": "runs"
+   },
+   "met": {
+    "value": "if(breaches == 0, 1, 0) + if(goal >= 0.8 * n, 1, 0) + if(inTime >= 0.8 * n, 1, 0) + if(squareIn >= 0.8 * n, 1, 0)",
+    "unit": "of 4"
+   }
+  },
+  "summary": "round(sum(r in runs: r.points) / n, 1)"
+ },
+ "pass": "breaches == 0 & goal >= 0.8 * n & inTime >= 0.8 * n & squareIn >= 0.8 * n",
+ "sources": [
+  {
+   "doc": "docs/curriculum/G12.md",
+   "where": "G12.4 Capstone: EVN Open - the level table (60 % of the approved requirements, the headline among them; the Wilson 95 % lower bound at 60 % over n >= 20; every shall on 8 of 10 with a fault survived or safely stopped) and the safety gate (a breach scores 0 and fails the level)"
+  },
+  {
+   "doc": "docs/OPEN_QUESTIONS.md",
+   "where": "OQ 124, ruled (c): practice only now, a new practice level no published page solves later - this course is that level"
+  }
+ ]
+}

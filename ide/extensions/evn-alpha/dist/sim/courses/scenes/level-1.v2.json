@@ -1,0 +1,75 @@
+{
+  "format": "evn-course/1",
+  "id": "corridor",
+  "challenge": "scenes",
+  "level": 1,
+  "version": 2,
+  "module": "G8.3",
+  "title": "Scene · Ten-cell corridor",
+  "brief": "A straight corridor of ten 280 mm cells: 268 mm clear, 36 mm a side for the class robot. Each run scores 100 if the robot never touches a wall and 0 if it does; the score is the mean of the runs.",
+  "field": {
+    "arena": {
+      "size": [
+        2788,
+        268
+      ],
+      "startBox": [
+        0,
+        0,
+        268,
+        268
+      ],
+      "goal": null,
+      "obstacles": [],
+      "wallH": 100,
+      "wallT": 12,
+      "obstacleH": 100
+    }
+  },
+  "robot": {
+    "rule": "learner"
+  },
+  "start": {
+    "nominal": {
+      "x": 134,
+      "y": 134,
+      "heading": 0
+    },
+    "vary": {
+      "xy": 0,
+      "heading": 0
+    },
+    "draw": "uniform-square-v1"
+  },
+  "runs": {
+    "min": 1,
+    "max": 20,
+    "default": 5,
+    "fixed": null
+  },
+  "kernel": {
+    "name": "pointToPoint",
+    "limitS": 60,
+    "goal": "footprintInside"
+  },
+  "constants": {},
+  "score": {
+    "run": "if(touches == 0, 100, 0)",
+    "summary": "round(sum(r in runs: r.points) / count(r in runs: true), 1)"
+  },
+  "pass": null,
+  "sources": [
+    {
+      "doc": "docs/curriculum/G08.md",
+      "where": "G8.3.2 Sim: a straight 10-cell corridor; 12 mm walls 100 mm high, cells 280 mm centre to centre (OQ 305, owner 2026-11-08: 280 mm cells)"
+    },
+    {
+      "doc": "docs/COURSE_CONTENT_DESIGN.md",
+      "where": "§2: a scene is a small arena with pass null"
+    },
+    {
+      "doc": "docs/session/2026-11-08_cc2/owner_items.md",
+      "where": "OQ 305: the cell, 280 mm (half clear 134)"
+    }
+  ]
+}

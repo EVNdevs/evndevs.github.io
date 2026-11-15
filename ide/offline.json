@@ -1,7 +1,7 @@
 {
  "format": 1,
- "version": "0.2.77+e49d821325c3",
- "extension": "0.2.77",
+ "version": "0.2.78+ef6f8ab443cb",
+ "extension": "0.2.78",
  "workbench": {
   "version": "1.143.0",
   "commit": "2d0b7506a36c1d6db9a466440131a8e01eab2289"
@@ -17,15 +17,15 @@
   },
   "README.txt": {
    "size": 965,
-   "sha256": "9d21bc1408d6907a43fa959eface6bf8709cf4401d0f0256a766a1acb0c73fa9"
+   "sha256": "ac798f876ae9a738d5bb947371c2369f6a04b10dc07768afeeb807ee0f89cfd4"
   },
   "extensions/evn-alpha/LICENSE": {
-   "size": 1114,
-   "sha256": "5d5a02840ed4f48c321ff708931bf515e3126764fc67176f05f3fdc1b54c89e1"
+   "size": 1093,
+   "sha256": "f8d6abc93e78f1bd68db31298489ebdb292986cae7df5e5bcbca03f3b5928a39"
   },
   "extensions/evn-alpha/THIRD_PARTY_NOTICES.md": {
-   "size": 32771,
-   "sha256": "1fdd73ac03c5814df8f76dc05a6c6048ab4059f87fd3421caa3e0288356c0cae"
+   "size": 38784,
+   "sha256": "af6b8c4559aee568306f0c153317b43975a756d5a8e997559c9aeb70cf503621"
   },
   "extensions/evn-alpha/dist/nb/kernel.node.js": {
    "size": 117161,
@@ -36,20 +36,828 @@
    "sha256": "2763d30e0e4f4d99631d897c97c946b8f454f73ca1259ae98a47ab70bc2480ca"
   },
   "extensions/evn-alpha/dist/perf/perfpage.js": {
-   "size": 248639,
-   "sha256": "5d89fab4a086793afa5c74cfb1fc4e97ea84d22b13939708b005a8c1f41e7445"
+   "size": 103364,
+   "sha256": "5688ebcab4f975b10de271474ff034766919744f4b1561933139b2954b8f683c"
   },
   "extensions/evn-alpha/dist/sim/LICENSE-pdfjs.txt": {
    "size": 10174,
    "sha256": "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594"
   },
   "extensions/evn-alpha/dist/sim/camworker.js": {
-   "size": 37531,
-   "sha256": "26ae3b3bf328fbb7d877eb9203b930e1bd1066521bdd2ccdfb9b78ce8620282c"
+   "size": 45579,
+   "sha256": "c7b6c4abd3978bc37d2d01178acc2a1772fad4cc79abeef4086440d872c35630"
   },
   "extensions/evn-alpha/dist/sim/challengeworker.js": {
-   "size": 931698,
-   "sha256": "5c356aa8703c82c0939a410f7b742a7d8f862e4a448a5cebafc2a53c2dbf1bda"
+   "size": 1171477,
+   "sha256": "67e8c59b397a9d952fed9ad32228efe2b7587a1330b04959a31648e19873167c"
+  },
+  "extensions/evn-alpha/dist/sim/courses/arm-shootout/index.json": {
+   "size": 2224,
+   "sha256": "ad797e02f3015b4a654ee57ae7554da82b66bc2f73d17c103b330c7a522b700d"
+  },
+  "extensions/evn-alpha/dist/sim/courses/arm-shootout/level-1.v1.json": {
+   "size": 6309,
+   "sha256": "630f5c74868b0e27010d18096752f3e58d83d7deeb6d88ca0e05a4ace3d7d60f"
+  },
+  "extensions/evn-alpha/dist/sim/courses/arm-shootout/level-1.v2.json": {
+   "size": 6417,
+   "sha256": "303133cc165666ae3ddb48fa433028e90f7d5186e0a73d547876272c2f2129cc"
+  },
+  "extensions/evn-alpha/dist/sim/courses/arm-shootout/level-2.v1.json": {
+   "size": 6368,
+   "sha256": "0c591dc29f03e543067906dec9eb607f5e15a3ced22f52c0d3bb0b246edd16a6"
+  },
+  "extensions/evn-alpha/dist/sim/courses/arm-shootout/level-2.v2.json": {
+   "size": 6476,
+   "sha256": "5d8273ad20bfc53da14e75926f78a31c6c99ed014ad39b9a57a3a272d4e028f7"
+  },
+  "extensions/evn-alpha/dist/sim/courses/arm-shootout/level-3.v1.json": {
+   "size": 8258,
+   "sha256": "5fb8d0bbe7a415ee20b3c053aca73928dbe142e852962187f3a84c934ae1d8d7"
+  },
+  "extensions/evn-alpha/dist/sim/courses/arm-shootout/level-3.v2.json": {
+   "size": 8383,
+   "sha256": "36c4dfba97632516b4196b81b7e86b2a4f771907549c7827a1936c7dd4f1bc95"
+  },
+  "extensions/evn-alpha/dist/sim/courses/autonomous-courier/index.json": {
+   "size": 1146,
+   "sha256": "b442214b86386448b55ca6dd64355258d145120e9378992da5e0b417524f81b8"
+  },
+  "extensions/evn-alpha/dist/sim/courses/autonomous-courier/level-1.v1.json": {
+   "size": 8131,
+   "sha256": "c346a16558077fdee0b68ed0ab50865dee86b78cf57c4e01d1af4e46c1ee71a6"
+  },
+  "extensions/evn-alpha/dist/sim/courses/autonomous-courier/level-2.v1.json": {
+   "size": 11464,
+   "sha256": "5a219aa53d6b66545bd2149aa0c7ab5d70420e0fb24882c25abffb844657c33a"
+  },
+  "extensions/evn-alpha/dist/sim/courses/autonomous-courier/level-3.v1.json": {
+   "size": 12090,
+   "sha256": "bb3fc562fe8c1370ffee2dd46353e7d236a221eda7ac65cc1ac7799b00dd93c9"
+  },
+  "extensions/evn-alpha/dist/sim/courses/balancer/index.json": {
+   "size": 793,
+   "sha256": "998e4d2a7437a6da3f36b647cb26c66ce7fb6863eb731965a3181e025ed4b2cb"
+  },
+  "extensions/evn-alpha/dist/sim/courses/balancer/level-1.v1.json": {
+   "size": 4267,
+   "sha256": "99727e0a808234e322e792be5e1edd6c1fe4c9367b30e5359de05a08d1387606"
+  },
+  "extensions/evn-alpha/dist/sim/courses/balancer/level-2.v1.json": {
+   "size": 6685,
+   "sha256": "3f19445719be67f9afe3b2fa9ee8b51e4a454ba0a3ead1be3354f22ee7e9babf"
+  },
+  "extensions/evn-alpha/dist/sim/courses/ball-chaser-bench/index.json": {
+   "size": 789,
+   "sha256": "ed1f0afdb24c1268cfa940e6a5fea002120e3cec6f58fb3bef3f295505824464"
+  },
+  "extensions/evn-alpha/dist/sim/courses/ball-chaser-bench/level-1.v1.json": {
+   "size": 2615,
+   "sha256": "8e18e805f7afa58d648dad29bbeceac6758804078cf5ccc61a48e9d4a31eb5ac"
+  },
+  "extensions/evn-alpha/dist/sim/courses/ball-chaser-bench/level-2.v1.json": {
+   "size": 3454,
+   "sha256": "52af040b1932186bba8235a7b502fdcb037b7f1f65bb88625a366c43cc39c291"
+  },
+  "extensions/evn-alpha/dist/sim/courses/ball-chaser/index.json": {
+   "size": 753,
+   "sha256": "b5b183cde0756679f00e6adf9073159f413c6fd6f88601e6e2e2de4679b7805a"
+  },
+  "extensions/evn-alpha/dist/sim/courses/ball-chaser/level-1.v1.json": {
+   "size": 2418,
+   "sha256": "8decb13d3e50692a0b267d7c0c698c6db049e0fcae965e766a873e28072dd2e0"
+  },
+  "extensions/evn-alpha/dist/sim/courses/ball-chaser/level-2.v1.json": {
+   "size": 3208,
+   "sha256": "040902c1859a755f21c2a6ab6d28a3e0b588c8d4e7e9965c5ef8b3d631b0ed79"
+  },
+  "extensions/evn-alpha/dist/sim/courses/blind-navigator/index.json": {
+   "size": 1121,
+   "sha256": "0b8976d815885a3ad2a3b025b55f5e550e6ed8c3ed7b2145bc1c4c9cec44c26f"
+  },
+  "extensions/evn-alpha/dist/sim/courses/blind-navigator/level-1.v1.json": {
+   "size": 5242,
+   "sha256": "b87ab2b710c6e86ea1a23da4f27d4bbcc95dd3a4a95ea47dd5160f3c944fd789"
+  },
+  "extensions/evn-alpha/dist/sim/courses/blind-navigator/level-2.v1.json": {
+   "size": 4797,
+   "sha256": "0e1c3315450ba684d8a742b1a08fa25f9485e76136870e5f630446ad14f0135d"
+  },
+  "extensions/evn-alpha/dist/sim/courses/blind-navigator/level-3.v1.json": {
+   "size": 5911,
+   "sha256": "8f21dfa89abb8e962d6cf550b3a25d54703941c83dcdffb674795b9257745f4e"
+  },
+  "extensions/evn-alpha/dist/sim/courses/bus-route/index.json": {
+   "size": 1046,
+   "sha256": "817a2a93a0721e51f82504c2bd70bbd574c3b8307cf2af52d5ae10ed32ede42d"
+  },
+  "extensions/evn-alpha/dist/sim/courses/bus-route/level-1.v1.json": {
+   "size": 3026,
+   "sha256": "787d32043d09745c0905918a39c6a38bdb96cd2a28d805069f1217e335a22a7a"
+  },
+  "extensions/evn-alpha/dist/sim/courses/bus-route/level-2.v1.json": {
+   "size": 3333,
+   "sha256": "ae7044377c8761688befda2fcb52fde398c425c1c6e33baf902a601bceb1d956"
+  },
+  "extensions/evn-alpha/dist/sim/courses/bus-route/level-3.v1.json": {
+   "size": 2937,
+   "sha256": "beadfefcb9b5742d20c9ae33375a4330c6928cc631387e7ed30d7453165ed71c"
+  },
+  "extensions/evn-alpha/dist/sim/courses/colour-sorter/index.json": {
+   "size": 1088,
+   "sha256": "55071f24a9e9f37786e15494a9bf44ec39d1cd1116af49728098f73fb2e1ea43"
+  },
+  "extensions/evn-alpha/dist/sim/courses/colour-sorter/level-1.v1.json": {
+   "size": 7593,
+   "sha256": "f4bf6dcf9c8f6d8f2266760cc8f8dbdcd13b61956fff25dcce1305f87aa3b9db"
+  },
+  "extensions/evn-alpha/dist/sim/courses/colour-sorter/level-2.v1.json": {
+   "size": 9968,
+   "sha256": "73f6531577d8760b1dd1dfaff8f492a35e9e8887cecf47661b85466f988593d2"
+  },
+  "extensions/evn-alpha/dist/sim/courses/colour-sorter/level-3.v1.json": {
+   "size": 10140,
+   "sha256": "580f69275cd194b8a64aa537d8d75a79935161a88f31d588378dda0a91ec43ed"
+  },
+  "extensions/evn-alpha/dist/sim/courses/cruise-control/index.json": {
+   "size": 767,
+   "sha256": "1198ae63c3f0d055cdd114ee4ee2238adf13e51307b616c74463b0f56aad202d"
+  },
+  "extensions/evn-alpha/dist/sim/courses/cruise-control/level-1.v1.json": {
+   "size": 3258,
+   "sha256": "db01c5187925065806374745054a507642714638a7a57c8dda6c4705416f5b43"
+  },
+  "extensions/evn-alpha/dist/sim/courses/cruise-control/level-3.v1.json": {
+   "size": 3951,
+   "sha256": "3f24a6d3689b147d5d425b55f42bc1d4fb052e224af0432af60ddc9000745a3f"
+  },
+  "extensions/evn-alpha/dist/sim/courses/disturbance-gauntlet/index.json": {
+   "size": 2558,
+   "sha256": "1d57194f22ea7b9ce0c6aae849bcdf37b32f37075e6923445a05b425d61ab1b2"
+  },
+  "extensions/evn-alpha/dist/sim/courses/disturbance-gauntlet/level-1.v1.json": {
+   "size": 5073,
+   "sha256": "b9e2fe5f0717087036fed71b885cd580986881e3e33f551ddd314fa4562e08d2"
+  },
+  "extensions/evn-alpha/dist/sim/courses/disturbance-gauntlet/level-1.v2.json": {
+   "size": 5517,
+   "sha256": "55c8360f4662ff964495daec9ef525be3dbcfc0cddf5e313d2bade091108392e"
+  },
+  "extensions/evn-alpha/dist/sim/courses/disturbance-gauntlet/level-1.v3.json": {
+   "size": 5625,
+   "sha256": "777d4dce54d4036bd5c617178230866033edbb66348823ae3a1d0ac929bb2dc3"
+  },
+  "extensions/evn-alpha/dist/sim/courses/disturbance-gauntlet/level-2.v1.json": {
+   "size": 5427,
+   "sha256": "23231b93bdabb941868a8b881c724f372f471163f47d518a98f33db5d2e37c76"
+  },
+  "extensions/evn-alpha/dist/sim/courses/disturbance-gauntlet/level-2.v2.json": {
+   "size": 5916,
+   "sha256": "c1c89190363bb742ded97a3393f0909964150ec0f7c5c5210fa722039f65903a"
+  },
+  "extensions/evn-alpha/dist/sim/courses/disturbance-gauntlet/level-3.v1.json": {
+   "size": 4997,
+   "sha256": "4a9608dbfb02c1b3ee377c122509f7e55ecd05e26dd5fb6b90e6d124ca6c5909"
+  },
+  "extensions/evn-alpha/dist/sim/courses/disturbance-gauntlet/level-3.v2.json": {
+   "size": 5441,
+   "sha256": "414f27b4dc774a1290be4f475c742880a820127cc0e8667ed5512fe2c84aab41"
+  },
+  "extensions/evn-alpha/dist/sim/courses/drag-race/index.json": {
+   "size": 430,
+   "sha256": "000fb5711eb21f5fcd25607c376c6b93fba4b5ff92bb16f9b9348a5cd02f5237"
+  },
+  "extensions/evn-alpha/dist/sim/courses/drag-race/level-1.v1.json": {
+   "size": 2107,
+   "sha256": "aaaa451eef4a1069a804da9bca007e690d43e6de7827a76b8fc09fdfca13b346"
+  },
+  "extensions/evn-alpha/dist/sim/courses/evn-cup/index.json": {
+   "size": 1071,
+   "sha256": "dd3ea83fbbe6a1696f29c0ab4e1e086235d73477b736c122489e139e361c5818"
+  },
+  "extensions/evn-alpha/dist/sim/courses/evn-cup/level-1.v1.json": {
+   "size": 3919,
+   "sha256": "9f29cf5210083381ab991cf0643bb34b1489340b58ca0bdf72c4573ca5b1dd8a"
+  },
+  "extensions/evn-alpha/dist/sim/courses/evn-cup/level-2.v1.json": {
+   "size": 7911,
+   "sha256": "442b478c05bab44c3e8178605bfa0861cff35b92ab47024e95e83f46f3010ac8"
+  },
+  "extensions/evn-alpha/dist/sim/courses/evn-cup/level-3.v1.json": {
+   "size": 8116,
+   "sha256": "e98f8080e0569523151edc14ef62faaf34355a7367eebedcc11e417b772e7b65"
+  },
+  "extensions/evn-alpha/dist/sim/courses/evn-open-car/index.json": {
+   "size": 1162,
+   "sha256": "e2d6c694711ae69b866f0355db86a964aa9cf0e3a6152ce95addc888c01b5459"
+  },
+  "extensions/evn-alpha/dist/sim/courses/evn-open-car/level-1.v1.json": {
+   "size": 6955,
+   "sha256": "7694a56b55f04545fbd3328f9551440a23e739cd865e780b750377aed8aef4fd"
+  },
+  "extensions/evn-alpha/dist/sim/courses/evn-open-car/level-2.v1.json": {
+   "size": 7238,
+   "sha256": "ed195fb04552dc5a96b779ed110df92c81ccc202a0d1d5f6be25231b7f5d5685"
+  },
+  "extensions/evn-alpha/dist/sim/courses/evn-open-car/level-3.v1.json": {
+   "size": 7691,
+   "sha256": "7b83a9c1e0d933bed2d0b6d4f394dc0096ab92e3094319b69fb42c66c168fa65"
+  },
+  "extensions/evn-alpha/dist/sim/courses/evn-open/index.json": {
+   "size": 1119,
+   "sha256": "9848dc416eacbf7a2571167f13c25e6eb83a6c03dcf45f87ca60e6a02f644924"
+  },
+  "extensions/evn-alpha/dist/sim/courses/evn-open/level-1.v1.json": {
+   "size": 3522,
+   "sha256": "e8edf358aca6bde43a99c536d9ff835df11d94b14c96c17831d745417dee5243"
+  },
+  "extensions/evn-alpha/dist/sim/courses/evn-open/level-2.v1.json": {
+   "size": 3833,
+   "sha256": "3ccd948d50338ee2a5491f21266e4e354532cbc05af6e8f44fe908b9fb73ff78"
+  },
+  "extensions/evn-alpha/dist/sim/courses/evn-open/level-3.v1.json": {
+   "size": 4365,
+   "sha256": "8e69742315658c1333952cb53853f37bb16acd17142fd3d17f27c4c6c10bad55"
+  },
+  "extensions/evn-alpha/dist/sim/courses/full-rescue-line/index.json": {
+   "size": 1067,
+   "sha256": "9c6f0c8bcbc048439c841390bf447c387194d2ac937a87188e7768cb042027b3"
+  },
+  "extensions/evn-alpha/dist/sim/courses/full-rescue-line/level-1.v1.json": {
+   "size": 6093,
+   "sha256": "9dcfee300d0b32fc6d2a4f9e31e3cfc4902f54a82e9c6aa999b0cdd56514f837"
+  },
+  "extensions/evn-alpha/dist/sim/courses/full-rescue-line/level-2.v1.json": {
+   "size": 7669,
+   "sha256": "b37c511d841fcd43cf99fc7d327b543c51cf8b69c63a538f05d2cfa6ba1c67b1"
+  },
+  "extensions/evn-alpha/dist/sim/courses/full-rescue-line/level-3.v1.json": {
+   "size": 8445,
+   "sha256": "d736615a18626b92527cf09d4c2d75113c5ed243e6a59dbb67f00a2ff6f697f2"
+  },
+  "extensions/evn-alpha/dist/sim/courses/hill-climb-and-push/index.json": {
+   "size": 1143,
+   "sha256": "cf490f2366950d9a554fdb050d5794b58255d805a08a3590fba3d9f6ce8a3804"
+  },
+  "extensions/evn-alpha/dist/sim/courses/hill-climb-and-push/level-1.v1.json": {
+   "size": 3531,
+   "sha256": "7fde7cdbecebe4697c10095b3d74e16f8ce11d1202c8e4175f9895f3358a888c"
+  },
+  "extensions/evn-alpha/dist/sim/courses/hill-climb-and-push/level-2.v1.json": {
+   "size": 3649,
+   "sha256": "bfbf74e3d36c17655689665c9def9e06d90d172615d7d71f7488720e4fa01888"
+  },
+  "extensions/evn-alpha/dist/sim/courses/hill-climb-and-push/level-3.v1.json": {
+   "size": 3511,
+   "sha256": "e5263652870bfb8ede33c8d8da8b2d687531552ad12a0f07c82b9793c078add2"
+  },
+  "extensions/evn-alpha/dist/sim/courses/index.json": {
+   "size": 1058,
+   "sha256": "134a76dc9eed6262fff4ab70e3a2d8803332b03474c9d81d26cedfc4d3dd5050"
+  },
+  "extensions/evn-alpha/dist/sim/courses/lane-keeper-bench/index.json": {
+   "size": 1110,
+   "sha256": "6b5479f54c1d0c2f35292880a398522dfe5afcecf7a8d881c1f3813077fa1a08"
+  },
+  "extensions/evn-alpha/dist/sim/courses/lane-keeper-bench/level-1.v1.json": {
+   "size": 3300,
+   "sha256": "532180c88c94622e99cfba43092666b487ae4466377cad0b190c8e49c83a3551"
+  },
+  "extensions/evn-alpha/dist/sim/courses/lane-keeper-bench/level-2.v1.json": {
+   "size": 4175,
+   "sha256": "8b35e654f7c5b027d2421027bab352e1b2b761186ebdda4b247b61f2ecc36014"
+  },
+  "extensions/evn-alpha/dist/sim/courses/lane-keeper-bench/level-3.v1.json": {
+   "size": 4329,
+   "sha256": "9d84ca8bfb70ce48e5666f9525def8da895bbc899768c7024d5b6faea2d950a0"
+  },
+  "extensions/evn-alpha/dist/sim/courses/lane-keeper/index.json": {
+   "size": 1368,
+   "sha256": "6327fc16b3bc0047ddc60c71302e0f1b34f7a4aefaf2d5b1fe2f0c3d2036fc4b"
+  },
+  "extensions/evn-alpha/dist/sim/courses/lane-keeper/level-1.v1.json": {
+   "size": 2562,
+   "sha256": "62a7c011a7873ecef6a0d297b7bbb57208a50d75185f8fbe956976c7a32c67a2"
+  },
+  "extensions/evn-alpha/dist/sim/courses/lane-keeper/level-1.v2.json": {
+   "size": 3275,
+   "sha256": "57ed90da2101b64b0e97619855068c525cdb4d1b56e7cc7044a0fae9caa5eb68"
+  },
+  "extensions/evn-alpha/dist/sim/courses/lane-keeper/level-2.v1.json": {
+   "size": 4133,
+   "sha256": "ef6151204988f02ba317606c3174a7991c67e9b33a1b73d785af305783b89226"
+  },
+  "extensions/evn-alpha/dist/sim/courses/lane-keeper/level-3.v1.json": {
+   "size": 4216,
+   "sha256": "d8ae1e53e7d8ed854de2f0cf74d85ce70e75602e66cf077e66c4cc5fd4749682"
+  },
+  "extensions/evn-alpha/dist/sim/courses/line-grand-prix/index.json": {
+   "size": 773,
+   "sha256": "b7a37e2d6d9cc50623b1eb92de67934e7db825e9766acef1b0307a86abc44cea"
+  },
+  "extensions/evn-alpha/dist/sim/courses/line-grand-prix/level-1.v1.json": {
+   "size": 3853,
+   "sha256": "216dbedc4ff127868829d2b3043953a66d02c9837010c4e31f3e0ac13e7cb7d0"
+  },
+  "extensions/evn-alpha/dist/sim/courses/line-grand-prix/level-2.v1.json": {
+   "size": 4067,
+   "sha256": "6aaed5598eddd69c9b8c2232163e7fa40cddc37d5f6908ab1908fdc611cd5fff"
+  },
+  "extensions/evn-alpha/dist/sim/courses/line-time-trial/index.json": {
+   "size": 1104,
+   "sha256": "aafbc9863b3891817dc450058f6be2e1ae572ea03c6fbedf88ac25c64629eab6"
+  },
+  "extensions/evn-alpha/dist/sim/courses/line-time-trial/level-1.v1.json": {
+   "size": 3701,
+   "sha256": "46be7810b127b2cafed5e6465c0e8eec89e66730fc374d34eb1cdd9b5e80375d"
+  },
+  "extensions/evn-alpha/dist/sim/courses/line-time-trial/level-2.v1.json": {
+   "size": 6939,
+   "sha256": "b16977ba6d082a6611c4ccb1ccb1a44dc7d9d61d517c848699a662760b682123"
+  },
+  "extensions/evn-alpha/dist/sim/courses/line-time-trial/level-3.v1.json": {
+   "size": 4958,
+   "sha256": "b1f6dfd2f2b33a96c60a1e7e0092bf2ef21e3ee3d86a5e8d2b0908603cd8750f"
+  },
+  "extensions/evn-alpha/dist/sim/courses/maze-mapper/index.json": {
+   "size": 1402,
+   "sha256": "4a5630fcd204a68093d9c42b5bf9b40a2457333727f4904741416d6e7c1cfd05"
+  },
+  "extensions/evn-alpha/dist/sim/courses/maze-mapper/level-1.v1.json": {
+   "size": 2484,
+   "sha256": "85c20ee44f813946d28f88086395d1fcd8b45649edbeee504040826f11cd343f"
+  },
+  "extensions/evn-alpha/dist/sim/courses/maze-mapper/level-1.v2.json": {
+   "size": 2548,
+   "sha256": "fdf19a899fcd577b328ec0303d07a2fb6e4d3f180d7c6df4468244c54f76bca7"
+  },
+  "extensions/evn-alpha/dist/sim/courses/maze-mapper/level-2.v1.json": {
+   "size": 2307,
+   "sha256": "38cf30036f2157a0034057a3e0239237fb213bb436a8d23bb2607f3102430f0d"
+  },
+  "extensions/evn-alpha/dist/sim/courses/maze-mapper/level-3.v1.json": {
+   "size": 2595,
+   "sha256": "072837e8b7f92a55a082c899e9c869ba860f8014ebbc65a45a2e919142215475"
+  },
+  "extensions/evn-alpha/dist/sim/courses/maze-runner/index.json": {
+   "size": 2004,
+   "sha256": "7490cbb58ba7d2673266f88c378308dd5941cbaa74f78f9defc57b6bb4a552ee"
+  },
+  "extensions/evn-alpha/dist/sim/courses/maze-runner/level-1.v1.json": {
+   "size": 1894,
+   "sha256": "7c2bb9d055ef66a645c109b3e7ac1cd97978a2f22a15f0cf5300ac3cdd1d45ca"
+  },
+  "extensions/evn-alpha/dist/sim/courses/maze-runner/level-1.v2.json": {
+   "size": 1930,
+   "sha256": "51f00bdf4732048fe292feac0c180e426c867790af959e035b2910ac69652cbd"
+  },
+  "extensions/evn-alpha/dist/sim/courses/maze-runner/level-2.v1.json": {
+   "size": 2161,
+   "sha256": "c68d5e794577c826e5a0a5afd3612f1f62ea7cb413c9c6429eb588c1ebb49b99"
+  },
+  "extensions/evn-alpha/dist/sim/courses/maze-runner/level-2.v2.json": {
+   "size": 2197,
+   "sha256": "ab8e2292acb9944e02c723819cd07cafd9c755dcfef4d885dda6c1a5445a58e3"
+  },
+  "extensions/evn-alpha/dist/sim/courses/maze-runner/level-3.v1.json": {
+   "size": 2458,
+   "sha256": "14d61029905ee9807b0cdded14d6179f477d5ebafd340d96c1851c3cac354ba1"
+  },
+  "extensions/evn-alpha/dist/sim/courses/maze-runner/level-3.v2.json": {
+   "size": 2494,
+   "sha256": "005248ec67d0136e78fbff9ad258fc46e6f1244f69eec0efa6652bb6b0efd8ba"
+  },
+  "extensions/evn-alpha/dist/sim/courses/measure-camera/index.json": {
+   "size": 753,
+   "sha256": "99cb1d2019383aa262f3bcc60840885c919396d8ebeb4db62aac9328f8b46091"
+  },
+  "extensions/evn-alpha/dist/sim/courses/measure-camera/level-1.v1.json": {
+   "size": 4255,
+   "sha256": "d99b6da7d5eab46fa3764d04609d9688356a8894679259a9aa6a7c2e14d549fa"
+  },
+  "extensions/evn-alpha/dist/sim/courses/measure-camera/level-2.v1.json": {
+   "size": 6413,
+   "sha256": "29cb4e6af9a891957a934e192f672ca5735b630f5084d730d864e239c36308be"
+  },
+  "extensions/evn-alpha/dist/sim/courses/mini-mission/index.json": {
+   "size": 1095,
+   "sha256": "d62e6c62cba203bbe241a8896fccac06a7e6692f98db064daa62f3d869e685cd"
+  },
+  "extensions/evn-alpha/dist/sim/courses/mini-mission/level-1.v1.json": {
+   "size": 4081,
+   "sha256": "67a9f2c51b2b85dcdc4a79065ea1c27fc6e1a38cb7a060bceccc82ef9ad0ca97"
+  },
+  "extensions/evn-alpha/dist/sim/courses/mini-mission/level-2.v1.json": {
+   "size": 5399,
+   "sha256": "7cc6596cca18f971f3939306e8cd2c0d200a2472a52d151dfe39d96c2477eb53"
+  },
+  "extensions/evn-alpha/dist/sim/courses/mini-mission/level-3.v1.json": {
+   "size": 7921,
+   "sha256": "3ddabba867fad2522475e52658a994b5047a78a004595fdc262b452f17fad1da"
+  },
+  "extensions/evn-alpha/dist/sim/courses/model-match/index.json": {
+   "size": 1399,
+   "sha256": "73caff45ffe7347144c6b8b9b6abaf6db7e88e187c24788ff70b0faedbf19dfc"
+  },
+  "extensions/evn-alpha/dist/sim/courses/model-match/level-1.v1.json": {
+   "size": 10660,
+   "sha256": "9ab6e7cd433af287383b7e46a797e59f089201262d989dd753068a06a1698439"
+  },
+  "extensions/evn-alpha/dist/sim/courses/model-match/level-1.v2.json": {
+   "size": 10768,
+   "sha256": "40fc6ccc9a2ec4bb66cd018e92367d88934bbdbeceb67e93d82f90d7c7d27291"
+  },
+  "extensions/evn-alpha/dist/sim/courses/model-match/level-2.v1.json": {
+   "size": 4267,
+   "sha256": "e31ed29a3f83b837d7f5fc7d3840cc040e0c1e4d8a8525008446d8c559c061db"
+  },
+  "extensions/evn-alpha/dist/sim/courses/model-match/level-2.v2.json": {
+   "size": 4375,
+   "sha256": "bb8c9d1f008bc73c7b9462e38dab61316a20dc3bf33a4d0ba026fc27a425cbc4"
+  },
+  "extensions/evn-alpha/dist/sim/courses/neighbourhood-delivery/index.json": {
+   "size": 816,
+   "sha256": "3b9626b3f32849cac1baec2fb569d8fd93ad4e0f3b0ea4c546bca93bade614d1"
+  },
+  "extensions/evn-alpha/dist/sim/courses/neighbourhood-delivery/level-1.v1.json": {
+   "size": 5448,
+   "sha256": "2058982b7bbd2d4d143b508ad8e5bdcf805fe0756027a07af378cf80bff5ad66"
+  },
+  "extensions/evn-alpha/dist/sim/courses/neighbourhood-delivery/level-2.v1.json": {
+   "size": 5997,
+   "sha256": "3b15ec2bc90c349d1e63dbb50add0e3da36eeaaf55d4d5bb2f617dd7a31bbf79"
+  },
+  "extensions/evn-alpha/dist/sim/courses/obstacle/index.json": {
+   "size": 1942,
+   "sha256": "b557b120eb3181093417287e3434945e56b25a50002f8bba0ba36f69a1943f13"
+  },
+  "extensions/evn-alpha/dist/sim/courses/obstacle/level-1.v1.json": {
+   "size": 1729,
+   "sha256": "2ba696621796e49c5d0f0600796af63efaeb26aff6585b156b74dd435a34d531"
+  },
+  "extensions/evn-alpha/dist/sim/courses/obstacle/level-1.v2.json": {
+   "size": 1726,
+   "sha256": "4d15c38b55d4ceb47fc54861cf7a484e33fb71cf6ea6bf85add05bf833a0810b"
+  },
+  "extensions/evn-alpha/dist/sim/courses/obstacle/level-2.v1.json": {
+   "size": 1824,
+   "sha256": "87993d3eeb84d39b2bc3d0a69afb5d5f4bb2064af7fb0ba163e605cc8d09b232"
+  },
+  "extensions/evn-alpha/dist/sim/courses/obstacle/level-2.v2.json": {
+   "size": 1821,
+   "sha256": "e5a627651f9679e3a7f95c5d9b98ce1f6724227d3c184493dc84885a215e8a02"
+  },
+  "extensions/evn-alpha/dist/sim/courses/obstacle/level-3.v1.json": {
+   "size": 2273,
+   "sha256": "95b767e45a56a9ee1c53143682a4238869da3aed6c313918ee509b217ef0f0bd"
+  },
+  "extensions/evn-alpha/dist/sim/courses/obstacle/level-3.v2.json": {
+   "size": 2270,
+   "sha256": "ee30cd2d7c20dc3a02f6fa58f9e145d6a5e224a096737c4b7aabb2a33a7035d5"
+  },
+  "extensions/evn-alpha/dist/sim/courses/perfect-parking/index.json": {
+   "size": 783,
+   "sha256": "f162334d5b9d6c89a7bc489670ef7ec48565024d78a7e0653eba2b9c172e88d5"
+  },
+  "extensions/evn-alpha/dist/sim/courses/perfect-parking/level-1.v1.json": {
+   "size": 3456,
+   "sha256": "6fba19224e0c795c833b1e413130a39748c84348aa7daa98cdf033d3ecea1cab"
+  },
+  "extensions/evn-alpha/dist/sim/courses/perfect-parking/level-2.v1.json": {
+   "size": 4351,
+   "sha256": "649320268960c5e82a96704552d0aa4d518fd6e25fb3ae62febededed03aa7d8"
+  },
+  "extensions/evn-alpha/dist/sim/courses/pick-and-place-bench/index.json": {
+   "size": 812,
+   "sha256": "ff6b921338b44dc9dd958ff53fe467186e8d2f0ab29cdeab0500c39028570bfc"
+  },
+  "extensions/evn-alpha/dist/sim/courses/pick-and-place-bench/level-2.v1.json": {
+   "size": 5655,
+   "sha256": "a9e32f3dfbe0312134aeaaf9baeb99eeb6564bb6aedfbd2b30a037ea2871ae96"
+  },
+  "extensions/evn-alpha/dist/sim/courses/pick-and-place-bench/level-3.v1.json": {
+   "size": 6245,
+   "sha256": "38c65bf72c80dc7e8ff91493dd5cad4055fbcf0897c60a38dafea3af1f882796"
+  },
+  "extensions/evn-alpha/dist/sim/courses/pick-and-place/index.json": {
+   "size": 1137,
+   "sha256": "38a641e70083bfd77f2de392d9ab40c5c7530a5ad3dfe8aa85d04481e8f62d9b"
+  },
+  "extensions/evn-alpha/dist/sim/courses/pick-and-place/level-1.v1.json": {
+   "size": 5369,
+   "sha256": "e7eae895fa0fb9d7d7f83fac1037f481b3dc1222010dad2f800041bf7da5b25f"
+  },
+  "extensions/evn-alpha/dist/sim/courses/pick-and-place/level-2.v1.json": {
+   "size": 5679,
+   "sha256": "a5ddf26fe2c21b41592f42449a8b89248c654b7ab508d9bf082f78e4b4ae61b4"
+  },
+  "extensions/evn-alpha/dist/sim/courses/pick-and-place/level-3.v1.json": {
+   "size": 6269,
+   "sha256": "2698619f3d29d6a8550a25190fe1722ef4512e69573f119c4749cf24fd147451"
+  },
+  "extensions/evn-alpha/dist/sim/courses/precision-stop/index.json": {
+   "size": 1112,
+   "sha256": "8db43367b503b78e943308c64bdef2c4aaa4625be90cef087ce616449d45c7ac"
+  },
+  "extensions/evn-alpha/dist/sim/courses/precision-stop/level-1.v1.json": {
+   "size": 2892,
+   "sha256": "5f32d9489ca29603af5a373a8c91ca3e3a5508f899c0b88affeaa9591c9a0a6d"
+  },
+  "extensions/evn-alpha/dist/sim/courses/precision-stop/level-2.v1.json": {
+   "size": 3812,
+   "sha256": "b5a666fb7f90b9c438d20824e870b91c8c3ee5dc79b73f08e26d4b8b35b030f6"
+  },
+  "extensions/evn-alpha/dist/sim/courses/precision-stop/level-3.v1.json": {
+   "size": 3728,
+   "sha256": "93e357e79445364bcc782ee4c993543e4b19d535b0a9c39ba065100ab85774af"
+  },
+  "extensions/evn-alpha/dist/sim/courses/rescue-line-lite/index.json": {
+   "size": 1114,
+   "sha256": "449292c78954f706721de59218551447f7aaff91be7d3bdf74e5829f845e736b"
+  },
+  "extensions/evn-alpha/dist/sim/courses/rescue-line-lite/level-1.v1.json": {
+   "size": 3922,
+   "sha256": "1c3859a7952801e2d1f220ee058635794c26f7b0e007cf3b316257270afc22c9"
+  },
+  "extensions/evn-alpha/dist/sim/courses/rescue-line-lite/level-2.v1.json": {
+   "size": 4752,
+   "sha256": "3047c8375909c64a2ebbd1d9b057804abb37acb79dd6bcc704ef3e61cc05186a"
+  },
+  "extensions/evn-alpha/dist/sim/courses/rescue-line-lite/level-3.v1.json": {
+   "size": 6064,
+   "sha256": "da77b13c4c37046eb0b5bbf0d1414e843cfba88f8bed23848ab8e34ddae3d0c2"
+  },
+  "extensions/evn-alpha/dist/sim/courses/rescue-line-open/index.json": {
+   "size": 1152,
+   "sha256": "bb84521c2db469ee50aa01c1d29d2b1e6f0015adae4ac5807e7702041c5bea6b"
+  },
+  "extensions/evn-alpha/dist/sim/courses/rescue-line-open/level-1.v1.json": {
+   "size": 9305,
+   "sha256": "34563b5f5951e1a4c0219a79ac1d78b5e8b44c5ac1d29df61bd7b1e85b0dac75"
+  },
+  "extensions/evn-alpha/dist/sim/courses/rescue-line-open/level-2.v1.json": {
+   "size": 41979,
+   "sha256": "8f0cdf6b630b0d95490f5310aa7327d0dd8c58655a67e2af7bdfd5ce687888a8"
+  },
+  "extensions/evn-alpha/dist/sim/courses/rescue-line-open/level-3.v1.json": {
+   "size": 42388,
+   "sha256": "e4587ef1a95aa5331df541db881dda9a8e6bea7f1380370828c3e5b219c34567"
+  },
+  "extensions/evn-alpha/dist/sim/courses/robot-parade/index.json": {
+   "size": 434,
+   "sha256": "be37de97b57a1251b571cf86ea6a4f9ac529e74a91b8df74b44a7ae76dc643ce"
+  },
+  "extensions/evn-alpha/dist/sim/courses/robot-parade/level-1.v1.json": {
+   "size": 3691,
+   "sha256": "a8801aaf99a122ef4abf1a74ee6de0e6d04ff006d66e35127108473808e26433"
+  },
+  "extensions/evn-alpha/dist/sim/courses/robot-says-hello/index.json": {
+   "size": 1104,
+   "sha256": "2d2b8e4fc7ee9b24cb43c08e3d26cf7a77fb4670ab8af05b684b124ebd059e96"
+  },
+  "extensions/evn-alpha/dist/sim/courses/robot-says-hello/level-1.v1.json": {
+   "size": 2960,
+   "sha256": "ffed9ab11b6062d2fa4a57ccab185739cd5a04a6ef228847c91a71cda4054305"
+  },
+  "extensions/evn-alpha/dist/sim/courses/robot-says-hello/level-2.v1.json": {
+   "size": 3197,
+   "sha256": "73e729b20efc7489df08f65791a0e3be619d38d2f444abda460810a656ae3045"
+  },
+  "extensions/evn-alpha/dist/sim/courses/robot-says-hello/level-3.v1.json": {
+   "size": 3312,
+   "sha256": "0b86b09806e90b2df221f8fce36749937acda28b2001fb04408406a42403e3a5"
+  },
+  "extensions/evn-alpha/dist/sim/courses/robot-vacuum/index.json": {
+   "size": 437,
+   "sha256": "176666ec1ed26d71712f2331ba89a28165244f802e2149f1d10e9733655eb3dd"
+  },
+  "extensions/evn-alpha/dist/sim/courses/robot-vacuum/level-1.v1.json": {
+   "size": 2988,
+   "sha256": "7f0d7a1f4393d3064b34f664aa8f1ddd0e1f48d5c4d2c83983564d93bb595dfb"
+  },
+  "extensions/evn-alpha/dist/sim/courses/scenes/index.json": {
+   "size": 2405,
+   "sha256": "b17ff64e183dac3298ee3ae8f7548594e36c9cbd687504b9ecc1e969e54f36f6"
+  },
+  "extensions/evn-alpha/dist/sim/courses/scenes/level-1.v1.json": {
+   "size": 1498,
+   "sha256": "559c191ed758039ceb1b2397ffa9018ffe2978c743ac8a18a06ab0ef7fab3335"
+  },
+  "extensions/evn-alpha/dist/sim/courses/scenes/level-1.v2.json": {
+   "size": 1691,
+   "sha256": "1cce084f93067aaad0353686d6189c63fafdbaa4b09637368bc6ed2a353fbf87"
+  },
+  "extensions/evn-alpha/dist/sim/courses/scenes/level-2.v1.json": {
+   "size": 2797,
+   "sha256": "6bf663b8bea063689b0499de6e63df7368f0c57cc1e9e797ab49947b2fa72a81"
+  },
+  "extensions/evn-alpha/dist/sim/courses/scenes/level-3.v1.json": {
+   "size": 1980,
+   "sha256": "92564602d38f098714346b831b3eb6a06a9c67d0163286bd0234ef44c0ea30d9"
+  },
+  "extensions/evn-alpha/dist/sim/courses/scenes/level-4.v1.json": {
+   "size": 2221,
+   "sha256": "57d375eb3a260f9ee4872025da3cf86eb49f0269f763ac9bb01660a6800fbfc3"
+  },
+  "extensions/evn-alpha/dist/sim/courses/scenes/level-5.v1.json": {
+   "size": 3338,
+   "sha256": "7268c6429a85a4800c8f8e24a4c957b18e0fc21409a66498e27e32a4fa4fcec1"
+  },
+  "extensions/evn-alpha/dist/sim/courses/scenes/level-5.v2.json": {
+   "size": 3558,
+   "sha256": "a61fc6ebcd73e0e4c128ad06979e41ef66a6ca6b4426f841d221f12f87ccf31b"
+  },
+  "extensions/evn-alpha/dist/sim/courses/scenes/level-6.v1.json": {
+   "size": 4485,
+   "sha256": "808fe326d4a313de8a9ed8fefeb3fb39acd058417997870cbd26b4e0545cd18b"
+  },
+  "extensions/evn-alpha/dist/sim/courses/shape-artist/index.json": {
+   "size": 1101,
+   "sha256": "3d8a8ceac49892e92e9062c6ee4acf148ce82cebc38cd4a80f47ace12e30da50"
+  },
+  "extensions/evn-alpha/dist/sim/courses/shape-artist/level-1.v1.json": {
+   "size": 2692,
+   "sha256": "cad1582cd5664dcb5b5c40070a9e172e835f3fee66208c7f4009f4815fd69a52"
+  },
+  "extensions/evn-alpha/dist/sim/courses/shape-artist/level-2.v1.json": {
+   "size": 3133,
+   "sha256": "4156122483ce0dbee29d3be07c28dbcde9667509747a83f12c9c34ec08933929"
+  },
+  "extensions/evn-alpha/dist/sim/courses/shape-artist/level-3.v1.json": {
+   "size": 3514,
+   "sha256": "1a0b5abd832f554104573f485130e52a6d7da4b671b708922c87484655233de4"
+  },
+  "extensions/evn-alpha/dist/sim/courses/shared-space/index.json": {
+   "size": 1144,
+   "sha256": "f0d8324db5c36e10becf048baebd90acc0ace25bb5c47847d264ab41673523a0"
+  },
+  "extensions/evn-alpha/dist/sim/courses/shared-space/level-1.v1.json": {
+   "size": 4451,
+   "sha256": "7a0460e1bb007d5bc9b7a501f666e193aaf6557cee8b576f858c3acaad9bd3db"
+  },
+  "extensions/evn-alpha/dist/sim/courses/shared-space/level-2.v1.json": {
+   "size": 6490,
+   "sha256": "00f9da0175f74a76bfbc0cfefbd9baf2d1f0a64ea40914804a1f81bd46e92116"
+  },
+  "extensions/evn-alpha/dist/sim/courses/shared-space/level-3.v1.json": {
+   "size": 7221,
+   "sha256": "6fcb131a71f84f01172b09d2a990e1ef1c02129d8506aaa7c8e0a7c120f8ebbf"
+  },
+  "extensions/evn-alpha/dist/sim/courses/ship-navigator/index.json": {
+   "size": 765,
+   "sha256": "027c94d6a39bad2a3be10aabebe87be286a1d994210a773cefa038ec7953a88c"
+  },
+  "extensions/evn-alpha/dist/sim/courses/ship-navigator/level-1.v1.json": {
+   "size": 3066,
+   "sha256": "cce97448489037a3e7385588e3227efeea9af1ac1bf0ccb7d109bcfa84081d41"
+  },
+  "extensions/evn-alpha/dist/sim/courses/ship-navigator/level-3.v1.json": {
+   "size": 4704,
+   "sha256": "aa86a32a1793f4613170d215d2dec5376915e8ee734be1dd9ffba9f36dac643c"
+  },
+  "extensions/evn-alpha/dist/sim/courses/slalom-gates/index.json": {
+   "size": 1072,
+   "sha256": "fd8486c118d004709153be5a60022383886b7a269901519245798c641383c108"
+  },
+  "extensions/evn-alpha/dist/sim/courses/slalom-gates/level-1.v1.json": {
+   "size": 5757,
+   "sha256": "c19c2366af7138b9c24723a1fac0272ecad3a3966c11d81789ce4e3451f40f47"
+  },
+  "extensions/evn-alpha/dist/sim/courses/slalom-gates/level-2.v1.json": {
+   "size": 5684,
+   "sha256": "b4fb011eecc054e64cfdb7f1324914c9d29aa5ee16d082129a44d38086407132"
+  },
+  "extensions/evn-alpha/dist/sim/courses/slalom-gates/level-3.v1.json": {
+   "size": 4120,
+   "sha256": "c1e7b8ae32371eb67bad9f6fe381c3190e72e5837acc7153618d9877c1118f36"
+  },
+  "extensions/evn-alpha/dist/sim/courses/tag-navigator-bench/index.json": {
+   "size": 1145,
+   "sha256": "2c8fdc06d3c82ff8dbc659c9c1e4b9bde235251ccee534497f12ebeb70140909"
+  },
+  "extensions/evn-alpha/dist/sim/courses/tag-navigator-bench/level-1.v1.json": {
+   "size": 6199,
+   "sha256": "5778ddbd8c351c6280836b02569ce79f1ec84d9deb5ed7f405e18d9911389ced"
+  },
+  "extensions/evn-alpha/dist/sim/courses/tag-navigator-bench/level-2.v1.json": {
+   "size": 7862,
+   "sha256": "264c524e86a83f59e19bb942bcd210f51e4bc7703261d129669ff4c4da3fe2d7"
+  },
+  "extensions/evn-alpha/dist/sim/courses/tag-navigator-bench/level-3.v1.json": {
+   "size": 8785,
+   "sha256": "935d26b27f1a6b93605be7f27ff4e8b0dab7cae004fce583ce72388c0a256009"
+  },
+  "extensions/evn-alpha/dist/sim/courses/tag-navigator/index.json": {
+   "size": 1091,
+   "sha256": "30a872c222ba86e787b251762ae1607f7c26c4b17ea7d46b047b2d924e914f82"
+  },
+  "extensions/evn-alpha/dist/sim/courses/tag-navigator/level-1.v1.json": {
+   "size": 6141,
+   "sha256": "1ab6327de3e87b6cf017672dbdb04102278a6a90a7e9fee9f1526bf5b990be99"
+  },
+  "extensions/evn-alpha/dist/sim/courses/tag-navigator/level-2.v1.json": {
+   "size": 7824,
+   "sha256": "948e62709d8cb356853aefc4779a8f4256b534d79d9281b36e0e9668a0f3bb24"
+  },
+  "extensions/evn-alpha/dist/sim/courses/tag-navigator/level-3.v1.json": {
+   "size": 8607,
+   "sha256": "c77da7d4c3afdae0e7e6157f0b1cc19d6ad1661d63f6e8058e4fbf6ea51f2318"
+  },
+  "extensions/evn-alpha/dist/sim/courses/traffic-light-town/index.json": {
+   "size": 1802,
+   "sha256": "a6d6c39218949a7aabd2821d57d7d4024c79630e18566fb4e9be4bc5e8477fdb"
+  },
+  "extensions/evn-alpha/dist/sim/courses/traffic-light-town/level-1.v1.json": {
+   "size": 4082,
+   "sha256": "4a513c6be159a49f0345b2b3657d42c6c5be0d95f0a4ebedc0d7f137143666b3"
+  },
+  "extensions/evn-alpha/dist/sim/courses/traffic-light-town/level-1.v2.json": {
+   "size": 4181,
+   "sha256": "22f2090cd8a352a647564ad011846f7df986901b2f4d7c57f00c0cbecdf8a30c"
+  },
+  "extensions/evn-alpha/dist/sim/courses/traffic-light-town/level-2.v1.json": {
+   "size": 4719,
+   "sha256": "d1d3b623b672106a1ca2946814323d505964e705cede3d5dc600879e9d32553e"
+  },
+  "extensions/evn-alpha/dist/sim/courses/traffic-light-town/level-2.v2.json": {
+   "size": 4818,
+   "sha256": "50d5068fe09d49af72523cd8434cb8e47df544ab3dde1b72c5887344f4cdaf65"
+  },
+  "extensions/evn-alpha/dist/sim/courses/traffic-light-town/level-3.v1.json": {
+   "size": 7107,
+   "sha256": "4ec4d0d787a443d25df89ce0110bbc7ef4130e37e015e28a52657e996edc9816"
+  },
+  "extensions/evn-alpha/dist/sim/courses/translate-beat/index.json": {
+   "size": 1117,
+   "sha256": "284117505c83c217b09fb48cc69bdc511184500446e2a9af1d47d6347a87d948"
+  },
+  "extensions/evn-alpha/dist/sim/courses/translate-beat/level-1.v1.json": {
+   "size": 2934,
+   "sha256": "1975c9c74b57a473f08dd231dab17dca009b094c4ea3e21ff79bd30d6c3edbd2"
+  },
+  "extensions/evn-alpha/dist/sim/courses/translate-beat/level-2.v1.json": {
+   "size": 3914,
+   "sha256": "313310d9f8596c9085cf469e3a0a97534d4ac86026f413539722fd71784f1feb"
+  },
+  "extensions/evn-alpha/dist/sim/courses/translate-beat/level-3.v1.json": {
+   "size": 3156,
+   "sha256": "4a1a650e03e7b9792ed71cb21daefad043fe45ad450a3a7b98cd203ed6f1d123"
+  },
+  "extensions/evn-alpha/dist/sim/courses/treasure-map/index.json": {
+   "size": 1113,
+   "sha256": "d28e95f5bed62b883be5b3a449ea94b15f92f4452959f3a571a5d2383d7fc7b9"
+  },
+  "extensions/evn-alpha/dist/sim/courses/treasure-map/level-1.v1.json": {
+   "size": 3954,
+   "sha256": "b2e68c317206123ba46d7807b7baffc5b0dabe4b6a3de039c4ccaf4453fbc99d"
+  },
+  "extensions/evn-alpha/dist/sim/courses/treasure-map/level-2.v1.json": {
+   "size": 4083,
+   "sha256": "2db5a2833f979ee8f8a099f75931690d6fcddced0a64cf0c5673133a75dc25cf"
+  },
+  "extensions/evn-alpha/dist/sim/courses/treasure-map/level-3.v1.json": {
+   "size": 4121,
+   "sha256": "fee0273618ffa2381432d276a3b12f7210489ac5a4753852713ffac5b6e25804"
+  },
+  "extensions/evn-alpha/dist/sim/courses/weightlifter/index.json": {
+   "size": 774,
+   "sha256": "a81c854af52f62e3ec31e01a172e6a66f544a86ca949b30101b22bcd74e9687d"
+  },
+  "extensions/evn-alpha/dist/sim/courses/weightlifter/level-1.v1.json": {
+   "size": 2696,
+   "sha256": "d657756396bf386886cc56c24f6ddab921ab56bbc7b157061069909e9941771c"
+  },
+  "extensions/evn-alpha/dist/sim/courses/weightlifter/level-3.v1.json": {
+   "size": 2822,
+   "sha256": "a7065d5fca16854762b64af43eb83ede301e808f49189e7d6e53931c1d29a017"
+  },
+  "extensions/evn-alpha/dist/sim/courses/zoo-trip/index.json": {
+   "size": 1057,
+   "sha256": "e8d28868d4b12d1743715a1371f8f0c15d89bea70da9b650bbaac7ee40d47625"
+  },
+  "extensions/evn-alpha/dist/sim/courses/zoo-trip/level-1.v1.json": {
+   "size": 2781,
+   "sha256": "1cb8ee310c2d1903a2d386fc81791606aa0b4d57bb24908f8f32e23782bb7165"
+  },
+  "extensions/evn-alpha/dist/sim/courses/zoo-trip/level-2.v1.json": {
+   "size": 3277,
+   "sha256": "c90740862679fb6e4c7845f52406b2718dd30e2a1b55c41914b778ca9f9110ff"
+  },
+  "extensions/evn-alpha/dist/sim/courses/zoo-trip/level-3.v1.json": {
+   "size": 4213,
+   "sha256": "3fcf49a58a5e42026e68505345bce7fd5d18870d483de7a1d381d63c5544580f"
+  },
+  "extensions/evn-alpha/dist/sim/enginechunk.js": {
+   "size": 124934,
+   "sha256": "0167fe5e18cb76934e3d8c793e664ac303b8b9a9a60c81fccadfab843aafc5b3"
+  },
+  "extensions/evn-alpha/dist/sim/framefolderworker.js": {
+   "size": 927359,
+   "sha256": "4c411887577e4905585487caf36e1deb043d8bdfa36bb8e07fae09458c4ffb58"
+  },
+  "extensions/evn-alpha/dist/sim/junior.js": {
+   "size": 22688,
+   "sha256": "0bad8833c447428304e0cb0e7831266def1f62ce37762991774a7a299f683762"
   },
   "extensions/evn-alpha/dist/sim/pdf.js": {
    "size": 443347,
@@ -60,12 +868,16 @@
    "sha256": "dd86a00ab6617c3cdbff5ac94bae29f03a45ae3d36661f4b72c32a41d67bc047"
   },
   "extensions/evn-alpha/dist/sim/reader.js": {
-   "size": 5181,
-   "sha256": "948ba13e30c33c23a94be404dc7657ad2050c56596edd654c8cbd5d91b624768"
+   "size": 5315,
+   "sha256": "0497a5a1dbf93e65e61d0481f95449d0b3f4251d3d80f7c31d053837cce3868b"
+  },
+  "extensions/evn-alpha/dist/sim/retestworker.js": {
+   "size": 1210875,
+   "sha256": "b0df9c2ccb3e7e59d046b71646b15832a078e7201bf48bc7f5158ca03f818db1"
   },
   "extensions/evn-alpha/dist/sim/worker.js": {
-   "size": 957007,
-   "sha256": "2be122ed59e801ec77983d9420d852b211580ccd8b89e21b4b2c51bcf60ed631"
+   "size": 1182827,
+   "sha256": "732e58df0be23b3885dd06c4a2e5d5d39e5585c3194cdcb8b3c47a88470a4d19"
   },
   "extensions/evn-alpha/dist/sim/wro/games/wro-2026-elementary/game.json": {
    "size": 12602,
@@ -120,105 +932,105 @@
    "sha256": "b1bc440c448eddb7916866bb65f369947fdd6723187f09a10cd30c80ae117b42"
   },
   "extensions/evn-alpha/dist/web/extension.js": {
-   "size": 1649466,
-   "sha256": "d193790533566233cab6f38fb380f26d4a675b70cad3d212a9cfc961be04e270",
+   "size": 1987707,
+   "sha256": "deddc02108b49dc7358594d3c28ea3aaff9844c1be084728eb2f311618eaccc0",
    "precache": true
   },
   "extensions/evn-alpha/docs/ACCESSIBILITY.md": {
-   "size": 5830,
-   "sha256": "51265a6035ecb93c9509c093224d359e6ea0cb7e8a3e61c0ba30bc864a34f65c"
+   "size": 5740,
+   "sha256": "8638570d652ca944628a5916a10c36f148e5544a63190df8011433c4aa2ff567"
   },
   "extensions/evn-alpha/docs/API.md": {
-   "size": 11428,
-   "sha256": "40d2685c4aed3856f6e483fa574d3595c4147db6c81c15803d5af59b1b0e58b6"
+   "size": 11392,
+   "sha256": "c971d5582a4133e602f5c65aed69d67b0083be311f601c6d801c4f94481c7604"
   },
   "extensions/evn-alpha/docs/API_DISPLAYS.md": {
-   "size": 47390,
-   "sha256": "4f9cc0e688e442c95abfe1d1189ddb575eb26a655ea50cd1e3e3f2b90663e2f6"
+   "size": 48118,
+   "sha256": "8f27d78573b39ae204379575cdf6dee22c97076d98d0674d6271e89f209d9fcf"
   },
   "extensions/evn-alpha/docs/API_EXTENDED.md": {
-   "size": 46825,
-   "sha256": "9e072ca85c8a9a183ddca88fcd1af28796b83f6a65790ef4d367a5045144a718"
+   "size": 46833,
+   "sha256": "90ef56dbbfc481325541c2ad176c0679a5325466504cfbdbee7b16cfffa520af"
   },
   "extensions/evn-alpha/docs/API_ROBOT.md": {
-   "size": 92814,
-   "sha256": "9e6a08053e1876a7cd73a8bdd8ae353ae7af9f7bf87918382bb4a62467b3fa9f"
+   "size": 95047,
+   "sha256": "142d386228c1d81efa3725e75b47b1c3f09d467a6e42e0135e7efe06bfae6b3b"
   },
   "extensions/evn-alpha/docs/API_SENSORS.md": {
-   "size": 97411,
-   "sha256": "d241e157b8406995f7f12c2f1c0198b085881830c781f389f1512fd8d81d9be5"
+   "size": 98669,
+   "sha256": "66fe87e87aa196f8d5daf109e5c8b719e45d25325acc4e1aa61d99e07e63f23a"
   },
   "extensions/evn-alpha/docs/API_SYSTEM.md": {
-   "size": 43637,
-   "sha256": "4a4d0f721a17acd1d2075f46302e937e17d1a49bbb5f6aa61096f93ea342edf9"
+   "size": 43525,
+   "sha256": "4f3ad669c2c69c7ffb003449ccfccd2c8e23053dee0ff2f5a93a8ef706fbb869"
   },
   "extensions/evn-alpha/docs/BLOCKS.md": {
-   "size": 72715,
-   "sha256": "6149676dd1f7cffff735d0fc1071e0d8b434dfe68e00b11f891b5b85b1eb95f0"
+   "size": 75241,
+   "sha256": "a0ce472630ae466a0f901b0867dae093f30e8f76838ab3c6ca42d65ee589984e"
   },
   "extensions/evn-alpha/docs/BLUETOOTH.md": {
-   "size": 11153,
-   "sha256": "b84018269fc250cea8cb2ef8231ebf232bca910e19e4eaaac9afa03a980b52b0"
+   "size": 12783,
+   "sha256": "89c2d419da0d0335a86e78078ff276f976d66e83b8cca9a3df9dfc205c4678e4"
   },
   "extensions/evn-alpha/docs/BOARD.md": {
-   "size": 5051,
-   "sha256": "a96597004992e10ba335a97d9492bc7bcdf7d3152448dd6263508963b42e1122"
+   "size": 4980,
+   "sha256": "70c562283b574f480e3276d3e630a86a1c396c5a2b4dc737ac43906c02f4c4fb"
   },
   "extensions/evn-alpha/docs/BOARD_VIEW.md": {
-   "size": 13228,
-   "sha256": "f1560431b79944bb72f746c30a050ca67ab43c9199e2817552805623c5475fa1"
+   "size": 13296,
+   "sha256": "2e32dde235a4507777bc461d9a6cd2ce68d34df6a5abb8b624d91bb6adc2d2b0"
   },
   "extensions/evn-alpha/docs/CALIBRATION.md": {
-   "size": 67220,
-   "sha256": "5101923f4ff577c02dca16754252838ad585c22d5fe8202e15c0aa10a0b48d6e"
+   "size": 70669,
+   "sha256": "bff08a34675a0c90fe4c8e6c34ccd83dc7e9dd6a9dca686415e7a8be053ea978"
   },
   "extensions/evn-alpha/docs/COMMANDS.md": {
-   "size": 9455,
-   "sha256": "c9cc5c49ca762b56c1adcd7949d6995f80262238093a3bf07228cddb2d217e92"
+   "size": 10123,
+   "sha256": "4eded3bd43d015601044d4117c6934102eb22ad9d8f24f93c9be6ee9063f5afe"
   },
   "extensions/evn-alpha/docs/DATA_LOGGER.md": {
-   "size": 7667,
-   "sha256": "41215bd80871e745c7da460f3e12ae0e8ef41a94501959b408ae9f9d887a296c"
+   "size": 7569,
+   "sha256": "24cb1eae95d2f0e54eb005d6a008d55d9e5d2133cdf47414a080188cb801deb2"
   },
   "extensions/evn-alpha/docs/GETTING_STARTED.md": {
-   "size": 9770,
-   "sha256": "c4a804bca290a34ec34230e7133c57590192f861c614f46bdbf89563e7093def"
+   "size": 10132,
+   "sha256": "8bbb4a226142bd47f5340e6f8ceac0c7c7ed3534a1018fecbb73c2c9cc2928fc"
   },
   "extensions/evn-alpha/docs/KNOWN_LIMITATIONS.md": {
-   "size": 11645,
-   "sha256": "d26c3b5e29f54b16e73d74c31afc3bd8d9de3c1456139500ef7d6fbfdb3a3b1e"
+   "size": 11842,
+   "sha256": "0ee35cc3ed0d2dfe58dc5f3e9734b38065e57b5330e108c5b75f426fbdfd77e5"
   },
   "extensions/evn-alpha/docs/MAIN_PY.md": {
-   "size": 5459,
-   "sha256": "9a3f801ff05c75bc8659a59dd5dd43c73721c2334715232bb81813287b21a852"
+   "size": 5946,
+   "sha256": "9ee96f4938b8f75cd27b49ff4d991c7ce2a8876082ce1aeee54503cf510182be"
   },
   "extensions/evn-alpha/docs/NOTEBOOK.md": {
-   "size": 9703,
-   "sha256": "cbc97e35bb4fa360b006dd12f51574425be4fc17270589ff3e9f7bc08bda513a"
+   "size": 9834,
+   "sha256": "f00291538455150d660c9e373b8f25f9d31d83cf7f089d9c188520fa4b44bedb"
   },
   "extensions/evn-alpha/docs/PROGRAMS.md": {
-   "size": 11632,
-   "sha256": "9c7f121630358ceddee6f783c38fb72d0876c4d5fb9ef7d7f4f739587efab2fa"
+   "size": 11913,
+   "sha256": "76995686003aa02852ed0dca414fc08719142c7dc57168361224000c4243f0da"
   },
   "extensions/evn-alpha/docs/REPL.md": {
-   "size": 5386,
-   "sha256": "0f364d4ed758499fb9985d790327f6ae8a2c65fe01b4c202052498cfac4d91bc"
+   "size": 5305,
+   "sha256": "bc9c89912cccd33a32da48e553b94caeac94982de42b04e481278ca00e571a30"
   },
   "extensions/evn-alpha/docs/SIMULATOR.md": {
-   "size": 175494,
-   "sha256": "3e687314a2af9508bdbef525807d4d4193ba922835b1f2551c733aa2b562c3ca"
+   "size": 181931,
+   "sha256": "b587b95835b466f58d1d1679a7d36bdadb24a1d2cdd04ae2c63e8fd6ebe9170f"
   },
   "extensions/evn-alpha/docs/TROUBLESHOOTING.md": {
-   "size": 11450,
-   "sha256": "4a8b15dddf8bb2d088590e5a7df807408079d8364c1f02170786f05f01204867"
+   "size": 11570,
+   "sha256": "8872ae0ab51d4c098070404d70d60fb56c4ef2e236769c673a6e09213b6b43b1"
   },
   "extensions/evn-alpha/docs/WHATS_NEW.md": {
-   "size": 20976,
-   "sha256": "3d073c697ff3330c31f062a18228aff5cebab3545b719ac6060b3ad109ca120e"
+   "size": 22050,
+   "sha256": "322c8b5c6a15cdc83e433610a0313842dc47f58c281d49c68dbe6268b2ea3f35"
   },
   "extensions/evn-alpha/docs/images/blocks-editor.png": {
-   "size": 86834,
-   "sha256": "512becc8aa96a0653b210c3f2c6357e493bf1324f37c732486fc4ce1db9cb51f"
+   "size": 84063,
+   "sha256": "d3eade67015ae90317f9dd30dcd516a80fb4a99b39edcda5b1fb150e0ecd09c4"
   },
   "extensions/evn-alpha/docs/images/blocks/blocks-advanced.png": {
    "size": 39655,
@@ -264,13 +1076,17 @@
    "size": 12118,
    "sha256": "0523ee25aaf6ce2d28fbcb9748d717d75836f8f1676f23c0797eb6ac8045c9c9"
   },
+  "extensions/evn-alpha/docs/images/blocks/blocks-lists.png": {
+   "size": 85528,
+   "sha256": "2d13b83077e6c65d8500c77072efad6634d422c2ad4804fa0ca1660c64a0db73"
+  },
   "extensions/evn-alpha/docs/images/blocks/blocks-logic.png": {
    "size": 13558,
    "sha256": "168fda9525cd6bdffd3f7669a12c2a1897a6aa2e540bf336fdd934170c59b159"
   },
   "extensions/evn-alpha/docs/images/blocks/blocks-loops.png": {
-   "size": 18842,
-   "sha256": "2c98c2a4de7aae5742bb86e5cebb7d1fe1f4eda16dc269f13766e3b659175736"
+   "size": 24384,
+   "sha256": "52af9c695b14053caa0be7969869421773409265ef8bc5d74a092931e561209e"
   },
   "extensions/evn-alpha/docs/images/blocks/blocks-math.png": {
    "size": 26048,
@@ -372,6 +1188,10 @@
    "size": 10787,
    "sha256": "08e7482886685160a7122c6312be78b1f1bd6d0a50fea0e34b0c0160a272650f"
   },
+  "extensions/evn-alpha/docs/images/bluetooth-serial-row.png": {
+   "size": 18381,
+   "sha256": "8e844b162bf66121aa0c3faed49838288bd390c102e35a3f64e689ec8f4b5c51"
+  },
   "extensions/evn-alpha/docs/images/board-buttons.jpg": {
    "size": 87551,
    "sha256": "63d56a8a1f45c8c5ca5fbee26c4b0711e258f8e3f68190879e7802d2f171f696"
@@ -379,6 +1199,10 @@
   "extensions/evn-alpha/docs/images/board-card.jpg": {
    "size": 119516,
    "sha256": "ee7930e4bc44267d30f2f51a23653459e07638093b2107e7088b555c93ff1b39"
+  },
+  "extensions/evn-alpha/docs/images/board-files.png": {
+   "size": 17490,
+   "sha256": "b330d3ba1b593198c79b4284b0863df240c15bca1906a0b8333148ea647e8212"
   },
   "extensions/evn-alpha/docs/images/board-pinout.jpg": {
    "size": 133578,
@@ -396,13 +1220,13 @@
    "size": 9949,
    "sha256": "84b16ebf4267c5c25d6e54cef1f36f48640c7ab477d003b0b73e44a91311a8c7"
   },
-  "extensions/evn-alpha/docs/images/calibration-color-refused.png": {
-   "size": 6987,
-   "sha256": "c2cc8e27e0b9f170f0fe80a162cd0fa3a81d2f43225573205f2b32d0e38eaa94"
+  "extensions/evn-alpha/docs/images/calibration-color-panel.png": {
+   "size": 75549,
+   "sha256": "74546081224eeca19d92996bfb4cb570bc6671aa4f4c5bd98073af02cb03a110"
   },
   "extensions/evn-alpha/docs/images/calibration-color-row.png": {
-   "size": 29879,
-   "sha256": "20775cf02b634041833d4c02c7fe7a21802db4c43d44858c5f25efff41a78c46"
+   "size": 51796,
+   "sha256": "7806f989db86ccb3570cb2aac8022c87b35efd9d7eda69bed4d8b62cd45a356f"
   },
   "extensions/evn-alpha/docs/images/calibration-compass-full.png": {
    "size": 53755,
@@ -411,14 +1235,6 @@
   "extensions/evn-alpha/docs/images/calibration-compass-planar.png": {
    "size": 29215,
    "sha256": "61b6aef5a3b4a3f6107f3802d950f88a1240c7a05d75d00fb1dcc788a884c08e"
-  },
-  "extensions/evn-alpha/docs/images/calibration-gesture-dialog.png": {
-   "size": 11198,
-   "sha256": "bd384b5df89c2bd7588d8a77d8be1dbb15cb3d68b6c11295be390719de09ff0e"
-  },
-  "extensions/evn-alpha/docs/images/calibration-imu-quickpick.png": {
-   "size": 18906,
-   "sha256": "1ffb45abe2c601e695c0cba01ee0e592f0913deaad27f8679d3746cbe465d60c"
   },
   "extensions/evn-alpha/docs/images/calibration-imu-row.png": {
    "size": 30050,
@@ -431,6 +1247,10 @@
   "extensions/evn-alpha/docs/images/calibration-motor-row.png": {
    "size": 29789,
    "sha256": "f5d985e5371280870d6ab1010c8c9e58b629584d6cef4f87701c4238c55c34fb"
+  },
+  "extensions/evn-alpha/docs/images/commands-palette.png": {
+   "size": 52119,
+   "sha256": "7678f2ce3ae7371f64a4bd47055bc05472dd85d0252e8f439649bf5b9fb3d914"
   },
   "extensions/evn-alpha/docs/images/console-chart.png": {
    "size": 53441,
@@ -449,12 +1269,40 @@
    "sha256": "7a1fd7d93fcfe7a11ff5fac662345422595d6ac2daeb6da1037512b44c4a1059"
   },
   "extensions/evn-alpha/docs/images/getting-started-run.png": {
-   "size": 25308,
-   "sha256": "d96e18f9cc0c9443dcd1e2c42abf805787cb1bbbc5f6c2411da15dcb769cb61f"
+   "size": 25261,
+   "sha256": "accaa4bf9ae95049b91d1bce7849e73c3a41b6dc753b8e6229121ec8ddb32424"
   },
   "extensions/evn-alpha/docs/images/getting-started-sidebar.png": {
-   "size": 39083,
-   "sha256": "d9e897f504bfadb9643a0bdef3dc6445b6f243a210b04bc0315aca545ba09629"
+   "size": 37736,
+   "sha256": "dbbad73122c4bf3c103c10cb5fef295fe5ecc6d863bd21c0cc36f0f5629ff209"
+  },
+  "extensions/evn-alpha/docs/images/module-colour.jpg": {
+   "size": 14353,
+   "sha256": "fce359634a54b90147083efae869b314967cf0c6024600f6083a2f523ba80f00"
+  },
+  "extensions/evn-alpha/docs/images/module-compass.jpg": {
+   "size": 15006,
+   "sha256": "44b6e2bb8343f83054e24314cf398b5778b97fb7234a68b2a1de14c41463bdbf"
+  },
+  "extensions/evn-alpha/docs/images/module-distance.jpg": {
+   "size": 12788,
+   "sha256": "a2326c9156a912f2209516f81aff3a0c3b0b772e0070d5cb8d728d0d543389c8"
+  },
+  "extensions/evn-alpha/docs/images/module-imu.jpg": {
+   "size": 18992,
+   "sha256": "8a6df51d96c9b16cbd935c6a29e8a99194e5fdefbd11765e17833a39505248f1"
+  },
+  "extensions/evn-alpha/docs/images/module-matrix.jpg": {
+   "size": 20896,
+   "sha256": "6c532a9023e12bc09770179f83b66cbce59ca78acea3f6afba6653c0b95d1042"
+  },
+  "extensions/evn-alpha/docs/images/module-oled.jpg": {
+   "size": 12056,
+   "sha256": "91f341c77c84f881395b31fb9d7dde288d1a45bcd3e4fa3e7ec054c7effce994"
+  },
+  "extensions/evn-alpha/docs/images/programs-my-projects.png": {
+   "size": 7915,
+   "sha256": "b28df624833d5f6ec3c1229f88a677eb3458e6ccc545dd40a2db35255a814f03"
   },
   "extensions/evn-alpha/docs/images/simulator-wro-2d.png": {
    "size": 50093,
@@ -469,476 +1317,476 @@
    "sha256": "fa6b8dc54e069531fc9a6fd7b4e04ecc608aa61f2341d1f29084900600db925f"
   },
   "extensions/evn-alpha/docs/images/simulator-wro-elementary-3d.png": {
-   "size": 85807,
-   "sha256": "48f4be22ee53419b06d9f025def10c1d336867dbdd5e173f541ed7416a028698"
+   "size": 146213,
+   "sha256": "f13672c3f7f4a2b62f08aa8a4f3b6974a5a280883e29fdf00c5d9e3c94e46e66"
   },
   "extensions/evn-alpha/docs/images/simulator-wro-senior-2d.png": {
    "size": 40296,
    "sha256": "f1003466ab40bd724922d1c3bf632e656ae13c848f528babd25683b6ba21e107"
   },
   "extensions/evn-alpha/docs/images/simulator-wro-senior-3d.png": {
-   "size": 102385,
-   "sha256": "ed0723d26993a79befb159a701e11a6ac97f29f2838f599705053da26dad8483"
+   "size": 177181,
+   "sha256": "d710167a8d9fdf7feed0b31d20168171cc77553b596117fb76d92f7076b6b1a3"
   },
   "extensions/evn-alpha/examples/01_board/board_complete.evnblocks": {
-   "size": 37543,
-   "sha256": "97a482ec1e97afe4835630da62b9323f62b51ec8221d26b806eb497acc6c0160"
+   "size": 37077,
+   "sha256": "e35f1dd6397cf885e368ef1b78c3bb524f14db566e56a6e7d449801d2d3bffde"
   },
   "extensions/evn-alpha/examples/01_board/board_complete.py": {
    "size": 4506,
    "sha256": "15192b133f79e79f87b7d9a624902386176151a06fbf6157eb0233aede0924ee"
   },
   "extensions/evn-alpha/examples/01_board/board_minimal.evnblocks": {
-   "size": 3258,
-   "sha256": "67315e65c642cee9dca0531ba25ccf82f23892cadaabab5e29421e80064a8fd2"
+   "size": 3156,
+   "sha256": "2f7e9878c1f5594a334945f7813753fdba0c3d6e70229b08290fe2721820dfed"
   },
   "extensions/evn-alpha/examples/01_board/board_minimal.py": {
    "size": 727,
    "sha256": "d39a588208f9d2a4dcccd82ef09ada1b2ad5473223d8f880b35f55031a4dfe31"
   },
   "extensions/evn-alpha/examples/02_motor/motor_complete.evnblocks": {
-   "size": 57681,
-   "sha256": "2278259ab89b3d1e55143774267f2703f8ecc5a89e9cd047077f66cb863befba"
+   "size": 57029,
+   "sha256": "21b612fad9573210677f0e5e39dde5849e2e8a0fdf0ac64fcf460ce61c9df7a1"
   },
   "extensions/evn-alpha/examples/02_motor/motor_complete.py": {
    "size": 5587,
    "sha256": "e4084ed88f22a2c544c80fa00bc7a55d81ee41576c192dbf5d4ef0b5184182c9"
   },
   "extensions/evn-alpha/examples/02_motor/motor_minimal.evnblocks": {
-   "size": 3345,
-   "sha256": "3bf7a4c70c6eb19e49193f974720560cd0c7040329542a21002a711a58487735"
+   "size": 3230,
+   "sha256": "07a59696337b2a712b46e480aa76bcf62d77447f3191bf370ad4d95eef2e0039"
   },
   "extensions/evn-alpha/examples/02_motor/motor_minimal.py": {
    "size": 490,
    "sha256": "0ec805cdf5288f3032f1f7e216d211a8fa0b193b69f46b1b85845715081d7d2b"
   },
   "extensions/evn-alpha/examples/03_robot/robot_complete.evnblocks": {
-   "size": 81121,
-   "sha256": "e7bd4031d3c9d5022f77d71606a0421d4b63610c215626f2a0766fd12b8733d5"
+   "size": 80362,
+   "sha256": "dffcc5b975238cb90ec50d847fb3dd56ed49465b5779c9ecb6ed2f1149c141cc"
   },
   "extensions/evn-alpha/examples/03_robot/robot_complete.py": {
    "size": 8046,
    "sha256": "fb34887970852fabffe382a431a01cab61f8b7044ff66f7b30fdc28fa228de22"
   },
   "extensions/evn-alpha/examples/03_robot/robot_minimal.evnblocks": {
-   "size": 5535,
-   "sha256": "987affb856de0a15a87b13db1f005d660f0d4bf16081d9c71c735904978a0de1"
+   "size": 5376,
+   "sha256": "0115632861a9ff3a4ae3b723d87a03492f2534f42576727fbb7d725c2d5818d0"
   },
   "extensions/evn-alpha/examples/03_robot/robot_minimal.py": {
    "size": 868,
    "sha256": "51b54cbb30173244dc1773adaeaffb2acea0f241e6fb419ec44d6b59aa424550"
   },
   "extensions/evn-alpha/examples/04_pose/pose_complete.evnblocks": {
-   "size": 50281,
-   "sha256": "6dd17346e9294b4ff261e8a6a98403898c697e85bc3ded6a204758cd8ae3f2bc"
+   "size": 49465,
+   "sha256": "f9aba2caad0ed81e9cce0181b066f5aa69a1a4b22e97668ea3f4a2d65cf2bb2e"
   },
   "extensions/evn-alpha/examples/04_pose/pose_complete.py": {
    "size": 7562,
    "sha256": "b4e7406ee40a7cdb44970f05d7592013be078ffa50b2ff681b533860651121f0"
   },
   "extensions/evn-alpha/examples/04_pose/pose_minimal.evnblocks": {
-   "size": 6910,
-   "sha256": "c4a34209bfdb5370bb171ce92e3c39c08f368483de114bc1c2b8245c746de9dc"
+   "size": 6724,
+   "sha256": "7108528430001aeddf0fa70a1592c73b26c3185dbe3475c223e3fa3af9c8d888"
   },
   "extensions/evn-alpha/examples/04_pose/pose_minimal.py": {
    "size": 1240,
    "sha256": "46a877f4d3714e4da2d587fc5fab3d95db0f98c56963bc624a8790196d08485b"
   },
   "extensions/evn-alpha/examples/05_colour_sensor/colour_sensor_complete.evnblocks": {
-   "size": 37518,
-   "sha256": "afcc0b2a9863baf7a4681b292cb1eb33399bd10830b2de8377bb3deb35ee6297"
+   "size": 37018,
+   "sha256": "b15bb39936806aa1a6fd63831449deb2c342342e7d7e784cd27c06e1f512822e"
   },
   "extensions/evn-alpha/examples/05_colour_sensor/colour_sensor_complete.py": {
    "size": 8777,
    "sha256": "7a481f63e068bf08b82ac72f507b3df8ad2f88ecfbafeae142bff88a1071b787"
   },
   "extensions/evn-alpha/examples/05_colour_sensor/colour_sensor_minimal.evnblocks": {
-   "size": 1968,
-   "sha256": "1f7fa78bac9a4ab27371a9d50c62f70f6b07bfcd05c3ecf15093522fda1b478f"
+   "size": 1899,
+   "sha256": "06cf6410db72f101454e82fd10f20ec317c7652cad29e8fa1de00b1216b6ffd1"
   },
   "extensions/evn-alpha/examples/05_colour_sensor/colour_sensor_minimal.py": {
    "size": 543,
    "sha256": "54746bcf6121a1922c2b42c7ff451a7feb84c90d6da4c8b040e029d696c8be3d"
   },
   "extensions/evn-alpha/examples/06_distance_sensor/distance_sensor_complete.evnblocks": {
-   "size": 14553,
-   "sha256": "e2008eb4770b3f7be4ce41136b20e92dc97ed20b34592b27262f580d195a6ee0"
+   "size": 14265,
+   "sha256": "0341b4fc023cb2a3f8d2056a25de22e507cbd21a51774a9d166e1c071873e50f"
   },
   "extensions/evn-alpha/examples/06_distance_sensor/distance_sensor_complete.py": {
    "size": 3644,
    "sha256": "178edc0c0a05c961587bad295915d406e5494741e1c9efd356a63ff85e504d69"
   },
   "extensions/evn-alpha/examples/06_distance_sensor/distance_sensor_minimal.evnblocks": {
-   "size": 1966,
-   "sha256": "3f300606f944a943a0b8884b1ce34cd89f613cf9f604650fd17d7ac48869bb11"
+   "size": 1897,
+   "sha256": "c20d056ba5d61e71e4dfe5ceb784b3f0d6a87231592a3d8c6df4bbd987791b4d"
   },
   "extensions/evn-alpha/examples/06_distance_sensor/distance_sensor_minimal.py": {
    "size": 567,
    "sha256": "d7beed484ab547f7cd4f9c3f1c9ca79132818470b00df34d31c903bec7a1b605"
   },
   "extensions/evn-alpha/examples/07_gesture_sensor/gesture_sensor_complete.evnblocks": {
-   "size": 37956,
-   "sha256": "37b002c88fdca03324de93c8800452c65d52fc92317f0c3c0fd5cfe236423cfa"
+   "size": 37486,
+   "sha256": "77d1d40629e2bcc16592758fa05b3445361676d3bc132c4a74f126744ebff5e0"
   },
   "extensions/evn-alpha/examples/07_gesture_sensor/gesture_sensor_complete.py": {
    "size": 11102,
    "sha256": "20769a54c72a151f2c4b13c2a7e593aabbe0eb1fc3d5b859c018903c2fe865d3"
   },
   "extensions/evn-alpha/examples/07_gesture_sensor/gesture_sensor_minimal.evnblocks": {
-   "size": 1916,
-   "sha256": "c475c359093680aa67f3c3b6ce5385aaae0ec209adfb4053d60feb30f7fb5e3f"
+   "size": 1852,
+   "sha256": "769e16d97325e4e06323e95483b3cdcab9656cd3ba288c90115921945cba6be4"
   },
   "extensions/evn-alpha/examples/07_gesture_sensor/gesture_sensor_minimal.py": {
    "size": 634,
    "sha256": "5a72f427d1fa6af2ea0d08a651ef92875780f327059445ff0481f807302cea71"
   },
   "extensions/evn-alpha/examples/08_environment_sensor/environment_sensor_complete.evnblocks": {
-   "size": 6516,
-   "sha256": "1677429ab9dd98cc05656fe3fb5b953adbd612ec51c6c1f55c9be5f914b095ad"
+   "size": 6353,
+   "sha256": "4f227d84191f9f6a27a9d14772278c576a5f53ea5e907d1e72732eeb616c5a81"
   },
   "extensions/evn-alpha/examples/08_environment_sensor/environment_sensor_complete.py": {
    "size": 4017,
    "sha256": "5e0aa72bc2e7bff873e831cf7cdcbe497716a652ef8ee54907015438bc33f720"
   },
   "extensions/evn-alpha/examples/08_environment_sensor/environment_sensor_minimal.evnblocks": {
-   "size": 1984,
-   "sha256": "cc10c7ec44ebc2fc8727f68b4c39cfede54bc81233b6e3555e164910032cb90b"
+   "size": 1914,
+   "sha256": "e14ff422a0a16c69c0512c328fe508373f4f85f3813fda93e1f4391a55cdc28d"
   },
   "extensions/evn-alpha/examples/08_environment_sensor/environment_sensor_minimal.py": {
    "size": 526,
    "sha256": "a070a07320b826e85c7d48ceb1735cc60907b30bb57f679bdc352c622cae88bc"
   },
   "extensions/evn-alpha/examples/09_compass/compass_complete.evnblocks": {
-   "size": 30388,
-   "sha256": "1d45bff1b2a973e97d3e3b85d440258f0cae5e87080c0b8b5bf3b865b165eba5"
+   "size": 29952,
+   "sha256": "afe794cc7be1e0c7c4d60c8564394153917cc83430feb83b32642056ea0eb706"
   },
   "extensions/evn-alpha/examples/09_compass/compass_complete.py": {
    "size": 8707,
    "sha256": "1a68ed8b8881f9106d125ec7a17db8473ec26f21723b3361dc73d2c57bdb565c"
   },
   "extensions/evn-alpha/examples/09_compass/compass_minimal.evnblocks": {
-   "size": 2255,
-   "sha256": "a75885193d972172832b49197a7806cc345f089e7b49a8305e7438099da15908"
+   "size": 2178,
+   "sha256": "fc9256ec467157e4d11977ecdc1858ac2bd91edc310d597176dd7a4e8d29072e"
   },
   "extensions/evn-alpha/examples/09_compass/compass_minimal.py": {
    "size": 585,
    "sha256": "87e33ac66e959a67ec202052caf696d9cb34a3d1ab7b5caa4043a3b2b831bf17"
   },
   "extensions/evn-alpha/examples/10_touch_pads/touch_pads_complete.evnblocks": {
-   "size": 12296,
-   "sha256": "fb0cc2609aa07fb6e66752be82b148904844c944291efc50dcc86bd125469ff1"
+   "size": 12039,
+   "sha256": "0893152d4b874e9244c88005c88882d5685e9dfb3b1df07901710dac28cc2038"
   },
   "extensions/evn-alpha/examples/10_touch_pads/touch_pads_complete.py": {
    "size": 5256,
    "sha256": "b1af6fcc8b40e46744e9a65944dcb2a40ee89cc117f8f73f93f25d9ccfc22169"
   },
   "extensions/evn-alpha/examples/10_touch_pads/touch_pads_minimal.evnblocks": {
-   "size": 3344,
-   "sha256": "b3209f4a246869d3551265743fc26a64abb5e56551ac95dd1d4888dc1f3d4a4f"
+   "size": 3242,
+   "sha256": "abafa429efc4ac5aa3ef128be94ca74c739c2756c8214830f48047e9ae894b51"
   },
   "extensions/evn-alpha/examples/10_touch_pads/touch_pads_minimal.py": {
    "size": 572,
    "sha256": "998cd756a58bf62001b9b532c03de88e426413457371a75c51d9ef1765eff704"
   },
   "extensions/evn-alpha/examples/11_imu/imu_complete.evnblocks": {
-   "size": 81981,
-   "sha256": "b0847ee905b49eb75d3edb22b7a5a67f1baa59ecba65b0e2b439dc04ba14ad9f"
+   "size": 81199,
+   "sha256": "3beb8cc6833482a5c7760ad945d8514d1354bae975dc4ba9462c326ac197bb21"
   },
   "extensions/evn-alpha/examples/11_imu/imu_complete.py": {
    "size": 11305,
    "sha256": "2b403664134b61b3875ec260ae792e914f68630a0191e93d2cc10ae4d7ac8845"
   },
   "extensions/evn-alpha/examples/11_imu/imu_minimal.evnblocks": {
-   "size": 2989,
-   "sha256": "35a172c4ebd28a46db26a38ef7a2fd5657d7d682c850510dc637afe76ef68de2"
+   "size": 2892,
+   "sha256": "c879afc4a172e5fb757dff904798b68ca0ab8e2a4466345858e3d2ea72a822c7"
   },
   "extensions/evn-alpha/examples/11_imu/imu_minimal.py": {
    "size": 587,
    "sha256": "fc3edc6a9585096319863e62595e165871be59cd00d2479d9892af1f35ee3c15"
   },
   "extensions/evn-alpha/examples/12_adc/adc_complete.evnblocks": {
-   "size": 10229,
-   "sha256": "eb17691c12e8d496911fa1b8b13aa793098b4e497a5d0a77492ee5b1d3e36708"
+   "size": 9999,
+   "sha256": "8b5246fd21e370077a0a9c73de667ae47103601390909fb8c873f111dd58f51c"
   },
   "extensions/evn-alpha/examples/12_adc/adc_complete.py": {
    "size": 3616,
    "sha256": "c64556850e2dfb3ef509cfdd014031b6da5ff98eab699fd365c5f26b8e37ea75"
   },
   "extensions/evn-alpha/examples/12_adc/adc_minimal.evnblocks": {
-   "size": 2581,
-   "sha256": "cf62810ca970b5888c63bbaa34216d51e07e3d84c16bd058731cc0bfb1118459"
+   "size": 2502,
+   "sha256": "cd37dbcadb17c0db18e3ec3d19686c8c0d733c937979cca35a055ec6ec6166f1"
   },
   "extensions/evn-alpha/examples/12_adc/adc_minimal.py": {
    "size": 760,
    "sha256": "b99a239a0b1d5e35f693ca99c65fec72b5c8b1f09faa94733bc8bdf1dfdf6d49"
   },
   "extensions/evn-alpha/examples/13_display/display_complete.evnblocks": {
-   "size": 15061,
-   "sha256": "581295b48747d37ee8b1eeac5d96553f5273a7c0d79fae351799ef926f2f2a44"
+   "size": 14772,
+   "sha256": "5862f086336a4e2afe139e1eccdaa14c87b28ef5a43f63feb1efd0d8567a558d"
   },
   "extensions/evn-alpha/examples/13_display/display_complete.py": {
    "size": 6451,
    "sha256": "2ab72630eb33719c7ab0a55bd45a1ff0e8f6bd21e23b3cac91681cec9201d63c"
   },
   "extensions/evn-alpha/examples/13_display/display_minimal.evnblocks": {
-   "size": 7065,
-   "sha256": "253052c51e266cbc794361b538f187ecba4ab09e09db01ce1290088ade17facb"
+   "size": 6863,
+   "sha256": "2004b8a930a185497983b691c77213f5be2f3a25931ad034ea221c05a8d6d37d"
   },
   "extensions/evn-alpha/examples/13_display/display_minimal.py": {
    "size": 571,
    "sha256": "16521578413001af2489f21004194fc701d422f387f6ae9e16875b7ac14be5a3"
   },
   "extensions/evn-alpha/examples/14_led_matrix/led_matrix_complete.evnblocks": {
-   "size": 39920,
-   "sha256": "ac3aa216e0bded2f570489b1cc18523bf23097d0c9191de2a5c40eabc193e62d"
+   "size": 39364,
+   "sha256": "2eb790fffe19b9f38c74e36cc8f4645cabefd984110adf6502136507c240dae4"
   },
   "extensions/evn-alpha/examples/14_led_matrix/led_matrix_complete.py": {
    "size": 5840,
    "sha256": "3631b84d5562bef6a37e93c984b7e88de5b61cc262d2d06fdab78b2acf1999ab"
   },
   "extensions/evn-alpha/examples/14_led_matrix/led_matrix_minimal.evnblocks": {
-   "size": 3209,
-   "sha256": "8e5149aec8c3fe7f376794623f7e139b11f25ab63692394d8feee14230855a4c"
+   "size": 3091,
+   "sha256": "7c664a14592c4338dc34204c99ab0c5354611309b63b214428c96393b8e058f1"
   },
   "extensions/evn-alpha/examples/14_led_matrix/led_matrix_minimal.py": {
    "size": 511,
    "sha256": "ac8da0c1b3424227a20e64f2a6b4ae4f9ce148d1c6eeae9851f098d0da06662a"
   },
   "extensions/evn-alpha/examples/15_seven_segment/seven_segment_complete.evnblocks": {
-   "size": 19658,
-   "sha256": "a69633df13185156b62d68f9eb402bd206d7f91bdb292ec330106351119e6489"
+   "size": 19331,
+   "sha256": "c7cabd549693512406508f0d197f9155c9ce06f628bf9a82fcd6b0f80d0326dd"
   },
   "extensions/evn-alpha/examples/15_seven_segment/seven_segment_complete.py": {
    "size": 4904,
    "sha256": "d2a06eccd1f99452bae0ecf41eeed2bcd78a364bd8e272ec7f44f3c1217a2461"
   },
   "extensions/evn-alpha/examples/15_seven_segment/seven_segment_minimal.evnblocks": {
-   "size": 3496,
-   "sha256": "6d01e67a96c4386cec296ebbfc6ec014b5bbbe0b620ac22f3ba6a74f30ed27b7"
+   "size": 3369,
+   "sha256": "3cbb45eb2cef36998d9e333dead5978f296eba4cd745727b09758c895b7678fd"
   },
   "extensions/evn-alpha/examples/15_seven_segment/seven_segment_minimal.py": {
    "size": 539,
    "sha256": "dc2f0f9f0126799f38c24ff2b35f5baa7e9a1ab00b34872c216955ef67b3a138"
   },
   "extensions/evn-alpha/examples/16_rgb_leds/rgb_leds_complete.evnblocks": {
-   "size": 24736,
-   "sha256": "94843feb8da09f67e501d52b6dac7e577803c551ee860d65aba82dc9d50b6a67"
+   "size": 24316,
+   "sha256": "e062c079a4a8f4acc5af5e559d173f9385acc66466ffabbb64cd1b901c3f09dd"
   },
   "extensions/evn-alpha/examples/16_rgb_leds/rgb_leds_complete.py": {
    "size": 4363,
    "sha256": "c7d67548f332dd06e844a3b5ae311cbdd12e391c6e10f8f3c8e6eaafba4d720a"
   },
   "extensions/evn-alpha/examples/16_rgb_leds/rgb_leds_minimal.evnblocks": {
-   "size": 5559,
-   "sha256": "2282943d59d8a3749095cdb8144b93e6fe4eb7cab8b666e5653d721dd51d8d95"
+   "size": 5401,
+   "sha256": "1f2a8282db3b9879e6e25d2e37289dc97e8092ff693168a327a2fe43af1f1e32"
   },
   "extensions/evn-alpha/examples/16_rgb_leds/rgb_leds_minimal.py": {
    "size": 544,
    "sha256": "622be777f13dd1f8d004f4db1cc85532ec6ead8f3905df45608ee9f3456e338e"
   },
   "extensions/evn-alpha/examples/17_servo/servo_complete.evnblocks": {
-   "size": 20479,
-   "sha256": "45400bbbda941d6b94b47ae21c35ad34d9f5d36c7c8cb090867c813a499c9b64"
+   "size": 20131,
+   "sha256": "425dfa0e2ac56952a5de76c9f69ba2d81507728621377069741c2fbea883cfe9"
   },
   "extensions/evn-alpha/examples/17_servo/servo_complete.py": {
    "size": 4038,
    "sha256": "747214bbb25f43a35352c23b5a0dbaaf1dbeab36063379056d8aa268b43493df"
   },
   "extensions/evn-alpha/examples/17_servo/servo_minimal.evnblocks": {
-   "size": 3567,
-   "sha256": "c2daab0f0acb163586095172695c7702310d40c8d0d7641dde747460c0cd09bc"
+   "size": 3447,
+   "sha256": "4176e3cab03792c0e9f73adfba88ebc2d1fb331172358b11c400a36d2170b18d"
   },
   "extensions/evn-alpha/examples/17_servo/servo_minimal.py": {
    "size": 516,
    "sha256": "8fa37dc5a27c12daafa1f5788e9b7cbe6279ae206b744ee801ee1ac2c1d8e154"
   },
   "extensions/evn-alpha/examples/18_bluetooth/bluetooth_complete.evnblocks": {
-   "size": 16812,
-   "sha256": "19d2297421a5bf646a79b5ffb3ad2870fed4c6143fad394f7e653de9f13695ae"
+   "size": 16508,
+   "sha256": "dcf13727b63687e4535a1af6a64a62f8bb69343c0de074a608b5ec3717f3f0f6"
   },
   "extensions/evn-alpha/examples/18_bluetooth/bluetooth_complete.py": {
    "size": 6076,
    "sha256": "8b2723c888310c84fbd52a1481ac8004c8c2562baca293c125bfd66de37fd4cc"
   },
   "extensions/evn-alpha/examples/18_bluetooth/bluetooth_minimal.evnblocks": {
-   "size": 7680,
-   "sha256": "f556e71d30f9f54aade676ebe70e698f23e0176e219ef58ccb0e1be9f85c0f74"
+   "size": 7502,
+   "sha256": "69202521984203f1df0dbbc291b099d18ed514f072e0c8414e234e4a1da33710"
   },
   "extensions/evn-alpha/examples/18_bluetooth/bluetooth_minimal.py": {
    "size": 1678,
    "sha256": "807e1d1a8a4c650ca03e30fdfa1cf5b8696d6afe5cac9ed2f73f02a2dc66d769"
   },
   "extensions/evn-alpha/examples/19_uart/uart_complete.evnblocks": {
-   "size": 16219,
-   "sha256": "d313cd79ca169c8aa1ebde3a4a99d1b2f4242720c4a1bdde7e343a14407d455a"
+   "size": 15890,
+   "sha256": "b825f2ee9292dda258c38b56fc7a512d132eb069e43265e7923accc2c933edac"
   },
   "extensions/evn-alpha/examples/19_uart/uart_complete.py": {
    "size": 5427,
    "sha256": "0161f300cb54c21e8a4e3b734563e4cbe7e6d134215adfa178b28f2a77e42eef"
   },
   "extensions/evn-alpha/examples/19_uart/uart_minimal.evnblocks": {
-   "size": 3006,
-   "sha256": "eecf9ec379ec5b77b59fce2d882b9f598685d570896081680ad14ae460c95013"
+   "size": 2911,
+   "sha256": "2eb8cf11dfaac15938d5b6dc9ec4b5780a4bad9f9fc40b7fa720158bb5f414f6"
   },
   "extensions/evn-alpha/examples/19_uart/uart_minimal.py": {
    "size": 1804,
    "sha256": "2698e99477a0d7db68876bc6873744bcf7b3d16d3c01375055425fd196060417"
   },
   "extensions/evn-alpha/examples/20_i2c/i2c_complete.evnblocks": {
-   "size": 30615,
-   "sha256": "e5e416458fc22ed2a75aa39505bd6cb956da0ca8fab001b135f5a561c8c4e976"
+   "size": 30091,
+   "sha256": "3c6752187f30ce94f762af52ea28e5903bcd9aae508050a717e115034751a476"
   },
   "extensions/evn-alpha/examples/20_i2c/i2c_complete.py": {
    "size": 6472,
    "sha256": "5c83363c17e2e23fe2bbf4229651e24f978c65a20b98ab736ab24e22c40baded"
   },
   "extensions/evn-alpha/examples/20_i2c/i2c_minimal.evnblocks": {
-   "size": 5339,
-   "sha256": "267a5d639cc6c4b044b2a6d546b38553e0b79f52529fa118c361ce8aa5f5ab51"
+   "size": 5186,
+   "sha256": "8a8597a72e94662eb5b54d0f1b780eec459c746eaee6d335e7926a1729c5baf5"
   },
   "extensions/evn-alpha/examples/20_i2c/i2c_minimal.py": {
    "size": 866,
    "sha256": "a060066db974c8c1d3217a98cd19e93a7cd9e9aa9c4c5d666c53c377da3e287e"
   },
   "extensions/evn-alpha/examples/21_files/files_complete.evnblocks": {
-   "size": 17310,
-   "sha256": "e46d935948c537719df63e2eff13445fcf84b6b16d17a84c89e0df05cf751415"
+   "size": 16944,
+   "sha256": "f3e7f264b66a3eef256cda61b0ae48a7291b834598eb720f6d922034e5a19ea7"
   },
   "extensions/evn-alpha/examples/21_files/files_complete.py": {
    "size": 5036,
    "sha256": "4aa3a202f850dd4044e7c9a69e908c7ff0dc1a9cef6b518cb024d45b200fb630"
   },
   "extensions/evn-alpha/examples/21_files/files_minimal.evnblocks": {
-   "size": 3248,
-   "sha256": "a06f88d37bd4d05377d0bae4e227f3c070c54bded6a314739b5c75c06d1653f4"
+   "size": 3146,
+   "sha256": "6a30302a3c7061e3f2a7b9c53288929d41f54738c8051568cda93f2bf97b9c68"
   },
   "extensions/evn-alpha/examples/21_files/files_minimal.py": {
    "size": 827,
    "sha256": "b8701ada91ab588feae0b6fc0645f338fcd5d29ef44973d3582031eb6cb39091"
   },
   "extensions/evn-alpha/examples/22_data_log/datalog_complete.evnblocks": {
-   "size": 10258,
-   "sha256": "f4580d0e790165d8e1c672c0ea303d289c681f220fb5b627a741fd9ae5175bb2"
+   "size": 10019,
+   "sha256": "a469df3de6049137d07f580a8b1aa42e3da4f95e9660ad03ca69f483bb288c15"
   },
   "extensions/evn-alpha/examples/22_data_log/datalog_complete.py": {
    "size": 3547,
    "sha256": "267ebadc14bc17c4f44c878154b41dbec03d65811c79801c96a129a03d8d05a8"
   },
   "extensions/evn-alpha/examples/22_data_log/datalog_minimal.evnblocks": {
-   "size": 4929,
-   "sha256": "8db1d98c30ee9dc884ea9f71d3bf5e9d5de7d3fb3cad355bf15d35195ea35a01"
+   "size": 4785,
+   "sha256": "bc34509ae45238d55e2d608427d68997d7794e01aae6fb6d881f541b25f76606"
   },
   "extensions/evn-alpha/examples/22_data_log/datalog_minimal.py": {
    "size": 785,
    "sha256": "c81f16420c5b9ad256e8801c6d9b807656f73b3aaed4a80cbca441be3b64cc98"
   },
   "extensions/evn-alpha/examples/23_controllers/controllers_complete.evnblocks": {
-   "size": 31827,
-   "sha256": "ef1af49b9bb394b36a5d7c16b32f08778b97013ccbc3f8fa88fcf1e7399b65b6"
+   "size": 31277,
+   "sha256": "71dcc287c4bc912582419aa153ebe2deaf59acda764dc415576dc63bce8d1206"
   },
   "extensions/evn-alpha/examples/23_controllers/controllers_complete.py": {
    "size": 4071,
    "sha256": "92de041ba269aa0794943f21a2c2c3e4918c8646f48b0a1b9a82b4dbf0e56ba0"
   },
   "extensions/evn-alpha/examples/23_controllers/controllers_minimal.evnblocks": {
-   "size": 6666,
-   "sha256": "e94387d309f8061daf1628a25911fb18074ebdb747710a06af78dde4d571f1e2"
+   "size": 6483,
+   "sha256": "ea181ed444771c1b11f33c8e913076163d278770587d5e32de6ffb542f15c4b0"
   },
   "extensions/evn-alpha/examples/23_controllers/controllers_minimal.py": {
    "size": 1280,
    "sha256": "9b253f5653c2309815c701dd3363108b817858417ac196b8494f9f1911531106"
   },
   "extensions/evn-alpha/examples/extended_peripherals/01_hitechnic_color/hitechnic_color_complete.evnblocks": {
-   "size": 16435,
-   "sha256": "6c764f594baeefcba31bafcd1c936070668cbaca424de4762daf3baaff286ed7"
+   "size": 16153,
+   "sha256": "e2d5fe5be9032139d4e1086b1ec1c9052a6fcd5c2f244b735cef6f9363fca8e6"
   },
   "extensions/evn-alpha/examples/extended_peripherals/01_hitechnic_color/hitechnic_color_complete.py": {
    "size": 4126,
    "sha256": "a089c0a33011c6a370d9a4709d76529361cc999d5bc0a236abe6ade9c6ab6dae"
   },
   "extensions/evn-alpha/examples/extended_peripherals/01_hitechnic_color/hitechnic_color_minimal.evnblocks": {
-   "size": 2274,
-   "sha256": "e920f4c767a63da7508d612ca1c4a996c7e8f8faf7c26784393c151852c7bee1"
+   "size": 2196,
+   "sha256": "ed209b4a9bb5859a3c54eafcaf9504214443b9bfce32ea1d1e534054becb7568"
   },
   "extensions/evn-alpha/examples/extended_peripherals/01_hitechnic_color/hitechnic_color_minimal.py": {
    "size": 592,
    "sha256": "bbf0891c20b12bb2e54e03e2659fb845c236fd4905e658d88ee86ec3cdd256fe"
   },
   "extensions/evn-alpha/examples/extended_peripherals/02_hitechnic_compass/hitechnic_compass_complete.evnblocks": {
-   "size": 9598,
-   "sha256": "ac270f8fdf18c1e470b5874b08606db1e1c45cc8b9b6b5392d159ff90a48f960"
+   "size": 9382,
+   "sha256": "73a1a769827c454f1d1aea95f33a5b205c9644d6d79e080e2229103819b070a3"
   },
   "extensions/evn-alpha/examples/extended_peripherals/02_hitechnic_compass/hitechnic_compass_complete.py": {
    "size": 2152,
    "sha256": "8a4f59b3f40961ade68567181572d4cc66642e6d9ae3ff84c65ae91062953a0a"
   },
   "extensions/evn-alpha/examples/extended_peripherals/02_hitechnic_compass/hitechnic_compass_minimal.evnblocks": {
-   "size": 2229,
-   "sha256": "cb3aca3d2b87484385fc5ef5a3a8e410d9196ea884d3a2eb7b927a2bb4a63163"
+   "size": 2152,
+   "sha256": "db2ba68da090dc9f7e7926da95eabee14958e1caf5f02f2ff93fe7be27271e0a"
   },
   "extensions/evn-alpha/examples/extended_peripherals/02_hitechnic_compass/hitechnic_compass_minimal.py": {
    "size": 589,
    "sha256": "ea634e060b260228e5c48a0f23d168bd02a6465fa3fdc9a678695352d53bf927"
   },
   "extensions/evn-alpha/examples/extended_peripherals/03_huskylens/huskylens_complete.evnblocks": {
-   "size": 11899,
-   "sha256": "e08dfaa16623d61018935f092fc07979636ae4354a51da09b308eb76a1880f12"
+   "size": 11635,
+   "sha256": "49e11cb5871a04dad4ecbf3ba0f05f20698e6917583711bcbe7d9dde2649d206"
   },
   "extensions/evn-alpha/examples/extended_peripherals/03_huskylens/huskylens_complete.py": {
    "size": 2058,
    "sha256": "e5ba3a00d0ebe2e19e4588dd6a7c6bdbf2d1d6deb78c26fe090d2c3f0c0cfaef"
   },
   "extensions/evn-alpha/examples/extended_peripherals/03_huskylens/huskylens_minimal.evnblocks": {
-   "size": 2176,
-   "sha256": "db0adf74ff37e621e63c9e663c474cd9b197b0a627309c880fa16dd63efc180a"
+   "size": 2099,
+   "sha256": "b5190ca7ef0d1ac2e3dc35785aebe3d1807f89c7af40719c0a3432525e744254"
   },
   "extensions/evn-alpha/examples/extended_peripherals/03_huskylens/huskylens_minimal.py": {
    "size": 513,
    "sha256": "f769afacd5b3c44f339a858801039598e2ef631984f1513f5c8529794ecc0c5f"
   },
   "extensions/evn-alpha/examples/extended_peripherals/04_vl53l1x/vl53l1x_complete.evnblocks": {
-   "size": 21876,
-   "sha256": "8600b4719a6076536b9516d1a1289d310782dd6a29a176d5dbc3f2afa02b5085"
+   "size": 21499,
+   "sha256": "5043da2b832a6ba38aeab7d0efbc243832610fdd6cb294c0d7a6e00bffec0472"
   },
   "extensions/evn-alpha/examples/extended_peripherals/04_vl53l1x/vl53l1x_complete.py": {
    "size": 4031,
    "sha256": "ceeac58c6e00c17c36cba6d29e503ddc10e59de6f94d71e9f105a81754132356"
   },
   "extensions/evn-alpha/examples/extended_peripherals/04_vl53l1x/vl53l1x_minimal.evnblocks": {
-   "size": 2206,
-   "sha256": "e21fbdc9081b08fa76c65de421cfd312800a762c5a1ce48a62bf73b4769559d1"
+   "size": 2129,
+   "sha256": "4cc6d1383ef2da3c2378ead857a3d5db7495e39005f5339eed8933f3ab5f5e66"
   },
   "extensions/evn-alpha/examples/extended_peripherals/04_vl53l1x/vl53l1x_minimal.py": {
    "size": 542,
    "sha256": "90072ff46d6672e67ad7fc8f0361c68a51a13d8b6f5ac3b5b4ca85a048080ded"
   },
   "extensions/evn-alpha/examples/extended_peripherals/05_tcs3430/tcs3430_complete.evnblocks": {
-   "size": 32603,
-   "sha256": "3229e7b2dfd2fc025364d1011ef40a4cd44eeb31a40a7658761ca4a93a83ff9e"
+   "size": 32129,
+   "sha256": "fd25b1986af6906b0e6ae60efa33f83abb778d86e39ec3d18ca482ff3ab0a787"
   },
   "extensions/evn-alpha/examples/extended_peripherals/05_tcs3430/tcs3430_complete.py": {
    "size": 5710,
    "sha256": "785aba109afd09e0e2d0ee5a63b2a91c51cffe06679008e102ada13545d49f71"
   },
   "extensions/evn-alpha/examples/extended_peripherals/05_tcs3430/tcs3430_minimal.evnblocks": {
-   "size": 6128,
-   "sha256": "8ddcf9102327e3b0921db5f31b372a34d4c92a52c3bd494ff7d0ada0dcc4e6b2"
+   "size": 5973,
+   "sha256": "c145311221782dc6be9feb6ef58c2e4c26df41cbaf277afbcd13dc89c1d4d35b"
   },
   "extensions/evn-alpha/examples/extended_peripherals/05_tcs3430/tcs3430_minimal.py": {
    "size": 757,
    "sha256": "2f51e597941998ef2c6a0e5bf4f68bdb4ab723ffbdcabaa3b5c642fd35ce335d"
   },
   "extensions/evn-alpha/examples/folders.json": {
-   "size": 18070,
-   "sha256": "90720be1f05844638ae4a249b83a48fc419cc495a2b1b3fbee78190e2aa24ae7"
+   "size": 17821,
+   "sha256": "19fa1c68bee1740a8e37c76f0497ba1ff556ae16297bb3139338fc83a57b7ff1"
   },
   "extensions/evn-alpha/examples/index.json": {
    "size": 22077,
    "sha256": "f198bd465fbd534afd7fe3e060a4a47b5be4cb80febf9287860b97a9d3491580"
   },
   "extensions/evn-alpha/firmware/BUILD.txt": {
-   "size": 1612,
-   "sha256": "97507a7d2980ebd93a8dd45310cc5ed259a5b8947bd5a031c4e8c4a2756588e1",
+   "size": 1725,
+   "sha256": "61377896708225605870dcaef56a9811f339e34276a1011c30825ec0574ec97c",
    "precache": true
   },
   "extensions/evn-alpha/media/blockly/LICENSE": {
@@ -1030,40 +1878,44 @@
    "sha256": "7d880e1763a147a4646398b5f6cf2398cf866bd12c12db44ed4c91a5d38fca59"
   },
   "extensions/evn-alpha/media/blocks/editor.css": {
-   "size": 19856,
-   "sha256": "ba90e1271a1c18be2cd18dc38c8c9617482cce73338e46cc3e67af59ef9e4d8f"
+   "size": 19374,
+   "sha256": "b4c0091c29d44303dd9f8bec25d2862ee5d8b81d452a175532f0d68148dfad54"
   },
   "extensions/evn-alpha/media/blocks/editor.js": {
-   "size": 24563,
-   "sha256": "3e00d82b3ae454d1f5654643c1be15c88d76f446931a529b68b306af0c5a27a1"
+   "size": 33663,
+   "sha256": "e63a326a57c4b96f24d96b9bcf6751e7224367939fb260fad83f5a177daa02c1"
   },
   "extensions/evn-alpha/media/blocks/evn_blocks.js": {
-   "size": 266061,
-   "sha256": "d01323d91620b7d98b94b402326017874af65a9a74425f2d9028a3f0bdb237ff"
+   "size": 280155,
+   "sha256": "7ef7cb87d4881d667c1ad41a2ca4c3097bdbc61488b05e7352b43600af67d7c7"
   },
   "extensions/evn-alpha/media/blocks/icon.svg": {
-   "size": 216,
-   "sha256": "ab65d4e24a5a0730d38efdc1e7a515faf801aa08bc7074b3010c6d2bc6ee46bf"
+   "size": 213,
+   "sha256": "1f4925524eb570e3ee47afadffe8508ad55da8d38a042a21df8c57291cf21341"
+  },
+  "extensions/evn-alpha/media/blocks/junior_blocks.js": {
+   "size": 20297,
+   "sha256": "8682e15e21a6af2fd1d0851c541eb09932f663dc3bd4e8cc0b94482845522046"
   },
   "extensions/evn-alpha/media/console/console.css": {
-   "size": 4589,
-   "sha256": "30f26ffa317004a5b0966e6bc273daab1be039dab02cb01957748cf046d82e4e"
+   "size": 4400,
+   "sha256": "95acf717ac02d5ecb226ed3768c94bbc6259403d2279fb6ecfc6b73edbdd016b"
   },
   "extensions/evn-alpha/media/console/console.js": {
-   "size": 18320,
-   "sha256": "73292f2f0d5a61cdaf080dfe7c445e06d9f93fd7fdef71db7c506c2525267894"
+   "size": 17878,
+   "sha256": "a90777e9253a41cab78bd9d28a188ecb7709d7d5cb41fbf243725191b2e09bd0"
   },
   "extensions/evn-alpha/media/datalog/datalog.css": {
-   "size": 9407,
-   "sha256": "8dcd185bc44dc20be4a440b5104c3415d1c913c185d5e34345087ff7ab0452e9"
+   "size": 9291,
+   "sha256": "35d68f7ef3c37a79842429804056b9162298a6df060a821e91f084c9ef0301b5"
   },
   "extensions/evn-alpha/media/datalog/datalog.js": {
-   "size": 38548,
-   "sha256": "19b1ee4f3088f4f8722178b61310ecd15e6553ece4a6f5fea514b4a5948357a2"
+   "size": 37850,
+   "sha256": "92f62a6415c8381f923124a2c6aad5162f076317535ba75a435a555ca8df4aaa"
   },
   "extensions/evn-alpha/media/evn-n-cambria.svg": {
-   "size": 863,
-   "sha256": "ca1ee4b676427c7653b09d3c3b0abf863bea59a8bae53384c8014d737ceb260e",
+   "size": 859,
+   "sha256": "81bc1edf554b6263943909185e62295a96434f4cbc8e0d4c9e55c32d8692af32",
    "precache": true
   },
   "extensions/evn-alpha/media/fonts/LICENSE-Jost.txt": {
@@ -1079,8 +1931,8 @@
    "sha256": "7726a5cd6f3c0e876c028ea2a643d45f7aad4b0f164b70966c669f4a4668f4b9"
   },
   "extensions/evn-alpha/media/hints/python_errors.json": {
-   "size": 9538,
-   "sha256": "a49d694a4e99387e8d9a6ef89f4c8d754e3fcf524fb6b6e27e7d7246adea77e1"
+   "size": 9270,
+   "sha256": "0f998e92467c873784eeb4f41dbe9f0016006a2622e90efd0abdad65db3f4452"
   },
   "extensions/evn-alpha/media/icon.png": {
    "size": 5514,
@@ -1132,40 +1984,44 @@
    "sha256": "b6ff7e3911642725ea9b30168df70c8aeb9ce50e5c4d544ac5fd037ee1ef6a52"
   },
   "extensions/evn-alpha/media/nb/nb-packages.json": {
-   "size": 6248,
-   "sha256": "ddb14dcb676a8761adf4f3eb66a109a363081c42ae26f0f22f8c1656c2f848ee"
+   "size": 5995,
+   "sha256": "c0fc567e2b2e6f3bbfda77bfcc015f066a95938dfbf8bf57ea9446d461b6ab88"
   },
   "extensions/evn-alpha/media/perf/index.html": {
-   "size": 3693,
-   "sha256": "4ed61adfdd09069522eed08b98d08ff61b24a5ecbfc5afa3f2f1eb21df146a57"
+   "size": 3634,
+   "sha256": "ed4a241dc02df7b3e99e3d96afde28578c9df9baf4247d8babab1c9bb9cc1df4"
   },
   "extensions/evn-alpha/media/pyodide/COPYRIGHT-musl.txt": {
-   "size": 6397,
-   "sha256": "5f7c882fccb097ee08aa9ff223cff44e4d5b284dedb85a8cc09d80768b2ecef9"
+   "size": 6204,
+   "sha256": "f9bc4423732350eb0b3f7ed7e91d530298476f8fec0c6c427a1c04ade22655af"
   },
   "extensions/evn-alpha/media/pyodide/LICENSE-CPython-incorporated.txt": {
-   "size": 40480,
-   "sha256": "ba96a3984f5c4b712527e5fb96b401483c2d2cf37d28a70aa747cba048eaf5ff"
+   "size": 39643,
+   "sha256": "c9968f89b8c5c3ac665d37214325ab87abf4db93e4605d9804f7f668100152d8"
   },
   "extensions/evn-alpha/media/pyodide/LICENSE-CPython.txt": {
-   "size": 14086,
-   "sha256": "77121f04e144538c0d1a0eb896dd84151132e819d796f47cc4f914e7f44ca41e"
+   "size": 13809,
+   "sha256": "78b12c3a81360b357002334f0e70ea0e92eebf7a9b358805c03c48484945f3bb"
   },
   "extensions/evn-alpha/media/pyodide/LICENSE-Emscripten.txt": {
-   "size": 5195,
-   "sha256": "51a110c35dd90d7b882df62864f256859c4d6ad51023da42ae8138a130c890cf"
+   "size": 5093,
+   "sha256": "620a78084fc7ca97c0b5dea9abf891f3ffcadfdbf305276f099c9c4e12fc1d86"
   },
   "extensions/evn-alpha/media/pyodide/LICENSE-HACL.txt": {
-   "size": 1230,
-   "sha256": "c94eb6f793466a9e45bdab7e416d60ca9a19c5767e8f52c6ae91b3165ecc0261"
+   "size": 1207,
+   "sha256": "998ce04fb8ad9dedb0bc1b44938f8c3dcf1089780fa105ce1c8c30fb5554d78c"
   },
   "extensions/evn-alpha/media/pyodide/LICENSE-Pyodide.txt": {
-   "size": 17098,
-   "sha256": "2684de17300e0a434686f1ec7f8af6045207a4b457a3fe04b2b9ce655e7c5d50"
+   "size": 16725,
+   "sha256": "1f256ecad192880510e84ad60474eab7589218784b9a50bc7ceee34c2b91f1d5"
+  },
+  "extensions/evn-alpha/media/pyodide/LICENSE-bzip2.txt": {
+   "size": 1901,
+   "sha256": "4919cfb14a73cd64fcef67b107613970cf1659a09aa675dba31314f373bc7204"
   },
   "extensions/evn-alpha/media/pyodide/LICENSE-libffi.txt": {
-   "size": 1153,
-   "sha256": "097eee0a217d07a7b298a0e9e725313884582275a2ec95e01c7c7168d1b087de"
+   "size": 1132,
+   "sha256": "2c9c2acb9743e6b007b91350475308aee44691d96aa20eacef8e199988c8c388"
   },
   "extensions/evn-alpha/media/pyodide/VERSION.txt": {
    "size": 97,
@@ -1208,236 +2064,320 @@
    "sha256": "4082bc4a9f7ab494137014991fe8afe83218aaaeb6bb4dbd6fd2b40c464742e5"
   },
   "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-contourpy.txt": {
-   "size": 1563,
-   "sha256": "85a9aa53d35dff0218d9df56726615f06c13e2a493e3f1407882bc51e5fff758"
+   "size": 1534,
+   "sha256": "c7d0a153bffaa104044463ebc633793d451722efd3138b5ffd2527b40f1505a2"
   },
   "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-cycler.txt": {
-   "size": 1523,
-   "sha256": "bd12389efcd462410fce53ae307bfeba183e9d609b53cd5d028dc0af3b14b286"
+   "size": 1497,
+   "sha256": "f1218143d766da3fea66f13396b7f15df46a83303f29bf96ba6e98eb4d42f408"
   },
   "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-fonttools.txt": {
-   "size": 1093,
-   "sha256": "22bef80697ecfaa17f97e62b9a26dfa12820be05583e8dd12ad169b241274c99"
+   "size": 1072,
+   "sha256": "6787208f83f659ccbc2223b2fde952ffa6f7e8aca62f1a8a2bf5bc51bb1b2383"
   },
   "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-kiwisolver.txt": {
-   "size": 3360,
-   "sha256": "97b2a3c8db935dc71e89adcde189f6070ea9891ac79b67f1deacf5c3637cb475"
+   "size": 3289,
+   "sha256": "238e69906d7e507a94832b9831131862c4176d58c002b388e2e99db5d83677d2"
   },
   "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-libopenblas-LAPACK.txt": {
-   "size": 2314,
-   "sha256": "5677a8645d82d423eb04693ae341c7638f3fd20b60af38e6c0454d62bf87d458"
+   "size": 2266,
+   "sha256": "978539245c405775bf347b1256c36df4daf8b69a64b099e94b1d53742201621e"
   },
   "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-libopenblas.txt": {
-   "size": 1577,
-   "sha256": "e432f9efd33d13e669036aed7cd2b6a9baded0ea2de2f693a5c035d48d54d03e"
+   "size": 1548,
+   "sha256": "190b5a9c8d9723fe958ad33916bd7346d96fab3c5ea90832bb02d854f620fcff"
   },
   "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-libopenssl.txt": {
-   "size": 6246,
-   "sha256": "15b8e85f410b23610e424681c010e1b2833c9805f977131713ad6f7decf3fe90"
+   "size": 6121,
+   "sha256": "c32913b33252e71190af2066f08115c69bc9fddadf3bf29296e20c835389841c"
   },
   "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-matplotlib-AMSFONTS.txt": {
-   "size": 12915,
-   "sha256": "d6706f84e487f1dddc791f1cc86fdb927afb5a0e114a6a01e4cfc713bd855721"
+   "size": 12675,
+   "sha256": "155141d59877f338f6e1c0805de9b79964dce71fe5d2a56c44e38b2c0f7e35ee"
   },
   "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-matplotlib-BAKOMA.txt": {
-   "size": 1480,
-   "sha256": "d5e162b6848a76f9ce1f4d8e0992f9075bf5239192282242f9a737eae51aa247"
+   "size": 1440,
+   "sha256": "93adb2b53c02b7ce06b26bff41358c21248f42fed287b633ec4c31038377cdbb"
   },
   "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-matplotlib-CARLOGO.txt": {
-   "size": 4499,
-   "sha256": "ce93bdc1b282885eebaa3e124d07075a3ccb8ffebb933871d66cddc239cb7481"
+   "size": 4455,
+   "sha256": "61902d5eef34dd24870b7287a96260d3328233b96f7202bf70ad6e2a0da2de3f"
   },
   "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-matplotlib-COLORBREWER.txt": {
-   "size": 707,
-   "sha256": "434d2c9daeba30f104653760fb947f911c0babc745efa323625fff496bf38849"
+   "size": 695,
+   "sha256": "01173653fe745ce2124ec156d78b460582d2a719d2d9212804267e95fd2c97e7"
   },
   "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-matplotlib-COURIERTEN.txt": {
-   "size": 820,
-   "sha256": "a8507f7125818be14fd3065c4fdc919fe8169358ba3306e74515ac7aaf21caea"
+   "size": 802,
+   "sha256": "ac81f717aaff9456b88010fc55382a8dff199e4c4bcc5d61e040c3f7063beb43"
   },
   "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-matplotlib-JSXTOOLS_RESIZE_OBSERVER.txt": {
-   "size": 6907,
-   "sha256": "ed05026458613a3c9f3447030ec6d400f694cb741692928f586208bfe1e5e72e"
+   "size": 6799,
+   "sha256": "597756adcb51f243ef4fb386920377f61d012ace0904364e1a8ee9aaec6afc84"
   },
   "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-matplotlib-QHULL.txt": {
-   "size": 1759,
-   "sha256": "2a6ebb495e26dd5f88cbc40c593733da6edb27b64936f70409cd5a1acafb1c32"
+   "size": 1720,
+   "sha256": "106d55c931fd6a84822e5345d900273d059f1c27310d02567ccb313c5d18c55d"
   },
   "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-matplotlib-QT4_EDITOR.txt": {
-   "size": 1260,
-   "sha256": "0250e0982d249c69e31563191d83b4c55150e30b3af7d80a14c4a72ae79f7dd3"
+   "size": 1230,
+   "sha256": "b2b50ca8b6172aca23095adf15db89d3727e9ef2d6ef0178e427234011bed3cd"
   },
   "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-matplotlib-SOLARIZED.txt": {
-   "size": 1141,
-   "sha256": "46b49a2bdc5c2b5d9486e91adcb3a1101fd05b989b6d85f791dc026a4c542ccd"
+   "size": 1121,
+   "sha256": "12d5327fbc4df845a86883de99ed5fdf4198445d56dbacdf5fad8f0efdc97513"
   },
   "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-matplotlib-STIX.txt": {
-   "size": 5600,
-   "sha256": "20742462c1dc14913b39f00ca1e06a2e9885b64b593a06de4209066988dbdb8e"
+   "size": 5476,
+   "sha256": "bab3d31dfef07f483624f2f65f2711e76065b8e7273278b1c071ede1041c9959"
   },
   "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-matplotlib-YORICK.txt": {
-   "size": 2362,
-   "sha256": "8b0fb87ee4ca8dfa45617212b5927fa662e622e6595b3508a73e91c082824a49"
+   "size": 2313,
+   "sha256": "cab753d38c093651e8deb5abb684e3ed68020e0e418034f94d79e890dc7ae84d"
   },
   "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-matplotlib.txt": {
-   "size": 4928,
-   "sha256": "a23af7b6b872ca6cb0ec6798c6484ed89628031515b1c6e0305cfd6f5aab7153"
+   "size": 4830,
+   "sha256": "5a1a81ea301728c8bba2933da832c0cd62229daf20893a024ab3d53244468dbc"
+  },
+  "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-numpy-BUNDLED.txt": {
+   "size": 974,
+   "sha256": "7fe52683ce840a3103e9cc82fe92252b2c533061ca4f9b8d6f3d4d835f7c32f9"
+  },
+  "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-numpy-DRAGON4.txt": {
+   "size": 1498,
+   "sha256": "92b12e5a8bdcd0bbf49cf7d7bb061ce3ea2d64902ea9f3c03395e5c063ed30bf"
+  },
+  "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-numpy-HIGHWAY-BSD3.txt": {
+   "size": 1515,
+   "sha256": "d25e82e26acd42ca3ccc9993622631163425b869b9e16284226d534cff6470f2"
+  },
+  "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-numpy-HIGHWAY.txt": {
+   "size": 11356,
+   "sha256": "43070e2d4e532684de521b885f385d0841030efa2b1a20bafb76133a5e1379c1"
+  },
+  "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-numpy-LAPACK_LITE.txt": {
+   "size": 2266,
+   "sha256": "a14cc25e10d40a3aa705b7de2fb764a6535d8ee9b2db4e1724900585457dfd55"
+  },
+  "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-numpy-LIBDIVIDE.txt": {
+   "size": 1018,
+   "sha256": "fbc539f47d0cf83bc61378080fb873d5c14630126cacbfe754035c3926daa5ec"
+  },
+  "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-numpy-MA.txt": {
+   "size": 1593,
+   "sha256": "05f3b88351988ecfad10abe92c0c50e5875c6452d5009a0084cc291551ffcca6"
+  },
+  "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-numpy-NPYMATH-COMPLEX.txt": {
+   "size": 1650,
+   "sha256": "d4be9e7e378f92dc053ae48d33fa534f2dfdf9d16749aedaef91cfcdb23f44fd"
+  },
+  "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-numpy-POCKETFFT.txt": {
+   "size": 1498,
+   "sha256": "a85ca13fdf90160b64a0698215868c13b74d835ad0a4e2ba44713b8c5058a056"
+  },
+  "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-numpy-PYTHONCAPI_COMPAT.txt": {
+   "size": 690,
+   "sha256": "3f2c1ffa76383a55ae0aac01c9737cd70050dff63e1f026694fbe9d662573c98"
+  },
+  "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-numpy-RANDOM-DISTRIBUTIONS.txt": {
+   "size": 2745,
+   "sha256": "469778be8f33d54e1bcaab28c281cc472916d2d273f835e55bc487d30503face"
+  },
+  "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-numpy-RANDOM-INCLUDE.txt": {
+   "size": 1018,
+   "sha256": "fbc539f47d0cf83bc61378080fb873d5c14630126cacbfe754035c3926daa5ec"
+  },
+  "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-numpy-RANDOM-MT19937.txt": {
+   "size": 2926,
+   "sha256": "0e111337b25494a773106695f0e799f642b8567aaacca4f116a74a8177179156"
+  },
+  "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-numpy-RANDOM-PCG64.txt": {
+   "size": 1154,
+   "sha256": "e7d4f4fb20358f314210a892ae17351e04993813646f697ec387385ca2a36918"
+  },
+  "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-numpy-RANDOM-PHILOX.txt": {
+   "size": 1509,
+   "sha256": "6f5828a57223d4cc7f8ea505a2623e7b978b242752c1515e355f46ba2cec1800"
+  },
+  "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-numpy-RANDOM-SFC64.txt": {
+   "size": 1226,
+   "sha256": "9d4098846018319cd68e228ee6220361787f73bccbf00237a85e4fc9621b998f"
+  },
+  "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-numpy-RANDOM-SPLITMIX64.txt": {
+   "size": 332,
+   "sha256": "268b0ca06759d31ea3ca68dd35f20e877916e927b1c2a835e4592a3c4354b1f9"
+  },
+  "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-numpy-RANDOM.txt": {
+   "size": 3511,
+   "sha256": "103166b62b80443afb9eb3488e052ea06be0cff566b908f199e561fde49af19f"
+  },
+  "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-numpy-UTF8-DECODER.txt": {
+   "size": 1155,
+   "sha256": "700eaf80cd09ac871f25482ade0a52432fd6e210714cf366b5d880d2e5652144"
   },
   "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-numpy.txt": {
-   "size": 1573,
-   "sha256": "2b3e076071410ffafe86fa9ddaff63f5ae3c50056f7802f13a87386c6921f526"
+   "size": 1543,
+   "sha256": "01fb016849aa427edb1bbbbd55f91c26ca6cadb32a5b20e7f000655dd05b0760"
   },
   "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-packaging-APACHE.txt": {
-   "size": 10351,
-   "sha256": "eb3d7b5485466acbd81f2b496f595ab637d2792e268206b27d99e793bdb67549"
+   "size": 10174,
+   "sha256": "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594"
   },
   "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-packaging-BSD.txt": {
-   "size": 1367,
-   "sha256": "67daf15b478dbd91bcd83bff907efff68471d42d2138226b89f039d658d53435"
+   "size": 1344,
+   "sha256": "b70e7e9b742f1cc6f948b34c16aa39ffece94196364bc88ff0d2180f0028fac5"
   },
   "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-packaging.txt": {
-   "size": 200,
-   "sha256": "8ef81e4c883c5ccb2a08026cc74ba3193279dd5149b36839d976c0a896637d87"
+   "size": 197,
+   "sha256": "cad1ef5bd340d73e074ba614d26f7deaca5c7940c3d8c34852e65c4909686c48"
   },
   "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-pillow.txt": {
-   "size": 1483,
-   "sha256": "25b382465adf68c20fb1d2c1933496013986ae03eaa70633f87829b77dc29dec"
+   "size": 1453,
+   "sha256": "17f240ae101143707e5e7303a5d800450d9ccc7475b463cedb555cefdb3c6ece"
   },
   "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-pyparsing.txt": {
-   "size": 1041,
-   "sha256": "d3cd4fabbe12a5ed57770ac691ec0d292a9ad3bf242c887b51623ec158dd8fc2"
+   "size": 1023,
+   "sha256": "10d5120a16805804ffda8b688c220bfb4e8f39741b57320604d455a309e01972"
   },
   "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-python-dateutil.txt": {
-   "size": 2942,
-   "sha256": "aedc1c280bcc065a11e10ed8008317c3e91a7371dcae51cc52971243f2577d64"
+   "size": 2889,
+   "sha256": "ba00f51a0d92823b5a1cde27d8b5b9d2321e67ed8da9bc163eff96d5e17e577e"
   },
   "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-pytz.txt": {
-   "size": 1107,
-   "sha256": "239f03bd61222bc20cb5914d19ede508abec7d95c53d48a8013e53ebcdb8ee2e"
+   "size": 1088,
+   "sha256": "be8b1a37ebe26c592a90f6c0eb33103a7f383ce2f4d7498c0af9a526990a07b8"
   },
   "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-scipy-ARPACK.txt": {
-   "size": 1937,
-   "sha256": "fcb3c6c7de1460cf7d0863c3c5996e518eb8015a2eced36911f3da178440b3df"
+   "size": 1892,
+   "sha256": "0926566f9f406178d1214f8cc796e166b1213dd7c05e0c5b461a8b8ac9e50bbe"
   },
   "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-scipy-ARRAY_API_COMPAT.txt": {
-   "size": 1118,
-   "sha256": "464569596b7e6162762669e4e4d1fe8d2618c03901ca7ba36e2603415fb6865d"
+   "size": 1097,
+   "sha256": "4ffd978e3fa18d058d98c66771cfea7ed634aaf7023cf9612b8b55eee9a8f0fe"
   },
   "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-scipy-BIASEDURN.txt": {
-   "size": 1247,
-   "sha256": "f0a52713eadf60ba7efec9fc8965553a2ca2c5b44beca89a3596d0ee0e748107"
+   "size": 1217,
+   "sha256": "c2bf3b1e5a5cde539b9f8e38b5c870f49db0b5f01c7f9cdd1d1291bafc81d22f"
   },
   "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-scipy-BOOST_MATH.txt": {
-   "size": 1361,
-   "sha256": "beb8e42e9d6b4284e03304d05a81a0755200a965fc8d0a5e0aea1e84cf805d6e"
+   "size": 1338,
+   "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
   },
   "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-scipy-BUNDLED.txt": {
-   "size": 12714,
-   "sha256": "ab5dd3bb046c55e0db1c3baba12d569d2a25ad192a42b05cf5a18628cad5acd7"
+   "size": 12426,
+   "sha256": "2ef7ab02d0a5f17837658d11761ef9892c38276714bed3338ed145bd2cf9865b"
   },
   "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-scipy-COBYQA.txt": {
-   "size": 1553,
-   "sha256": "e0c00b8283e5906a14be34d6763a41b68ef16a88ac3d2319ce0b8a6dc13837ac"
+   "size": 1525,
+   "sha256": "24c0f8f2ba06c8200c8748cbb49c6c4402ff0d7da6c1e69da3f88c3acb0bf3bd"
   },
   "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-scipy-DECORATOR.txt": {
-   "size": 1459,
-   "sha256": "834a646a42a0740063fa04c2d6e00216cf1253642f50b2d2fba0b3605b2953da"
+   "size": 1431,
+   "sha256": "da056edc51a1b76d3e9ce948db93d4dadf9d5698d242dd5d84cc3123bfa6ca82"
   },
   "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-scipy-DIRECT.txt": {
-   "size": 1571,
-   "sha256": "a0b09441117df970446929d904ac66aff7f8ce16ade7d96732f834247d9ba672"
+   "size": 1543,
+   "sha256": "a7669da81aac1b0539f161cf93d6a94956d24ff476537e0b0579925997eec3f0"
+  },
+  "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-scipy-ELLIP_HARM.txt": {
+   "size": 1438,
+   "sha256": "a12b4d787c968f435513c2f7beb04d0600c37c5be45dd211371e781560fc1a42"
   },
   "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-scipy-FAST_FLOAT.txt": {
-   "size": 1106,
-   "sha256": "bf1b57355feca8fce77ee95f48002f8d4789fb71b30ec7599c06cda4901fbb2b"
+   "size": 1079,
+   "sha256": "e562f3f974ced7e69dd1db77b820b36bcf8f30377f1aa105723fba449c53c4e6"
   },
   "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-scipy-FAST_MATRIX_MARKET.txt": {
-   "size": 1284,
-   "sha256": "f85a0c9fd27cf9a5bfdbe097f8923528023023e9224fedda2ecbdac88b2493cb"
+   "size": 1275,
+   "sha256": "4421977664ada9a02087ab1b031b50335f02b500e2cb58a1757074f31b4a89f5"
   },
   "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-scipy-HIGHS-BOOST.txt": {
-   "size": 1359,
-   "sha256": "36266a8fd073568394cb81cdb2b124f7fdae2c64c1a7ed09db34b4d22efa2951"
+   "size": 1337,
+   "sha256": "8d8291caf1cee26d23acf3eb67c9f9a2d58f1c681b16a4fbe8cbfb9e3c0b5a9b"
   },
   "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-scipy-HIGHS-FILEREADERLP.txt": {
-   "size": 1080,
-   "sha256": "35ffce513a58dc18cfae320797f2ddf747271a9c3d2fffdae42714bd5536bde6"
+   "size": 1061,
+   "sha256": "4374bb8064e5302f5ac6b82fd3e153a36670f04d0a6ee1bc55b3dc3faee923cc"
   },
   "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-scipy-HIGHS-PDQSORT.txt": {
-   "size": 890,
-   "sha256": "ecc88b39daa4e34d69778a17388baf74ec06882db6fc6bc5c8b71c808d162c5e"
+   "size": 874,
+   "sha256": "323fc18e35fcf058d69d684022ef844f206cb8fefb2bac1298fa1767e0b9ae38"
   },
   "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-scipy-HIGHS.txt": {
-   "size": 1188,
-   "sha256": "d76f5516dc3cf8bf45937e048184301d7eab03dc6e59bebe7c9aa2c28ff00680"
+   "size": 1164,
+   "sha256": "6dab9737857b3ed0188a37e1cf0e52cc4227a2525adca87d3e9ae3e389e02d2c"
   },
   "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-scipy-ID_DIST.txt": {
-   "size": 1805,
-   "sha256": "339832974180ac368172547c89348605502d7ed8fd4a5256086dedfe4bfa2837"
+   "size": 1760,
+   "sha256": "bf750ffcbee547ed729f0cbb9f7ee5dd387f22425e150f06a170fe614a38877d"
   },
   "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-scipy-LBFGSB.txt": {
-   "size": 3297,
-   "sha256": "fc2501587806e715bb1c6e4b6bd82c1d0d82afb71189dccf39ec5de2b837a080"
+   "size": 3221,
+   "sha256": "14285792eef6daed32a2e646854a1083b5730ead24389e8c0a88587124164ab8"
   },
   "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-scipy-LOGFACTORIAL.txt": {
-   "size": 1585,
-   "sha256": "20bbe91239e8bd9ff8a26faedcf7401b367cdeea67be219885eb5f05db941259"
+   "size": 1551,
+   "sha256": "9926aa31644bd4718722348ffd081f640a1fc4bb219accca7d7c2642dc3079d7"
   },
   "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-scipy-NDIMAGE.txt": {
-   "size": 1417,
-   "sha256": "9bca3aa574263028bfc41114c660c1f497c105160ec5ddffb5e59621826f3719"
+   "size": 1389,
+   "sha256": "606209a000716c5f66e33e180ce08434b96ed17db4975ab9723c6b5fbcc89609"
   },
   "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-scipy-POCKETFFT.txt": {
-   "size": 1523,
-   "sha256": "c04661685cff9d8035fe1c4c3ab357e7f7633cafc06a73e9d90c3c5fede8a86a"
+   "size": 1498,
+   "sha256": "c254b2b5fd30ae3c89d36ba061730563b9760fca04f1b746a1b2c3157da2c789"
   },
   "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-scipy-POCKETFFT_CPP.txt": {
-   "size": 1523,
-   "sha256": "8db000e158c162e7249787852d8c69764706502ccee725c06641b31c1e95c8af"
+   "size": 1498,
+   "sha256": "a85ca13fdf90160b64a0698215868c13b74d835ad0a4e2ba44713b8c5058a056"
+  },
+  "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-scipy-POCKETFFT_HDRONLY.txt": {
+   "size": 1842,
+   "sha256": "c5435113970e2d065cc733d3d3337f1789bce2221f5d142d3c4def68f8b18bf9"
   },
   "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-scipy-PROPACK.txt": {
-   "size": 2043,
-   "sha256": "c38769948f0c04785abbf7fdd40757d31967ce7be4dda2f57296dcea901e9873"
+   "size": 1993,
+   "sha256": "06e688f0ce45483c0671f8d887588e5452a993aecd557d2aee3b3b98e399ba67"
   },
   "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-scipy-PYSTREAMBUF.txt": {
-   "size": 2782,
-   "sha256": "4d41944dba7a77ac666a081106737ad01ded94e5ba6c593d7cd7293c16be82b2"
+   "size": 2726,
+   "sha256": "daa7b8ce3c49809260ef401bc37593d0a439d0a5087664436ca3517759b1a9fc"
   },
   "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-scipy-QHULL.txt": {
-   "size": 1673,
-   "sha256": "962452e737df7c743a3dc2744232071028b8c0450e7674a55057c330ea1977eb"
+   "size": 1635,
+   "sha256": "34db0c0c4f931861d720555c9cd7a2e228d1290ba29af0f2ee80c41bb2038afb"
   },
   "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-scipy-RYU.txt": {
-   "size": 1361,
-   "sha256": "beb8e42e9d6b4284e03304d05a81a0755200a965fc8d0a5e0aea1e84cf805d6e"
+   "size": 1338,
+   "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
   },
   "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-scipy-SUPERLU.txt": {
-   "size": 1710,
-   "sha256": "a67abecb1f65d86805e9e5def1380dab8d95d493f3d884a326e8c2eab2b722d1"
+   "size": 1681,
+   "sha256": "f0cedf52503b2d42b83411a0a16e6fefac346dfad8fddc66f50050150123470c"
   },
   "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-scipy-TEMPITA.txt": {
-   "size": 1092,
-   "sha256": "a7f81d3539c0feed4a6a1f509fe3b74f8a531ba19396f83a464f7c52f390d6a2"
+   "size": 1072,
+   "sha256": "743b0f4a0087fe3607167113fffab6f2ca069c8da321763697ab5d0d8411634a"
   },
   "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-scipy-TNC.txt": {
-   "size": 1105,
-   "sha256": "e1bfcb73fc3af365dd344d9f7f9721048d6b179c260611766d5c30628cfd39ea"
+   "size": 1085,
+   "sha256": "3df9207af2fdb861af0ae3b22026f163b9bcfab4e525dc4943afe2ffa3f77624"
   },
   "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-scipy-UARRAY.txt": {
-   "size": 1543,
-   "sha256": "e4c4acc31e8287066d7c995d26e3ef902ca1977ee187b260b11c278366503811"
+   "size": 1514,
+   "sha256": "c80c39b5fce06ba4897e14e0b0a88b54458334d951eb1361402ffad2cfb863b4"
   },
   "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-scipy-UNURAN.txt": {
-   "size": 14758,
-   "sha256": "85b99340aea1e53b8eab0d2e9617135a392026ce4f7fbbe46468df587a5a00b5"
+   "size": 14404,
+   "sha256": "8d62d5c8e1752ee5c3d3a0f8fd0dd0b45865c243fa282cf5e63f00288a01c5ee"
   },
   "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-scipy.txt": {
-   "size": 1566,
-   "sha256": "0bc9049fda0257f1aa8128e3e13c431af7267e25ba93562baeb4b545a8fc02bc"
+   "size": 1536,
+   "sha256": "c29fb8e5936f33237a8b15256b4c6e93037f05bbf58c3d7b5755aede4c200173"
   },
   "extensions/evn-alpha/media/pyodide/nb-licenses/LICENSE-six.txt": {
-   "size": 1084,
-   "sha256": "b4d3d680140254b09d8904f740fdb8684035f5a91cae0e49a02e045ce9bbbfe2"
+   "size": 1066,
+   "sha256": "4375ba20e2b9c6c4e7cad2940a628fd90e95cc3d50ee92aae755715d8ba1fbd0"
   },
   "extensions/evn-alpha/media/pyodide/nb-packages.json": {
    "size": 5995,
@@ -1511,110 +2451,118 @@
    "size": 233128,
    "sha256": "2e6becfeeef5f09a227310d0eedb9be5c93868694a97af4683296ecb64a3af27"
   },
+  "extensions/evn-alpha/media/sim/LICENSE-OpenCV.txt": {
+   "size": 12384,
+   "sha256": "e670b2079d6b572e758eba2c719939e7e99d117dac44f6bf56eb593ce2e93ee8"
+  },
+  "extensions/evn-alpha/media/sim/aruco_4x4_50.js": {
+   "size": 2190,
+   "sha256": "861020d6e57c2bd73435a04b64df650645743f43357c8a57af1bd4f4266f45b9"
+  },
   "extensions/evn-alpha/media/sim/boot.py": {
-   "size": 44549,
-   "sha256": "4dddb14f60cabce48a4a3c0ae7b24bd999c765a758957cdd380078c702f819a9"
+   "size": 64835,
+   "sha256": "a274e7af8cb96c824b549f9d6317a7f83c83b3ae18f9b5e09342da9ba0b9cea7"
   },
   "extensions/evn-alpha/media/sim/card.js": {
-   "size": 32216,
-   "sha256": "0d37bb589006996cd175052428e20801e040531a2a96924a9c2e6c71cb4689a6"
+   "size": 37119,
+   "sha256": "ae568faa1bff8d0808cbbb4669c874a064c6454ee44a3f33642c1d46ff1b81a6"
   },
   "extensions/evn-alpha/media/sim/evn.py": {
-   "size": 133090,
-   "sha256": "1e0147500e6de1f336a970e7b746de78ac2e33ecc7063617d731235046a4479b"
+   "size": 139774,
+   "sha256": "2e2ca2dc8f80e76b06693670c7f423a217ec03354e66169a4694a7c7ae809bae"
   },
   "extensions/evn-alpha/media/sim/models/colour_sensor.js": {
-   "size": 39869,
-   "sha256": "ddf1989b1d0ae34da3497d2c78098a0adff14636029c934df0423c0e6a4a2d2e"
+   "size": 39867,
+   "sha256": "a95fa503883ddc54c505ee3aa509c81562ec358220f64664087ae8ca5e0242a2"
   },
   "extensions/evn-alpha/media/sim/models/distance_sensor.js": {
-   "size": 38584,
-   "sha256": "ee2e5cf054baaef8f774c48213ff3bdd092344da10d82bbf0e8090dc352c8a60"
+   "size": 38582,
+   "sha256": "06b7bfe1cc1f7ee4a6f9a995a8b58bbfe5513b71aea1211b02f2d5cb81b39dd1"
   },
   "extensions/evn-alpha/media/sim/models/evn_alpha.js": {
-   "size": 286488,
-   "sha256": "6affdfa48218ac4d45340e41b1bf7de39470eb28df7ff80d5e75a844a30b9a2c"
+   "size": 309229,
+   "sha256": "75e5a6662c1c122109654a98e9b7a441b55204239723bc1068eb568b4a5cb510"
   },
   "extensions/evn-alpha/media/sim/models/imu_sensor.js": {
-   "size": 39419,
-   "sha256": "49829750954425bf5640b0a08e754309f03e59c847062a5f20bc106ec9a86ddb"
+   "size": 39417,
+   "sha256": "8b9570c0701786e8a75ba17b20235572b78e1e8b6cead4098175a8d1e15e845f"
   },
   "extensions/evn-alpha/media/sim/models/motor_53787.js": {
-   "size": 41356,
-   "sha256": "ccefef359a2ed56078fcefac0757cb8291ddc2c3342f6a257fe276be26042a40"
+   "size": 41516,
+   "sha256": "ac3bef676199402769a882644bf3d10485bbd3e107aeebd16a2ce207eae3670e"
   },
   "extensions/evn-alpha/media/sim/models/motor_95658.js": {
-   "size": 40037,
-   "sha256": "3934c869ca9a3e7cfb4fff60a00f85321d197a00e230df3d76cc5c9c704805f0"
+   "size": 40125,
+   "sha256": "d6dfc7b212670b9e869572eff628560780554b712c9d16fbde9accb4d983e51d"
   },
   "extensions/evn-alpha/media/sim/models/motor_99455.js": {
-   "size": 40106,
-   "sha256": "141c342e95be07e12379a3bb8744a0c03fa023b364e4a838381dfe6b58cbee43"
+   "size": 40104,
+   "sha256": "95d1d9d777ed90627873b572bce72994686f575e4a6abf3c0136084cd726a25c"
   },
   "extensions/evn-alpha/media/sim/models/wheel_32020.js": {
-   "size": 76167,
-   "sha256": "0b78b6293317f0d2c17feecef87cbf37d66c65ce249c5812cd4e181908493036"
+   "size": 76165,
+   "sha256": "16fd7c9400372f33ce84040619b77ed476f722e33fd08f0ca0ff7b01550a982e"
   },
   "extensions/evn-alpha/media/sim/render3d.js": {
-   "size": 87378,
-   "sha256": "76771ae76ebb47ca85f7345a5e9afb11ae5b72730e15fdca7bfa03a7efe40166"
+   "size": 103760,
+   "sha256": "4c0633969e50f8efc84fe551066d9a8f832a62e3bc6676914a60e471a6cfc3ae"
   },
   "extensions/evn-alpha/media/sim/sim.css": {
-   "size": 13074,
-   "sha256": "deddbb37efd79fc9a110b0c34989c766cbf09bf20b75580588bacf77c69a1dce"
+   "size": 15937,
+   "sha256": "bbb06b90114fcfdeda6df3d292ca17016401a4cd9434ddeceb399500f6d85dc7"
   },
   "extensions/evn-alpha/media/sim/sim.js": {
-   "size": 352192,
-   "sha256": "d0b6bad8d6cf4257a04bfd00de0559e3cdb1fa61024b5fcee3e383ae97b97cee"
+   "size": 398496,
+   "sha256": "7edeb0a0b25a77f8899d36126a53f952618d6f469ec03beabf23f39acdd03263"
   },
   "extensions/evn-alpha/media/sim/view3d.js": {
-   "size": 10110,
-   "sha256": "1a7db874d94106591d444b704ca7f0be1f166e87109a0c403616e9ac52aa2ac5"
+   "size": 24079,
+   "sha256": "b9c7d0077c5ac5e883abb24df51ecd6f4379e81f6de74248e7f533dc966ce69d"
   },
   "extensions/evn-alpha/media/sim/wroMat.js": {
-   "size": 46209,
-   "sha256": "10a8a2557d5d4e680823873cefc7e0cb9c93f2118a55b3d1b9dc42b5164747b7"
+   "size": 45495,
+   "sha256": "6ab4cb695ec3b0b47a69a8db3a21294387b7f4b8677d1b4c3addedfd42c87f20"
   },
   "extensions/evn-alpha/media/theme/evn-palette.json": {
-   "size": 3051,
-   "sha256": "cacd4b24a9dde3eb44af9466e06eacb90adb82a5ba9adef0b73c105a11a6b3eb"
+   "size": 3012,
+   "sha256": "3b3b8ab3ccb226b86571e25112d2052eeae1c9c42d4d4d8876a2780a41cdafcb"
   },
   "extensions/evn-alpha/media/walkthrough/docs.md": {
-   "size": 1572,
-   "sha256": "0b45df44625be604dd23c6910e94f6de1a4fcfe7df882a7cfcd919df18313255"
+   "size": 1540,
+   "sha256": "72bc49494bc72dc2d6a73e1f59c1cee22dabac35a77779cdc06806b33c50b201"
   },
   "extensions/evn-alpha/media/walkthrough/flash.md": {
-   "size": 3271,
-   "sha256": "87aca4054edfef15f258b7fb71d5c79035439c289557085aba55ce6ecb12f460"
+   "size": 3222,
+   "sha256": "aa54bc00e8140f23ad23c516d08ecefb73a78bf83b924722f23f7af739aafb74"
   },
   "extensions/evn-alpha/media/walkthrough/mpremote.md": {
-   "size": 1511,
-   "sha256": "4d482911a5354615801188cd68e88c226142c4e281790dd5e8c4c5c4805e56cf"
+   "size": 1475,
+   "sha256": "023f018341d5fac411371403741da8ca9f406d134ff87081471dc4f61c8c5332"
   },
   "extensions/evn-alpha/media/walkthrough/port-web.md": {
-   "size": 1367,
-   "sha256": "be36db4d096fa5146d43147b6b5a09d22e830c11c4b7e0b4dbcbbcd530398ca2",
+   "size": 1341,
+   "sha256": "a5e414e53c65b89d3a85526eb2d8d5db22a92b9898ad22a0cf3d90b25b6925b8",
    "precache": true
   },
   "extensions/evn-alpha/media/walkthrough/program.md": {
-   "size": 1860,
-   "sha256": "96d0ba2eb827cc58c1eaf8af46c83c05120343066b37c59e36a63ef4ad0ce344"
+   "size": 1824,
+   "sha256": "888cdc3fb5adaeef2eb9d9160e51281f7627f5e9797b760eab70cab1d40e0bc0"
   },
   "extensions/evn-alpha/media/walkthrough/run.md": {
-   "size": 1781,
-   "sha256": "ce18c054fc580cb2621407c263c1a89128dd9512ec1b862c14e2c47dfaf2688f"
+   "size": 1744,
+   "sha256": "c44efa578909f69323765c707becfe1831b05eca859149e95a9fd80be6877db5"
   },
   "extensions/evn-alpha/media/walkthrough/web-program.md": {
-   "size": 1259,
-   "sha256": "c990e989fbc6639bc3b8b9573abd64991ec765ff7649f542d76919851ed18820"
+   "size": 1233,
+   "sha256": "419f88c59b05cee3b3593c12bc2bd9faf1f3c24c72c30968ca4d96eb1c9fd233"
   },
   "extensions/evn-alpha/media/walkthrough/web-run.md": {
-   "size": 1436,
-   "sha256": "c90a34b1d7a01490be30c5adce6468ebb01082c5fb3a613734fe8da804dbf1f8"
+   "size": 1404,
+   "sha256": "45c37cc958b4a12182438c415ea04e8af160dcce00bcec47f36b200d77b9a884"
   },
   "extensions/evn-alpha/package.json": {
-   "size": 74741,
-   "sha256": "29e5995583ac7c20a43a330dbe66054e73c97584ea822cd508dc353404796702",
+   "size": 78069,
+   "sha256": "1f7c888bef0b2e69dde5401816ae5e3b4098d446bc36ffad8310f62e1d771754",
    "precache": true
   },
   "extensions/evn-alpha/package.nls.json": {
@@ -1623,25 +2571,25 @@
    "precache": true
   },
   "extensions/evn-alpha/sealed/checks.sealed": {
-   "size": 3782,
-   "sha256": "e3fa719178746a1ff4a36a89bd180dcb9b4a4418ce34362252b2139d19eb826a",
+   "size": 4039,
+   "sha256": "95161de272b2515145271b208a0ff666f9782cad30b9de71982af477794e5b61",
    "precache": true
   },
   "extensions/evn-alpha/snippets/python.json": {
-   "size": 24172,
-   "sha256": "72babea89604da941609dacafe927bfea20fc28c734905656895a60e57bdd54a"
+   "size": 23651,
+   "sha256": "7d95cbdd97420cc0869b4bcee1e262d98194d39a61e92027bb62dda2c882e83f"
   },
   "extensions/evn-alpha/stubs/evn.pyi": {
-   "size": 311760,
-   "sha256": "107faaa1fca6af600a7abf24050c672b4cd4252cb0d0a5a1ef141b084f21a0fb"
+   "size": 308408,
+   "sha256": "87a0dedac8dc28d9dd56c51083fa5db0bd4870393c0dce7e439c2664f176c3bc"
   },
   "extensions/evn-alpha/stubs/simtrail.pyi": {
-   "size": 1487,
-   "sha256": "66621ed89ea39d427713dfcb018b7fac2201437540be9af9613351082172182e"
+   "size": 1455,
+   "sha256": "dd23d5b58e33bafd849c99e7100443f4bfe2ae4776cfd1ab1b6ebde0d8fa5a5c"
   },
   "index.html": {
-   "size": 17384,
-   "sha256": "03cd21d721e4ec8e20643a78e841cfb6bfd4af4f85e1be62d83999c8a667191e"
+   "size": 18223,
+   "sha256": "3d23102f790a26a5ae51d5bd8058ef92034929b90e3eb74f0fe4285399563b3b"
   },
   "vscode/LICENSE": {
    "size": 13380,

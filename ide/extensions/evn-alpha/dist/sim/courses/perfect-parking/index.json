@@ -1,0 +1,32 @@
+{
+ "format": "evn-course-index/1",
+ "generated": "node scripts/course_index.js --write; do not edit",
+ "levels": [
+  {
+   "file": "perfect-parking/level-1.v1.json",
+   "id": "perfect-parking-1",
+   "version": 1,
+   "sha256": "6fba19224e0c795c833b1e413130a39748c84348aa7daa98cdf033d3ecea1cab",
+   "current": true,
+   "title": "Perfect parking · Level 1: The bay at 54 cm",
+   "limit": 30,
+   "runs": {
+    "default": 5,
+    "fixed": 5
+   }
+  },
+  {
+   "file": "perfect-parking/level-2.v1.json",
+   "id": "perfect-parking-2",
+   "version": 1,
+   "sha256": "649320268960c5e82a96704552d0aa4d518fd6e25fb3ae62febededed03aa7d8",
+   "current": true,
+   "title": "Perfect parking · Level 2: Turn back, then park",
+   "limit": 30,
+   "runs": {
+    "default": 5,
+    "fixed": 5
+   }
+  }
+ ]
+}

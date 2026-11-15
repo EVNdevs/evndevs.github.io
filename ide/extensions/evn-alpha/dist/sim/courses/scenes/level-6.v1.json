@@ -1,0 +1,213 @@
+{
+  "format": "evn-course/1",
+  "id": "tag-field",
+  "challenge": "scenes",
+  "level": 6,
+  "version": 1,
+  "module": "G10.4",
+  "title": "Scene \u00b7 Tag navigator field",
+  "brief": "The Tag navigator field: 2.4 x 1.8 m, four 100 mm ArUco tags (DICT_4X4_50, ids 0-3), each on an orange post with its middle 150 mm up, and four stations 300 mm in front of them. The robot starts anywhere in the 0.5 m box in the middle, at any heading. Each run scores 100 if it touches nothing.",
+  "field": {
+    "arena": {
+      "size": [
+        2400,
+        1800
+      ],
+      "startBox": [
+        950,
+        650,
+        1450,
+        1150
+      ],
+      "goal": null,
+      "obstacles": [
+        {
+          "name": "post0",
+          "x": 80,
+          "y": 900,
+          "w": 40,
+          "d": 160,
+          "h": 250,
+          "color": "#ff8c00"
+        },
+        {
+          "name": "post1",
+          "x": 1200,
+          "y": 1720,
+          "w": 160,
+          "d": 40,
+          "h": 250,
+          "color": "#ff8c00"
+        },
+        {
+          "name": "post2",
+          "x": 2320,
+          "y": 900,
+          "w": 40,
+          "d": 160,
+          "h": 250,
+          "color": "#ff8c00"
+        },
+        {
+          "name": "post3",
+          "x": 1200,
+          "y": 80,
+          "w": 160,
+          "d": 40,
+          "h": 250,
+          "color": "#ff8c00"
+        }
+      ],
+      "wallH": 100,
+      "wallT": 20,
+      "obstacleH": 250,
+      "startPaint": false,
+      "areas": [
+        {
+          "name": "station0",
+          "circle": [
+            400,
+            900,
+            100
+          ],
+          "paint": null
+        },
+        {
+          "name": "station1",
+          "circle": [
+            1200,
+            1400,
+            100
+          ],
+          "paint": null
+        },
+        {
+          "name": "station2",
+          "circle": [
+            2000,
+            900,
+            100
+          ],
+          "paint": null
+        },
+        {
+          "name": "station3",
+          "circle": [
+            1200,
+            400,
+            100
+          ],
+          "paint": null
+        }
+      ],
+      "prints": [
+        {
+          "name": "tag0",
+          "pattern": "aruco-4x4-50:0",
+          "at": [
+            100,
+            900,
+            150
+          ],
+          "yaw": 0,
+          "pitch": 0,
+          "size": [
+            100,
+            100
+          ],
+          "quiet": 20
+        },
+        {
+          "name": "tag1",
+          "pattern": "aruco-4x4-50:1",
+          "at": [
+            1200,
+            1700,
+            150
+          ],
+          "yaw": -90,
+          "pitch": 0,
+          "size": [
+            100,
+            100
+          ],
+          "quiet": 20
+        },
+        {
+          "name": "tag2",
+          "pattern": "aruco-4x4-50:2",
+          "at": [
+            2300,
+            900,
+            150
+          ],
+          "yaw": 180,
+          "pitch": 0,
+          "size": [
+            100,
+            100
+          ],
+          "quiet": 20
+        },
+        {
+          "name": "tag3",
+          "pattern": "aruco-4x4-50:3",
+          "at": [
+            1200,
+            100,
+            150
+          ],
+          "yaw": 90,
+          "pitch": 0,
+          "size": [
+            100,
+            100
+          ],
+          "quiet": 20
+        }
+      ]
+    }
+  },
+  "robot": {
+    "rule": "learner"
+  },
+  "start": {
+    "nominal": {
+      "x": 1200,
+      "y": 900,
+      "heading": 0
+    },
+    "vary": {
+      "xy": 0,
+      "heading": 180
+    },
+    "draw": "free-v1"
+  },
+  "runs": {
+    "min": 1,
+    "max": 20,
+    "default": 5,
+    "fixed": null
+  },
+  "kernel": {
+    "name": "pointToPoint",
+    "limitS": 120,
+    "goal": "footprintInside"
+  },
+  "constants": {},
+  "score": {
+    "run": "if(touches == 0, 100, 0)",
+    "summary": "round(sum(r in runs: r.points) / count(r in runs: true), 1)"
+  },
+  "pass": null,
+  "sources": [
+    {
+      "doc": "docs/curriculum/G10.md",
+      "where": "Challenge - Tag navigator: 2.4 x 1.8 m, 100 mm DICT_4X4_50 tags ids 0-3 on posts, centre 150 mm up, the station 300 mm in front; start anywhere in a 0.5 m box, any heading; the tag poses (100, 900, 0), (1200, 1700, -90), (2300, 900, 180), (1200, 100, 90)"
+    },
+    {
+      "doc": "docs/COURSE_CONTENT_DESIGN.md",
+      "where": "\u00a75.4 (free-v1 in a 500 mm box, startPaint false, stations circle areas r 100), \u00a74 prints, \u00a77 CC-7"
+    }
+  ]
+}

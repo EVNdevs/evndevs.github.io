@@ -1,0 +1,266 @@
+{
+ "format": "evn-course/1",
+ "id": "rescue-line-lite-3",
+ "challenge": "rescue-line-lite",
+ "level": 3,
+ "version": 1,
+ "module": "G5.3",
+ "title": "Rescue line lite \u00b7 Level 3: Ramp and debris",
+ "brief": "A 7 x 4-tile course of 300 mm tiles (a black line about 19 mm wide on white), laid by the simulator's map builder from the library's tiles: level 2's course - the Start tile, two 100 mm gaps on straights (#11), a T junction (#70) whose green marker turns the robot right-angled off its arm (its third arm a short spur ending at a tile edge, never on the route), and a crossing (#80) driven twice, each time turned by a green marker (25 mm squares) - with a loop through two more columns: a 15-degree ramp up one tile to a raised corner 80 mm high, and a 15-degree ramp down the next tile; a speed bump 10 mm high across the line, and three 3 mm dowels 240 mm long across it; round corners of radius 150 mm, and the Goal tile: one route with no dead end, 6.26 m of line. The robot starts on the Start tile on the line, facing along it, moved up to 10 mm sideways and turned up to 5 degrees (run 1 too). The robot is the class robot (Configure robot's default: four downward colour sensors 24 and 48 mm ahead, 16 mm either side) with an IMU on I2C 8 lying flat, fixed by the level (imu.tilt()[0] is the pitch); a run on a changed robot is not this level's. The RCJ referee judges the run: a tile is reached in order (5.4.6), and a lack of progress is called when the robot passes the next tile's exit off the line (5.5.1b) or takes a wrong line (5.5.1c); the robot is then put back on the Start tile and the start button pressed for it. A run ends when the robot reaches the Goal tile, at the third lack of progress, or after 180 s. Score: 60 x the fraction of the line completed (the progress along it, never past the tiles reached in order and the robot's front), + 20 x min(1, par / time) if it reached the Goal, + 20 if no lack of progress was called. Par 42.3 s (the markers reference's mean). Pass: a mean of at least 60 over the 5 runs, and at least 4 of 5 runs reach the Goal.",
+ "field": {
+  "tiles": {
+   "map": {
+    "version": 1,
+    "name": "Rescue line lite L3",
+    "tiles": [
+     {
+      "id": "1",
+      "col": 0,
+      "row": 0,
+      "rot": 2
+     },
+     {
+      "id": "11",
+      "col": 0,
+      "row": 1,
+      "rot": 0
+     },
+     {
+      "id": "10",
+      "col": 0,
+      "row": 2,
+      "rot": 0
+     },
+     {
+      "id": "44",
+      "col": 0,
+      "row": 3,
+      "rot": 0
+     },
+     {
+      "id": "10",
+      "col": 1,
+      "row": 3,
+      "rot": 1
+     },
+     {
+      "id": "44",
+      "col": 2,
+      "row": 3,
+      "rot": 3
+     },
+     {
+      "id": "80",
+      "col": 2,
+      "row": 2,
+      "rot": 0,
+      "green": [
+       0,
+       2
+      ]
+     },
+     {
+      "id": "44",
+      "col": 1,
+      "row": 2,
+      "rot": 0
+     },
+     {
+      "id": "70",
+      "col": 1,
+      "row": 1,
+      "rot": 2,
+      "green": [
+       1
+      ]
+     },
+     {
+      "id": "44",
+      "col": 2,
+      "row": 1,
+      "rot": 2
+     },
+     {
+      "id": "44",
+      "col": 3,
+      "row": 2,
+      "rot": 2
+     },
+     {
+      "id": "44",
+      "col": 3,
+      "row": 3,
+      "rot": 0
+     },
+     {
+      "id": "44",
+      "col": 4,
+      "row": 3,
+      "rot": 3
+     },
+     {
+      "id": "10",
+      "col": 3,
+      "row": 0,
+      "rot": 1
+     },
+     {
+      "id": "10",
+      "col": 2,
+      "row": 0,
+      "rot": 1
+     },
+     {
+      "id": "99",
+      "col": 1,
+      "row": 0,
+      "rot": 1
+     },
+     {
+      "id": "44",
+      "col": 4,
+      "row": 2,
+      "rot": 1
+     },
+     {
+      "id": "10",
+      "col": 5,
+      "row": 2,
+      "rot": 1,
+      "ramp": 2,
+      "incline": 15
+     },
+     {
+      "id": "44",
+      "col": 6,
+      "row": 2,
+      "rot": 3,
+      "z": 80.38475772933681
+     },
+     {
+      "id": "10",
+      "col": 6,
+      "row": 1,
+      "rot": 0,
+      "ramp": true,
+      "incline": 15
+     },
+     {
+      "id": "44",
+      "col": 6,
+      "row": 0,
+      "rot": 2
+     },
+     {
+      "id": "11",
+      "col": 5,
+      "row": 0,
+      "rot": 1
+     },
+     {
+      "id": "10",
+      "col": 4,
+      "row": 0,
+      "rot": 1
+     }
+    ],
+    "objects": [
+     {
+      "type": "bump",
+      "x": 450,
+      "y": 1050,
+      "rot": 90,
+      "length": 240,
+      "width": 30,
+      "height": 10
+     },
+     {
+      "type": "debris",
+      "x": 1020,
+      "y": 150,
+      "rot": 90,
+      "length": 240,
+      "diameter": 3
+     },
+     {
+      "type": "debris",
+      "x": 840,
+      "y": 150,
+      "rot": 90,
+      "length": 240,
+      "diameter": 3
+     },
+     {
+      "type": "debris",
+      "x": 720,
+      "y": 150,
+      "rot": 90,
+      "length": 240,
+      "diameter": 3
+     }
+    ]
+   },
+   "referee": {
+    "ramp": "tile",
+    "afterThree": "retry",
+    "press": true,
+    "lopStart": "press",
+    "calibration": 0,
+    "seed": 1,
+    "autoCaptain": false,
+    "offTiles": 300,
+    "lostOff": 400,
+    "autoCaptainS": 30
+   }
+  }
+ },
+ "robot": {
+  "rule": "fixed",
+  "base": "class-imu8"
+ },
+ "start": {
+  "nominal": {
+   "x": 150,
+   "y": 150,
+   "heading": 90
+  },
+  "vary": {
+   "xy": 10,
+   "heading": 5
+  },
+  "draw": "uniform-across-v1"
+ },
+ "runs": {
+  "min": 1,
+  "max": 20,
+  "default": 5,
+  "fixed": 5
+ },
+ "kernel": {
+  "name": "pointToPoint",
+  "limitS": 180,
+  "goal": "footprintInside",
+  "final": "runEnd",
+  "tiles": {
+   "maxLops": 3
+  }
+ },
+ "constants": {
+  "par": 42.3
+ },
+ "score": {
+  "run": "60 * fraction + if(goal, 20 * min(1, par / goalTime), 0) + if(lops == 0, 20, 0)",
+  "summary": "round(sum(r in runs: r.points) / count(r in runs: true), 1)"
+ },
+ "pass": "sum(r in runs: r.points) / count(r in runs: true) >= 60 & count(r in runs: r.goal) >= 0.8 * n",
+ "sources": [
+  {
+   "doc": "docs/curriculum/G05.md",
+   "where": "G5.3 Challenge - Rescue line lite, the level table, level 3"
+  },
+  {
+   "doc": "docs/session/2026-11-14_w12-g63/design/g53_l3.md",
+   "where": "G5.3 L3 on the tile half (built by lane w12-g63)"
+  }
+ ]
+}

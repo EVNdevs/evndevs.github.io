@@ -1,0 +1,45 @@
+{
+ "format": "evn-course-index/1",
+ "generated": "node scripts/course_index.js --write; do not edit",
+ "levels": [
+  {
+   "file": "evn-open/level-1.v1.json",
+   "id": "evn-open-1",
+   "version": 1,
+   "sha256": "e8edf358aca6bde43a99c536d9ff835df11d94b14c96c17831d745417dee5243",
+   "current": true,
+   "title": "EVN Open practice · Level 1: Four requirements, five runs",
+   "limit": 60,
+   "runs": {
+    "default": 5,
+    "fixed": 5
+   }
+  },
+  {
+   "file": "evn-open/level-2.v1.json",
+   "id": "evn-open-2",
+   "version": 1,
+   "sha256": "3ccd948d50338ee2a5491f21266e4e354532cbc05af6e8f44fe908b9fb73ff78",
+   "current": true,
+   "title": "EVN Open practice · Level 2: Twenty unseen starts, the Wilson bound",
+   "limit": 60,
+   "runs": {
+    "default": 5,
+    "fixed": 20
+   }
+  },
+  {
+   "file": "evn-open/level-3.v1.json",
+   "id": "evn-open-3",
+   "version": 1,
+   "sha256": "8e69742315658c1333952cb53853f37bb16acd17142fd3d17f27c4c6c10bad55",
+   "current": true,
+   "title": "EVN Open practice · Level 3: A shifted start and a push",
+   "limit": 60,
+   "runs": {
+    "default": 5,
+    "fixed": 10
+   }
+  }
+ ]
+}

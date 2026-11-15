@@ -1,0 +1,45 @@
+{
+ "format": "evn-course-index/1",
+ "generated": "node scripts/course_index.js --write; do not edit",
+ "levels": [
+  {
+   "file": "colour-sorter/level-1.v1.json",
+   "id": "colour-sorter-1",
+   "version": 1,
+   "sha256": "f4bf6dcf9c8f6d8f2266760cc8f8dbdcd13b61956fff25dcce1305f87aa3b9db",
+   "current": true,
+   "title": "Colour sorter · Level 1: Red and blue",
+   "limit": 90,
+   "runs": {
+    "default": 5,
+    "fixed": 5
+   }
+  },
+  {
+   "file": "colour-sorter/level-2.v1.json",
+   "id": "colour-sorter-2",
+   "version": 1,
+   "sha256": "73f6531577d8760b1dd1dfaff8f492a35e9e8887cecf47661b85466f988593d2",
+   "current": true,
+   "title": "Colour sorter · Level 2: Three colours",
+   "limit": 90,
+   "runs": {
+    "default": 5,
+    "fixed": 5
+   }
+  },
+  {
+   "file": "colour-sorter/level-3.v1.json",
+   "id": "colour-sorter-3",
+   "version": 1,
+   "sha256": "580f69275cd194b8a64aa537d8d75a79935161a88f31d588378dda0a91ec43ed",
+   "current": true,
+   "title": "Colour sorter · Level 3: Under a dimmer light",
+   "limit": 90,
+   "runs": {
+    "default": 5,
+    "fixed": 5
+   }
+  }
+ ]
+}

@@ -1,0 +1,45 @@
+{
+ "format": "evn-course-index/1",
+ "generated": "node scripts/course_index.js --write; do not edit",
+ "levels": [
+  {
+   "file": "rescue-line-lite/level-1.v1.json",
+   "id": "rescue-line-lite-1",
+   "version": 1,
+   "sha256": "1c3859a7952801e2d1f220ee058635794c26f7b0e007cf3b316257270afc22c9",
+   "current": true,
+   "title": "Rescue line lite · Level 1: Smooth line",
+   "limit": 90,
+   "runs": {
+    "default": 5,
+    "fixed": 5
+   }
+  },
+  {
+   "file": "rescue-line-lite/level-2.v1.json",
+   "id": "rescue-line-lite-2",
+   "version": 1,
+   "sha256": "3047c8375909c64a2ebbd1d9b057804abb37acb79dd6bcc704ef3e61cc05186a",
+   "current": true,
+   "title": "Rescue line lite · Level 2: Gaps and markers",
+   "limit": 150,
+   "runs": {
+    "default": 5,
+    "fixed": 5
+   }
+  },
+  {
+   "file": "rescue-line-lite/level-3.v1.json",
+   "id": "rescue-line-lite-3",
+   "version": 1,
+   "sha256": "da77b13c4c37046eb0b5bbf0d1414e843cfba88f8bed23848ab8e34ddae3d0c2",
+   "current": true,
+   "title": "Rescue line lite · Level 3: Ramp and debris",
+   "limit": 180,
+   "runs": {
+    "default": 5,
+    "fixed": 5
+   }
+  }
+ ]
+}

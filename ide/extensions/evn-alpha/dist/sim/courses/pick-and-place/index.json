@@ -1,0 +1,45 @@
+{
+ "format": "evn-course-index/1",
+ "generated": "node scripts/course_index.js --write; do not edit",
+ "levels": [
+  {
+   "file": "pick-and-place/level-1.v1.json",
+   "id": "pick-and-place-1",
+   "version": 1,
+   "sha256": "e7eae895fa0fb9d7d7f83fac1037f481b3dc1222010dad2f800041bf7da5b25f",
+   "current": true,
+   "title": "Pick and place · Level 1: four balls to spots whose coordinates are given",
+   "limit": 80.7,
+   "runs": {
+    "default": 5,
+    "fixed": 10
+   }
+  },
+  {
+   "file": "pick-and-place/level-2.v1.json",
+   "id": "pick-and-place-2",
+   "version": 1,
+   "sha256": "a5ddf26fe2c21b41592f42449a8b89248c654b7ab508d9bf082f78e4b4ae61b4",
+   "current": true,
+   "title": "Pick and place · Level 2: Coloured spots",
+   "limit": 105,
+   "runs": {
+    "default": 5,
+    "fixed": 10
+   }
+  },
+  {
+   "file": "pick-and-place/level-3.v1.json",
+   "id": "pick-and-place-3",
+   "version": 1,
+   "sha256": "2698619f3d29d6a8550a25190fe1722ef4512e69573f119c4749cf24fd147451",
+   "current": true,
+   "title": "Pick and place · Level 3: From the conveyor",
+   "limit": 105,
+   "runs": {
+    "default": 5,
+    "fixed": 10
+   }
+  }
+ ]
+}

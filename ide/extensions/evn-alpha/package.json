@@ -2,7 +2,7 @@
   "name": "evn-alpha-micropython",
   "displayName": "EVN ALPHA MicroPython",
   "description": "Early-access tooling for the EVN ALPHA robotics controller: flash the MicroPython firmware, run programs, open the REPL, autocomplete for the evn motor API, and a Blockly block editor that generates MicroPython.",
-  "version": "0.2.77",
+  "version": "0.2.78",
   "publisher": "evn-alpha",
   "license": "MIT",
   "preview": true,
@@ -380,6 +380,12 @@
       },
       {
         "category": "EVN",
+        "command": "evn.console.startNow",
+        "title": "Start now (the board runs main.py)",
+        "icon": "$(play)"
+      },
+      {
+        "category": "EVN",
         "command": "evn.console.connectInstead",
         "title": "Connect instead (the board does not start main.py)",
         "icon": "$(plug)"
@@ -483,13 +489,13 @@
       {
         "category": "EVN",
         "command": "evn.bluetooth.pair",
-        "title": "Pair the Bluetooth module in Windows",
+        "title": "Pair the Bluetooth module",
         "icon": "$(link)"
       },
       {
         "category": "EVN",
         "command": "evn.bluetooth.usePort",
-        "title": "Use the Bluetooth COM port for the board",
+        "title": "Use the Bluetooth port for the board",
         "icon": "$(plug)"
       },
       {
@@ -509,6 +515,17 @@
         "command": "evn.motor.calibrate",
         "title": "Calibrate this motor (shaft free, ~12 s)...",
         "icon": "$(pulse)"
+      },
+      {
+        "category": "EVN",
+        "command": "evn.driveBase.setup",
+        "title": "Set up drive base (ports, calibration, direction, wheel, track, IMU)...",
+        "icon": "$(rocket)"
+      },
+      {
+        "category": "EVN",
+        "command": "evn.motor.details",
+        "title": "Motor port details (the calibration's figures)"
       },
       {
         "category": "EVN",
@@ -700,6 +717,16 @@
       {
         "command": "evn.challenge.openSubmission",
         "title": "Open a challenge submission",
+        "category": "EVN"
+      },
+      {
+        "command": "evn.challenge.readRetestResults",
+        "title": "Read re-test results",
+        "category": "EVN"
+      },
+      {
+        "command": "evn.challenge.retestJobsOffline",
+        "title": "Re-test jobs (offline)",
         "category": "EVN"
       },
       {
@@ -1000,6 +1027,10 @@
           "when": "false"
         },
         {
+          "command": "evn.motor.details",
+          "when": "false"
+        },
+        {
           "command": "evn.motor.clearCalibration",
           "when": "false"
         },
@@ -1132,7 +1163,7 @@
         },
         {
           "command": "evn.console.pause",
-          "when": "view == evn.board && (evn.console.state == live || evn.console.state == busy || evn.console.state == waiting || evn.console.state == connecting)",
+          "when": "view == evn.board && (evn.console.state == live || evn.console.state == busy || evn.console.state == waiting || evn.console.state == connecting || evn.console.listenLost)",
           "group": "0_console@2"
         },
         {
@@ -1187,7 +1218,7 @@
         },
         {
           "command": "evn.console.pause",
-          "when": "view == evn.console && (evn.console.state == live || evn.console.state == busy || evn.console.state == waiting || evn.console.state == connecting)",
+          "when": "view == evn.console && (evn.console.state == live || evn.console.state == busy || evn.console.state == waiting || evn.console.state == connecting || evn.console.listenLost)",
           "group": "0_console@1"
         },
         {
@@ -1373,6 +1404,11 @@
           "group": "inline"
         },
         {
+          "command": "evn.console.startNow",
+          "when": "view == evn.board && viewItem == evnBoardConsoleWaiting",
+          "group": "inline"
+        },
+        {
           "command": "evn.console.connectInstead",
           "when": "view == evn.board && viewItem == evnBoardConsoleWaiting",
           "group": "inline"
@@ -1389,7 +1425,7 @@
         },
         {
           "command": "evn.console.pause",
-          "when": "view == evn.board && viewItem =~ /^evnBoardConsole(Live|Connecting|Waiting)/",
+          "when": "view == evn.board && viewItem =~ /^evnBoardConsole(Live|Connecting|Waiting|PausedNotListening)/",
           "group": "inline"
         },
         {
@@ -1516,6 +1552,16 @@
           "command": "evn.motor.calibrateAll",
           "when": "view == evn.board && viewItem == evnBoardMotors && evn.console.state == live",
           "group": "2_calibrate@1"
+        },
+        {
+          "command": "evn.driveBase.setup",
+          "when": "view == evn.board && viewItem == evnBoardMotors && evn.console.state == live",
+          "group": "inline@2"
+        },
+        {
+          "command": "evn.driveBase.setup",
+          "when": "view == evn.board && viewItem == evnBoardMotors && evn.console.state == live",
+          "group": "2_calibrate@2"
         },
         {
           "command": "evn.calibration.status",
@@ -1757,6 +1803,25 @@
           "default": "",
           "description": "Python interpreter used to run mpremote. Leave empty to use the Python extension's selected interpreter, then `py -3` / `python3` / `python` from PATH."
         },
+        "evn.retestPython": {
+          "type": "string",
+          "default": "",
+          "scope": "machine",
+          "description": "For EVN: Re-test jobs (offline) only: the absolute path to the pinned stack's Python, which runs the learner's PC script. Never looked up on PATH; a relative path is refused. Not evn.pythonPath (that one runs mpremote)."
+        },
+        "evn.panels.openIn": {
+          "type": "string",
+          "enum": [
+            "active",
+            "beside"
+          ],
+          "enumDescriptions": [
+            "In the active editor column, as a tab: the whole editor width (UX-01).",
+            "Beside the editor, in a column of their own (the behaviour before UX-01)."
+          ],
+          "default": "active",
+          "description": "Where the colour calibration, compass map and data logger panels open."
+        },
         "evn.uploadMain.then": {
           "type": "string",
           "enum": [
@@ -1886,6 +1951,21 @@
           "scope": "application",
           "description": "Your teacher's code (it starts with EVNTCH1.): a challenge submission is sealed for your teacher and EVN, so only they can open it. Save a challenge submission asks for it the first time."
         },
+        "evn.challenge.roundTimeFactor": {
+          "type": "number",
+          "enum": [
+            1,
+            1.5,
+            2
+          ],
+          "default": 1,
+          "description": "A rounds level's edit window times this (1, 1.5 or 2): extended time for a learner with that arrangement, set by the teacher on this computer. It is never sealed in a submission."
+        },
+        "evn.challenge.teacherCalls": {
+          "type": "boolean",
+          "default": false,
+          "description": "On a rounds level that allows it, show the teacher's call in each round's window: a button per value (each confirmed) that calls the round's value instead of the drawn one. A called round is marked \"called (not drawn)\" in the teacher's report."
+        },
         "evn.lessonsUrl": {
           "type": "string",
           "default": "https://learn.coresg.tech",
@@ -2012,7 +2092,7 @@
       {
         "view": "evn.board",
         "when": "!evn.hasMpremote && !evn.hasPython && evn.webSerial",
-        "contents": "No serial port has been granted to this page yet.\n\n[Choose the board port](command:evn.selectPort)\n\nThe browser asks which device this page may use: pick the EVN ALPHA (USB 2E8A:000A), or \"Any serial port\" for a Bluetooth link.\n\nNo board at hand? [Open the simulator](command:evn.simulator.open): a simulated robot that runs your programs, with no board and no Python."
+        "contents": "No serial port has been granted to this page yet.\n\n[Choose the board port](command:evn.selectPort)\n\nChoose \"An EVN ALPHA on USB\": the browser then opens its own list, which shows only boards with the EVN ALPHA's USB id (another Pico board can show too), each named by its port. Pick yours and press Connect; the browser remembers it. For a Bluetooth link choose \"Any serial port\" and pick the module's port.\n\nNo board at hand? [Open the simulator](command:evn.simulator.open): a simulated robot that runs your programs, with no board and no Python."
       },
       {
         "view": "evn.board",

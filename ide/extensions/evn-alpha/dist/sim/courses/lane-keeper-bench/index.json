@@ -1,0 +1,45 @@
+{
+ "format": "evn-course-index/1",
+ "generated": "node scripts/course_index.js --write; do not edit",
+ "levels": [
+  {
+   "file": "lane-keeper-bench/level-1.v1.json",
+   "id": "lane-keeper-bench-1",
+   "version": 1,
+   "sha256": "532180c88c94622e99cfba43092666b487ae4466377cad0b190c8e49c83a3551",
+   "current": true,
+   "title": "Lane keeper bench · Level 1: Two laps",
+   "limit": 90,
+   "runs": {
+    "default": 5,
+    "fixed": 10
+   }
+  },
+  {
+   "file": "lane-keeper-bench/level-2.v1.json",
+   "id": "lane-keeper-bench-2",
+   "version": 1,
+   "sha256": "8b35e654f7c5b027d2421027bab352e1b2b761186ebdda4b247b61f2ecc36014",
+   "current": true,
+   "title": "Lane keeper bench · Level 2: Cones",
+   "limit": 90,
+   "runs": {
+    "default": 5,
+    "fixed": 10
+   }
+  },
+  {
+   "file": "lane-keeper-bench/level-3.v1.json",
+   "id": "lane-keeper-bench-3",
+   "version": 1,
+   "sha256": "9d84ca8bfb70ce48e5666f9525def8da895bbc899768c7024d5b6faea2d950a0",
+   "current": true,
+   "title": "Lane keeper bench · Level 3: An unseen track",
+   "limit": 90,
+   "runs": {
+    "default": 5,
+    "fixed": 10
+   }
+  }
+ ]
+}

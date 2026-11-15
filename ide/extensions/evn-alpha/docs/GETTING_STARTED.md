@@ -18,11 +18,13 @@ No VS Code? The browser IDE needs no install. Do steps 1 and 2, open the IDE in 
 ## 1. What you need
 
 - **An EVN ALPHA board.** [The board](BOARD.md) shows its buttons, lights and ports.
-- **Two flat-top 18650 Li-ion cells** (a flat + end, no button). They go in the board's own holder, in series.
+- **Two flat-top 18650 Li-ion cells** (a flat + end, no button). They go in the board's built-in holder, two in series (2S).
   The motors run from the cells, not from USB, so the cells must deliver a high current:
   choose cells rated **at least 25 A continuous**. The cells shipped to customers in Singapore are P26B.
-  Why 25 A: four motor ports at 4 A peak each draw 16 A, and the board's 5 V and 3.3 V supplies up to 4.5 A more
-  when the cells are nearly empty. That is 20.5 A at worst, plus headroom ([current ratings](BOARD.md#current-ratings)).
+  - Why 25 A? Each of the four motor channels peaks at 4 A, so 4 A x 4 = 16 A. The board's 5 V and 3.3 V supplies
+    (TPS5430 step-down converters) give up to 3 A each, (15 + 9.9) W, which takes (15 + 9.9) W / 0.9 = 4.5 A from the
+    cells at 6.1 V, where the pack switches the board off. That is 20.5 A at worst, plus headroom
+    ([current ratings](BOARD.md#current-ratings)).
 - **A USB-C data cable.** Some USB-C cables only charge. With one of those the computer never sees the board.
 - **One LEGO EV3 or NXT motor** with its cable, for the first program.
 - **A computer** with Windows, macOS or Linux, and:
@@ -59,6 +61,7 @@ The firmware is the program inside the board that runs your Python. The extensio
 1. Press **Flash the firmware** in the walkthrough. The same command is in the *Board* view's `...` menu, and in the palette as **EVN: Flash MicroPython firmware**. Confirm.
 2. A board that already runs the EVN firmware restarts into its loader by itself.
    **A new board** has to be put there by hand. With the board on and USB connected: **hold the BOOTSEL button, press and release RESET, then let go of BOOTSEL.** A drive named `RPI-RP2` appears, and the status bar reads **EVN: BOOTSEL mode — click to flash**.
+
    The other way, also with the board switched on: unplug USB, hold BOOTSEL, plug USB back in, then let go. A board that is switched off does not run on USB power alone (USB only charges the cells), so switch it on first.
    ![The other way into BOOTSEL mode, with the board switched on, in four steps: unplug the USB-C cable, press and hold BOOTSEL, plug the cable back in still holding, release BOOTSEL; the RPI-RP2 drive appears and the status bar offers the flash](images/bootsel-gesture.webp)
 3. Wait for **firmware flashed**. The board restarts on its own.
@@ -81,7 +84,7 @@ Before it writes anything, the extension checks that its firmware file is comple
 
 Open the **EVN ALPHA** tab in the activity bar (the ℕ icon). It has *Start*, *My projects* and *Examples*.
 
-![The EVN ALPHA side bar: Start, My projects, and Examples with the Motor folder open on motor_minimal and motor_complete, in Python and in blocks](images/getting-started-sidebar.png)
+![The EVN ALPHA side bar: Start, My projects, and Examples with one row for each part of the API - Board, Motor, Robot, Pose and the sensors](images/getting-started-sidebar.png)
 
 1. Plug the motor into **motor port 1**. Keep its wheel off the ground.
 2. Under *Examples*, click **Motor** and choose *Minimal · Python* (`motor_minimal.py`).
@@ -91,11 +94,11 @@ The motor turns, and the program's output appears in the *EVN ALPHA* terminal. W
 
 ![The EVN ALPHA terminal after a run: the program finished, the motors are coasting, and the REPL is attached (this one is the browser IDE's simulated board, which does not run the Python)](images/getting-started-run.png)
 
-The terminal then stays at the board's prompt, with the program's variables still there. Type `motor_1.angle()` and press Enter to try it. **Ctrl+]** leaves the prompt and coasts every motor.
+The terminal then stays at the board's prompt, with the program's variables still there. Type `motor_1.angle()` and press Enter to try it. **Ctrl+]** leaves the prompt and coasts every motor. [Using the REPL](REPL.md) says more about the prompt.
 
 **To stop a program**, press **Ctrl+C** in the terminal, **Ctrl+Shift+F5**, or the red **Stop** button in the status bar. Every motor coasts. Without a computer, press the board's **user button**.
 
-**In the browser IDE, press Stop before you close the tab.** A closed tab cannot reach the board, so a running motor keeps driving.
+> **Warning: in the browser IDE, press Stop before you close the tab.** A closed tab cannot reach the board, so a running motor keeps driving.
 
 ## 6. Write your own program
 
@@ -117,12 +120,14 @@ For autocomplete on `evn`, choose **Open my projects folder as the workspace** i
 
 - [Programs: run, stop, ports and units](PROGRAMS.md): examples, blocks, motor and sensor ports.
 - [The Board view and the live console](BOARD_VIEW.md): watch and drive every port without a program.
-- [Calibrating your robot](CALIBRATION.md): motors, IMU, compass and colour sensors.
+- [Calibrating your robot](CALIBRATION.md): motors, IMU, compass and colour sensors. Swapping a motor? Choose the new one with the gear first ([why](CALIBRATION.md#motors)).
 - [Recording data](DATA_LOGGER.md): the data logger and `evn.DataLog`.
 - [A program that starts from the user button](MAIN_PY.md): a robot that runs without a computer.
 - [Working without the USB cable](BLUETOOTH.md): the board's prompt over Bluetooth.
 - [The robot simulator](SIMULATOR.md): run your programs on a simulated robot, with no board.
 - [Commands and updates](COMMANDS.md): every `EVN:` command.
 - [The board](BOARD.md): buttons, lights and the pinout.
+- [Using the REPL](REPL.md): the board's prompt, its keys, and a first session.
 - [Troubleshooting](TROUBLESHOOTING.md): when something does not work, and how to report it.
+- [Known limitations](KNOWN_LIMITATIONS.md): what does not work yet, and what you can help us test.
 - The [API reference](API.md) lists every call; the [Blocks reference](BLOCKS.md) every block.

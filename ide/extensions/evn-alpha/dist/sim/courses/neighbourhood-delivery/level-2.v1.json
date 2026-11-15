@@ -1,0 +1,264 @@
+{
+  "format": "evn-course/1",
+  "id": "neighbourhood-delivery-2",
+  "challenge": "neighbourhood-delivery",
+  "level": 2,
+  "version": 1,
+  "module": "G1.2",
+  "title": "Neighbourhood delivery · Level 2: Bakery, then house 7",
+  "brief": "Drive 5 squares to the bakery, wait there with the light on until the 2 s parcel load ends, then 2 squares more to house 7 and flash the light. The delivery counts only after the bakery stop (light on at least 1.9 s); that stop is not a delivery to house 5. 60 s. 50 for the delivery, and then up to 40 for speed (the run's time against par 14 s); 10 for no wheel on the grass, paid on its own; a delivery to another house scores 0, and a light at house 5 shorter than 1.9 s is a delivery to house 5. The level runs at the Junior speed, 200 mm/s and 90 deg/s (Junior mode's hidden set-up sets it; a Python program sets it with drive_base.settings(straight_speed=200, turn_rate=90)).",
+  "field": {
+    "arena": {
+      "size": [
+        2700,
+        900
+      ],
+      "startBox": [
+        60,
+        360,
+        240,
+        540
+      ],
+      "goal": null,
+      "obstacles": [],
+      "wallH": 100,
+      "wallT": 20,
+      "obstacleH": 150,
+      "areas": [
+        {
+          "name": "post",
+          "rect": [
+            0,
+            300,
+            300,
+            600
+          ],
+          "paint": null
+        },
+        {
+          "name": "house1",
+          "rect": [
+            300,
+            300,
+            600,
+            600
+          ],
+          "paint": null
+        },
+        {
+          "name": "house2",
+          "rect": [
+            600,
+            300,
+            900,
+            600
+          ],
+          "paint": null
+        },
+        {
+          "name": "house3",
+          "rect": [
+            900,
+            300,
+            1200,
+            600
+          ],
+          "paint": null
+        },
+        {
+          "name": "house4",
+          "rect": [
+            1200,
+            300,
+            1500,
+            600
+          ],
+          "paint": null
+        },
+        {
+          "name": "house5",
+          "rect": [
+            1500,
+            300,
+            1800,
+            600
+          ],
+          "paint": null
+        },
+        {
+          "name": "house6",
+          "rect": [
+            1800,
+            300,
+            2100,
+            600
+          ],
+          "paint": null
+        },
+        {
+          "name": "house7",
+          "rect": [
+            2100,
+            300,
+            2400,
+            600
+          ],
+          "paint": null
+        },
+        {
+          "name": "house8",
+          "rect": [
+            2400,
+            300,
+            2700,
+            600
+          ],
+          "paint": null
+        },
+        {
+          "name": "grassN",
+          "rect": [
+            0,
+            0,
+            2700,
+            300
+          ],
+          "paint": "green",
+          "noGo": true
+        },
+        {
+          "name": "grassS",
+          "rect": [
+            0,
+            600,
+            2700,
+            900
+          ],
+          "paint": "green",
+          "noGo": true
+        }
+      ]
+    }
+  },
+  "robot": {
+    "rule": "fixed",
+    "base": "junior"
+  },
+  "start": {
+    "nominal": {
+      "x": 150,
+      "y": 450,
+      "heading": 0
+    },
+    "vary": {
+      "xy": 20,
+      "heading": 2
+    },
+    "draw": "uniform-square-v1"
+  },
+  "runs": {
+    "min": 1,
+    "max": 20,
+    "default": 5,
+    "fixed": 5
+  },
+  "kernel": {
+    "name": "pointToPoint",
+    "limitS": 60,
+    "goal": "footprintInside",
+    "final": "runEnd",
+    "noGo": "wheels",
+    "visits": {
+      "targets": [
+        {
+          "area": "house5",
+          "flash": {
+            "s": 1.9,
+            "mms": 5
+          }
+        },
+        {
+          "area": "house7",
+          "flash": {
+            "s": 0.9,
+            "mms": 5
+          }
+        },
+        {
+          "area": "house1",
+          "flash": {
+            "s": 0.9,
+            "mms": 5
+          }
+        },
+        {
+          "area": "house2",
+          "flash": {
+            "s": 0.9,
+            "mms": 5
+          }
+        },
+        {
+          "area": "house3",
+          "flash": {
+            "s": 0.9,
+            "mms": 5
+          }
+        },
+        {
+          "area": "house4",
+          "flash": {
+            "s": 0.9,
+            "mms": 5
+          }
+        },
+        {
+          "area": "house5",
+          "flash": {
+            "s": 0.9,
+            "mms": 5,
+            "maxS": 1.899
+          }
+        },
+        {
+          "area": "house6",
+          "flash": {
+            "s": 0.9,
+            "mms": 5
+          }
+        },
+        {
+          "area": "house8",
+          "flash": {
+            "s": 0.9,
+            "mms": 5
+          }
+        }
+      ]
+    }
+  },
+  "constants": {
+    "par": 14
+  },
+  "score": {
+    "run": "if(visitTime_3 >= 0 | visitTime_4 >= 0 | visitTime_5 >= 0 | visitTime_6 >= 0 | visitTime_7 >= 0 | visitTime_8 >= 0 | visitTime_9 >= 0, 0, round(if(visitedInOrder >= 2, 50 + 40 * min(1, par / max(time, 0.001)), 0) + if(noGoEntries == 0, 10, 0), 1))",
+    "values": {
+      "finished": {
+        "value": "count(r in runs: r.points >= 50)",
+        "unit": "runs"
+      }
+    },
+    "summary": "round(sum(r in runs: r.points) / n, 1)"
+  },
+  "pass": "score >= 60 & finished >= 0.8 * n",
+  "sources": [
+    {
+      "doc": "docs/curriculum/G01.md",
+      "where": "G1.2 Go and stop, Challenge — Neighbourhood delivery, the level table (level 2) and the scoring paragraph"
+    },
+    {
+      "doc": "vscode-evn-alpha/docs/COURSE_FORMAT_DESIGN.md",
+      "where": "§12.1 (the flash at a visit; flash.maxS for the bakery stop: house 5's cap 1.899 s, just under G01.md's 1.9 s bakery stop, so every light of 0.9 s or more at house 5 is either the bakery stop or a delivery to house 5; flashes are timed on the 1 ms tick), §11.5 (noGo wheels: the grass), §13 (robot and start rules)"
+    }
+  ]
+}

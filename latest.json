@@ -1,11 +1,12 @@
 {
   "extension": {
-    "version": "0.2.77",
-    "vsix": "https://evn.coresg.tech/vsix/evn-alpha-micropython-0.2.77.vsix",
-    "notes": "https://evn.coresg.tech/#/changelog"
+    "version": "0.2.78",
+    "vsix": "https://evn.coresg.tech/vsix/evn-alpha-micropython-0.2.78.vsix",
+    "notes": "https://evn.coresg.tech/#/changelog",
+    "sha256": "284a3376965e3a94b6574f72a07c99dbdf0e7b704d0655d15b8f1ba4637190bc"
   },
   "firmware": {
-    "version": "0.2.77",
+    "version": "0.2.78",
     "uf2": "https://evn.coresg.tech/firmware/EVN_ALPHA_MicroPython.uf2",
     "notes": "https://github.com/EVNdevs/evndevs.github.io/blob/main/firmware/BUILD.txt"
   }

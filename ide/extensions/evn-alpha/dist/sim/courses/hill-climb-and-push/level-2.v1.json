@@ -1,0 +1,131 @@
+{
+  "format": "evn-course/1",
+  "id": "hill-climb-and-push-2",
+  "challenge": "hill-climb-and-push",
+  "level": 2,
+  "version": 1,
+  "module": "G6.2",
+  "title": "Hill climb and push · Level 2: Up the ramp with a load",
+  "brief": "Carrying a 600 g load (the level sets the robot's mass to 1.2 kg), climb the 25° ramp (600 mm, 280 mm up) and stop with the whole robot in the green zone on the platform; the run ends when your program ends (and the robot stands still), or at 60 s; the zone is judged then (a program that stops on an error gets no zone). Five starts on the floor 300 mm before the ramp (±10 mm, ±2°). 50 for ending wholly in the zone, plus 40 × min(1, par ÷ time) with it, plus 10 if the robot never rolled back more than 10 mm down the ramp. Pass: mean 60 or more and at least 4 of 5 runs in the zone.",
+  "field": {
+    "arena": {
+      "size": [
+        2400,
+        1200
+      ],
+      "startBox": [
+        420,
+        450,
+        760,
+        750
+      ],
+      "goal": [
+        1800,
+        450,
+        2100,
+        750
+      ],
+      "obstacles": [],
+      "wallH": 100,
+      "wallT": 20,
+      "obstacleH": 100,
+      "terrain": [
+        {
+          "name": "ramp",
+          "kind": "ramp",
+          "rect": [
+            900,
+            450,
+            1500,
+            750
+          ],
+          "up": "+x",
+          "deg": 25
+        },
+        {
+          "name": "platform",
+          "kind": "platform",
+          "rect": [
+            1500,
+            450,
+            2100,
+            750
+          ],
+          "on": "ramp"
+        }
+      ]
+    }
+  },
+  "robot": {
+    "rule": "fixed",
+    "set": {
+      "mass": 1200
+    }
+  },
+  "start": {
+    "nominal": {
+      "x": 600,
+      "y": 600,
+      "heading": 0
+    },
+    "vary": {
+      "xy": 10,
+      "heading": 2
+    },
+    "draw": "uniform-square-v1"
+  },
+  "runs": {
+    "min": 1,
+    "max": 20,
+    "default": 5,
+    "fixed": 5
+  },
+  "kernel": {
+    "name": "pointToPoint",
+    "limitS": 60,
+    "goal": "footprintInside",
+    "end": "afterProgram",
+    "still": {
+      "s": 0.1,
+      "dps": 5,
+      "mms": 3
+    },
+    "final": "runEnd",
+    "climb": {
+      "ramp": "ramp"
+    }
+  },
+  "constants": {
+    "par": 4.5,
+    "zoneX0": 1800,
+    "zoneX1": 2100,
+    "zoneY0": 450,
+    "zoneY1": 750,
+    "limitS": 60
+  },
+  "score": {
+    "run": "let c = cosd(endHeading) in let s = sind(endHeading) in let hx = abs(bodyHalf * s) in let hy = abs(bodyHalf * c) in let inZone = min(endX + bodyFront * c, endX - bodyRear * c) - hx >= zoneX0 & max(endX + bodyFront * c, endX - bodyRear * c) + hx <= zoneX1 & min(endY + bodyFront * s, endY - bodyRear * s) - hy >= zoneY0 & max(endY + bodyFront * s, endY - bodyRear * s) + hy <= zoneY1 in if(inZone & (stopped | time >= limitS), 50 + 40 * min(1, par / time), 0) + if(!rolledBack, 10, 0)",
+    "values": {
+      "inTarget": {
+        "value": "count(r in runs: r.points >= 50)",
+        "unit": "runs"
+      }
+    },
+    "summary": "sum(r in runs: r.points) / n"
+  },
+  "pass": "score >= 60 & inTarget >= 4",
+  "sources": [
+    {
+      "doc": "docs/curriculum/G06.md",
+      "where": "G6.2 Hill climb and push, the challenge paragraph and the level table (level 2)"
+    },
+    {
+      "doc": "docs/design/P0C3T_TERRAIN.md",
+      "where": "§3 (field.arena.terrain), §4 (edge walls, the wall rule), §5 (kernel.climb, roll-back), §8 (G6.2's levels)"
+    },
+    {
+      "doc": "vscode-evn-alpha/scripts/fixtures/hill_climb_and_push_pars.json",
+      "where": "the par: scripts/hill_climb_pars.js, the steady reference's median time over 50 seeds x 5 runs, rounded up to 0.1 s"
+    }
+  ]
+}

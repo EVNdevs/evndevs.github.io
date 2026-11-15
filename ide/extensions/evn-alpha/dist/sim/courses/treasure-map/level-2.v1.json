@@ -1,0 +1,144 @@
+{
+  "format": "evn-course/1",
+  "id": "treasure-map-2",
+  "challenge": "treasure-map",
+  "level": 2,
+  "version": 1,
+  "module": "G6.1",
+  "title": "Treasure map · Level 2: Four treasures, any angle",
+  "brief": "Four treasures anywhere on the 100 mm grid (legs at any angle), then back to base. Line 1 of the program must be the one statement treasures = [(x, y), ...]: on a scored run the runner fills it in with that run's treasures; practice runs without it, so practise with seed 0's: treasures = [(1600, 800), (500, 800), (2000, 1100), (1700, 300)]. A treasure is visited when the axle's middle passes within 50 mm of its centre. Base is the 200 x 200 mm square centred at (300, 300); the robot starts there facing +x, within 15 mm and 2 degrees. The level fixes the robot: the class robot with an IMU on I2C 8, its axle track drawn for each run between 175 and 185 mm (not the 178 your program says; the wheels cannot count it). A run ends when the program ends, or at 90 s. Per run: 50 x treasures visited / 4, + 40 x min(1, 20 mm / end error) (the axle's middle to base's centre at the end), + 10 at or under par when all four are visited. Pass: a mean of at least 60 over 5 runs, and at least 4 runs that visit every treasure and end on base. Par: 25 s.",
+  "field": {
+    "random": [
+      {
+        "name": "loot",
+        "draw": "points-v1",
+        "n": 4,
+        "box": [
+          300,
+          300,
+          2100,
+          1500
+        ],
+        "grid": 100,
+        "gap": 200,
+        "legs": "any",
+        "from": [
+          300,
+          300
+        ]
+      }
+    ],
+    "arena": {
+      "size": [
+        2400,
+        1800
+      ],
+      "startBox": [
+        200,
+        200,
+        400,
+        400
+      ],
+      "goal": null,
+      "obstacles": [],
+      "areas": [
+        {
+          "group": "disc",
+          "from": "loot",
+          "circle": 30,
+          "paint": "yellow"
+        },
+        {
+          "group": "near",
+          "from": "loot",
+          "circle": 50,
+          "paint": null
+        }
+      ],
+      "wallH": 100,
+      "wallT": 20,
+      "obstacleH": 150
+    }
+  },
+  "robot": {
+    "rule": "fixed",
+    "base": "odometry-imu8",
+    "set": {
+      "axleTrack": 180
+    },
+    "draw": {
+      "axleTrack": {
+        "d": 5
+      }
+    },
+    "drawPer": "run"
+  },
+  "start": {
+    "nominal": {
+      "x": 300,
+      "y": 300,
+      "heading": 0
+    },
+    "vary": {
+      "xy": 15,
+      "heading": 2
+    },
+    "draw": "uniform-square-v1"
+  },
+  "runs": {
+    "min": 1,
+    "max": 20,
+    "default": 5,
+    "fixed": 5
+  },
+  "kernel": {
+    "name": "pointToPoint",
+    "limitS": 90,
+    "goal": "footprintInside",
+    "final": "runEnd",
+    "visits": {
+      "targets": [
+        {
+          "group": "near"
+        }
+      ]
+    }
+  },
+  "constants": {
+    "k": 4,
+    "par": 25,
+    "baseX": 300,
+    "baseY": 300
+  },
+  "reveal": {
+    "line": {
+      "value": "loot",
+      "as": "treasures"
+    }
+  },
+  "score": {
+    "run": "round(50 * visited / k + 40 * min(1, 20 / max(hypot(endX - baseX, endY - baseY), 0.001)) + if(visited == k & time <= par, 10, 0), 1)",
+    "values": {
+      "complete": {
+        "value": "count(r in runs: r.visited == k & abs(r.endX - baseX) <= 100 & abs(r.endY - baseY) <= 100)",
+        "unit": "runs"
+      }
+    },
+    "summary": "round(sum(r in runs: r.points) / n, 1)"
+  },
+  "pass": "score >= 60 & complete >= 0.8 * n",
+  "sources": [
+    {
+      "doc": "docs/curriculum/G06.md",
+      "where": "G6.1 Treasure map, the challenge paragraph, the level table (level 2) and the scoring paragraph"
+    },
+    {
+      "doc": "docs/OPEN_QUESTIONS.md",
+      "where": "OQ 101 (a), ruled 2026-11-07: each seed (each run) draws a robot error the wheels cannot count, an axle track 175-185 mm (owner item RD-4, done/c1-robotdraw.md)"
+    },
+    {
+      "doc": "vscode-evn-alpha/docs/COURSE_FORMAT_DESIGN.md",
+      "where": "§11.3 (visits: each treasure's 50 mm circle), §13 (the fixed robot, its drawn axle track), §14 (points-v1, items from a list, the line-1 reveal)"
+    }
+  ]
+}

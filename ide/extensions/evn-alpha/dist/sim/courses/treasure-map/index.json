@@ -1,0 +1,45 @@
+{
+ "format": "evn-course-index/1",
+ "generated": "node scripts/course_index.js --write; do not edit",
+ "levels": [
+  {
+   "file": "treasure-map/level-1.v1.json",
+   "id": "treasure-map-1",
+   "version": 1,
+   "sha256": "b2e68c317206123ba46d7807b7baffc5b0dabe4b6a3de039c4ccaf4453fbc99d",
+   "current": true,
+   "title": "Treasure map · Level 1: Four treasures, square legs",
+   "limit": 90,
+   "runs": {
+    "default": 5,
+    "fixed": 5
+   }
+  },
+  {
+   "file": "treasure-map/level-2.v1.json",
+   "id": "treasure-map-2",
+   "version": 1,
+   "sha256": "2db5a2833f979ee8f8a099f75931690d6fcddced0a64cf0c5673133a75dc25cf",
+   "current": true,
+   "title": "Treasure map · Level 2: Four treasures, any angle",
+   "limit": 90,
+   "runs": {
+    "default": 5,
+    "fixed": 5
+   }
+  },
+  {
+   "file": "treasure-map/level-3.v1.json",
+   "id": "treasure-map-3",
+   "version": 1,
+   "sha256": "fee0273618ffa2381432d276a3b12f7210489ac5a4753852713ffac5b6e25804",
+   "current": true,
+   "title": "Treasure map · Level 3: Five treasures, your order",
+   "limit": 120,
+   "runs": {
+    "default": 5,
+    "fixed": 5
+   }
+  }
+ ]
+}

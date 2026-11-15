@@ -1,0 +1,45 @@
+{
+ "format": "evn-course-index/1",
+ "generated": "node scripts/course_index.js --write; do not edit",
+ "levels": [
+  {
+   "file": "tag-navigator/level-1.v1.json",
+   "id": "tag-navigator-1",
+   "version": 1,
+   "sha256": "1ab6327de3e87b6cf017672dbdb04102278a6a90a7e9fee9f1526bf5b990be99",
+   "current": true,
+   "title": "Tag navigator · Level 1: Visit all four",
+   "limit": 120,
+   "runs": {
+    "default": 5,
+    "fixed": 10
+   }
+  },
+  {
+   "file": "tag-navigator/level-2.v1.json",
+   "id": "tag-navigator-2",
+   "version": 1,
+   "sha256": "948e62709d8cb356853aefc4779a8f4256b534d79d9281b36e0e9668a0f3bb24",
+   "current": true,
+   "title": "Tag navigator · Level 2: The printed order",
+   "limit": 120,
+   "runs": {
+    "default": 5,
+    "fixed": 10
+   }
+  },
+  {
+   "file": "tag-navigator/level-3.v1.json",
+   "id": "tag-navigator-3",
+   "version": 1,
+   "sha256": "c77da7d4c3afdae0e7e6157f0b1cc19d6ad1661d63f6e8058e4fbf6ea51f2318",
+   "current": true,
+   "title": "Tag navigator · Level 3: Hidden tags",
+   "limit": 120,
+   "runs": {
+    "default": 5,
+    "fixed": 10
+   }
+  }
+ ]
+}

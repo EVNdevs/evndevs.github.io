@@ -1,0 +1,133 @@
+{
+  "format": "evn-course/1",
+  "id": "cruise-control-1",
+  "challenge": "cruise-control",
+  "level": 1,
+  "version": 1,
+  "module": "G7.3",
+  "title": "Cruise control · Level 1: The flat lane",
+  "brief": "A straight lane 3000 x 400 mm between two red no-go strips. Hold 200 mm/s along the lane for 10 s with dc() only (no DriveBase, no run(), drive() or other controlled move on motors 1-2). The course measures the robot's true forward speed along the lane every 10 ms from 1.00 s to 9.00 s after Run, both included (801 samples), and scores each run max(0, 100 - 2 x MAE), MAE the mean |v - 200| in mm/s. A run that puts a wheel on a red strip, calls a controlled move or ends before 9.00 s scores 0 and does not finish. Starts vary by +-30 mm and +-2 deg. The class robot, fixed. Par: MAE 4 mm/s. Pass: a mean of at least 60 over the 10 runs with at least 8 finished.",
+  "field": {
+    "arena": {
+      "size": [
+        3000,
+        600
+      ],
+      "startBox": [
+        150,
+        120,
+        450,
+        480
+      ],
+      "goal": null,
+      "obstacles": [],
+      "areas": [
+        {
+          "name": "edgeS",
+          "rect": [
+            0,
+            0,
+            3000,
+            100
+          ],
+          "paint": "red",
+          "noGo": true
+        },
+        {
+          "name": "edgeN",
+          "rect": [
+            0,
+            500,
+            3000,
+            600
+          ],
+          "paint": "red",
+          "noGo": true
+        }
+      ],
+      "wallH": 100,
+      "wallT": 20,
+      "obstacleH": 150
+    }
+  },
+  "robot": {
+    "rule": "fixed"
+  },
+  "start": {
+    "nominal": {
+      "x": 300,
+      "y": 300,
+      "heading": 0
+    },
+    "vary": {
+      "xy": 30,
+      "heading": 2
+    },
+    "draw": "lane-v1",
+    "lane": {
+      "x": [
+        270,
+        330
+      ]
+    }
+  },
+  "runs": {
+    "min": 1,
+    "max": 20,
+    "default": 5,
+    "fixed": 10
+  },
+  "kernel": {
+    "name": "pointToPoint",
+    "limitS": 10,
+    "goal": "footprintInside",
+    "final": "runEnd",
+    "noGo": "wheels",
+    "sample": {
+      "signal": {
+        "of": "chassis",
+        "q": "vAlong",
+        "axisDeg": 0
+      },
+      "everyMs": 10,
+      "windows": [
+        {
+          "fromS": 1,
+          "toS": 9,
+          "ref": 200
+        }
+      ],
+      "stats": [
+        "mae"
+      ]
+    },
+    "program": {
+      "noMove": [
+        1,
+        2
+      ]
+    }
+  },
+  "constants": {},
+  "score": {
+    "run": "if(sampled & moveTicks == 0 & noGoEntries == 0, max(0, 100 - 2 * mae_1), 0)",
+    "values": {
+      "finished": {
+        "value": "count(r in runs: r.sampled & r.moveTicks == 0 & r.noGoEntries == 0)",
+        "unit": "runs"
+      }
+    },
+    "summary": "round(sum(r in runs: r.points) / n, 1)"
+  },
+  "pass": "score >= 60 & finished >= 8",
+  "sources": [
+    {
+      "doc": "docs/curriculum/G07.md",
+      "where": "G7.3 Feedback from scratch: the robot line (no DriveBase, dc() only), the challenge paragraph and the level table, level 1"
+    },
+    {
+      "doc": "vscode-evn-alpha/docs/COURSE_FORMAT_DESIGN.md",
+      "where": "§19.1 (12c-1 kernel.sample: the chassis vAlong signal, G7.3 L1's worked level), §11.5 (no-go areas, wheels), §12.2 (noMove), §13.2 (lane-v1)"
+    }
+  ]
+}

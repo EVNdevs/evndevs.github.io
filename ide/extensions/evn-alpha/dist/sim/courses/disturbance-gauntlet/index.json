@@ -1,0 +1,97 @@
+{
+ "format": "evn-course-index/1",
+ "generated": "node scripts/course_index.js --write; do not edit",
+ "levels": [
+  {
+   "file": "disturbance-gauntlet/level-1.v1.json",
+   "id": "disturbance-gauntlet-1",
+   "version": 1,
+   "sha256": "b9e2fe5f0717087036fed71b885cd580986881e3e33f551ddd314fa4562e08d2",
+   "current": false,
+   "title": "Disturbance gauntlet · Level 1: Hold 300 deg/s",
+   "limit": 7,
+   "runs": {
+    "default": 5,
+    "fixed": 10
+   }
+  },
+  {
+   "file": "disturbance-gauntlet/level-1.v2.json",
+   "id": "disturbance-gauntlet-1",
+   "version": 2,
+   "sha256": "55c8360f4662ff964495daec9ef525be3dbcfc0cddf5e313d2bade091108392e",
+   "current": false,
+   "title": "Disturbance gauntlet · Level 1: Hold 300 deg/s",
+   "limit": 7,
+   "runs": {
+    "default": 5,
+    "fixed": 10
+   }
+  },
+  {
+   "file": "disturbance-gauntlet/level-1.v3.json",
+   "id": "disturbance-gauntlet-1",
+   "version": 3,
+   "sha256": "777d4dce54d4036bd5c617178230866033edbb66348823ae3a1d0ac929bb2dc3",
+   "current": true,
+   "title": "Disturbance gauntlet · Level 1: Hold 300 deg/s",
+   "limit": 7,
+   "runs": {
+    "default": 5,
+    "fixed": 10
+   }
+  },
+  {
+   "file": "disturbance-gauntlet/level-2.v1.json",
+   "id": "disturbance-gauntlet-2",
+   "version": 1,
+   "sha256": "23231b93bdabb941868a8b881c724f372f471163f47d518a98f33db5d2e37c76",
+   "current": false,
+   "title": "Disturbance gauntlet · Level 2: Hold the arm level",
+   "limit": 6,
+   "runs": {
+    "default": 5,
+    "fixed": 10
+   }
+  },
+  {
+   "file": "disturbance-gauntlet/level-2.v2.json",
+   "id": "disturbance-gauntlet-2",
+   "version": 2,
+   "sha256": "c1c89190363bb742ded97a3393f0909964150ec0f7c5c5210fa722039f65903a",
+   "current": true,
+   "title": "Disturbance gauntlet · Level 2: Hold the arm level",
+   "limit": 6,
+   "runs": {
+    "default": 5,
+    "fixed": 10
+   }
+  },
+  {
+   "file": "disturbance-gauntlet/level-3.v1.json",
+   "id": "disturbance-gauntlet-3",
+   "version": 1,
+   "sha256": "4a9608dbfb02c1b3ee377c122509f7e55ecd05e26dd5fb6b90e6d124ca6c5909",
+   "current": false,
+   "title": "Disturbance gauntlet · Level 3: Twenty plants, one tuning",
+   "limit": 6.5,
+   "runs": {
+    "default": 5,
+    "fixed": 20
+   }
+  },
+  {
+   "file": "disturbance-gauntlet/level-3.v2.json",
+   "id": "disturbance-gauntlet-3",
+   "version": 2,
+   "sha256": "414f27b4dc774a1290be4f475c742880a820127cc0e8667ed5512fe2c84aab41",
+   "current": true,
+   "title": "Disturbance gauntlet · Level 3: Twenty plants, one tuning",
+   "limit": 6.5,
+   "runs": {
+    "default": 5,
+    "fixed": 20
+   }
+  }
+ ]
+}

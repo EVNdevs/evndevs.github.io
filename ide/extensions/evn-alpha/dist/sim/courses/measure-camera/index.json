@@ -1,0 +1,32 @@
+{
+ "format": "evn-course-index/1",
+ "generated": "node scripts/course_index.js --write; do not edit",
+ "levels": [
+  {
+   "file": "measure-camera/level-1.v1.json",
+   "id": "measure-camera-1",
+   "version": 1,
+   "sha256": "d99b6da7d5eab46fa3764d04609d9688356a8894679259a9aa6a7c2e14d549fa",
+   "current": true,
+   "title": "Measure with a camera · level 1",
+   "limit": 30,
+   "runs": {
+    "default": 5,
+    "fixed": 10
+   }
+  },
+  {
+   "file": "measure-camera/level-2.v1.json",
+   "id": "measure-camera-2",
+   "version": 1,
+   "sha256": "29cb4e6af9a891957a934e192f672ca5735b630f5084d730d864e239c36308be",
+   "current": true,
+   "title": "Measure with a camera · level 2",
+   "limit": 30,
+   "runs": {
+    "default": 5,
+    "fixed": 10
+   }
+  }
+ ]
+}

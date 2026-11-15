@@ -8,7 +8,7 @@ Open the **EVN ALPHA** tab in the activity bar (the ℕ icon). It has three sect
 
 - **Start**: **New Python program**, **New blocks program**, **Board panel**, **Documentation** and **Getting started**, then the [update row](COMMANDS.md#updates). The extension's version is beside the title; quote it in a bug report.
 - **My projects**: your own programs.
-- **Examples**: one row for every part of the API (only the *Extended Peripherals* group is a folder to open); click a row to choose its minimal or complete example, in Python or in blocks.
+- **Examples**: one row for every part of the API (only the *Extended Peripherals* group is a folder to open). Click a row to choose its minimal or complete example, in Python or in blocks.
 
 Two more views, *Board* and *Console*, are in the secondary side bar on the other side of the window ([The Board view](BOARD_VIEW.md)).
 
@@ -41,7 +41,7 @@ If the board cannot be reached when you leave, the terminal says so in red. **En
 
 The stop goes straight to the board's port. If the port cannot be reached, the terminal says so in red and a message names the port: a stop that did not happen is never reported as done. Then use the user button.
 
-**In the browser IDE, press Stop before you close or reload the tab.** The browser closes the page at once, with no time to reach the board. A running program, or a motor started at the prompt, keeps driving. If you forgot, press the user button or switch the board off.
+> **Warning: in the browser IDE, press Stop before you close or reload the tab.** The browser closes the page at once, with no time to reach the board. A running program, or a motor started at the prompt, keeps driving. If you forgot, press the user button or switch the board off.
 
 ## Your own programs
 
@@ -49,13 +49,21 @@ The stop goes straight to the board's port. If the port cannot be reached, the t
 
 *My projects* lists everything in that folder: Python programs in its **Python** folder, blocks programs in its **Blocks** folder. Each file has **Run on the board** and **Upload as main.py** next to it. Its right-click menu has Rename, Duplicate, Delete and **Show in the file explorer**.
 
-**Your progress and backups.** Your progress (micro-lessons done, checks passed, challenge levels) is saved in the hidden folder `.evn` inside your projects folder, beside your programs; *My projects* does not show it. **EVN: Back up my work** saves your programs and your progress as one `.zip` file where you choose (Documents by default). Keep it on a school drive or a USB stick. **EVN: Restore from a backup** reads one back: it adds programs that are missing and never writes over a program you have. **EVN: My progress** shows what is saved and offers backup, restore, *Undo the last restore*, the progress page, and **Delete my progress here** (your programs are kept). If your Documents folder is synced (OneDrive, Google Drive), `.evn` is synced with your programs.
+![My projects with one program, my_motor_minimal.py, in its Python folder: the Run on the board and Upload as main.py buttons beside it, and the New Python program, New blocks program, refresh and collapse buttons in the header](images/programs-my-projects.png)
+
+**Your progress and backups.** Your progress (micro-lessons done, checks passed, challenge levels) is saved in the hidden folder `.evn` inside your projects folder, beside your programs. *My projects* does not show it. If your Documents folder is synced (OneDrive, Google Drive), `.evn` is synced with your programs.
+
+- **EVN: Back up my work** saves your programs and your progress as one `.zip` file where you choose (Documents by default). Keep it on a school drive or a USB stick.
+- **EVN: Restore from a backup** reads one back: it adds programs that are missing and never writes over a program you have.
+- **EVN: My progress** shows what is saved and offers backup, restore, *Undo the last restore*, the progress page, and **Delete my progress here** (your programs are kept).
 
 A Python program cannot be named `something.evnblocks` (or `.evnblocks.py`). That name belongs to the file a blocks program writes when it runs, so the name box refuses it and says why.
 
 ## Examples
 
-*Examples* has one folder per part of the API: the board, the motor, the robot, the pose, the serial and I2C ports, files, the data log, the controllers (`PID`, `ADRC`) and every standard peripheral. Each has a `…_minimal` program (the few lines you need) and a `…_complete` one (every call of that object), in Python and in blocks. Each is one row: click it and choose *Minimal* or *Complete*, in *Python* or *Blocks* (the language you picked last comes first); **Run** and **Save as my program** on the row ask the same. The *Extended Peripherals* group has one folder per device.
+*Examples* has one folder per part of the API. They cover the board, the motor, the robot, the pose, the serial and I2C ports, files, the data log, the controllers (`PID`, `ADRC`) and every standard peripheral. The *Extended Peripherals* group has one folder per device.
+
+Each has a `…_minimal` program (the few lines you need) and a `…_complete` one (every call of that object), in Python and in blocks. Each is one row: click it and choose *Minimal* or *Complete*, in *Python* or *Blocks*. The language you picked last comes first. **Run** and **Save as my program** on the row ask the same.
 
 Every example says what hardware it needs, next to its name and in its tooltip: `Needs: one motor on port 1, wheels off the ground`.
 
@@ -69,7 +77,15 @@ Autocomplete for `evn` works inside the projects folder once it is the workspace
 
 Hover over an `evn` name (`Motor`, `run_angle`, `imu.heading`) to see its signature and documentation. Where Pylance does not show it (the browser IDE, an example opened from *Examples*), the extension shows the same text itself. The setting `evn.python.hover` is `auto`, `always` or `off`.
 
-In the same places the extension also completes as you type: after `evn.` every name of the module, after `m1.` (with `m1 = Motor(1)`) the motor's methods and properties, and the names a `from evn import` brings in. Inside a call (`m1.run_angle(`) it shows the parameters with their types and defaults, the one you are typing highlighted, and the first paragraph of the documentation. Nothing is offered inside a string or a comment. The setting `evn.python.completion` is `auto` (only where Pylance does not complete), `always` or `off`. The suggest list and the parameter hints are read out by a screen reader.
+In the same places the extension also completes as you type:
+
+- after `evn.`, every name of the module;
+- after `m1.` (with `m1 = Motor(1)`), the motor's methods and properties;
+- the names a `from evn import` brings in.
+
+Inside a call (`m1.run_angle(`) it shows the parameters with their types and defaults, the one you are typing highlighted, and the first paragraph of the documentation. Nothing is offered inside a string or a comment. The suggest list and the parameter hints are read out by a screen reader.
+
+The setting `evn.python.completion` is `auto` (only where Pylance does not complete), `always` or `off`.
 
 **Ctrl+F1** on a word (`Motor`, `run_angle`, `battery`, `StopWatch`) opens the online API reference at that word's section. It is also *Open online documentation for the symbol under the cursor* in the right-click menu. The setting `evn.docsUrl` names the site it opens.
 

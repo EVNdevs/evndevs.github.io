@@ -1,0 +1,251 @@
+{
+  "format": "evn-course/1",
+  "id": "slalom-gates-2",
+  "challenge": "slalom-gates",
+  "level": 2,
+  "version": 1,
+  "module": "G8.1",
+  "title": "Slalom gates · Level 2: Faster",
+  "brief": "The same five gates, faster: x = 600, 1000, 1400, 1800, 2200 mm, y = 450, 750, 450, 750, 450 mm, then the finish line at x = 2700 mm. 15 points a gate passed cleanly (the robot's centre between its posts, the gates in order), 25 x min(1, par / t) when all five are passed and the finish crossed, 5 off for each post touched (each post once), never below 0; a run that skips a gate scores 0. t runs from Run to the centre crossing the finish line, which ends the run; 60 s a run. Par: 6 s.",
+  "field": {
+    "arena": {
+      "size": [
+        3000,
+        1200
+      ],
+      "startBox": [
+        0,
+        475,
+        250,
+        725
+      ],
+      "goal": null,
+      "wallH": 100,
+      "wallT": 20,
+      "obstacleH": 150,
+      "obstacles": [
+        {
+          "name": "post1L",
+          "x": 600,
+          "y": 280,
+          "w": 40,
+          "d": 40,
+          "h": 150
+        },
+        {
+          "name": "post1R",
+          "x": 600,
+          "y": 620,
+          "w": 40,
+          "d": 40,
+          "h": 150
+        },
+        {
+          "name": "post2L",
+          "x": 1000,
+          "y": 580,
+          "w": 40,
+          "d": 40,
+          "h": 150
+        },
+        {
+          "name": "post2R",
+          "x": 1000,
+          "y": 920,
+          "w": 40,
+          "d": 40,
+          "h": 150
+        },
+        {
+          "name": "post3L",
+          "x": 1400,
+          "y": 280,
+          "w": 40,
+          "d": 40,
+          "h": 150
+        },
+        {
+          "name": "post3R",
+          "x": 1400,
+          "y": 620,
+          "w": 40,
+          "d": 40,
+          "h": 150
+        },
+        {
+          "name": "post4L",
+          "x": 1800,
+          "y": 580,
+          "w": 40,
+          "d": 40,
+          "h": 150
+        },
+        {
+          "name": "post4R",
+          "x": 1800,
+          "y": 920,
+          "w": 40,
+          "d": 40,
+          "h": 150
+        },
+        {
+          "name": "post5L",
+          "x": 2200,
+          "y": 280,
+          "w": 40,
+          "d": 40,
+          "h": 150
+        },
+        {
+          "name": "post5R",
+          "x": 2200,
+          "y": 620,
+          "w": 40,
+          "d": 40,
+          "h": 150
+        }
+      ],
+      "areas": [
+        {
+          "name": "gate1",
+          "rect": [
+            580,
+            300,
+            620,
+            600
+          ],
+          "paint": null
+        },
+        {
+          "name": "gate2",
+          "rect": [
+            980,
+            600,
+            1020,
+            900
+          ],
+          "paint": null
+        },
+        {
+          "name": "gate3",
+          "rect": [
+            1380,
+            300,
+            1420,
+            600
+          ],
+          "paint": null
+        },
+        {
+          "name": "gate4",
+          "rect": [
+            1780,
+            600,
+            1820,
+            900
+          ],
+          "paint": null
+        },
+        {
+          "name": "gate5",
+          "rect": [
+            2180,
+            300,
+            2220,
+            600
+          ],
+          "paint": null
+        },
+        {
+          "name": "finish",
+          "rect": [
+            2700,
+            0,
+            3000,
+            1200
+          ],
+          "paint": null
+        }
+      ]
+    }
+  },
+  "robot": {
+    "rule": "fixed"
+  },
+  "start": {
+    "nominal": {
+      "x": 125,
+      "y": 600,
+      "heading": 0
+    },
+    "vary": {
+      "xy": 10,
+      "heading": 2
+    },
+    "draw": "uniform-square-v1"
+  },
+  "runs": {
+    "min": 1,
+    "max": 20,
+    "default": 5,
+    "fixed": 10
+  },
+  "kernel": {
+    "name": "pointToPoint",
+    "limitS": 60,
+    "goal": "footprintInside",
+    "final": "runEnd",
+    "visits": {
+      "targets": [
+        {
+          "area": "gate1"
+        },
+        {
+          "area": "gate2"
+        },
+        {
+          "area": "gate3"
+        },
+        {
+          "area": "gate4"
+        },
+        {
+          "area": "gate5"
+        },
+        {
+          "area": "finish"
+        }
+      ],
+      "endAtLast": true
+    }
+  },
+  "constants": {
+    "par": 6,
+    "gx1": 600,
+    "gx2": 1000,
+    "gx3": 1400,
+    "gx4": 1800,
+    "gx5": 2200
+  },
+  "score": {
+    "run": "if(visited > visitedInOrder | (visitedInOrder == 0 & endX > gx1 + 20) | (visitedInOrder == 1 & endX > gx2 + 20) | (visitedInOrder == 2 & endX > gx3 + 20) | (visitedInOrder == 3 & endX > gx4 + 20) | (visitedInOrder == 4 & endX > gx5 + 20), 0, round(max(0, 15 * min(5, visitedInOrder) + if(visitedInOrder == 6, 25 * min(1, par / max(visitTime_6, 0.001)), 0) - 5 * (min(1, touchesOf_post1L) + min(1, touchesOf_post1R) + min(1, touchesOf_post2L) + min(1, touchesOf_post2R) + min(1, touchesOf_post3L) + min(1, touchesOf_post3R) + min(1, touchesOf_post4L) + min(1, touchesOf_post4R) + min(1, touchesOf_post5L) + min(1, touchesOf_post5R))), 1))",
+    "values": {
+      "finished": {
+        "value": "count(r in runs: r.visitedInOrder == 6)",
+        "unit": "runs"
+      }
+    },
+    "summary": "round(sum(r in runs: r.points) / n, 1)"
+  },
+  "pass": "score >= 60 & finished >= 0.8 * n",
+  "sources": [
+    {
+      "doc": "docs/curriculum/G08.md",
+      "where": "G8.1 Slalom gates, the challenge paragraph and the level table (level 2)"
+    },
+    {
+      "doc": "vscode-evn-alpha/docs/COURSE_FORMAT_DESIGN.md",
+      "where": "§11.3 (visits: the gates in order, the finish ending the run), §11.4 (touches by name: the posts), §13 (robot and start rules)"
+    }
+  ]
+}

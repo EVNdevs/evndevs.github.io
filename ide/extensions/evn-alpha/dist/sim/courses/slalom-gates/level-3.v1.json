@@ -1,0 +1,161 @@
+{
+  "format": "evn-course/1",
+  "id": "slalom-gates-3",
+  "challenge": "slalom-gates",
+  "level": 3,
+  "version": 1,
+  "module": "G8.1",
+  "title": "Slalom gates · Level 3: Random gates",
+  "brief": "Five gates placed at random for each run: x spaced 350-500 mm from x = 600 mm, y between 350 and 850 mm. Before the run the course writes them to gates.json on the flash as [[x, y], ...] (json.load(open(\"gates.json\"))); practice runs without it, so upload seed 0's: [[600, 486], [997, 392], [1373, 840], [1783, 567], [2277, 843]]. Then cross the finish line at x = 2700 mm. 15 points a gate passed cleanly (the robot's centre between its posts, the gates in order), 25 x min(1, par / t) when all five are passed and the finish crossed, 5 off for each post touched (each post once), never below 0; a run that skips a gate scores 0. t runs from Run to the centre crossing the finish line, which ends the run; 60 s a run. Par: 8 s.",
+  "field": {
+    "random": [
+      {
+        "name": "gates",
+        "draw": "gates-v1",
+        "n": 5,
+        "x0": 600,
+        "dx": [
+          350,
+          500
+        ],
+        "y": [
+          350,
+          850
+        ]
+      }
+    ],
+    "arena": {
+      "size": [
+        3000,
+        1200
+      ],
+      "startBox": [
+        0,
+        475,
+        250,
+        725
+      ],
+      "goal": null,
+      "wallH": 100,
+      "wallT": 20,
+      "obstacleH": 150,
+      "obstacles": [
+        {
+          "group": "postL",
+          "from": "gates",
+          "at": [
+            0,
+            -170
+          ],
+          "w": 40,
+          "d": 40,
+          "h": 150
+        },
+        {
+          "group": "postR",
+          "from": "gates",
+          "at": [
+            0,
+            170
+          ],
+          "w": 40,
+          "d": 40,
+          "h": 150
+        }
+      ],
+      "areas": [
+        {
+          "group": "gate",
+          "from": "gates",
+          "rect": [
+            -20,
+            -150,
+            20,
+            150
+          ],
+          "paint": null
+        },
+        {
+          "name": "finish",
+          "rect": [
+            2700,
+            0,
+            3000,
+            1200
+          ],
+          "paint": null
+        }
+      ]
+    }
+  },
+  "robot": {
+    "rule": "fixed"
+  },
+  "start": {
+    "nominal": {
+      "x": 125,
+      "y": 600,
+      "heading": 0
+    },
+    "vary": {
+      "xy": 20,
+      "heading": 3
+    },
+    "draw": "uniform-square-v1"
+  },
+  "runs": {
+    "min": 1,
+    "max": 20,
+    "default": 5,
+    "fixed": 10
+  },
+  "kernel": {
+    "name": "pointToPoint",
+    "limitS": 60,
+    "goal": "footprintInside",
+    "final": "runEnd",
+    "visits": {
+      "targets": [
+        {
+          "group": "gate"
+        },
+        {
+          "area": "finish"
+        }
+      ],
+      "endAtLast": true
+    }
+  },
+  "constants": {
+    "par": 8
+  },
+  "score": {
+    "run": "if(visited > visitedInOrder, 0, round(max(0, 15 * min(5, visitedInOrder) + if(visitedInOrder == 6, 25 * min(1, par / max(visitTime_6, 0.001)), 0) - 5 * (min(1, touchesOf_postL_1) + min(1, touchesOf_postR_1) + min(1, touchesOf_postL_2) + min(1, touchesOf_postR_2) + min(1, touchesOf_postL_3) + min(1, touchesOf_postR_3) + min(1, touchesOf_postL_4) + min(1, touchesOf_postR_4) + min(1, touchesOf_postL_5) + min(1, touchesOf_postR_5))), 1))",
+    "values": {
+      "finished": {
+        "value": "count(r in runs: r.visitedInOrder == 6)",
+        "unit": "runs"
+      }
+    },
+    "summary": "round(sum(r in runs: r.points) / n, 1)"
+  },
+  "pass": "score >= 60 & finished >= 0.8 * n",
+  "reveal": {
+    "file": {
+      "name": "gates.json",
+      "values": [
+        "gates"
+      ]
+    }
+  },
+  "sources": [
+    {
+      "doc": "docs/curriculum/G08.md",
+      "where": "G8.1 Slalom gates, the challenge paragraph and the level table (level 3)"
+    },
+    {
+      "doc": "vscode-evn-alpha/docs/COURSE_FORMAT_DESIGN.md",
+      "where": "§11.3 (visits: the gates in order, the finish ending the run), §11.4 (touches by name: the posts), §13 (robot and start rules), §14 (gates-v1, items from a list, the gates.json reveal)"
+    }
+  ]
+}

@@ -1,0 +1,160 @@
+{
+ "format": "evn-course/1",
+ "id": "robot-says-hello-3",
+ "challenge": "robot-says-hello",
+ "level": 3,
+ "version": 1,
+ "module": "G1.1",
+ "title": "Robot says hello \u00b7 Level 3: On the star",
+ "brief": "As level 2, but each visitor's mat is smaller (200 mm): stop with the robot's middle on the star. 60 s. 50 for ending in the garage with every flash made in order, up to 40 for closeness (all 40 inside the smiley ring, 30 mm round the star, none at 150 mm), 10 for touching no wall.",
+ "field": {
+  "arena": {
+   "size": [
+    1800,
+    600
+   ],
+   "startBox": [
+    0,
+    100,
+    300,
+    500
+   ],
+   "goal": null,
+   "obstacles": [
+    {
+     "name": "garageS",
+     "x": 150,
+     "y": 90,
+     "w": 300,
+     "d": 20,
+     "h": 100
+    },
+    {
+     "name": "garageN",
+     "x": 150,
+     "y": 510,
+     "w": 300,
+     "d": 20,
+     "h": 100
+    }
+   ],
+   "wallH": 100,
+   "wallT": 20,
+   "obstacleH": 100,
+   "startPaint": false,
+   "areas": [
+    {
+     "name": "visitor1",
+     "rect": [
+      650.0,
+      200.0,
+      850.0,
+      400.0
+     ],
+     "paint": "yellow"
+    },
+    {
+     "name": "visitor2",
+     "rect": [
+      1250.0,
+      200.0,
+      1450.0,
+      400.0
+     ],
+     "paint": "yellow"
+    }
+   ]
+  }
+ },
+ "robot": {
+  "rule": "fixed",
+  "base": "junior"
+ },
+ "start": {
+  "nominal": {
+   "x": 150,
+   "y": 300,
+   "heading": 0
+  },
+  "vary": {
+   "xy": 30,
+   "heading": 3
+  },
+  "draw": "uniform-square-v1"
+ },
+ "runs": {
+  "min": 1,
+  "max": 20,
+  "default": 5,
+  "fixed": 5
+ },
+ "kernel": {
+  "name": "pointToPoint",
+  "limitS": 60,
+  "goal": "footprintInside",
+  "end": "afterProgram",
+  "still": {
+   "s": 0.5,
+   "dps": 5,
+   "mms": 3
+  },
+  "final": "runEnd",
+  "visits": {
+   "targets": [
+    {
+     "area": "start",
+     "flash": {
+      "s": 0.9,
+      "mms": 5
+     },
+     "beforeLeaving": true
+    },
+    {
+     "area": "visitor1",
+     "flash": {
+      "s": 0.9,
+      "mms": 5
+     }
+    },
+    {
+     "area": "visitor2",
+     "flash": {
+      "s": 0.9,
+      "mms": 5
+     }
+    }
+   ]
+  }
+ },
+ "constants": {
+  "gx0": 0,
+  "gx1": 300,
+  "gy0": 100,
+  "gy1": 500,
+  "sx1": 750,
+  "sy1": 300,
+  "sx2": 1350,
+  "sy2": 300
+ },
+ "score": {
+  "run": "round(if(visitedInOrder == 3 & endX >= gx0 & endX <= gx1 & endY >= gy0 & endY <= gy1, 50 + 40 * (min(1, max(0, (150 - hypot(visitX_2 - sx1, visitY_2 - sy1)) / 120)) + min(1, max(0, (150 - hypot(visitX_3 - sx2, visitY_3 - sy2)) / 120))) / 2, 0) + if(touches == 0, 10, 0), 1)",
+  "values": {
+   "finished": {
+    "value": "count(r in runs: r.visitedInOrder == 3 & r.endX >= gx0 & r.endX <= gx1 & r.endY >= gy0 & r.endY <= gy1)",
+    "unit": "runs"
+   }
+  },
+  "summary": "round(sum(r in runs: r.points) / n, 1)"
+ },
+ "pass": "score >= 60 & finished >= 0.8 * n",
+ "sources": [
+  {
+   "doc": "docs/curriculum/G01.md",
+   "where": "G1.1 Hello, robot, Challenge \u2014 Robot says hello: the field, the level table (level 3), the scoring paragraph; \"How a run is measured\" (the G1 run's end, stopped, the flash)"
+  },
+  {
+   "doc": "vscode-evn-alpha/docs/COURSE_FORMAT_DESIGN.md",
+   "where": "\u00a711.8 (end afterProgram: the G1 run's end and time), \u00a712.1 (a flash at a visit; the garage's flash before leaving; visitX / visitY for closeness), \u00a711.3 (in order), \u00a713.1 (the fixed robot)"
+  }
+ ]
+}

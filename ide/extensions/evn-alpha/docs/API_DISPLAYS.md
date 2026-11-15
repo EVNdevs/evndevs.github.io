@@ -6,13 +6,23 @@ The standard peripherals that show, move or talk: the OLED display, the LED matr
 
 ## Display — 128×64 OLED (SSD1306 / SSD1315)
 
+![An EVN OLED module in a white printed housing, its 128 by 64 display facing the camera between two other modules.](images/module-oled.jpg)
+
 Plug the EVN OLED into an I2C port; only SDA and SCL are used. Text sits on a grid of 16 columns × 8 rows of 8×8 characters; drawing uses pixels, x 0..127 from the left and y 0..63 from the top. The `draw_*` calls and `print()` are Pybricks' EV3 screen names.
 
 **Constructor**
 
 | Call | Notes |
 | :--- | :--- |
-| `oled = Display(port, addr=0x3C, *, flip=False)` | `port` 1..16; `addr` 0x3C (the EVN OLED) or 0x3D, else `ValueError`; `flip=True` mounts the picture rotated 180°. `OSError` if nothing answers at the address, `OSError` when two displays are already open, `OSError(ETIMEDOUT)` if the panel does not come up; a device at the address whose status byte does not follow the display commands (a panel the firmware cannot identify) is opened anyway, about 0.5 s later, with one line `WARNING: Display(n): the device at I2C 0x3c is not identified ...`: it draws as usual, but a panel that resets without being unplugged (or is unplugged for less than about 0.3 s) stays dark until the display is opened again, and a longer unplug identifies whatever is plugged in afresh; `MemoryError` (`"Display(n): no memory for the display's 1024-byte frame"`) when the heap cannot supply the picture's memory, taken from the heap here and given back at `close()` or the soft reboot. Returns with the EVN mark (the N of the EVN site's icon) in the middle of the panel and the panel on, contrast 207 (≈ 55 ms; up to ≈ 740 ms on a panel that has just been plugged in). The mark stays until the program draws: the first drawing call of any kind (`write()`, `print()`, `pixel()`, `clear()`, …) blanks the screen first, then draws; `contrast()`, `flip()`, `invert()`, `on()`, `off()` and `scroll()` keep it. An empty or control-only `print()` output (a bare newline, a cursor move) keeps it, and so does `draw_pixel()` at a point off the screen, which draws nothing |
+| `oled = Display(port, addr=0x3C, *, flip=False)` | `port` 1..16; `addr` 0x3C (the EVN OLED) or 0x3D, else `ValueError`; `flip=True` mounts the picture rotated 180°. (details below the table) |
+
+**`Display()` in detail**
+
+- `OSError` if nothing answers at the address, `OSError` when two displays are already open, `OSError(ETIMEDOUT)` if the panel does not come up;
+- a device at the address whose status byte does not follow the display commands (a panel the firmware cannot identify) is opened anyway, about 0.5 s later, with one line `WARNING: Display(n): the device at I2C 0x3c is not identified ...`: it draws as usual, but a panel that resets without being unplugged (or is unplugged for less than about 0.3 s) stays dark until the display is opened again, and a longer unplug identifies whatever is plugged in afresh;
+- `MemoryError` (`"Display(n): no memory for the display's 1024-byte frame"`) when the heap cannot supply the picture's memory, taken from the heap here and given back at `close()` or the soft reboot.
+- Returns with the EVN mark (the N of the EVN site's icon) in the middle of the panel and the panel on, contrast 207 (≈ 55 ms; up to ≈ 740 ms on a panel that has just been plugged in).
+- The mark stays until the program draws: the first drawing call of any kind (`write()`, `print()`, `pixel()`, `clear()`, …) blanks the screen first, then draws; `contrast()`, `flip()`, `invert()`, `on()`, `off()` and `scroll()` keep it. An empty or control-only `print()` output (a bare newline, a cursor move) keeps it, and so does `draw_pixel()` at a point off the screen, which draws nothing
 
 ### Text
 
@@ -66,7 +76,19 @@ Plug the EVN OLED into an I2C port; only SDA and SCL are used. Text sits on a gr
 
 | Call | Notes |
 | :--- | :--- |
-| `oled.ports([enable])` | `oled.ports(True)` turns the screen into a live map of the 16 I2C ports, in the small 4×6 font: ports 1..8 down the left half, 9..16 down the right, one row each. A **plain** number means nothing answers on that port; a number **in a lit box** (dark on light, like the EVN icon) means a device does. Beside the number, up to 12 characters: `?` for a device the firmware does not know; the name of a known device no program has open — `VL53L0X`, `VL53L1X`, `TCS34725`, `TCS34727`, `TCS3430`, `APDS9960`, `HMC5883L`, `QMC5883L`, `MPU6500`, `LSM6DSV`, `OLED`, `HT COLOR` / `HT COMPASS` (HiTechnic), `BME280`, `ADS1115`, `MPR121`, `HT16K33` (LED matrix / seven-segment), and `BAT` on port 16 for the board's own charger (a HuskyLens has no ID register the map may read: it shows `?` until a program opens it); for a device the program has open, its newest reading, live, whether or not the program reads it: a distance `123 mm` / `1.23 m` / `far` (`s 6`: a range status the sensor's `distance()` does not accept either), a colour sensor's clear count `C 1234` (the TCS3430 `Y …`), the gesture sensor's proximity `px 40`, a heading `h 271` (compass, IMU, HiTechnic compass), a HiTechnic colour number `# 12`, a temperature `23.5 C`, the ADC's newest input `3.30 V`, the lowest touched pad `t 3` (`t 3+` with more, `t -` none), the HuskyLens's objects `obj 2`, the name for outputs; `---` before its first reading and `lost` (boxed) while it does not answer. `I2C` marks a port the program talks to through `evn.I2C`. The firmware identifies one port every 0.1 s by its ID register (all 16 in 1.6 s), never one a program has open or uses through `evn.I2C`, and never waits; while the map is on, a busy loop runs about 2-2.5 % slower (measured on the board, 2026-10-20: 2.0, 2.3 and 2.5 %). Reading an ID register writes the register's number first, so a chip that is not an EVN device but answers at an address an EVN device uses receives those bytes about every 1.6 s while the map is on: one byte at 0x01, 0x0D, 0x1E, 0x39, 0x5A–0x5D, 0x68–0x6B and 0x76–0x77; two (0x02, then 0x03) at 0x48–0x4B; and at 0x29 up to four in three writes (0xC0, 0x92, then 0x01 0x0F, which writes 0x0F into register 0x01 of a chip with 8-bit registers). A port expander such as a PCF8574A takes them as data. A device unplugged shows as empty on the next pass; one plugged in shows on the next pass. One display at a time (a second display takes it over and the first is cleared); `ports(True)` on the display already showing the map changes nothing. `ports(False)`, `close()` or a soft reset (Ctrl-D) ends it and the screen is cleared; on this display `ports(True)` ends `mirror()` and `mirror(True)` ends the map. **The map owns the screen**: it repaints the whole screen every 0.2 s, so anything a program draws while it runs is overwritten. `oled.ports()` says whether this display shows the map. Off, the map costs nothing |
+| `oled.ports([enable])` | `oled.ports(True)` turns the screen into a live map of the 16 I2C ports, in the small 4×6 font: ports 1..8 down the left half, 9..16 down the right, one row each. A **plain** number means nothing answers on that port; a number **in a lit box** (dark on light, like the EVN icon) means a device does. (details below the table) |
+
+**`oled.ports()` in detail**
+
+- Beside the number, up to 12 characters: `?` for a device the firmware does not know;
+  - the name of a known device no program has open — `VL53L0X`, `VL53L1X`, `TCS34725`, `TCS34727`, `TCS3430`, `APDS9960`, `HMC5883L`, `QMC5883L`, `MPU6500`, `LSM6DSV`, `OLED`, `HT COLOR` / `HT COMPASS` (HiTechnic), `BME280`, `ADS1115`, `MPR121`, `HT16K33` (LED matrix / seven-segment), and `BAT` on port 16 for the board's own charger (a HuskyLens has no ID register the map may read: it shows `?` until a program opens it);
+  - for a device the program has open, its newest reading, live, whether or not the program reads it: a distance `123 mm` / `1.23 m` / `far` (`s 6`: a range status the sensor's `distance()` does not accept either), a colour sensor's clear count `C 1234` (the TCS3430 `Y …`), the gesture sensor's proximity `px 40`, a heading `h 271` (compass, IMU, HiTechnic compass), a HiTechnic colour number `# 12`, a temperature `23.5 C`, the ADC's newest input `3.30 V`, the lowest touched pad `t 3` (`t 3+` with more, `t -` none), the HuskyLens's objects `obj 2`, the name for outputs;
+  - `---` before its first reading and `lost` (boxed) while it does not answer.
+- `I2C` marks a port the program talks to through `evn.I2C`. The firmware identifies one port every 0.1 s by its ID register (all 16 in 1.6 s), never one a program has open or uses through `evn.I2C`, and never waits; while the map is on, a busy loop runs about 2-2.5 % slower (measured on the board, 2026-10-20: 2.0, 2.3 and 2.5 %).
+- Reading an ID register writes the register's number first, so a chip that is not an EVN device but answers at an address an EVN device uses receives those bytes about every 1.6 s while the map is on: one byte at 0x01, 0x0D, 0x1E, 0x39, 0x5A–0x5D, 0x68–0x6B and 0x76–0x77; two (0x02, then 0x03) at 0x48–0x4B; and at 0x29 up to four in three writes (0xC0, 0x92, then 0x01 0x0F, which writes 0x0F into register 0x01 of a chip with 8-bit registers).
+- A port expander such as a PCF8574A takes them as data. A device unplugged shows as empty on the next pass; one plugged in shows on the next pass. One display at a time (a second display takes it over and the first is cleared); `ports(True)` on the display already showing the map changes nothing.
+- `ports(False)`, `close()` or a soft reset (Ctrl-D) ends it and the screen is cleared; on this display `ports(True)` ends `mirror()` and `mirror(True)` ends the map.
+- **The map owns the screen**: it repaints the whole screen every 0.2 s, so anything a program draws while it runs is overwritten. `oled.ports()` says whether this display shows the map. Off, the map costs nothing
 
 **Example**
 
@@ -87,11 +109,15 @@ d = DistanceSensor(1)     # port 1 now shows the distance, live
 
 **Notes**
 
-Drawing changes a picture held in the firmware and returns at once (50 `write()` calls take about 28 ms). The changed parts are streamed to the panel in the background: a whole new picture in about 60 ms, or at once with `show()`. Drawing and `contrast()`, `flip()`, `invert()`, `on()` / `off()` keep working while the display is unplugged. A replugged display gets its picture and settings back by itself. `show()`, `scroll()`, `scroll_stop()`, `fade()`, `zoom()`, `all_on()` and `command()` need the panel: they raise `OSError("display on port N not responding")` while it is unplugged.
+Drawing changes a picture held in the firmware and returns at once (50 `write()` calls take about 28 ms). The changed parts are streamed to the panel in the background: a whole new picture in about 60 ms, or at once with `show()`. Drawing and `contrast()`, `flip()`, `invert()`, `on()` / `off()` keep working while the display is unplugged. A replugged display gets its picture and settings back by itself.
+
+`show()`, `scroll()`, `scroll_stop()`, `fade()`, `zoom()`, `all_on()` and `command()` need the panel: they raise `OSError("display on port N not responding")` while it is unplugged.
 
 The constructor raises `OSError` when nothing answers on the port or two displays are already open. The getters read the firmware's copy and do not raise while the display is unplugged. After `close()` every call except `close()` raises `ValueError("Display is closed")`.
 
 ## MatrixLED — 8×8 LED matrix (HT16K33)
+
+![An EVN 8 by 8 LED matrix module in a printed housing, the matrix facing the camera.](images/module-matrix.jpg)
 
 Plug the EVN 8×8 LED matrix into an I2C port; only SDA and SCL are used. The names follow Pybricks' `hub.display` (row first, `icon()`, `number()`, `text()`, `animate()`, `orientation()`).
 
@@ -153,7 +179,7 @@ m.animate([Icon.HAPPY, Icon.SAD], 500)
 
 **Notes**
 
-Drawing calls change a picture held in the firmware, which reaches the chip within 10 ms (1.2–3.8 ms measured); `show()` sends it at once. Drawing calls and settings keep working while the display is unplugged, and a replugged display gets its picture, brightness, blink and orientation back by itself (the firmware looks for it every 250 ms); a chip reset without an unplug (a supply dip) is healed within about 110 ms.
+Drawing calls change a picture held in the firmware, which reaches the chip within 10 ms (1.2–3.8 ms measured); `show()` sends it at once. Drawing calls and settings keep working while the display is unplugged. A replugged display gets its picture, brightness, blink and orientation back by itself (the firmware looks for it every 250 ms). A chip reset without an unplug (a supply dip) is healed within about 110 ms.
 
 The constructor raises `OSError` when nothing answers on the port or the display pool is full. The display's getters read the firmware's copy and do not raise while it is unplugged; `show()` does, and so does a setting sent while the chip stops answering. After `close()` every call except `close()` raises `ValueError("MatrixLED is closed")`.
 
@@ -207,7 +233,7 @@ seg.number(3.14159)                  # 3.141 (number() clears the colon)
 
 **Notes**
 
-Every call changes a picture held in the firmware, which reaches the chip within 10 ms (1.7–4.9 ms measured; many changes in a row go out as one write); `show()` sends it at once. The calls and settings keep working while the display is unplugged, and a replugged display gets its digits, brightness and blink back by itself (the firmware looks for it every 250 ms).
+Every call changes a picture held in the firmware, which reaches the chip within 10 ms (1.7–4.9 ms measured; many changes in a row go out as one write). `show()` sends it at once. The calls and settings keep working while the display is unplugged. A replugged display gets its digits, brightness and blink back by itself (the firmware looks for it every 250 ms).
 
 The constructor raises `OSError` when nothing answers on the port or the display pool is full. The display's getters read the firmware's copy and do not raise while it is unplugged; `show()` does, and so does a setting sent while the chip stops answering. After `close()` every call except `close()` raises `ValueError("SevenSegmentLED is closed")`.
 
@@ -265,9 +291,9 @@ leds.blink(Color.YELLOW, [200, 200, 200, 800])   # double blink, in the backgrou
 
 **Notes**
 
-Any `set()`, `fill()`, `range()`, `clear()`, `on()` or `off()` ends a running `blink()` / `animate()`. A pattern is stepped by the firmware's 1 kHz poll in the background, so it keeps time while the program waits, prints or computes; a step below 2 ms is refused rather than silently stretched. Colours accept the whole `Color` set, including `Color(h, s, v)`, `c * 0.5` (dimmer) and `c >> 30` (hue shifted).
+Any `set()`, `fill()`, `range()`, `clear()`, `on()` or `off()` ends a running `blink()` / `animate()`. A pattern is stepped by the firmware's 1 kHz poll in the background, so it keeps time while the program waits, prints or computes. A step below 2 ms is refused rather than silently stretched. Colours accept the whole `Color` set, including `Color(h, s, v)`, `c * 0.5` (dimmer) and `c >> 30` (hue shifted).
 
-The servo port has one owner at a time: `Servo(n)` raises `OSError("servo port n is used by an RGBLED strip")` while the strip is open, and `RGBLED(n)` raises while a `Servo` object holds the port (`Servo.close()` gives it back). A servo port pulses nothing until a `Servo` object is built, so a strip plugged in at power-on stays dark.
+The servo port has one owner at a time. `Servo(n)` raises `OSError("servo port n is used by an RGBLED strip")` while the strip is open, and `RGBLED(n)` raises while a `Servo` object holds the port (`Servo.close()` gives it back). A servo port pulses nothing until a `Servo` object is built, so a strip plugged in at power-on stays dark.
 
 Nothing is read back from the strip, so there is no unplug detection: writes to an unplugged strip simply go nowhere. After `close()` every call except `close()` itself raises `ValueError("RGBLED is closed")`, even once a new `RGBLED(port)` has opened the same port: an old object never acts on the new one's strip.
 
@@ -327,11 +353,16 @@ wheel.duty(50)                   # about 185 deg/s unloaded; wheel.stop() to sto
 
 **Notes**
 
-How accurate they are, measured with an encoder on the horn: the Geekservo 270° travels 277..281° over its 0..270 command, in a straight line, and follows `move(270, 200)` at 200..206 deg/s. The continuous-rotation servo does not creep at duty 0, turns at about 185 / 315 / 450 deg/s at duty 50 / 75 / 100, starts in about 100 ms and stops in about 150 ms; under a heavy load it is limited by its torque below duty 50.
+How accurate they are, measured with an encoder on the horn:
 
-The emergency stop (Ctrl-C, the board button) ends every sweep and sends a continuous servo its stop pulse; a fixed-range servo keeps holding its position, the way a motor keeps its brake. A servo port pulses nothing until the first `Servo` object on it is built, and a new object drives its port even after `disable()` on an earlier one. A second `Servo(n)` while an older object holds the port **takes it over**: the pulse is the new object's from its first frame (its profile's start), every call on the older object raises `ValueError("Servo(n) was replaced by a newer Servo(n)")` and its `close()` does nothing.
+- The Geekservo 270° travels 277..281° over its 0..270 command, in a straight line, and follows `move(270, 200)` at 200..206 deg/s.
+- The continuous-rotation servo does not creep at duty 0. It turns at about 185 / 315 / 450 deg/s at duty 50 / 75 / 100, starts in about 100 ms and stops in about 150 ms. Under a heavy load it is limited by its torque below duty 50.
 
-The port has one owner at a time: `RGBLED(n)` raises `OSError("servo port n is used by a Servo object")` while this object is open, and while a strip holds the port the constructor and every writing call here raise `OSError("servo port n is used by an RGBLED strip")`. A strip's `close()` frees the port about 1–3 ms later (its black frame drains first); `Servo(port)` straight after `leds.close()` waits up to 10 ms for that, and raises only if the strip is still open or has not handed the port back within those 10 ms.
+The emergency stop (Ctrl-C, the board button) ends every sweep and sends a continuous servo its stop pulse. A fixed-range servo keeps holding its position, the way a motor keeps its brake.
+
+A servo port pulses nothing until the first `Servo` object on it is built, and a new object drives its port even after `disable()` on an earlier one. A second `Servo(n)` while an older object holds the port **takes it over**. The pulse is the new object's from its first frame (its profile's start). Every call on the older object raises `ValueError("Servo(n) was replaced by a newer Servo(n)")` and its `close()` does nothing.
+
+The port has one owner at a time. `RGBLED(n)` raises `OSError("servo port n is used by a Servo object")` while this object is open. While a strip holds the port, the constructor and every writing call here raise `OSError("servo port n is used by an RGBLED strip")`. A strip's `close()` frees the port about 1–3 ms later (its black frame drains first). Straight after `leds.close()`, `Servo(port)` waits up to 10 ms for that. It raises only if the strip is still open or has not handed the port back within those 10 ms.
 
 A servo has no feedback line, so nothing detects an unplugged servo. After `close()` every call except `close()` itself raises `ValueError("Servo is closed")` (on an object a newer `Servo(n)` replaced: `"... was replaced by a newer Servo(n)"`).
 
@@ -339,13 +370,27 @@ A servo has no feedback line, so nothing detects an unplugged servo. After `clos
 
 Plug the EVN Bluetooth module into Serial 1 or Serial 2. Once a peer is connected the module is a transparent serial link: bytes written on one end come out of the other.
 
-The module has two modes. **Hold its button while you switch the board on** and it boots in command mode. The constructor then programs the baud, name and role, reboots the module (about 1 s) and switches to data mode. Switched on without the button, the module is already in data mode. The constructor then sends an `AT` probe, gets no answer within 300 ms, and only opens the port at `baud`. `configured()` says which happened. Right after the board is switched on (`boot.py`), the module is still starting, so the constructor keeps asking until the board has been up about 2 s. With nothing plugged into the header (no answer, and nothing driving its receive line) the constructor raises `OSError("no Bluetooth module on serial port n")` instead of opening a port that goes nowhere. The settings persist in the module, so it only needs programming once.
+The module has two modes:
+
+- **Hold its button while you switch the board on** and it boots in command mode. The constructor then programs the baud, name and role, reboots the module (about 1 s) and switches to data mode.
+- Switched on without the button, the module is already in data mode. The constructor then sends an `AT` probe, gets no answer within 300 ms, and only opens the port at `baud`.
+
+`configured()` says which happened. The settings persist in the module, so it only needs programming once.
+
+Right after the board is switched on (`boot.py`), the module is still starting, so the constructor keeps asking until the board has been up about 2 s. With nothing plugged into the header (no answer, and nothing driving its receive line) the constructor raises `OSError("no Bluetooth module on serial port n")` instead of opening a port that goes nowhere.
 
 **Constructor**
 
 | Call | Notes |
 | :--- | :--- |
-| `bt = Bluetooth(port, baud=230400, name="EVN Bluetooth", mode="remote", addr=None, *, stay_in_command=False, wait=True, rxbuf=None)` | `port` is the serial port, 1 or 2. `rxbuf` (2026-11-01, as `UART`'s): `None` or up to 255 the port's 255-byte receive buffer (about 11 ms of data at 230400 baud), 256..16384 a buffer of that many bytes on the MicroPython heap, freed by `close()` and at the soft reboot (`MemoryError` when the heap has no room, `ValueError` above 16384); a module that carries the REPL may take it too. Applied only in command mode (button held): `baud` 4800..1382400, rounded down to the module's table (4800, 9600, 19200, 38400, 57600, 115200, 230400, 460800, 921600, 1382400) — 230400 is the highest the module sustains without losing data; `name` 1..32 characters; `mode` `'remote'` (a PC or a host module connects to it) or `'host'` (it connects by itself to the module at `addr`, `'NAP,UAP,LAP'` as `address()` prints it, `:` accepted). `stay_in_command=True` leaves the module in command mode for `command()`, `address()`, `version()`. `wait=True` returns once the module is ready (`OSError(ETIMEDOUT)` after 3 s, plus what is left of the first 2 s after power-on); `OSError("no Bluetooth module on serial port n")` with nothing on the header; `wait=False` returns at once — poll `ready()`, and stop when `state()` reads `'absent'` (nothing on the header: `ready()` never comes true). `ValueError` for any value out of range; `OSError` while an `evn.UART` object or another live `Bluetooth` object holds the port, `OSError(EIO)` when the port cannot be opened |
+| `bt = Bluetooth(port, baud=None, name=None, mode=None, addr=None, *, stay_in_command=False, wait=True, rxbuf=None)` | `port` is the serial port, 1 or 2. `None` means *not given*: `baud` 230400 (or, on a module that carries the REPL, the port's own baud), and, when the module is programmed, `name` `"EVN Bluetooth"` and `mode` `'remote'` - the module is then given those, whatever it was called or set to before (a programmed module's name and role are always written); `addr=None` sends no binding, so a module keeps the address it was bound to. (details below the table) |
+
+**`Bluetooth()` in detail**
+
+- `rxbuf` (2026-11-01, as `UART`'s): `None` or up to 255 the port's 255-byte receive buffer (about 11 ms of data at 230400 baud), 256..16384 a buffer of that many bytes on the MicroPython heap, freed by `close()` and at the soft reboot (`MemoryError` when the heap has no room, `ValueError` above 16384); a module that carries the REPL may take it too.
+- Applied only in command mode (button held): `baud` 4800..1382400, rounded down to the module's table (4800, 9600, 19200, 38400, 57600, 115200, 230400, 460800, 921600, 1382400) — 230400 is the highest the module sustains without losing data; `name` 1..32 characters; `mode` `'remote'` (a PC or a host module connects to it) or `'host'` (it connects by itself to the module at `addr`, `'NAP,UAP,LAP'` as `address()` prints it, `:` accepted).
+- `stay_in_command=True` leaves the module in command mode for `command()`, `address()`, `version()`. `wait=True` returns once the module is ready (`OSError(ETIMEDOUT)` after 3 s, plus what is left of the first 2 s after power-on); `OSError("no Bluetooth module on serial port n")` with nothing on the header; `wait=False` returns at once — poll `ready()`, and stop when `state()` reads `'absent'` (nothing on the header: `ready()` never comes true).
+- `ValueError` for any value out of range; `OSError` while an `evn.UART` object or another live `Bluetooth` object holds the port, `OSError(EIO)` when the port cannot be opened
 
 ### Sending and receiving
 
@@ -388,12 +433,22 @@ bt.repl(True)
 
 **Notes**
 
-**Pairing with a PC.** Pair the module in the Windows Bluetooth settings (it shows as `HC-05` or `EVN Bluetooth`, PIN `1234`); Windows then lists a *Standard Serial over Bluetooth link (COMxx)* port, and a PC program that opens it talks to `bt.read()` / `bt.write()`. Only a module in the `'remote'` role can be reached from a PC.
+**Pairing with a PC.** Pair the module in the Windows Bluetooth settings (it shows as `HC-05` or `EVN Bluetooth`, PIN `1234`). Windows then lists a *Standard Serial over Bluetooth link (COMxx)* port, and a PC program that opens it talks to `bt.read()` / `bt.write()`. Only a module in the `'remote'` role can be reached from a PC.
 
 **Two modules, no PC.** Program one module as the host bound to the other's address, once: switch on with the host module's button held and run `Bluetooth(1, mode="host", addr="98D3:41:F71802")` (the address the other module's `address()` gave). From then on the host connects to that module by itself at every power-up.
 
-**The REPL over the air.** `bt.repl(True)` lets the PC's Bluetooth COM port carry the prompt, Run and Stop, so the USB cable can come out ([Working without the USB cable](BLUETOOTH.md); the *Board* view does the whole set-up). Put it in `boot.py`, as in the example above.
+**The REPL over the air.** `bt.repl(True)` lets the PC's Bluetooth COM port carry the prompt, Run and Stop, so the USB cable can come out. The *Board* view does the whole set-up: [Working without the USB cable](BLUETOOTH.md). Put it in `boot.py`, as in the example above.
 
-A module that already carries the REPL — even one whose object was dropped, as in `evn.Bluetooth(2).repl(True)` — is adopted as it stands by a plain `Bluetooth(n)`: at the port's own baud, nothing sent to the module, `configured()` `False`. Any configuration argument (a `baud` equal to the port's own is accepted) then raises `ValueError("the module carries the REPL; call repl(False) before changing its configuration")`; a program that needs the module for its own traffic calls `bt.repl(False)` first.
+A module that already carries the REPL is adopted as it stands by a plain `Bluetooth(n)`: at the port's own baud, nothing sent to the module, `configured()` `False`. That holds even for one whose object was dropped, as in `evn.Bluetooth(2).repl(True)`. Any configuration argument (a `baud` equal to the port's own is accepted) then raises `ValueError("the module carries the REPL; call repl(False) before changing its configuration")`. A program that needs the module for its own traffic calls `bt.repl(False)` first.
 
-One object per serial header: `Bluetooth(n)` raises `OSError("serial port n is used by a UART object")` while an `evn.UART` object holds the port, `OSError("serial port n is already open")` while another live `Bluetooth` object does, and `UART(n)` raises the mirror error while this object holds it. The module does not answer from the serial side in data mode, so the constructor does not detect an absent module - an empty header gives an object in data mode exactly like a module switched on without its button - and nothing detects an unplug. Only `configured()` `True` (or a non-empty `config_errors()`) proves a module answered; the Board view words a silent header *no answer (a module in data mode, or nothing attached)* for that reason. After `close()` every call except `close()` itself raises `ValueError("Bluetooth is closed")`, even once a new `Bluetooth(n)` has opened the same port: an old object never acts on the new one's module, and its second `close()` does nothing.
+One object per serial header:
+
+- `Bluetooth(n)` raises `OSError("serial port n is used by a UART object")` while an `evn.UART` object holds the port.
+- It raises `OSError("serial port n is already open")` while another live `Bluetooth` object does.
+- `UART(n)` raises the mirror error while this object holds it.
+
+The module does not answer from the serial side in data mode, so the constructor tells an empty header by its receive line instead: a module drives that line, an empty header leaves it low, and the constructor raises `OSError("no Bluetooth module on serial port n")` (with `wait=False`, `state()` reads `'absent'`).
+
+Before firmware 0.2.76 it did not: an empty header gave an object in data mode exactly like a module switched on without its button, which is why the Board view still words a silent header *no answer (a module in data mode, or nothing attached)*. Nothing detects an unplug once the object is open. Only `configured()` `True` (or a non-empty `config_errors()`) proves a module answered.
+
+After `close()` every call except `close()` itself raises `ValueError("Bluetooth is closed")`, even once a new `Bluetooth(n)` has opened the same port. An old object never acts on the new one's module, and its second `close()` does nothing.

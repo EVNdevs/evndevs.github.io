@@ -1,0 +1,45 @@
+{
+ "format": "evn-course-index/1",
+ "generated": "node scripts/course_index.js --write; do not edit",
+ "levels": [
+  {
+   "file": "translate-beat/level-1.v1.json",
+   "id": "translate-beat-1",
+   "version": 1,
+   "sha256": "1975c9c74b57a473f08dd231dab17dca009b094c4ea3e21ff79bd30d6c3edbd2",
+   "current": true,
+   "title": "Translate and beat · Level 1: A square that closes",
+   "limit": 60,
+   "runs": {
+    "default": 5,
+    "fixed": 5
+   }
+  },
+  {
+   "file": "translate-beat/level-2.v1.json",
+   "id": "translate-beat-2",
+   "version": 1,
+   "sha256": "313310d9f8596c9085cf469e3a0a97534d4ac86026f413539722fd71784f1feb",
+   "current": true,
+   "title": "Translate and beat · Level 2: Triangle, hexagon, star",
+   "limit": 90,
+   "runs": {
+    "default": 5,
+    "fixed": 5
+   }
+  },
+  {
+   "file": "translate-beat/level-3.v1.json",
+   "id": "translate-beat-3",
+   "version": 1,
+   "sha256": "4a1a650e03e7b9792ed71cb21daefad043fe45ad450a3a7b98cd203ed6f1d123",
+   "current": true,
+   "title": "Translate and beat · Level 3: A rosette",
+   "limit": 120,
+   "runs": {
+    "default": 5,
+    "fixed": 5
+   }
+  }
+ ]
+}

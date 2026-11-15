@@ -1,8 +1,8 @@
 /* The 3D scene of the Simulator panel, without the page: the course and the robot as the world has them, drawn with
  * WebGL into whatever context it is given - the 3D view's (media/sim/view3d.js, the DOM shell: its canvas, its orbit
  * camera, the theme's background) and each virtual camera's (src/sim/camWorker.ts, an OffscreenCanvas in a Web Worker,
- * docs/SIMULATOR_SBC_DESIGN.md §2.4: one scene builder, so a camera sees exactly what the 3D view shows - but for the
- * robot's models, below: a camera draws the robot drawing's boxes where the 3D view draws the models, SIMULATOR_MODELS_DESIGN.md M5).
+ * docs/SIMULATOR_SBC_DESIGN.md §2.4: one scene builder, so a camera sees exactly what the 3D view shows - the robot's models
+ * included since OQ 493 (owner, 2026-11-11: "Yes"), always on in a camera, SIMULATOR_MODELS_DESIGN.md M5).
  *
  * Nothing here touches document, window or the page's style: 2D canvases (the paint textures) come from the
  * `canvas2d(w, h)` the caller gives (document.createElement('canvas') in the page, OffscreenCanvas in a worker), and
@@ -43,10 +43,10 @@
  * B1). Without `cull` (a test's stand-in) the pass is exactly the one before them. Nothing per frame allocates: the stud
  * meshes are built in setGeom.
  *
- * The EVN board and the standard peripherals' models (docs/SIMULATOR_MODELS_DESIGN.md M5): option `models` (the 3D view's;
- * the camera worker never sets it, so no camera draws or loads one) and setModels(self.EVNModels) - the committed meshes
+ * The EVN board and the standard peripherals' models (docs/SIMULATOR_MODELS_DESIGN.md M5): option `models` (the 3D view's and
+ * every camera's: the camera worker's scenes take the models the page posts, OQ 493) and setModels(self.EVNModels) - the committed meshes
  * of media/sim/models/*.js (tools/sim/models/convert_models.py), one static mesh per part and colour with each triangle's
- * face normal, built once. With `models` on, `showModels` (the 3D view's Models button, default on) and a part loaded,
+ * face normal, built once. With `models` on, `showModels` (the 3D view's Models button, default on; a camera's always on) and a part loaded,
  * robot() draws the board's model in place of the deck's board and battery boxes, each colour and distance sensor's module
  * in place of its orange box, the IMU's module in place of its green one (M4's places), the LDraw wheel in place of each tyre's cylinder, turning with its motor, and each drive motor's LDraw model in place of its hub stub (M10); otherwise it draws exactly what it drew before. Looks only: the world is unchanged.
  *
@@ -150,6 +150,8 @@ void main() {
     }
 
     function hex(c) { const v = parseInt(c.slice(1), 16); return [(v >> 16 & 255) / 255, (v >> 8 & 255) / 255, (v & 255) / 255]; }
+    /** a light's colour, '#rgb' or '#rrggbb' (AREA_INK's black is '#111': review g23 inc 1b S1); hex() reads six digits only */
+    function hex6(c) { return hex(c.length === 4 ? `#${c[1]}${c[1]}${c[2]}${c[2]}${c[3]}${c[3]}` : c); }
 
     /** A mesh: interleaved position (3), normal (3), uv (2) triangles */
     class Mesh {
@@ -324,6 +326,42 @@ void main() {
 
     const D2R = Math.PI / 180;
     const pow2 = (v) => { let p = 2; while (p < v && p < 4096) { p *= 2; } return p; };
+    const VIEW_PRINT_MAX = 1024; // the 3D view's print texture side, px (printCanvas; a power of two)
+
+    /* A course's prints (docs/COURSE_CONTENT_DESIGN.md §4, CC-6; src/sim/course/prints.ts says the file's words and the
+     * frame): generated patterns, never image files. printCells is the pattern's grid of cells, row 0 at the top, column 0
+     * at the left, 1 white: an ArUco tag's 6 x 6 (its black border, then OpenCV's DICT_4X4_50 marker from
+     * media/sim/aruco_4x4_50.js - rotation 0 is a row's first 2 bytes, most significant bit first, row-major), a
+     * checkerboard's squares (the top-left black), or a board of dots (`dots`: each cell a black dot half its pitch across);
+     * null for a pattern this file does not know or an ArUco id the table lacks (the loader refuses both). */
+    const PRINT_PROUD = 0.2;
+    function printCells(pattern) {
+        let m = /^aruco-4x4-50:(\d+)$/.exec(pattern);
+        if (m) {
+            const D = root.EVNAruco4x4_50, hx = D && D.bytes[Number(m[1])];
+            if (!hx) { return null; }
+            const n = D.markerSize, cells = [];
+            for (let r = 0; r < n + 2; r++) {
+                const row = [];
+                for (let c = 0; c < n + 2; c++) {
+                    const k = (r - 1) * n + (c - 1);
+                    row.push(r >= 1 && r <= n && c >= 1 && c <= n ? (parseInt(hx.substr(2 * (k >> 3), 2), 16) >> (7 - (k & 7))) & 1 : 0);
+                }
+                cells.push(row);
+            }
+            return { nx: n + 2, ny: n + 2, cells, dots: false };
+        }
+        m = /^(checker|dots):(\d+)x(\d+):/.exec(pattern);
+        if (!m) { return null; }
+        const nx = Number(m[2]), ny = Number(m[3]), dots = m[1] === 'dots';
+        return { nx, ny, dots, cells: Array.from({ length: ny }, (_, r) => Array.from({ length: nx }, (_, c) => (dots ? 1 : (r + c) % 2))) };
+    }
+    /** a print's frame (prints.ts printFrame): normal n (yaw from +x, pitch up), right u, up v = n x u; o its pattern's middle */
+    function printFrame(p, proud) {
+        const y = p.yaw * D2R, q = p.pitch * D2R;
+        const n = [Math.cos(q) * Math.cos(y), Math.cos(q) * Math.sin(y), Math.sin(q)], u = [-Math.sin(y), Math.cos(y), 0], v = cross(n, u);
+        return { o: [p.at[0] + proud * n[0], p.at[1] + proud * n[1], p.at[2] + proud * n[2]], n, u, v };
+    }
 
     /* A stroked piece's ends (a line's first / last point, an arc's at a0 / a1), and whether two pieces are one stroke:
      * the same kind of stroke (line or arc, not a fill), colour, width, join and clip, the second starting where the
@@ -360,6 +398,10 @@ void main() {
             const P = bytes(g.pos), I = bytes(g.idx), nv = P.byteLength / 6, ni = I.byteLength / 2;
             const alpha = g.alpha === undefined ? 1 : g.alpha;
             if (nv !== g.n || ni % 3 || !/^#[0-9a-f]{6}$/i.test(g.color) || !(alpha > 0 && alpha <= 1)) { throw new Error('a malformed group'); }
+            // a textured group (OQ 496: the board's art): `uv` uint16 per vertex (u, v x 65535; v 0 the image's bottom row, as
+            // texture() uploads it flipped) and `tex` its texture in m.textures
+            const UV = g.uv !== undefined ? bytes(g.uv) : null;
+            if (UV && (UV.byteLength !== nv * 4 || !Array.isArray(m.textures) || !m.textures[g.tex])) { throw new Error('a malformed textured group'); }
             const out = new Array(ni * 8);
             const v = (k) => { if (k >= nv) { throw new Error('an index out of range'); } return [P.getInt16(6 * k, true) * q, P.getInt16(6 * k + 2, true) * q, P.getInt16(6 * k + 4, true) * q]; };
             const nt = ni / 3, idx = new Array(ni), fa = new Array(nt), fu = new Array(nt), at = Array.from({ length: nv }, () => []);
@@ -378,15 +420,17 @@ void main() {
                     for (const f of at[k]) { if (dot(fu[f], fu[t]) >= cosC) { n[0] += fa[f][0]; n[1] += fa[f][1]; n[2] += fa[f][2]; } }
                     const u = Math.hypot(n[0], n[1], n[2]) > 0 ? norm(n) : fu[t];
                     const o = (3 * t + j) * 8;
-                    out[o] = p[0]; out[o + 1] = p[1]; out[o + 2] = p[2]; out[o + 3] = u[0]; out[o + 4] = u[1]; out[o + 5] = u[2]; out[o + 6] = 0; out[o + 7] = 0;
+                    out[o] = p[0]; out[o + 1] = p[1]; out[o + 2] = p[2]; out[o + 3] = u[0]; out[o + 4] = u[1]; out[o + 5] = u[2];
+                    out[o + 6] = UV ? UV.getUint16(4 * k, true) / 65535 : 0; out[o + 7] = UV ? UV.getUint16(4 * k + 2, true) / 65535 : 0;
                 }
             }
-            return [out, hex(g.color), alpha];
+            return [out, hex(g.color), alpha, UV ? g.tex : -1];
         });
     }
 
     class Scene3D {
-        /** gl: a WebGL 1 or 2 context; opts.canvas2d(w, h): a canvas with a 2D context (the paint); opts.mip, opts.showCams */
+        /** gl: a WebGL 1 or 2 context; opts.canvas2d(w, h): a canvas with a 2D context (the paint); opts.mip, opts.showCams;
+         *  opts.names: CC-8's Show names may draw here (the 3D view's; never a camera's) */
         constructor(gl, opts = {}) {
             this.gl = gl;
             this.canvas2d = opts.canvas2d;
@@ -422,6 +466,8 @@ void main() {
             wx.fillStyle = '#ffffff'; wx.fillRect(0, 0, 2, 2);
             this.white = this.texture(wc);
             this.statics = [];
+            // G2.3 (DESIGN_r2.md §1.3): each light's quad (setGeom), coloured each frame from the snapshot; none on every other course
+            this.lightQuads = [];
             // each seesaw's paint texture, by its index in geom.world3d.seesaws: this scene's (its context's), never cached on
             // the course's geometry - several scenes (cameras, a view rebuilt after a lost context) share one geom, each in
             // its own context, and a texture is only valid in the context that made it (review rcjcam r2 B1)
@@ -458,8 +504,80 @@ void main() {
             this.useModels = !!opts.models;
             this.showModels = true;
             this.models = new Map();
+            // setModels' textures decoded (OQ 496): a promise, and a callback when they are in (the 3D view redraws)
+            this.modelsReady = Promise.resolve();
+            this.onModelsReady = null;
             // a frame's translucent model groups (the board's clear shield), drawn after everything opaque (frame())
             this.later = [];
+            // CC-8's Show names (COURSE_CONTENT_DESIGN.md §6 "The names"; lane cc8): on only where opts.names is (the 3D view),
+            // so a camera's scene never draws a name; the named items (setNames), the toggle, each name's label texture and
+            // the labels' quad (made at the first label drawn: a scene that draws none makes no call for them)
+            this.namesOn = !!opts.names;
+            this.names = null;
+            this.showNames = false;
+            this.nameTex = new Map();
+            this.nameQuad = null;
+        }
+
+        /** CC-8's named items ([{ name, x, y, kind: 'item' | 'area' | 'ball' }], the worker's `names`: workerCore.ts
+         *  courseNames), or null: kept only in a scene made with opts.names; drawn while showNames is on (frame()) */
+        setNames(names) {
+            const gl = this.gl;
+            for (const t of this.nameTex.values()) { if (gl) { gl.deleteTexture(t.tex); } }
+            this.nameTex.clear();
+            this.names = this.namesOn && Array.isArray(names) && names.length ? names : null;
+        }
+
+        /** a name's label (its plate and text, as the 2D view's label colours: an area's blue, the rest near black), once
+         *  per name and kind */
+        nameLabel(n) {
+            const key = `${n.kind}|${n.name}`;
+            let t = this.nameTex.get(key);
+            if (t) { return t; }
+            const PX = 40, PAD = 10, probe = this.canvas2d(2, 2).getContext('2d');
+            probe.font = `${PX}px sans-serif`;
+            const m = probe.measureText ? probe.measureText(String(n.name)) : null;
+            const w = Math.max(2, Math.ceil((m && Number.isFinite(m.width) ? m.width : String(n.name).length * PX * 0.6) + 2 * PAD)), h = PX + 2 * PAD;
+            const cv = this.canvas2d(w, h), c = cv.getContext('2d');
+            c.fillStyle = '#ffffff'; c.fillRect(0, 0, w, h);
+            c.strokeStyle = '#5f6b7a'; c.lineWidth = 3; c.strokeRect(1.5, 1.5, w - 3, h - 3);
+            c.font = `${PX}px sans-serif`; c.fillStyle = n.kind === 'area' ? '#1d4f91' : '#1a1a1a';
+            c.textAlign = 'center'; c.textBaseline = 'middle';
+            c.fillText(String(n.name), w / 2, h / 2);
+            t = { tex: this.texture(cv), w, h };
+            this.nameTex.set(key, t);
+            return t;
+        }
+
+        /** the names over the course (frame(), last): each a label facing the view, its foot over the item - an obstacle's
+         *  top, a ball's (where the snapshot has it, by sim.js namesNow's rule: the snapshot's balls in the course's order when
+         *  there are as many), an area's floor - at a fixed height on the screen, drawn over everything (no depth test) */
+        drawNames(vp, W, H) {
+            const gl = this.gl, w3 = this.geom.world3d, hz = this.snap && this.snap.hazards, list = this.names;
+            if (!this.nameQuad) { const o = []; quad(o, [-0.5, -0.5, 0], [0.5, -0.5, 0], [0.5, 0.5, 0], [-0.5, 0.5, 0]); this.nameQuad = new Mesh(gl, o); }
+            const nb = list.filter((n) => n.kind === 'ball').length;
+            const hb = hz && hz.balls && nb && hz.balls.length === nb ? hz.balls : null;
+            // the view's right and up in the world: vp's first two rows (a projection scales each alone: M4.persp, M4.look)
+            const right = norm([vp[0], vp[4], vp[8]]), up = norm([vp[1], vp[5], vp[9]]), fy = Math.hypot(vp[1], vp[5], vp[9]) || 1;
+            const L = this.light, px = Math.max(14, Math.min(28, H / 28));
+            gl.disable(gl.DEPTH_TEST);
+            let k = 0;
+            for (const n of list) {
+                let x = n.x, y = n.y, z = 2;
+                if (n.kind === 'ball') { const b = hb ? hb[k] : null, bl = w3 && w3.balls && w3.balls.length === nb ? w3.balls[k] : null; k++; if (b) { x = b[0]; y = b[1]; } z = (b ? b[2] : bl ? bl.z : 0) + (bl ? bl.r : 0) + 4; }
+                else if (n.kind === 'item' && w3) {
+                    const bk = w3.blocks.find((q) => q.at && Math.abs(q.at[0] - n.x) < 1 && Math.abs(q.at[1] - n.y) < 1);
+                    if (bk) { const i = w3.blocks.indexOf(bk), at = (hz && hz.blocks && hz.blocks.length === w3.blocks.length && hz.blocks[i]) || bk.at; x = at[0]; y = at[1]; z = at[3] + bk.h + 4; }
+                }
+                const cw = vp[3] * x + vp[7] * y + vp[11] * z + vp[15];
+                if (!(cw > 0)) { continue; }   // behind the eye
+                const t = this.nameLabel(n), h = 2 * px * cw / (H * fy), w = h * t.w / t.h;
+                // the label's x along the view's right, y along its up, its normal the light's (lit flat: the plate reads white)
+                const c = [x + up[0] * h / 2, y + up[1] * h / 2, z + up[2] * h / 2];
+                const m = [right[0] * w, right[1] * w, right[2] * w, 0, up[0] * h, up[1] * h, up[2] * h, 0, L[0], L[1], L[2], 0, c[0], c[1], c[2], 1];
+                this.draw(vp, m, null, { mesh: this.nameQuad, tex: t.tex });
+            }
+            gl.enable(gl.DEPTH_TEST);
         }
 
         /** the committed models (self.EVNModels: { part: model }), built into static meshes once; a part that does not decode is
@@ -468,13 +586,31 @@ void main() {
             const gl = this.gl;
             for (const m of this.models.values()) { for (const [mesh] of m.meshes) { gl.deleteBuffer(mesh.buf); } }
             this.models.clear();
+            this.modelsReady = Promise.resolve();
             if (!this.useModels || !src || !gl) { return; }
+            const decodes = [];
             for (const name of Object.keys(src).sort()) {
                 try {
                     const groups = modelGroups(src[name]);
-                    this.models.set(name, { meshes: groups.map(([d, c, a]) => [new Mesh(gl, d), c, a]), bbox: src[name].bbox, size: src[name].source_bbox });
+                    const model = { meshes: groups.map(([d, c, a, t]) => [new Mesh(gl, d), c, a, t >= 0 ? null : undefined, t]), bbox: src[name].bbox, size: src[name].source_bbox };
+                    this.models.set(name, model);
+                    // its textures (OQ 496), decoded off the frame: a textured group is not drawn until its texture is in;
+                    // modelsReady resolves when every one is (the camera worker waits for it before a frame - no frame with
+                    // half the art) and onModelsReady() is called (the 3D view redraws)
+                    for (const [k, tx] of (src[name].textures || []).entries()) {
+                        if (typeof createImageBitmap !== 'function' || typeof Blob !== 'function') { if (typeof console !== 'undefined') { console.warn(`3D view: the ${name} model's textures are not drawn (no createImageBitmap here)`); } break; }
+                        const bin = atob(tx.data), u8 = new Uint8Array(bin.length);
+                        for (let i = 0; i < bin.length; i++) { u8[i] = bin.charCodeAt(i); }
+                        // flipped as decoded: WebGL ignores UNPACK_FLIP_Y for an ImageBitmap, and v 0 is the image's bottom row
+                        decodes.push(createImageBitmap(new Blob([u8], { type: tx.mime }), { imageOrientation: 'flipY' }).then((bmp) => {
+                            if (this.models.get(name) !== model) { return; }   // the models were set again meanwhile
+                            const t = this.texture(bmp);
+                            for (const ms of model.meshes) { if (ms[4] === k) { ms[3] = t; } }
+                        }).catch((e) => { if (typeof console !== 'undefined') { console.warn(`3D view: the ${name} model's texture ${k} is not drawn (${e && e.message})`); } }));
+                    }
                 } catch (e) { if (typeof console !== 'undefined') { console.warn(`3D view: the ${name} model is not drawn (${e.message})`); } }
             }
+            if (decodes.length) { this.modelsReady = Promise.all(decodes).then(() => { if (this.onModelsReady) { this.onModelsReady(); } }); }
         }
 
         /** the model `name` when the models are drawn and it is loaded, else null (the boxes) */
@@ -513,7 +649,7 @@ void main() {
                 const p = pieces[i];
                 c.save();
                 if (p.clip) { c.beginPath(); c.rect(p.clip[0], p.clip[1], p.clip[2] - p.clip[0], p.clip[3] - p.clip[1]); c.clip(); }
-                c.strokeStyle = p.css; c.fillStyle = p.css; c.lineWidth = p.w; c.lineCap = 'butt'; c.lineJoin = p.join || 'round';
+                c.strokeStyle = p.css; c.fillStyle = p.css; c.lineWidth = p.w; c.lineCap = p.cap || 'butt'; c.lineJoin = p.join || 'round';
                 c.beginPath();
                 // this piece, then each next one that continues it (pieceEnds / continues above), as one path
                 for (let q = p, first = true; ; first = false) {
@@ -524,6 +660,35 @@ void main() {
                 if (p.kind === 'fill') { c.fill(); } else { c.stroke(); }
                 c.restore();
             }
+            return cv;
+        }
+
+        /** a print's texture (CC-6): its quiet rectangle white, the pattern's black cells (or dots) filled as one path, so
+         *  neighbouring cells leave no seam; 32 px a cell (64 a dot's pitch), at most 2048 px a side; the canvas maps the
+         *  rectangle's mm exactly (at the next power of two, scaled per axis, everywhere but a WebGL 2 camera, which mipmaps
+         *  any size: the 3D view mipmaps only a power of two, so a distant tag would alias - c1-prints r1 N2); the 3D view's
+         *  (no `mip`) at most 1024 px a side, so the round-up costs no more than 1024 x 1024 (~5.6 MB with its mipmaps) where a
+         *  1100 px side would become 2048 (~22 MB; review c1-measure w6_r2 R2-N1); a camera's, either WebGL, is not capped */
+        printCanvas(p, cells) {
+            const W = p.size[0] + 2 * p.quiet, H = p.size[1] + 2 * p.quiet, cw = p.size[0] / cells.nx, ch = p.size[1] / cells.ny;
+            const k = Math.min((cells.dots ? 64 : 32) / Math.min(cw, ch), 2048 / Math.max(W, H));
+            let w = Math.max(2, Math.round(W * k)), h = Math.max(2, Math.round(H * k));
+            if (!(this.mip && this.gl2)) { w = pow2(w); h = pow2(h); }
+            if (!this.mip) { w = Math.min(w, VIEW_PRINT_MAX); h = Math.min(h, VIEW_PRINT_MAX); }
+            const cv = this.canvas2d(w, h), c = cv.getContext('2d');
+            c.fillStyle = '#ffffff'; c.fillRect(0, 0, w, h);
+            // mm from the rectangle's top-left, x right, y down
+            c.setTransform(w / W, 0, 0, h / H, 0, 0);
+            c.fillStyle = '#000000';
+            c.beginPath();
+            for (let r = 0; r < cells.ny; r++) {
+                for (let q = 0; q < cells.nx; q++) {
+                    const x = p.quiet + q * cw, y = p.quiet + r * ch;
+                    if (cells.dots) { c.moveTo(x + cw * 0.75, y + ch / 2); c.arc(x + cw / 2, y + ch / 2, Math.min(cw, ch) / 4, 0, 2 * Math.PI); }
+                    else if (!cells.cells[r][q]) { c.rect(x, y, cw, ch); }
+                }
+            }
+            c.fill();
             return cv;
         }
 
@@ -540,6 +705,8 @@ void main() {
             if (!gl) { return; }
             for (const s of this.statics) { gl.deleteBuffer(s.mesh.buf); if (s.tex && s.tex !== this.white) { gl.deleteTexture(s.tex); } }
             this.statics = [];
+            for (const q of this.lightQuads) { gl.deleteBuffer(q.mesh.buf); }
+            this.lightQuads = [];
             for (const t of this.seesawTex.values()) { gl.deleteTexture(t); }
             this.seesawTex.clear();
             const b = geom.bounds;
@@ -561,7 +728,10 @@ void main() {
                 this.statics.push({ mesh: new Mesh(gl, fl), color: hex('#d9dadc') });
                 const t = [];
                 this.cells(t, b[0], b[1], b[2], b[3], () => 0);
-                this.statics.push({ mesh: new Mesh(gl, t), tex: this.texture(this.paintCanvas(b, geom.paint, k)) });
+                // (G2.3: without the lights - each is its own quad, below - so a light's change bakes nothing again; P0c-3t-1
+                // (P0C3T §6): without the paint on a terrain piece, drawn on the piece's top by terrainPieces)
+                this.statics.push({ mesh: new Mesh(gl, t), tex: this.texture(this.paintCanvas(b, geom.paint.filter((p) => p.light === undefined && p.on === undefined), k)) });
+                this.terrainPieces(geom);
             } else {
                 this.statics.push({ mesh: new Mesh(gl, fl), color: hex('#d9dadc') });
                 tiles.forEach((t, i) => {
@@ -582,7 +752,7 @@ void main() {
                 // the paint of the tile it lies on (not a bridge's over it)
                 const cx = (rect[0] + rect[2]) / 2, cy = (rect[1] + rect[3]) / 2, base = sf.a + sf.bx * cx + sf.by * cy;
                 const level = (t) => { const k = w3.tileSurface[t] ?? -1; const q = k >= 0 ? w3.surfaces[k] : undefined; return q ? q.a + q.bx * cx + q.by * cy : 0; };
-                const under = (geom.paint || []).filter((p) => p.tile === undefined || p.tile === null || Math.abs(level(p.tile) - base) < 40);
+                const under = (geom.paint || []).filter((p) => p.light === undefined && (p.tile === undefined || p.tile === null || Math.abs(level(p.tile) - base) < 40));
                 this.statics.push({ mesh: new Mesh(gl, m.data), tex: this.texture(this.paintCanvas(rect, under, Math.min(4, 1024 / Math.max(rect[2] - rect[0], rect[3] - rect[1])))) });
             }
             // EN2 (ES §4.4, D176): a WRO package's decals (the Senior pattern paper) - flat polygons 0.1 mm over the floor,
@@ -594,6 +764,16 @@ void main() {
                     for (const q of [P[0], P[i], P[i + 1]]) { out.push(q[0], q[1], 0.1, 0, 0, 1, 0, 0); }
                 }
                 if (out.length) { this.statics.push({ mesh: new Mesh(gl, out), color: d.rgb.map((v) => v / 255), decal: d.k }); }
+            }
+            // G2.3 (DESIGN_r2.md §1.3): each light - a paint entry the course message marks `light` - one flat quad (a fan of its
+            // outline) 0.1 mm over the floor, drawn as a decal is (polygon offset), its colour each frame from the snapshot (frame)
+            for (const p of geom.paint || []) {
+                if (p.light === undefined) { continue; }
+                const out = [], P = p.pts;
+                for (let i = 1; i + 1 < P.length; i++) {
+                    for (const q of [P[0], P[i], P[i + 1]]) { out.push(q[0], q[1], 0.1, 0, 0, 1, 0, 0); }
+                }
+                if (out.length) { this.lightQuads.push({ mesh: new Mesh(gl, out), light: p.light, cols: p.lightCss.map(hex6), col0: hex6(p.css) }); }
             }
             // EN1 (G§2.7): each fixture's pieces from their drawing faces (base then top vertices, model axes) at its pose,
             // flat-shaded in its colour (lifted to 24 of 255 so a black frame's faces still shade); static, one mesh a fixture
@@ -611,6 +791,17 @@ void main() {
                 }
                 const col = fx.colour.map((v) => Math.max(24, v) / 255);
                 if (out.length) { this.statics.push({ mesh: new Mesh(gl, out), color: col }); }
+            }
+            // CC-6 (CCD §4): each print, one static textured quad PRINT_PROUD mm proud of its `at` - its pattern on its white quiet
+            // rectangle in one texture - pulled toward the eye by a polygon offset as a decal is (`print`), lit by its normal
+            for (const p of (w3 && w3.prints) || []) {
+                const cells = printCells(p.pattern);
+                if (!cells) { continue; }
+                const { o, u, v } = printFrame(p, PRINT_PROUD), hw = p.size[0] / 2 + p.quiet, hh = p.size[1] / 2 + p.quiet;
+                const P = (s, t) => [o[0] + s * u[0] + t * v[0], o[1] + s * u[1] + t * v[1], o[2] + s * u[2] + t * v[2]];
+                const out = [];
+                quad(out, P(-hw, -hh), P(hw, -hh), P(hw, hh), P(-hw, hh));
+                this.statics.push({ mesh: new Mesh(gl, out), tex: this.texture(this.printCanvas(p, cells)), print: p.name });
             }
             this.buildGames(w3);
         }
@@ -710,6 +901,28 @@ void main() {
             return ex;
         }
 
+        /** P0c-3t-1 (docs/design/P0C3T_TERRAIN.md §6): a challenge arena's terrain - each ramp and platform (a surface of
+         *  kind ramp / tile on a course with no tiles) as a tile is drawn, its top and its sides down to the floor, and each
+         *  area painted on it (paint `on` it) as its own flat mesh 0.5 mm over its top; nothing on a course without them.
+         *  Its edge walls are blocks, drawn with the obstacles. Statics tagged `piece` / `onPiece` (the rows read them) */
+        terrainPieces(geom) {
+            const gl = this.gl, w3 = geom.world3d;
+            (w3 ? w3.surfaces : []).forEach((sf, k) => {
+                if (sf.kind !== 'ramp' && sf.kind !== 'tile') { return; }
+                const xs = sf.poly.map((p) => p[0]), ys = sf.poly.map((p) => p[1]);
+                const top = (x, y) => sf.a + sf.bx * x + sf.by * y;
+                const m = this.tileMesh({ rect: [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)], ramp: sf.kind === 'ramp' }, -1 - k, top, sf.thick > 0 ? sf.thick : Infinity, true);
+                this.statics.push({ mesh: new Mesh(gl, m.out), tex: this.white, piece: k });
+                if (m.sides.length) { this.statics.push({ mesh: new Mesh(gl, m.sides), color: hex(sf.kind === 'ramp' ? '#c8c2b6' : '#d6d0c4'), piece: k }); }
+                for (const p of geom.paint) {
+                    if (p.on !== k || p.kind !== 'fill' || p.pts.length < 3) { continue; }
+                    const out = [], P = p.pts;
+                    for (let i = 1; i + 1 < P.length; i++) { for (const q of [P[0], P[i], P[i + 1]]) { out.push(q[0], q[1], top(q[0], q[1]) + 0.5, 0, 0, 1, 0, 0); } }
+                    this.statics.push({ mesh: new Mesh(gl, out), color: hex(p.css), onPiece: k });
+                }
+            });
+        }
+
         /** a tile: its top with its paint, and its sides down to what it stands on (`thick` under its top: a slab) */
         tileMesh(t, i, top, thick, dynamic) {
             const gl = this.gl;
@@ -793,9 +1006,16 @@ void main() {
             for (const st of this.statics) {
                 // EN2 (D176, review en2 r1 S2): a decal 0.1 mm over the floor is pulled toward the eye by a polygon offset, so it
                 // stays in front of the floor at any zoom (the 0.1 mm alone runs out of depth precision from about 8 m out)
-                if (st.decal !== undefined) { gl.enable(gl.POLYGON_OFFSET_FILL); gl.polygonOffset(-1, -1); }
+                if (st.decal !== undefined || st.print !== undefined) { gl.enable(gl.POLYGON_OFFSET_FILL); gl.polygonOffset(-1, -1); }
                 this.draw(vp, I, st.color, { mesh: st.mesh, tex: st.tex });
-                if (st.decal !== undefined) { gl.disable(gl.POLYGON_OFFSET_FILL); }
+                if (st.decal !== undefined || st.print !== undefined) { gl.disable(gl.POLYGON_OFFSET_FILL); }
+            }
+            // G2.3: each light in its colour now, `lightCss[snap.lights[k]]` (its course's first colour while no snapshot of it has come)
+            for (const q of this.lightQuads) {
+                const k = s && s.lights ? s.lights[q.light] : undefined;
+                gl.enable(gl.POLYGON_OFFSET_FILL); gl.polygonOffset(-1, -1);
+                this.draw(vp, I, (k !== undefined && q.cols[k]) || q.col0, { mesh: q.mesh });
+                gl.disable(gl.POLYGON_OFFSET_FILL);
             }
             const w3 = this.geom.world3d;
             const hz = s && s.hazards;
@@ -848,6 +1068,8 @@ void main() {
                 gl2.depthMask(true);
                 this.later.length = 0;
             }
+            // CC-8's names (lane cc8): last, over everything; only in a scene made with opts.names, while Show names is on
+            if (this.namesOn && this.showNames && this.names) { this.drawNames(vp, W, H); }
         }
 
         /** the game objects (W4): each one's model matrix (its place x, y, yaw a and base height z0 - the snapshot's
@@ -1074,7 +1296,8 @@ void main() {
         /** a model's meshes at model matrix m (one draw per colour); a translucent group (alpha < 1: the board's shield) kept
          *  for the end of the frame, drawn after everything opaque with depth writes off so what is behind it shows */
         drawModel(vp, m, model) {
-            for (const [mesh, c, a] of model.meshes) { if (a < 1) { this.later.push([vp, m, c, a, mesh]); } else { this.draw(vp, m, c, { mesh }); } }
+            // a textured group (tex null: its texture not decoded yet) is drawn only with its texture (OQ 496)
+            for (const [mesh, c, a, tex] of model.meshes) { if (tex === null) { continue; } if (a < 1) { this.later.push([vp, m, c, a, mesh]); } else { this.draw(vp, m, c, tex ? { mesh, tex } : { mesh }); } }
         }
 
         robot(vp, s) {
@@ -1141,7 +1364,8 @@ void main() {
             const vl = this.model('distance_sensor');
             for (const d of hw.distanceSensors || []) {
                 // its module (design M4, increment 2): turned to its angle, looking along it (the module's -z onto the
-                // heading), the face's centre at the sensor's place - where its beam starts
+                // heading), its origin - on the face under the VL53L0X, 5.35 mm off the mount's middle - at the sensor's place,
+                // where its beam starts (hardware.ts moduleBoxes places it the same way)
                 if (vl) { this.drawModel(vp, M4.chain(base, M4.trans(d.forward, d.left, d.height), M4.rz(d.angle * Math.PI / 180), M4.ry(-Math.PI / 2)), vl); } else { part(d.forward, d.left, d.height, 10, 20, 12, '#eb6834', undefined, [M4.rz(d.angle * Math.PI / 180)]); }
             }
             // the IMU: on the body's top; with the board's model, on the board's top at its middle (design M4: the battery box
@@ -1190,5 +1414,5 @@ void main() {
         }
     }
 
-    root.EVN3DCore = { Scene3D, M4, hex, modelGroups, CREASE_DEG };
+    root.EVN3DCore = { Scene3D, M4, hex, modelGroups, CREASE_DEG, printCells, printFrame };
 })(typeof self !== 'undefined' ? self : globalThis);

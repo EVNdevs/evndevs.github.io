@@ -1,0 +1,298 @@
+{
+ "format": "evn-course/1",
+ "id": "evn-open-car-3",
+ "challenge": "evn-open-car",
+ "level": 3,
+ "version": 1,
+ "module": "G12.4",
+ "title": "EVN Open car practice · Level 3: A shifted start and a push",
+ "brief": "Practice for the EVN Open capstone's option A (G12.4: an autonomous car), never a capstone level: a team's level is witnessed on its own track. A closed track of 6.57 m with two bends (300 mm lane, black lines), one lap from the start line. A pedestrian crossing at x 2100 on the lower straight: a person (a 200 mm cylinder) walks y 200..1740 across the road and back at 150 mm/s, waits while the robot is within 250 mm of its next step and turns back after 2 s; its start is drawn each run. Yield before it: aim your front at x 1600 at most and let it come to rest short of x 1750 (there the person never waits for you), and go when it has crossed your path and moved away - a forward distance sensor sees it only about 140 mm either side of your centre line, and a breach counts out to 349 mm. A stop sign stands by the upper straight at x 1550; its stop zone is x 1600..1850 on the lane (the sign is a print a camera reads; the class robot has none, so its place is given here - a stand-in until LINK). One cone (50 mm, loose) on the upper straight, 100 mm off the centre: red, keep it on your left (it lies left of the centre); green, on your right; its place and colour are in cone.json ([[mm along the lane, colour]], a stand-in for a camera), along the lane's centre line from (1000, 1000), east along the lower straight first. The lap's clock runs from the start line (300 mm along, x 1300) to its next crossing; a departure is a wheel's middle over a line (a wheel held outside the lane counts one more each second). The course fixes one example set of approved requirements. R1 (headline): one lap (at most 3 departures). R2 (safety): never touch the person or pass within 150 mm of it, never touch a wall. R3: the lap within 60 s (driving at 0.2 m/s takes 33 s; the lap time counts the stop and the wait too). R4 (sign): stand still (under 5 mm/s) with the middle of your axle in the stop zone for 1 s - stop 2 s to be sure. R5 (obstacle): the lap, and the cone passed on its side and not knocked. A run that breaks R2 scores 0 and fails the level, whatever else it did; any other run scores 20 for each requirement it meets. A requirement is met over the level when it holds on at least 80 % of the runs (R2 on every run). Level 3: ten runs from a shifted start (+-40 mm, +-6 deg), the cone at 4250, 4350 or 4450 mm along, each with one push the course draws (at 2 to 12 s, 50 to 100 mNs, 100 mm ahead of the axle, left or right). Pass: no run breaks R2, and R1, R3, R4 and R5 each hold on at least 8 of the 10 runs; a run that stops safely after the push (no breach) misses R1 and is allowed. cone.json for practice (seed 0): [[4350, \"red\"]]. Par: 29 s.",
+ "field": {
+  "arena": {
+   "size": [
+    3400,
+    2500
+   ],
+   "startBox": [
+    1100,
+    950,
+    1200,
+    1050
+   ],
+   "goal": null,
+   "lanes": [
+    {
+     "name": "lane",
+     "path": [
+      [
+       "S",
+       1400
+      ],
+      [
+       "A",
+       600,
+       180
+      ],
+      [
+       "S",
+       1400
+      ],
+      [
+       "A",
+       600,
+       180
+      ]
+     ],
+     "at": [
+      1000,
+      1000,
+      0
+     ],
+     "width": 300,
+     "line": 25,
+     "paint": "black",
+     "startLine": 300
+    }
+   ],
+   "obstacles": [
+    {
+     "group": "cone",
+     "from": "cones",
+     "at": [
+      0,
+      0
+     ],
+     "shape": "cylinder",
+     "w": 50,
+     "d": 50,
+     "h": 100,
+     "massG": 30,
+     "colorBy": {
+      "red": "#d9302a",
+      "green": "#2e9e4a"
+     }
+    }
+   ],
+   "prints": [
+    {
+     "name": "stopSign",
+     "pattern": "aruco-4x4-50:7",
+     "at": [
+      1550,
+      2400,
+      150
+     ],
+     "yaw": -90,
+     "pitch": 0,
+     "size": [
+      100,
+      100
+     ],
+     "quiet": 20
+    }
+   ],
+   "areas": [
+    {
+     "name": "stopZone",
+     "rect": [
+      1600,
+      2075,
+      1850,
+      2325
+     ],
+     "paint": null
+    }
+   ],
+   "wallH": 100,
+   "wallT": 20,
+   "obstacleH": 60,
+   "startPaint": false
+  },
+  "random": [
+   {
+    "name": "cones",
+    "draw": "along-v1",
+    "n": 1,
+    "path": "lane",
+    "s": [
+     4250,
+     4550
+    ],
+    "gap": 100,
+    "offset": 100,
+    "of": [
+     "red",
+     "green"
+    ]
+   },
+   {
+    "name": "py",
+    "draw": "uniform-v1",
+    "min": 210,
+    "max": 1730,
+    "step": 2
+   },
+   {
+    "name": "pd",
+    "draw": "choice-v1",
+    "of": [
+     -1,
+     1
+    ]
+   },
+   {
+    "name": "pushAt",
+    "draw": "uniform-v1",
+    "min": 2,
+    "max": 12,
+    "step": 0.5
+   },
+   {
+    "name": "pushMNs",
+    "draw": "uniform-v1",
+    "min": 50,
+    "max": 100,
+    "step": 25
+   },
+   {
+    "name": "pushDir",
+    "draw": "choice-v1",
+    "of": [
+     90,
+     -90
+    ]
+   }
+  ]
+ },
+ "robot": {
+  "rule": "learner"
+ },
+ "start": {
+  "nominal": {
+   "x": 1150,
+   "y": 1000,
+   "heading": 0
+  },
+  "vary": {
+   "xy": 40,
+   "heading": 6
+  },
+  "draw": "uniform-square-v1"
+ },
+ "runs": {
+  "min": 1,
+  "max": 20,
+  "default": 5,
+  "fixed": 10
+ },
+ "kernel": {
+  "name": "pointToPoint",
+  "limitS": 90,
+  "goal": "footprintInside",
+  "final": "runEnd",
+  "lane": {
+   "lane": "lane",
+   "laps": 1,
+   "departures": 3,
+   "cones": "cone"
+  },
+  "visits": {
+   "targets": [
+    {
+     "area": "stopZone",
+     "dwell": {
+      "s": 1,
+      "mms": 5
+     }
+    }
+   ]
+  },
+  "actors": {
+   "person": {
+    "r": 100,
+    "h": 1700,
+    "x": 2100,
+    "y": [
+     200,
+     1740
+    ],
+    "v": 150,
+    "from": "py",
+    "dir": "pd",
+    "waitWithin": 250,
+    "turnAfterS": 2,
+    "sep": 150
+   }
+  }
+ },
+ "reveal": {
+  "file": {
+   "name": "cone.json",
+   "values": [
+    "cones"
+   ]
+  }
+ },
+ "dist": {
+  "events": [
+   {
+    "at": {
+     "$": "pushAt"
+    },
+    "kind": "impulse",
+    "mNs": {
+     "$": "pushMNs"
+    },
+    "dir": {
+     "$": "pushDir"
+    },
+    "at_mm": 100
+   }
+  ]
+ },
+ "constants": {
+  "par": 29.0,
+  "tmax": 60
+ },
+ "score": {
+  "run": "if(personBreach | touchesOf_wallW + touchesOf_wallE + touchesOf_wallS + touchesOf_wallN > 0, 0, 20 + if(finished, 20, 0) + if(finished & lapTime <= tmax, 20, 0) + if(visitTime_1 >= 0, 20, 0) + if(finished & conesWrong + conesKnocked == 0, 20, 0))",
+  "values": {
+   "breaches": {
+    "value": "count(r in runs: r.personBreach | r.touchesOf_wallW + r.touchesOf_wallE + r.touchesOf_wallS + r.touchesOf_wallN > 0)",
+    "unit": "runs"
+   },
+   "lap": {
+    "value": "count(r in runs: r.finished)",
+    "unit": "runs"
+   },
+   "inTime": {
+    "value": "count(r in runs: r.finished & r.lapTime <= tmax)",
+    "unit": "runs"
+   },
+   "sign": {
+    "value": "count(r in runs: r.visitTime_1 >= 0)",
+    "unit": "runs"
+   },
+   "cone": {
+    "value": "count(r in runs: r.finished & r.conesWrong + r.conesKnocked == 0)",
+    "unit": "runs"
+   },
+   "met": {
+    "value": "if(breaches == 0, 1, 0) + if(lap >= 0.8 * n, 1, 0) + if(inTime >= 0.8 * n, 1, 0) + if(sign >= 0.8 * n, 1, 0) + if(cone >= 0.8 * n, 1, 0)",
+    "unit": "of 5"
+   }
+  },
+  "summary": "round(sum(r in runs: r.points) / n, 1)"
+ },
+ "pass": "breaches == 0 & lap >= 0.8 * n & inTime >= 0.8 * n & sign >= 0.8 * n & cone >= 0.8 * n",
+ "sources": [
+  {
+   "doc": "docs/design/G124_OPTIONS.md",
+   "where": "revision 3, converged at round 3: §1 the field, §2 the requirements and the levels"
+  },
+  {
+   "doc": "docs/curriculum/G12.md",
+   "where": "G12.4 Capstone: EVN Open - option A, the minimum difficulty for approval (a closed track of at least 6 m with two bends, one sign rule and one obstacle; at least 0.2 m/s), the level table and the safety gate"
+  }
+ ]
+}

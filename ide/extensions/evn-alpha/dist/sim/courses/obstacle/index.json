@@ -1,0 +1,81 @@
+{
+ "format": "evn-course-index/1",
+ "generated": "node scripts/course_index.js --write; do not edit",
+ "levels": [
+  {
+   "file": "obstacle/level-1.v1.json",
+   "id": "obstacle-1",
+   "version": 1,
+   "sha256": "2ba696621796e49c5d0f0600796af63efaeb26aff6585b156b74dd435a34d531",
+   "current": false,
+   "title": "Obstacle course · Level 1: Around the block",
+   "limit": 60,
+   "runs": {
+    "default": 5
+   }
+  },
+  {
+   "file": "obstacle/level-1.v2.json",
+   "id": "obstacle-1",
+   "version": 2,
+   "sha256": "4d15c38b55d4ceb47fc54861cf7a484e33fb71cf6ea6bf85add05bf833a0810b",
+   "current": true,
+   "title": "Obstacle course · Level 1: Around the block",
+   "limit": 60,
+   "runs": {
+    "default": 5,
+    "fixed": 5
+   }
+  },
+  {
+   "file": "obstacle/level-2.v1.json",
+   "id": "obstacle-2",
+   "version": 1,
+   "sha256": "87993d3eeb84d39b2bc3d0a69afb5d5f4bb2064af7fb0ba163e605cc8d09b232",
+   "current": false,
+   "title": "Obstacle course · Level 2: Slalom",
+   "limit": 60,
+   "runs": {
+    "default": 5
+   }
+  },
+  {
+   "file": "obstacle/level-2.v2.json",
+   "id": "obstacle-2",
+   "version": 2,
+   "sha256": "e5a627651f9679e3a7f95c5d9b98ce1f6724227d3c184493dc84885a215e8a02",
+   "current": true,
+   "title": "Obstacle course · Level 2: Slalom",
+   "limit": 60,
+   "runs": {
+    "default": 5,
+    "fixed": 5
+   }
+  },
+  {
+   "file": "obstacle/level-3.v1.json",
+   "id": "obstacle-3",
+   "version": 1,
+   "sha256": "95b767e45a56a9ee1c53143682a4238869da3aed6c313918ee509b217ef0f0bd",
+   "current": false,
+   "title": "Obstacle course · Level 3: The gauntlet",
+   "limit": 90,
+   "runs": {
+    "default": 5
+   }
+  },
+  {
+   "file": "obstacle/level-3.v2.json",
+   "id": "obstacle-3",
+   "version": 2,
+   "sha256": "ee30cd2d7c20dc3a02f6fa58f9e145d6a5e224a096737c4b7aabb2a33a7035d5",
+   "current": true,
+   "title": "Obstacle course · Level 3: The gauntlet",
+   "limit": 90,
+   "runs": {
+    "default": 5,
+    "fixed": 5
+   }
+  }
+ ]
+}

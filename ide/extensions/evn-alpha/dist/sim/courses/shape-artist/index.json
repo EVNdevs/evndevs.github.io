@@ -1,0 +1,45 @@
+{
+ "format": "evn-course-index/1",
+ "generated": "node scripts/course_index.js --write; do not edit",
+ "levels": [
+  {
+   "file": "shape-artist/level-1.v1.json",
+   "id": "shape-artist-1",
+   "version": 1,
+   "sha256": "cad1582cd5664dcb5b5c40070a9e172e835f3fee66208c7f4009f4815fd69a52",
+   "current": true,
+   "title": "Shape artist · Level 1: A square that closes",
+   "limit": 60,
+   "runs": {
+    "default": 5,
+    "fixed": 5
+   }
+  },
+  {
+   "file": "shape-artist/level-2.v1.json",
+   "id": "shape-artist-2",
+   "version": 1,
+   "sha256": "4156122483ce0dbee29d3be07c28dbcde9667509747a83f12c9c34ec08933929",
+   "current": true,
+   "title": "Shape artist · Level 2: Triangle, then hexagon",
+   "limit": 60,
+   "runs": {
+    "default": 5,
+    "fixed": 5
+   }
+  },
+  {
+   "file": "shape-artist/level-3.v1.json",
+   "id": "shape-artist-3",
+   "version": 1,
+   "sha256": "1a0b5abd832f554104573f485130e52a6d7da4b671b708922c87484655233de4",
+   "current": true,
+   "title": "Shape artist · Level 3: A star on a mystery robot",
+   "limit": 60,
+   "runs": {
+    "default": 5,
+    "fixed": 5
+   }
+  }
+ ]
+}

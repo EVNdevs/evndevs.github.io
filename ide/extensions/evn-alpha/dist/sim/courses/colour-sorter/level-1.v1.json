@@ -1,0 +1,244 @@
+{
+ "format": "evn-course/1",
+ "id": "colour-sorter-1",
+ "challenge": "colour-sorter",
+ "level": 1,
+ "version": 1,
+ "module": "G4.4",
+ "title": "Colour sorter \u00b7 Level 1: Red and blue",
+ "brief": "Follow the black line from the start, stop at each cube, read it with colour sensor 3 (facing forward, its eye 20 mm up: it reads a cube's colour with the robot against it) and push it left into the red bin or right into the blue bin (300 mm wide, along the two long walls). Two red and two blue cubes, a new order each run. Push each red or blue cube into its bin, not against the wall: a cube pressed against a long wall does not count as in its bin. The white pad and the black pad (upright, beside the start, either side of the line) are for calibrating sensor 3. The run ends when your program has ended and the robot has stood still for 0.5 s, or at 90 s; it finishes when every cube lies wholly in a bin. 50 x (cubes in their right bin / 4), + 40 for speed only when every cube is in its right bin (all 40 at or under 40 s, 40 x 40 / time above), + 10 when no cube is in a wrong bin.",
+ "field": {
+  "arena": {
+   "size": [
+    2000,
+    1000
+   ],
+   "startBox": [
+    0,
+    375,
+    250,
+    625
+   ],
+   "goal": null,
+   "wallH": 50,
+   "wallT": 20,
+   "obstacleH": 50,
+   "obstacles": [
+    {
+     "name": "cubeR1",
+     "x": {
+      "$": "if(order == 1, 500, if(order == 2, 500, if(order == 3, 500, if(order == 4, 750, if(order == 5, 750, 1000)))))"
+     },
+     "y": 500,
+     "w": 50,
+     "d": 50,
+     "h": 50,
+     "massG": 40,
+     "color": "#dc1e1e",
+     "sensed": "color"
+    },
+    {
+     "name": "cubeR2",
+     "x": {
+      "$": "if(order == 1, 750, if(order == 2, 1000, if(order == 3, 1250, if(order == 4, 1000, if(order == 5, 1250, 1250)))))"
+     },
+     "y": 500,
+     "w": 50,
+     "d": 50,
+     "h": 50,
+     "massG": 40,
+     "color": "#dc1e1e",
+     "sensed": "color"
+    },
+    {
+     "name": "cubeB1",
+     "x": {
+      "$": "if(order == 1, 1000, if(order == 2, 750, if(order == 3, 750, if(order == 4, 500, if(order == 5, 500, 500)))))"
+     },
+     "y": 500,
+     "w": 50,
+     "d": 50,
+     "h": 50,
+     "massG": 40,
+     "color": "#1e50dc",
+     "sensed": "color"
+    },
+    {
+     "name": "cubeB2",
+     "x": {
+      "$": "if(order == 1, 1250, if(order == 2, 1250, if(order == 3, 1000, if(order == 4, 1250, if(order == 5, 1000, 750)))))"
+     },
+     "y": 500,
+     "w": 50,
+     "d": 50,
+     "h": 50,
+     "massG": 40,
+     "color": "#1e50dc",
+     "sensed": "color"
+    },
+    {
+     "name": "whitePad",
+     "x": 125,
+     "y": 800,
+     "w": 200,
+     "d": 20,
+     "h": 50,
+     "color": "#ffffff",
+     "sensed": "color"
+    },
+    {
+     "name": "blackPad",
+     "x": 125,
+     "y": 200,
+     "w": 200,
+     "d": 20,
+     "h": 50,
+     "color": "#111111",
+     "sensed": "color"
+    }
+   ],
+   "areas": [
+    {
+     "name": "line",
+     "rect": [
+      250,
+      490,
+      2000,
+      510
+     ],
+     "paint": "black"
+    },
+    {
+     "name": "binRed",
+     "rect": [
+      300,
+      700,
+      2000,
+      1000
+     ],
+     "paint": null
+    },
+    {
+     "name": "binBlue",
+     "rect": [
+      300,
+      0,
+      2000,
+      300
+     ],
+     "paint": null
+    }
+   ]
+  },
+  "random": [
+   {
+    "name": "order",
+    "draw": "int-v1",
+    "min": 1,
+    "max": 6
+   }
+  ]
+ },
+ "robot": {
+  "rule": "fixed",
+  "base": "class-forward3"
+ },
+ "start": {
+  "nominal": {
+   "x": 125,
+   "y": 500,
+   "heading": 0
+  },
+  "vary": {
+   "xy": 15,
+   "heading": 3
+  },
+  "draw": "uniform-square-v1"
+ },
+ "runs": {
+  "min": 1,
+  "max": 20,
+  "default": 5,
+  "fixed": 5
+ },
+ "kernel": {
+  "name": "pointToPoint",
+  "limitS": 90,
+  "goal": "footprintInside",
+  "end": "afterProgram",
+  "still": {
+   "s": 0.5,
+   "dps": 5,
+   "mms": 3
+  },
+  "final": "runEnd",
+  "place": {
+   "items": [
+    {
+     "name": "cubeR1",
+     "areas": [
+      "binRed",
+      "binBlue"
+     ]
+    },
+    {
+     "name": "cubeR2",
+     "areas": [
+      "binRed",
+      "binBlue"
+     ]
+    },
+    {
+     "name": "cubeB1",
+     "areas": [
+      "binRed",
+      "binBlue"
+     ]
+    },
+    {
+     "name": "cubeB2",
+     "areas": [
+      "binRed",
+      "binBlue"
+     ]
+    }
+   ]
+  }
+ },
+ "constants": {
+  "par": 40
+ },
+ "score": {
+  "run": "let right = if(wholly_cubeR1_binRed, 1, 0) + if(wholly_cubeR2_binRed, 1, 0) + if(wholly_cubeB1_binBlue, 1, 0) + if(wholly_cubeB2_binBlue, 1, 0) in let wrong = if(wholly_cubeR1_binBlue, 1, 0) + if(wholly_cubeR2_binBlue, 1, 0) + if(wholly_cubeB1_binRed, 1, 0) + if(wholly_cubeB2_binRed, 1, 0) in round(50 * right / 4 + if(right == 4, 40 * min(1, par / time), 0) + if(wrong == 0, 10, 0), 1)",
+  "values": {
+   "finished": {
+    "value": "count(r in runs: (r.wholly_cubeR1_binRed | r.wholly_cubeR1_binBlue) & (r.wholly_cubeR2_binRed | r.wholly_cubeR2_binBlue) & (r.wholly_cubeB1_binRed | r.wholly_cubeB1_binBlue) & (r.wholly_cubeB2_binRed | r.wholly_cubeB2_binBlue))",
+    "unit": "runs"
+   },
+   "meanTime": {
+    "value": "round(sum(r in runs: r.time) / n, 2)",
+    "unit": "s"
+   }
+  },
+  "summary": "round(sum(r in runs: r.points) / n, 1)"
+ },
+ "pass": "score >= 60 & finished >= 0.8 * n",
+ "sources": [
+  {
+   "doc": "docs/curriculum/G04.md",
+   "where": "G4.4 Data detective: the Robot paragraph (colour sensor 3 turned to face forward, eye 20 mm up, reads within 30 mm), Challenge - Colour sorter (the 2000 x 1000 table, walls 50 mm, the black guide line along its middle, 50 mm 40 g cubes across the line 250 mm apart in a seeded order, the red bin left and the blue bin right as 300 mm zones along the long walls, at level 2 yellow cubes straight on into the end bin, a white pad and a black pad beside the start, the run ends with the program or at 90 s, finished when every cube is in a bin), the level table (level 1: four cubes, red and blue; starts +-15 mm, +-3 deg; the colour order seeded; par 40), the scoring paragraph (50 x right / cubes, + 40 speed, + 10 no cube in a wrong bin; a cube in a bin when wholly inside its zone at the run's end). The lane's: the start box and the line's start (x 250: a painted area may not meet the start box), the bins' x from 300, the two-and-two colour counts and the order as one int-v1 draw placing the red cubes on two of the four slots (FC1_DESIGN.md section 4's table), the pads as upright fixed sensed blocks 200 x 20 x 50 at (125, 800) white and (125, 200) black (the forward sensor sees no floor)"
+  },
+  {
+   "doc": "docs/session/2026-11-14_w12-c1g4/done/w12-c1g4.md (Owner items)",
+   "where": "the owner's rulings, relayed by the s1114r orchestrator (2026-11-15): WB-1 (b) 'Pages say not the wall': the place measure unchanged (a cube pressed against a long wall rests with its outline a hair past the wall's face, so not wholly in the bin), the brief says to push into the bin, not against the wall; BS-1 (a) 'Speed pts only if all right': the 40 for speed only when every cube is in its right bin (the record's 'every cube is in a bin' tightened, so a program that reads no colour cannot pass)"
+  },
+  {
+   "doc": "docs/session/2026-11-14_w12-c1g4/design/FC1_DESIGN.md",
+   "where": "rev 3: section 2 (sensed: color), section 4 (the level, the robot's cal 22, the score), section 6 (BS-1, YL-1)"
+  },
+  {
+   "doc": "vscode-evn-alpha/docs/COURSE_FORMAT_DESIGN.md",
+   "where": "\u00a722 (kernel.place: wholly_<cube>_<bin> on the end tick), \u00a711.8 (end afterProgram with the robot 0.5 s still, as G01's levels: a cube pushed against a wall rests there before it is judged - review g44_b1 B1), \u00a714.2 (scalars in geometry), \u00a728 (FC-1: sensed obstacles)"
+  }
+ ]
+}

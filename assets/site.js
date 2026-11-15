@@ -1676,6 +1676,9 @@
       txt.appendChild(el('p', null,
         'The same editor, the same blocks and the same board panel, running as a web page. It talks to ' +
         'the board over Web Serial, so it needs a Chromium browser (Chrome or Edge) and a USB cable.'));
+      // SITE-28 (#102): the caveat on the card too - a closed tab cannot stop a program (docs/WEB.md)
+      txt.appendChild(el('p', null,
+        'Press Stop before you close its tab: a closed tab cannot stop the motors.'));
       var go = el('a', 'btn btn-primary', 'Open the browser IDE');
       linkTo(go, 'ide/');
       card.appendChild(txt);

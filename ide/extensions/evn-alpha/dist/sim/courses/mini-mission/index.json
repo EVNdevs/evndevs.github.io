@@ -1,0 +1,45 @@
+{
+ "format": "evn-course-index/1",
+ "generated": "node scripts/course_index.js --write; do not edit",
+ "levels": [
+  {
+   "file": "mini-mission/level-1.v1.json",
+   "id": "mini-mission-1",
+   "version": 1,
+   "sha256": "67a9f2c51b2b85dcdc4a79065ea1c27fc6e1a38cb7a060bceccc82ef9ad0ca97",
+   "current": true,
+   "title": "Mini mission · Level 1: Two cubes home",
+   "limit": 120,
+   "runs": {
+    "default": 5,
+    "fixed": 5
+   }
+  },
+  {
+   "file": "mini-mission/level-2.v1.json",
+   "id": "mini-mission-2",
+   "version": 1,
+   "sha256": "7cc6596cca18f971f3939306e8cd2c0d200a2472a52d151dfe39d96c2477eb53",
+   "current": true,
+   "title": "Mini mission · Level 2: Cubes home, then park",
+   "limit": 120,
+   "runs": {
+    "default": 5,
+    "fixed": 5
+   }
+  },
+  {
+   "file": "mini-mission/level-3.v1.json",
+   "id": "mini-mission-3",
+   "version": 1,
+   "sha256": "3ddabba867fad2522475e52658a994b5047a78a004595fdc262b452f17fad1da",
+   "current": true,
+   "title": "Mini mission · Level 3: Four tasks in the round",
+   "limit": 120,
+   "runs": {
+    "default": 5,
+    "fixed": 5
+   }
+  }
+ ]
+}

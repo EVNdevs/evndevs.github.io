@@ -51,6 +51,9 @@ You can also read files with plain Python: `open()`, the `csv` module, `os.listd
   need them (see [NumPy, SciPy and Matplotlib on the desktop](#numpy-scipy-and-matplotlib-on-the-desktop)). SciPy
   brings `scipy.optimize` (`curve_fit`), `scipy.signal` (`lfilter`, `bode`, `cont2discrete`), `scipy.linalg` (`expm`,
   `solve_discrete_are`), `scipy.integrate` (`solve_ivp`), `scipy.ndimage` and `scipy.spatial` (`cKDTree`).
+- **No floating-point warnings.** The notebook's NumPy runs in WebAssembly, so `np.log(0)`, `x / 0` or `np.sqrt(-1)`
+  gives `-inf`, `inf` or `nan` with no `RuntimeWarning` (NumPy on a PC warns), and `np.array([np.nan]).astype(int)` gives 0: check a
+  result with `np.isfinite()`.
 - **Charts.** A Matplotlib figure shows under its cell. Each one has a description a screen reader reads out (its
   title, its axes and their ranges, its lines), and a data table: the numbers it was drawn from. Both are saved in the
   notebook, so they are still there when you open it again. Give your charts a title and axis labels with
@@ -88,7 +91,7 @@ Before each cell runs, the notebook's Python gets a copy of the notebook's folde
     again.
 - **EVN: Restart notebook kernel** (the button at the top of the notebook) clears all the variables.
 - **4 notebooks at once** on the desktop, and 2 in a browser tab. When you run one more, the notebook left idle the
-  longest has its Python stopped, and its variables are cleared: its next cell says so, and you run its cells again.
+  longest has its Python stopped, and its variables are cleared. Its next cell says so, and you run its cells again.
   If every notebook is busy running a cell, the new one starts anyway.
 - **Memory.** If a notebook's Python uses more than 1 GB, the cell's output says so. Restart it to free the memory.
 - **A folder you do not trust** runs no cell. Each cell says `Trust this folder to run notebooks in it`.
@@ -116,7 +119,7 @@ The desktop extension does not come with NumPy, SciPy and Matplotlib. You instal
 mpremote:
 
 1. The first time a cell imports one (`import numpy as np`), the cell stops with one line saying they are not installed
-   yet, and a message offers **Install NumPy, SciPy and Matplotlib (30.0 MB)** or **Cancel**.
+   yet. A message offers **Install NumPy, SciPy and Matplotlib (30.0 MB)** or **Cancel**.
 2. **Install** downloads them from the EVN site (the same files the browser IDE uses). The message shows how much has
    arrived and has a **Cancel** button.
 3. When it is done, click **Restart Python** (this clears the notebook's variables) and run the cell again. If you
@@ -133,7 +136,7 @@ Command Palette.
   end. A download that stops part-way keeps what arrived, and the next **EVN: Install notebook packages** carries on
   from there. A part-downloaded set is never used.
 - **After an extension update** that needs a newer Python for the notebook, a cell that imports NumPy says the
-  installed packages are for the older one and offers the download again; the old ones are deleted once the new ones
+  installed packages are for the older one and offers the download again. The old ones are deleted once the new ones
   are in. If the EVN site is on a different version from your extension, the message says so and asks you to update
   the extension.
 - The packages are kept in VS Code's storage for the extension, not in your projects folder.

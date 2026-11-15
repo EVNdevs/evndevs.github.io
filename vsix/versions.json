@@ -1,6 +1,13 @@
 {
   "versions": [
     {
+      "version": "0.2.77",
+      "file": "evn-alpha-micropython-0.2.77.vsix",
+      "url": "https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.77/evn-alpha-micropython-0.2.77.vsix",
+      "sha256": "a3a7c3de13ee2f766c393bde0085c621f3c0897bb5522e7c143974ef3756a7de",
+      "size": 15488512
+    },
+    {
       "version": "0.2.76",
       "file": "evn-alpha-micropython-0.2.76.vsix",
       "url": "https://github.com/EVNdevs/evndevs.github.io/releases/download/vsix-0.2.76/evn-alpha-micropython-0.2.76.vsix",

@@ -1,0 +1,151 @@
+{
+  "format": "evn-course/1",
+  "id": "measure-field",
+  "challenge": "scenes",
+  "level": 5,
+  "version": 1,
+  "module": "G10.2",
+  "title": "Scene \u00b7 Measure with a camera, level 1's field",
+  "brief": "Five 30 mm discs (blue, green, red, yellow, black) at seeded places 220-800 mm ahead of the robot's axle, each wholly inside the frame of G10.2's camera (forward 60, height 120, tilt 30 down) with a 20 px margin. The robot stands still; the run ends after the program. Each run scores 100 if it touches nothing.",
+  "field": {
+    "random": [
+      {
+        "name": "discs",
+        "draw": "pointsIn-v1",
+        "n": 5,
+        "poly": [
+          [
+            421,
+            497
+          ],
+          [
+            999,
+            192
+          ],
+          [
+            999,
+            1008
+          ],
+          [
+            421,
+            703
+          ]
+        ],
+        "grid": 10,
+        "gap": 60,
+        "from": [
+          200,
+          600
+        ]
+      }
+    ],
+    "arena": {
+      "size": [
+        1200,
+        1200
+      ],
+      "startBox": [
+        0,
+        450,
+        380,
+        750
+      ],
+      "goal": null,
+      "obstacles": [],
+      "wallH": 100,
+      "wallT": 20,
+      "obstacleH": 100,
+      "startPaint": false,
+      "areas": [
+        {
+          "name": "blue",
+          "from": "discs",
+          "i": 1,
+          "circle": 15,
+          "paint": "blue"
+        },
+        {
+          "name": "green",
+          "from": "discs",
+          "i": 2,
+          "circle": 15,
+          "paint": "green"
+        },
+        {
+          "name": "red",
+          "from": "discs",
+          "i": 3,
+          "circle": 15,
+          "paint": "red"
+        },
+        {
+          "name": "yellow",
+          "from": "discs",
+          "i": 4,
+          "circle": 15,
+          "paint": "yellow"
+        },
+        {
+          "name": "black",
+          "from": "discs",
+          "i": 5,
+          "circle": 15,
+          "paint": "black"
+        }
+      ]
+    }
+  },
+  "robot": {
+    "rule": "learner"
+  },
+  "start": {
+    "nominal": {
+      "x": 200,
+      "y": 600,
+      "heading": 0
+    },
+    "vary": {
+      "xy": 0,
+      "heading": 0
+    },
+    "draw": "uniform-square-v1"
+  },
+  "runs": {
+    "min": 1,
+    "max": 20,
+    "default": 5,
+    "fixed": null
+  },
+  "kernel": {
+    "name": "pointToPoint",
+    "limitS": 30,
+    "goal": "footprintInside",
+    "end": "afterProgram",
+    "still": {
+      "s": 1,
+      "dps": 5,
+      "mms": 3
+    },
+    "final": "runEnd"
+  },
+  "constants": {},
+  "score": {
+    "run": "if(touches == 0, 100, 0)",
+    "summary": "round(sum(r in runs: r.points) / count(r in runs: true), 1)"
+  },
+  "pass": null,
+  "sources": [
+    {
+      "doc": "docs/curriculum/G10.md",
+      "where": "G10.2 Robot (Camera Module 3, forward 60, left 0, height 120, tilt down 30) and Challenge: five 30 mm discs 220-800 mm ahead, inside the projected footprint with a 20 px margin"
+    },
+    {
+      "doc": "docs/COURSE_CONTENT_DESIGN.md",
+      "where": "\u00a74 pointsIn-v1 (the poly the footprint less 20 px), \u00a75.2 L1, \u00a77 CC-7"
+    },
+    {
+      "doc": "scripts/camera_footprint.js",
+      "where": "the poly: node scripts/camera_footprint.js measure-field (the footprint less 20 px and the disc's 15 mm, x 220-800 ahead)"
+    }
+  ]
+}

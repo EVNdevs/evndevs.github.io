@@ -1,0 +1,32 @@
+{
+ "format": "evn-course-index/1",
+ "generated": "node scripts/course_index.js --write; do not edit",
+ "levels": [
+  {
+   "file": "weightlifter/level-1.v1.json",
+   "id": "weightlifter-1",
+   "version": 1,
+   "sha256": "d657756396bf386886cc56c24f6ddab921ab56bbc7b157061069909e9941771c",
+   "current": true,
+   "title": "Weightlifter · Level 1: Lift 50 g",
+   "limit": 10,
+   "runs": {
+    "default": 5,
+    "fixed": 10
+   }
+  },
+  {
+   "file": "weightlifter/level-3.v1.json",
+   "id": "weightlifter-3",
+   "version": 1,
+   "sha256": "a7065d5fca16854762b64af43eb83ede301e808f49189e7d6e53931c1d29a017",
+   "current": true,
+   "title": "Weightlifter · Level 3: Lift 150 g fastest, energy counted",
+   "limit": 10,
+   "runs": {
+    "default": 5,
+    "fixed": 10
+   }
+  }
+ ]
+}

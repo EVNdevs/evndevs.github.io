@@ -1,0 +1,19 @@
+{
+ "format": "evn-course-index/1",
+ "generated": "node scripts/course_index.js --write; do not edit",
+ "levels": [
+  {
+   "file": "drag-race/level-1.v1.json",
+   "id": "drag-race-1",
+   "version": 1,
+   "sha256": "aaaa451eef4a1069a804da9bca007e690d43e6de7827a76b8fc09fdfca13b346",
+   "current": true,
+   "title": "Drag race · Level 1: The class robot",
+   "limit": 20,
+   "runs": {
+    "default": 5,
+    "fixed": 5
+   }
+  }
+ ]
+}

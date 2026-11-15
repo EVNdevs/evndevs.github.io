@@ -1,0 +1,118 @@
+{
+  "format": "evn-course/1",
+  "id": "ball-chaser-bench-1",
+  "challenge": "ball-chaser-bench",
+  "level": 1,
+  "version": 1,
+  "module": "G10.1",
+  "title": "Ball chaser bench \u00b7 Level 1: Touch the ball",
+  "brief": "Touch the orange ball with the front of the robot. It lies somewhere at least 0.8 m from the start and may be out of view. A touch is within 20 mm of the robot's front edge; 45 s. Bench level, not scored for a pass: the runner writes balls.json to the flash, the drawn position, for a stand-in camera.",
+  "field": {
+    "random": [
+      {
+        "name": "ball",
+        "draw": "points-v1",
+        "n": 1,
+        "box": [
+          150,
+          150,
+          1850,
+          1850
+        ],
+        "grid": 50,
+        "gap": 800,
+        "legs": "any",
+        "from": [
+          250,
+          250
+        ]
+      }
+    ],
+    "arena": {
+      "size": [
+        2000,
+        2000
+      ],
+      "startBox": [
+        0,
+        0,
+        400,
+        400
+      ],
+      "goal": null,
+      "obstacles": [],
+      "wallH": 100,
+      "wallT": 20,
+      "obstacleH": 60,
+      "wallColor": "#9a9ea3",
+      "balls": [
+        {
+          "name": "orange",
+          "d": 60,
+          "massG": 40,
+          "color": "#ff8c00",
+          "from": "ball",
+          "i": 1
+        }
+      ]
+    }
+  },
+  "robot": {
+    "rule": "learner"
+  },
+  "start": {
+    "nominal": {
+      "x": 250,
+      "y": 250,
+      "heading": 45
+    },
+    "vary": {
+      "xy": 10,
+      "heading": 2
+    },
+    "draw": "uniform-square-v1"
+  },
+  "runs": {
+    "min": 1,
+    "max": 20,
+    "default": 5,
+    "fixed": 10
+  },
+  "kernel": {
+    "name": "pointToPoint",
+    "limitS": 45,
+    "goal": "footprintInside",
+    "final": "runEnd",
+    "reach": {
+      "target": "orange",
+      "foes": [],
+      "mm": 20
+    }
+  },
+  "constants": {
+    "par": 6.9
+  },
+  "score": {
+    "run": "if(reachWon, round(100 * min(1, par / max(time, 0.001)), 1), 0)",
+    "summary": "round(sum(r in runs: r.points) / count(r in runs: true), 1)"
+  },
+  "pass": null,
+  "sources": [
+    {
+      "doc": "docs/curriculum/G10.md",
+      "where": "G10.1 Ball chaser, the challenge paragraph and the level table (levels 1-2) (on origin/worktree-g101-1106)"
+    },
+    {
+      "doc": "vscode-evn-alpha/docs/COURSE_CONTENT_DESIGN.md",
+      "where": "\u00a74 arena.balls, \"i\", pointsIn-v1; \u00a75.1 Ball chaser arena and kernel.reach; \u00a77 CC-5 (OQ 350-353: docs/session/2026-11-08_cc5/owner_items.md)"
+    }
+  ],
+  "reveal": {
+    "file": {
+      "name": "balls.json",
+      "values": [
+        "ball"
+      ]
+    }
+  }
+}

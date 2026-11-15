@@ -1,6 +1,8 @@
 /* Block editor webview: a Blockly workspace bound to one .evnblocks document.
  *
- * Messages from the extension:  {type:'load', text}            document text (JSON) to show
+ * Messages from the extension:  {type:'load', text, junior?}    document text (JSON) to show; `junior`: for a Junior file
+ *                                                              (or a word-blocks file made from one) the robot the
+ *                                                              extension resolved, {robot, robotId, why, speed, toolbox}
  *                               {type:'getCode', id}           reply with the current Python
  *                               {type:'status', message, error, ok}
  *                               {type:'theme', value}          'auto' | 'light' | 'dark' (setting changed)
@@ -10,6 +12,8 @@
  *                               {type:'state', broken}         after each load: true = not the whole file (never run it)
  *                               {type:'code', id, python, broken}  reply to getCode
  *                               {type:'run'|'stop'|'upload'|'export'}   toolbar buttons
+ *                               {type:'saveCopy', kind, text}  "Open in word blocks" ('words') / "in picture blocks"
+ *                                                              ('junior'): the transformed file, for the extension to save
  *                               {type:'showCode', value}       Python pane shown or minimised
  *                               {type:'codeWidth', value}      Python pane resized (px, null = default)
  *                               {type:'theme', value}          theme button pressed
@@ -115,6 +119,59 @@
     let seq = 0;                  // the extension's number of the last load: every message with Python carries it
                                   // (src/blocksEditor.ts, "who holds the blocks text"), so it never runs an older program
     let pendingText = null;       // a document that arrived before the workspace existed
+    let pendingJunior = null;
+
+    /* ---- Junior mode (docs/design/JR_JUNIOR_MODE.md §4.2, J2) --------------------------------------------------------
+     * A file whose `kind` is "junior" (src/junior/junior.js isJunior: the kind decides, never the version number, review
+     * r2 S-b) opens in Junior mode: the Junior blocks (media/blocks/junior_blocks.js) with the toolbox of the lesson's list
+     * (or its grade's blocks), greyed where they never run. Its Python pane is the transform's: junior.js toStandard with
+     * the robot the extension resolved, then the one generator. A file of another kind, or of a later Junior version,
+     * opens read-only and is never saved. The file is saved as the Junior document it is, with no speed in it (S-d: the
+     * speed is the lesson manifest's, filled in at transform time). */
+    const JR = window.evnJunior || null;
+    const JRB = window.evnJuniorBlocks || null;
+    if (JRB) { JRB.register(); }
+    let junior = null;            // in Junior mode: the extension's context ({robot, why, speed, toolbox}); null otherwise
+    let fromJunior = null;        // a word-blocks file made from a Junior one: the context for "Open in picture blocks"
+    let why = '';                 // in Junior mode, why there is no program (no robot): Run / Upload / Export refuse
+    function deps() { return { Blockly: Blockly, generator: window.python.pythonGenerator, evn: evnBlocks }; }   // window.: `python` here is the program text
+    function juniorDoc() {
+        const doc = Object.assign({}, lastDoc, { format: JR.FILE_FORMAT, version: JR.JUNIOR_VERSION, kind: JR.KIND,
+            workspace: Blockly.serialization.workspaces.save(workspace) });
+        delete doc.speed;
+        return doc;
+    }
+    function juniorStandard() {
+        return JR.toStandard(juniorDoc(), { robot: junior.robot, speed: junior.speed || undefined });
+    }
+    let toolboxKey = 'standard';   // the toolbox shown: changed only when the mode or the Junior toolbox changes (r1 N2)
+    function setMode(isJunior, doc) {
+        document.body.classList.toggle('junior', isJunior);
+        document.getElementById('btnWords').hidden = !isJunior;
+        document.getElementById('btnPictures').hidden = isJunior || !fromJunior;
+        const tb = isJunior ? JRB.toolboxFor({ grade: JR.gradeOf(doc && doc.lesson), list: junior && junior.toolbox }) : evnBlocks.TOOLBOX;
+        const key = isJunior ? JSON.stringify(tb) : 'standard';
+        if (key !== toolboxKey) { workspace.updateToolbox(tb); toolboxKey = key; }
+    }
+    /** the numbers Blockly put right on load (a pad field's range: a hand-edited file's forward 150 is shown as 99), named
+     * like the standard editor's "Opened with changes" (r1 S3) */
+    function juniorChanges(doc) {
+        const out = [];
+        const visit = (b) => {
+            if (!b || typeof b !== 'object') { return; }
+            const live = b.id && workspace.getBlockById(b.id);
+            if (live && b.fields) {
+                for (const k of Object.keys(b.fields)) {
+                    const f = live.getField(k);
+                    if (f && typeof b.fields[k] !== 'object' && String(f.getValue()) !== String(b.fields[k])) { out.push(b.type + ' ' + k + ' ' + b.fields[k] + ' -> ' + f.getValue()); }
+                }
+            }
+            for (const i of Object.values(b.inputs || {})) { visit(i.block); }
+            if (b.next) { visit(b.next.block); }
+        };
+        for (const t of (doc.workspace && doc.workspace.blocks && doc.workspace.blocks.blocks) || []) { visit(t); }
+        return out;
+    }
 
     /* Blockly 13's keyboard route is on by default (its ShortcutRegistry; A11Y_DESIGN §4.7). One of its keys is VS Code's
      * too: "show tooltip" is Ctrl+J (Cmd+J on a Mac), the workbench's Toggle Panel, and the webview hands its key presses
@@ -145,7 +202,8 @@
             trashcan: true,
             sounds: false,
             plugins: { connectionChecker: evnBlocks.CONNECTION_CHECKER },   // set-up blocks only under "set up", the rest never there
-            maxInstances: { [evnBlocks.SETUP_HAT]: 1, [evnBlocks.PROGRAM_HAT]: 1 },
+            maxInstances: Object.assign({ [evnBlocks.SETUP_HAT]: 1, [evnBlocks.PROGRAM_HAT]: 1 }, JRB ? { [JRB.JR_START]: 1 } : {}),
+            oneBasedIndex: evnBlocks.ZERO_BASED.oneBasedIndex,   // lists count from 0, as Python (evn_blocks.js ZERO_BASED; the flyout copies it here)
         });
         evnBlocks.setBoardConnected(workspace, boardConnected);
         // a stack attached to neither hat is greyed out and not run (evn_blocks.js applySections), kept in
@@ -155,7 +213,7 @@
             if (loading || e.isUiEvent || workspace.isDragging()) { return; }
             const group = Blockly.Events.getGroup();
             Blockly.Events.setGroup(e.group);
-            try { evnBlocks.applySections(workspace); } finally { Blockly.Events.setGroup(group); }
+            try { (junior ? JRB.applySections : evnBlocks.applySections)(workspace); } finally { Blockly.Events.setGroup(group); }
         });
         workspace.addChangeListener(function (e) {
             if (loading || broken || e.isUiEvent || e.type === Blockly.Events.FINISHED_LOADING) { return; }
@@ -163,11 +221,11 @@
             const code = generate();
             if (text !== lastText) {
                 lastText = text;
-                vscode.postMessage({ type: 'edit', text: text, python: code, seq: seq });
+                vscode.postMessage({ type: 'edit', text: text, python: code, seq: seq, why: why || undefined });   // why: set by generate() (r1 S1)
             }
         });
         applyCodePane();
-        if (pendingText !== null) { const t = pendingText; pendingText = null; load(t); }
+        if (pendingText !== null) { const t = pendingText; pendingText = null; load(t, pendingJunior); }
     }
 
     /* ---- generated code pane ------------------------------------------------------------- */
@@ -193,13 +251,30 @@
 
     function generate() {
         if (!workspace) { return python; }
-        try {
-            python = evnBlocks.workspaceToPython(workspace);
-        } catch (e) {
-            python = '# could not generate code: ' + (e && e.message ? e.message : e);
+        let shown = null;
+        if (junior) {
+            // the Junior program's Python: the transform, then the one generator; with no robot, no program and the reason
+            why = '';
+            try {
+                if (!junior.robot) { throw new Error(junior.why || 'no robot'); }
+                python = JR.plainPython(deps(), juniorStandard());
+            } catch (e) {
+                why = e && e.message ? e.message : String(e);
+                python = '';
+                shown = '# This Junior program has no Python yet: ' + why;
+            }
+        } else {
+            try {
+                python = evnBlocks.workspaceToPython(workspace);
+            } catch (e) {
+                python = '# could not generate code: ' + (e && e.message ? e.message : e);
+            }
         }
         const pre = document.getElementById('code');
-        if (python) {
+        if (shown) {
+            pre.classList.remove('empty');
+            pre.textContent = shown;
+        } else if (python) {
             pre.classList.remove('empty');
             pre.innerHTML = highlight(python);
         } else {
@@ -216,43 +291,71 @@
     let lastDoc = {};
 
     function serialize() {
-        const state = Blockly.serialization.workspaces.save(workspace);
-        const doc = Object.assign({}, lastDoc, { format: FILE_FORMAT, version: FILE_VERSION, workspace: state });
+        if (junior) { return JSON.stringify(juniorDoc(), null, 2) + '\n'; }
+        // the workspace's own standard robot is written beside the version (evn_blocks.js documentOf, ROBOT176 R1)
+        const doc = evnBlocks.documentOf(workspace, lastDoc, FILE_FORMAT, FILE_VERSION);
         return JSON.stringify(doc, null, 2) + '\n';
     }
 
     /* line endings never count: VS Code keeps a CRLF document CRLF, and serialize() writes LF */
     function lf(t) { return String(t).replace(/\r\n/g, '\n'); }
 
-    function load(text) {
-        if (!workspace) { pendingText = text; return; }
+    function load(text, ctx) {
+        if (!workspace) { pendingText = text; pendingJunior = ctx || null; return; }
         loading = true;
         try {
             Blockly.Events.disable();
             workspace.clear();
             lastDoc = {};
+            junior = null;
+            fromJunior = null;
+            why = '';
             let warning = '';
             const trimmed = (text || '').trim();
-            if (trimmed) {
-                const doc = JSON.parse(trimmed);
-                const ours = doc && doc.format === FILE_FORMAT;
-                const newer = ours && Number(doc.version) > FILE_VERSION;
-                const state = ours ? doc.workspace : doc;   // tolerate a bare Blockly state
-                if (ours) {
-                    lastDoc = Object.assign({}, doc);
-                    delete lastDoc.workspace;              // the workspace is regenerated on save
-                }
-                // read as written and put right (evn_blocks.js loadWorkspace): a rule-breaking block comes loose instead
-                // of the load stopping there; a version-1 file is upgraded, a new one gets its two hats
-                const notes = evnBlocks.loadWorkspace(state, workspace, ours ? doc.version : 1);
-                if (notes.length && !warning) { warning = 'Opened with changes: ' + notes.join('; ') + '.'; }
-                if (newer) {
-                    // a newer format: shown as far as this editor knows it, read-only (see catch), never saved
-                    throw new Error('it was made by a newer version of the extension (format ' + doc.version + '; this one knows '
-                        + FILE_VERSION + '); it is shown read-only');
-                }
+            const doc = trimmed ? JSON.parse(trimmed) : null;
+            const kind = doc && doc.format === FILE_FORMAT ? doc.kind : undefined;
+            if (kind === 'junior' && JR && JRB && JR.isJunior(doc) && Number(doc.version) === JR.JUNIOR_VERSION) {
+                // the kind decides (S-b): a Junior file opens in Junior mode
+                junior = Object.assign({ robot: null, why: 'the extension resolved no robot', speed: null, toolbox: null }, ctx || {});
+                lastDoc = Object.assign({}, doc);
+                delete lastDoc.workspace;
+                delete lastDoc.speed;                      // S-d: never kept in the file
+                setMode(true, doc);
+                Blockly.serialization.workspaces.load(JRB.workspaceState(doc), workspace);
+                JRB.applySections(workspace);
+                const changed = juniorChanges(doc);
+                if (changed.length) { warning = 'Opened with changes: ' + changed.join('; ') + '.'; }
+                if (!junior.robot) { warning = 'Junior mode: ' + junior.why + '. The blocks can be edited; the program cannot run until the robot is found.' + (warning ? ' ' + warning : ''); }
+            } else if (kind !== undefined) {
+                // another kind, or a Junior file of a later version: read-only (see catch), never saved
+                setMode(false, null);
+                throw new Error(kind === 'junior'
+                    ? 'it is a Junior program of a version this editor does not know (format ' + doc.version + '); it is shown read-only'
+                    : 'its kind "' + kind + '" is not one this editor knows; it is shown read-only');
             } else {
-                evnBlocks.loadWorkspace(null, workspace, FILE_VERSION);
+                if (doc && doc.format === FILE_FORMAT && doc.fromJunior && ctx && ctx.robot) { fromJunior = ctx; }
+                setMode(false, null);
+                if (doc) {
+                    const ours = doc && doc.format === FILE_FORMAT;
+                    const newer = ours && Number(doc.version) > FILE_VERSION;
+                    const state = ours ? doc.workspace : doc;   // tolerate a bare Blockly state
+                    if (ours) {
+                        lastDoc = Object.assign({}, doc);
+                        delete lastDoc.workspace;              // the workspace is regenerated on save
+                    }
+                    // read as written and put right (evn_blocks.js loadWorkspace): a rule-breaking block comes loose instead
+                    // of the load stopping there; a version-1 file is upgraded, a new one gets its two hats
+                    // the file's own standard robot (ROBOT176 R1): a bare Blockly state has none
+                    const notes = evnBlocks.loadWorkspace(state, workspace, ours ? doc.version : 1, ours ? doc.standardRobot : undefined);
+                    if (notes.length && !warning) { warning = 'Opened with changes: ' + notes.join('; ') + '.'; }
+                    if (newer) {
+                        // a newer format: shown as far as this editor knows it, read-only (see catch), never saved
+                        throw new Error('it was made by a newer version of the extension (format ' + doc.version + '; this one knows '
+                            + FILE_VERSION + '); it is shown read-only');
+                    }
+                } else {
+                    evnBlocks.loadWorkspace(null, workspace, FILE_VERSION);
+                }
             }
             evnBlocks.setBoardConnected(workspace, boardConnected);
             broken = false;
@@ -273,7 +376,7 @@
 
     /* after every load: the program of what is shown now, so Run / Upload / Export from the title bar have it at once */
     function report() {
-        vscode.postMessage({ type: 'state', broken: broken, seq: seq, python: generate() });
+        vscode.postMessage({ type: 'state', broken: broken, seq: seq, python: generate(), why: why || undefined });   // why: set by generate()
     }
 
     /* ---- toolbar ------------------------------------------------------------------------- */
@@ -291,7 +394,11 @@
             setStatus('This file did not open completely, so it is not run, uploaded or exported. Update the EVN ALPHA extension, or fix the file as text.', true);
             return;
         }
-        vscode.postMessage({ type: type, python: generate(), seq: seq });
+        if (junior && ['run', 'upload', 'export'].indexOf(type) >= 0) {
+            generate();
+            if (why) { setStatus('This Junior program cannot be run, uploaded or exported: ' + why + '.', true); return; }
+        }
+        vscode.postMessage({ type: type, python: generate(), seq: seq, why: why || undefined });
     }
     function button(id, type) {
         document.getElementById(id).addEventListener('click', function () { send(type); });
@@ -306,6 +413,32 @@
     button('btnStop', 'stop');
     button('btnUpload', 'upload');
     button('btnExport', 'export');
+
+    /* "Open in word blocks" (G2 -> G3, design D1): the transform, saved by the extension as a new version-3 file. "Open in
+     * picture blocks": the reverse (junior.js fromStandard), for a word-blocks file made from a Junior one whose every
+     * block has a picture block; it refuses, saying why, when a block or the set-up has none. */
+    function saveCopy(kind) {
+        if (broken) { setStatus('This file did not open completely, so no copy is made.', true); return; }
+        let doc;
+        try {
+            if (kind === 'words') {
+                if (!junior || !junior.robot) { throw new Error(junior ? junior.why : 'not a Junior program'); }
+                doc = juniorStandard();
+                // greyed blocks that have no word block on this robot (a sensor it lacks) would be lost: say which (r1 B2)
+                if (doc.fromJunior && doc.fromJunior.notCarried) { throw new Error('these greyed blocks cannot be written as word blocks on this robot: ' + doc.fromJunior.notCarried.join('; ')); }
+            } else {
+                if (!fromJunior) { throw new Error('this file was not made from a Junior program'); }
+                const std = evnBlocks.documentOf(workspace, lastDoc, FILE_FORMAT, FILE_VERSION);
+                doc = JR.fromStandard(std, { robot: fromJunior.robot, robotId: fromJunior.robotId || undefined, speed: fromJunior.speed || undefined }, deps());
+            }
+        } catch (e) {
+            setStatus('No copy made: ' + (e && e.message ? e.message : e) + '.', true);
+            return;
+        }
+        vscode.postMessage({ type: 'saveCopy', kind: kind, text: JSON.stringify(doc), seq: seq });
+    }
+    document.getElementById('btnWords').addEventListener('click', function () { saveCopy('words'); });
+    document.getElementById('btnPictures').addEventListener('click', function () { saveCopy('junior'); });
 
     /* The Python pane sits to the right of the canvas behind a draggable splitter, and minimises
      * to a pill in the top-right corner of the canvas. Shown/minimised is the evn.blocks.showCode
@@ -423,10 +556,10 @@
         switch (msg.type) {
             case 'load':
                 seq = msg.seq;
-                if (lf(msg.text || '') !== lastText) { load(msg.text); } else { report(); }
+                if (lf(msg.text || '') !== lastText) { load(msg.text, msg.junior); } else { report(); }
                 break;
             case 'getCode':
-                vscode.postMessage({ type: 'code', id: msg.id, python: generate(), broken: broken, seq: seq });
+                vscode.postMessage({ type: 'code', id: msg.id, python: generate(), broken: broken, seq: seq, why: why || undefined });
                 break;
             case 'status':
                 setStatus(msg.message || '', !!msg.error, !!msg.ok);

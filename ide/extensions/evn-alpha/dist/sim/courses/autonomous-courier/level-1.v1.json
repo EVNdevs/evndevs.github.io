@@ -1,0 +1,287 @@
+{
+  "format": "evn-course/1",
+  "id": "autonomous-courier-1",
+  "challenge": "autonomous-courier",
+  "level": 1,
+  "version": 1,
+  "module": "G12.1",
+  "title": "Autonomous courier \u00b7 Level 1: The known map",
+  "brief": "Carry the parcel from the depot to zone A, then zone B, and back to the depot, on a known map. The arena is 3000 x 2000 mm, (0, 0) its bottom-left corner, walled by 20 mm strips inside it; two rows of shelves (x 700-800: y 20-200, 460-900, 1260-1500, 1900-1980; x 1900-2000: y 20-300, 700-1300, 1680-1980) and five 100 mm pillars at (1140-1240, 700-800), (1460-1560, 1140-1240), (1240-1340, 300-400), (2340-2440, 1100-1200), (2600-2700, 900-1000). The depot is (100-500, 100-500), zone A (1300-1700, 1560-1900), zone B (2500-2900, 200-600). Line 1 of the program must be start = (x, y, heading): the runner fills in the run's start (mm, mm, degrees anticlockwise from +x); run 1 starts at (300, 300, 0), runs 2-10 with x and y each within 60 mm of it and the heading within 15 degrees; a practice Run is told where the robot stands ((300, 300, 0) when it is at the start). Before the run the flash holds grid.txt, the occupancy grid of the shelves, pillars and wall strips in 10 mm cells: line 1 'grid-v1 10 300 200', then 200 rows of 300 characters, 1 occupied and 0 free, the BOTTOM row first, so rows = open('grid.txt').read().split()[4:] and rows[r][c] is the cell at x 10c-10c+10, y 10r-10r+10 (self-check: rows[0][0] is '1', the south wall). Merged 2 x 2 it is the lessons' 20 mm grid. A zone is reached when the middle of the axle stays inside it, slower than 5 mm/s and turning slower than 5 degrees a second, for 0.5 s; done when zone A, zone B and then the depot are reached in that order, which ends the run. T is the time from Run to the depot's reached stop. Write your plan to plan.csv: rows t_ms,x_mm,y_mm in the arena's frame, t_ms from t0 = time.ticks_ms() taken first, every row of one plan sharing the t_ms at which it took effect (a replan is a new block), at most 1000 points and 64 000 bytes in all; write it in a finally: after evn.stop_all() (the run's end raises KeyboardInterrupt, and a write while a motor drives is refused), within the run's 2 s grace. e is the RMS distance of the true middle of the axle from the plan in effect, every 1 ms from the first plan to the run's end (no plan.csv: the plan term scores 0). A collision is a contact with a wall, shelf or pillar that begins after at least 0.5 s with none. Per run: S = 40 done + 30 min(1, par / T) + 30 clamp(1 - e / 40, 0, 1) - 15 collisions, at least 0, the time and plan terms only when done. Pass: a mean S of at least 60, at least 8 of 10 runs done, and e at most 40 mm on at least 8 of 10 runs. Par 32.2 s; the limit 96.6 s. The robot: the class robot with an IMU (MPU-6500, flat) on I2C 8 and distance5 looking ahead.",
+  "field": {
+    "arena": {
+      "size": [
+        3000,
+        2000
+      ],
+      "startBox": [
+        100,
+        100,
+        500,
+        500
+      ],
+      "goal": null,
+      "obstacles": [
+        {
+          "x": 1500,
+          "y": 10,
+          "w": 3000,
+          "d": 20,
+          "h": 100
+        },
+        {
+          "x": 1500,
+          "y": 1990,
+          "w": 3000,
+          "d": 20,
+          "h": 100
+        },
+        {
+          "x": 10,
+          "y": 1000,
+          "w": 20,
+          "d": 1960,
+          "h": 100
+        },
+        {
+          "x": 2990,
+          "y": 1000,
+          "w": 20,
+          "d": 1960,
+          "h": 100
+        },
+        {
+          "x": 750,
+          "y": 110,
+          "w": 100,
+          "d": 180,
+          "h": 300
+        },
+        {
+          "x": 750,
+          "y": 680,
+          "w": 100,
+          "d": 440,
+          "h": 300
+        },
+        {
+          "x": 750,
+          "y": 1380,
+          "w": 100,
+          "d": 240,
+          "h": 300
+        },
+        {
+          "x": 750,
+          "y": 1940,
+          "w": 100,
+          "d": 80,
+          "h": 300
+        },
+        {
+          "x": 1950,
+          "y": 160,
+          "w": 100,
+          "d": 280,
+          "h": 300
+        },
+        {
+          "x": 1950,
+          "y": 1000,
+          "w": 100,
+          "d": 600,
+          "h": 300
+        },
+        {
+          "x": 1950,
+          "y": 1830,
+          "w": 100,
+          "d": 300,
+          "h": 300
+        },
+        {
+          "x": 1190,
+          "y": 750,
+          "w": 100,
+          "d": 100,
+          "h": 300
+        },
+        {
+          "x": 1510,
+          "y": 1190,
+          "w": 100,
+          "d": 100,
+          "h": 300
+        },
+        {
+          "x": 1290,
+          "y": 350,
+          "w": 100,
+          "d": 100,
+          "h": 300
+        },
+        {
+          "x": 2390,
+          "y": 1150,
+          "w": 100,
+          "d": 100,
+          "h": 300
+        },
+        {
+          "x": 2650,
+          "y": 950,
+          "w": 100,
+          "d": 100,
+          "h": 300
+        }
+      ],
+      "wallH": 100,
+      "wallT": 20,
+      "obstacleH": 300,
+      "areas": [
+        {
+          "name": "depot",
+          "rect": [
+            100,
+            100,
+            500,
+            500
+          ],
+          "paint": null
+        },
+        {
+          "name": "zoneA",
+          "rect": [
+            1300,
+            1560,
+            1700,
+            1900
+          ],
+          "paint": null
+        },
+        {
+          "name": "zoneB",
+          "rect": [
+            2500,
+            200,
+            2900,
+            600
+          ],
+          "paint": null
+        }
+      ]
+    }
+  },
+  "robot": {
+    "rule": "learner",
+    "standard": "odometry-imu8"
+  },
+  "start": {
+    "nominal": {
+      "x": 300,
+      "y": 300,
+      "heading": 0
+    },
+    "vary": {
+      "xy": 60,
+      "heading": 15
+    },
+    "draw": "uniform-square-v1"
+  },
+  "runs": {
+    "min": 1,
+    "max": 20,
+    "default": 5,
+    "fixed": 10
+  },
+  "kernel": {
+    "name": "pointToPoint",
+    "limitS": 96.6,
+    "goal": "footprintInside",
+    "final": "runEnd",
+    "visits": {
+      "targets": [
+        {
+          "area": "zoneA",
+          "dwell": {
+            "s": 0.5,
+            "mms": 5,
+            "dps": 5
+          }
+        },
+        {
+          "area": "zoneB",
+          "dwell": {
+            "s": 0.5,
+            "mms": 5,
+            "dps": 5
+          }
+        },
+        {
+          "area": "depot",
+          "dwell": {
+            "s": 0.5,
+            "mms": 5,
+            "dps": 5
+          }
+        }
+      ],
+      "endAtLast": "inOrder"
+    },
+    "collisions": {
+      "quietS": 0.5
+    },
+    "report": {
+      "kind": "series",
+      "routes": [
+        "file"
+      ],
+      "file": "plan.csv",
+      "columns": [
+        "t_ms",
+        "x_mm",
+        "y_mm"
+      ],
+      "frame": "arena",
+      "align": "path",
+      "fromMs": "first",
+      "to": "end",
+      "cover": null,
+      "rms": [
+        "xy"
+      ],
+      "maxRows": 1000
+    }
+  },
+  "constants": {
+    "par": 32.2,
+    "epar": 40
+  },
+  "reveal": {
+    "map": {
+      "name": "grid.txt",
+      "cell": 10
+    },
+    "start": {
+      "as": "start"
+    }
+  },
+  "score": {
+    "run": "max(0, if(visitedInOrder == 3, 40 + 30 * min(1, par / max(time, 0.001)) + if(repHas, 30 * clamp(1 - repRms_xy / epar, 0, 1), 0), 0) - 15 * collisions)",
+    "summary": "round(sum(r in runs: r.points) / n, 1)"
+  },
+  "pass": "score >= 60 & count(r in runs: r.visitedInOrder == 3) >= 0.8 * n & count(r in runs: r.repHas & r.repRms_xy <= epar) >= 0.8 * n",
+  "sources": [
+    {
+      "doc": "docs/curriculum/G12.md",
+      "where": "G12.1 Plan and track, the challenge paragraph, the level table (level 1), the run score and the definitions; OQ 117 (b)"
+    },
+    {
+      "doc": "docs/design/G121_COURIER.md",
+      "where": "\u00a71 the keys, \u00a72-\u00a75 K1-K4 (the map, collisions, dwell.dps, the start), \u00a76 the par (the reference's mean T)"
+    },
+    {
+      "doc": "vscode-evn-alpha/learn/content/lessons/G12/G12.1/G12.1.1.md",
+      "where": "the practice stand-in's arena, start and card (the plan the course takes)"
+    }
+  ]
+}

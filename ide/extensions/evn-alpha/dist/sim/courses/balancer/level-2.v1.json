@@ -1,0 +1,331 @@
+{
+  "format": "evn-course/1",
+  "id": "balancer-2",
+  "challenge": "balancer",
+  "level": 2,
+  "version": 1,
+  "module": "G9.4",
+  "title": "Balancer · Level 2: Hold your place under three pushes",
+  "brief": "The balancing robot (a rig, not the class robot: EV3 Large motors on ports 1-2, left mirrored on 1, 56 mm wheels 150 mm apart, an IMU on I2C 8) starts held upright within 3 deg and is released at the Run. Balance for 30 s and hold your place through three pushes, each drawn per run: 100, 150 or 200 mN s, forward or backward, horizontal at the body's centre of mass (120 mm above the axle), one at a whole second from 4 to 8 s, one from 13 to 17 s and one from 22 to 26 s. The reference program recovers from every push the level can draw. Practice: the fall end and the score (100 - RMS position error (mm) / 2, 0 on a fall) wait for the body truth (GT); the run is not scored yet.",
+  "field": {
+    "random": [
+      {
+        "name": "tilt",
+        "draw": "uniform-v1",
+        "min": -3,
+        "max": 3,
+        "step": 0.1
+      },
+      {
+        "name": "comOff",
+        "draw": "uniform-v1",
+        "min": -5,
+        "max": 5,
+        "step": 0.1
+      },
+      {
+        "name": "t1",
+        "draw": "uniform-v1",
+        "min": 4,
+        "max": 8,
+        "step": 1
+      },
+      {
+        "name": "t2",
+        "draw": "uniform-v1",
+        "min": 13,
+        "max": 17,
+        "step": 1
+      },
+      {
+        "name": "t3",
+        "draw": "uniform-v1",
+        "min": 22,
+        "max": 26,
+        "step": 1
+      },
+      {
+        "name": "j1",
+        "draw": "uniform-v1",
+        "min": 100,
+        "max": 200,
+        "step": 50
+      },
+      {
+        "name": "j2",
+        "draw": "uniform-v1",
+        "min": 100,
+        "max": 200,
+        "step": 50
+      },
+      {
+        "name": "j3",
+        "draw": "uniform-v1",
+        "min": 100,
+        "max": 200,
+        "step": 50
+      },
+      {
+        "name": "d1",
+        "draw": "choice-v1",
+        "of": [
+          0,
+          180
+        ]
+      },
+      {
+        "name": "d2",
+        "draw": "choice-v1",
+        "of": [
+          0,
+          180
+        ]
+      },
+      {
+        "name": "d3",
+        "draw": "choice-v1",
+        "of": [
+          0,
+          180
+        ]
+      }
+    ],
+    "arena": {
+      "size": [
+        2000,
+        2000
+      ],
+      "startBox": [
+        800,
+        800,
+        1200,
+        1200
+      ],
+      "goal": null,
+      "obstacles": [],
+      "wallH": 100,
+      "wallT": 20,
+      "obstacleH": 60
+    }
+  },
+  "robot": {
+    "rule": "fixed",
+    "rig": {
+      "format": "evn-rig/1",
+      "name": "balancer",
+      "version": 1,
+      "base": "floor",
+      "start": {
+        "pitch": {
+          "$": "tilt"
+        }
+      },
+      "bodies": [
+        {
+          "name": "body",
+          "shape": {
+            "box": [
+              80,
+              120,
+              200
+            ]
+          },
+          "massG": 700,
+          "com": [
+            {
+              "$": "comOff"
+            },
+            0,
+            120
+          ]
+        },
+        {
+          "name": "left",
+          "wheel": {
+            "d": 56,
+            "w": 20
+          },
+          "massG": 50,
+          "inertiaKgM2": [
+            1.15e-05,
+            2e-05,
+            1.15e-05
+          ],
+          "friction": 1,
+          "at": [
+            0,
+            75,
+            0
+          ]
+        },
+        {
+          "name": "right",
+          "wheel": {
+            "d": 56,
+            "w": 20
+          },
+          "massG": 50,
+          "inertiaKgM2": [
+            1.15e-05,
+            2e-05,
+            1.15e-05
+          ],
+          "friction": 1,
+          "at": [
+            0,
+            -75,
+            0
+          ]
+        }
+      ],
+      "joints": [
+        {
+          "kind": "hinge",
+          "a": "body",
+          "b": "left",
+          "at": [
+            0,
+            75,
+            0
+          ],
+          "axis": [
+            0,
+            1,
+            0
+          ],
+          "motor": {
+            "port": 1,
+            "model": "EV3 Large",
+            "gear": 1,
+            "mirrored": true
+          }
+        },
+        {
+          "kind": "hinge",
+          "a": "body",
+          "b": "right",
+          "at": [
+            0,
+            -75,
+            0
+          ],
+          "axis": [
+            0,
+            1,
+            0
+          ],
+          "motor": {
+            "port": 2,
+            "model": "EV3 Large",
+            "gear": 1
+          }
+        }
+      ],
+      "sensors": [
+        {
+          "kind": "imu",
+          "port": 8,
+          "body": "body",
+          "at": [
+            0,
+            0,
+            150
+          ]
+        }
+      ]
+    }
+  },
+  "start": {
+    "nominal": {
+      "x": 1000,
+      "y": 1000,
+      "heading": 0
+    },
+    "vary": {
+      "xy": 0,
+      "heading": 0
+    },
+    "draw": "uniform-square-v1"
+  },
+  "runs": {
+    "min": 1,
+    "max": 20,
+    "default": 5,
+    "fixed": 10
+  },
+  "kernel": {
+    "name": "pointToPoint",
+    "limitS": 30,
+    "goal": "footprintInside",
+    "end": "afterProgram",
+    "still": {
+      "s": 1,
+      "dps": 5,
+      "mms": 3
+    },
+    "final": "runEnd"
+  },
+  "dist": {
+    "events": [
+      {
+        "at": {
+          "$": "t1"
+        },
+        "kind": "impulse",
+        "target": "body",
+        "mNs": {
+          "$": "j1"
+        },
+        "dir": {
+          "$": "d1"
+        }
+      },
+      {
+        "at": {
+          "$": "t2"
+        },
+        "kind": "impulse",
+        "target": "body",
+        "mNs": {
+          "$": "j2"
+        },
+        "dir": {
+          "$": "d2"
+        }
+      },
+      {
+        "at": {
+          "$": "t3"
+        },
+        "kind": "impulse",
+        "target": "body",
+        "mNs": {
+          "$": "j3"
+        },
+        "dir": {
+          "$": "d3"
+        }
+      }
+    ]
+  },
+  "constants": {},
+  "score": {
+    "run": "0",
+    "summary": "0"
+  },
+  "pass": null,
+  "sources": [
+    {
+      "doc": "docs/curriculum/G09.md",
+      "where": "G9.4 Challenge - Balancer: the challenge paragraph and the level table (level 2: three pushes of 0.1-0.2 N s at the centre of mass, each checked recoverable by the reference), the scores paragraph"
+    },
+    {
+      "doc": "vscode-evn-alpha/docs/SIMULATOR_LB4B_DS3B_DESIGN.md",
+      "where": "§2.2 Pushes and masses on a body (BodyRig.bodyPush), §2.8 the push recovered (lane lb4bw W1)"
+    },
+    {
+      "doc": "vscode-evn-alpha/src/sim/engine/dist.ts",
+      "where": "the events' header: impulse { mNs, dir, target } on a body rig's body"
+    }
+  ]
+}

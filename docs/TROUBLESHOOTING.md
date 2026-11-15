@@ -42,7 +42,9 @@ The extension looks for the `RPI-RP2` drive where the desktop mounts USB drives 
 
 ## Flashing
 
-**No `RPI-RP2` drive appears.** With the board on and USB connected, hold BOOTSEL, press and release RESET, then let go of BOOTSEL. Or, also with the board switched on: unplug USB, hold BOOTSEL, plug USB back in, then let go. A board that is switched off does not run on USB power alone (USB only charges the cells), so switch it on first. If the drive still does not appear, try another cable: a charge-only cable carries no data.
+**No `RPI-RP2` drive appears.** With the board on and USB connected, hold BOOTSEL, press and release RESET, then let go of BOOTSEL. Or, also with the board switched on: unplug USB, hold BOOTSEL, plug USB back in, then let go. A board that is switched off does not run on USB power alone (USB only charges the cells), so switch it on first.
+
+If the drive still does not appear, try another cable: a charge-only cable carries no data.
 
 ![The other way into BOOTSEL mode, with the board switched on, in four steps: unplug the USB-C cable, press and hold BOOTSEL, plug the cable back in still holding, release BOOTSEL; the RPI-RP2 drive appears and the status bar offers the flash](images/bootsel-gesture.webp)
 
@@ -92,11 +94,35 @@ Run **EVN: Check Python setup** with the file open. It says what applies and off
 
 - One board at a time per VS Code window.
 - `run_until_stalled` needs a real obstruction; an unloaded shaft never stalls. **`duty_limit` is the force it pushes with before the stall is reported.** Without one the motor pushes with the whole pack.
-- A file write on the board is **refused while a motor drives**: it raises `OSError: [Errno 16] EBUSY`, because a write would stall the motor control for 45–400 ms. Motors that hold, brake or coast do not block it. Collect your readings in a list while the robot moves, and write the file after `stop()`, `hold()` or a `wait=True` move. `stop()` returns once the motor coasts, so the write can follow at once; or catch the `OSError` and write later. A refused `close()` keeps its data and writes it once the motors stop; a file never closed loses its buffered bytes if it is freed while a motor drives, so close files or use `with`. Reading files and `import` are not refused (except a file opened for writing that still holds unwritten data, or one whose refused `close()` is still waiting).
+- A file write on the board is **refused while a motor drives**: it raises `OSError: [Errno 16] EBUSY`. It is refused because a write would stall the motor control for 45–400 ms. Motors that hold, brake or coast do not block it. Collect your readings in a list while the robot moves, and write the file after `stop()`, `hold()` or a `wait=True` move.
+  <details>
+  <summary>Writing after a stop, and a refused close()</summary>
+
+  Because `stop()` returns once the motor coasts, the write can follow at once; or catch the `OSError` and write later.
+
+  A refused `close()` keeps its data and writes it once the motors stop. A file never closed loses its buffered bytes if it is freed while a motor drives, so close files or use `with`.
+
+  Reading files and `import` are not refused (except a file opened for writing that still holds unwritten data, or one whose refused `close()` is still waiting).
+
+  </details>
 - A peripheral that is unplugged raises `OSError` from its next reading. It recovers by itself when plugged back into the **same** port; a different port is not followed.
 - `Compass.calibrate_stop()` refuses a calibration until the sensor has been through enough directions, and keeps collecting: turn it more and stop again, or `calibrate_cancel()`.
 - In the browser IDE, closing the tab does not stop a running motor. Press **Stop** first.
-- **A single huge integer calculation may take up to about 30 s; printing a huge number reboots the board; other single operations may take 3 s.** The 3 s hardware watchdog is fed between Python steps and in every wait (`time.sleep()`, a `wait=True` move, a file write), so those may take as long as they need. A huge integer's power, product, division or conversion to or from text (`3**100000` takes about 4 s, `3**32000` about 0.4 s) is fed while it runs, for at most 30 s from its start; one still running then is taken as a frozen board, and the watchdog reboots it about 3 s later. Turning a huge number into text is far slower than computing it (the conversion goes over the whole number once for every digit it writes): `print(3**100000)`, `str(3**100000)`, or `3**100000` typed at the REPL (which prints the result) runs past 30 s, so the board reboots about 33 s after the line began. Print a part of the number instead (`x % 10**20`, or `len(str(...))` of a smaller one). While such a calculation runs the board does not answer the console; Ctrl-C, the extension's **Stop** and the end of the program take effect only when it ends, up to about 30 s later, and a motor move already running goes on until then (a 2 s button hold counts from then too); the user button still coasts the motors at once. Any other single operation that runs 3 s without reaching a wait reboots the board (a search in a very long string, a regular expression that backtracks without end). After a watchdog reboot the console loses the board, the motors coast, and `evn.reset_cause()` returns `"watchdog"`; `main.py` is skipped, after soft reboots (Ctrl-D) too, until the board next restarts.
+- **A single huge integer calculation may take up to about 30 s; printing a huge number reboots the board; other single operations may take 3 s.** The 3 s hardware watchdog is fed between Python steps and in every wait (`time.sleep()`, a `wait=True` move, a file write), so those may take as long as they need. Print a part of a huge number instead (`x % 10**20`, or `len(str(...))` of a smaller one).
+  <details>
+  <summary>How the watchdog treats a long calculation</summary>
+
+  A huge integer's power, product, division or conversion to or from text is fed while it runs, for at most 30 s from its start. (`3**100000` takes about 4 s, `3**32000` about 0.4 s.) One still running then is taken as a frozen board, and the watchdog reboots it about 3 s later.
+
+  Turning a huge number into text is far slower than computing it: the conversion goes over the whole number once for every digit it writes. So `print(3**100000)`, `str(3**100000)`, or `3**100000` typed at the REPL (which prints the result) runs past 30 s, and the board reboots about 33 s after the line began.
+
+  While such a calculation runs, the board does not answer the console. Ctrl-C, the extension's **Stop** and the end of the program take effect only when it ends, up to about 30 s later. A motor move already running goes on until then (a 2 s button hold counts from then too). The user button still coasts the motors at once.
+
+  Any other single operation that runs 3 s without reaching a wait reboots the board (a search in a very long string, a regular expression that backtracks without end).
+
+  After a watchdog reboot the console loses the board, the motors coast, and `evn.reset_cause()` returns `"watchdog"`; `main.py` is skipped, after soft reboots (Ctrl-D) too, until the board next restarts.
+
+  </details>
 
 ## Reporting problems
 

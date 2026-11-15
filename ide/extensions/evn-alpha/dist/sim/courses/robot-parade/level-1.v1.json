@@ -1,0 +1,190 @@
+{
+ "format": "evn-course/1",
+ "id": "robot-parade-1",
+ "challenge": "robot-parade",
+ "level": 1,
+ "version": 1,
+ "module": "G1.4",
+ "title": "Robot parade \u00b7 Level 1: The square",
+ "brief": "Drive a square of side 2 squares through the 4 corner flags in order (the robot's middle within 100 mm of each): up 2 squares, right 2, down 2, then left 2 to the start corner and back into the start box. No wheel may cross the red border. 60 s. 12.5 for each flag passed in order, up to 40 for speed when all 4 are passed and the robot ends in the start box, 10 for never crossing the border. Par: 20 s.",
+ "field": {
+  "arena": {
+   "size": [
+    1800,
+    1800
+   ],
+   "startBox": [
+    600,
+    300,
+    900,
+    600
+   ],
+   "goal": null,
+   "obstacles": [],
+   "wallH": 100,
+   "wallT": 20,
+   "obstacleH": 100,
+   "areas": [
+    {
+     "name": "flag1",
+     "circle": [
+      750,
+      1050,
+      100
+     ],
+     "paint": null
+    },
+    {
+     "name": "flag2",
+     "circle": [
+      1350,
+      1050,
+      100
+     ],
+     "paint": null
+    },
+    {
+     "name": "flag3",
+     "circle": [
+      1350,
+      450,
+      100
+     ],
+     "paint": null
+    },
+    {
+     "name": "flag4",
+     "circle": [
+      750,
+      450,
+      100
+     ],
+     "paint": null
+    },
+    {
+     "name": "borderS",
+     "rect": [
+      0,
+      0,
+      1800,
+      300
+     ],
+     "paint": "red",
+     "noGo": true
+    },
+    {
+     "name": "borderN",
+     "rect": [
+      0,
+      1500,
+      1800,
+      1800
+     ],
+     "paint": "red",
+     "noGo": true
+    },
+    {
+     "name": "borderW",
+     "rect": [
+      0,
+      300,
+      300,
+      1500
+     ],
+     "paint": "red",
+     "noGo": true
+    },
+    {
+     "name": "borderE",
+     "rect": [
+      1500,
+      300,
+      1800,
+      1500
+     ],
+     "paint": "red",
+     "noGo": true
+    }
+   ]
+  }
+ },
+ "robot": {
+  "rule": "fixed",
+  "base": "junior"
+ },
+ "start": {
+  "nominal": {
+   "x": 750,
+   "y": 450,
+   "heading": 90
+  },
+  "vary": {
+   "xy": 10,
+   "heading": 1
+  },
+  "draw": "uniform-square-v1"
+ },
+ "runs": {
+  "min": 1,
+  "max": 20,
+  "default": 5,
+  "fixed": 5
+ },
+ "kernel": {
+  "name": "pointToPoint",
+  "limitS": 60,
+  "goal": "footprintInside",
+  "end": "afterProgram",
+  "still": {
+   "s": 0.5,
+   "dps": 5,
+   "mms": 3
+  },
+  "final": "runEnd",
+  "noGo": "wheels",
+  "visits": {
+   "targets": [
+    {
+     "area": "flag1"
+    },
+    {
+     "area": "flag2"
+    },
+    {
+     "area": "flag3"
+    },
+    {
+     "area": "flag4"
+    }
+   ]
+  }
+ },
+ "constants": {
+  "par": 20,
+  "sx0": 600,
+  "sx1": 900,
+  "sy0": 300,
+  "sy1": 600
+ },
+ "score": {
+  "run": "round(12.5 * visitedInOrder + if(visitedInOrder == 4 & endX >= sx0 & endX <= sx1 & endY >= sy0 & endY <= sy1, 40 * min(1, par / max(time, 0.001)), 0) + if(noGoEntries == 0, 10, 0), 1)",
+  "values": {
+   "finished": {
+    "value": "count(r in runs: r.visitedInOrder == 4 & r.endX >= sx0 & r.endX <= sx1 & r.endY >= sy0 & r.endY <= sy1)",
+    "unit": "runs"
+   }
+  },
+  "summary": "round(sum(r in runs: r.points) / n, 1)"
+ },
+ "pass": "score >= 60 & finished >= 0.8 * n",
+ "sources": [
+  {
+   "doc": "docs/curriculum/G01.md",
+   "where": "G1.4 Again and again, Challenge \u2014 Robot parade: the parade ground (its 4 x 4 squares from (300, 300); the start box B1; the corner flags at the square's corners, the middle within 100 mm), the level table (level 1), the scoring paragraph; \"How a run is measured\""
+  },
+  {
+   "doc": "vscode-evn-alpha/docs/COURSE_FORMAT_DESIGN.md",
+   "where": "\u00a711.3 (visits without a dwell: on entry; in order), \u00a711.5 (noGo wheels: past the red border), \u00a711.8 (end afterProgram), \u00a713.1 (the fixed robot)"
+  }
+ ]
+}

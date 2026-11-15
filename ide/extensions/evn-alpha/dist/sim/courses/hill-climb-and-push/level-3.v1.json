@@ -1,0 +1,133 @@
+{
+  "format": "evn-course/1",
+  "id": "hill-climb-and-push-3",
+  "challenge": "hill-climb-and-push",
+  "level": 3,
+  "version": 1,
+  "module": "G6.2",
+  "title": "Hill climb and push · Level 3: Push the box",
+  "brief": "On the flat floor, push the 600 g box (a 150 mm cube, 305 mm ahead of the robot) 900 mm so it ends wholly in the green zone; the run ends when your program ends (and the robot stands still), or at 90 s; the box is judged then (a program that stops on an error gets no zone). Five starts (±10 mm, ±2°). 50 for the box wholly in the zone, plus 40 × min(1, par ÷ time) with it, plus 10 if the wheels' count - counted at the robot's real wheel - ends no more than 90 mm past the distance the robot truly went along its path. Pass: mean 60 or more and the box in the zone in at least 4 of 5 runs.",
+  "field": {
+    "arena": {
+      "size": [
+        2400,
+        1200
+      ],
+      "startBox": [
+        420,
+        450,
+        760,
+        750
+      ],
+      "goal": null,
+      "obstacles": [
+        {
+          "name": "box",
+          "x": 1050,
+          "y": 600,
+          "w": 150,
+          "d": 150,
+          "h": 150,
+          "massG": 600,
+          "color": "#b5793a"
+        }
+      ],
+      "areas": [
+        {
+          "name": "zone",
+          "rect": [
+            1800,
+            450,
+            2100,
+            750
+          ],
+          "paint": "green"
+        }
+      ],
+      "wallH": 100,
+      "wallT": 20,
+      "obstacleH": 100
+    }
+  },
+  "robot": {
+    "rule": "fixed"
+  },
+  "start": {
+    "nominal": {
+      "x": 600,
+      "y": 600,
+      "heading": 0
+    },
+    "vary": {
+      "xy": 10,
+      "heading": 2
+    },
+    "draw": "uniform-square-v1"
+  },
+  "runs": {
+    "min": 1,
+    "max": 20,
+    "default": 5,
+    "fixed": 5
+  },
+  "kernel": {
+    "name": "pointToPoint",
+    "limitS": 90,
+    "goal": "footprintInside",
+    "end": "afterProgram",
+    "still": {
+      "s": 0.1,
+      "dps": 5,
+      "mms": 3
+    },
+    "final": "runEnd",
+    "place": {
+      "items": [
+        {
+          "name": "box",
+          "areas": [
+            "zone"
+          ]
+        }
+      ]
+    },
+    "count": true
+  },
+  "constants": {
+    "par": 3.1,
+    "limitS": 90
+  },
+  "score": {
+    "run": "if(wholly_box_zone & (stopped | time >= limitS), 50 + 40 * min(1, par / time), 0) + if(overCountMm <= 90, 10, 0)",
+    "values": {
+      "inTarget": {
+        "value": "count(r in runs: r.points >= 50)",
+        "unit": "runs"
+      }
+    },
+    "summary": "sum(r in runs: r.points) / n"
+  },
+  "pass": "score >= 60 & inTarget >= 4",
+  "sources": [
+    {
+      "doc": "docs/curriculum/G06.md",
+      "where": "G6.2 Hill climb and push, the challenge paragraph and the level table (level 3)"
+    },
+    {
+      "doc": "docs/OPEN_QUESTIONS.md",
+      "where": "OQ 129 (level 3's slip judged as the wheels' count minus the true distance) and the 2026-11-08 page-lane ruling (4) (the 90 mm bound kept)"
+    },
+    {
+      "doc": "docs/design/P0C3P_PUSH.md",
+      "where": "§3 (kernel.count), §5 (this level, laid as G6.2.9's forces-box600), §7 (the par)"
+    },
+    {
+      "doc": "vscode-evn-alpha/docs/COURSE_FORMAT_DESIGN.md",
+      "where": "§22 (kernel.place: the box wholly in the zone on the run's end tick)"
+    },
+    {
+      "doc": "vscode-evn-alpha/scripts/fixtures/hill_climb_and_push_l3_pars.json",
+      "where": "the par: scripts/push_pars.js, the steady reference's median time over 50 seeds x 5 runs, rounded up to 0.1 s"
+    }
+  ]
+}

@@ -1,0 +1,88 @@
+{
+ "format": "evn-course/1",
+ "id": "drag-race-1",
+ "challenge": "drag-race",
+ "level": 1,
+ "version": 1,
+ "module": "G3.1",
+ "title": "Drag race \u00b7 Level 1: The class robot",
+ "brief": "Sprint down the lane and stop with the whole robot inside the green box (2000 to 2200 mm from the start line). The run ends when the robot has stood still for 0.5 s after it first moved, when it touches the far wall, or at 20 s. 50 for stopping in the box, up to 40 for speed (the moment it came to rest against par), 10 for touching no wall; a robot that stops short or overshoots scores 0. Par: 4.0 s.",
+ "field": {
+  "arena": {
+   "size": [
+    2600,
+    400
+   ],
+   "startBox": [
+    60,
+    60,
+    300,
+    340
+   ],
+   "goal": [
+    2200,
+    0,
+    2400,
+    400
+   ],
+   "obstacles": [],
+   "wallH": 100,
+   "wallT": 20,
+   "obstacleH": 150
+  }
+ },
+ "robot": {
+  "rule": "fixed"
+ },
+ "start": {
+  "nominal": {
+   "x": 200,
+   "y": 200,
+   "heading": 0
+  },
+  "vary": {
+   "xy": 10,
+   "heading": 1
+  },
+  "draw": "uniform-square-v1"
+ },
+ "runs": {
+  "min": 1,
+  "max": 20,
+  "default": 5,
+  "fixed": 5
+ },
+ "kernel": {
+  "name": "pointToPoint",
+  "limitS": 20,
+  "goal": "footprintInside",
+  "end": "still",
+  "still": {
+   "s": 0.5,
+   "dps": 5,
+   "mms": 3
+  },
+  "endOnTouch": [
+   "wallE"
+  ],
+  "final": "runEnd"
+ },
+ "constants": {
+  "par": 4.0
+ },
+ "score": {
+  "run": "if(reached, round(50 + 40 * min(1, par / max(time, 0.001)) + if(touches == 0, 10, 0), 1), 0)",
+  "summary": "round(sum(r in runs: r.points) / n, 1)"
+ },
+ "pass": "score >= 60 & reached >= 0.8 * n",
+ "sources": [
+  {
+   "doc": "docs/curriculum/G03.md",
+   "where": "G3.1 Wheels and speed, Challenge \u2014 Drag race: the lane, the start line (the axle; here x 200, 2400 mm from the far wall), the finish box, the run's end, the level table (level 1), the scoring paragraph"
+  },
+  {
+   "doc": "vscode-evn-alpha/docs/COURSE_FORMAT_DESIGN.md",
+   "where": "\u00a710.1 (end still after the first move, the goal judged at the run's end, endOnTouch the far wall wallE, final runEnd), \u00a713.1 (the fixed robot and its set)"
+  }
+ ]
+}

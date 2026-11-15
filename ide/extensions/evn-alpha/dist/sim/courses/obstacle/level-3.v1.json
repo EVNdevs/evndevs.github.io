@@ -1,0 +1,115 @@
+{
+  "format": "evn-course/1",
+  "id": "obstacle-3",
+  "challenge": "obstacle",
+  "level": 3,
+  "version": 1,
+  "module": "G5.2",
+  "title": "Obstacle course · Level 3: The gauntlet",
+  "brief": "Through the gap, round the pillar and up into the bay through its 320 mm opening. The start varies more: measure, do not guess.",
+  "field": {
+    "arena": {
+      "size": [
+        2400,
+        1200
+      ],
+      "startBox": [
+        100,
+        450,
+        400,
+        750
+      ],
+      "goal": [
+        2040,
+        830,
+        2360,
+        1150
+      ],
+      "obstacles": [
+        {
+          "x": 800,
+          "y": 200,
+          "w": 100,
+          "d": 400
+        },
+        {
+          "x": 800,
+          "y": 1000,
+          "w": 100,
+          "d": 400
+        },
+        {
+          "x": 1350,
+          "y": 600,
+          "w": 250,
+          "d": 250
+        },
+        {
+          "x": 1985,
+          "y": 1000,
+          "w": 30,
+          "d": 400
+        },
+        {
+          "x": 2020,
+          "y": 785,
+          "w": 40,
+          "d": 30
+        },
+        {
+          "x": 2380,
+          "y": 785,
+          "w": 40,
+          "d": 30
+        }
+      ],
+      "wallH": 100,
+      "wallT": 20,
+      "obstacleH": 150
+    }
+  },
+  "robot": {
+    "rule": "learner"
+  },
+  "start": {
+    "nominal": {
+      "x": 230,
+      "y": 600,
+      "heading": 0
+    },
+    "vary": {
+      "xy": 30,
+      "heading": 4
+    },
+    "draw": "uniform-square-v1"
+  },
+  "runs": {
+    "min": 1,
+    "max": 20,
+    "default": 5,
+    "fixed": null
+  },
+  "kernel": {
+    "name": "pointToPoint",
+    "limitS": 90,
+    "goal": "footprintInside"
+  },
+  "constants": {
+    "par": 8
+  },
+  "score": {
+    "run": "if(reached, round(50 + 40 * min(1, par / max(time, 0.001)) + if(touches == 0, 10, 0), 1), 0)",
+    "summary": "round(sum(r in runs: r.points) / count(r in runs: true), 1)"
+  },
+  "pass": "score >= 60 & reached >= 0.8 * n",
+  "sources": [
+    {
+      "doc": "docs/curriculum/G05.md",
+      "where": "G5.2 Obstacle course, the level table and the scoring paragraph"
+    },
+    {
+      "doc": "src/sim/engine/challenges.ts",
+      "where": "CHALLENGE_LEVELS before the port (ported bit for bit: scripts/fixtures/course_obstacle_v1.json)"
+    }
+  ]
+}

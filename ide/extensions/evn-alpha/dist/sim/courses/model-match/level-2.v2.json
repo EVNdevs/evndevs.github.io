@@ -1,0 +1,154 @@
+{
+  "format": "evn-course/1",
+  "id": "model-match-2",
+  "challenge": "model-match",
+  "level": 2,
+  "version": 2,
+  "module": "G9.1",
+  "title": "Model match · Level 2: The arm's step",
+  "brief": "Predict a step of the arm bench's motor on port 3 (an EV3 Large through a 12:36 gear to a 150 mm arm with a 100 g tip, hanging at rest), from rest. The course sets line 1 to `d = <duty>`, drawn 40 to 80 % per run. Before the step, write your model's 151 predictions of Motor(3).speed() / 3 (the arm's deg/s: Motor(3) is the motor, ungeared) in deg/s, for t = 0, 0.002, ..., 0.3 s, to the flash file predict.txt (numbers separated by blanks, commas or new lines); then call Motor(3).dc(d) and hold it, the program still running (a wait past the window): the run ends 0.3 s after the step. The course reads Motor(3).speed() / 3 (the arm's deg/s: Motor(3) is the motor, ungeared) every 2 ms from the step (t = 0 is the reading before the duty acts) to 0.3 s, both included. NRMSE = rms(prediction - reading) / y_ss, y_ss the reading at the window's end; a run scores 100 x clamp(1 - NRMSE / 0.15, 0, 1), and 0 when the step is not dc(d) held to the end, when a built-in move ran on port 3, or when any other motor (ports 1, 2, 4) drew energy. Ten runs; pass: a mean of 60 or more and 8 runs predicted. The window ends before the arm passes horizontal. Practice until COURSE and LAB ship. Par: the reference model's mean score on seed 0, 99.0 (mean NRMSE 0.14 %).",
+  "field": {
+    "arena": {
+      "size": [
+        1000,
+        600
+      ],
+      "startBox": [
+        100,
+        200,
+        400,
+        400
+      ],
+      "goal": null,
+      "obstacles": [],
+      "wallH": 100,
+      "wallT": 20,
+      "obstacleH": 150
+    },
+    "random": [
+      {
+        "name": "d",
+        "draw": "uniform-v1",
+        "min": 40,
+        "max": 80,
+        "step": 1
+      }
+    ]
+  },
+  "robot": {
+    "rule": "fixed",
+    "rig": {
+      "format": "evn-rig/1",
+      "name": "arm-bench",
+      "version": 1,
+      "base": "bolted",
+      "motors": [
+        {
+          "port": 3,
+          "model": "EV3 Large"
+        }
+      ],
+      "shaft": [
+        {
+          "port": 3,
+          "ratio": "12/36",
+          "zero": 270,
+          "min": -120,
+          "max": 120,
+          "parts": [
+            {
+              "kind": "bar",
+              "l": 150,
+              "massG": 0
+            },
+            {
+              "kind": "tip",
+              "l": 150,
+              "massG": 100,
+              "name": "payload"
+            }
+          ]
+        }
+      ],
+      "bodies": [],
+      "joints": [],
+      "sensors": [
+        {
+          "kind": "encoder",
+          "port": 3
+        }
+      ]
+    }
+  },
+  "start": {
+    "nominal": {
+      "x": 250,
+      "y": 300,
+      "heading": 0
+    },
+    "vary": {
+      "xy": 0,
+      "heading": 0
+    },
+    "draw": "uniform-square-v1"
+  },
+  "runs": {
+    "min": 1,
+    "max": 20,
+    "default": 5,
+    "fixed": 10
+  },
+  "kernel": {
+    "name": "pointToPoint",
+    "limitS": 3,
+    "goal": "footprintInside",
+    "final": "runEnd",
+    "end": "window",
+    "step": {
+      "port": 3,
+      "windowS": 0.3,
+      "everyMs": 2,
+      "predict": "predict.txt",
+      "ySs": "end",
+      "over": 3
+    },
+    "program": {
+      "noMove": [
+        3
+      ]
+    },
+    "energy": [
+      1,
+      2,
+      4
+    ]
+  },
+  "reveal": {
+    "line": {
+      "value": "d",
+      "as": "d"
+    }
+  },
+  "constants": {},
+  "score": {
+    "run": "if(predicted & stepped & stepHeld & stepDuty == d & moveTicks == 0 & energy_1 == 0 & energy_2 == 0 & energy_4 == 0, 100 * clamp(1 - nrmse / 0.15, 0, 1), 0)",
+    "values": {
+      "finished": {
+        "value": "count(r in runs: r.predicted)",
+        "unit": "runs"
+      }
+    },
+    "summary": "round(sum(r in runs: r.points) / n, 1)"
+  },
+  "pass": null,
+  "sources": [
+    {
+      "doc": "docs/curriculum/G09.md",
+      "where": "G9.1 Challenge — Model match, the level table (level 2) and the NRMSE paragraph"
+    },
+    {
+      "doc": "vscode-evn-alpha/docs/COURSE_FORMAT_DESIGN.md",
+      "where": "§19.3 (12c-3 kernel.step, G9.1 L1-L2), §19.13 (revision 3: over, the deadline read), §19.9 SIG-1 (the default built) (v2: practice only - `pass: null` until the parts its brief names ship; the owner, 2026-11-14, RULINGS_0930.md item 3: \"C now, B after\")"
+    }
+  ]
+}

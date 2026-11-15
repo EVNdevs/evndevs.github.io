@@ -1,0 +1,92 @@
+{
+  "format": "evn-course/1",
+  "id": "shape-artist-2",
+  "challenge": "shape-artist",
+  "level": 2,
+  "version": 1,
+  "module": "G4.1",
+  "title": "Shape artist · Level 2: Triangle, then hexagon",
+  "brief": "The class robot starts in the middle of an empty 2400 x 2400 mm floor facing +x (starts vary 20 mm and 5 degrees); the level fixes the robot. The pen is the middle of the axle. The run ends when the program ends, or at 60 s. From the same corner, an equilateral triangle of 400 mm sides, then a regular hexagon of 250 mm sides, standing still for 1 s between them (a wait of 1 s): the course splits the trail at the first stop. The triangle's close is read where that stop begins, the hexagon's at the run's end, and the worse of the two is scored. A run with no stop has not drawn every side. 50 points for drawing every side without touching a wall (the pen travels 90 % of the perimeters and each shape encloses 80 % of its area), plus 40 for the close (all 40 at a closing error of 10 mm or less, 40 x 10 / error above), plus 10 for ending within 2 degrees of the start heading. A run that does not draw every side scores 0. Pass: mean 60 or more over 5 runs, 4 of them finishing (every side drawn, no wall touched). Par error: 10 mm.",
+  "field": {
+    "arena": {
+      "size": [
+        2400,
+        2400
+      ],
+      "startBox": [
+        1050,
+        1050,
+        1350,
+        1350
+      ],
+      "goal": null,
+      "obstacles": [],
+      "wallH": 100,
+      "wallT": 20,
+      "obstacleH": 150
+    }
+  },
+  "robot": {
+    "rule": "fixed"
+  },
+  "start": {
+    "nominal": {
+      "x": 1200,
+      "y": 1200,
+      "heading": 0
+    },
+    "vary": {
+      "xy": 20,
+      "heading": 5
+    },
+    "draw": "uniform-square-v1"
+  },
+  "runs": {
+    "min": 1,
+    "max": 20,
+    "default": 5,
+    "fixed": 5
+  },
+  "kernel": {
+    "name": "pointToPoint",
+    "limitS": 60,
+    "goal": "footprintInside",
+    "final": "runEnd",
+    "trail": {
+      "pieces": 2,
+      "stop": {
+        "s": 0.9,
+        "dps": 5,
+        "mms": 3
+      }
+    }
+  },
+  "constants": {
+    "perim": 2700,
+    "area1": 69282,
+    "area2": 162380,
+    "parErr": 10,
+    "headDeg": 2
+  },
+  "score": {
+    "run": "if(trailLength >= 0.9 * perim & pieceArea_1 >= 0.8 * area1 & pieceArea_2 >= 0.8 * area2, let e = max(pieceClose_1, pieceClose_2) in round(if(touches == 0, 50, 0) + if(e <= parErr, 40, 40 * parErr / e) + if(abs(wrap180(endHeading - startHeading)) <= headDeg, 10, 0), 1), 0)",
+    "values": {
+      "finished": {
+        "value": "count(r in runs: r.trailLength >= 0.9 * perim & r.pieceArea_1 >= 0.8 * area1 & r.pieceArea_2 >= 0.8 * area2 & r.touches == 0)",
+        "unit": "runs"
+      }
+    },
+    "summary": "round(sum(r in runs: r.points) / n, 1)"
+  },
+  "pass": "score >= 60 & finished >= 0.8 * n",
+  "sources": [
+    {
+      "doc": "docs/curriculum/G04.md",
+      "where": "G4.1 Shape artist, the challenge paragraph and the level table (level 2)"
+    },
+    {
+      "doc": "vscode-evn-alpha/docs/COURSE_FORMAT_DESIGN.md",
+      "where": "§18 (kernel.trail, P0c-4), §10 (runEnd), §13 (the fixed robot)"
+    }
+  ]
+}

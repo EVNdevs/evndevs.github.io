@@ -1,0 +1,45 @@
+{
+ "format": "evn-course-index/1",
+ "generated": "node scripts/course_index.js --write; do not edit",
+ "levels": [
+  {
+   "file": "hill-climb-and-push/level-1.v1.json",
+   "id": "hill-climb-and-push-1",
+   "version": 1,
+   "sha256": "7fde7cdbecebe4697c10095b3d74e16f8ce11d1202c8e4175f9895f3358a888c",
+   "current": true,
+   "title": "Hill climb and push · Level 1: Up the ramp",
+   "limit": 60,
+   "runs": {
+    "default": 5,
+    "fixed": 5
+   }
+  },
+  {
+   "file": "hill-climb-and-push/level-2.v1.json",
+   "id": "hill-climb-and-push-2",
+   "version": 1,
+   "sha256": "bfbf74e3d36c17655689665c9def9e06d90d172615d7d71f7488720e4fa01888",
+   "current": true,
+   "title": "Hill climb and push · Level 2: Up the ramp with a load",
+   "limit": 60,
+   "runs": {
+    "default": 5,
+    "fixed": 5
+   }
+  },
+  {
+   "file": "hill-climb-and-push/level-3.v1.json",
+   "id": "hill-climb-and-push-3",
+   "version": 1,
+   "sha256": "e5263652870bfb8ede33c8d8da8b2d687531552ad12a0f07c82b9793c078add2",
+   "current": true,
+   "title": "Hill climb and push · Level 3: Push the box",
+   "limit": 90,
+   "runs": {
+    "default": 5,
+    "fixed": 5
+   }
+  }
+ ]
+}

@@ -1,0 +1,19 @@
+{
+ "format": "evn-course-index/1",
+ "generated": "node scripts/course_index.js --write; do not edit",
+ "levels": [
+  {
+   "file": "robot-vacuum/level-1.v1.json",
+   "id": "robot-vacuum-1",
+   "version": 1,
+   "sha256": "7f0d7a1f4393d3064b34f664aa8f1ddd0e1f48d5c4d2c83983564d93bb595dfb",
+   "current": true,
+   "title": "Robot vacuum · Level 1: An empty room",
+   "limit": 90,
+   "runs": {
+    "default": 5,
+    "fixed": 5
+   }
+  }
+ ]
+}

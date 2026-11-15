@@ -1,0 +1,32 @@
+{
+ "format": "evn-course-index/1",
+ "generated": "node scripts/course_index.js --write; do not edit",
+ "levels": [
+  {
+   "file": "pick-and-place-bench/level-2.v1.json",
+   "id": "pick-and-place-bench-2",
+   "version": 1,
+   "sha256": "a9e32f3dfbe0312134aeaaf9baeb99eeb6564bb6aedfbd2b30a037ea2871ae96",
+   "current": true,
+   "title": "Pick and place bench · Level 2: Coloured spots",
+   "limit": 105,
+   "runs": {
+    "default": 5,
+    "fixed": 10
+   }
+  },
+  {
+   "file": "pick-and-place-bench/level-3.v1.json",
+   "id": "pick-and-place-bench-3",
+   "version": 1,
+   "sha256": "38c65bf72c80dc7e8ff91493dd5cad4055fbcf0897c60a38dafea3af1f882796",
+   "current": true,
+   "title": "Pick and place bench · Level 3: From the conveyor",
+   "limit": 105,
+   "runs": {
+    "default": 5,
+    "fixed": 10
+   }
+  }
+ ]
+}

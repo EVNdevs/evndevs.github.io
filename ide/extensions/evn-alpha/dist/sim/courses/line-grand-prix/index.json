@@ -1,0 +1,32 @@
+{
+ "format": "evn-course-index/1",
+ "generated": "node scripts/course_index.js --write; do not edit",
+ "levels": [
+  {
+   "file": "line-grand-prix/level-1.v1.json",
+   "id": "line-grand-prix-1",
+   "version": 1,
+   "sha256": "216dbedc4ff127868829d2b3043953a66d02c9837010c4e31f3e0ac13e7cb7d0",
+   "current": true,
+   "title": "Line grand prix · Level 1: Flowing loop",
+   "limit": 43.3,
+   "runs": {
+    "default": 5,
+    "fixed": 10
+   }
+  },
+  {
+   "file": "line-grand-prix/level-2.v1.json",
+   "id": "line-grand-prix-2",
+   "version": 1,
+   "sha256": "6aaed5598eddd69c9b8c2232163e7fa40cddc37d5f6908ab1908fdc611cd5fff",
+   "current": true,
+   "title": "Line grand prix · Level 2: Hairpins",
+   "limit": 49.6,
+   "runs": {
+    "default": 5,
+    "fixed": 10
+   }
+  }
+ ]
+}

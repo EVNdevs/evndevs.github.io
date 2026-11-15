@@ -1,0 +1,144 @@
+{
+  "format": "evn-course/1",
+  "id": "line-grand-prix-2",
+  "challenge": "line-grand-prix",
+  "level": 2,
+  "version": 1,
+  "module": "G9.3",
+  "title": "Line grand prix \u00b7 Level 2: Hairpins",
+  "brief": "A 5.6 m loop with two 180 degree hairpins of radius 100 mm and an S-bend: a long loop whose two legs run 200 mm apart, a hairpin at each end, the S in its middle taken by both legs. The robot starts on the line at the south leg's west end, heading east (anticlockwise), within 10 mm and 5 degrees. A 19 mm black line on white. The robot is G9.3's line racer (EV3 Large on 81.6 mm wheels, four colour sensors in a row 70 mm ahead of the axle, +27, +9, -9, -27 mm left, 8 mm up); a run on a changed robot is not this level's. One lap with a flying start: the clock starts when the robot's centre first crosses the start line, 350 mm along the line ahead of the start, and stops when it crosses it again a lap later, which ends the run. The lap is valid if the robot's centre never strays more than 120 mm from the line and the line is never under none of the sensors' footprints (a disc round each, its radius the sensor's height) for more than 0.3 s at a time, read on every 1 ms tick from the start line's crossing; the first tick that breaks either rule ends the run, and so does the lap's clock passing 3 x par (not valid). Score: 100 x min(1, par / T) for a valid lap, else 0. Par 13.2 s (the reference's mean lap). Pass: a mean of at least 60 with 8 of 10 runs valid.",
+  "field": {
+    "arena": {
+      "size": [
+        3150,
+        1200
+      ],
+      "startBox": [
+        380,
+        630,
+        420,
+        670
+      ],
+      "goal": null,
+      "obstacles": [],
+      "wallH": 100,
+      "wallT": 20,
+      "obstacleH": 60,
+      "startPaint": false,
+      "lines": [
+        {
+          "name": "track",
+          "path": [
+            [
+              "S",
+              1000
+            ],
+            [
+              "A",
+              400,
+              -45
+            ],
+            [
+              "A",
+              400,
+              45
+            ],
+            [
+              "S",
+              857.52
+            ],
+            [
+              "A",
+              100,
+              180
+            ],
+            [
+              "S",
+              857.52
+            ],
+            [
+              "A",
+              200,
+              -45
+            ],
+            [
+              "A",
+              600,
+              45
+            ],
+            [
+              "S",
+              1000
+            ],
+            [
+              "A",
+              100,
+              180
+            ]
+          ],
+          "at": [
+            350,
+            650,
+            0
+          ],
+          "line": 19,
+          "paint": "black",
+          "startLine": 400
+        }
+      ]
+    }
+  },
+  "robot": {
+    "rule": "fixed",
+    "base": "line-racer"
+  },
+  "start": {
+    "nominal": {
+      "x": 400,
+      "y": 650,
+      "heading": 0
+    },
+    "vary": {
+      "xy": 10,
+      "heading": 5
+    },
+    "draw": "uniform-square-v1"
+  },
+  "runs": {
+    "min": 1,
+    "max": 20,
+    "default": 5,
+    "fixed": 10
+  },
+  "kernel": {
+    "name": "pointToPoint",
+    "limitS": 49.6,
+    "goal": "footprintInside",
+    "final": "runEnd",
+    "line": {
+      "line": "track",
+      "laps": 1,
+      "offMm": 120,
+      "lostS": 0.3,
+      "maxLapS": 39.6
+    }
+  },
+  "constants": {
+    "par": 13.2
+  },
+  "score": {
+    "run": "if(lapValid, 100 * min(1, par / lapTime), 0)",
+    "summary": "round(sum(r in runs: r.points) / count(r in runs: true), 1)"
+  },
+  "pass": "score >= 60 & count(r in runs: r.lapValid) >= 0.8 * n",
+  "sources": [
+    {
+      "doc": "docs/curriculum/G09.md",
+      "where": "G9.3 Line grand prix, the challenge paragraph and the level table, level 2 (5.6 m, two hairpins of radius 100 mm and an S-bend)"
+    },
+    {
+      "doc": "vscode-evn-alpha/docs/COURSE_FORMAT_DESIGN.md",
+      "where": "\u00a720 item 11: arena.lines, kernel.line, G9.3 L1-L2 (lane e1-line, docs/session/2026-11-13_e1-line/)"
+    }
+  ]
+}

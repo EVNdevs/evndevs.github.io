@@ -14,13 +14,15 @@ In VS Code and in the browser IDE alike:
 - **EVN: Open REPL** in the command palette.
 
 The REPL opens in the *EVN ALPHA* terminal. It also follows every **Run** (setting `evn.replAfterRun`, on by
-default): when your program ends, the terminal stays at the prompt with the program's variables still there, so you
+default). When your program ends, the terminal stays at the prompt with the program's variables still there, so you
 can look at them.
 
 **Leave it with Ctrl-]** (Ctrl and the closing square bracket). Leaving coasts every motor and closes the terminal.
-Closing the terminal's tab does the same. In the browser IDE, closing or reloading the browser tab is the exception:
-the browser gives the page no time to send anything, so a motor started at the REPL keeps its last command (press
-the board's user button, or open the IDE again and stop it).
+Closing the terminal's tab does the same.
+
+In the browser IDE, closing or reloading the browser tab is the exception. The browser gives the page no time to send
+anything, so a motor started at the REPL keeps its last command. Press the board's user button, or open the IDE again
+and stop it.
 
 While the REPL is open it holds the board's port: the *Board* view stops updating and the live console waits. Run,
 Upload and the other commands close the REPL first and take the port themselves.
@@ -53,16 +55,25 @@ also completes a name you have started.
 
 ## Motors at the REPL
 
-A program run from the extension ends with every motor coasting. Lines typed at the REPL have no such end: a motor
-keeps its last command (`m.run(300)` keeps it turning) until you `stop()` or `close()` it, call `evn.stop_all()`,
-press Ctrl-C or Ctrl-D, press the user button, or leave the REPL. A block such as `with Motor(1) as m:` coasts its
+A program run from the extension ends with every motor coasting. Lines typed at the REPL have no such end. A motor
+keeps its last command (`m.run(300)` keeps it turning) until you:
+
+- `stop()` or `close()` it;
+- call `evn.stop_all()`;
+- press Ctrl-C or Ctrl-D;
+- press the user button;
+- or leave the REPL.
+
+A block such as `with Motor(1) as m:` coasts its
 motor when the block ends.
 
 ## The friendly REPL and the raw REPL
 
 The prompt you type at is the **friendly REPL**: it echoes what you type, completes names and indents blocks. The
 extension also uses a second mode, the **raw REPL**, to send whole programs and files to the board (Run, Upload,
-the live console, *Files on the board*). You never need to type in it. If a terminal ever shows
+the live console, *Files on the board*). You never need to type in it.
+
+If a terminal ever shows
 `raw REPL; CTRL-B to exit` and a bare `>`, press **Ctrl-B** to get the friendly prompt back.
 
 ## The REPL, the command line and the Console view
@@ -82,7 +93,7 @@ The command line and the Console view run on top of the live console: see
 
 ## The REPL elsewhere
 
-- **Over Bluetooth:** with an EVN Bluetooth module, `bt.repl(True)` puts the REPL on the module, and the PC's
+- **Over Bluetooth:** with an EVN Bluetooth module, `bt.repl(True)` puts the REPL on the module. The PC's
   Bluetooth COM port carries the prompt, Run and Stop ([Bluetooth](API_DISPLAYS.md#bluetooth--bluetooth-module-hc-05);
   [Working without the USB cable](BLUETOOTH.md)).
 - **On an OLED:** `Display(port).mirror(True)` copies everything the REPL prints to the display

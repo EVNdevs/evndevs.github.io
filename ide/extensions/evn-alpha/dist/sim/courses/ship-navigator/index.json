@@ -1,0 +1,32 @@
+{
+ "format": "evn-course-index/1",
+ "generated": "node scripts/course_index.js --write; do not edit",
+ "levels": [
+  {
+   "file": "ship-navigator/level-1.v1.json",
+   "id": "ship-navigator-1",
+   "version": 1,
+   "sha256": "cce97448489037a3e7385588e3227efeea9af1ac1bf0ccb7d109bcfa84081d41",
+   "current": true,
+   "title": "Ship navigator · Level 1: Sailing orders",
+   "limit": 60,
+   "runs": {
+    "default": 5,
+    "fixed": 5
+   }
+  },
+  {
+   "file": "ship-navigator/level-3.v1.json",
+   "id": "ship-navigator-3",
+   "version": 1,
+   "sha256": "aa86a32a1793f4613170d215d2dec5376915e8ee734be1dd9ffba9f36dac643c",
+   "current": true,
+   "title": "Ship navigator · Level 3: Five buoys",
+   "limit": 60,
+   "runs": {
+    "default": 5,
+    "fixed": 5
+   }
+  }
+ ]
+}

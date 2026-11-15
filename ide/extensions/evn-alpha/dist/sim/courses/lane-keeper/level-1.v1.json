@@ -1,0 +1,109 @@
+{
+  "format": "evn-course/1",
+  "id": "lane-keeper-1",
+  "challenge": "lane-keeper",
+  "level": 1,
+  "version": 1,
+  "module": "G10.3",
+  "title": "Lane keeper \u00b7 Level 1: Two laps",
+  "brief": "A lane of two 25 mm black lines, 300 mm apart centre to centre, round a 6 m stadium loop (two 1743 mm straights, two half circles of radius 400 mm). The robot starts on the lane's centre at the south straight's west end, heading east (anticlockwise round the loop), within 30 mm and 5 degrees. Practice: the lap judge (laps, departures, the score against par 20.9 s) comes with kernel.lane; until then every run scores 0 and the level has no pass rule.",
+  "field": {
+    "arena": {
+      "size": [
+        3000,
+        1300
+      ],
+      "startBox": [
+        578.5,
+        200,
+        678.5,
+        300
+      ],
+      "goal": null,
+      "obstacles": [],
+      "wallH": 100,
+      "wallT": 20,
+      "obstacleH": 60,
+      "startPaint": false,
+      "lanes": [
+        {
+          "name": "lane",
+          "path": [
+            [
+              "S",
+              1743
+            ],
+            [
+              "A",
+              400,
+              180
+            ],
+            [
+              "S",
+              1743
+            ],
+            [
+              "A",
+              400,
+              180
+            ]
+          ],
+          "at": [
+            628.5,
+            250,
+            0
+          ],
+          "width": 300,
+          "line": 25,
+          "paint": "black",
+          "startLine": 300
+        }
+      ]
+    }
+  },
+  "robot": {
+    "rule": "learner"
+  },
+  "start": {
+    "nominal": {
+      "x": 628.5,
+      "y": 250,
+      "heading": 0
+    },
+    "vary": {
+      "xy": 30,
+      "heading": 5
+    },
+    "draw": "uniform-square-v1"
+  },
+  "runs": {
+    "min": 1,
+    "max": 20,
+    "default": 5,
+    "fixed": 10
+  },
+  "kernel": {
+    "name": "pointToPoint",
+    "limitS": 90,
+    "goal": "footprintInside",
+    "final": "runEnd"
+  },
+  "constants": {
+    "par": 20.9
+  },
+  "score": {
+    "run": "0",
+    "summary": "round(sum(r in runs: r.points) / count(r in runs: true), 1)"
+  },
+  "pass": null,
+  "sources": [
+    {
+      "doc": "docs/curriculum/G10.md",
+      "where": "G10.3 Lane keeper, the challenge paragraph and the level table, level 1 (the practice pars, OQ 165: 20.9 s, ruled 2026-11-07)"
+    },
+    {
+      "doc": "vscode-evn-alpha/docs/COURSE_CONTENT_DESIGN.md",
+      "where": "\u00a75.3 Lane keeper (arena.lanes, path.ts); \u00a77 CC-11 (OQ 355-357: docs/session/2026-11-09_cc11/owner_items.md)"
+    }
+  ]
+}

@@ -1,0 +1,84 @@
+{
+ "format": "evn-course-index/1",
+ "generated": "node scripts/course_index.js --write; do not edit",
+ "levels": [
+  {
+   "file": "maze-runner/level-1.v1.json",
+   "id": "maze-runner-1",
+   "version": 1,
+   "sha256": "7c2bb9d055ef66a645c109b3e7ac1cd97978a2f22a15f0cf5300ac3cdd1d45ca",
+   "current": false,
+   "title": "Maze runner · Level 1: One corridor",
+   "limit": 120,
+   "runs": {
+    "default": 5,
+    "fixed": 5
+   }
+  },
+  {
+   "file": "maze-runner/level-1.v2.json",
+   "id": "maze-runner-1",
+   "version": 2,
+   "sha256": "51f00bdf4732048fe292feac0c180e426c867790af959e035b2910ac69652cbd",
+   "current": true,
+   "title": "Maze runner · Level 1: One corridor",
+   "limit": 120,
+   "runs": {
+    "default": 5,
+    "fixed": 5
+   }
+  },
+  {
+   "file": "maze-runner/level-2.v1.json",
+   "id": "maze-runner-2",
+   "version": 1,
+   "sha256": "c68d5e794577c826e5a0a5afd3612f1f62ea7cb413c9c6429eb588c1ebb49b99",
+   "current": false,
+   "title": "Maze runner · Level 2: A dead end",
+   "limit": 120,
+   "runs": {
+    "default": 5,
+    "fixed": 5
+   }
+  },
+  {
+   "file": "maze-runner/level-2.v2.json",
+   "id": "maze-runner-2",
+   "version": 2,
+   "sha256": "ab8e2292acb9944e02c723819cd07cafd9c755dcfef4d885dda6c1a5445a58e3",
+   "current": true,
+   "title": "Maze runner · Level 2: A dead end",
+   "limit": 120,
+   "runs": {
+    "default": 5,
+    "fixed": 5
+   }
+  },
+  {
+   "file": "maze-runner/level-3.v1.json",
+   "id": "maze-runner-3",
+   "version": 1,
+   "sha256": "14d61029905ee9807b0cdded14d6179f477d5ebafd340d96c1851c3cac354ba1",
+   "current": false,
+   "title": "Maze runner · Level 3: The island",
+   "limit": 120,
+   "runs": {
+    "default": 5,
+    "fixed": 5
+   }
+  },
+  {
+   "file": "maze-runner/level-3.v2.json",
+   "id": "maze-runner-3",
+   "version": 2,
+   "sha256": "005248ec67d0136e78fbff9ad258fc46e6f1244f69eec0efa6652bb6b0efd8ba",
+   "current": true,
+   "title": "Maze runner · Level 3: The island",
+   "limit": 120,
+   "runs": {
+    "default": 5,
+    "fixed": 5
+   }
+  }
+ ]
+}
