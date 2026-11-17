@@ -87,7 +87,7 @@ const ENTRANCE_TURN = 0.3;                                   // the board turns 
 const SCENE_MOTION = {
   motors: { mode: 'plugs', from: 0.55 },
   sensors: { mode: 'above', from: 0.45 },
-  robot: { mode: 'above', whole: true, from: 0.7 },
+  robot: { mode: 'above', whole: true, from: 0.35 },                // straight up the screen (sceneItems it.view): 0.7 left over the top
   code: { mode: 'behind', whole: true, from: 0.8, usb: true, screenOn: true },   // usb: plugged in, it lights the board's green LED
   simulator: { mode: 'behind', whole: true, from: 0.8, screenOn: true },          // screenOn: a laptop's screen is never dark
   displays: { mode: 'above', from: 0.45 }
@@ -594,10 +594,25 @@ function sceneItems(group, key, model, boardRoot) {
     if (it.hover) { motorSpin(it); }
     /* each node's travel and hover lift in its parent's frame */
     it.recs = it.nodes.map((n) => ({ n, base: n.position.clone(), d: vecIn(group, n.parent, it.dir.clone().multiplyScalar(it.dist)),
-                                     lift: vecIn(group, n.parent, up.clone().multiplyScalar(0.025 * L)) }));
+                                     lift: vecIn(group, n.parent, up.clone().multiplyScalar(0.025 * L)),
+                                     gp: cfg.whole ? linIn(group, n.parent) : null }));
+    /* a scene that moves as one piece (a laptop, the drive base) travels along a direction fixed on the screen, not on the
+       board: a laptop straight away from the camera (it recedes as it fades, and comes forward out of the distance), the
+       drive base straight up. "Behind the board" pointed largely toward the camera at those poses, and the board turns up
+       to 100 degrees on the way into and out of the drive base, so the laptops swung past the window's right edge and the
+       drive base dropped in over the top-left one (the owner, 2026-11-17: "the transitions to and from scene 4 (lego
+       technic) fly out of the screen before flying back in"). The camera looks along -z */
+    if (cfg.whole) { it.view = { rg: linIn(boardRoot, group), screen: cfg.mode === 'behind' ? new THREE.Vector3(0, 0, -1) : new THREE.Vector3(0, 1, 0) }; }
   }
   return items;
 }
+/* the linear part (rotation and scale) of the map from `from`'s frame to `to`'s, as it stands */
+function linIn(from, to) {
+  from.updateMatrixWorld(true);
+  to.updateMatrixWorld(true);
+  return new THREE.Matrix3().setFromMatrix4(to.matrixWorld.clone().invert().multiply(from.matrixWorld));
+}
+const vqA = new THREE.Quaternion(), vdP = new THREE.Vector3();
 /* a motor under the pointer turns its output: the EV3 motors' red hub and the NXT motor's orange hub are their own
    primitives (their own meshes once loaded), round in two of their box's sides: each turns about the third, through its
    centre. The gearmotor's "shaft" primitive turns about its long side, on the line through its gearbox's centre. A motor
@@ -1633,10 +1648,20 @@ export async function start(stage, opts) {
         const pr = it.key === 'rest' || n < 2 ? ins : clamp01((ins - (j++) * STAGGER / (n - 1)) / (1 - STAGGER));
         it.prog = pr;
         const off = 1 - ease(pr);
-        it.offG.copy(it.dir).multiplyScalar(it.dist * off);
-        for (const r of it.recs) {
-          r.n.position.copy(r.base).addScaledVector(r.d, off).addScaledVector(r.lift, ease(it.hov));
-          r.n.visible = pr > 0;
+        if (it.view) {
+          /* the screen's direction in the board's frame as the board stands now, then in the scene's */
+          boardRoot.getWorldQuaternion(vqA).invert();
+          it.offG.copy(it.view.screen).applyQuaternion(vqA).applyMatrix3(it.view.rg).normalize().multiplyScalar(it.dist * off);
+          for (const r of it.recs) {
+            r.n.position.copy(r.base).add(vdP.copy(it.offG).applyMatrix3(r.gp)).addScaledVector(r.lift, ease(it.hov));
+            r.n.visible = pr > 0;
+          }
+        } else {
+          it.offG.copy(it.dir).multiplyScalar(it.dist * off);
+          for (const r of it.recs) {
+            r.n.position.copy(r.base).addScaledVector(r.d, off).addScaledVector(r.lift, ease(it.hov));
+            r.n.visible = pr > 0;
+          }
         }
         /* fading in over the first ITEM_FADE of its way in, out over the last of its way out */
         paintItem(it, pr >= 1 ? 1 : easeOut(clamp01(pr / ITEM_FADE)));
