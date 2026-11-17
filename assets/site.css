@@ -477,6 +477,15 @@ a.shot:hover { text-decoration: none; border-color: var(--accent); }
 .chapter-link { display: inline-block; margin-top: 16px; color: var(--st-accent); font-weight: 500; text-decoration: underline; text-underline-offset: 4px; }
 .chapter-link:hover { color: #ddd0b8; }
 .chapter-note { margin: 14px 0 0; font-size: 13px; color: var(--st-muted); }
+/* chapter 05's course buttons (site.js simCourses): which run the simulator clip shows; the one shown filled */
+.sim-courses { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0 0; }
+.sim-course {
+  font: inherit; font-size: 14px; line-height: 1.2; padding: 7px 13px; border-radius: 999px; cursor: pointer;
+  border: 1px solid var(--st-line); background: rgba(255, 255, 255, .04); color: var(--st-muted);
+}
+.sim-course:hover { color: var(--st-ink); border-color: rgba(255, 255, 255, .32); }
+.sim-course[aria-pressed="true"] { color: #12161a; background: var(--st-accent); border-color: var(--st-accent); }
+.sim-course:focus-visible { outline: 2px solid var(--st-accent); outline-offset: 2px; }
 /* the chapters rise into place as they arrive (with motion only; without it they are simply there) */
 @media (prefers-reduced-motion: no-preference) {
   .js-reveal .chapter-card { opacity: 0; transform: translateY(28px); transition: opacity .7s ease, transform .7s ease; }

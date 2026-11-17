@@ -896,6 +896,47 @@
      (hero3d.js marks the chapter has-3d once its scene is in). The owner, 2026-11-10: "The home page looks to be missing the
      renders". */
   var STAGE_STILL = { src: 'assets/images/stage-board.webp', width: 1280, height: 913 };
+  /* Chapter 05's clips (the owner, 2026-11-17: "re-record. also let's allow user to select between 3 different courses"):
+     the simulator's 3D view of one run each, recorded from the Simulator panel's own page after the panel's stall fix
+     (0.2.77), the simulation at 0.5x and the clip at 2x its run time (a "2x speed" label in each), looped whole: a
+     RoboCup Junior Rescue Line field, the WRO RoboMission Junior table (on the simulator's schematic floor: WRO's mat
+     artwork is never shown) and one of the curriculum's challenges, the EVN Cup mission (the owner: "1 RoboCup (done),
+     wro junior, and 1 of the curriculum challenges"). Their programs and how they were
+     taken: docs/session/2026-11-17_simclips/README.md. The first is shown until the visitor picks another (the course
+     buttons in the chapter's card); hero3d.js plays the same list on its laptop (start()'s opts.simClips) */
+  var SIM_CLIPS = [
+    { key: 'rcj', label: 'RoboCup Rescue Line', poster: 'assets/images/sim-rcj.webp',
+      sources: [['assets/video/sim-rcj.webm', 'video/webm'], ['assets/video/sim-rcj.mp4', 'video/mp4']] },
+    { key: 'junior', label: 'WRO Junior', poster: 'assets/images/sim-junior.webp',
+      sources: [['assets/video/sim-junior.webm', 'video/webm'], ['assets/video/sim-junior.mp4', 'video/mp4']] },
+    { key: 'cup', label: 'EVN Cup mission', poster: 'assets/images/sim-cup.webp',
+      sources: [['assets/video/sim-cup.webm', 'video/webm'], ['assets/video/sim-cup.mp4', 'video/mp4']] }
+  ];
+  var simClip = 0;                                   // the clip shown (SIM_CLIPS index): the course buttons set it
+  /* a course button pressed: every button's state, the stage's mark, and the clips told (chapterScreen, hero3d.js) */
+  function chooseSimClip(i) {
+    if (i === simClip) { return; }
+    simClip = i;
+    document.querySelectorAll('.sim-course').forEach(function (b) { b.setAttribute('aria-pressed', Number(b.getAttribute('data-clip')) === i ? 'true' : 'false'); });
+    var stage = document.querySelector('.stage');
+    if (stage) { stage.setAttribute('data-sim-clip', SIM_CLIPS[i].key); }
+    document.dispatchEvent(new CustomEvent('evnsimclip', { detail: { index: i } }));
+  }
+  /* the course buttons, in chapter 05's card under its words: real buttons, one pressed (aria-pressed), in the tab order */
+  function simCourses() {
+    var g = el('div', 'sim-courses');
+    g.setAttribute('role', 'group');
+    g.setAttribute('aria-label', 'The course the simulator clip shows');
+    SIM_CLIPS.forEach(function (c, i) {
+      var b = el('button', 'sim-course', c.label);
+      b.type = 'button';
+      b.setAttribute('data-clip', String(i));
+      b.setAttribute('aria-pressed', i === simClip ? 'true' : 'false');
+      b.addEventListener('click', function () { chooseSimClip(i); });
+      g.appendChild(b);
+    });
+    return g;
+  }
   var CHAPTER_STILLS = {
     motors: { src: 'assets/images/chapter-motors.webp', width: 1280, height: 892,
       alt: 'The EVN ALPHA board with LEGO MINDSTORMS EV3 and NXT motors and a small gearmotor plugged into its four motor ports.' },
@@ -906,14 +947,13 @@
     technic: { src: 'assets/images/chapter-robot.webp', width: 1224, height: 804,
       alt: 'A two-wheeled competition robot built from LEGO Technic parts around the EVN ALPHA board.' },
     simulator: { src: 'assets/images/chapter-sim.webp', width: 1280, height: 1075,
-      alt: 'A laptop running the EVN robot simulator in 3D: a robot following the line on a RoboCup Junior Rescue Line course.',
-      /* its screen shows the simulator's 3D view on the full Rescue Line course (owner, 2026-11-11: "use the 3d view instead
-         of the 2d"): the clip's first frame over the render's screen (its box in % of the render, measured on
-         chapter-sim.webp: 889 x 534 px at 194, 89), and the clip itself where motion is welcome (chapterScreen) */
-      screen: { box: [15.16, 8.28, 69.45, 49.67], poster: 'assets/images/sim-rcj.webp',
-        sources: [['assets/video/sim-rcj.webm', 'video/webm'], ['assets/video/sim-rcj.mp4', 'video/mp4']], loop: [0, 14.3],
-        /* the clip's playback speed as recorded: a sped-up retake (the owner, 2026-11-11: the full course "sped up if needed
-           and marked as sped up", a "2x speed" label in the clip itself) sets it, and the render's alt then says so */
+      alt: 'A laptop running the EVN robot simulator in 3D: a robot running the course chosen beside it: the RoboCup Junior Rescue Line field, the WRO RoboMission Junior table or the EVN Cup mission challenge.',
+      /* its screen shows the simulator's 3D view (owner, 2026-11-11: "use the 3d view instead of the 2d"): the chosen
+         clip's first frame over the render's screen (its box in % of the render, measured on chapter-sim.webp: 889 x 534 px
+         at 194, 89), and the clip itself where motion is welcome (chapterScreen) */
+      screen: { box: [15.16, 8.28, 69.45, 49.67], clips: SIM_CLIPS,
+        /* the clips' playback speed as recorded (the owner, 2026-11-11: "sped up if needed and marked as sped up", a
+           "2x speed" label in each clip): the render's alt then says so */
         speed: 2 } }
   };
 
@@ -928,10 +968,11 @@
     box.style.left = b[0] + '%'; box.style.top = b[1] + '%'; box.style.width = b[2] + '%'; box.style.height = b[3] + '%';
     /* scaled with the render (site.css: 12 % larger from 761 px) about the render's own centre */
     box.style.transformOrigin = ((50 - b[0]) / b[2] * 100).toFixed(2) + '% ' + ((50 - b[1]) / b[3] * 100).toFixed(2) + '%';
+    var cur = function () { return scr.clips[simClip] || scr.clips[0]; };
     var poster = el('img', 'chapter-screen-still');
-    poster.src = scr.poster;
+    poster.src = cur().poster;
     poster.width = 1280;
-    poster.height = 770;
+    poster.height = 768;
     poster.alt = '';
     poster.loading = 'lazy';
     poster.decoding = 'async';
@@ -943,7 +984,7 @@
     function sync() {
       if (!video) { return; }
       var shown = inView && box.offsetParent !== null && getComputedStyle(fig).opacity !== '0';
-      if (shown && !userPaused) { if (video.currentTime < scr.loop[0]) { video.currentTime = scr.loop[0]; } video.play().catch(function () {}); }
+      if (shown && !userPaused) { video.play().catch(function () {}); }
       else { video.pause(); }
       btn.setAttribute('aria-pressed', userPaused ? 'false' : 'true');
       btn.setAttribute('aria-label', userPaused ? 'Play the simulator clip' : 'Pause the simulator clip');
@@ -952,10 +993,8 @@
       video = el('video', 'chapter-screen-clip');
       video.muted = true; video.defaultMuted = true; video.playsInline = true; video.loop = false; video.preload = 'auto';
       video.setAttribute('muted', ''); video.setAttribute('playsinline', ''); video.setAttribute('aria-hidden', 'true');
-      video.poster = scr.poster;
-      scr.sources.forEach(function (s) { var so = el('source'); so.src = s[0]; so.type = s[1]; video.appendChild(so); });
-      video.addEventListener('timeupdate', function () { if (video.currentTime >= scr.loop[1]) { video.currentTime = scr.loop[0]; } });
-      video.addEventListener('ended', function () { video.currentTime = scr.loop[0]; sync(); });
+      sources();
+      video.addEventListener('ended', function () { video.currentTime = 0; sync(); });       // looped whole
       video.addEventListener('playing', function () { box.classList.add('playing'); });
       box.appendChild(video);
       btn = el('button', 'stage-run chapter-screen-pause');
@@ -965,6 +1004,23 @@
       btn.addEventListener('click', function () { userPaused = !userPaused; sync(); });
       box.appendChild(btn);
     }
+    /* the chosen clip's file and first frame on the video */
+    function sources() {
+      while (video.firstChild) { video.removeChild(video.firstChild); }
+      video.poster = cur().poster;
+      cur().sources.forEach(function (s) { var so = el('source'); so.src = s[0]; so.type = s[1]; video.appendChild(so); });
+    }
+    /* a course button: the new clip's first frame at once, its file loaded and played where the old one played */
+    function onChoose() {
+      if (!box.isConnected) { document.removeEventListener('evnsimclip', onChoose); return; }
+      poster.src = cur().poster;
+      if (!video) { return; }
+      box.classList.remove('playing');
+      sources();
+      video.load();
+      sync();
+    }
+    document.addEventListener('evnsimclip', onChoose);
     /* the 3D layer running on a wide screen (it loads the chapter's scene as it comes near, and plays the clip on its
        own laptop): leave the clip to it, not fetched twice */
     function threeD() {                                    // looked up when asked: the figure joins the page after this runs
@@ -1028,7 +1084,8 @@
           return import(new URL('assets/hero3d.js', document.baseURI).href).then(function (m) {
             /* ?evn3d=keep (screen captures on a software renderer only): keep the layer even if its first frames are slow */
             if (!stage.isConnected) { return; }
-            return m.start(stage, { models: models, keepSlow: /[?&]evn3d=keep\b/.test(location.search) }).then(function (h) {
+            return m.start(stage, { models: models, keepSlow: /[?&]evn3d=keep\b/.test(location.search),
+              simClips: SIM_CLIPS, simClip: function () { return simClip; } }).then(function (h) {
               if (stage.isConnected) { stageHandle = h; } else { h.stop('left'); }
             });
           });
@@ -1185,6 +1242,7 @@
     var stage = el('section', 'stage');
     stage.setAttribute('aria-label', 'EVN ALPHA');
     stage.setAttribute('data-3d', 'still');
+    stage.setAttribute('data-sim-clip', SIM_CLIPS[simClip].key);    // the clip chapter 05 shows (chooseSimClip)
     var vis = el('div', 'stage-visual');
     vis.setAttribute('aria-hidden', 'true');
     var still = el('img', 'stage-still');
@@ -1256,6 +1314,7 @@
       h.id = ch.id + '-h';
       card.appendChild(h);
       card.appendChild(el('p', 'chapter-text', c[3]));
+      if (CHAPTER_STILLS[c[0]] && CHAPTER_STILLS[c[0]].screen && CHAPTER_STILLS[c[0]].screen.clips) { card.appendChild(simCourses()); }
       if (c[4]) { card.appendChild(linkTo(el('a', 'chapter-link', c[4][0]), c[4][1])); }
       if (c[5]) { card.appendChild(el('p', 'chapter-note', c[5])); }
       cw.appendChild(card);

@@ -1325,20 +1325,19 @@ function buildFollower(model, group, pose, ownBox, mmU) {
 }
 
 /* ---- the simulator chapter's laptop screen (owner, 2026-11-11: "For the robot on the oval track in the simulator, is
-   it supposed to be a video on mobile? Also use the 3d view instead of the 2d"): the simulator's 3D view of a robot
-   following the line on the full RoboCup Junior Rescue Line course, a 12 s clip the Razer recorded (data/screens/
-   sim_rcj_clip.*, 1 s spare each end: SCREEN_CLIP.loop plays the middle 10 s), on the laptop's screen as a video
-   texture; its first frame (assets/images/sim-rcj.webp) until the clip can play. It plays while the scene is in view and
-   until the visitor pauses it (a real button, WCAG 2.2.2: moving content over 5 s that starts on its own can be paused);
-   muted, loaded only when this scene loads. Phones and the photo layout have the same clip over the chapter's render
-   (site.js chapterScreen) */
+   it supposed to be a video on mobile? Also use the 3d view instead of the 2d"; 2026-11-17: "re-record. also let's allow
+   user to select between 3 different courses"): the simulator's 3D view of a run, the clip the visitor chose with the
+   course buttons in chapter 05's card (site.js SIM_CLIPS, given as start()'s opts.simClips; the course buttons send
+   `evnsimclip`), on the laptop's screen as a video texture, looped whole; the chosen clip's first frame until it can
+   play. It plays while the scene is in view and until the visitor pauses it (a real button, WCAG 2.2.2: moving content
+   over 5 s that starts on its own can be paused); muted, loaded only when this scene loads. Phones and the photo layout
+   have the same clips over the chapter's render (site.js chapterScreen) */
 const SCREEN_CLIP = {
   scene: 'simulator',
-  poster: 'assets/images/sim-rcj.webp',
-  sources: [['assets/video/sim-rcj.webm', 'video/webm'], ['assets/video/sim-rcj.mp4', 'video/mp4']],
-  loop: [0, 14.3]
+  /* the clips when start() is given none (site.js always gives SIM_CLIPS) */
+  clips: [{ key: 'rcj', poster: 'assets/images/sim-rcj.webp', sources: [['assets/video/sim-rcj.webm', 'video/webm'], ['assets/video/sim-rcj.mp4', 'video/mp4']] }]
 };
-function screenClip(group) {
+function screenClip(group, clips, first) {
   let screen = null;
   group.traverse((o) => { if (!screen && o.isMesh && [].concat(o.material).some((m) => m && m.name === 'screen')) { screen = o; } });
   if (!screen) { return null; }
@@ -1350,43 +1349,65 @@ function screenClip(group) {
     if (old) { t.offset.copy(old.offset); t.repeat.copy(old.repeat); t.rotation = old.rotation; t.center.copy(old.center); }
     return t;
   };
-  new THREE.TextureLoader().load(new URL(SCREEN_CLIP.poster, document.baseURI).href, (t) => {
-    if (sc.live) { t.dispose(); return; }
-    mat.emissiveMap = fit(t); mat.needsUpdate = true; sc.changed = true;
-  });
+  /* a clip's first frame on the screen, until that clip plays (each loaded once) */
+  const posters = new Map();
+  function showPoster(i) {
+    const put = (t) => { if (sc.index !== i || sc.playing) { return; } mat.emissiveMap = t; mat.needsUpdate = true; sc.changed = true; };
+    if (posters.has(i)) { put(posters.get(i)); return; }
+    new THREE.TextureLoader().load(new URL(clips[i].poster, document.baseURI).href, (t) => { posters.set(i, fit(t)); put(t); });
+  }
   const video = document.createElement('video');
   video.muted = true; video.defaultMuted = true; video.playsInline = true; video.preload = 'auto';
   video.setAttribute('muted', ''); video.setAttribute('playsinline', '');
-  for (const [src, type] of SCREEN_CLIP.sources) {
-    const so = document.createElement('source');
-    so.src = new URL(src, document.baseURI).href; so.type = type;
-    video.appendChild(so);
+  function sources(i) {
+    while (video.firstChild) { video.firstChild.remove(); }
+    for (const [src, type] of clips[i].sources) {
+      const so = document.createElement('source');
+      so.src = new URL(src, document.baseURI).href; so.type = type;
+      video.appendChild(so);
+    }
   }
-  video.addEventListener('timeupdate', () => { if (video.currentTime >= SCREEN_CLIP.loop[1]) { video.currentTime = SCREEN_CLIP.loop[0]; } });
-  video.addEventListener('ended', () => { video.currentTime = SCREEN_CLIP.loop[0]; if (sc.want) { video.play().catch(() => {}); } });
+  video.addEventListener('ended', () => { video.currentTime = 0; if (sc.want) { video.play().catch(() => {}); } });   // looped whole
   video.addEventListener('playing', () => {
-    if (sc.live) { return; }
-    const vt = fit(new THREE.VideoTexture(video));
-    if (mat.emissiveMap && mat.emissiveMap !== old) { mat.emissiveMap.dispose(); }
-    mat.emissiveMap = vt; mat.needsUpdate = true; sc.live = vt; sc.changed = true;
+    sc.playing = true;
+    if (!sc.live) { sc.live = fit(new THREE.VideoTexture(video)); }       // one texture for the video, whichever clip it plays
+    if (mat.emissiveMap !== sc.live) { mat.emissiveMap = sc.live; mat.needsUpdate = true; }
+    sc.changed = true;
   });
   if (!screen.geometry.boundingBox) { screen.geometry.computeBoundingBox(); }
   const lb = screen.geometry.boundingBox;
   const sc = {
-    screen, video, live: null, want: false, userPaused: false, changed: false,
+    screen, video, live: null, want: false, userPaused: false, changed: false, index: Math.max(0, Math.min(clips.length - 1, first || 0)), playing: false,
     corners: [0, 1, 2, 3, 4, 5, 6, 7].map((i) => new THREE.Vector3(i & 1 ? lb.max.x : lb.min.x, i & 2 ? lb.max.y : lb.min.y, i & 4 ? lb.max.z : lb.min.z)),
     /* the scene's share in view: plays while it is mostly in, unless paused; true while frames must be drawn */
     step(ins) {
       const want = ins >= 0.6 && !sc.userPaused;
       if (want !== sc.want) {
         sc.want = want;
-        if (want) { if (video.currentTime < SCREEN_CLIP.loop[0]) { video.currentTime = SCREEN_CLIP.loop[0]; } video.play().catch(() => {}); } else { video.pause(); }
+        if (want) { video.play().catch(() => {}); } else { video.pause(); }
       }
       const ch = sc.changed; sc.changed = false;
       return ch || (want && !video.paused);
     },
-    dispose() { video.pause(); video.removeAttribute('src'); while (video.firstChild) { video.firstChild.remove(); } video.load(); if (sc.live) { sc.live.dispose(); } }
+    /* a course button: the new clip's first frame at once, its file loaded, played where the old one played */
+    choose(i) {
+      if (!(i >= 0 && i < clips.length) || i === sc.index) { return; }
+      sc.index = i; sc.playing = false;
+      video.pause();
+      sources(i);
+      video.load();
+      showPoster(i);
+      if (sc.want) { video.play().catch(() => {}); }
+      sc.changed = true;
+    },
+    dispose() {
+      video.pause(); video.removeAttribute('src'); while (video.firstChild) { video.firstChild.remove(); } video.load();
+      if (sc.live) { sc.live.dispose(); }
+      for (const t of posters.values()) { t.dispose(); }
+    }
   };
+  sources(sc.index);
+  showPoster(sc.index);
   return sc;
 }
 
@@ -1465,6 +1486,8 @@ export async function start(stage, opts) {
   scene.add(rim);
 
   const models = opts && opts.models ? opts.models : null;
+  /* chapter 05's clips (site.js SIM_CLIPS) */
+  const simClips = opts && Array.isArray(opts.simClips) && opts.simClips.length ? opts.simClips : SCREEN_CLIP.clips;
   /* the marketing renders' studio HDRI, turned as they turn it (models.json environment.turn_deg), fetched beside the
      board: nothing is drawn until both are in (owner, 2026-11-11: "lighting shows up awkwardly when first loaded ...
      ensure model loads first?"); the generic room only if it does not load */
@@ -2126,6 +2149,9 @@ export async function start(stage, opts) {
   listenSkip();
   if (canHover) { window.addEventListener('pointermove', onPointer, { passive: true }); }
   document.addEventListener('visibilitychange', onVis);
+  /* a course button in chapter 05's card (site.js chooseSimClip): the laptop's clip follows */
+  const onSimClip = (e) => { if (clip && e && e.detail) { clip.choose(e.detail.index); loop(); } };
+  document.addEventListener('evnsimclip', onSimClip);
   if (motionMq.addEventListener) { motionMq.addEventListener('change', onMotion); }
   if (stackedMq.addEventListener) { stackedMq.addEventListener('change', resize); }
   canvas.addEventListener('webglcontextlost', onLost);
@@ -2156,6 +2182,7 @@ export async function start(stage, opts) {
     unlistenSkip();
     window.removeEventListener('pointermove', onPointer);
     document.removeEventListener('visibilitychange', onVis);
+    document.removeEventListener('evnsimclip', onSimClip);
     if (motionMq.removeEventListener) { motionMq.removeEventListener('change', onMotion); }
     if (stackedMq.removeEventListener) { stackedMq.removeEventListener('change', resize); }
     canvas.removeEventListener('webglcontextlost', onLost);
@@ -2331,7 +2358,9 @@ export async function start(stage, opts) {
          dark panels and halo'd the laptop (the owner, 2026-11-17: "on simulator scene (laptop with video), bloom makes
          video have almost 0 contrast"). What is meant to glow is far above it: the LEDs (LED_EMISSIVE 16), the colour
          sensor's lamp (12 x LAMP_GAIN 3); the OLED (0.875) was already under it */
-      const bloom = new UnrealBloomPass(new THREE.Vector2(r.width, r.height), 0.3, 0.4, 1.5);
+      /* strength 0.12, radius 0.35 (were 0.3, 0.4; the owner, 2026-11-17: "bloom is still too high"): the colour sensor's lamp,
+         the LEDs and the lid's bright edge no longer flare */
+      const bloom = new UnrealBloomPass(new THREE.Vector2(r.width, r.height), 0.12, 0.35, 1.5);
       /* the glow is added to the colour only: its blur writes alpha 1 everywhere, and blended as it ships it made the
          whole canvas opaque over the stage's own background. The scene's alpha is kept, so the glow adds onto the page */
       Object.assign(bloom.blendMaterial, { blending: THREE.CustomBlending, blendEquation: THREE.AddEquation,
@@ -2404,7 +2433,7 @@ export async function start(stage, opts) {
           if (follower) { boardRoot.add(follower.still, follower.board); model.add(follower.moving); }
         }
         /* the simulator scene's laptop: the Rescue Line clip on its screen */
-        if (keyName === SCREEN_CLIP.scene) { clip = screenClip(group); }
+        if (keyName === SCREEN_CLIP.scene) { clip = screenClip(group, simClips, opts && typeof opts.simClip === 'function' ? opts.simClip() : 0); }
         /* what each item is (its key, node count, direction, and a motor's hub turn or twitch): for the captures */
         stage.setAttribute('data-3d-items-' + keyName, items.map((it) => `${it.key}:${it.nodes.length}:${['x', 'y', 'z'].map((a) => Math.round(it.dir[a])).join('')}${it.spin ? ':' + it.spin.kind : ''}`).join(' '));
         group.visible = false;
