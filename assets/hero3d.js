@@ -2104,7 +2104,12 @@ export async function start(stage, opts) {
       /* strength 0.3 (was 0.55): it is on only where the first frames are fast, so the page looked different from one
          load to the next (the owner, 2026-11-11: "bloom is very intense initially on razer, refreshing seems to set it
          back to normal"); gentler, with or without it the page reads the same */
-      const bloom = new UnrealBloomPass(new THREE.Vector2(r.width, r.height), 0.3, 0.4, 0.94);
+      /* threshold 1.5 (was 0.94), in linear light before the tone mapping: the laptops' screens (emissive strength 1.4 in
+         scene_laptop.glb and scene_site_sim.glb) passed it, and the simulator's mostly white field bloomed over its own
+         dark panels and halo'd the laptop (the owner, 2026-11-17: "on simulator scene (laptop with video), bloom makes
+         video have almost 0 contrast"). What is meant to glow is far above it: the LEDs (LED_EMISSIVE 16), the colour
+         sensor's lamp (12 x LAMP_GAIN 3); the OLED (0.875) was already under it */
+      const bloom = new UnrealBloomPass(new THREE.Vector2(r.width, r.height), 0.3, 0.4, 1.5);
       /* the glow is added to the colour only: its blur writes alpha 1 everywhere, and blended as it ships it made the
          whole canvas opaque over the stage's own background. The scene's alpha is kept, so the glow adds onto the page */
       Object.assign(bloom.blendMaterial, { blending: THREE.CustomBlending, blendEquation: THREE.AddEquation,
