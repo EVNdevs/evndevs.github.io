@@ -1399,14 +1399,28 @@
     if (stillTeardown) { stillTeardown(); }
     var still = stage.querySelector('.stage-still'), hero = stage.querySelector('.stage-hero'), vis = stage.querySelector('.stage-visual');
     /* a browser without matchMedia (jsdom, an old one) keeps the wide layout's still where site.css puts it */
-    var mq = window.matchMedia ? window.matchMedia('(max-width: 1100px)') : { matches: false }, ticking = false;
+    var mq = window.matchMedia ? window.matchMedia('(max-width: 1100px)') : { matches: false }, ticking = false, lastOff = null;
     function place() {
       ticking = false;
-      if (!mq.matches || !still || !hero || !vis) { stage.style.removeProperty('--still-y'); return; }
-      var s = Math.max(0, -stage.getBoundingClientRect().top), over = Math.max(0, hero.offsetHeight - vis.clientHeight);
-      var back = vis.clientHeight * 0.4;
-      var y = s <= hero.offsetHeight ? Math.min(s, over) : over * Math.max(0, 1 - (s - hero.offsetHeight) / back);
-      stage.style.setProperty('--still-y', (-Math.round(y)) + 'px');
+      if (!still || !hero || !vis) { stage.style.removeProperty('--still-y'); return; }
+      var s = Math.max(0, -stage.getBoundingClientRect().top), y = 0;
+      if (mq.matches) {
+        var over = Math.max(0, hero.offsetHeight - vis.clientHeight), back = vis.clientHeight * 0.4;
+        y = s <= hero.offsetHeight ? Math.min(s, over) : over * Math.max(0, 1 - (s - hero.offsetHeight) / back);
+        stage.style.setProperty('--still-y', (-Math.round(y)) + 'px');
+      } else {
+        stage.style.removeProperty('--still-y');
+      }
+      /* without the 3D layer (still loading, or given up: data-3d not "ready") the still is the first screen's picture, and
+         it scrolls away with the first screen: the sticky visual held it in place for the whole stage, and every chapter's
+         render scrolled over it (the owner, 2026-11-17: "the rendered image of the evn board remains in the background
+         (static, no fade, no movement, same place on the screen), while everything else (text, 3d objects) scroll on top
+         of it", "when everything has loaded once and the user scrolls back up": the 3D layer's slow-scenes give-up).
+         site.css applies it only then; with the 3D layer running the 3D board takes the still's box and moves as before.
+         Set on the still itself (one element restyled a scroll frame, not the stage), the visual's height at most (out of
+         view by then), only when it changes */
+      var off = -Math.round(Math.min(Math.max(0, s - y), vis.clientHeight));
+      if (off !== lastOff) { lastOff = off; still.style.setProperty('--still-off', off + 'px'); }
     }
     function onScroll() { if (!ticking) { ticking = true; requestAnimationFrame(place); } }
     place();

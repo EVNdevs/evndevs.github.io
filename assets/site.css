@@ -366,6 +366,9 @@ a.shot:hover { text-decoration: none; border-color: var(--accent); }
 .stage-canvas { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; transition: opacity .6s ease; }
 .stage[data-3d="ready"] .stage-canvas { opacity: 1; }
 .stage[data-3d="ready"] .stage-still { opacity: 0; }
+/* no 3D layer (loading, or given up): the still scrolls away with the first screen (site.js followStill --still-off), never
+   pinned under the chapters' renders (owner, 2026-11-17) */
+.stage:not([data-3d="ready"]) .stage-still { translate: 0 var(--still-off, 0px); }
 /* the 3D layer's loading pill (hero3d.js showLoad): under the render while the board or the chapter's scene downloads */
 .stage-load {
   position: fixed; z-index: 3; left: 50%; top: 0; transform: translateX(-50%); display: flex; align-items: center; gap: 10px;
