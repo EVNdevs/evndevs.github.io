@@ -1560,9 +1560,18 @@ export async function start(stage, opts) {
     /* the two poses either side of the story's position, each fitted, then blended: continuous as a scene comes and goes */
     const i = Math.min(POSES.length - 2, Math.max(0, Math.floor(cur.p))), t = ease(Math.min(1, Math.max(0, cur.p - i)));
     const pa = posePts(POSES[i]), pb = posePts(POSES[i + 1]);
-    const D = lerp(fitDistance(pa, C, aw, ah), fitDistance(pb, C, aw, ah), t) * cur.zoom;
+    const Da = fitDistance(pa, C, aw, ah) * cur.zoom, Db = fitDistance(pb, C, aw, ah) * cur.zoom;
+    const D = lerp(Da, Db, t);
     camera.clearViewOffset();
-    const ba = span(pa, D, C), bb = span(pb, D, C);
+    /* each pose's picture centre from its own fitted distance, then blended: measured from the blended D, a pose that needs
+       the camera much further back (the code laptop, three quarters of the way to the drive base) had points at or behind
+       the camera, their projections ran off to infinity, and the framing threw the whole scene off the window (the owner,
+       2026-11-17: "the transitions to and from scene 4 (lego technic) fly out of the screen", "also flies out at the next
+       transition"). At either pose it is the same as before */
+    const ba = span(pa, Da, C), bb = span(pb, Db, C);
+    camera.position.set(C.x, C.y + D * 0.06, C.z + D);
+    camera.lookAt(C);
+    camera.updateMatrixWorld(true);
     const cx = lerp((ba.x0 + ba.x1) / 2, (bb.x0 + bb.x1) / 2, t), cy = lerp((ba.y0 + ba.y1) / 2, (bb.y0 + bb.y1) / 2, t);
     const px = (cx / tanW + 1) / 2 * W, py = (1 - cy / tanH) / 2 * H;
     /* the depth range around the scene (its reach and an item's travel, at most 0.9 of the board's 4.2 units), not from
