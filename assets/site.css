@@ -497,6 +497,16 @@ a.shot:hover { text-decoration: none; border-color: var(--accent); }
   .chapter-fig { order: -1; width: min(100%, 560px); margin: 0 auto 18px; }
   .chapter-card { max-width: 640px; }
 }
+/* a landscape window in that range (a tablet or a folding phone's inner screen turned sideways, about 890 x 626 on the
+   iPhone Duo; a phone sideways): the render (and so its 3D scene, fitted to the render's box) stacked over its card was
+   taller than the view, and centring the two put the scene up under the header (the owner, 2026-11-17: "on an iphone
+   duo, the 3d scenes sit too high on the screen"). Beside the card, as the wide layout has it, and never taller than the
+   view: the renders are at most 0.84 as tall as wide, drawn 1.12 x with ~4 % transparent margins (about 0.9 of the
+   width seen), so a width of 1.1 x the view's height less 48 px leaves 24 px clear above and below */
+@media (min-width: 761px) and (max-width: 1100px) and (orientation: landscape) {
+  .chapter.has-fig .wrap { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 32px; align-items: center; }
+  .chapter-fig { order: 0; width: min(100%, calc((var(--st-h) - 48px) * 1.1)); margin: 0; justify-self: center; }
+}
 @media (max-width: 760px) {
   .stage { --still-w: min(78vw, 324px); }
   /* a phone's 3D layer is the first screen's only (models.json phone_scenes: none): past it the canvas fades and each
