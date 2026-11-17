@@ -1332,6 +1332,10 @@ function buildFollower(model, group, pose, ownBox, mmU) {
    play. It plays while the scene is in view and until the visitor pauses it (a real button, WCAG 2.2.2: moving content
    over 5 s that starts on its own can be paused); muted, loaded only when this scene loads. Phones and the photo layout
    have the same clips over the chapter's render (site.js chapterScreen) */
+/* the render layer of what never blooms: the laptops' screens (the owner, 2026-11-17: "can we not bloom the laptop but keep
+   the rest?"). The camera sees it in a plain render; with the bloom on, the scene is drawn without it, bloomed, and the
+   screens drawn over the result before the tone mapping (enableBloom), so they look as they do with no bloom at all */
+const NO_BLOOM = 1;
 const SCREEN_CLIP = {
   scene: 'simulator',
   /* the clips when start() is given none (site.js always gives SIM_CLIPS) */
@@ -1343,9 +1347,24 @@ function screenClip(group, clips, first) {
   if (!screen) { return null; }
   const mat = [].concat(screen.material).find((m) => m.name === 'screen');
   const old = mat.emissiveMap;
+  /* the picture's sRGB decoded in the shader, the same for the video and its poster on every browser (the owner,
+     2026-11-17: "the contrast still doesnt look right, could it be the lighting"): a VideoTexture marked sRGB was not
+     decoded here (Chrome, three r163), so the clip's near-black 18 / 255 came out at 91 and every dark tone was washed
+     out, where the poster, an image, came out at 29. Both are now raw (NoColorSpace) and decoded below. And the screen
+     matte: glossy, it laid the studio's reflection over the picture (7 / 255 more on its blacks) */
+  mat.roughness = 1;
+  mat.onBeforeCompile = (sh) => {
+    sh.fragmentShader = sh.fragmentShader.replace('#include <emissivemap_fragment>', `#ifdef USE_EMISSIVEMAP
+  vec4 emissiveColor = texture2D( emissiveMap, vEmissiveMapUv );
+  emissiveColor.rgb = mix( emissiveColor.rgb * 0.0773993808, pow( emissiveColor.rgb * 0.9478672986 + 0.0521327014, vec3( 2.4 ) ), step( vec3( 0.04045 ), emissiveColor.rgb ) );
+  totalEmissiveRadiance *= emissiveColor.rgb;
+#endif`);
+  };
+  mat.customProgramCacheKey = () => 'evn-screen-srgb';
+  mat.needsUpdate = true;
   const fit = (t) => {                                   // the GLB's own placing of the picture on the screen
     t.flipY = false;
-    t.colorSpace = THREE.SRGBColorSpace;
+    t.colorSpace = THREE.NoColorSpace;                   // raw: decoded in the shader (above)
     if (old) { t.offset.copy(old.offset); t.repeat.copy(old.repeat); t.rotation = old.rotation; t.center.copy(old.center); }
     return t;
   };
@@ -1477,6 +1496,7 @@ export async function start(stage, opts) {
   let composer = null, bloomFailed = false;
   function draw() { if (composer) { composer.render(); } else { renderer.render(scene, camera); } }
   const camera = new THREE.PerspectiveCamera(30, 1, 0.05, 200);
+  camera.layers.enable(NO_BLOOM);                       // the screens (NO_BLOOM): seen in a plain render
   scene.add(new THREE.HemisphereLight(0xffffff, 0x222222, 0.35));
   const key = new THREE.DirectionalLight(0xffffff, 1.1);
   key.position.set(4, 7, 6);
@@ -2341,31 +2361,46 @@ export async function start(stage, opts) {
   async function enableBloom() {
     if (composer || bloomFailed) { return; }
     try {
-      const [{ EffectComposer }, { RenderPass }, { UnrealBloomPass }, { OutputPass }] = await Promise.all([
+      const [{ EffectComposer }, { RenderPass }, { UnrealBloomPass }, { OutputPass }, { Pass }] = await Promise.all([
         import('three/addons/postprocessing/EffectComposer.js'), import('three/addons/postprocessing/RenderPass.js'),
-        import('three/addons/postprocessing/UnrealBloomPass.js'), import('three/addons/postprocessing/OutputPass.js')]);
+        import('three/addons/postprocessing/UnrealBloomPass.js'), import('three/addons/postprocessing/OutputPass.js'),
+        import('three/addons/postprocessing/Pass.js')]);
       if (gaveUp || stackedMq.matches || composer) { return; }
       const r = host.getBoundingClientRect();
       const c = new EffectComposer(renderer);
-      const base = new RenderPass(scene, camera);
+      /* the scene without the screens (NO_BLOOM): what the bloom reads */
+      class BloomedPart extends RenderPass {
+        render(...a) { camera.layers.disable(NO_BLOOM); try { super.render(...a); } finally { camera.layers.enable(NO_BLOOM); } }
+      }
+      /* the screens alone, over the bloomed picture, tested against its depth (the RenderPass's, which the bloom's blend
+         leaves as it is), still in linear light: the OutputPass tone-maps them with the rest */
+      class ScreensOver extends Pass {
+        constructor() { super(); this.needsSwap = false; }
+        render(rr, writeBuffer, readBuffer) {
+          const auto = rr.autoClear;
+          rr.autoClear = false;
+          camera.layers.set(NO_BLOOM);
+          rr.setRenderTarget(this.renderToScreen ? null : readBuffer);
+          try { rr.render(scene, camera); } finally { camera.layers.enable(0); rr.autoClear = auto; }
+        }
+      }
+      const base = new BloomedPart(scene, camera);
       base.clearAlpha = 0;                   // as it ships, RenderPass's clear left the canvas opaque (data/bloom_probe)
       c.addPass(base);
       /* strength 0.3 (was 0.55): it is on only where the first frames are fast, so the page looked different from one
          load to the next (the owner, 2026-11-11: "bloom is very intense initially on razer, refreshing seems to set it
-         back to normal"); gentler, with or without it the page reads the same */
-      /* threshold 1.5 (was 0.94), in linear light before the tone mapping: the laptops' screens (emissive strength 1.4 in
-         scene_laptop.glb and scene_site_sim.glb) passed it, and the simulator's mostly white field bloomed over its own
-         dark panels and halo'd the laptop (the owner, 2026-11-17: "on simulator scene (laptop with video), bloom makes
-         video have almost 0 contrast"). What is meant to glow is far above it: the LEDs (LED_EMISSIVE 16), the colour
-         sensor's lamp (12 x LAMP_GAIN 3); the OLED (0.875) was already under it */
-      /* strength 0.12, radius 0.35 (were 0.3, 0.4; the owner, 2026-11-17: "bloom is still too high"): the colour sensor's lamp,
-         the LEDs and the lid's bright edge no longer flare */
-      const bloom = new UnrealBloomPass(new THREE.Vector2(r.width, r.height), 0.12, 0.35, 1.5);
+         back to normal"); gentler, with or without it the page reads the same. Threshold 0.94 in linear light before the
+         tone mapping. The laptops' screens are not in it at all (NO_BLOOM): the simulator clip's mostly white field had
+         bloomed over its own dark panels (the owner, 2026-11-17: "bloom makes video have almost 0 contrast"); raising
+         the threshold (1.5) and then the strength (0.12) for that crushed every other glow instead ("the other scenes
+         have blooms crushed to almost nothing"), so both are back as they were */
+      const bloom = new UnrealBloomPass(new THREE.Vector2(r.width, r.height), 0.3, 0.4, 0.94);
       /* the glow is added to the colour only: its blur writes alpha 1 everywhere, and blended as it ships it made the
          whole canvas opaque over the stage's own background. The scene's alpha is kept, so the glow adds onto the page */
       Object.assign(bloom.blendMaterial, { blending: THREE.CustomBlending, blendEquation: THREE.AddEquation,
         blendSrc: THREE.SrcAlphaFactor, blendDst: THREE.OneFactor, blendSrcAlpha: THREE.ZeroFactor, blendDstAlpha: THREE.OneFactor });
       c.addPass(bloom);
+      c.addPass(new ScreensOver());
       c.addPass(new OutputPass());
       c.setSize(Math.max(1, Math.round(r.width)), Math.max(1, Math.round(r.height)));
       composer = c;
@@ -2409,6 +2444,8 @@ export async function start(stage, opts) {
         model.add(group);
         group.updateMatrixWorld(true);
         decalOffsets(group);
+        /* a laptop's screen (its material "screen": scene_laptop.glb, scene_site_sim.glb) on the layer the bloom never sees */
+        group.traverse((o) => { if (o.isMesh && [].concat(o.material).some((m) => m && m.name === 'screen')) { o.layers.set(NO_BLOOM); } });
         /* its outline and box in the board group's frame (alone, and with the board's), and its items, all as it stands
            put together, before any item is moved */
         const ownBox = localBox(boardRoot, [group]), ownPts = outline(boardRoot, [group]);
