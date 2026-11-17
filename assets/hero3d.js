@@ -861,6 +861,185 @@ function buildChalkboard(pose, box) {
    with no panel of its own, behind the robot as the chalkboard is behind the motors; its run button is a real button (site.css
    .stage-run) placed over the panel's corner. Decorative like the layer, but the button is a control: "Run the line
    follower" / "Pause the line follower", aria-pressed. It never starts on its own, and pauses when the scene leaves. */
+/* The sensors scene's background: the extension's Board view, its I2C devices section open (the owner, 2026-11-17: "in the
+   background, we will show the board panel, focusing on the i2c devices section, with each device coming online as they
+   get plugged into the evn"). Drawn as VS Code's dark theme draws the view (docs/images/calibration-board-view.png): the
+   BOARD header, Motors, Servo ports and Serial ports closed and dimmed, I2C devices open; each device's row as the Board
+   view words it (src/boardView.ts: the code your program writes for it, then what it is; the colour and gesture sensors'
+   calibration state left off, which ran the rows past the LED strip in a 1333 px window) appears, lit for a moment, as
+   its sensor's plug lands (PLUGGED, when its lights come on), and goes as it is pulled. The ports are the scene's own
+   cables (product_renders scenes.py peri_sensors: I2C 1, 6, 11, 16), items k0-k3 in that order. Decorative like the
+   layer: what the rows say is in the chapter's words */
+const DEVICES = {
+  scene: 'sensors',
+  rows: [
+    { key: 'k0', label: 'ColorSensor(1)', desc: 'colour sensor' },
+    { key: 'k1', label: 'DistanceSensor(6)', desc: 'distance sensor' },
+    { key: 'k2', label: 'GestureSensor(11)', desc: 'gesture sensor' },
+    { key: 'k3', label: 'Display(16)', desc: 'OLED display' }
+  ],
+  IN_S: 0.3,                                                 // a row's fade in, seconds
+  LIT_S: 1.2,                                                // the highlight it comes online with, fading out, seconds
+  width: 1.9,                                                // the panel's width, in the scene's radii
+  shift: 0.5,                                                // the panel moved right, in its widths
+  raise: 0.38                                                // and up, in the scene's radii
+};
+function buildDevicePanel(pose, box) {
+  const W = 1024, H = 576, S = 2.4;                          // canvas px, and the view's px to canvas px
+  const ROW = 22 * S, IND = 8 * S, TW = 16 * S;              // VS Code's tree: 22 px rows, 8 px indent, 16 px twisty
+  const FG = '#cccccc', DESC = '#9d9d9d', BG = '#181818', LIT = '#04395e';
+  const UI = '"Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif';
+  const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  const c = cv.getContext('2d');
+  const x0 = 44, y0 = 30;                                    // the view's own left edge and top in the canvas
+  const lw = 1.25 * S;
+  const ink = (a) => `rgba(204, 204, 204, ${a})`;
+  /* the codicons drawn by hand at 16 view px (the twisty, a gear, the antenna, the chip, the plug) */
+  function chevron(x, y, open, a) {
+    c.strokeStyle = ink(a); c.lineWidth = lw; c.beginPath();
+    if (open) { c.moveTo(x - 3.5 * S, y - 1.5 * S); c.lineTo(x, y + 2 * S); c.lineTo(x + 3.5 * S, y - 1.5 * S); }
+    else { c.moveTo(x - 1.5 * S, y - 3.5 * S); c.lineTo(x + 2 * S, y); c.lineTo(x - 1.5 * S, y + 3.5 * S); }
+    c.stroke();
+  }
+  function gear(x, y, a) {
+    c.strokeStyle = ink(a); c.lineWidth = lw;
+    c.beginPath(); c.arc(x, y, 2.2 * S, 0, Math.PI * 2); c.stroke();
+    c.beginPath(); c.arc(x, y, 5 * S, 0, Math.PI * 2); c.stroke();
+    for (let k = 0; k < 8; k++) {
+      const t = k * Math.PI / 4;
+      c.beginPath(); c.moveTo(x + Math.cos(t) * 5 * S, y + Math.sin(t) * 5 * S); c.lineTo(x + Math.cos(t) * 6.6 * S, y + Math.sin(t) * 6.6 * S); c.stroke();
+    }
+  }
+  function antenna(x, y, a) {
+    c.strokeStyle = ink(a); c.lineWidth = lw;
+    c.beginPath(); c.moveTo(x, y - 1 * S); c.lineTo(x - 3 * S, y + 6.5 * S); c.moveTo(x, y - 1 * S); c.lineTo(x + 3 * S, y + 6.5 * S); c.stroke();
+    c.beginPath(); c.arc(x, y - 1.5 * S, 1.3 * S, 0, Math.PI * 2); c.stroke();
+    for (const r of [3.6, 6]) {
+      c.beginPath(); c.arc(x, y - 1.5 * S, r * S, -Math.PI * 0.8, -Math.PI * 0.2); c.stroke();
+    }
+  }
+  function chip(x, y, a) {
+    c.strokeStyle = ink(a); c.lineWidth = lw;
+    c.strokeRect(x - 4 * S, y - 4 * S, 8 * S, 8 * S);
+    for (const d of [-2, 0.5, 3]) {
+      c.beginPath();
+      c.moveTo(x + (d - 0.5) * S, y - 4 * S); c.lineTo(x + (d - 0.5) * S, y - 6.5 * S);
+      c.moveTo(x + (d - 0.5) * S, y + 4 * S); c.lineTo(x + (d - 0.5) * S, y + 6.5 * S);
+      c.moveTo(x - 4 * S, y + (d - 0.5) * S); c.lineTo(x - 6.5 * S, y + (d - 0.5) * S);
+      c.moveTo(x + 4 * S, y + (d - 0.5) * S); c.lineTo(x + 6.5 * S, y + (d - 0.5) * S);
+      c.stroke();
+    }
+  }
+  function plug(x, y, a) {
+    c.strokeStyle = ink(a); c.lineWidth = lw;
+    c.beginPath(); c.moveTo(x - 2.2 * S, y - 6.5 * S); c.lineTo(x - 2.2 * S, y - 3.2 * S); c.moveTo(x + 2.2 * S, y - 6.5 * S); c.lineTo(x + 2.2 * S, y - 3.2 * S); c.stroke();
+    c.beginPath();
+    c.moveTo(x - 4.5 * S, y - 3.2 * S); c.lineTo(x + 4.5 * S, y - 3.2 * S); c.lineTo(x + 4.5 * S, y);
+    c.quadraticCurveTo(x + 4.5 * S, y + 3 * S, x, y + 3 * S); c.quadraticCurveTo(x - 4.5 * S, y + 3 * S, x - 4.5 * S, y); c.closePath(); c.stroke();
+    c.beginPath(); c.moveTo(x, y + 3 * S); c.lineTo(x, y + 7 * S); c.stroke();
+  }
+  function text(str, x, y, color, size, weight) {
+    c.fillStyle = color; c.font = `${weight || 400} ${size * S}px ${UI}`; c.textBaseline = 'middle';
+    c.fillText(str, x, y);
+    return c.measureText(str).width;
+  }
+  /* the rows above the section, dimmed: the view, with the eye taken to the I2C devices */
+  const top = [['Motors', gear], ['Servo ports', gear], ['Serial ports', antenna]];
+  const DIM = 0.42;
+  const rowY = (i) => y0 + 22 * S * 1.1 + ROW * i + ROW / 2;      // under the BOARD header
+  const iconX = x0 + IND + TW + 8 * S, labelX = iconX + 8 * S + 6 * S;
+  const dev = DEVICES.rows.map((r) => ({ ...r, a: 0, lit: 0, on: false }));
+  function paint() {
+    c.clearRect(0, 0, W, H);
+    c.fillStyle = BG; c.fillRect(0, 0, W, H);
+    /* the view's section header */
+    chevron(x0 + 10 * S, y0 + 11 * S, true, DIM);
+    text('BOARD', x0 + 20 * S, y0 + 11 * S, ink(DIM), 11, 700);
+    top.forEach(([name, icon], i) => {
+      const y = rowY(i);
+      chevron(x0 + IND + TW / 2, y, false, DIM);
+      icon(iconX, y, DIM);
+      text(name, labelX, y, ink(DIM), 13);
+    });
+    /* the section, open */
+    const yS = rowY(top.length);
+    chevron(x0 + IND + TW / 2, yS, true, 1);
+    chip(iconX, yS, 1);
+    text('I2C devices', labelX, yS, FG, 13);
+    /* its devices, in port order, each from the moment its plug lands */
+    let n = 0;
+    for (const d of dev) {
+      if (d.a <= 0.001) { continue; }
+      const y = rowY(top.length + 1 + n);
+      c.globalAlpha = d.a;
+      if (d.lit > 0.001) { c.fillStyle = LIT; c.globalAlpha = d.a * d.lit; c.fillRect(0, y - ROW / 2, W, ROW); c.globalAlpha = d.a; }
+      const ix = iconX + IND + TW / 2 + 2 * S;
+      plug(ix, y, 1);
+      const w = text(d.label, ix + 14 * S, y, FG, 13);
+      text(d.desc, ix + 14 * S + w + 6 * S, y, DESC, 12);
+      c.globalAlpha = 1;
+      n++;
+    }
+    /* its edges into the stage's dark: a panel in the background, not a window */
+    c.save();
+    c.globalCompositeOperation = 'destination-in';
+    const gx = c.createLinearGradient(0, 0, W, 0);
+    gx.addColorStop(0, 'rgba(0,0,0,0)'); gx.addColorStop(0.06, 'rgba(0,0,0,1)'); gx.addColorStop(0.8, 'rgba(0,0,0,1)'); gx.addColorStop(1, 'rgba(0,0,0,0)');
+    c.fillStyle = gx; c.fillRect(0, 0, W, H);
+    const gy = c.createLinearGradient(0, 0, 0, H);
+    gy.addColorStop(0, 'rgba(0,0,0,0)'); gy.addColorStop(0.07, 'rgba(0,0,0,1)'); gy.addColorStop(0.86, 'rgba(0,0,0,1)'); gy.addColorStop(1, 'rgba(0,0,0,0)');
+    c.fillStyle = gy; c.fillRect(0, 0, W, H);
+    c.restore();
+    tex.needsUpdate = true;
+  }
+  const tex = new THREE.CanvasTexture(cv);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.generateMipmaps = false;
+  tex.minFilter = THREE.LinearFilter;
+  /* placed as the chalkboard is: behind the scene, faced to the sensors pose's camera, and moved right by half its width:
+     the board stands in the middle of the sensors pose's view, and centred behind it the board hid the devices' names;
+     to its right, above the OLED, the view is open (in the board group's frame) */
+  const qi = new THREE.Quaternion().setFromEuler(new THREE.Euler(pose.rx, pose.ry, 0, 'XYZ')).invert();
+  const toCam = new THREE.Vector3(0, 0.06, 1).normalize().applyQuaternion(qi);
+  const up = new THREE.Vector3(0, 1, 0).applyQuaternion(qi);
+  const sph = box.getBoundingSphere(new THREE.Sphere());
+  const pw = sph.radius * DEVICES.width, ph = pw * H / W;
+  const mat = new THREE.MeshBasicMaterial({ map: tex, color: 0xd2d2d2, transparent: true, opacity: 0, depthWrite: false });
+  const g = new THREE.Group();
+  const right = up.clone().cross(toCam).normalize();
+  g.position.copy(sph.center).addScaledVector(toCam, -sph.radius * 1.15).addScaledVector(up, sph.radius * DEVICES.raise)
+    .addScaledVector(right, pw * DEVICES.shift);
+  g.userData.fit = { base: g.position.clone(), up: up.clone(), h: ph };          // keepInView: below the header in a short window
+  g.quaternion.setFromRotationMatrix(new THREE.Matrix4().lookAt(toCam, new THREE.Vector3(0, 0, 0), up));
+  g.add(new THREE.Mesh(new THREE.PlaneGeometry(pw, ph), mat));
+  g.visible = false;
+  paint();
+  return {
+    group: g,
+    /* ins: the scene's share in view (the panel fades with it); items: the scene's, their prog this frame; plugged: the
+       prog at which an item counts as plugged in (start()'s PLUGGED, its lights' own) */
+    step(dt, ins, items, plugged) {
+      g.visible = ins > 0.001;
+      mat.opacity = Math.min(1, ins) * 0.95;
+      let changed = false, moving = false;
+      for (const d of dev) {
+        const it = items && items.find((x) => x.key === d.key);
+        const on = !!(it && it.prog >= plugged && ins > 0.001);
+        if (on && !d.on) { d.lit = 1; }
+        d.on = on;
+        const a = on ? Math.min(1, d.a + dt / 1000 / DEVICES.IN_S) : Math.max(0, d.a - dt / 1000 / DEVICES.IN_S);
+        const lit = on ? Math.max(0, d.lit - dt / 1000 / DEVICES.LIT_S) : 0;
+        if (a !== d.a || lit !== d.lit) { changed = true; }
+        if ((on && a < 1) || (!on && a > 0) || lit > 0) { moving = true; }
+        d.a = a; d.lit = lit;
+      }
+      if (changed) { paint(); }
+      return moving;
+    },
+    /* how many rows are showing, for the captures */
+    shown() { return dev.filter((d) => d.a > 0.5).length; }
+  };
+}
 const FOLLOW = {
   scene: 'robot',
   board: 'assets/images/blocks-line-follower.webp',
@@ -1385,6 +1564,7 @@ export async function start(stage, opts) {
   for (const p of asm.parts) { for (const m of p.mats) { if (byMat.has(m)) { byMat.get(m).part = p; } } }
   const scenes = {};                               // key -> { group, box, pts, own, items }
   let chalk = null;
+  let devPanel = null;                             // the sensors scene's Board view, its I2C devices (buildDevicePanel)
   let follower = null;                             // the robot scene's line follower (buildFollower), once that scene is in
   let clip = null;                                 // the simulator scene's laptop screen (screenClip), once that scene is in
   const twQ = new THREE.Vector3();                                // the motors scene's chalkboard (buildChalkboard), once that scene is in
@@ -1631,6 +1811,7 @@ export async function start(stage, opts) {
       model.updateMatrixWorld(true);
     }
     if (chalk) { keepInView(chalk.group); }
+    if (devPanel) { keepInView(devPanel.group); }
     if (follower) { keepInView(follower.board); }
     setAssembly(asm, asmDone ? Infinity : asmT, shadow);
     setBoardFade(cur.bf > 0.999 ? 1 : cur.bf < 0.001 ? 0 : cur.bf);
@@ -2054,6 +2235,13 @@ export async function start(stage, opts) {
       if (chalk.step(dt, cs && cs.group.visible ? cs.ins : 0, time)) { anim = true; }
       if (stage.getAttribute('data-3d-chalk') !== chalk.state) { stage.setAttribute('data-3d-chalk', chalk.state); }
     }
+    /* the Board view's devices come online as their plugs land, and go as they are pulled */
+    if (devPanel) {
+      const ds = scenes[DEVICES.scene];
+      if (devPanel.step(dt, ds && ds.group.visible ? ds.ins : 0, ds && ds.items, PLUGGED)) { anim = true; }
+      const n = String(devPanel.shown());
+      if (stage.getAttribute('data-3d-devices') !== n) { stage.setAttribute('data-3d-devices', n); }
+    }
     /* the simulator's clip plays while its scene is in, unless paused */
     if (clip) {
       const csc = scenes[SCREEN_CLIP.scene];
@@ -2204,6 +2392,11 @@ export async function start(stage, opts) {
           if (gaveUp) { return; }
           chalk = buildChalkboard(pose, ownBox);
           model.add(chalk.group);
+        }
+        /* the sensors scene's Board view: after the outline and items, as the chalkboard */
+        if (keyName === DEVICES.scene) {
+          devPanel = buildDevicePanel(pose, ownBox);
+          model.add(devPanel.group);
         }
         /* the robot scene's line follower: its floor and board still, its sensors' light turning with the robot */
         if (keyName === FOLLOW.scene) {
